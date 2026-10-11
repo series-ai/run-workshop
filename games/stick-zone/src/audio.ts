@@ -699,6 +699,25 @@ class SoundSystem {
     boltOsc.start(t + 0.04);
     boltOsc.stop(t + 0.11);
   }
+
+  /** Tactical weapon flashlight pressure switch click */
+  public playFlashlightClick(isOn: boolean = true): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(isOn ? 1800 : 1300, t);
+    osc.frequency.exponentialRampToValueAtTime(isOn ? 2400 : 900, t + 0.025);
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.025);
+  }
 }
 
 export const sound = new SoundSystem();

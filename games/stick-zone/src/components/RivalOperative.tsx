@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { OperativeState } from "../sim/game.js";
 import { InklineStickCharacter } from "./InklineStickCharacter.js";
+import { DynamicFlashlightOcclusion } from "./DynamicFlashlightOcclusion.js";
 
 interface RivalOperativeProps {
   operative: OperativeState;
@@ -193,6 +194,20 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
             <meshBasicMaterial map={barkTexture} transparent depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         </group>
+      )}
+
+      {/* Scav & Boss Dynamic Tactical Searchlight with Container Occlusion */}
+      {operative.isAlive && (
+        <DynamicFlashlightOcclusion
+          origin={{ x: operative.x, y: operative.y || 0, z: operative.z }}
+          facing={operative.facing}
+          isActive={true}
+          colorHex={isBoss ? "#ef4444" : "#f59e0b"}
+          maxRange={isBoss ? 20.0 : 15.0}
+          halfAngle={isBoss ? 0.52 : 0.42}
+          baseAlpha={isBoss ? 0.32 : 0.24}
+          showSpotLight={false}
+        />
       )}
 
       <group ref={rootGroupRef} position={[operative.x, operative.y || 0, operative.z]}>

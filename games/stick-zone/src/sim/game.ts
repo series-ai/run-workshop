@@ -312,6 +312,11 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   { minX: 49.4, maxX: 51.0, minZ: 44.2, maxZ: 45.8 },
 ];
 
+export const ALL_OCCLUDING_OBSTACLES: ObstacleBox[] = [
+  ...DEPOT_CONTAINERS,
+  ...FIELD_OBSTACLES,
+];
+
 export const ROGUE_PATROL_WAYPOINTS = [
   { x: -45, z: 45 },
   { x: -20, z: 20 },
@@ -452,6 +457,7 @@ export interface OperativeState {
   isInvulnerable: boolean;
   isAlive: boolean;
   isExtracted: boolean;
+  isFlashlightOn?: boolean;
   ammo: number;
   maxAmmo: number;
   shootCooldownTicks?: number;
@@ -558,6 +564,11 @@ export interface GameInput {
 
 export class SectorDepotSimulation {
   private lastConsumedFireTick: number = -1;
+
+  public toggleFlashlight(): boolean {
+    this.player.isFlashlightOn = !(this.player.isFlashlightOn ?? true);
+    return this.player.isFlashlightOn;
+  }
 
   public consumeFireEvent(): boolean {
     if (this.player.lastFireTick !== undefined && this.player.lastFireTick > this.lastConsumedFireTick) {
@@ -1161,6 +1172,7 @@ export class SectorDepotSimulation {
       isInvulnerable: false,
       isAlive: true,
       isExtracted: false,
+      isFlashlightOn: true,
       ammo: 30,
       maxAmmo: 30,
       weapon: 'rifle',

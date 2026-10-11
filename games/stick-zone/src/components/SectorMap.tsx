@@ -168,13 +168,12 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       return tex;
     };
 
-    const makeDecalTex = (
+    const makeStencilTex = (
       width: number,
       height: number,
       mainText: string,
       subText: string,
-      accentColor: string,
-      bgColor = "rgba(15, 23, 42, 0.94)"
+      accentColor: string
     ) => {
       const canvas = document.createElement("canvas");
       canvas.width = width;
@@ -184,36 +183,32 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
 
       ctx.clearRect(0, 0, width, height);
 
-      // Card Background
-      ctx.fillStyle = bgColor;
-      ctx.roundRect(4, 4, width - 8, height - 8, 8);
-      ctx.fill();
-
-      // Bold Comic Border
+      // Clean stenciled corner brackets
       ctx.strokeStyle = accentColor;
-      ctx.lineWidth = 5;
-      ctx.roundRect(4, 4, width - 8, height - 8, 8);
+      ctx.lineWidth = 4;
+      const bl = 24;
+      ctx.beginPath();
+      // TL
+      ctx.moveTo(6, 6 + bl); ctx.lineTo(6, 6); ctx.lineTo(6 + bl, 6);
+      // TR
+      ctx.moveTo(width - 6 - bl, 6); ctx.lineTo(width - 6, 6); ctx.lineTo(width - 6, 6 + bl);
+      // BL
+      ctx.moveTo(6, height - 6 - bl); ctx.lineTo(6, height - 6); ctx.lineTo(6 + bl, height - 6);
+      // BR
+      ctx.moveTo(width - 6 - bl, height - 6); ctx.lineTo(width - 6, height - 6); ctx.lineTo(width - 6, height - 6 - bl);
       ctx.stroke();
 
-      // Diagonal Hazard Slash Corners
-      ctx.fillStyle = accentColor;
-      ctx.beginPath();
-      ctx.moveTo(6, 32);
-      ctx.lineTo(32, 6);
-      ctx.lineTo(44, 6);
-      ctx.lineTo(6, 44);
-      ctx.closePath();
-      ctx.fill();
-
       // Main Text
-      ctx.font = "900 " + Math.floor(height * 0.36) + "px monospace";
+      ctx.font = "900 " + Math.floor(height * 0.40) + "px monospace";
       ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+      ctx.shadowBlur = 6;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(mainText, width / 2, height * 0.38);
 
       // Sub Text
-      ctx.font = "bold " + Math.floor(height * 0.22) + "px monospace";
+      ctx.font = "bold " + Math.floor(height * 0.24) + "px monospace";
       ctx.fillStyle = accentColor;
       ctx.fillText(subText, width / 2, height * 0.74);
 
@@ -224,17 +219,15 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
 
     setGateLabelTex(makeTex("SECTOR 7 COMBAT AIRLOCK", "COMBAT ZONE // WEAPONS HOT", "#d45538"));
     setFobLabelTex(makeTex("FORWARD OPERATING BASE", "SECTOR 7 STAGING OUTPOST", "#151716"));
-    setControlsDecalTex(
-      makeDecalTex(1024, 192, "[WASD] MOVE  •  [SHIFT] SPRINT  •  [C] SLIDE  •  [SPACE] ROLL", "FOB AGILITY TRAINING GROUND // FREE MOVEMENT", "#38bdf8")
-    );
+    setControlsDecalTex(null);
     setFiringDecalTex(
-      makeDecalTex(1024, 192, "➔ FIRING RANGE // [LEFT CLICK / J] FIRE • [R] RELOAD", "BALLISTIC CALIBRATION LANE // 5M - 10M TARGETS", "#f59e0b")
+      makeStencilTex(800, 160, "➔ LANE 01 // BALLISTIC RANGE", "5M - 10M TARGET CALIBRATION", "#f59e0b")
     );
     setLockerDecalTex(
-      makeDecalTex(1024, 192, "➔ TRAINING SUPPLY LOCKER // [E / F] LOOT CACHES", "QUICK-LOOT PRACTICE // TAKE STARTER AMMO & STIMS", "#10b981")
+      makeStencilTex(800, 160, "➔ CACHE 02 // SUPPLY LOCKER", "QUICK-LOOT STARTER CRATE", "#10b981")
     );
     setAirlockDecalTex(
-      makeDecalTex(1024, 192, "▲▲▲ SECTOR 7 COMBAT GATEWAY // STEP THROUGH TO RAID ▲▲▲", "EXTRACTION ZONE DEPLOYMENT // HOSTILES PRESENT // WEAPONS HOT", "#ef4444")
+      makeStencilTex(1024, 160, "▲ SECTOR 7 GATEWAY ▲", "EXTRACTION ZONE DEPLOYMENT", "#ef4444")
     );
   }, []);
 
@@ -243,32 +236,47 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* =========================================================================
           1. MAIN DEPOT FLOOR & PERIMETER WALLS (Spoke Area z: -50 to +80)
          ========================================================================= */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 10]} receiveShadow>
-        <planeGeometry args={[160, 140]} />
-        <meshStandardMaterial color="#dde0e4" roughness={0.9} metalness={0.05} />
+      {/* Heavy Industrial Ground Floor (Tactical Military Concrete Tarmac) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+        <planeGeometry args={[240, 240]} />
+        <meshStandardMaterial color="#3c443d" roughness={0.92} metalness={0.02} />
       </mesh>
+
+      {/* Concrete Slab Grid Joint Seams (6m Slabs with Dark Joints) */}
+      {Array.from({ length: 27 }, (_, i) => -80 + i * 6).map((zPos) => (
+        <mesh key={`seam_z_${zPos}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.045, zPos]} receiveShadow>
+          <planeGeometry args={[160, 0.05]} />
+          <meshBasicMaterial color="#232a24" />
+        </mesh>
+      ))}
+      {Array.from({ length: 27 }, (_, i) => -80 + i * 6).map((xPos) => (
+        <mesh key={`seam_x_${xPos}`} rotation={[-Math.PI / 2, 0, 0]} position={[xPos, -0.045, 0]} receiveShadow>
+          <planeGeometry args={[0.05, 160]} />
+          <meshBasicMaterial color="#232a24" />
+        </mesh>
+      ))}
 
       {/* Central Tactical Logistics Runway (Concrete Slabs) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} receiveShadow>
         <planeGeometry args={[22, 126]} />
-        <meshStandardMaterial color="#dde0e4" roughness={0.85} metalness={0.05} />
+        <meshStandardMaterial color="#4a534b" roughness={0.88} metalness={0.03} />
       </mesh>
 
-      {/* Flanking Pitch-Black Ink Linework Strips */}
+      {/* Flanking Luminous Guide Strips */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.2, 0.02, 17]} receiveShadow>
-        <planeGeometry args={[0.5, 126]} />
-        <meshBasicMaterial color="#151716" />
+        <planeGeometry args={[0.3, 126]} />
+        <meshBasicMaterial color="#b5a05d" />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.2, 0.02, 17]} receiveShadow>
-        <planeGeometry args={[0.5, 126]} />
-        <meshBasicMaterial color="#151716" />
+        <planeGeometry args={[0.3, 126]} />
+        <meshBasicMaterial color="#b5a05d" />
       </mesh>
 
-      {/* Transverse Heavy-Vehicle Runway Ink Markers */}
+      {/* Transverse Heavy-Vehicle Runway Markers */}
       {[-35, -15, 5, 25, 45, 65].map((zPos) => (
         <mesh key={zPos} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, zPos]} receiveShadow>
-          <planeGeometry args={[16, 0.8]} />
-          <meshBasicMaterial color="#151716" />
+          <planeGeometry args={[16, 0.6]} />
+          <meshBasicMaterial color="#334155" />
         </mesh>
       ))}
 
@@ -296,22 +304,22 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* FOB Outpost Elevated Foundation Slab (Solid 3D block at y=0.08, zero z-fighting with terrain) */}
       <mesh position={[0, 0.08, -63]} receiveShadow castShadow>
         <boxGeometry args={[15.6, 0.16, 21]} />
-        <meshStandardMaterial color="#dde0e4" roughness={0.8} metalness={0.08} />
+        <meshStandardMaterial color="#151c28" roughness={0.7} metalness={0.12} />
       </mesh>
 
       {/* FOB North Wall Behind Outpost */}
       <mesh position={[0, 2.5, -73]} receiveShadow castShadow>
         <boxGeometry args={[16, 5, 1]} />
-        <meshStandardMaterial color="#64748b" roughness={0.8} />
+        <meshStandardMaterial color="#1e293b" roughness={0.7} />
       </mesh>
       {/* FOB Side Enclosure Walls (preventing stepping into empty space) */}
       <mesh position={[-8, 2.5, -62.5]} receiveShadow castShadow>
         <boxGeometry args={[1, 5, 21]} />
-        <meshStandardMaterial color="#64748b" roughness={0.8} />
+        <meshStandardMaterial color="#1e293b" roughness={0.7} />
       </mesh>
       <mesh position={[8, 2.5, -62.5]} receiveShadow castShadow>
         <boxGeometry args={[1, 5, 21]} />
-        <meshStandardMaterial color="#64748b" roughness={0.8} />
+        <meshStandardMaterial color="#1e293b" roughness={0.7} />
       </mesh>
 
       {/* FOB Header Signboard Overhead */}
@@ -366,32 +374,25 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
         hitSide={lastDummyHitSide}
       />
 
-      {/* FOB Floor Graphic Manga Decals & Stencils */}
-      {controlsDecalTex && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.168, -67.5]} receiveShadow>
-          <planeGeometry args={[5.2, 1.1]} />
-          <meshBasicMaterial map={controlsDecalTex} transparent opacity={0.92} />
-        </mesh>
-      )}
-
+      {/* FOB Floor Stencils (Cleanly positioned on sides, completely clear walkway) */}
       {firingDecalTex && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.6, 0.168, -60.5]} receiveShadow>
-          <planeGeometry args={[4.2, 0.95]} />
-          <meshBasicMaterial map={firingDecalTex} transparent opacity={0.92} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4.8, 0.168, -58.5]} receiveShadow>
+          <planeGeometry args={[3.2, 0.65]} />
+          <meshBasicMaterial map={firingDecalTex} transparent opacity={0.88} />
         </mesh>
       )}
 
       {lockerDecalTex && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3.6, 0.168, -60.5]} receiveShadow>
-          <planeGeometry args={[4.2, 0.95]} />
-          <meshBasicMaterial map={lockerDecalTex} transparent opacity={0.92} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4.8, 0.168, -58.5]} receiveShadow>
+          <planeGeometry args={[3.2, 0.65]} />
+          <meshBasicMaterial map={lockerDecalTex} transparent opacity={0.88} />
         </mesh>
       )}
 
       {airlockDecalTex && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.168, -54.8]} receiveShadow>
-          <planeGeometry args={[5.4, 1.0]} />
-          <meshBasicMaterial map={airlockDecalTex} transparent opacity={0.95} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.168, -54.2]} receiveShadow>
+          <planeGeometry args={[4.2, 0.65]} />
+          <meshBasicMaterial map={airlockDecalTex} transparent opacity={0.90} />
         </mesh>
       )}
 

@@ -36,6 +36,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
   >([]);
 
   const [showIngressBanner, setShowIngressBanner] = React.useState(false);
+  const [isFobMinimized, setIsFobMinimized] = React.useState(true);
   const hasShownIngressRef = React.useRef(false);
   const lastCombatLogCountRef = React.useRef(sim.combatLog.length);
 
@@ -336,7 +337,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
   const currentCardinal = CARDINALS[Math.round(headingDeg / 45) % 8];
 
   return (
-    <div className="hud-layer">
+    <div className="tactical-hud hud-layer">
       {/* Anime Kinetic Speed Lines Canvas Overlay */}
       {!isTestMode && (isSlidingActive || player.action === "sprint" || sim.zoneMode === "airlock_corridor") && (
         <canvas
@@ -411,13 +412,24 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
         </div>
       )}
 
-      {/* Dynamic FOB Pre-Flight Readiness Card */}
-      {sim.zoneMode === "hub" && (
-        <div className="fob-briefing-card tactical-ink-card hud-interactive">
+      
+
+      {sim.zoneMode === "hub" && !isFobMinimized && (
+        <div className="fob-briefing-card hud-shell hud-interactive" style={{ position: "absolute", top: "140px", left: "18px", zIndex: 30, maxWidth: "340px" }}>
           <div className="fob-briefing-watermark" aria-hidden="true">TRAINING</div>
-          <div className="fob-briefing-header">
-            <span className="fob-briefing-tag">// FORWARD OPERATING BASE</span>
-            <span className="fob-briefing-title">PRE-FLIGHT READINESS</span>
+          <div className="fob-briefing-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span className="fob-briefing-tag">// FORWARD OPERATING BASE</span>
+              <span className="fob-briefing-title">PRE-FLIGHT READINESS</span>
+            </div>
+            <button
+              onClick={() => setIsFobMinimized(true)}
+              className="tactical-ink-btn"
+              style={{ padding: "2px 8px", fontSize: "9px", background: "transparent", color: "#94a3b8", borderColor: "#475569" }}
+              title="Minimize Checklist"
+            >
+              ▲ HIDE
+            </button>
           </div>
 
           <div className="fob-briefing-checklist">
@@ -566,188 +578,152 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       )}
 
       {/* ============================================================
-          TOP BAR: Minimal, Clean, Desloppified
+          AUTHENTIC DIEGETIC MILITARY GAME HUD (Sol 6.1 High Architecture)
           ============================================================ */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-        <div className="tactical-top-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-          {/* Top Left: Sector Status & Proximity Warning */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span className="tactical-badge">
-              {sim.zoneMode === "hub" ? "SECTOR 7 // HUB" : "SECTOR 7 // RAID"}
-            </span>
-            {onOpenHideout && (
-              <button
-                onClick={onOpenHideout}
-                className="tactical-ink-btn hud-interactive"
-                style={{ padding: "4px 10px", fontSize: "11px", fontWeight: 800, display: "flex", alignItems: "center", gap: "6px", pointerEvents: "auto" }}
-                title="Open Stash & Armory [TAB]"
-              >
-                <span>📦</span>
-                <span>HIDEOUT [TAB]</span>
-              </button>
-            )}
-            {proximityAlert.distance < 45 ? (
-              <span className="tactical-badge badge-crimson">
-                ⚠️ HOSTILE {Math.round(proximityAlert.distance)}M
-              </span>
-            ) : (
-              <span style={{ fontSize: "11px", color: "#64748b", fontFamily: "monospace", fontWeight: 700 }}>
-                RADAR CLEAR
-              </span>
-            )}
+      <span className="tactical-badge hud-panel" style={{ display: "none" }} />
+
+      {/* Top Left: Callsign & Arsenal Station */}
+      <div className="hud-station hud-callsign">
+        <div className="hud-shell">
+          <div className="hud-shell__body">
+            <div className="hud-label">// OPERATIONAL SECTOR</div>
+            <div className="hud-callsign-name">
+              {sim.zoneMode === "hub" ? "FOB STAGING // SECTOR 7" : "SECTOR 7 // DEPOT RAID"}
+            </div>
+            <div className="hud-callsign-sub">
+              {sim.zoneMode === "hub" ? "OUTPOST SECURE • PRE-RAID" : "HOSTILE INGRESS • WEAPONS HOT"}
+            </div>
 
             {sim.squadmate && sim.squadmate.isAlive && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "3px 8px",
-                  background: "rgba(18, 24, 36, 0.85)",
-                  border: "1px solid rgba(81, 229, 240, 0.4)",
-                  borderRadius: "4px",
-                  fontFamily: "monospace",
-                  fontSize: "11px",
-                  fontWeight: 800,
-                  color: "#51E5F0",
-                }}
-              >
-                <span>◇ VIPER-2</span>
-                <span style={{ color: "#64748b" }}>|</span>
-                <span style={{ color: sim.squadmate.health > 40 ? "#72F1A8" : "#FF365E" }}>
+              <div className="hud-squadmate-tag">
+                <span>◇ VIPER-2:</span>
+                <span style={{ color: sim.squadmate.health > 40 ? "var(--hud-phosphor)" : "var(--hud-danger)" }}>
                   {sim.squadmate.health} HP
                 </span>
               </div>
             )}
 
-            {/* Compact Mobile/Landscape Vitals Pill */}
-            <div
-              className="tactical-vitals-mobile-pill"
-              style={{
-                display: "none",
-                alignItems: "center",
-                gap: "8px",
-                background: "#f3f4f6",
-                border: "2px solid #151716",
-                borderRadius: "4px",
-                padding: "3px 8px",
-                fontFamily: "monospace",
-                fontWeight: 800,
-                fontSize: "11px",
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: "3px", color: player.health > 35 ? "#16a34a" : "#ff2212" }}>
-                <Heart size={12} fill={player.health > 35 ? "#16a34a" : "#ff2212"} /> {player.health}
-              </span>
-              <span style={{ color: "#cbd5e1" }}>|</span>
-              <span style={{ display: "flex", alignItems: "center", gap: "3px", color: "#0284c7" }}>
-                <Shield size={12} fill="#0284c7" /> {player.armor}
-              </span>
-            </div>
-          </div>
+            {sim.zoneMode === "hub" && (
+              <div style={{ marginTop: "6px", borderTop: "1px solid var(--hud-line)", paddingTop: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span className="hud-label">PRE-FLIGHT READINESS</span>
+                  <button
+                    onClick={() => setIsFobMinimized(!isFobMinimized)}
+                    className="hud-switch"
+                    style={{ minHeight: "20px", padding: "1px 6px", fontSize: "8.5px" }}
+                    title="Toggle Pre-Flight Task List"
+                  >
+                    {[sim.trainingProgress?.dummyHit, sim.trainingProgress?.agilityUsed, sim.trainingProgress?.crateLooted].filter(Boolean).length}/3 {isFobMinimized ? "▼" : "▲"}
+                  </button>
+                </div>
+              </div>
+            )}
 
-          {/* Top Center: Clean Minimal Compass */}
-          <div className="compass-bar" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Compass
-              size={16}
-              color="#151716"
-              style={{
-                transform: `rotate(${-headingDeg}deg)`,
-                transition: "transform 0.08s linear",
-              }}
-            />
-            <span style={{ fontWeight: 800, color: "#151716", fontFamily: "monospace", fontSize: "12px" }}>
-              {String(headingDeg).padStart(3, "0")}° [{currentCardinal}]
-            </span>
-          </div>
-
-          {/* Top Right: Match Deadline Countdown & Mini-Map Radar */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div className="tactical-badge badge-amber" style={{ fontSize: "12px" }}>
-              EXFIL: {timeFormatted}
-            </div>
-
-            {/* Tactical 2D Mini-Map Radar */}
-            <div
-              className="mini-map-radar"
-              style={{
-                width: "72px",
-                height: "72px",
-                background: "#f3f4f6",
-                border: "2px solid #151716",
-                borderRadius: "6px",
-                position: "relative",
-                overflow: "hidden",
-                boxShadow: "2px 2px 0px #151716",
-              }}
-            >
-              <svg width="72" height="72" viewBox="-85 -85 170 170" style={{ width: "100%", height: "100%", display: "block" }}>
-                <rect x="-80" y="-80" width="160" height="160" fill="none" stroke="#151716" strokeWidth="1.2" opacity="0.3" />
-                <circle cx="45" cy="45" r="7.0" fill="rgba(34, 197, 94, 0.4)" stroke="#151716" strokeWidth="1.4" />
-                {DEPOT_CONTAINERS.map((c, i) => (
-                  <rect
-                    key={i}
-                    x={c.minX}
-                    y={c.minZ}
-                    width={c.maxX - c.minX}
-                    height={c.maxZ - c.minZ}
-                    fill="#cbd5e1"
-                    stroke="#151716"
-                    strokeWidth="1.0"
-                  />
-                ))}
-                {sim.crates.map((c) => (
-                  <circle key={c.id} cx={c.x} cy={c.z} r="2.5" fill={c.opened ? "#94a3b8" : "#d45538"} />
-                ))}
-                {sim.machines.filter((m) => m.isAlive).map((m) => (
-                  <circle key={m.id} cx={m.x} cy={m.z} r="3.2" fill="#ff2212" />
-                ))}
-                {sim.rivals.filter((r) => r.isAlive && !r.isExtracted).map((r) => (
-                  <g key={r.id} transform={`translate(${r.x}, ${r.z})`}>
-                    <circle cx="0" cy="0" r="3.2" fill="#ff2212" />
-                    <line x1="0" y1="0" x2={Math.sin(r.facing) * 5.0} y2={Math.cos(r.facing) * 5.0} stroke="#ff2212" strokeWidth="1.5" />
-                  </g>
-                ))}
-                <g transform={`translate(${player.x}, ${player.z})`}>
-                  <circle cx="0" cy="0" r="3.5" fill="#151716" />
-                  <line x1="0" y1="0" x2={Math.sin(player.facing) * 7.0} y2={Math.cos(player.facing) * 7.0} stroke="#151716" strokeWidth="2.0" />
-                </g>
-              </svg>
+            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "6px" }}>
+              {onOpenHideout && (
+                <button
+                  onClick={onOpenHideout}
+                  className="hud-switch"
+                  title="Open Tactical Stash & Armory [TAB]"
+                >
+                  [TAB] ARSENAL
+                </button>
+              )}
+              {proximityAlert.distance < 45 ? (
+                <span className="hud-proximity-alert">
+                  ⚠️ HOSTILE {Math.round(proximityAlert.distance)}M
+                </span>
+              ) : (
+                <span className="hud-proximity-clear">
+                  RADAR CLEAR
+                </span>
+              )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Center Alert Banners (Conditional) */}
+      {/* Top Right: Telemetry & Tactical Radar Station */}
+      <div className="hud-station hud-telemetry">
+        <div className="hud-shell">
+          <div className="hud-shell__body">
+            <div className="hud-telemetry-row">
+              <span className="hud-label">EXFIL WINDOW</span>
+              <span className="hud-exfil-timer">{timeFormatted}</span>
+            </div>
+            <div className="hud-telemetry-status">
+              <span
+                className="hud-status-indicator"
+                style={{
+                  background: isHoldingLZ
+                    ? "var(--hud-warning)"
+                    : exfilState.kind === "extracted"
+                    ? "#10b981"
+                    : "var(--hud-phosphor)",
+                }}
+              />
+              <span>
+                {isHoldingLZ
+                  ? `HOLDING LZ [${Math.floor(holdTicks / 30)}s]`
+                  : exfilState.kind === "extracted"
+                  ? "EXFIL CONFIRMED"
+                  : sim.zoneMode === "hub"
+                  ? "STAGING PHASE"
+                  : "LZ AVAILABLE"}
+              </span>
+            </div>
+
+            {/* Tactical Radar Display with Scope Crosshair & Scanlines */}
+            <div className="hud-radar">
+              <div className="hud-radar-crosshair" />
+              <div className="hud-radar-ring" style={{ width: "38%", height: "38%" }} />
+              <div className="hud-radar-ring" style={{ width: "76%", height: "76%" }} />
+              
+              {/* Rotating Player Heading Marker */}
+              <div
+                className="hud-radar-heading"
+                style={{ transform: `translate(-50%, -50%) rotate(${headingDeg}deg)` }}
+              >
+                ▲
+              </div>
+
+              {/* Hostile Blips within 30m Detection Envelope */}
+              {sim.rivals.map((r) => {
+                if (!r.isAlive || r.isExtracted) return null;
+                const dx = r.x - player.x;
+                const dz = r.z - player.z;
+                const dist = Math.hypot(dx, dz);
+                if (dist > 30) return null;
+                const px = 50 + (dx / 30) * 42;
+                const py = 50 + (dz / 30) * 42;
+                const isBoss = r.id === "scav_boss_warlord" || /boss|warlord/i.test(r.name);
+                return (
+                  <div
+                    key={r.id}
+                    className={`hud-radar-blip ${isBoss ? "boss-blip" : "enemy-blip"}`}
+                    style={{ left: `${px}%`, top: `${py}%` }}
+                  />
+                );
+              })}
+
+              <div className="hud-radar-tag">
+                RNG 30M // {currentCardinal} {String(headingDeg).padStart(3, "0")}°
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Center Dynamic Tactical Banners */}
+      <div className="hud-center-alerts">
         {isHoldingLZ && !recentInterruption && (
-          <div
-            className="tactical-ink-card"
-            style={{
-              padding: "8px 20px",
-              background: "#22c55e",
-              color: "#ffffff",
-              boxShadow: "4px 4px 0px #151716",
-              fontWeight: 900,
-              fontSize: "13px",
-              fontFamily: "monospace",
-            }}
-          >
+          <div className="hud-alert-banner banner-holding">
             HOLDING EXTRACTION LZ: {(holdTicks / 60).toFixed(1)}s / 3.0s
           </div>
         )}
 
         {showResetBanner && (
-          <div
-            className="tactical-ink-card"
-            style={{
-              padding: "8px 20px",
-              background: "#ff2212",
-              color: "#ffffff",
-              boxShadow: "4px 4px 0px #151716",
-              fontWeight: 900,
-              fontSize: "13px",
-              fontFamily: "monospace",
-            }}
-          >
+          <div className="hud-alert-banner banner-reset">
             DAMAGE INTERRUPTION — LZ HOLD RESET!
           </div>
         )}
@@ -757,206 +733,188 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
             onClick={() => {
               if (sim.useStim()) sound.playHealInject();
             }}
-            className="tactical-ink-card bleed-alert-pulse hud-interactive"
-            style={{
-              padding: "6px 18px",
-              background: "#ff2212",
-              color: "#ffffff",
-              cursor: "pointer",
-              boxShadow: "4px 4px 0px #151716",
-              fontWeight: 900,
-              fontSize: "12px",
-              fontFamily: "monospace",
-              pointerEvents: "auto",
-            }}
+            className="hud-alert-banner banner-bleed"
+            title="Inject Combat Stim [H]"
           >
-            ⚠️ ARTERIAL BLEED! INJECT STIM [H]
+            ⚠️ ARTERIAL BLEED! PRESS [H] TO STIM
           </div>
         )}
 
         {player.hasKeycard && !sim.isPlayerInExfilZone() && !nearbyCrate && (
-          <div
-            className="tactical-ink-card"
-            style={{
-              padding: "4px 14px",
-              background: "#fef3c7",
-              color: "#151716",
-              fontWeight: 800,
-              fontSize: "11px",
-              fontFamily: "monospace",
-            }}
-          >
+          <div className="hud-alert-banner banner-keycard">
             💳 VIOLET KEYCARD ACTIVE — EMERGENCY BUNKER (-45, -45)
           </div>
         )}
       </div>
 
-      {/* ============================================================
-          BOTTOM BAR: Unified Translucent Modern Shooter HUD
-          ============================================================ */}
-      <div className="tactical-bottom-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%" }}>
-        {/* Bottom Left: Streamlined Vital Status */}
-        <div
-          className="tactical-ink-card"
-          style={{
-            padding: "8px 14px",
-            minWidth: "200px",
-            maxWidth: "240px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "5px",
-          }}
-        >
-          {/* Ingress Shield Banner if active */}
-          {(player as any).ingressShieldTicks > 0 && (
-            <div style={{ fontSize: "10px", fontWeight: 800, color: "#38bdf8", letterSpacing: "0.5px" }}>
-              ⚡ INGRESS SHIELD ACTIVE
-            </div>
-          )}
+      {/* Bottom Left: Military Combat Vitals Station */}
+      <div className="hud-station hud-vitals">
+        <div className="hud-shell">
+          <div className="hud-shell__body">
+            {(player as any).ingressShieldTicks > 0 && (
+              <div className="hud-shield-banner">
+                ⚡ INGRESS SHIELD ACTIVE
+              </div>
+            )}
 
-          {/* Health Bar */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 800, color: "#f8fafc" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <Heart size={12} color="#22c55e" /> HP
+            <div className="hud-vitals-header">
+              <span className="hud-label">OPERATIVE HEALTH</span>
+              <span className={`hud-vitals-val ${player.health < 30 ? "hud-danger" : "hud-phosphor"}`}>
+                {Math.round(player.health)} / 100
               </span>
-              <span style={{ fontFamily: "monospace" }}>{player.health}/100</span>
             </div>
-            <div style={{ height: "4px", background: "rgba(51, 65, 85, 0.6)", borderRadius: "2px", overflow: "hidden" }}>
-              <div
-                style={{
-                  width: `${player.health}%`,
-                  height: "100%",
-                  background: player.health > 35 ? "#22c55e" : "#ef4444",
-                  transition: "width 0.15s ease",
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Armor Bar */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 800, color: "#f8fafc" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <Shield size={12} color="#38bdf8" /> AP
+            {/* 5-Pip Discrete Military Health Cells */}
+            <div className="hud-cells hud-cells--health">
+              {[0, 1, 2, 3, 4].map((pipIdx) => {
+                const pipMin = pipIdx * 20;
+                const fillPct = Math.min(100, Math.max(0, ((player.health - pipMin) / 20) * 100));
+                return (
+                  <div key={pipIdx} className="hud-cell">
+                    <div
+                      className={`hud-cell__fill ${player.health < 30 ? "fill-danger" : "fill-health"}`}
+                      style={{ width: `${fillPct}%` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hud-vitals-header" style={{ marginTop: "6px" }}>
+              <span className="hud-label">ARMOR // AP</span>
+              <span className="hud-vitals-val" style={{ color: "#38bdf8" }}>
+                {Math.round(player.armor)} / 100
               </span>
-              <span style={{ fontFamily: "monospace" }}>{player.armor}/100</span>
             </div>
-            <div style={{ height: "4px", background: "rgba(51, 65, 85, 0.6)", borderRadius: "2px", overflow: "hidden" }}>
-              <div
-                style={{
-                  width: `${player.armor}%`,
-                  height: "100%",
-                  background: "#38bdf8",
-                  transition: "width 0.15s ease",
-                }}
-              />
-            </div>
-          </div>
 
-          {/* Clean Controls Hint */}
-          <div style={{ display: "flex", gap: "4px", fontSize: "8.5px", fontWeight: 700, fontFamily: "monospace", color: "#94a3b8", marginTop: "1px" }}>
-            <span>SHIFT RUN</span> &bull; <span>C SLIDE</span> &bull; <span>SPACE ROLL</span> &bull; <span>V KICK</span>
+            {/* 10-Pip Segmented Armor / AP Cells */}
+            <div className="hud-cells hud-cells--resource">
+              {Array.from({ length: 10 }).map((_, pipIdx) => {
+                const pipMin = pipIdx * 10;
+                const fillPct = Math.min(100, Math.max(0, ((player.armor - pipMin) / 10) * 100));
+                return (
+                  <div key={pipIdx} className="hud-cell hud-cell--sm">
+                    <div className="hud-cell__fill fill-ap" style={{ width: `${fillPct}%` }} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Affliction Alert */}
+            {player.isBleeding && (
+              <div className="hud-affliction">
+                <span>⚠️ ARTERIAL BLEED</span>
+                <span style={{ fontSize: "8.5px", color: "var(--hud-ink)" }}>PRESS [H]</span>
+              </div>
+            )}
+
+            {/* Tactical Keybind Telemetry */}
+            <div className="hud-maneuvers">
+              <span>SHIFT RUN</span>
+              <span>•</span>
+              <span>C SLIDE</span>
+              <span>•</span>
+              <span>SPACE ROLL</span>
+              <span>•</span>
+              <span>V KICK</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Center: Minimal Combat Ticker */}
-        {sim.combatLog.length > 0 && (
-          <div style={{ maxWidth: "340px", display: "flex", flexDirection: "column", gap: "3px", pointerEvents: "none" }}>
-            {sim.combatLog.slice(-2).map((log, idx) => (
-              <div
-                key={idx}
-                className="tactical-ink-card"
-                style={{
-                  padding: "3px 10px",
-                  fontSize: "10px",
-                  fontFamily: "monospace",
-                  fontWeight: 700,
-                  opacity: 0.9,
-                }}
-              >
+      {/* Bottom Center: Minimal Combat Ticker */}
+      {(() => {
+        const displayLogs = sim.combatLog
+          .filter((l) => !l.startsWith("[STAGED INGRESS]") && !l.startsWith("[SETTLEMENT]"))
+          .slice(-2);
+        if (displayLogs.length === 0) return null;
+        return (
+          <div className="hud-combat-ticker">
+            {displayLogs.map((log, idx) => (
+              <div key={idx} className="hud-ticker-line">
                 {log}
               </div>
             ))}
           </div>
-        )}
+        );
+      })()}
 
-        {/* Bottom Right: Clean High-Craft Arsenal & Resources Widget */}
-        <div
-          className="tactical-ink-card hud-interactive"
-          style={{
-            padding: "6px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            pointerEvents: "auto",
-          }}
-        >
-          {/* Current Weapon & Ammo */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Crosshair size={20} color={player.weapon === "shotgun" ? "#f59e0b" : "#38bdf8"} />
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: player.weapon === "shotgun" ? "#f59e0b" : "#38bdf8", letterSpacing: "0.5px" }}>
-                {player.weapon === "shotgun" ? "M590 SHOTGUN" : "M4A1 RIFLE"}
+      {/* Bottom Right: Tactical Ballistics Station */}
+      <div className="hud-station hud-ballistics">
+        <div className="hud-shell">
+          <div className="hud-shell__body">
+            <div className="hud-weapon-header">
+              <div>
+                <div className="hud-weapon-name">
+                  {player.weapon === "shotgun" ? "M590 BREACHER" : "M4A1 CQBR"}
+                </div>
+                <div className="hud-weapon-caliber">
+                  {player.weapon === "shotgun" ? "12-GAUGE 00 BUCK • PUMP" : "5.56x45MM NATO • AUTO"}
+                </div>
               </div>
-              <div style={{ fontSize: "20px", fontWeight: 900, fontFamily: "monospace", color: "#f8fafc", lineHeight: 1.1 }}>
-                {player.ammo} <span style={{ fontSize: "11px", color: "#94a3b8" }}>/ {player.weapon === "shotgun" ? player.reserveShotgunAmmo ?? 24 : player.reserveRifleAmmo ?? 90}</span>
+              <div className="hud-ammo-display">
+                <span className="hud-ammo">{player.ammo}</span>
+                <span className="hud-ammo__reserve">
+                  / {player.weapon === "shotgun" ? player.reserveShotgunAmmo ?? 24 : player.reserveRifleAmmo ?? 90}
+                </span>
               </div>
             </div>
+
+            {/* Tactical Magazine Bullet Pip Stack */}
+            <div className="hud-mag-bar">
+              {Array.from({ length: player.weapon === "shotgun" ? 8 : 30 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`hud-mag-pip ${i < player.ammo ? "loaded" : "spent"}`}
+                />
+              ))}
+            </div>
+
+            {/* Mil-Spec Action Switches */}
+            <div className="hud-controls-row">
+              <button
+                onClick={() => sim.switchWeapon()}
+                className="hud-switch"
+                title="Swap Weapon [1/2 or Q]"
+              >
+                [1/2] SWAP
+              </button>
+              <button
+                onClick={() => {
+                  if (sim.reload()) sound.playReload();
+                }}
+                className="hud-switch"
+                title="Reload Weapon [R]"
+              >
+                [R] RELOAD
+              </button>
+              <button
+                onClick={() => {
+                  const isOn = sim.toggleFlashlight();
+                  sound.playFlashlightClick(isOn);
+                }}
+                className={`hud-switch ${(player.isFlashlightOn ?? true) ? "illum-active" : ""}`}
+                title="Toggle Tactical Light [L]"
+              >
+                [L] {(player.isFlashlightOn ?? true) ? "ILLUM ON" : "ILLUM OFF"}
+              </button>
+              <button
+                onClick={() => {
+                  if (sim.useStim()) sound.playHealInject();
+                }}
+                className="hud-switch hud-stim-btn"
+                title="Inject Combat Stim [H]"
+              >
+                💉 {player.stimsRemaining || 0} [H]
+              </button>
+            </div>
+
+            {/* Scavenged Loot Telemetry */}
+            <div className="hud-loot-row">
+              <span className="hud-label">SCAVENGED LOOT:</span>
+              <span className="hud-loot-val">${player.cash.toLocaleString()}</span>
+            </div>
           </div>
-
-          {/* Quick Action Chips */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <button
-              onClick={() => sim.switchWeapon()}
-              className="tactical-ink-btn"
-              style={{ padding: "1px 6px", fontSize: "8.5px" }}
-              title="Swap Weapon [1/2 or Q]"
-            >
-              [1/2] SWAP
-            </button>
-            <button
-              onClick={() => {
-                if (sim.reload()) sound.playReload();
-              }}
-              className="tactical-ink-btn"
-              style={{ padding: "1px 6px", fontSize: "8.5px" }}
-              title="Reload Weapon [R]"
-            >
-              [R] RELOAD
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div style={{ width: "1px", height: "24px", background: "rgba(148, 163, 184, 0.25)" }} />
-
-          {/* Scavenged Cash */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-            <span style={{ fontSize: "8.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>LOOT</span>
-            <span style={{ fontSize: "15px", fontWeight: 900, color: "#10b981", fontFamily: "monospace" }}>
-              ${player.cash.toLocaleString()}
-            </span>
-          </div>
-
-          {/* Stims Button */}
-          <button
-            onClick={() => {
-              if (sim.useStim()) sound.playHealInject();
-            }}
-            className="tactical-ink-btn"
-            style={{
-              padding: "3px 7px",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              background: (player.stimsRemaining || 0) > 0 ? "rgba(30, 41, 59, 0.9)" : "rgba(15, 23, 42, 0.6)",
-              borderColor: (player.stimsRemaining || 0) > 0 ? "#38bdf8" : "rgba(148, 163, 184, 0.2)",
-            }}
-            title="Inject Stim [H]"
-          >
-            <span>💉</span>
-            <span style={{ fontSize: "10px", fontFamily: "monospace", color: "#f8fafc" }}>{player.stimsRemaining || 0} [H]</span>
-          </button>
         </div>
       </div>
 

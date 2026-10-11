@@ -1369,17 +1369,26 @@ html, body, #root {
   position: absolute;
   top: 76px;
   left: 20px;
-  width: 320px;
+  width: 270px;
   max-width: calc(100vw - 40px);
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96) 0%, rgba(2, 6, 23, 0.98) 100%);
-  border: 2px solid #38bdf8;
+  background: rgba(11, 17, 32, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
   border-radius: 8px;
-  padding: 14px 16px;
-  box-shadow: 5px 5px 0px #0b0f19, 0 8px 30px rgba(0, 0, 0, 0.6);
+  padding: 10px 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
   z-index: 25;
   pointer-events: auto;
   overflow: hidden;
-  animation: fob-card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fob-card-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fob-minimized-pill {
+  transition: all 0.15s ease;
+}
+.fob-minimized-pill:hover {
+  border-color: #38bdf8 !important;
+  transform: translateY(-1px);
 }
 
 @keyframes fob-card-in {
@@ -1619,4 +1628,549 @@ html, body, #root {
     transform: translateX(-50%) scale(1.05);
     box-shadow: 0 0 40px rgba(239, 68, 68, 0.95);
   }
+}
+
+
+/* =========================================================================
+   AUTHENTIC DIEGETIC TACTICAL SHOOTER GAME HUD (Sol 6.1 High Architecture)
+   ========================================================================= */
+.tactical-hud {
+  --hud-ink: #d5dbc6;
+  --hud-muted: #95a28d;
+  --hud-line: #4c5746;
+  --hud-line-glow: rgba(173, 197, 139, 0.25);
+  --hud-panel: rgba(18, 24, 20, 0.92);
+  --hud-empty: #222923;
+  --hud-phosphor: #adc58b;
+  --hud-warning: #eab308;
+  --hud-danger: #ef4444;
+  --hud-cut: 10px;
+  --hud-mono: "JetBrains Mono", "Courier New", monospace;
+  --hud-stencil: "Impact", "Arial Black", monospace;
+  --hud-shape: polygon(
+    0 0,
+    calc(100% - var(--hud-cut)) 0,
+    100% var(--hud-cut),
+    100% 100%,
+    var(--hud-cut) 100%,
+    0 calc(100% - var(--hud-cut))
+  );
+
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  color: var(--hud-ink);
+  font-family: var(--hud-mono);
+  font-size: 12px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.hud-station {
+  position: absolute;
+  pointer-events: auto;
+}
+
+.hud-callsign {
+  top: max(18px, env(safe-area-inset-top));
+  left: max(18px, env(safe-area-inset-left));
+  max-width: 280px;
+}
+
+.hud-telemetry {
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  width: 220px;
+}
+
+.hud-vitals {
+  left: max(18px, env(safe-area-inset-left));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 250px;
+}
+
+.hud-ballistics {
+  right: max(18px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 290px;
+}
+
+/* Chamfered Tactical Shells */
+.hud-shell {
+  position: relative;
+  padding: 1px;
+  background: var(--hud-line);
+  clip-path: var(--hud-shape);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 10px var(--hud-line-glow);
+}
+
+.hud-shell__body {
+  padding: 12px 14px;
+  background: var(--hud-panel);
+  clip-path: var(--hud-shape);
+  backdrop-filter: blur(10px);
+}
+
+/* Label & Typography */
+.hud-label {
+  color: var(--hud-muted);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.hud-callsign-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--hud-phosphor);
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+.hud-callsign-sub {
+  font-size: 9px;
+  color: var(--hud-muted);
+  margin-bottom: 4px;
+}
+
+.hud-squadmate-tag {
+  display: inline-flex;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #51e5f0;
+  background: rgba(81, 229, 240, 0.1);
+  border: 1px solid rgba(81, 229, 240, 0.3);
+  padding: 2px 6px;
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+.hud-proximity-alert {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  padding: 2px 6px;
+  letter-spacing: 0.05em;
+}
+
+.hud-proximity-clear {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--hud-muted);
+  letter-spacing: 0.05em;
+}
+
+/* Vitals & Health Cells */
+.hud-shield-banner {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.hud-vitals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.hud-vitals-val {
+  font-family: var(--hud-mono);
+  font-weight: 800;
+  font-size: 11px;
+}
+
+.hud-cells {
+  display: grid;
+  gap: 3px;
+  margin-top: 3px;
+  margin-bottom: 5px;
+}
+
+.hud-cells--health {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.hud-cells--resource {
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.hud-cell {
+  position: relative;
+  height: 12px;
+  background: var(--hud-empty);
+  border: 1px solid var(--hud-line);
+  overflow: hidden;
+}
+
+.hud-cell--sm {
+  height: 8px;
+}
+
+.hud-cell__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  transition: width 0.15s ease-out;
+}
+
+.fill-health {
+  background: var(--hud-phosphor);
+}
+
+.fill-danger {
+  background: var(--hud-danger);
+}
+
+.fill-ap {
+  background: #38bdf8;
+}
+
+.hud-affliction {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 3px 6px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid var(--hud-danger);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--hud-danger);
+}
+
+.hud-maneuvers {
+  display: flex;
+  gap: 6px;
+  font-size: 8.5px;
+  color: var(--hud-muted);
+  margin-top: 5px;
+  letter-spacing: 0.04em;
+}
+
+/* Ballistics Station */
+.hud-weapon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.hud-weapon-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--hud-ink);
+  letter-spacing: 0.05em;
+}
+
+.hud-weapon-caliber {
+  font-size: 9px;
+  color: var(--hud-muted);
+  letter-spacing: 0.05em;
+  margin-top: 1px;
+}
+
+.hud-ammo-display {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.hud-ammo {
+  font-family: var(--hud-stencil);
+  font-size: 38px;
+  line-height: 1;
+  color: var(--hud-ink);
+  letter-spacing: 1px;
+}
+
+.hud-ammo__reserve {
+  font-family: var(--hud-mono);
+  font-size: 13px;
+  color: var(--hud-muted);
+  font-weight: 700;
+}
+
+.hud-mag-bar {
+  display: flex;
+  gap: 2px;
+  height: 5px;
+  margin: 6px 0 8px 0;
+}
+
+.hud-mag-pip {
+  flex: 1;
+  height: 100%;
+  border-radius: 1px;
+}
+
+.hud-mag-pip.loaded {
+  background: var(--hud-phosphor);
+}
+
+.hud-mag-pip.spent {
+  background: var(--hud-empty);
+}
+
+.hud-controls-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.hud-loot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--hud-line);
+}
+
+.hud-loot-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #10b981;
+  font-family: var(--hud-mono);
+}
+
+/* Mil-Spec Buttons & Switches */
+.hud-switch {
+  min-height: 25px;
+  padding: 3px 8px;
+  border: 1px solid var(--hud-line);
+  background: rgba(18, 24, 20, 0.95);
+  color: var(--hud-ink);
+  font-family: var(--hud-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.12s ease-in-out;
+}
+
+.hud-switch:hover {
+  border-color: var(--hud-phosphor);
+  color: var(--hud-phosphor);
+  background: rgba(30, 42, 32, 0.95);
+}
+
+.hud-switch.illum-active {
+  border-color: var(--hud-warning);
+  color: var(--hud-warning);
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.3);
+}
+
+.hud-switch.hud-stim-btn {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+/* Telemetry & Radar */
+.hud-telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.hud-exfil-timer {
+  font-family: var(--hud-mono);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--hud-warning);
+  letter-spacing: 0.08em;
+}
+
+.hud-telemetry-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9.5px;
+  color: var(--hud-phosphor);
+  margin-top: 2px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.hud-status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.hud-radar {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  background: rgba(12, 18, 14, 0.95);
+  border: 1px solid var(--hud-line);
+  overflow: hidden;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.85);
+}
+
+.hud-radar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 3px,
+    rgba(173, 197, 139, 0.05) 3px 4px
+  );
+}
+
+.hud-radar-crosshair {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(101, 113, 94, 0.4);
+}
+
+.hud-radar-crosshair::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -60px;
+  bottom: -60px;
+  width: 1px;
+  background: rgba(101, 113, 94, 0.4);
+}
+
+.hud-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px dashed rgba(101, 113, 94, 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hud-radar-heading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: var(--hud-phosphor);
+  font-size: 9px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.hud-radar-blip {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hud-radar-blip.enemy-blip {
+  background: #f87171;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+.hud-radar-blip.boss-blip {
+  background: #facc15;
+  box-shadow: 0 0 8px #eab308;
+  width: 8px;
+  height: 8px;
+}
+
+.hud-radar-tag {
+  position: absolute;
+  bottom: 3px;
+  left: 5px;
+  font-size: 8px;
+  color: var(--hud-muted);
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+/* Center Alert Banners */
+.hud-center-alerts {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.hud-alert-banner {
+  padding: 6px 18px;
+  font-family: var(--hud-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+}
+
+.banner-holding {
+  background: #16a34a;
+  color: #ffffff;
+  border: 1px solid #4ade80;
+}
+
+.banner-reset {
+  background: #ef4444;
+  color: #ffffff;
+  border: 1px solid #fca5a5;
+}
+
+.banner-bleed {
+  background: #dc2626;
+  color: #ffffff;
+  border: 1px solid #fecaca;
+  cursor: pointer;
+  animation: bleedPulse 0.4s alternate infinite;
+}
+
+.banner-keycard {
+  background: #fef08a;
+  color: #151716;
+  border: 1px solid #eab308;
+}
+
+/* Combat Ticker */
+.hud-combat-ticker {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.hud-ticker-line {
+  background: rgba(18, 24, 20, 0.88);
+  border: 1px solid var(--hud-line);
+  padding: 3px 10px;
+  font-size: 9.5px;
+  font-family: var(--hud-mono);
+  font-weight: 700;
+  color: var(--hud-muted);
+  text-align: center;
 }

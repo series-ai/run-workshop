@@ -168,6 +168,9 @@ const MainApp: React.FC = () => {
         queuedReload.current = true;
       } else if (e.code === "KeyE" || e.code === "KeyF") {
         queuedInteract.current = true;
+      } else if (e.code === "KeyL" || e.code === "KeyT") {
+        const isOn = sim.toggleFlashlight();
+        sound.playFlashlightClick(isOn);
       }
     };
 

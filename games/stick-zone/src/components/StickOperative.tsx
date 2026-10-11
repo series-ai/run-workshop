@@ -4,6 +4,7 @@ import * as THREE from "three";
 import type { OperativeState } from "../sim/game.js";
 import { DEPOT_CONTAINERS } from "../sim/game.js";
 import { InklineStickCharacter } from "./InklineStickCharacter.js";
+import { DynamicFlashlightOcclusion } from "./DynamicFlashlightOcclusion.js";
 
 interface StickOperativeProps {
   operative: OperativeState;
@@ -226,6 +227,19 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
             <meshBasicMaterial map={labelTexture} transparent depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         </group>
+      )}
+
+      {/* Tactical Dynamic Flashlight Beam with Container Occlusion */}
+      {operative.isAlive && (
+        <DynamicFlashlightOcclusion
+          origin={{ x: operative.x, y: operative.y || 0, z: operative.z }}
+          facing={operative.facing}
+          isActive={operative.isFlashlightOn ?? true}
+          colorHex={isCurrentPlayer ? "#fffbeb" : "#93c5fd"}
+          maxRange={isCurrentPlayer ? 22.0 : 16.0}
+          halfAngle={0.48}
+          showSpotLight={isCurrentPlayer}
+        />
       )}
 
       <group ref={rootGroupRef} position={[operative.x, operative.y || 0, operative.z]}>
