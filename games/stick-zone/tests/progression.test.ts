@@ -381,6 +381,7 @@ describe('Player Progression, Economy & Armory Store', () => {
     const initialGrenadeCount = sim.activeGrenades.length;
     const firedGrenade = sim.fire();
     expect(firedGrenade).toBe(true);
+    expect(sim.player.action).toBe("throw");
     expect(sim.activeGrenades.length).toBe(initialGrenadeCount + 1);
     expect(sim.player.fragGrenades).toBe(1);
     expect(sim.player.ammo).toBe(1);

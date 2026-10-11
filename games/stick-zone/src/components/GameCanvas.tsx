@@ -410,6 +410,146 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
   );
 };
 
+const MAX_GRENADES = 12;
+
+const ActiveGrenadesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
+  const groupsRef = useRef<(THREE.Group | null)[]>([]);
+  const meshRefs = useRef<(THREE.Group | null)[]>([]);
+  const fuseRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const shadowRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const rotRefs = useRef<Array<{ x: number; y: number; z: number }>>(
+    Array.from({ length: MAX_GRENADES }, () => ({ x: 0, y: 0, z: 0 }))
+  );
+
+  useFrame((_, delta) => {
+    const isPaused =
+      typeof window !== "undefined" &&
+      Boolean((window as any).__STICK_ZONE_TEST__?.isPaused);
+    if (isPaused) return;
+
+    const grenades = sim.activeGrenades;
+    for (let i = 0; i < MAX_GRENADES; i++) {
+      const group = groupsRef.current[i];
+      const mesh = meshRefs.current[i];
+      const fuse = fuseRefs.current[i];
+      const shadow = shadowRefs.current[i];
+      if (!group) continue;
+
+      if (i < grenades.length) {
+        const g = grenades[i];
+        group.visible = true;
+        group.position.set(g.x, g.y, g.z);
+
+        // Dynamic 3D physics tumbling in flight
+        const rot = rotRefs.current[i];
+        const isAirborne = g.y > 0.22 || Math.hypot(g.vx, g.vz) > 1.0;
+        if (isAirborne) {
+          rot.x += delta * 8.5;
+          rot.y += delta * 6.0;
+          rot.z += delta * 7.0;
+        } else {
+          // Settled on ground, roll slightly along momentum
+          rot.x = THREE.MathUtils.lerp(rot.x, Math.PI / 2, Math.min(1, delta * 12));
+          rot.y += delta * 1.5;
+        }
+        if (mesh) {
+          mesh.rotation.set(rot.x, rot.y, rot.z);
+        }
+
+        // Blinking tactical fuse beacon: accelerates as fuse runs down
+        if (fuse && fuse.material) {
+          const blinkRate = g.fuseTicks < 30 ? 3 : 6;
+          const isBlinkOn = Math.floor(g.fuseTicks / blinkRate) % 2 === 0;
+          const mat = fuse.material as THREE.MeshBasicMaterial;
+          mat.color.set(isBlinkOn ? "#ff2222" : "#ffffff");
+        }
+
+        // Dynamic ground contact shadow projected onto terrain at y = 0.02
+        if (shadow) {
+          shadow.position.set(0, -g.y + 0.02, 0);
+          const heightScale = Math.max(0.2, 1.0 - g.y * 0.22);
+          shadow.scale.set(heightScale, heightScale, 1);
+          if (shadow.material) {
+            (shadow.material as THREE.MeshBasicMaterial).opacity = Math.max(0.25, 0.75 - g.y * 0.15);
+          }
+        }
+      } else {
+        group.visible = false;
+      }
+    }
+  });
+
+  return (
+    <>
+      {Array.from({ length: MAX_GRENADES }).map((_, i) => (
+        <group
+          key={i}
+          ref={(el) => {
+            groupsRef.current[i] = el;
+          }}
+          visible={false}
+        >
+          {/* Tactical Pineapple F-1 Frag Grenade Body (High Readability Scale) */}
+          <group
+            ref={(el) => {
+              meshRefs.current[i] = el;
+            }}
+          >
+            {/* Cast shadow grenade core */}
+            <mesh castShadow>
+              <cylinderGeometry args={[0.15, 0.17, 0.32, 12]} />
+              <meshStandardMaterial color="#475e2e" roughness={0.8} metalness={0.2} />
+            </mesh>
+            {/* Pineapple fragmentation ribbed ring */}
+            <mesh>
+              <torusGeometry args={[0.165, 0.035, 8, 16]} />
+              <meshStandardMaterial color="#2d3f1a" roughness={0.9} metalness={0.1} />
+            </mesh>
+            {/* Dark Inkline comic outline */}
+            <mesh scale={[1.18, 1.14, 1.18]}>
+              <cylinderGeometry args={[0.15, 0.17, 0.32, 12]} />
+              <meshBasicMaterial color="#000000" side={THREE.BackSide} />
+            </mesh>
+            {/* Metal collar & fuse striker head */}
+            <mesh position={[0, 0.19, 0]}>
+              <cylinderGeometry args={[0.06, 0.06, 0.09, 8]} />
+              <meshStandardMaterial color="#94a3b8" roughness={0.4} metalness={0.8} />
+            </mesh>
+            {/* Lever spoon mechanism */}
+            <mesh position={[0.06, 0.12, 0]} rotation={[0, 0, -0.2]}>
+              <boxGeometry args={[0.03, 0.24, 0.05]} />
+              <meshStandardMaterial color="#64748b" roughness={0.5} metalness={0.7} />
+            </mesh>
+            {/* High-visibility glowing crimson fuse LED */}
+            <mesh
+              ref={(el) => {
+                fuseRefs.current[i] = el;
+              }}
+              position={[0, 0.25, 0]}
+            >
+              <sphereGeometry args={[0.065, 8, 8]} />
+              <meshBasicMaterial color="#ff2222" />
+            </mesh>
+            <pointLight position={[0, 0.25, 0]} color="#ef4444" intensity={2.0} distance={3.5} />
+          </group>
+
+          {/* Dynamic ground shadow */}
+          <mesh
+            ref={(el) => {
+              shadowRefs.current[i] = el;
+            }}
+            rotation={[-Math.PI / 2, 0, 0]}
+            position={[0, 0.02, 0]}
+          >
+            <circleGeometry args={[0.26, 16]} />
+            <meshBasicMaterial color="#000000" transparent opacity={0.65} />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+};
+
 const PresentationFXManager: React.FC<{
   sim: SectorDepotSimulation;
   recoilImpulseRef: React.MutableRefObject<[number, number]>;
@@ -1045,25 +1185,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = React.memo(({ sim }) => {
             <MachineEnemy key={machine.id} machine={machine} />
           ))}
 
-          {/* Active F-1 Fragmentation Grenades */}
-          {sim.activeGrenades.map((g) => (
-            <group key={g.id} position={[g.x, g.y, g.z]}>
-              <mesh castShadow>
-                <cylinderGeometry args={[0.07, 0.07, 0.16, 10]} />
-                <meshStandardMaterial color="#365314" roughness={0.7} metalness={0.4} />
-              </mesh>
-              {/* Glowing tactical fuse beacon */}
-              <mesh position={[0, 0.1, 0]}>
-                <sphereGeometry args={[0.035, 8, 8]} />
-                <meshBasicMaterial color="#ef4444" />
-              </mesh>
-              {/* Dynamic contact shadow projection */}
-              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -g.y + 0.02, 0]}>
-                <circleGeometry args={[0.16, 16]} />
-                <meshBasicMaterial color="#000000" transparent opacity={0.65} />
-              </mesh>
-            </group>
-          ))}
+          {/* Active F-1 Fragmentation Grenades with dynamic 3D physics flight & contact shadows */}
+          <ActiveGrenadesRenderer sim={sim} />
         </Suspense>
       </Canvas>
     </div>

@@ -446,7 +446,7 @@ export interface Vector2D {
   z: number;
 }
 
-export type StickActionState = 'idle' | 'walk' | 'sprint' | 'slide' | 'roll' | 'kick' | 'shoot' | 'jump' | 'crouch' | 'reload';
+export type StickActionState = 'idle' | 'walk' | 'sprint' | 'slide' | 'roll' | 'kick' | 'throw' | 'shoot' | 'jump' | 'crouch' | 'reload';
 
 export interface OperativeState {
   id: string;
@@ -1501,13 +1501,13 @@ export class SectorDepotSimulation {
     const throwSpeed = 16.0;
 
     this.activeGrenades.push({
-      id: `frag_player_${this.tick}`,
+      id: `frag_player_${this.tick}_${Math.random().toString(36).substring(2, 6)}`,
       throwerId: this.player.id,
-      x: this.player.x,
-      y: 1.2,
-      z: this.player.z,
+      x: this.player.x + forwardX * 0.65,
+      y: 1.35,
+      z: this.player.z + forwardZ * 0.65,
       vx: forwardX * throwSpeed,
-      vy: 6.0,
+      vy: 5.5,
       vz: forwardZ * throwSpeed,
       fuseTicks: 90,
       radius: 8.0,
@@ -2096,10 +2096,16 @@ export class SectorDepotSimulation {
         if (this.player.actionTicks === 0) {
           this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
           this.player.isInvulnerable = false;
+          if (this.player.weapon === 'grenade' && (this.player.fragGrenades ?? 0) <= 0) {
+            this.setWeapon('rifle');
+          }
         }
       } else {
-        if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'shoot' || this.player.action === 'reload') {
+        if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'throw' || this.player.action === 'shoot' || this.player.action === 'reload') {
           this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
+          if (this.player.weapon === 'grenade' && (this.player.fragGrenades ?? 0) <= 0) {
+            this.setWeapon('rifle');
+          }
         }
         this.player.isInvulnerable = false;
       }
@@ -2667,7 +2673,7 @@ export class SectorDepotSimulation {
 
   public fire(): boolean {
     if (this.isInputLocked()) return false;
-    if (this.player.action === "roll" || this.player.action === "kick") return false;
+    if (this.player.action === "roll" || this.player.action === "kick" || this.player.action === "throw") return false;
 
     if (this.player.weapon === "fists") {
       if (this.kickCooldownTicks > 0) return false;
@@ -2683,12 +2689,11 @@ export class SectorDepotSimulation {
       if (this.shootCooldownTicks > 0) return false;
       this.player.fragGrenades = (this.player.fragGrenades ?? 2) - 1;
       this.player.ammo = this.player.fragGrenades;
-      this.shootCooldownTicks = 30;
-      this.player.shootCooldownTicks = 30;
+      this.shootCooldownTicks = 38;
+      this.player.shootCooldownTicks = 38;
+      this.player.action = "throw";
+      this.player.actionTicks = 36;
       this.throwFragGrenade();
-      if (this.player.fragGrenades <= 0) {
-        this.setWeapon("rifle");
-      }
       return true;
     }
 
@@ -3458,6 +3463,8 @@ export class SectorDepotSimulation {
         const chosenBark = fragBarks[Math.floor(Math.random() * fragBarks.length)];
         rival.barkText = chosenBark;
         rival.barkTick = this.tick;
+        rival.action = "throw";
+        rival.actionTicks = 35;
         this.recentBark = { sender: rival.name, text: chosenBark, tick: this.tick, isBoss: rival.id === BOSS_CONFIG.id };
         this.combatLog.push(`[TACTICAL ORDNANCE] ${rival.name} hurled an F-1 Frag Grenade over cover: "${chosenBark}"`);
 

@@ -125,7 +125,11 @@ function LoadedCharacter({
   const _scratchMuzzleDir = useMemo(() => new THREE.Vector3(), []);
   const currentWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
   const isHoldingFirearm = hasWeapon && (currentWeapon === "shotgun" || currentWeapon === "rifle" || currentWeapon === "pistol");
-  const isHoldingGrenade = currentWeapon === "grenade";
+  const liveAction = operative ? operative.action : operativeAction;
+  const isHoldingGrenade =
+    currentWeapon === "grenade" &&
+    ((operative?.fragGrenades ?? 2) > 0) &&
+    (liveAction !== "throw" || (operative?.actionTicks ?? 0) > 18);
 
   // Synthesize blended weapon-run clips (run legs + rifle/pistol upper body)
   const effectiveAnimations = useMemo(() => {
@@ -187,11 +191,15 @@ function LoadedCharacter({
 
     // 2. Cross-fade animation clips dynamically in useFrame without virtual DOM reconciliations
     if (actions) {
-      let targetClip = "rifle-idle";
+      let targetClip = "idle";
       if (!liveIsAlive) {
         targetClip = actions["death"] ? "death" : "idle";
       } else if (liveIsRolling && actions["roll"]) {
         targetClip = "roll";
+      } else if (liveAction === "kick") {
+        targetClip = actions["kick-roundhouse"] ? "kick-roundhouse" : actions["kick-front"] ? "kick-front" : "sweep";
+      } else if (liveAction === "throw") {
+        targetClip = actions["throw"] ? "throw" : actions["ball-throw"] ? "ball-throw" : "punch-heavy";
       } else if (liveIsFiring) {
         if (liveWeapon === "shotgun" && actions["shotgun-fire"]) {
           targetClip = "shotgun-fire";
@@ -227,12 +235,27 @@ function LoadedCharacter({
             nextAction.reset().play();
             nextAction.clampWhenFinished = true;
             nextAction.loop = THREE.LoopOnce;
+          } else if (
+            targetClip === "kick-roundhouse" ||
+            targetClip === "kick-front" ||
+            targetClip === "throw" ||
+            targetClip === "ball-throw"
+          ) {
+            nextAction.reset();
+            nextAction.setLoop(THREE.LoopOnce, 1);
+            nextAction.clampWhenFinished = false;
+            nextAction.timeScale = targetClip === "throw" ? 1.35 : 1.2;
+            nextAction.fadeIn(0.06).play();
+            if (prevAction && prevAction !== nextAction) {
+              prevAction.fadeOut(0.06);
+            }
           } else if (prevAction && prevAction !== nextAction) {
             nextAction.enabled = true;
+            nextAction.setLoop(THREE.LoopRepeat, Infinity);
             nextAction.play();
-            prevAction.crossFadeTo(nextAction, 0.16, false);
+            prevAction.crossFadeTo(nextAction, 0.14, false);
           } else {
-            nextAction.reset().fadeIn(0.16).play();
+            nextAction.reset().fadeIn(0.14).play();
           }
           currentActionNameRef.current = targetClip;
         }
@@ -266,13 +289,21 @@ function LoadedCharacter({
       groupRef.current.rotation.y = curRot + rotDiff * Math.min(1, delta * 18);
     }
 
-    if (spineBone && chestBone) {
+    if (spineBone && chestBone && liveAction !== "kick" && liveAction !== "throw") {
       const halfTwist = targetTorsoTwist * 0.5;
       spineBone.rotation.y = THREE.MathUtils.lerp(spineBone.rotation.y, halfTwist, Math.min(1, delta * 15));
       chestBone.rotation.y = THREE.MathUtils.lerp(chestBone.rotation.y, halfTwist, Math.min(1, delta * 15));
     }
 
-    if (actions && currentActionNameRef.current && liveIsMoving) {
+    const isSpecialAction =
+      currentActionNameRef.current === "death" ||
+      currentActionNameRef.current === "roll" ||
+      currentActionNameRef.current === "kick-roundhouse" ||
+      currentActionNameRef.current === "kick-front" ||
+      currentActionNameRef.current === "throw" ||
+      currentActionNameRef.current === "ball-throw";
+
+    if (actions && currentActionNameRef.current && liveIsMoving && !isSpecialAction) {
       const activeAction = actions[currentActionNameRef.current];
       if (activeAction) {
         const curSpeed = liveSpeedRef.current > 0.05 ? liveSpeedRef.current : 4.8;
@@ -637,14 +668,18 @@ function LoadedCharacter({
       {/* Handheld F-1 Frag Grenade Socketed Inside Hand_R */}
       {isHoldingGrenade && isAlive && !isRolling && handBone && (
         createPortal(
-          <group position={[0, 0.05, 0.02]}>
+          <group position={[0, 0.06, 0.02]} scale={1.15}>
             <mesh castShadow>
-              <sphereGeometry args={[0.075, 12, 12]} />
-              <meshStandardMaterial color="#3f4e2e" roughness={0.7} metalness={0.2} />
+              <cylinderGeometry args={[0.065, 0.075, 0.15, 10]} />
+              <meshStandardMaterial color="#475e2e" roughness={0.7} metalness={0.2} />
             </mesh>
-            <mesh position={[0, 0.08, 0]}>
-              <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
+            <mesh position={[0, 0.09, 0]}>
+              <cylinderGeometry args={[0.025, 0.025, 0.04, 8]} />
               <meshStandardMaterial color="#94a3b8" metalness={0.8} />
+            </mesh>
+            <mesh position={[0, 0.12, 0]}>
+              <sphereGeometry args={[0.025, 8, 8]} />
+              <meshBasicMaterial color="#ef4444" />
             </mesh>
           </group>,
           handBone
