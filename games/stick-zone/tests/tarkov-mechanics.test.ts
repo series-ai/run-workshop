@@ -1235,6 +1235,7 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
 
   it('30. Scav pre-attack telegraph: target acquisition emits vocal bark and wind-up delay before discharge', () => {
     sim.rivals = [];
+    sim.machines = []; // Isolate Scav telegraph from background machine fire
     sim.player.x = 0;
     sim.player.z = 0;
     sim.player.health = 100;
@@ -1280,7 +1281,11 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
 
     // Now weapon discharges and deals damage
     expect(scav.action).toBe('shoot');
-    expect(sim.player.armor).toBe(78); // 12 damage absorbed by armor
+    // Projectile travels 10m to player (~12 ticks)
+    for (let i = 0; i < 12; i++) {
+      sim.step(makeInput({ dx: 0, dz: 0 }));
+    }
+    expect(sim.player.armor).toBe(88); // 12 damage absorbed by armor (100 - 12)
   });
 
   it('31. Aim punch telemetry: player damage records tick, amount, and directional angle', () => {

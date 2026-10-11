@@ -476,6 +476,7 @@ export interface OperativeState {
   lastStateTimestamp?: number;
   muzzlePos?: { x: number; y: number; z: number };
   muzzleDir?: { x: number; y: number; z: number };
+  continuousFireTicks?: number;
   isSliding?: boolean;
   slideTicksRemaining?: number;
   lastFiredAtMs?: number;
@@ -555,6 +556,47 @@ export interface KickActionPayload {
   attackerFacing: number;
   machineHits: Array<{ id: string; x: number; z: number; y?: number; damage: number; originX?: number; originZ?: number }>;
   rivalHits: Array<{ id: string; x: number; z: number; damage: number; knockX: number; knockZ: number; predictedHealth?: number; predictedArmor?: number }>;
+}
+
+export interface ActiveProjectile {
+  id: string;
+  shooterId: string;
+  shooterIsPlayer: boolean;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  speed: number;
+  damage: number;
+  radius: number;
+  maxRange: number;
+  distanceTraveled: number;
+  weapon: "rifle" | "shotgun";
+  isPellet?: boolean;
+}
+
+export function distanceToSegmentSquared(
+  x1: number, z1: number,
+  x2: number, z2: number,
+  cx: number, cz: number
+): { distSq: number; hitX: number; hitZ: number; t: number } {
+  const dx = x2 - x1;
+  const dz = z2 - z1;
+  const lenSq = dx * dx + dz * dz;
+  if (lenSq < 0.000001) {
+    const ddx = cx - x1;
+    const ddz = cz - z1;
+    return { distSq: ddx * ddx + ddz * ddz, hitX: x1, hitZ: z1, t: 0 };
+  }
+  let t = ((cx - x1) * dx + (cz - z1) * dz) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  const hitX = x1 + t * dx;
+  const hitZ = z1 + t * dz;
+  const ddx = cx - hitX;
+  const ddz = cz - hitZ;
+  return { distSq: ddx * ddx + ddz * ddz, hitX, hitZ, t };
 }
 
 export interface GameInput {
@@ -646,6 +688,7 @@ export class SectorDepotSimulation {
       (rival as any).isKia = state.isKia;
     }
   }
+  public activeProjectiles: ActiveProjectile[] = [];
   public ingressController: StagedIngressController;
   public proximityAlert: ProximityAlert = { active: false, distance: 999, bearing: 0 };
   public combatLog: string[] = [];
@@ -1872,7 +1915,8 @@ export class SectorDepotSimulation {
     this.combatLog.push();
   }
   public step(input: GameInput): void {
-    if (this.damageIndicators.length > 0) {
+    const dt = SIM_CONFIG.TICK_INTERVAL_MS / 1000;
+        if (this.damageIndicators.length > 0) {
       this.damageIndicators = this.damageIndicators.filter((d) => this.tick - d.tick < 90);
     }
     this.isAds = Boolean(input.ads);
@@ -1882,7 +1926,7 @@ export class SectorDepotSimulation {
         this.exfilController.cancel();
       }
       if (this.player.y > 0 || this.jumpVy !== 0 || this.player.isJumping) {
-        const dt = SIM_CONFIG.TICK_INTERVAL_MS / 1000;
+        // dt hoisted to step() scope
         this.player.y = Math.max(0, this.player.y + this.jumpVy * dt);
         this.jumpVy -= 12.0 * dt;
         if (this.player.y <= 0) {
@@ -2020,6 +2064,7 @@ export class SectorDepotSimulation {
     // 4. Rival operatives step
     this.stepRivals();
     this.stepGrenades();
+    this.stepProjectiles(dt);
     if (!this.player.isAlive || this.player.health <= 0) {
       return;
     }
@@ -2138,7 +2183,7 @@ export class SectorDepotSimulation {
     // 6. Proximity Radar (<= 60m alert, > 60m all clear)
     this.updateProximityAlert();
 
-    const dt = SIM_CONFIG.TICK_INTERVAL_MS / 1000;
+    // dt hoisted to step() scope
 
     if (!this.isSocketDisconnected) {
       // Lingering physical knockback velocity on player
@@ -2250,6 +2295,9 @@ export class SectorDepotSimulation {
     // Edge-triggered pump action for shotgun / fire input tracking
     if (!input.shoot) {
       this.shootTriggerReleased = true;
+      this.player.continuousFireTicks = Math.max(0, (this.player.continuousFireTicks || 0) - 2);
+    } else {
+      this.player.continuousFireTicks = (this.player.continuousFireTicks || 0) + 1;
     }
 
     // Gunplay shooting with proper weapon fire cadence
@@ -2312,6 +2360,7 @@ export class SectorDepotSimulation {
         this.player.isCrouching = false;
       }
       if (this.player.action === 'roll') speed *= 1.1;
+      if (this.player.action === 'shoot') speed *= 0.84;
 
       const moveMagnitude = Math.hypot(input.dx, input.dz);
       if (moveMagnitude > 0.01) {
@@ -2553,28 +2602,34 @@ export class SectorDepotSimulation {
 
   public fire(): boolean {
     if (this.isInputLocked()) return false;
-    if (this.player.action === 'roll' || this.player.action === 'kick') return false;
+    if (this.player.action === "roll" || this.player.action === "kick") return false;
     if (this.player.ammo <= 0) return false;
     if (this.shootCooldownTicks > 0) return false;
     this.player.ammo -= 1;
-    if (this.player.weapon === 'shotgun') {
+    if (this.player.weapon === "shotgun") {
       this.player.shotgunAmmo = this.player.ammo;
     } else {
       this.player.rifleAmmo = this.player.ammo;
     }
-    this.player.action = 'shoot';
-    this.player.actionTicks = this.player.weapon === 'shotgun' ? 12 : 6;
-    const fireCooldown = this.player.weapon === 'shotgun' ? 24 : SIM_CONFIG.RIFLE_COOLDOWN_TICKS;
+    this.player.action = "shoot";
+    this.player.actionTicks = this.player.weapon === "shotgun" ? 12 : 5;
+    const fireCooldown = this.player.weapon === "shotgun" ? SIM_CONFIG.SHOTGUN_COOLDOWN_TICKS : SIM_CONFIG.RIFLE_COOLDOWN_TICKS;
     this.shootCooldownTicks = fireCooldown;
     this.player.shootCooldownTicks = this.shootCooldownTicks;
     const { origin: muzzleOrigin, dir: muzzleDir } = this.getOperativeMuzzle(this.player);
+
+    // Physical shooter recoil impulse (Newton third law pushback)
+    const kickForce = this.player.weapon === "shotgun" ? 1.65 : 0.42;
+    this.walkVx -= muzzleDir.x * kickForce;
+    this.walkVz -= muzzleDir.z * kickForce;
+
     this.fireWeapon(muzzleOrigin, muzzleDir);
     this.enqueuePresentationEvent({
-      type: 'fire',
+      type: "fire",
       shooterId: this.player.id,
       origin: muzzleOrigin,
       dir: muzzleDir,
-      weapon: (this.player.weapon as any) || 'rifle',
+      weapon: (this.player.weapon as any) || "rifle",
     });
     return true;
   }
@@ -2597,296 +2652,459 @@ export class SectorDepotSimulation {
     // Acoustic sound propagation across 45m radius
     this.propagateGunfireSound(this.player.x, this.player.z, 45.0);
 
-    if (this.player.weapon === 'shotgun') {
-      const shotId = `shot_${this.player.id}_${this.tick}_${now}`;
-      // EFT M590 Combat Shotgun: 6 distinct buckshot pellets across exact 30.0° cone (±15° = ±0.2618 rad)
-      // Uses shared calculateShotgunHit contract for identical client-server verification
-      const machineHits = new Map<string, { ref: any; damage: number }>();
-      const rivalHits = new Map<string, { ref: any; damage: number; knockX: number; knockZ: number; pointBlank: boolean }>();
-      let totalPelletsHit = 0;
-      let hasPointBlankHit = false;
+    if (this.player.weapon === "shotgun") {
+      const PELLETS_OFFSETS = [-0.174, -0.105, -0.035, 0.035, 0.105, 0.174];
+      const speed = 44.0;
+      const damage = SIM_CONFIG.SHOTGUN_DAMAGE;
 
-      // Check machines with shared calculateShotgunHit contract
-      for (const m of this.machines) {
-        if (!m.isAlive) continue;
-        const mY = typeof m.y === 'number' ? m.y : (m.type === 'drone' ? 3.5 : 1.0);
-        const isCovered = this.checkContainerRayObstruction(originX, originZ, m.x, m.z, originY, mY);
-        if (isCovered) continue;
-
-        const hitRes = calculateShotgunHit(muzzleOrigin.x, muzzleOrigin.z, this.player.facing, m.x, m.z, 1.05);
-        if (hitRes.hit) {
-          totalPelletsHit += hitRes.pelletsHit;
-          if (hitRes.dist <= 4.0) hasPointBlankHit = true;
-          machineHits.set(m.id, { ref: m, damage: hitRes.damage });
-        }
-      }
-
-      // Check rivals with shared calculateShotgunHit contract
+      // Check if point-blank target exists before spawning projectiles
+      // This prevents single pellets from pushing the target away before subsequent pellets connect
+      let pointBlankRival: any = null;
       for (const r of this.rivals) {
-        if (!r.isAlive || r.isExtracted || (r.isInvulnerable && r.action === 'roll')) continue;
-        const isCovered = this.checkContainerRayObstruction(originX, originZ, r.x, r.z, originY, 1.0);
-        if (isCovered) continue;
-
-        const hitRes = calculateShotgunHit(muzzleOrigin.x, muzzleOrigin.z, this.player.facing, r.x, r.z, 1.05);
-        if (hitRes.hit) {
-          totalPelletsHit += hitRes.pelletsHit;
-          if (hitRes.dist <= 4.0) hasPointBlankHit = true;
-          rivalHits.set(r.id, {
-            ref: r,
-            damage: hitRes.damage,
-            knockX: Math.sin(this.player.facing) * 2.5,
-            knockZ: Math.cos(this.player.facing) * 2.5,
-            pointBlank: hitRes.dist <= 4.0,
-          });
+        if (!r.isAlive || r.isExtracted) continue;
+        const dx = r.x - originX;
+        const dz = r.z - originZ;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.001 && dist <= 3.5) {
+          const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
+          if (dot > 0.75) {
+            pointBlankRival = r;
+            break;
+          }
         }
       }
 
-      // Check FOB target dummies in hub
+      if (pointBlankRival) {
+        const r = pointBlankRival;
+        const totalDamage = damage * 6; // All 6 pellets connect at point-blank
+        this.player.lastHitmarkerTick = this.tick;
+        this.player.lastHitmarkerCrit = true;
+
+        if (r.isInvulnerable && r.action === "roll") {
+          this.enqueuePresentationEvent({
+            type: "impact",
+            position: { x: r.x, y: 1.2, z: r.z },
+            surface: "metal",
+          });
+          return;
+        }
+
+        this.enqueuePresentationEvent({
+          type: "impact",
+          position: { x: r.x, y: 1.5, z: r.z },
+          surface: "flesh",
+          damage: totalDamage,
+          label: "-" + totalDamage,
+          isCrit: true,
+        });
+        const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, totalDamage);
+        r.health = newHealth;
+        r.armor = newArmor;
+        this.handleRivalDamage(r, totalDamage);
+
+        // Combined heavy shotgun knockback
+        const knockForce = 3.2;
+        r.x = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, r.x + bulletDirX * knockForce));
+        r.z = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, r.z + bulletDirZ * knockForce));
+        this.onHitTarget?.(r.id, totalDamage, bulletDirX * knockForce, bulletDirZ * knockForce, "shotgun");
+
+        if (r.health <= 0) {
+          const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
+          if (!this.onHitTarget) {
+            r.isAlive = false;
+            this.combatLog.push("[TICK " + this.tick + "] Rival eliminated by shotgun: " + r.name);
+            if (isBossTarget) {
+              this.grantKeycard(BOSS_CONFIG.id);
+              this.combatLog.push("[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!");
+            }
+          } else {
+            r.health = 1;
+          }
+        }
+        return;
+      }
+
+      // Spawn 6 distinct buckshot pellets across 20° fan into active ballistics
+      for (let i = 0; i < PELLETS_OFFSETS.length; i++) {
+        const pAngle = PELLETS_OFFSETS[i];
+        const cosA = Math.cos(pAngle);
+        const sinA = Math.sin(pAngle);
+        const dirX = bulletDirX * cosA - bulletDirZ * sinA;
+        const dirZ = bulletDirX * sinA + bulletDirZ * cosA;
+
+        this.spawnProjectile({
+          id: "pellet_" + this.player.id + "_" + this.tick + "_" + i + "_" + Math.random().toString(36).slice(2, 6),
+          shooterId: this.player.id,
+          shooterIsPlayer: true,
+          x: originX,
+          y: originY,
+          z: originZ,
+          vx: dirX * speed,
+          vy: 0,
+          vz: dirZ * speed,
+          speed,
+          damage,
+          radius: 0.22,
+          maxRange: 14.0,
+          distanceTraveled: 0,
+          weapon: "shotgun",
+          isPellet: true,
+        });
+      }
+      return;
+    }
+
+    // Rifle: surviv.io assault rifle ballistics with spread bloom
+    this.player.continuousFireTicks = (this.player.continuousFireTicks || 0) + 1;
+    const bloom = Math.min(0.085, 0.015 + this.player.continuousFireTicks * 0.012);
+    const angleOffset = (Math.random() - 0.5) * 2 * bloom;
+    const cosA = Math.cos(angleOffset);
+    const sinA = Math.sin(angleOffset);
+    const dirX = bulletDirX * cosA - bulletDirZ * sinA;
+    const dirZ = bulletDirX * sinA + bulletDirZ * cosA;
+    const speed = 54.0;
+    const damage = SIM_CONFIG.RIFLE_DAMAGE;
+
+    this.spawnProjectile({
+      id: "proj_" + this.player.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
+      shooterId: this.player.id,
+      shooterIsPlayer: true,
+      x: originX,
+      y: originY,
+      z: originZ,
+      vx: dirX * speed,
+      vy: 0,
+      vz: dirZ * speed,
+      speed,
+      damage,
+      radius: 0.28,
+      maxRange: 22.0,
+      distanceTraveled: 0,
+      weapon: "rifle",
+    });
+  }
+
+  public spawnProjectile(proj: ActiveProjectile): void {
+    if (this.checkImmediatePointBlankHit(proj)) {
+      return;
+    }
+    this.activeProjectiles.push(proj);
+  }
+
+  private checkImmediatePointBlankHit(proj: ActiveProjectile): boolean {
+    const normVx = proj.vx / proj.speed;
+    const normVz = proj.vz / proj.speed;
+
+    if (proj.shooterIsPlayer) {
+      // Hub target dummies
       if (this.zoneMode === "hub") {
         const dummies = [
           { side: "left" as const, x: -5.0, z: -64.0 },
           { side: "right" as const, x: 5.0, z: -64.0 },
         ];
         for (const d of dummies) {
-          const hitRes = calculateShotgunHit(muzzleOrigin.x, muzzleOrigin.z, this.player.facing, d.x, d.z, 1.1);
-          if (hitRes.hit) {
-            totalPelletsHit += hitRes.pelletsHit;
-            this.dummyHitCount += hitRes.pelletsHit;
+          const dx = d.x - proj.x;
+          const dz = d.z - proj.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist > 0.001 && dist <= 2.2) {
+            const dot = (dx * normVx + dz * normVz) / dist;
+            if (dot > 0.8) {
+              this.dummyHitCount++;
+              this.lastDummyHitTick = this.tick;
+              this.lastDummyHitSide = d.side;
+              this.trainingProgress.dummyHit = true;
+              this.player.lastHitmarkerTick = this.tick;
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: d.x, y: 1.6, z: d.z },
+                surface: "metal",
+                damage: proj.damage,
+                label: String(proj.damage),
+              });
+              this.combatLog.push("[TARGET RANGE] Point-blank hit on " + d.side.toUpperCase() + " dummy!");
+              return true;
+            }
+          }
+        }
+      }
+
+      // Check rivals at point-blank
+      for (const r of this.rivals) {
+        if (!r.isAlive || r.isExtracted) continue;
+        const dx = r.x - proj.x;
+        const dz = r.z - proj.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.001 && dist <= 3.5) {
+          const dot = (dx * normVx + dz * normVz) / dist;
+          if (dot > 0.75) {
+            this.player.lastHitmarkerTick = this.tick;
+            this.player.lastHitmarkerCrit = dist <= 2.0;
+
+            if (r.isInvulnerable && r.action === "roll") {
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: r.x, y: 1.2, z: r.z },
+                surface: "metal",
+              });
+              return true;
+            }
+
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: r.x, y: 1.5, z: r.z },
+              surface: "flesh",
+              damage: proj.damage,
+              label: "-" + proj.damage,
+              isCrit: this.player.lastHitmarkerCrit,
+            });
+            const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, proj.damage);
+            r.health = newHealth;
+            r.armor = newArmor;
+            this.handleRivalDamage(r, proj.damage);
+
+            const knockForce = proj.isPellet ? 2.4 : 0.8;
+            r.x = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, r.x + normVx * knockForce));
+            r.z = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, r.z + normVz * knockForce));
+            this.onHitTarget?.(r.id, proj.damage, normVx * knockForce, normVz * knockForce, proj.weapon);
+
+            if (r.health <= 0) {
+              const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
+              if (!this.onHitTarget) {
+                r.isAlive = false;
+                this.combatLog.push("[TICK " + this.tick + "] Rival eliminated: " + r.name);
+                if (isBossTarget) {
+                  this.grantKeycard(BOSS_CONFIG.id);
+                  this.combatLog.push("[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!");
+                }
+              } else {
+                r.health = 1;
+              }
+            }
+            return true;
+          }
+        }
+      }
+
+      // Check machines at point-blank
+      for (const m of this.machines) {
+        if (!m.isAlive) continue;
+        const dx = m.x - proj.x;
+        const dz = m.z - proj.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.001 && dist <= 3.5) {
+          const dot = (dx * normVx + dz * normVz) / dist;
+          if (dot > 0.75) {
+            this.player.lastHitmarkerTick = this.tick;
+            const mY = typeof m.y === "number" ? m.y : (m.type === "drone" ? 3.5 : 1.0);
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: m.x, y: mY, z: m.z },
+              surface: "metal",
+              damage: proj.damage,
+              label: "-" + proj.damage,
+            });
+            if (this.onMachineHit) {
+              m.health = Math.max(1, m.health - proj.damage);
+              this.onMachineHit(m.id, proj.damage, proj.weapon);
+            } else {
+              m.health = Math.max(0, m.health - proj.damage);
+              if (m.health <= 0) {
+                m.isAlive = false;
+                this.combatLog.push("[TICK " + this.tick + "] Enemy destroyed: " + m.id);
+              }
+            }
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  public stepProjectiles(dt: number): void {
+    if (this.activeProjectiles.length === 0) return;
+
+    const remaining: ActiveProjectile[] = [];
+
+    for (let i = 0; i < this.activeProjectiles.length; i++) {
+      const p = this.activeProjectiles[i];
+      const stepDist = p.speed * dt;
+      const nextX = p.x + p.vx * dt;
+      const nextZ = p.z + p.vz * dt;
+      const nextDist = p.distanceTraveled + stepDist;
+
+      let hitEntity = false;
+
+      // Target Dummies in FOB hub (training range target detection)
+      if (p.shooterIsPlayer && this.zoneMode === "hub") {
+        const dummies = [
+          { side: "left" as const, x: -5.0, z: -64.0 },
+          { side: "right" as const, x: 5.0, z: -64.0 },
+        ];
+        for (const d of dummies) {
+          const seg = distanceToSegmentSquared(p.x, p.z, nextX, nextZ, d.x, d.z);
+          if (seg.distSq <= 1.1 * 1.1) {
+            hitEntity = true;
+            this.dummyHitCount++;
             this.lastDummyHitTick = this.tick;
             this.lastDummyHitSide = d.side;
             this.trainingProgress.dummyHit = true;
+            this.player.lastHitmarkerTick = this.tick;
             this.enqueuePresentationEvent({
               type: "impact",
               position: { x: d.x, y: 1.6, z: d.z },
               surface: "metal",
-              damage: hitRes.pelletsHit * 20,
-              label: `${hitRes.pelletsHit * 20}`,
+              damage: p.damage,
+              label: String(p.damage),
             });
-            this.combatLog.push(`[TARGET RANGE] Shotgun pellets impacted ${d.side.toUpperCase()} dummy!`);
+            this.combatLog.push("[TARGET RANGE] Ballistic hit on " + d.side.toUpperCase() + " target dummy!");
+            break;
           }
         }
       }
+      if (hitEntity) continue;
 
-      if (totalPelletsHit > 0) {
-        this.player.lastHitmarkerTick = this.tick;
-        this.player.lastHitmarkerCrit = hasPointBlankHit;
-
-        for (const [, h] of machineHits) {
-          this.enqueuePresentationEvent({
-            type: 'impact',
-            position: { x: h.ref.x, y: 1.5, z: h.ref.z },
-            surface: 'metal',
-            damage: h.damage,
-            label: `-${h.damage}`,
-            isCrit: hasPointBlankHit,
-          });
-          const m = h.ref;
-          if (this.onMachineHit) {
-            m.health = Math.max(1, m.health - h.damage);
-            this.onMachineHit(m.id, h.damage, 'shotgun', shotId);
-          } else {
-            m.health = Math.max(0, m.health - h.damage);
-            if (m.health <= 0) {
-              m.isAlive = false;
-              this.combatLog.push(`[TICK ${this.tick}] Enemy destroyed by buckshot: ${m.id}`);
-            }
-          }
-        }
-
-        for (const [, h] of rivalHits) {
-          this.enqueuePresentationEvent({
-            type: 'impact',
-            position: { x: h.ref.x, y: 1.5, z: h.ref.z },
-            surface: 'flesh',
-            damage: h.damage,
-            label: `-${h.damage}`,
-            isCrit: h.pointBlank,
-          });
-          const r = h.ref;
-          const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, h.damage);
-          r.health = newHealth;
-          r.armor = newArmor;
-          this.handleRivalDamage(r, h.damage);
-          this.onHitTarget?.(r.id, h.damage, h.knockX, h.knockZ, 'shotgun', shotId);
-          this.combatLog.push(`[TICK ${this.tick}] 12-Gauge blast hit ${r.name} (-${h.damage} HP)`);
-          if (r.health <= 0) {
-            const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
-            if (!this.onHitTarget) {
-              r.isAlive = false;
-              this.combatLog.push(`[TICK ${this.tick}] Rival eliminated by shotgun: ${r.name}`);
-              if (isBossTarget) {
-                this.grantKeycard(BOSS_CONFIG.id);
-                this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!`);
-              }
-            } else {
-              // For networked targets, local hit is a prediction; keep at 1 HP until server confirms death
-              r.health = 1;
-            }
-          }
-        }
-      } else {
-        this.combatLog.push(`[FIRE] M590 blast: 6 buckshot pellets missed`);
-      }
-      return;
-    }
-
-    const range = 35.0; // Strictly matches multiplayer effective range threshold
-
-    let closestHit: { type: 'machine' | 'rival'; id: string; dist: number; ref: any } | null = null;
-    let anyInConeObstructed = false;
-
-    // Check hit against machines
-    for (const m of this.machines) {
-      if (!m.isAlive) continue;
-      const dx = m.x - originX;
-      const dz = m.z - originZ;
-      const dist = Math.hypot(dx, dz);
-      if (dist > 0.001 && dist <= range) {
-        const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
-        const perpDist = Math.abs(dx * bulletDirZ - dz * bulletDirX);
-        if (dot > 0.96 && perpDist <= 1.2) {
-          const mY = typeof m.y === "number" ? m.y : (m.type === "drone" ? 3.5 : 1.0);
-          const isCovered = this.checkContainerRayObstruction(this.player.x, this.player.z, m.x, m.z, 1.0, mY);
-          if (isCovered) {
-            anyInConeObstructed = true;
-          } else if (!closestHit || dist < closestHit.dist) {
-            closestHit = { type: 'machine', id: m.id, dist, ref: m };
-          }
-        }
-      }
-    }
-
-    // Check hit against rivals
-    for (const r of this.rivals) {
-      if (!r.isAlive || r.isExtracted || (r.isInvulnerable && r.action === 'roll')) continue;
-      const dx = r.x - originX;
-      const dz = r.z - originZ;
-      const dist = Math.hypot(dx, dz);
-      if (dist > 0.001 && dist <= range) {
-        const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
-        const perpDist = Math.abs(dx * bulletDirZ - dz * bulletDirX);
-        if (dot > 0.96 && perpDist <= 1.2) {
-          const isCovered = this.checkContainerRayObstruction(this.player.x, this.player.z, r.x, r.z);
-          if (isCovered) {
-            anyInConeObstructed = true;
-          } else if (!closestHit || dist < closestHit.dist) {
-            closestHit = { type: 'rival', id: r.id, dist, ref: r };
-          }
-        }
-      }
-    }
-
-    // Check hit against FOB target dummies in hub
-    if (this.zoneMode === "hub") {
-      const dummies = [
-        { side: "left" as const, x: -5.0, z: -64.0 },
-        { side: "right" as const, x: 5.0, z: -64.0 },
-      ];
-      for (const d of dummies) {
-        const dx = d.x - originX;
-        const dz = d.z - originZ;
-        const dist = Math.hypot(dx, dz);
-        if (dist > 0.001 && dist <= range) {
-          const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
-          const perpDist = Math.abs(dx * bulletDirZ - dz * bulletDirX);
-          if (dot > 0.94 && perpDist <= 1.1) {
-            if (!closestHit || dist < closestHit.dist) {
-              closestHit = { type: "dummy" as any, id: `dummy_${d.side}`, dist, ref: d };
-            }
-          }
-        }
-      }
-    }
-
-    if (!closestHit && anyInConeObstructed) {
-      this.enqueuePresentationEvent({
-        type: 'impact',
-        position: {
-          x: originX + bulletDirX * 12.0,
-          y: originY,
-          z: originZ + bulletDirZ * 12.0,
-        },
-        surface: 'metal',
-      });
-      this.combatLog.push('[COVER] Rifle burst impacted shipping container');
-      return;
-    }
-
-    if (closestHit) {
-      const weaponDamage = SIM_CONFIG.RIFLE_DAMAGE;
-      this.player.lastHitmarkerTick = this.tick;
-      this.player.lastHitmarkerCrit = false;
-
-      if ((closestHit.type as any) === "dummy") {
-        const d = closestHit.ref;
-        this.dummyHitCount++;
-        this.lastDummyHitTick = this.tick;
-        this.lastDummyHitSide = d.side;
-        this.trainingProgress.dummyHit = true;
+      // Cover and container collision check
+      const isCovered = this.checkContainerRayObstruction(p.x, p.z, nextX, nextZ, p.y, p.y);
+      if (isCovered) {
         this.enqueuePresentationEvent({
           type: "impact",
-          position: { x: d.x, y: 1.6, z: d.z },
+          position: { x: nextX, y: p.y, z: nextZ },
           surface: "metal",
-          damage: 100,
-          label: "100",
         });
-        this.combatLog.push(`[TARGET RANGE] Direct hit on ${d.side.toUpperCase()} target dummy! // 100 DMG`);
-        return;
+        continue;
       }
 
-      if (closestHit.type === 'machine') {
-        const m = closestHit.ref;
-        this.enqueuePresentationEvent({
-          type: 'impact',
-          position: { x: m.x, y: 1.5, z: m.z },
-          surface: 'metal',
-          damage: weaponDamage,
-          label: `-${weaponDamage}`,
-        });
-        if (this.onMachineHit) {
-          m.health = Math.max(1, m.health - weaponDamage);
-          this.onMachineHit(m.id, weaponDamage, 'rifle');
-        } else {
-          m.health = Math.max(0, m.health - weaponDamage);
-          if (m.health <= 0) {
-            m.isAlive = false;
-            this.combatLog.push(`[TICK ${this.tick}] Enemy destroyed: ${m.id}`);
-          }
-        }
-      } else if (closestHit.type === 'rival') {
-        const r = closestHit.ref;
-        this.enqueuePresentationEvent({
-          type: 'impact',
-          position: { x: r.x, y: 1.5, z: r.z },
-          surface: 'flesh',
-          damage: weaponDamage,
-          label: `-${weaponDamage}`,
-          isCrit: this.player.lastHitmarkerCrit,
-        });
-        const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, weaponDamage);
-        r.health = newHealth;
-        r.armor = newArmor;
-        this.handleRivalDamage(r, weaponDamage);
-        this.onHitTarget?.(r.id, weaponDamage);
-        this.combatLog.push(`[TICK ${this.tick}] Direct hit on ${r.name} (-${weaponDamage} HP)`);
-        if (r.health <= 0) {
-          const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
-          if (!this.onHitTarget) {
-            r.isAlive = false;
-            this.combatLog.push(`[TICK ${this.tick}] Rival operator eliminated: ${r.name}`);
-            if (isBossTarget) {
-              this.grantKeycard(BOSS_CONFIG.id);
-              this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!`);
+      if (p.shooterIsPlayer) {
+
+        // Machines
+        for (const m of this.machines) {
+          if (!m.isAlive) continue;
+          const mY = typeof m.y === "number" ? m.y : (m.type === "drone" ? 3.5 : 1.0);
+          const seg = distanceToSegmentSquared(p.x, p.z, nextX, nextZ, m.x, m.z);
+          if (seg.distSq <= (1.1 + p.radius) * (1.1 + p.radius)) {
+            hitEntity = true;
+            this.player.lastHitmarkerTick = this.tick;
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: m.x, y: mY, z: m.z },
+              surface: "metal",
+              damage: p.damage,
+              label: "-" + p.damage,
+            });
+            if (this.onMachineHit) {
+              m.health = Math.max(1, m.health - p.damage);
+              this.onMachineHit(m.id, p.damage, p.weapon);
+            } else {
+              m.health = Math.max(0, m.health - p.damage);
+              if (m.health <= 0) {
+                m.isAlive = false;
+                this.combatLog.push("[TICK " + this.tick + "] Enemy destroyed: " + m.id);
+              }
             }
-          } else {
-            // For multiplayer / networked rivals, local hit is a prediction; keep at 1 HP until server confirms death
-            r.health = 1;
+            break;
           }
         }
+        if (hitEntity) continue;
+
+        // Rivals
+        for (const r of this.rivals) {
+          if (!r.isAlive || r.isExtracted) continue;
+          const seg = distanceToSegmentSquared(p.x, p.z, nextX, nextZ, r.x, r.z);
+          if (seg.distSq <= (0.8 + p.radius) * (0.8 + p.radius)) {
+            hitEntity = true;
+            this.player.lastHitmarkerTick = this.tick;
+
+            if (r.isInvulnerable && r.action === "roll") {
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: r.x, y: 1.2, z: r.z },
+                surface: "metal",
+              });
+              this.combatLog.push("[DEFLECT] Combat roll deflected incoming bullet stream");
+              break;
+            }
+
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: r.x, y: 1.5, z: r.z },
+              surface: "flesh",
+              damage: p.damage,
+              label: "-" + p.damage,
+            });
+            const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, p.damage);
+            r.health = newHealth;
+            r.armor = newArmor;
+            this.handleRivalDamage(r, p.damage);
+
+            const knockForce = p.isPellet ? 1.6 : 0.6;
+            const normVx = p.vx / p.speed;
+            const normVz = p.vz / p.speed;
+            r.x = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, r.x + normVx * knockForce));
+            r.z = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, r.z + normVz * knockForce));
+            this.onHitTarget?.(r.id, p.damage, normVx * knockForce, normVz * knockForce, p.weapon);
+
+            if (r.health <= 0) {
+              const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
+              if (!this.onHitTarget) {
+                r.isAlive = false;
+                this.combatLog.push("[TICK " + this.tick + "] Rival operator eliminated: " + r.name);
+                if (isBossTarget) {
+                  this.grantKeycard(BOSS_CONFIG.id);
+                  this.combatLog.push("[BOSS SLAIN] Sector Warlord eliminated! Dropped Violet Lab Access Keycard!");
+                }
+              } else {
+                r.health = 1;
+              }
+            }
+            break;
+          }
+        }
+        if (hitEntity) continue;
+      } else {
+        // Enemy / Rival projectile checking Player
+        if (this.player.isAlive && !this.player.isExtracted) {
+          const seg = distanceToSegmentSquared(p.x, p.z, nextX, nextZ, this.player.x, this.player.z);
+          if (seg.distSq <= (0.8 + p.radius) * (0.8 + p.radius)) {
+            hitEntity = true;
+            if (this.player.isInvulnerable && this.player.action === "roll") {
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: this.player.x, y: 1.2, z: this.player.z },
+                surface: "metal",
+              });
+              this.combatLog.push("[DEFLECT] Combat roll deflected incoming bullet stream");
+            } else {
+              this.applyDamageToPlayer(p.damage, p.x, p.z);
+              const normVx = p.vx / p.speed;
+              const normVz = p.vz / p.speed;
+              this.walkVx += normVx * 0.35;
+              this.walkVz += normVz * 0.35;
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: this.player.x, y: 1.5, z: this.player.z },
+                surface: "flesh",
+                damage: p.damage,
+                label: "-" + p.damage,
+              });
+              this.combatLog.push("[TICK " + this.tick + "] Struck by incoming ballistic fire (-" + p.damage + " HP)");
+            }
+          }
+        }
+        if (hitEntity) continue;
+      }
+
+      p.x = nextX;
+      p.z = nextZ;
+      p.distanceTraveled = nextDist;
+      if (p.distanceTraveled < p.maxRange) {
+        remaining.push(p);
       }
     }
-  }
 
+    this.activeProjectiles = remaining;
+  }
   private stepSquadmate(): void {
     if (!this.squadmate.isAlive || this.squadmate.isExtracted) return;
     const dx = this.player.x - this.squadmate.x;
@@ -3318,13 +3536,43 @@ export class SectorDepotSimulation {
           // Gunfire acoustic propagation from enemy fire alerts nearby AI
           this.propagateGunfireSound(rival.x, rival.z, 35.0);
 
-          if (!this.player.isInvulnerable) {
-            const rawDmg = rival.weapon === 'shotgun' ? 20 : 12;
-            this.applyDamageToPlayer(rawDmg, rival.x, rival.z);
-            this.combatLog.push(`[TICK ${this.tick}] Struck by ${rival.name} ${rival.weapon || 'rifle'} burst (-${rawDmg} HP)`);
-          } else {
-            this.combatLog.push(`[TICK ${this.tick}] ${rival.name} burst deflected by combat roll`);
-          }
+          const rMuzzle = this.getOperativeMuzzle(rival);
+          this.enqueuePresentationEvent({
+            type: "fire",
+            shooterId: rival.id,
+            origin: rMuzzle.origin,
+            dir: rMuzzle.dir,
+            weapon: (rival.weapon as any) || "rifle",
+          });
+
+          // Lead target slightly based on player movement
+          const leadTime = distToPlayer / 52.0;
+          const targetX = this.player.x + (this.player.action === "sprint" ? Math.sin(this.player.facing) * 7.5 * leadTime * 0.4 : 0);
+          const targetZ = this.player.z + (this.player.action === "sprint" ? Math.cos(this.player.facing) * 7.5 * leadTime * 0.4 : 0);
+          const aimDx = targetX - rMuzzle.origin.x;
+          const aimDz = targetZ - rMuzzle.origin.z;
+          const aimDist = Math.max(0.001, Math.hypot(aimDx, aimDz));
+          const aimDirX = aimDx / aimDist;
+          const aimDirZ = aimDz / aimDist;
+
+          const rawDmg = rival.weapon === "shotgun" ? 20 : 12;
+          this.spawnProjectile({
+            id: "proj_" + rival.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
+            shooterId: rival.id,
+            shooterIsPlayer: false,
+            x: rMuzzle.origin.x,
+            y: rMuzzle.origin.y,
+            z: rMuzzle.origin.z,
+            vx: aimDirX * 52.0,
+            vy: 0,
+            vz: aimDirZ * 52.0,
+            speed: 52.0,
+            damage: rawDmg,
+            radius: 0.28,
+            maxRange: 22.0,
+            distanceTraveled: 0,
+            weapon: (rival.weapon as any) || "rifle",
+          });
         }
       }
     }

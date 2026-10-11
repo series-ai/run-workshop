@@ -32,9 +32,9 @@ export const SIM_CONFIG = {
 
   // Weapon Stats (grounded in rundot/simulation/entities.json)
   RIFLE_DAMAGE: entitiesConfig.entities.weapon_rifle.metadata.damage,
-  RIFLE_COOLDOWN_TICKS: entitiesConfig.entities.weapon_rifle.metadata.cooldownTicks,
+  RIFLE_COOLDOWN_TICKS: 6, // 100ms / 600 RPM full-auto cadence (surviv.io standard)
   SHOTGUN_DAMAGE: entitiesConfig.entities.weapon_shotgun.metadata.damage,
-  SHOTGUN_COOLDOWN_TICKS: entitiesConfig.entities.weapon_shotgun.metadata.cooldownTicks,
+  SHOTGUN_COOLDOWN_TICKS: 32, // ~533ms pump cycle
 
   // Sector 7 Map Dimensions
   MAP_MIN_X: -79.05,

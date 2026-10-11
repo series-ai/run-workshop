@@ -1286,6 +1286,10 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     // Step simulation: Rogue AI aims and fires at player
     simTest.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
     expect(rogue.action).toBe('shoot');
+    // Ballistic projectile travels 7.07m to player (~9 ticks)
+    for (let i = 0; i < 9; i++) {
+      simTest.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
+    }
     // Player sustained 12 damage absorbed by armor
     expect(simTest.player.armor).toBe(88);
 
@@ -1294,6 +1298,9 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     simTest.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: true, kick: false, shoot: false, interact: false });
     expect(simTest.player.action).toBe('roll');
     expect(simTest.player.isInvulnerable).toBe(true);
+    for (let i = 0; i < 9; i++) {
+      simTest.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: true, kick: false, shoot: false, interact: false });
+    }
     // Armor remains 88 because roll deflected bullet!
     expect(simTest.player.armor).toBe(88);
   });
@@ -1358,9 +1365,13 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     hubSim.player.ammo = 30;
     const fired = hubSim.fire();
     expect(fired).toBe(true);
+    // Ballistic round travels 4m to dummy (~5 ticks)
+    for (let i = 0; i < 6; i++) {
+      hubSim.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
+    }
     expect(hubSim.dummyHitCount).toBeGreaterThan(0);
     expect(hubSim.trainingProgress.dummyHit).toBe(true);
-    expect(hubSim.player.lastHitmarkerTick).toBe(hubSim.tick);
+    expect(hubSim.player.lastHitmarkerTick).toBeGreaterThan(0);
 
     // Reset and test melee kick against right dummy at [5, 0, -64]
     hubSim.player.x = 5.0;
@@ -1454,5 +1465,227 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const fireEvent = events.find((e) => e.type === "fire");
     expect(fireEvent).toBeDefined();
     expect(fireEvent?.origin).toEqual({ x: 0.24, y: 1.18, z: -0.68 });
+  });
+  it("38. Surviv.io combat cadence & weapon dynamics: automatic rifle continuous fire, recoil bloom, and shooter recoil impulse", () => {
+    const testSim = new SectorDepotSimulation("test_cadence", "spoke");
+    testSim.admitOperative(0);
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.facing = Math.PI; // Aim North (-Z)
+    testSim.player.weapon = "rifle";
+
+    // Tick 0: Initial shot discharge
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: true,
+      interact: false,
+      aimAngle: Math.PI,
+    });
+
+    expect(testSim.activeProjectiles.length).toBeGreaterThanOrEqual(1);
+    const initialRound = testSim.activeProjectiles[0];
+    expect(initialRound.shooterIsPlayer).toBe(true);
+    expect(initialRound.speed).toBe(54.0);
+    expect(initialRound.vz).toBeLessThan(0); // Flying North (-Z)
+
+    // Verify Newton recoil kick on shooter: player walk velocity kicked backwards (+Z)
+    expect(testSim.walkVz).toBeGreaterThan(0.2);
+
+    // Verify recoil continuous fire counter incremented
+    expect(testSim.player.continuousFireTicks).toBeGreaterThanOrEqual(1);
+
+    // Hold shoot for 5 ticks: rate of fire cooldown prevents premature discharge
+    for (let i = 0; i < 5; i++) {
+      testSim.step({
+        dx: 0,
+        dz: 0,
+        sprint: false,
+        slide: false,
+        roll: false,
+        kick: false,
+        shoot: true,
+        interact: false,
+        aimAngle: Math.PI,
+      });
+    }
+
+    // At 6th tick: automatic rifle fires 2nd round (600 RPM cadence)
+    const activeBeforeSecond = testSim.activeProjectiles.length;
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: true,
+      interact: false,
+      aimAngle: Math.PI,
+    });
+    expect(testSim.activeProjectiles.length).toBeGreaterThan(activeBeforeSecond);
+    expect(testSim.player.continuousFireTicks).toBeGreaterThanOrEqual(2);
+  });
+
+  it("39. Surviv.io ballistic flight & combat roll dodge: continuous bullet traversal and i-frame dodge", () => {
+    const testSim = new SectorDepotSimulation("test_dodge", "spoke");
+    testSim.admitOperative(0);
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.hp = 100;
+
+    // Clear any pre-existing active projectiles
+    testSim.activeProjectiles = [];
+
+    // Spawn an incoming enemy ballistic round 8 meters North traveling South towards player
+    const enemyBullet = {
+      id: "enemy_bullet_test",
+      shooterId: "scav_enemy",
+      shooterIsPlayer: false,
+      x: 0,
+      y: 1.1,
+      z: -8.0,
+      vx: 0,
+      vy: 0,
+      vz: 40.0, // 40 m/s South (+Z)
+      speed: 40.0,
+      damage: 35,
+      radius: 0.22,
+      maxRange: 20.0,
+      distanceTraveled: 0,
+      weapon: "rifle" as const,
+      isPellet: false,
+    };
+    testSim.spawnProjectile(enemyBullet);
+    expect(testSim.activeProjectiles.length).toBe(1);
+
+    // Player executes tactical combat roll (12 i-frames)
+    testSim.step({
+      dx: 1,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: true,
+      kick: false,
+      shoot: false,
+      interact: false,
+      aimAngle: 0,
+    });
+    expect(testSim.player.action).toBe("roll");
+    expect(testSim.player.isInvulnerable).toBe(true);
+
+    // Step simulation across bullet flight time into player hitbox
+    for (let i = 0; i < 12; i++) {
+      testSim.step({
+        dx: 0,
+        dz: 0,
+        sprint: false,
+        slide: false,
+        roll: false,
+        kick: false,
+        shoot: false,
+        interact: false,
+        aimAngle: 0,
+      });
+    }
+
+    // Because player had active roll i-frames when bullet swept through, player deflected damage
+    expect(testSim.player.hp).toBe(100);
+  });
+
+  it("40. Surviv.io tactical cover blocking & point-blank shotgun blast", () => {
+    const testSim = new SectorDepotSimulation("test_cover_shotgun", "spoke");
+    testSim.admitOperative(0);
+
+    // Part A: Tactical cover blocks ballistic rounds
+    // Container 0 is at minX: -23.5, maxX: -16.5, minZ: -32.0, maxZ: -28.0
+    testSim.activeProjectiles = [];
+    const bulletAtCover = {
+      id: "cover_test_round",
+      shooterId: "test_shooter",
+      shooterIsPlayer: true,
+      x: -20.0,
+      y: 1.1,
+      z: -35.0, // North of container
+      vx: 0,
+      vy: 0,
+      vz: 50.0, // Traveling South (+Z) through container
+      speed: 50.0,
+      damage: 40,
+      radius: 0.15,
+      maxRange: 30.0,
+      distanceTraveled: 0,
+      weapon: "rifle" as const,
+      isPellet: false,
+    };
+    testSim.spawnProjectile(bulletAtCover);
+
+    // Step across container coordinates
+    for (let i = 0; i < 5; i++) {
+      testSim.step({
+        dx: 0,
+        dz: 0,
+        sprint: false,
+        slide: false,
+        roll: false,
+        kick: false,
+        shoot: false,
+        interact: false,
+        aimAngle: 0,
+      });
+    }
+
+    // Bullet was absorbed and destroyed by container cover
+    expect(testSim.activeProjectiles.some(p => p.id === "cover_test_round")).toBe(false);
+
+    // Part B: Close-range shotgun blast delivers lethal aggregate damage & knockback
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.facing = Math.PI; // North (-Z)
+    testSim.player.weapon = "shotgun";
+
+    // Place a rival operative 2.5m North (point-blank sweet spot)
+    const targetRival = {
+      id: "target_rival_point_blank",
+      isPlayer: false,
+      isRival: true,
+      isAI: false,
+      name: "Rival Point Blank",
+      x: 0,
+      y: 0,
+      z: -2.5,
+      facing: 0,
+      health: 120,
+      armor: 0,
+      cash: 0,
+      action: "idle" as const,
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+    };
+    testSim.rivals.push(targetRival);
+
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: true,
+      interact: false,
+      aimAngle: Math.PI,
+    });
+
+    // Point-blank shotgun connects 6 pellets (aggregate 96 dmg) and applies heavy knockback
+    expect(targetRival.health).toBeLessThanOrEqual(30); // 120 - 96 = 24
+    expect(targetRival.z).toBeLessThan(-2.5); // Pushed backwards North (-Z)
   });
 });

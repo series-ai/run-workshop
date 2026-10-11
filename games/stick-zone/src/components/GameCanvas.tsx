@@ -289,6 +289,163 @@ const _scratchHit = new THREE.Vector3();
 const _scratchBlast = new THREE.Vector3();
 const _scratchLocomotion = new THREE.Vector3();
 
+
+const PROJECTILE_POOL_SIZE = 48;
+
+interface PooledProjectileItem {
+  root: THREE.Group;
+  coreMesh: THREE.Mesh;
+  coreMaterial: THREE.MeshBasicMaterial;
+  outlineMesh: THREE.Mesh;
+  outlineMaterial: THREE.MeshBasicMaterial;
+  tailMesh: THREE.Mesh;
+  tailMaterial: THREE.MeshBasicMaterial;
+  shadowMesh: THREE.Mesh;
+  shadowMaterial: THREE.MeshBasicMaterial;
+}
+
+const _projDir = new THREE.Vector3();
+const _projTarget = new THREE.Vector3();
+
+const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
+  const containerGroup = useMemo(() => new THREE.Group(), []);
+  const shadowGroup = useMemo(() => new THREE.Group(), []);
+
+  const pool = useMemo<PooledProjectileItem[]>(() => {
+    const items: PooledProjectileItem[] = [];
+    const coreGeo = new THREE.SphereGeometry(0.08, 8, 8);
+    const outlineGeo = new THREE.SphereGeometry(0.11, 8, 8);
+    const tailGeo = new THREE.CylinderGeometry(0.015, 0.075, 1.0, 6);
+    tailGeo.rotateX(Math.PI / 2);
+    tailGeo.translate(0, 0, -0.5);
+    const shadowGeo = new THREE.CircleGeometry(0.18, 12);
+
+    for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) {
+      const root = new THREE.Group();
+      root.visible = false;
+
+      const coreMaterial = new THREE.MeshBasicMaterial({ color: "#fde047" });
+      const coreMesh = new THREE.Mesh(coreGeo, coreMaterial);
+      root.add(coreMesh);
+
+      const outlineMaterial = new THREE.MeshBasicMaterial({
+        color: "#0f172a",
+        side: THREE.BackSide,
+      });
+      const outlineMesh = new THREE.Mesh(outlineGeo, outlineMaterial);
+      root.add(outlineMesh);
+
+      const tailMaterial = new THREE.MeshBasicMaterial({
+        color: "#f59e0b",
+        transparent: true,
+        opacity: 0.85,
+      });
+      const tailMesh = new THREE.Mesh(tailGeo, tailMaterial);
+      root.add(tailMesh);
+
+      const shadowMaterial = new THREE.MeshBasicMaterial({
+        color: "#000000",
+        transparent: true,
+        opacity: 0.45,
+      });
+      const shadowMesh = new THREE.Mesh(shadowGeo, shadowMaterial);
+      shadowMesh.rotation.x = -Math.PI / 2;
+      shadowMesh.visible = false;
+
+      containerGroup.add(root);
+      shadowGroup.add(shadowMesh);
+
+      items.push({
+        root,
+        coreMesh,
+        coreMaterial,
+        outlineMesh,
+        outlineMaterial,
+        tailMesh,
+        tailMaterial,
+        shadowMesh,
+        shadowMaterial,
+      });
+    }
+
+    return items;
+  }, [containerGroup, shadowGroup]);
+
+  useEffect(() => {
+    return () => {
+      for (const item of pool) {
+        containerGroup.remove(item.root);
+        shadowGroup.remove(item.shadowMesh);
+        item.coreMaterial.dispose();
+        item.outlineMaterial.dispose();
+        item.tailMaterial.dispose();
+        item.shadowMaterial.dispose();
+      }
+    };
+  }, [pool, containerGroup, shadowGroup]);
+
+  useFrame(() => {
+    const isPaused =
+      typeof window !== "undefined" &&
+      Boolean((window as any).__STICK_ZONE_TEST__?.isPaused);
+    if (isPaused) return;
+
+    const projs = sim.activeProjectiles;
+    const count = Math.min(projs.length, pool.length);
+
+    for (let i = 0; i < pool.length; i++) {
+      const item = pool[i];
+      if (i < count) {
+        const p = projs[i];
+        item.root.visible = true;
+        item.shadowMesh.visible = true;
+
+        item.root.position.set(p.x, p.y, p.z);
+        item.shadowMesh.position.set(p.x, 0.02, p.z);
+
+        const speed = Math.hypot(p.vx, p.vy, p.vz) || 1;
+        const dirX = p.vx / speed;
+        const dirY = p.vy / speed;
+        const dirZ = p.vz / speed;
+
+        _projDir.set(dirX, dirY, dirZ);
+        _projTarget.copy(item.root.position).add(_projDir);
+        item.root.lookAt(_projTarget);
+
+        const isPlayer = p.shooterIsPlayer;
+        if (isPlayer) {
+          item.coreMaterial.color.set(p.isPellet ? "#fef08a" : "#fde047");
+          item.outlineMaterial.color.set("#0f172a");
+          item.tailMaterial.color.set(p.isPellet ? "#facc15" : "#f59e0b");
+          item.shadowMaterial.opacity = 0.45;
+        } else {
+          item.coreMaterial.color.set("#ef4444");
+          item.outlineMaterial.color.set("#450a0a");
+          item.tailMaterial.color.set("#dc2626");
+          item.shadowMaterial.opacity = 0.55;
+        }
+
+        const baseScale = p.isPellet ? 0.72 : 1.1;
+        item.coreMesh.scale.set(baseScale, baseScale, baseScale * 1.3);
+        item.outlineMesh.scale.set(baseScale, baseScale, baseScale * 1.3);
+
+        const tailLen = p.isPellet ? 0.5 : 0.85;
+        item.tailMesh.scale.set(baseScale * 0.75, baseScale * 0.75, tailLen);
+      } else {
+        item.root.visible = false;
+        item.shadowMesh.visible = false;
+      }
+    }
+  });
+
+  return (
+    <>
+      <primitive object={containerGroup} />
+      <primitive object={shadowGroup} />
+    </>
+  );
+};
+
 const PresentationFXManager: React.FC<{
   sim: SectorDepotSimulation;
   recoilImpulseRef: React.MutableRefObject<[number, number]>;
@@ -470,9 +627,9 @@ const PresentationFXManager: React.FC<{
             );
           }
           const endPt = {
-            x: muzzlePos.x + muzzleDir.x * 32.0,
-            y: muzzlePos.y + muzzleDir.y * 32.0,
-            z: muzzlePos.z + muzzleDir.z * 32.0,
+            x: muzzlePos.x + muzzleDir.x * 3.5,
+            y: muzzlePos.y + muzzleDir.y * 3.5,
+            z: muzzlePos.z + muzzleDir.z * 3.5,
           };
           trails.line(
             tracerSlot,
@@ -487,9 +644,9 @@ const PresentationFXManager: React.FC<{
           // Intense golden-amber rifle tracer beam with bullet stroke
           effects.trigger("bullet-tracer", originVec, "#fde047", 1.2, fireAngle);
           const endPt = {
-            x: muzzlePos.x + muzzleDir.x * 36.0,
-            y: muzzlePos.y + muzzleDir.y * 36.0,
-            z: muzzlePos.z + muzzleDir.z * 36.0,
+            x: muzzlePos.x + muzzleDir.x * 4.0,
+            y: muzzlePos.y + muzzleDir.y * 4.0,
+            z: muzzlePos.z + muzzleDir.z * 4.0,
           };
           trails.line(
             tracerSlot,
@@ -894,6 +1051,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
         />
 
         <Suspense fallback={null}>
+          {/* Continuous Ballistic Projectiles (surviv.io mechanics) */}
+          <ActiveProjectilesRenderer sim={sim} />
+
           {/* Depot & FOB Outpost Environment */}
           <SectorMap crates={sim.crates} lastDummyHitTick={sim.lastDummyHitTick} lastDummyHitSide={sim.lastDummyHitSide} />
 
