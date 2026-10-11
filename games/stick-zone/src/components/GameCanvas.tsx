@@ -377,7 +377,8 @@ const PresentationFXManager: React.FC<{
 
     for (const ev of events) {
       if (ev.type === "fire") {
-        const fireAngle = Math.atan2(ev.dir.x, ev.dir.z);
+        // Compute 2D screen-projected firing angle (0 = East/+X, PI/2 = North/-Z, PI = West/-X, -PI/2 = South/+Z)
+        const fireAngle = Math.atan2(-ev.dir.z, ev.dir.x);
         const flashPreset = ev.weapon === "shotgun" ? "shotgun-flash" : "rifle-flash";
         const flashScale = ev.weapon === "shotgun" ? 1.7 : 1.35;
         const originVec = _scratchOrigin.set(ev.origin.x, ev.origin.y, ev.origin.z);
@@ -392,7 +393,7 @@ const PresentationFXManager: React.FC<{
           originVec,
           "#f59e0b",
           1.3,
-          fireAngle + Math.PI / 2
+          fireAngle - Math.PI / 2
         );
 
         // Ballistic projectile tracer strokes
@@ -472,10 +473,11 @@ const PresentationFXManager: React.FC<{
         effects.trigger("critical-hit", elimVec, "#ef4444", 1.4);
       } else if (ev.type === "kick") {
         const kickPos = _scratchKick.set(ev.position.x, ev.position.y, ev.position.z);
+        const screenFacing = Math.atan2(-Math.cos(ev.facing), Math.sin(ev.facing));
         // Kinetic Xiao Xiao melee slash sweep
-        effects.trigger("sword-slash", kickPos, "#eeece5", 1.9, ev.facing);
+        effects.trigger("sword-slash", kickPos, "#eeece5", 1.9, screenFacing);
         // Kinetic air compression shockwave ring
-        effects.trigger("plasma-pulse", kickPos, "#38bdf8", 1.4, ev.facing);
+        effects.trigger("plasma-pulse", kickPos, "#38bdf8", 1.4, screenFacing);
         if (ev.isHit) {
           const hitPos = _scratchHit.set(
             ev.position.x + Math.sin(ev.facing) * 1.5,

@@ -315,8 +315,8 @@ export class InkEffects {
           );
           p.velocity.set(
             Math.cos(angle) * speed * scale,
-            (floor ? 0.1 + this.random() * 0.15 : Math.sin(angle) * speed + 0.3) * scale,
-            (floor ? Math.sin(angle) * speed : (this.random() - 0.5) * speed * 0.4) * scale
+            (floor ? 0.1 + this.random() * 0.15 : (this.random() - 0.5) * 0.25) * scale,
+            -Math.sin(angle) * speed * scale
           );
           p.size = effect.size * (0.65 + this.random() * 0.6) * scale;
           p.rotation = angle - (effect.shape === 'arc' ? 0 : Math.PI / 2);
