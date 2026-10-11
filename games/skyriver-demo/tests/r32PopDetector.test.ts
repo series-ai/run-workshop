@@ -30,7 +30,27 @@ describe('R32 independent production detector units', () => {
     expect(source).toContain('let best = null; let bd = 100;');
     expect(source).toContain('return n <= 8;');
     expect(source).toContain('cellW = C * scaleX; cellH = C * scaleY;');
-    expect(source).toContain('if (performance.now() < end) requestAnimationFrame(frame); else done();');
+    expect(source).toContain(`            if (performance.now() < end) {
+              rafId = requestAnimationFrame(frame);
+            } else {
+              cancelQueuedRaf();
+              done();
+            }`);
+    expect(source).toContain(`          } catch (error) {
+            cancelQueuedRaf();
+            reject(error);
+          }`);
+    expect(source).toContain(`    const cancelQueuedRaf = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    };`);
+    expect(source).toContain(`    } finally {
+      cancelQueuedRaf();
+      s.composer.render = origComposerRender;
+      a.scene.update = origUpdate;
+    }`);
     expect(source).not.toContain('page.clock');
     expect(source).not.toContain('fixedFrames');
     expect(source).toContain("if (![1, 1.25].includes(proofDpr))");
