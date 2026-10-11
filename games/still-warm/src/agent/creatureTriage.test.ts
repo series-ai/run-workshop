@@ -7,7 +7,7 @@ import {
   type AgentToolSet,
 } from "@series-inc/rundot-agent";
 import { GameStore } from "../game/store";
-import { createInitialState } from "../game/model";
+import { createInitialState, type PhysicalAction } from "../game/model";
 import { createCreatureTriage, type TriageIntent } from "./creatureTriage";
 import { createInitialTempo, type TempoTracker } from "../game/tempo";
 
@@ -403,10 +403,10 @@ describe("fetch narration stays inside hearing", () => {
     let tempo: TempoTracker = createInitialTempo("pinned");
     let lastResponseText = "";
     let actionSucceeded = false;
-    const executedActions: any[] = [];
+    const executedActions: PhysicalAction[] = [];
 
     const mockTools = createMockTools(store, (action) => {
-      executedActions.push(action);
+      executedActions.push(action as PhysicalAction);
       if (action.kind === "pick_up") actionSucceeded = true;
     });
     const triage = createCreatureTriage(mockTools, {
