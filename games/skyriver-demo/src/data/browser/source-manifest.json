@@ -126,8 +126,8 @@
   },
   {
     "path": "src/render/lightHandover.ts",
-    "sha256": "11aa5f1c80a389292ea1f4f460c5fe4edb5c4eebb53de24ff0ec096edc040e9e",
-    "byteLength": 9385
+    "sha256": "0376d91a16cd4053ceaedf8095f7bec458ad8606ab3bc5b3b64df4acac367361",
+    "byteLength": 9761
   },
   {
     "path": "src/render/presentationLayout.ts",
@@ -186,8 +186,8 @@
   },
   {
     "path": "src/render/traffic.ts",
-    "sha256": "5f882ce28a1c9af87ba789441bd6688b29a6bf67c0734a4138a8ec65296900db",
-    "byteLength": 124503
+    "sha256": "27f39a78d660421e34cbae86195aab4ffcdd36b80363a5b5424179639c5e4889",
+    "byteLength": 124161
   },
   {
     "path": "src/render/trafficAppearance.ts",
@@ -196,8 +196,8 @@
   },
   {
     "path": "src/render/trafficAppearanceModel.ts",
-    "sha256": "ca75d48896ec5d977394c31c860fe24ecdcb97a21c63cf3678c407fe08da67c8",
-    "byteLength": 62406
+    "sha256": "a713634d18cb2944d2ab4b2d52f009569dfa5b9317bafa9d588d838708093eee",
+    "byteLength": 62583
   },
   {
     "path": "src/render/trafficStreams.ts",

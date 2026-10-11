@@ -2,11 +2,11 @@
   "codecVersion": 2,
   "runtime": "node",
   "canonicalSeed": 424242,
-  "sourceManifestDigest": "33fe1b9bddce70ccc06c71d4ed3324ce6d5264a0ed51275016e08cf76a689350",
+  "sourceManifestDigest": "36fb95c6c986d6fd28a8a3e9a6704bb0456b0ee2df704b258571ee867c89630a",
   "layoutSignature": "da9970e810e361d7ebbc486e7f00c20df5020e1c1b19e97b79864ed6cba6b6c3",
   "payloadHash": "8274354bfae5f02aa6b7b7af1e60360cbbf8938280a65ac88a4c8c4582fe238e",
   "payloadBytes": 13351377,
-  "payloadSha256": "1a0cfd0dda1f99aa840eb2124966875ff6b93d3e6d18b6c66dacd60176a6ed3c",
-  "gzipBytes": 1962478,
-  "gzipSha256": "de638f7c60d39ed5b4b3425162c7e6c00730dd3fed404143388345bca7d28c2b"
+  "payloadSha256": "f4cb336da827b73eec6e35ac518d1521f41505b3c24c95fe7c03222b959340d3",
+  "gzipBytes": 1962482,
+  "gzipSha256": "e68d16cec7d8f8415ea4ac84caca86d201530cb2448dcdbb3865bd9b87323340"
 }

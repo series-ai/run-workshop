@@ -90,7 +90,7 @@ import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanc
 import { continuityInput, shippedHullResponse } from './support/flyerContinuityMatrix';
 
 describe('R33 actual rear approach at timed closure speed', () => {
-  it('keeps distance fade separate from actual tier lifecycle scale', () => {
+  it('keeps physical size fixed and applies actual tier presence to coverage', () => {
     const traffic = createTraffic();
     const rows: unknown[] = [];
     try {
@@ -118,7 +118,7 @@ describe('R33 actual rear approach at timed closure speed', () => {
         if (!actual) throw new Error('R33_REAL_TIER_HULL_MISSING');
         // At 200 m the total lamp share is one. Its fade is the source and tier product.
         const expected = shippedHullResponse(200, current.fade);
-        expect(actual.fade).toBe(1);
+        expect(actual.fade).toBeCloseTo(expected.fade, 6);
         expect(actual.scale).toBeCloseTo(current.sizeScale * expected.scale, 5);
         rows.push({ elapsed, carId: current.id, sourceTierFade: current.fade,
           baseScale: current.sizeScale, actual, expected });
@@ -162,8 +162,7 @@ describe('R33 actual rear approach at timed closure speed', () => {
         const alpha = uploadedFade.getX(slot);
         const expected = shippedHullResponse(sample.distanceM);
         expect(scale).toBeCloseTo(current.sizeScale * expected.scale, 5);
-        expect(scale / current.sizeScale).toBeGreaterThanOrEqual(0.85 - 1e-6);
-        expect(scale / current.sizeScale).toBeLessThanOrEqual(1 + 1e-6);
+        expect(Math.abs(scale / current.sizeScale - 1)).toBeLessThanOrEqual(1e-6);
         expect(alpha).toBeGreaterThanOrEqual(previousFade - 1e-6);
         maxFrameFadeStep = Math.max(maxFrameFadeStep, alpha - previousFade);
         previousFade = alpha;

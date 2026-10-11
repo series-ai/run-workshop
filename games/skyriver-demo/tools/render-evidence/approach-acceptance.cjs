@@ -8,11 +8,25 @@ function smoothstep(start, end, value) {
   return t * t * (3 - 2 * t);
 }
 
-// Use the shipped equations independently of runtime helpers.
+// These are CPU scalar checks. They do not prove raster visibility.
 function shippedHullResponse(distanceM, sourceTierFade) {
-  const hullFade = 1 - smoothstep(750, 1300, distanceM);
-  return { hullFade, distanceScale: 0.85 + 0.15 * hullFade,
-    lifecycleScale: smoothstep(0, 0.45, sourceTierFade) };
+  const distanceCoverage = 1 - smoothstep(750, 1300, distanceM);
+  return { hullFade: distanceCoverage * sourceTierFade, distanceCoverage,
+    lifecyclePresence: sourceTierFade, distanceScale: 1, lifecycleScale: 1 };
+}
+
+function checkHullFade(samples) {
+  const rows = samples.map(sample => {
+    const response = shippedHullResponse(sample.distanceM, sample.sourceTierFade);
+    const expectedFade = response.hullFade;
+    const absoluteError = Math.abs(sample.fade - expectedFade);
+    const valid = [sample.distanceM, sample.sourceTierFade, sample.fade].every(Number.isFinite)
+      && sample.distanceM >= 0 && sample.sourceTierFade >= 0 && sample.sourceTierFade <= 1
+      && sample.fade >= 0 && sample.fade <= 1;
+    return { ...sample, ...response, expectedFade, absoluteError, pass: valid && absoluteError < SCALE_LIMIT };
+  });
+  return { pass: rows.length > 0 && rows.every(row => row.pass), limit: SCALE_LIMIT,
+    maxAbsoluteError: rows.length > 0 ? Math.max(...rows.map(row => row.absoluteError)) : null, samples: rows };
 }
 
 function checkPhysicalScale(samples) {
@@ -21,7 +35,8 @@ function checkPhysicalScale(samples) {
     const expectedScale = sample.baseScale * response.distanceScale * response.lifecycleScale;
     const absoluteError = Math.abs(sample.scale - expectedScale);
     const valid = [sample.distanceM, sample.sourceTierFade, sample.baseScale, sample.scale].every(Number.isFinite)
-      && sample.distanceM >= 0 && sample.sourceTierFade >= 0 && sample.baseScale > 0 && sample.scale >= 0;
+      && sample.distanceM >= 0 && sample.sourceTierFade >= 0 && sample.sourceTierFade <= 1
+      && sample.baseScale > 0 && sample.scale >= 0;
     return { ...sample, ...response, expectedScale, absoluteError, pass: valid && absoluteError < SCALE_LIMIT };
   });
   return { pass: rows.length > 0 && rows.every(row => row.pass), limit: SCALE_LIMIT,
@@ -45,4 +60,4 @@ function checkTrailIntensity(samples) {
   return { pass: rows.length > 0 && rows.every(row => row.pass), limit: INTENSITY_LIMIT, samples: rows };
 }
 
-module.exports = { shippedHullResponse, checkPhysicalScale, shippedTrailViewGain, checkTrailIntensity };
+module.exports = { shippedHullResponse, checkPhysicalScale, checkHullFade, shippedTrailViewGain, checkTrailIntensity };

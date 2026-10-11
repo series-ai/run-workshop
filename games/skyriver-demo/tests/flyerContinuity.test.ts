@@ -229,10 +229,36 @@ describe('flyer continuity: captured temporal state', () => {
 import { trafficTrailViewGain } from '../src/render/trafficAppearance';
 import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanceModel';
 
-describe('R33 shipped hull dissolve and trail contract', () => {
-  it('separates distance size from source and tier lifecycle size', () => {
+describe('R33 hull dissolve and R44 constant size contract', () => {
+  it('uses the direct source and tier product without a second color fade', () => {
+    for (const distance of [200, 750, 900, 1190, 1300]) {
+      for (const sourceFade of [0, 0.143, 0.5, 1]) {
+        for (const tierFade of [0, 0.143, 0.5, 1]) {
+          const input = { ...continuityInput(0, 1.5, 45, 'high', distance), carIndex: 1000, sourceFade,
+            cpuTier: { fromCount: 2400, targetCount: 500, progress: 1 - tierFade } };
+          const actual = evaluateSameCarTrafficAppearance(input);
+          const expected = shippedHullResponse(distance, sourceFade, tierFade);
+          expect(actual.hull.scale).toBe(input.sizeScale);
+          expect(actual.hull.fade).toBeCloseTo(expected.fade, 12);
+          expect(actual.hull.coverage).toBeCloseTo(expected.fade, 12);
+          expect(actual.uploaded.aFade).toBeCloseTo(expected.fade, 12);
+          const fullPresence = evaluateSameCarTrafficAppearance({ ...input, sourceFade: 1,
+            cpuTier: { ...input.cpuTier, progress: 0 } });
+          expect(actual.hull.tintGain).toBe(fullPresence.hull.tintGain);
+        }
+      }
+    }
+    const row = continuityRow({ ...continuityInput(0, 1.5, 45, 'high', 200), sourceFade: 0.143 });
+    const oldRampPhase = 0.143 / 0.45;
+    const oldRamp = oldRampPhase * oldRampPhase * (3 - 2 * oldRampPhase);
+    const remappedPresence = { ...row, output: { ...row.output,
+      hull: { ...row.output.hull, fade: oldRamp, coverage: oldRamp } } };
+    expect(continuityViolations([remappedPresence]).some(failure => failure.channel === 'hull distance fade')).toBe(true);
+  });
+
+  it('uses direct source presence in coverage and keeps physical size fixed', () => {
     for (const distance of [600, 750, 900, 1190, 1300, 1500]) {
-      for (const sourceFade of [0, 0.1, 0.3, 0.45, 1]) {
+      for (const sourceFade of [0, 0.143, 0.5, 1]) {
         const response = shippedHullResponse(distance, sourceFade);
         const result = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', distance), sourceFade });
         expect(result.hull.scale).toBeCloseTo(2 * response.scale, 12);
@@ -240,11 +266,8 @@ describe('R33 shipped hull dissolve and trail contract', () => {
         expect(result.hull.coverage).toBeCloseTo(response.fade, 12);
         expect(result.hull.distanceScale).toBeCloseTo(response.distanceScale, 12);
         expect(result.hull.lifecycleScale).toBeCloseTo(response.lifecycleScale, 12);
-        if (sourceFade === 1) {
-          expect(result.hull.scale).toBeGreaterThanOrEqual(2 * 0.85);
-          expect(result.hull.scale).toBeLessThanOrEqual(2);
-        }
-        if (sourceFade === 0) expect(result.hull.patches.flat().every(patch => !patch.rendered)).toBe(true);
+        expect(result.hull.scale).toBe(2);
+        if (sourceFade === 0) expect(result.hull.coverage).toBe(0);
       }
     }
     const zero = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'low', 1150, true), fogColor: { r: 1, g: 1, b: 1 }, fogFactor: 1 });
@@ -270,11 +293,11 @@ describe('R33 shipped hull dissolve and trail contract', () => {
     }
   });
 
-  it('rejects the old constant scale and narrow hull dissolve band', () => {
+  it('rejects physical size collapse and a narrow hull dissolve band', () => {
     const actual = continuityRow(continuityInput(0, 1, 45, 'high', 900));
-    const constantScale = { ...actual, output: { ...actual.output,
-      hull: { ...actual.output.hull, scale: actual.input.sizeScale } } };
-    expect(continuityViolations([constantScale]).some(failure => failure.channel === 'physical hull scale')).toBe(true);
+    const collapsedScale = { ...actual, output: { ...actual.output,
+      hull: { ...actual.output.hull, scale: actual.input.sizeScale * 0.85 } } };
+    expect(continuityViolations([collapsedScale]).some(failure => failure.channel === 'physical hull scale')).toBe(true);
     const oldFade = { ...actual, output: { ...actual.output,
       hull: { ...actual.output.hull, fade: 1, coverage: 1 } } };
     expect(continuityViolations([oldFade]).some(failure => failure.channel === 'hull distance fade')).toBe(true);

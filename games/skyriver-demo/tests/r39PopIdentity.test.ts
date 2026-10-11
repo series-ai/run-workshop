@@ -295,6 +295,7 @@ describe('R39 independent real-buffer pop identity', () => {
         if (!expression || !condition) throw new Error('R33_ACTUAL_IGN_TERM_MISSING');
         expect(expression.slice(1).map(Number)).toEqual([52.9829189, 0.06711056, 0.00583715]);
         expect(condition[1]).toBe('>');
+        expect(shader.fragmentShader).toContain('if (vHullFade <= 0.0) discard;');
         const fract = (value: number) => value - Math.floor(value);
         const actual = (x: number, y: number) => fract(Number(expression[1]) * fract(x * Number(expression[2]) + y * Number(expression[3])));
         const samples = Array.from({ length: 1024 }, (_, i) => {
@@ -308,7 +309,12 @@ describe('R39 independent real-buffer pop identity', () => {
           return { point, noise: actual(...point) };
         });
         expect(actual(0, 0)).toBe(0);
-        expect(trafficHullFragmentDiscarded(0, [0, 0])).toBe(false);
+        expect(trafficHullFragmentDiscarded(0, [0, 0])).toBe(true);
+        expect(trafficHullFragmentDiscarded(1e-6, [0, 0])).toBe(false);
+        const equalityPoint: [number, number] = [0.5, 0.5];
+        const equalityFade = actual(...equalityPoint);
+        expect(equalityFade).toBeGreaterThan(0);
+        expect(trafficHullFragmentDiscarded(equalityFade, equalityPoint)).toBe(false);
         const fades = [0, 1e-6, 0.5, 1].map(fade => ({ fade, survivingSamples: samples.filter(s => !(s.noise > fade)).length }));
         expect(fades[2]!.survivingSamples).toBeGreaterThan(450);
         expect(fades[2]!.survivingSamples).toBeLessThan(575);

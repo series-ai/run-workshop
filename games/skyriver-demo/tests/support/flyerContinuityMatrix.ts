@@ -100,12 +100,12 @@ export function independentSmoothstep(a: number, b: number, value: number): numb
   const x = Math.max(0, Math.min(1, (value - a) / (b - a)));
   return 3 * x * x - 2 * x * x * x;
 }
-/** Independent values from the shipped 04f8393a runtime contract. */
+/** Independent R44 values. Visibility changes coverage. Physical size stays fixed. */
 export function shippedHullResponse(distanceM: number, sourceFade = 1, tierFade = 1) {
-  const fade = 1 - independentSmoothstep(750, 1300, distanceM);
-  const distanceScale = 0.85 + 0.15 * fade;
-  const lifecycleScale = independentSmoothstep(0, 0.45, sourceFade * tierFade);
-  return { fade, distanceScale, lifecycleScale, scale: distanceScale * lifecycleScale };
+  const distanceCoverage = 1 - independentSmoothstep(750, 1300, distanceM);
+  const lifecyclePresence = sourceFade * tierFade;
+  return { fade: distanceCoverage * lifecyclePresence, distanceCoverage, lifecyclePresence,
+    distanceScale: 1, lifecycleScale: 1, scale: 1 };
 }
 function referenceTierFade(input: SameCarTrafficAppearanceInput): number {
   const tier = input.cpuTier;
@@ -170,7 +170,7 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
         const actual = [patch.preFogRgb.r, patch.preFogRgb.g, patch.preFogRgb.b];
         const tint = [row.input.tint.r, row.input.tint.g, row.input.tint.b];
         for (let channel = 0; channel < 3; channel += 1) check(row.distanceM, 'hull lamp radiance',
-          Math.abs(actual[channel]! - color[channel]! * tint[channel]! * expectedDim * expectedNear * row.input.sourceFade), 1e-12);
+          Math.abs(actual[channel]! - color[channel]! * tint[channel]! * expectedDim * expectedNear), 1e-12);
       }
     }
 

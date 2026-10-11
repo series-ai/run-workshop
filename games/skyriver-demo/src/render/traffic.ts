@@ -93,7 +93,6 @@ import {
   TRAFFIC_GPU_SEED_BRIGHTNESS_BASE,
   TRAFFIC_GPU_SEED_BRIGHTNESS_MULTIPLIER,
   TRAFFIC_GPU_SEED_BRIGHTNESS_SPAN,
-  TRAFFIC_HULL_FADE_RAMP_END,
   TRAFFIC_HULL_HEADLIGHT_RGB,
   TRAFFIC_HULL_SIGN_RGB,
   TRAFFIC_HULL_TAILLIGHT_RGB,
@@ -129,13 +128,11 @@ import {
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
   createImpostorTierTransition,
-  HULL_DISSOLVE_FLOOR_SCALE,
-  HULL_DISSOLVE_START_M,
-  HULL_DRAW_DISTANCE_M,
   IMPOSTOR_FAR_FALLOFF_BAND_M,
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
   IMPOSTOR_TIER_FADE_S,
+  trafficHullVisibility,
   writeSameCarLightLod,
   type SameCarLightLod,
 } from './lightHandover';
@@ -2069,9 +2066,9 @@ if (vTrafficGlass > 0.5) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\n  vHullFade = aFade;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nvarying float vHullFade;\nfloat skyriverIgn(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }')
-      .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n  if (skyriverIgn(gl_FragCoord.xy) > vHullFade) discard;');
+      .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n  if (vHullFade <= 0.0) discard;\n  if (skyriverIgn(gl_FragCoord.xy) > vHullFade) discard;');
   };
-  carMaterial.customProgramCacheKey = () => 'skyriver-hull-ign-dissolve-glass-v4';
+  carMaterial.customProgramCacheKey = () => 'skyriver-hull-ign-dissolve-glass-v5';
 
   const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildBus(), buildFlatbed()];
   const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'];
@@ -2685,16 +2682,11 @@ if (vTrafficGlass > 0.5) {
             : clamp((-carDriftA[car]! * carDriftW[car]! * carDriftW[car]! * Math.sin(driftArg)) / Math.max(20, speed) * 40 * direction, -0.45, 0.45);
         }
 
-        const toCarX = px - camX;
-        const toCarY = py - camY;
-        const toCarZ = pz - camZ;
-        // Use the shipped distance scale and dissolve.
-        const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
-        const hullLod = 1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
+        // Keep physical geometry constant. Apply lifecycle and distance through coverage.
         fade *= tierFadeFor(car);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
-        const scale = sizeScale[car]! * (HULL_DISSOLVE_FLOOR_SCALE + (1 - HULL_DISSOLVE_FLOOR_SCALE) * hullLod) * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
+        const scale = sizeScale[car]!;
         const pitchY = clamp(fy, -TRAFFIC_DIRECTION_PITCH_CLAMP, TRAFFIC_DIRECTION_PITCH_CLAMP);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;
@@ -2740,11 +2732,11 @@ if (vTrafficGlass > 0.5) {
         const distanceM = Math.sqrt(distanceSq);
         const legacyFarAlpha = trafficThinFarAlpha(distanceSq, carThinFar[car] === 1);
         writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
-        hullFadeArrays[archetype]![slot] = hullLod;
-        const nearFade = fade * sameCarLodScratch.nearAlpha;
+        hullFadeArrays[archetype]![slot] = trafficHullVisibility(distanceM, fade);
         const totalFade = fade * sameCarLodScratch.totalAlpha;
-        // Hull bars and instance colour use the near share.
-        const dim = trafficDistanceDim(distanceSq) * nearFade;
+        // Hull bars and instance colour use the near share without lifecycle multiplier. Coverage owns lifecycle.
+        const distanceDim = trafficDistanceDim(distanceSq);
+        const dim = distanceDim * sameCarLodScratch.nearAlpha;
         const colorOffset = slot * 3;
         colors[colorOffset] = tintR[car] * dim;
         colors[colorOffset + 1] = tintG[car] * dim;

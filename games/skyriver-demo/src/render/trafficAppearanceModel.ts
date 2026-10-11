@@ -4,11 +4,9 @@
  */
 import {
   farImpostorBrightness,
-  HULL_DISSOLVE_FLOOR_SCALE,
-  HULL_DISSOLVE_START_M,
-  HULL_DRAW_DISTANCE_M,
   impostorLightHandoverAlpha,
   impostorSupportTaperAlpha,
+  trafficHullVisibility,
   writeSameCarLightLod,
   computeInstanceAlpha,
   IMPOSTOR_TIER_FADE_S,
@@ -26,7 +24,6 @@ import {
   TRAFFIC_GPU_SEED_BRIGHTNESS_BASE,
   TRAFFIC_GPU_SEED_BRIGHTNESS_MULTIPLIER,
   TRAFFIC_GPU_SEED_BRIGHTNESS_SPAN,
-  TRAFFIC_HULL_FADE_RAMP_END,
   TRAFFIC_HULL_HEADLIGHT_RGB,
   TRAFFIC_HULL_TAILLIGHT_RGB,
   TRAFFIC_LAMP_FLOOR_BLEND_SHARE,
@@ -278,15 +275,21 @@ export interface SameCarTrafficAppearance {
   };
   readonly hull: {
     readonly hasInstance: boolean;
+    /** Distance-only hull LOD share (750–1300 m). */
     readonly hullLodAlpha: number;
+    /** Direct distance times lifecycle coverage passed to hull shader aFade. */
     readonly fade: number;
+    /** Retained compatibility distance scale factor (fixed at 1). */
     readonly distanceScale: number;
+    /** Retained compatibility lifecycle scale factor (fixed at 1). */
     readonly lifecycleScale: number;
+    /** Physical geometry scale (exact input sizeScale). */
     readonly scale: number;
-    /** Continuous mean coverage estimate. This is not a raster survival test. */
+    /** Continuous mean coverage estimate (distance times lifecycle coverage). This is not a raster survival test. */
     readonly coverage: number;
     readonly dissolve: 'interleaved-gradient-noise';
     readonly distanceDim: number;
+    /** Hull tint gain with lifecycle removed; coverage owns lifecycle. */
     readonly tintGain: number;
     readonly patches: readonly [readonly TrafficHullLampPatch[], readonly TrafficHullLampPatch[]];
   };
@@ -1319,9 +1322,9 @@ export function trafficHullIgnNoise(fragmentBufferPx: TrafficVec2): number {
   return value - Math.floor(value);
 }
 
-/** Apply the shipped strict discard comparison. Equality retains the fragment. */
+/** Retain equality at positive fade. Discard all fragments at zero or negative fade. */
 export function trafficHullFragmentDiscarded(fade: number, fragmentBufferPx: TrafficVec2): boolean {
-  return trafficHullIgnNoise(fragmentBufferPx) > fade;
+  return fade <= 0.0 || trafficHullIgnNoise(fragmentBufferPx) > fade;
 }
 
 /** Full CPU same-car evaluator: hull, streak lamps, the existing proxy share, and near trail. */
@@ -1337,14 +1340,13 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
   const finalFade = input.sourceFade * cpuTierFade;
   const legacyFarAlpha = evaluateThinFarAlpha(distanceSq, input.thinFar);
   const lod = writeSameCarLightLod(input.distanceM, input.impostorPresence, legacyFarAlpha);
-  const hullLod = 1 - trafficAppearanceSmoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, input.distanceM);
-  const distanceScale = HULL_DISSOLVE_FLOOR_SCALE + (1 - HULL_DISSOLVE_FLOOR_SCALE) * hullLod;
-  const lifecycleScale = trafficAppearanceSmoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, finalFade);
-  const hullScale = input.sizeScale * distanceScale * lifecycleScale;
-  const hullCoverage = hullLod;
-  const nearFade = finalFade * lod.nearAlpha;
+  const hullLod = trafficHullVisibility(input.distanceM, 1);
+  const distanceScale = 1;
+  const lifecycleScale = 1;
+  const hullScale = input.sizeScale;
+  const hullCoverage = trafficHullVisibility(input.distanceM, finalFade);
   const distanceDim = evaluateTrafficDistanceDim(distanceSq);
-  const tintGain = distanceDim * nearFade;
+  const tintGain = distanceDim * lod.nearAlpha;
   const hasHullRecord = input.hasHullRecord ?? true;
   const hullHead = hullPatchAppearance(input, 'head', hullScale, tintGain, hasHullRecord, hullCoverage);
   const hullTail = hullPatchAppearance(input, 'tail', hullScale, tintGain, hasHullRecord, hullCoverage);
@@ -1383,7 +1385,7 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
     hull: {
       hasInstance: hasHullRecord,
       hullLodAlpha: hullLod,
-      fade: hullLod,
+      fade: hullCoverage,
       distanceScale,
       lifecycleScale,
       scale: hullScale,
@@ -1396,7 +1398,7 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
     streak: { hasRecord: hasStreakRecord, head, tail, headPickup, tailPickup, trail },
     uploaded: {
       hasRecord: hasStreakRecord,
-      aFade: hasHullRecord ? hullLod : null,
+      aFade: hasHullRecord ? hullCoverage : null,
       aCarFade: hasStreakRecord ? aCarFade : null,
       aCarLod: hasStreakRecord ? [lod.nearAlpha, lod.impostorAlpha, input.carIndex] : null,
     },

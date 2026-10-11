@@ -37,6 +37,14 @@ export function hullLodAlpha(distanceM: number): number {
   return 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, distanceM);
 }
 
+/**
+ * Hull visibility combining lifecycle presence and far dissolve distance.
+ * Returns clamp(lifecyclePresence, 0, 1) * (1 - smoothstep(750, 1300, distanceM)).
+ */
+export function trafficHullVisibility(distanceM: number, lifecyclePresence: number): number {
+  return clamp01(lifecyclePresence) * (1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, distanceM));
+}
+
 /** Keeps the low-tier far fade at zero presence, then adopts the hull LOD cap by threshold. */
 export function cpuLightVisibilityAlpha(
   distanceM: number,

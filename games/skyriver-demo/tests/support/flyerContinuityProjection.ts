@@ -1,6 +1,6 @@
 import type { TrafficCameraProjection, TrafficRgb } from '../../src/render/trafficAppearanceModel';
 
-export const FLYER_MATRIX_DPRS = [1, 1.25] as const;
+export const FLYER_MATRIX_DPRS = [1, 1.25, 1.5] as const;
 export const FLYER_MATRIX_FACINGS = [0, 180, 45, 90] as const;
 export const FLYER_MATRIX_TIERS = ['high', 'medium', 'low'] as const;
 export const FLYER_MATRIX_STEP_M = 25;
