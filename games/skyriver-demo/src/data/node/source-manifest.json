@@ -170,6 +170,11 @@
     "byteLength": 1814
   },
   {
+    "path": "src/render/signMedia.ts",
+    "sha256": "38f898f320505ba9440ab46b2ef2dd69bf507fa4c4d5da20afcd7a26b320d39a",
+    "byteLength": 25996
+  },
+  {
     "path": "src/render/signShaders.ts",
     "sha256": "0ff1b39a1e07536189c51b3f0f3541c063d32d2fa439189afbcfdac25db00a3e",
     "byteLength": 8167
