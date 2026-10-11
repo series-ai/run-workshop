@@ -66,8 +66,8 @@
   },
   {
     "path": "src/render/city.ts",
-    "sha256": "9d977d34f7c4d5560030445d91e55a694cef06837da647a2c2c8196ac1b12c0e",
-    "byteLength": 639148
+    "sha256": "ab910aa1e7af73799cf871c6f5b1657307d685bd4df05b8e404c7e593d670384",
+    "byteLength": 645583
   },
   {
     "path": "src/render/citySnapshotCodec.ts",
@@ -146,8 +146,8 @@
   },
   {
     "path": "src/render/scene.ts",
-    "sha256": "f3480c4460c0910b703286206b36827a32494074ffe02934b5d90258e9bcc49d",
-    "byteLength": 87809
+    "sha256": "b67ccbca79d991092224a5f8c22904d81f06c154774331354f7e746f039dd894",
+    "byteLength": 88080
   },
   {
     "path": "src/render/shuttle.ts",

@@ -135,6 +135,53 @@ export type SkyriverInteriorMode = 'full' | 'near' | 'off';
 /** View-depth fade windows (start, end), metres: rooms within start, emissive panes beyond end. */
 export { SKYRIVER_INTERIOR_FADE };
 
+/** Duration of the interior transition during runtime tier changes, in seconds. */
+export const SKYRIVER_INTERIOR_TRANSITION_DURATION_S = 1.2;
+
+/** State of one interior parameter transition. */
+export interface SkyriverInteriorTransitionState {
+  fromStrength: number;
+  fromFadeStart: number;
+  fromFadeEnd: number;
+  toStrength: number;
+  toFadeStart: number;
+  toFadeEnd: number;
+  startTime: number;
+  duration: number;
+}
+
+/** Diagnostic record of the interior transition state. */
+export interface SkyriverInteriorTransitionDiagnostic {
+  readonly currentStrength: number;
+  readonly currentFade: readonly [number, number];
+  readonly targetMode: SkyriverInteriorMode;
+  readonly targetStrength: number;
+  readonly targetFade: readonly [number, number];
+  readonly transitioning: boolean;
+  readonly progress: number;
+}
+
+/** Return settled interior parameters for one mode. */
+export function skyriverInteriorSettledParameters(mode: SkyriverInteriorMode): {
+  readonly strength: number;
+  readonly fadeStart: number;
+  readonly fadeEnd: number;
+} {
+  const strength = mode === 'off' ? 0 : 1;
+  const fade = mode === 'near' ? SKYRIVER_INTERIOR_FADE.near : SKYRIVER_INTERIOR_FADE.full;
+  return {
+    strength,
+    fadeStart: fade[0],
+    fadeEnd: fade[1],
+  };
+}
+
+/** Calculate smoothstep interpolation in range 0 to 1. */
+function smoothstep01(value: number): number {
+  const t = Math.min(1, Math.max(0, value));
+  return t * t * (3 - 2 * t);
+}
+
 export const SKYRIVER_CONTACT_AO = Object.freeze({
   legacyMinimum: 0.35,
   legacyHeightM: 40,
@@ -13401,8 +13448,29 @@ export class SkyriverCity {
   private readonly impostorAtlas: ImpostorAtlas;
   /** R16 A/B: far layers as cards ('impostor', default) or as R15's box masses ('geometry'). */
   private farMode: 'impostor' | 'geometry' = 'impostor';
-  /** The interior mapping mode currently applied, for the diagnostic settings record. */
+  /** Target interior mode. */
   private roomMode: SkyriverInteriorMode = 'full';
+  /** Current interpolated interior strength. */
+  private currentInteriorStrength: number = 1;
+  /** Current interpolated interior fade start distance in metres. */
+  private currentInteriorFadeStart: number = SKYRIVER_INTERIOR_FADE.full[0];
+  /** Current interpolated interior fade end distance in metres. */
+  private currentInteriorFadeEnd: number = SKYRIVER_INTERIOR_FADE.full[1];
+  /** True when an interior transition is active. */
+  private interiorTransitioning = false;
+  /** Presentation time of the last frame. Null before the first frame. */
+  private lastPresentationTime: number | null = null;
+  /** State object for interior parameter transitions. */
+  private readonly interiorTransition: SkyriverInteriorTransitionState = {
+    fromStrength: 1,
+    fromFadeStart: SKYRIVER_INTERIOR_FADE.full[0],
+    fromFadeEnd: SKYRIVER_INTERIOR_FADE.full[1],
+    toStrength: 1,
+    toFadeStart: SKYRIVER_INTERIOR_FADE.full[0],
+    toFadeEnd: SKYRIVER_INTERIOR_FADE.full[1],
+    startTime: Number.NaN,
+    duration: SKYRIVER_INTERIOR_TRANSITION_DURATION_S,
+  };
   private readonly trimMaterial: THREE.ShaderMaterial;
   private readonly signMaterial: THREE.ShaderMaterial;
   private readonly signGeometry: THREE.InstancedBufferGeometry;
@@ -13451,7 +13519,7 @@ export class SkyriverCity {
   private roofDetailUploadedByStratum: [number, number, number] = [0, 0, 0];
   private roofDetailHeroExcludedByStratum: [number, number, number] = [0, 0, 0];
 
-  constructor({ layout, colourSwitch }: SkyriverCityOptions) {
+  constructor({ layout, quality, colourSwitch }: SkyriverCityOptions) {
     installSkyriverFogChunks();
     this.layout = layout;
     this.colourSwitch = colourSwitch;
@@ -13670,6 +13738,9 @@ export class SkyriverCity {
 
     // R22: the materials above were built in the switch's current state, so only a change applies.
     colourSwitch.onChange((allowed) => this.applyDistrictColour(allowed));
+    if (quality) {
+      this.setInteriorMode(quality.interiors, true);
+    }
   }
 
   /**
@@ -13693,15 +13764,90 @@ export class SkyriverCity {
   }
 
   /**
-   * T7-4 interior mapping tier: 'full' traces rooms out to ~750 m, 'near' only close by (medium
-   * tier), 'off' keeps the emissive window term (low tier, perf-safe fallback).
+   * Set the interior mode.
+   * Runtime tier changes start a smooth parameter transition.
+   * Bootstrap and explicit immediate calls apply target values immediately.
    */
-  setInteriorMode(mode: SkyriverInteriorMode): void {
+  setInteriorMode(mode: SkyriverInteriorMode, immediate = false): void {
+    const target = skyriverInteriorSettledParameters(mode);
+    const forceImmediate = immediate || this.lastPresentationTime === null;
+
+    if (forceImmediate) {
+      this.roomMode = mode;
+      this.interiorTransitioning = false;
+      this.currentInteriorStrength = target.strength;
+      this.currentInteriorFadeStart = target.fadeStart;
+      this.currentInteriorFadeEnd = target.fadeEnd;
+
+      const t = this.interiorTransition;
+      t.fromStrength = target.strength;
+      t.fromFadeStart = target.fadeStart;
+      t.fromFadeEnd = target.fadeEnd;
+      t.toStrength = target.strength;
+      t.toFadeStart = target.fadeStart;
+      t.toFadeEnd = target.fadeEnd;
+      t.startTime = Number.NaN;
+      t.duration = SKYRIVER_INTERIOR_TRANSITION_DURATION_S;
+
+      const u = this.towerMaterial.uniforms;
+      u.uInteriorStrength!.value = target.strength;
+      (u.uInteriorFade!.value as THREE.Vector2).set(target.fadeStart, target.fadeEnd);
+      return;
+    }
+
+    // Repeated requests for the same target mode do not restart the transition.
+    if (mode === this.roomMode) {
+      return;
+    }
+
     this.roomMode = mode;
+
+    // Interrupted tier changes start from current parameters without discontinuity.
+    const t = this.interiorTransition;
+    t.fromStrength = this.currentInteriorStrength;
+    t.fromFadeStart = this.currentInteriorFadeStart;
+    t.fromFadeEnd = this.currentInteriorFadeEnd;
+    t.toStrength = target.strength;
+    t.toFadeStart = target.fadeStart;
+    t.toFadeEnd = target.fadeEnd;
+    t.startTime = Number.NaN;
+    t.duration = SKYRIVER_INTERIOR_TRANSITION_DURATION_S;
+    this.interiorTransitioning = true;
+  }
+
+  /**
+   * Update interior parameters for the presentation time.
+   */
+  private updateInteriorTransition(time: number): void {
+    this.lastPresentationTime = time;
+    if (!this.interiorTransitioning) return;
+
+    const t = this.interiorTransition;
+    if (Number.isNaN(t.startTime)) {
+      t.startTime = time;
+    }
+
+    const elapsed = time - t.startTime;
+    const progress = t.duration > 0 ? Math.min(1, Math.max(0, elapsed / t.duration)) : 1;
+    const smooth = smoothstep01(progress);
+
+    if (progress >= 1) {
+      this.currentInteriorStrength = t.toStrength;
+      this.currentInteriorFadeStart = t.toFadeStart;
+      this.currentInteriorFadeEnd = t.toFadeEnd;
+      this.interiorTransitioning = false;
+    } else {
+      this.currentInteriorStrength = t.fromStrength + (t.toStrength - t.fromStrength) * smooth;
+      this.currentInteriorFadeStart = t.fromFadeStart + (t.toFadeStart - t.fromFadeStart) * smooth;
+      this.currentInteriorFadeEnd = t.fromFadeEnd + (t.toFadeEnd - t.fromFadeEnd) * smooth;
+    }
+
     const u = this.towerMaterial.uniforms;
-    u.uInteriorStrength!.value = mode === 'off' ? 0 : 1;
-    const fade = mode === 'near' ? SKYRIVER_INTERIOR_FADE.near : SKYRIVER_INTERIOR_FADE.full;
-    (u.uInteriorFade!.value as THREE.Vector2).set(fade[0], fade[1]);
+    u.uInteriorStrength!.value = this.currentInteriorStrength;
+    (u.uInteriorFade!.value as THREE.Vector2).set(
+      this.currentInteriorFadeStart,
+      this.currentInteriorFadeEnd,
+    );
   }
 
   setContactAllowed(allowed: boolean): void {
@@ -13709,10 +13855,49 @@ export class SkyriverCity {
   }
 
   /** The fade window currently in use, metres (for the debug stats). */
-  interiorFade(): { readonly strength: number; readonly start: number; readonly end: number } {
-    const u = this.towerMaterial.uniforms;
-    const fade = u.uInteriorFade!.value as THREE.Vector2;
-    return { strength: u.uInteriorStrength!.value as number, start: fade.x, end: fade.y };
+  interiorFade(): {
+    readonly strength: number;
+    readonly start: number;
+    readonly end: number;
+    readonly targetStrength: number;
+    readonly targetStart: number;
+    readonly targetEnd: number;
+    readonly transitioning: boolean;
+  } {
+    const target = skyriverInteriorSettledParameters(this.roomMode);
+    return {
+      strength: this.currentInteriorStrength,
+      start: this.currentInteriorFadeStart,
+      end: this.currentInteriorFadeEnd,
+      targetStrength: target.strength,
+      targetStart: target.fadeStart,
+      targetEnd: target.fadeEnd,
+      transitioning: this.interiorTransitioning,
+    };
+  }
+
+  /** Diagnostic record of target and current transition state. */
+  interiorTransitionDiagnostic(): SkyriverInteriorTransitionDiagnostic {
+    const target = skyriverInteriorSettledParameters(this.roomMode);
+    const t = this.interiorTransition;
+    let progress = 1;
+    if (
+      this.interiorTransitioning &&
+      this.lastPresentationTime !== null &&
+      !Number.isNaN(t.startTime) &&
+      t.duration > 0
+    ) {
+      progress = Math.min(1, Math.max(0, (this.lastPresentationTime - t.startTime) / t.duration));
+    }
+    return {
+      currentStrength: this.currentInteriorStrength,
+      currentFade: [this.currentInteriorFadeStart, this.currentInteriorFadeEnd],
+      targetMode: this.roomMode,
+      targetStrength: target.strength,
+      targetFade: [target.fadeStart, target.fadeEnd],
+      transitioning: this.interiorTransitioning,
+      progress,
+    };
   }
 
   /** The interior mapping mode and the far-city mode actually applied, for the settings record. */
@@ -14301,6 +14486,7 @@ export class SkyriverCity {
     this.towerMaterial.uniforms.uTime.value = time;
     this.trimMaterial.uniforms.uTime.value = time;
     this.signMaterial.uniforms.uTime.value = time;
+    this.updateInteriorTransition(time);
   }
 
   stats(): SkyriverCityStats {

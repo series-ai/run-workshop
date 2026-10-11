@@ -44,7 +44,12 @@ import {
   skyriverBeamRecord,
   skyriverFogBypassed,
 } from './atmosphere';
-import { SkyriverCity, SKYRIVER_CITY_DRAW_CALL_BUDGET, type SkyriverInteriorMode } from './city';
+import {
+  SkyriverCity,
+  SKYRIVER_CITY_DRAW_CALL_BUDGET,
+  type SkyriverInteriorMode,
+  type SkyriverInteriorTransitionDiagnostic,
+} from './city';
 import { SkyriverDistrictColourSwitch } from './districts';
 import { SkyriverDepthSnapshot } from './depthFade';
 import { presentCityLayout } from './presentationLayout';
@@ -825,7 +830,7 @@ export class SkyriverScene {
       colourSwitch: this.colourSwitch,
     });
     this.scene.add(this.city.group);
-    this.city.setInteriorMode(this.quality.interiors);
+    this.city.setInteriorMode(this.quality.interiors, true);
 
     // R23 smog: allocated once at the high count, so a tier change only moves `instanceCount`.
     this.smog = new SkyriverSmog({
@@ -1255,7 +1260,7 @@ export class SkyriverScene {
   /** A/B evidence and perf: force interior mapping off (false) or back to the tier default (true). */
   setInteriorsAllowed(allowed: boolean): void {
     this.interiorsAllowed = allowed;
-    this.city.setInteriorMode(allowed ? this.quality.interiors : 'off');
+    this.city.setInteriorMode(allowed ? this.quality.interiors : 'off', true);
   }
 
   /**
@@ -1489,6 +1494,11 @@ export class SkyriverScene {
       postDraws: post,
       frameDrawEstimate: scene + post,
     };
+  }
+
+  /** Diagnostic record of target and current interior transition state. */
+  interiorTransitionDiagnostic(): SkyriverInteriorTransitionDiagnostic {
+    return this.city.interiorTransitionDiagnostic();
   }
 
   /**
