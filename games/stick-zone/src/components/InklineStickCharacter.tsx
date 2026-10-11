@@ -10,6 +10,7 @@ import {
   updatePaleInkContour,
   updateXraySilhouette,
   disposeInstance,
+  INK_CONTOUR_COLOR,
 } from "../render/celShader.js";
 import type { AssetKey } from "../assetLibrary.js";
 
@@ -29,6 +30,7 @@ export interface InklineStickCharacterProps {
   accentColor: string;
   hasWeapon?: boolean;
   speed?: number;
+  moveAngle?: number;
   action?: string;
   onSampleBones?: (bones: { footR: THREE.Vector3; handR: THREE.Vector3 }) => void;
 }
@@ -101,6 +103,7 @@ function LoadedCharacter({
   hasWeapon = true,
   isCurrentPlayer = false,
   speed,
+  moveAngle,
   action: operativeAction,
   onSampleBones,
 }: InklineStickCharacterProps & { url: string }) {
@@ -192,13 +195,46 @@ function LoadedCharacter({
     }
   }, [actions, isMoving, isFiring, isAlive, isRolling, weapon, hasWeapon]);
 
-  // Dynamically match animation playback rate to physical locomotion speed
-  useFrame(() => {
+  // Separate upper and lower body animation & aim rotation
+  useFrame((_, delta) => {
+    let targetBaseRotation = facing;
+    let targetTorsoTwist = 0;
+    let isBackpedaling = false;
+
+    if (isMoving && moveAngle !== undefined) {
+      let angleDiff = facing - moveAngle;
+      angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+
+      if (Math.abs(angleDiff) <= 1.95) {
+        // Forward / flanking run: legs face move direction, torso twists to aim
+        targetBaseRotation = moveAngle;
+        targetTorsoTwist = angleDiff;
+      } else {
+        // Retreating / backpedaling: legs face aim target, run animation plays in reverse
+        targetBaseRotation = facing;
+        targetTorsoTwist = 0;
+        isBackpedaling = true;
+      }
+    }
+
+    if (groupRef.current) {
+      const curRot = groupRef.current.rotation.y;
+      const rotDiff = Math.atan2(Math.sin(targetBaseRotation - curRot), Math.cos(targetBaseRotation - curRot));
+      groupRef.current.rotation.y = curRot + rotDiff * Math.min(1, delta * 18);
+    }
+
+    if (spineBone && chestBone) {
+      const halfTwist = targetTorsoTwist * 0.5;
+      spineBone.rotation.y = THREE.MathUtils.lerp(spineBone.rotation.y, halfTwist, Math.min(1, delta * 15));
+      chestBone.rotation.y = THREE.MathUtils.lerp(chestBone.rotation.y, halfTwist, Math.min(1, delta * 15));
+    }
+
     if (actions && currentActionNameRef.current && isMoving) {
       const activeAction = actions[currentActionNameRef.current];
       if (activeAction) {
         const curSpeed = (speed !== undefined && speed > 0.05) ? speed : 4.8;
-        const targetScale = THREE.MathUtils.clamp(curSpeed / 4.8, 0.75, 1.55);
+        const baseScale = THREE.MathUtils.clamp(curSpeed / 4.8, 0.75, 1.55);
+        const targetScale = isBackpedaling ? -baseScale : baseScale;
         activeAction.timeScale = THREE.MathUtils.lerp(activeAction.timeScale, targetScale, 0.2);
       }
     }
@@ -241,9 +277,8 @@ function LoadedCharacter({
         applyCelShading(mat);
       }
 
-      // Attach authentic Inkline screen-space back-face contour with squad/team accent
-      const contourColor = isCurrentPlayer ? "#38bdf8" : accentColor;
-      updatePaleInkContour(child, 1.45, contourColor);
+      // Attach authentic Inkline pitch-black comic ink outline
+      updatePaleInkContour(child, 1.35, INK_CONTOUR_COLOR);
 
       // Attach X-Ray occluded silhouette through walls (cyan for allies, threat red for enemies)
       const xrayColor = isCurrentPlayer || accentColor === "#38bdf8" || accentColor === "#51E5F0" ? "#38bdf8" : "#ef4444";
@@ -280,6 +315,17 @@ function LoadedCharacter({
       });
     }
     return head;
+  }, [clonedScene]);
+
+  const spineBone = useMemo(() => {
+    if (!clonedScene) return null;
+    let spine = clonedScene.getObjectByName("Spine");
+    if (!spine) {
+      clonedScene.traverse((obj) => {
+        if (obj instanceof THREE.Bone && !spine && /spine/i.test(obj.name)) spine = obj;
+      });
+    }
+    return spine;
   }, [clonedScene]);
 
   const chestBone = useMemo(() => {
@@ -346,7 +392,7 @@ function LoadedCharacter({
       : [0, 0.05, 0.02];
 
   return (
-    <group ref={groupRef} rotation={[0, facing, 0]} dispose={null}>
+    <group ref={groupRef} dispose={null}>
       {/* 3D Skeletal Mesh with Cel-Shading and Ink Contours */}
       <primitive object={clonedScene} />
 

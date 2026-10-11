@@ -239,44 +239,44 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* Heavy Industrial Ground Floor (Tactical Military Concrete Tarmac) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
         <planeGeometry args={[240, 240]} />
-        <meshStandardMaterial color="#464238" roughness={0.94} metalness={0.02} />
+        <meshStandardMaterial color="#dde0e4" roughness={0.90} metalness={0.05} />
       </mesh>
 
       {/* Concrete Slab Grid Joint Seams (6m Slabs with Dark Joints) */}
       {Array.from({ length: 27 }, (_, i) => -80 + i * 6).map((zPos) => (
         <mesh key={`seam_z_${zPos}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.045, zPos]} receiveShadow>
           <planeGeometry args={[160, 0.05]} />
-          <meshBasicMaterial color="#232a24" />
+          <meshBasicMaterial color="#151716" transparent opacity={0.25} />
         </mesh>
       ))}
       {Array.from({ length: 27 }, (_, i) => -80 + i * 6).map((xPos) => (
         <mesh key={`seam_x_${xPos}`} rotation={[-Math.PI / 2, 0, 0]} position={[xPos, -0.045, 0]} receiveShadow>
           <planeGeometry args={[0.05, 160]} />
-          <meshBasicMaterial color="#232a24" />
+          <meshBasicMaterial color="#151716" transparent opacity={0.25} />
         </mesh>
       ))}
 
       {/* Central Tactical Logistics Runway (Concrete Slabs) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} receiveShadow>
         <planeGeometry args={[22, 126]} />
-        <meshStandardMaterial color="#545044" roughness={0.90} metalness={0.02} />
+        <meshStandardMaterial color="#dde0e4" roughness={0.85} metalness={0.05} />
       </mesh>
 
       {/* Flanking Luminous Guide Strips */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.2, 0.02, 17]} receiveShadow>
         <planeGeometry args={[0.3, 126]} />
-        <meshBasicMaterial color="#b5a05d" />
+        <meshBasicMaterial color="#151716" />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.2, 0.02, 17]} receiveShadow>
         <planeGeometry args={[0.3, 126]} />
-        <meshBasicMaterial color="#b5a05d" />
+        <meshBasicMaterial color="#151716" />
       </mesh>
 
       {/* Transverse Heavy-Vehicle Runway Markers */}
       {[-35, -15, 5, 25, 45, 65].map((zPos) => (
         <mesh key={zPos} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, zPos]} receiveShadow>
           <planeGeometry args={[16, 0.6]} />
-          <meshBasicMaterial color="#334155" />
+          <meshBasicMaterial color="#151716" />
         </mesh>
       ))}
 
@@ -304,7 +304,7 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* FOB Outpost Elevated Foundation Slab (Solid 3D block at y=0.08, zero z-fighting with terrain) */}
       <mesh position={[0, 0.08, -63]} receiveShadow castShadow>
         <boxGeometry args={[15.6, 0.16, 21]} />
-        <meshStandardMaterial color="#38352f" roughness={0.92} metalness={0.02} />
+        <meshStandardMaterial color="#dde0e4" roughness={0.88} metalness={0.05} />
       </mesh>
 
       {/* FOB North Wall Behind Outpost */}

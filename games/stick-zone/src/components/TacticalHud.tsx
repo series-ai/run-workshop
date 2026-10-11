@@ -179,7 +179,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
           prev.filter((c) => !newEntries.some((n) => n.id === c.id))
         );
       }, 700);
-      return () => clearTimeout(timer);
+  return () => clearTimeout(timer);
     }
   }, [
     isTestMode,
@@ -320,6 +320,18 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
   const CARDINALS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
   const currentCardinal = CARDINALS[Math.round(headingDeg / 45) % 8];
 
+  const isHub = sim.zoneMode === "hub";
+  const mapMinX = isHub ? -20 : -65;
+  const mapMaxX = isHub ? 20 : 65;
+  const mapMinZ = isHub ? -80 : -55;
+  const mapMaxZ = isHub ? -45 : 65;
+
+  const toMapPct = (x: number, z: number) => {
+    const px = Math.max(6, Math.min(94, ((x - mapMinX) / (mapMaxX - mapMinX)) * 100));
+    const py = Math.max(6, Math.min(94, ((z - mapMinZ) / (mapMaxZ - mapMinZ)) * 100));
+    return { left: `${px}%`, top: `${py}%` };
+  };
+
   return (
     <div className="tactical-hud hud-layer">
       {/* Anime Kinetic Speed Lines Canvas Overlay */}
@@ -398,61 +410,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
 
       
 
-      {sim.zoneMode === "hub" && !isFobMinimized && (
-        <div className="fob-briefing-card hud-shell hud-interactive" style={{ position: "absolute", top: "140px", left: "18px", zIndex: 30, maxWidth: "340px" }}>
-          <div className="fob-briefing-watermark" aria-hidden="true">TRAINING</div>
-          <div className="fob-briefing-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <span className="fob-briefing-tag">// FORWARD OPERATING BASE</span>
-              <span className="fob-briefing-title">PRE-FLIGHT READINESS</span>
-            </div>
-            <button
-              onClick={() => setIsFobMinimized(true)}
-              className="tactical-ink-btn"
-              style={{ padding: "2px 8px", fontSize: "9px", background: "transparent", color: "#94a3b8", borderColor: "#475569" }}
-              title="Minimize Checklist"
-            >
-              ▲ HIDE
-            </button>
-          </div>
-
-          <div className="fob-briefing-checklist">
-            <div className={`fob-task-row ${sim.trainingProgress?.dummyHit ? "completed" : "pending"}`}>
-              <span className="task-status-icon">{sim.trainingProgress?.dummyHit ? "✓" : "○"}</span>
-              <div className="task-text-group">
-                <span className="task-label">TEST WEAPONS ON TARGET DUMMIES</span>
-                <span className="task-subtext">[LEFT CLICK / J] FIRE • [R] RELOAD • [E] KICK</span>
-              </div>
-            </div>
-
-            <div className={`fob-task-row ${sim.trainingProgress?.agilityUsed ? "completed" : "pending"}`}>
-              <span className="task-status-icon">{sim.trainingProgress?.agilityUsed ? "✓" : "○"}</span>
-              <div className="task-text-group">
-                <span className="task-label">PRACTICE AGILITY MANEUVERS</span>
-                <span className="task-subtext">[C] COMBAT SLIDE • [SPACE] EVASION ROLL</span>
-              </div>
-            </div>
-
-            <div className={`fob-task-row ${sim.trainingProgress?.crateLooted ? "completed" : "pending"}`}>
-              <span className="task-status-icon">{sim.trainingProgress?.crateLooted ? "✓" : "○"}</span>
-              <div className="task-text-group">
-                <span className="task-label">SEARCH TRAINING SUPPLY LOCKER</span>
-                <span className="task-subtext">APPROACH EAST CRATE • PRESS [E / F] TO LOOT</span>
-              </div>
-            </div>
-
-            <div className="fob-task-row deployment-task">
-              <span className="task-status-icon deployment-icon">➔</span>
-              <div className="task-text-group">
-                <span className="task-label deployment-label">ENTER AIRLOCK GATEWAY (z: -52)</span>
-                <span className="task-subtext">STEP ONTO PAD TO INITIATE SECTOR 7 EXTRACTION</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Contextual Airlock Proximity Prompt */}
+            {/* Contextual Airlock Proximity Prompt */}
       {sim.zoneMode === "hub" && Math.hypot(player.x, player.z - (-52)) < 7.5 && (
         <div
           style={{
@@ -691,42 +649,87 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
               </>
             )}
 
-            {/* Tactical Radar Display with Scope Crosshair & Scanlines */}
-            <div className="hud-radar">
-              <div className="hud-radar-crosshair" />
-              <div className="hud-radar-ring" style={{ width: "38%", height: "38%" }} />
-              <div className="hud-radar-ring" style={{ width: "76%", height: "76%" }} />
-              
-              {/* Rotating Player Heading Marker */}
-              <div
-                className="hud-radar-heading"
-                style={{ transform: `translate(-50%, -50%) rotate(${headingDeg}deg)` }}
-              >
-                ▲
-              </div>
+            {/* Real Functional Tactical Minimap */}
+            <div className="hud-minimap-container">
+              <div className="hud-minimap-grid" />
+              <div className="hud-minimap-runway" />
 
-              {/* Hostile Blips within 30m Detection Envelope */}
-              {sim.rivals.map((r) => {
-                if (!r.isAlive || r.isExtracted) return null;
-                const dx = r.x - player.x;
-                const dz = r.z - player.z;
-                const dist = Math.hypot(dx, dz);
-                if (dist > 30) return null;
-                const px = 50 + (dx / 30) * 42;
-                const py = 50 + (dz / 30) * 42;
-                const isBoss = r.id === "scav_boss_warlord" || /boss|warlord/i.test(r.name);
+              {/* Extraction / Gateway Points */}
+              {isHub ? (
+                <>
+                  <div className="hud-minimap-zone airlock" style={toMapPct(0, -52)}>
+                    <div className="zone-dot" />
+                    <span>GATE</span>
+                  </div>
+                  <div className="hud-minimap-zone" style={{ ...toMapPct(-5, -64), color: "#f59e0b" }}>
+                    <div className="zone-dot" style={{ borderRadius: "50%" }} />
+                    <span>DUMMY</span>
+                  </div>
+                  <div className="hud-minimap-zone" style={{ ...toMapPct(5, -64), color: "#f59e0b" }}>
+                    <div className="zone-dot" style={{ borderRadius: "50%" }} />
+                    <span>DUMMY</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="hud-minimap-zone lz" style={toMapPct(45, 45)}>
+                    <div className="zone-dot" />
+                    <span>LZ-1</span>
+                  </div>
+                  <div className="hud-minimap-zone bunker" style={toMapPct(-45, -45)}>
+                    <div className="zone-dot" />
+                    <span>BNK</span>
+                  </div>
+                  <div className="hud-minimap-zone airlock" style={toMapPct(0, -48)}>
+                    <div className="zone-dot" />
+                    <span>FOB</span>
+                  </div>
+                </>
+              )}
+
+              {/* Loot Crates */}
+              {sim.crates.map((c) => {
+                if (c.opened) return null;
+                const pos = toMapPct(c.x, c.z);
                 return (
                   <div
-                    key={r.id}
-                    className={`hud-radar-blip ${isBoss ? "boss-blip" : "enemy-blip"}`}
-                    style={{ left: `${px}%`, top: `${py}%` }}
+                    key={c.id}
+                    className="hud-minimap-crate"
+                    style={pos}
+                    title="Supply Crate"
                   />
                 );
               })}
 
-              <div className="hud-radar-tag">
-                RNG 30M // {currentCardinal} {String(headingDeg).padStart(3, "0")}°
+              {/* Enemy Contacts */}
+              {sim.rivals.map((r) => {
+                if (!r.isAlive || r.isExtracted) return null;
+                const pos = toMapPct(r.x, r.z);
+                const isBoss = r.id === "scav_boss_warlord" || /boss|warlord/i.test(r.name);
+                return (
+                  <div
+                    key={r.id}
+                    className={`hud-minimap-enemy ${isBoss ? "boss" : ""}`}
+                    style={pos}
+                    title={r.name}
+                  />
+                );
+              })}
+
+              {/* Player Icon with Heading Arrow */}
+              <div
+                className="hud-minimap-player"
+                style={{
+                  ...toMapPct(player.x, player.z),
+                  transform: `translate(-50%, -50%) rotate(${headingDeg}deg)`,
+                }}
+              >
+                <span className="player-arrow">▲</span>
               </div>
+            </div>
+
+            <div className="hud-minimap-footer">
+              [{Math.round(player.x)}, {Math.round(player.z)}] • {currentCardinal} {String(headingDeg).padStart(3, "0")}°
             </div>
           </div>
         </div>
@@ -826,36 +829,12 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
               </div>
             )}
 
-            {/* Tactical Keybind Telemetry */}
-            <div className="hud-maneuvers">
-              <span>SHIFT RUN</span>
-              <span>•</span>
-              <span>C SLIDE</span>
-              <span>•</span>
-              <span>SPACE ROLL</span>
-              <span>•</span>
-              <span>V KICK</span>
-            </div>
+
           </div>
         </div>
       </div>
 
-      {/* Bottom Center: Minimal Combat Ticker */}
-      {(() => {
-        const displayLogs = sim.combatLog
-          .filter((l) => !l.startsWith("[STAGED INGRESS]") && !l.startsWith("[SETTLEMENT]"))
-          .slice(-2);
-        if (displayLogs.length === 0) return null;
-        return (
-          <div className="hud-combat-ticker">
-            {displayLogs.map((log, idx) => (
-              <div key={idx} className="hud-ticker-line">
-                {log}
-              </div>
-            ))}
-          </div>
-        );
-      })()}
+
 
       {/* Bottom Right: Tactical Ballistics Station */}
       <div className="hud-station hud-ballistics">

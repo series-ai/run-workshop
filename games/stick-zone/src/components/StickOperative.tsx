@@ -43,6 +43,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   const lastPosRef = useRef({ x: operative.x, z: operative.z });
   const speedRef = useRef(0);
   const isMovingLocallyRef = useRef(false);
+  const moveAngleRef = useRef<number | undefined>(undefined);
   const lastHealthRef = useRef(operative.health);
   const lastArmorRef = useRef(operative.armor || 0);
   const hitFlashUntilRef = useRef(0);
@@ -105,6 +106,9 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     const measuredSpeed = distMoved / Math.max(0.001, delta);
     speedRef.current = THREE.MathUtils.lerp(speedRef.current, measuredSpeed, 0.25);
     isMovingLocallyRef.current = distMoved > 0.012;
+    const dx = rootGroupRef.current.position.x - lastPosRef.current.x;
+    const dz = rootGroupRef.current.position.z - lastPosRef.current.z;
+    moveAngleRef.current = distMoved > 0.012 ? Math.atan2(dx, dz) : undefined;
     lastPosRef.current = {
       x: rootGroupRef.current.position.x,
       z: rootGroupRef.current.position.z,
@@ -257,15 +261,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
               side={THREE.DoubleSide}
             />
           </mesh>
-          {/* Directional Aim Cone (Only for current player) */}
-          {isCurrentPlayer && (
-            <group rotation={[0, 0, -operative.facing]}>
-              <mesh position={[0, 0.82, 0]}>
-                <coneGeometry args={[0.10, 0.22, 3]} />
-                <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} />
-              </mesh>
-            </group>
-          )}
+
         </group>
 
         {/* Rigged Animated Inkline 3D Stick Character */}
@@ -283,6 +279,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
           accentColor={accentColor}
           hasWeapon={true}
           speed={speedRef.current}
+          moveAngle={moveAngleRef.current}
           action={operative.action}
           onSampleBones={onSampleBones}
         />

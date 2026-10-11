@@ -1637,11 +1637,11 @@ html, body, #root {
 .tactical-hud {
   --hud-ink: #d5dbc6;
   --hud-muted: #95a28d;
-  --hud-line: #4c5746;
-  --hud-line-glow: rgba(173, 197, 139, 0.25);
-  --hud-panel: rgba(18, 24, 20, 0.92);
-  --hud-empty: #222923;
-  --hud-phosphor: #adc58b;
+  --hud-line: rgba(56, 189, 248, 0.22);
+  --hud-line-glow: rgba(56, 189, 248, 0.12);
+  --hud-panel: rgba(15, 23, 42, 0.65);
+  --hud-empty: rgba(30, 41, 59, 0.55);
+  --hud-phosphor: #38bdf8;
   --hud-warning: #eab308;
   --hud-danger: #ef4444;
   --hud-cut: 10px;
@@ -1702,15 +1702,16 @@ html, body, #root {
   position: relative;
   padding: 1px;
   background: var(--hud-line);
-  clip-path: var(--hud-shape);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 10px var(--hud-line-glow);
+  border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
 }
 
 .hud-shell__body {
-  padding: 12px 14px;
+  padding: 10px 13px;
   background: var(--hud-panel);
-  clip-path: var(--hud-shape);
-  backdrop-filter: blur(10px);
+  border-radius: 5px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 /* Label & Typography */
@@ -2173,4 +2174,124 @@ html, body, #root {
   font-weight: 700;
   color: var(--hud-muted);
   text-align: center;
+}
+
+/* Real Functional Tactical Minimap */
+.hud-minimap-container {
+  width: 100%;
+  height: 125px;
+  background: rgba(8, 12, 20, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.hud-minimap-grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+  pointer-events: none;
+}
+
+.hud-minimap-runway {
+  position: absolute;
+  left: calc(50% - 1px);
+  top: 8%;
+  bottom: 8%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.hud-minimap-player {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hud-minimap-player .player-arrow {
+  color: #38bdf8;
+  font-size: 12px;
+  line-height: 1;
+  text-shadow: 0 0 4px #38bdf8;
+}
+
+.hud-minimap-crate {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #f59e0b;
+  border-radius: 1px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 3px #f59e0b;
+  pointer-events: none;
+}
+
+.hud-minimap-enemy {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px #ef4444;
+  pointer-events: none;
+}
+
+.hud-minimap-enemy.boss {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #ffffff;
+}
+
+.hud-minimap-zone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 7.5px;
+  font-weight: 800;
+  font-family: monospace;
+  pointer-events: none;
+}
+
+.hud-minimap-zone.lz {
+  color: #10b981;
+}
+
+.hud-minimap-zone.bunker {
+  color: #c084fc;
+}
+
+.hud-minimap-zone.airlock {
+  color: #38bdf8;
+}
+
+.hud-minimap-zone .zone-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  border: 1px solid currentColor;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.hud-minimap-footer {
+  font-size: 8px;
+  color: var(--hud-muted);
+  text-align: center;
+  margin-top: 4px;
+  font-family: var(--hud-mono);
+  letter-spacing: 0.04em;
 }

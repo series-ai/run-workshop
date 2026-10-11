@@ -7,26 +7,6 @@ import { globalCutaway } from "../render/cutaway.js";
 import type { AssetKey } from "../assetLibrary.js";
 
 
-const DEFAULT_TACTICAL_TINTS: Partial<Record<AssetKey, string>> = {
-  cargoContainer: "#3d4a36",
-  barrierConcrete: "#787366",
-  terminalConsole: "#222a24",
-  powerCore: "#292f2b",
-  dumpster: "#354235",
-  barrel: "#b48228",
-  watertankIndustrial: "#4a544c",
-  catwalkStraight: "#2f3631",
-  pipeStraight: "#524c42",
-  pipeCurve: "#524c42",
-  valveWheel: "#854d0e",
-  floodlightTower: "#29302c",
-  teleporterPad: "#1e2421",
-  warpBeacon: "#262c28",
-  crateMilitary: "#3f4939",
-  stackedPallets: "#6b583e",
-  generatorLarge: "#2b332d",
-};
-
 export interface InklineModelProps {
   assetKey: AssetKey;
   position?: [number, number, number];
@@ -82,12 +62,11 @@ function LoadedInklineModel({
         const mesh = child as THREE.Mesh;
         mesh.castShadow = castShadow;
         mesh.receiveShadow = receiveShadow;
-        const effectiveTint = tintColor || DEFAULT_TACTICAL_TINTS[assetKey];
-        if (effectiveTint && mesh.material) {
+        if (tintColor && mesh.material) {
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           for (const m of mats) {
             if ("color" in m && m.color instanceof THREE.Color) {
-              m.color.set(effectiveTint);
+              m.color.set(tintColor);
             }
             if ("roughness" in m) (m as THREE.MeshStandardMaterial).roughness = 0.92;
             if ("metalness" in m) (m as THREE.MeshStandardMaterial).metalness = 0.05;

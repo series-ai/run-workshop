@@ -20,6 +20,7 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
   const lastPosRef = useRef({ x: operative.x, z: operative.z });
   const speedRef = useRef(0);
   const isMovingLocallyRef = useRef(false);
+  const moveAngleRef = useRef<number | undefined>(undefined);
   const lastShootTimeRef = useRef(0);
 
   
@@ -141,6 +142,9 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
     const measuredSpeed = distMoved / Math.max(0.001, delta);
     speedRef.current = THREE.MathUtils.lerp(speedRef.current, measuredSpeed, 0.25);
     isMovingLocallyRef.current = distMoved > 0.012;
+    const dx = rootGroupRef.current.position.x - lastPosRef.current.x;
+    const dz = rootGroupRef.current.position.z - lastPosRef.current.z;
+    moveAngleRef.current = distMoved > 0.012 ? Math.atan2(dx, dz) : undefined;
     lastPosRef.current = {
       x: rootGroupRef.current.position.x,
       z: rootGroupRef.current.position.z,
@@ -237,6 +241,7 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
           accentColor={accentColor}
           hasWeapon={true}
           speed={speedRef.current}
+          moveAngle={moveAngleRef.current}
           action={operative.action}
         />
       </group>

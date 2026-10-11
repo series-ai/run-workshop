@@ -44,8 +44,8 @@ const DynamicShadowLight: React.FC<{ playerPos: { x: number; y: number; z: numbe
       <directionalLight
         ref={lightRef}
         position={[playerPos.x + 30, 50, playerPos.z + 20]}
-        intensity={1.4}
-        color="#f6ede0"
+        intensity={2.2}
+        color="#ffffff"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -775,14 +775,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
           fov: 46,
         }}
         onCreated={({ gl, scene, camera }) => {
-          gl.setClearColor(new THREE.Color("#222823"), 1);
-          scene.fog = new THREE.FogExp2("#222823", 0.0035);
+          gl.setClearColor(new THREE.Color("#dde0e4"), 1);
           (window as any).__STICK_ZONE_THREE_GL__ = gl;
           (window as any).__STICK_ZONE_THREE_SCENE__ = scene;
           (window as any).__STICK_ZONE_THREE_CAMERA__ = camera;
         }}
       >
-        <ambientLight intensity={0.65} color="#bcc4b3" />
+        <ambientLight intensity={1.3} color="#ffffff" />
         <DynamicShadowLight playerPos={sim.player} />
         <CameraController
           playerPos={sim.player}
