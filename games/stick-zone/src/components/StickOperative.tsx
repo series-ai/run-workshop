@@ -41,6 +41,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   });
 
   const lastPosRef = useRef({ x: operative.x, z: operative.z });
+  const speedRef = useRef(0);
   const isMovingLocallyRef = useRef(false);
   const lastHealthRef = useRef(operative.health);
   const lastArmorRef = useRef(operative.armor || 0);
@@ -101,7 +102,9 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
       rootGroupRef.current.position.x - lastPosRef.current.x,
       rootGroupRef.current.position.z - lastPosRef.current.z
     );
-    isMovingLocallyRef.current = distMoved > 0.015;
+    const measuredSpeed = distMoved / Math.max(0.001, delta);
+    speedRef.current = THREE.MathUtils.lerp(speedRef.current, measuredSpeed, 0.25);
+    isMovingLocallyRef.current = distMoved > 0.012;
     lastPosRef.current = {
       x: rootGroupRef.current.position.x,
       z: rootGroupRef.current.position.z,
@@ -279,6 +282,8 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
           facing={operative.facing}
           accentColor={accentColor}
           hasWeapon={true}
+          speed={speedRef.current}
+          action={operative.action}
           onSampleBones={onSampleBones}
         />
 

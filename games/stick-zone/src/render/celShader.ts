@@ -153,7 +153,7 @@ export function disposeInstance(root: THREE.Object3D): void {
     if (object.geometry) {
       object.geometry.dispose();
     }
-    if (object instanceof THREE.SkinnedMesh && !object.userData.inkContour) {
+    if (object instanceof THREE.SkinnedMesh && !object.userData.inkContour && !object.userData.xraySilhouette) {
       skeletons.add(object.skeleton);
     }
   });
@@ -162,4 +162,43 @@ export function disposeInstance(root: THREE.Object3D): void {
   }
   root.clear();
   root.removeFromParent();
+}
+
+/**
+ * Attaches or updates an X-Ray occluded silhouette pass for operatives and rivals.
+ * Uses depthFunc = THREE.GreaterDepth and depthWrite = false so it renders ONLY
+ * when the character is behind walls, containers, and occluders.
+ */
+export function updateXraySilhouette(
+  mesh: THREE.SkinnedMesh,
+  color: string = "#38bdf8"
+): THREE.SkinnedMesh {
+  let xray = mesh.children.find((child) => child.userData.xraySilhouette) as THREE.SkinnedMesh | undefined;
+
+  if (!xray) {
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.88,
+      depthTest: true,
+      depthWrite: false,
+      depthFunc: THREE.GreaterDepth,
+      side: THREE.DoubleSide,
+    });
+
+    xray = new THREE.SkinnedMesh(mesh.geometry, material);
+    xray.name = "avatar-xray-silhouette";
+    xray.userData.xraySilhouette = true;
+    xray.frustumCulled = false;
+    xray.renderOrder = 999;
+    xray.bind(mesh.skeleton, mesh.bindMatrix);
+    mesh.add(xray);
+  }
+
+  xray.geometry = mesh.geometry;
+  if (xray.material instanceof THREE.MeshBasicMaterial) {
+    xray.material.color.set(color);
+  }
+  xray.visible = true;
+  return xray;
 }

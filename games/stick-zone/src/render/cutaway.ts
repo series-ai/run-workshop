@@ -22,6 +22,8 @@ export class ForegroundCutaway {
   private readonly secondaryWorld = new THREE.Vector3();
 
   apply(root: THREE.Object3D): void {
+    // Disabled in favor of full geometry integrity and occluded X-Ray silhouette outlines
+    return;
     root.traverse((object) => {
       if (!(object instanceof THREE.Mesh || object instanceof THREE.LineSegments)) return;
       const materials = Array.isArray(object.material) ? object.material : [object.material];

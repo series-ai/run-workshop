@@ -8,6 +8,7 @@ import { InklineModel } from "./InklineModel.js";
 import {
   applyCelShading,
   updatePaleInkContour,
+  updateXraySilhouette,
   disposeInstance,
 } from "../render/celShader.js";
 import type { AssetKey } from "../assetLibrary.js";
@@ -27,6 +28,8 @@ export interface InklineStickCharacterProps {
   facing: number;
   accentColor: string;
   hasWeapon?: boolean;
+  speed?: number;
+  action?: string;
   onSampleBones?: (bones: { footR: THREE.Vector3; handR: THREE.Vector3 }) => void;
 }
 
@@ -97,6 +100,8 @@ function LoadedCharacter({
   accentColor,
   hasWeapon = true,
   isCurrentPlayer = false,
+  speed,
+  action: operativeAction,
   onSampleBones,
 }: InklineStickCharacterProps & { url: string }) {
   const { scene, animations } = useGLTF(url);
@@ -129,7 +134,9 @@ function LoadedCharacter({
     }
   }, [mixer]);
 
-  // Transition animations smoothly based on operative locomotion & combat state
+  const currentActionNameRef = useRef<string>("");
+
+  // Transition animations smoothly using crossFadeTo without jerky resets
   useEffect(() => {
     if (!actions) return;
 
@@ -164,61 +171,89 @@ function LoadedCharacter({
       targetClip = "idle";
     }
 
-    const action = actions[targetClip];
-    if (action) {
+    if (currentActionNameRef.current === targetClip) return;
+
+    const prevAction = actions[currentActionNameRef.current];
+    const nextAction = actions[targetClip];
+
+    if (nextAction) {
       if (targetClip === "death") {
-        action.reset().play();
-        action.clampWhenFinished = true;
-        action.loop = THREE.LoopOnce;
+        nextAction.reset().play();
+        nextAction.clampWhenFinished = true;
+        nextAction.loop = THREE.LoopOnce;
+      } else if (prevAction && prevAction !== nextAction) {
+        nextAction.enabled = true;
+        nextAction.play();
+        prevAction.crossFadeTo(nextAction, 0.16, false);
       } else {
-        action.reset().fadeIn(0.12).play();
+        nextAction.reset().fadeIn(0.16).play();
+      }
+      currentActionNameRef.current = targetClip;
+    }
+  }, [actions, isMoving, isFiring, isAlive, isRolling, weapon, hasWeapon]);
+
+  // Dynamically match animation playback rate to physical locomotion speed
+  useFrame(() => {
+    if (actions && currentActionNameRef.current && isMoving) {
+      const activeAction = actions[currentActionNameRef.current];
+      if (activeAction) {
+        const curSpeed = (speed !== undefined && speed > 0.05) ? speed : 4.8;
+        const targetScale = THREE.MathUtils.clamp(curSpeed / 4.8, 0.75, 1.55);
+        activeAction.timeScale = THREE.MathUtils.lerp(activeAction.timeScale, targetScale, 0.2);
       }
     }
-
-    return () => {
-      if (action && targetClip !== "death") {
-        action.fadeOut(0.12);
-      }
-    };
-  }, [actions, isMoving, isFiring, isAlive, isRolling, weapon, hasWeapon]);
+  });
 
   // Apply graphic-novel cel-shading, ink contours, palette, and disposal
   useEffect(() => {
+    const targetMeshes: THREE.SkinnedMesh[] = [];
     clonedScene.traverse((child) => {
-      if (child instanceof THREE.SkinnedMesh && !child.userData.inkContour) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-
-        const materials = Array.isArray(child.material)
-          ? child.material
-          : [child.material];
-
-        for (const mat of materials) {
-          if ('color' in mat && mat.color instanceof THREE.Color) {
-            const isAccent = /accent/i.test(mat.name) || /visor/i.test(mat.name);
-            mat.color.set(isAccent ? accentColor : GUNMETAL_BODY_COLOR);
-          }
-          if ('roughness' in mat) (mat as THREE.MeshStandardMaterial).roughness = 0.95;
-          if ('metalness' in mat) (mat as THREE.MeshStandardMaterial).metalness = 0.05;
-          if ('emissive' in mat) {
-            const isAccent = /accent/i.test(mat.name);
-            if (!isAccent) {
-              (mat as THREE.MeshStandardMaterial).emissive.set(0x000000);
-            }
-          }
-          applyCelShading(mat);
-        }
-
-        // Attach authentic Inkline screen-space back-face contour with squad/team accent
-        const contourColor = isCurrentPlayer ? "#38bdf8" : accentColor;
-        updatePaleInkContour(child, 1.45, contourColor);
+      if (
+        child instanceof THREE.SkinnedMesh &&
+        !child.userData.inkContour &&
+        !child.userData.xraySilhouette
+      ) {
+        targetMeshes.push(child);
       }
     });
+
+    for (const child of targetMeshes) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+
+      const materials = Array.isArray(child.material)
+        ? child.material
+        : [child.material];
+
+      for (const mat of materials) {
+        if ('color' in mat && mat.color instanceof THREE.Color) {
+          const isAccent = /accent/i.test(mat.name) || /visor/i.test(mat.name);
+          mat.color.set(isAccent ? accentColor : GUNMETAL_BODY_COLOR);
+        }
+        if ('roughness' in mat) (mat as THREE.MeshStandardMaterial).roughness = 0.95;
+        if ('metalness' in mat) (mat as THREE.MeshStandardMaterial).metalness = 0.05;
+        if ('emissive' in mat) {
+          const isAccent = /accent/i.test(mat.name);
+          if (!isAccent) {
+            (mat as THREE.MeshStandardMaterial).emissive.set(0x000000);
+          }
+        }
+        applyCelShading(mat);
+      }
+
+      // Attach authentic Inkline screen-space back-face contour with squad/team accent
+      const contourColor = isCurrentPlayer ? "#38bdf8" : accentColor;
+      updatePaleInkContour(child, 1.45, contourColor);
+
+      // Attach X-Ray occluded silhouette through walls (cyan for allies, threat red for enemies)
+      const xrayColor = isCurrentPlayer || accentColor === "#38bdf8" || accentColor === "#51E5F0" ? "#38bdf8" : "#ef4444";
+      updateXraySilhouette(child, xrayColor);
+    }
 
     return () => {
       disposeInstance(clonedScene);
     };
-  }, [clonedScene, accentColor]);
+  }, [clonedScene, accentColor, isCurrentPlayer]);
 
   // Locate Hand_R and Foot_R bones in skeleton hierarchy
   const handBone = useMemo(() => {

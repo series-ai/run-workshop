@@ -6,6 +6,27 @@ import { addOutlines, disposeInstance } from "../render/celShader.js";
 import { globalCutaway } from "../render/cutaway.js";
 import type { AssetKey } from "../assetLibrary.js";
 
+
+const DEFAULT_TACTICAL_TINTS: Partial<Record<AssetKey, string>> = {
+  cargoContainer: "#3d4a36",
+  barrierConcrete: "#787366",
+  terminalConsole: "#222a24",
+  powerCore: "#292f2b",
+  dumpster: "#354235",
+  barrel: "#b48228",
+  watertankIndustrial: "#4a544c",
+  catwalkStraight: "#2f3631",
+  pipeStraight: "#524c42",
+  pipeCurve: "#524c42",
+  valveWheel: "#854d0e",
+  floodlightTower: "#29302c",
+  teleporterPad: "#1e2421",
+  warpBeacon: "#262c28",
+  crateMilitary: "#3f4939",
+  stackedPallets: "#6b583e",
+  generatorLarge: "#2b332d",
+};
+
 export interface InklineModelProps {
   assetKey: AssetKey;
   position?: [number, number, number];
@@ -21,6 +42,7 @@ export interface InklineModelProps {
 
 function LoadedInklineModel({
   url,
+  assetKey,
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
@@ -60,10 +82,15 @@ function LoadedInklineModel({
         const mesh = child as THREE.Mesh;
         mesh.castShadow = castShadow;
         mesh.receiveShadow = receiveShadow;
-        if (tintColor && mesh.material) {
-          const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshStandardMaterial;
-          if (mat && mat.color) {
-            mat.color.set(tintColor);
+        const effectiveTint = tintColor || DEFAULT_TACTICAL_TINTS[assetKey];
+        if (effectiveTint && mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          for (const m of mats) {
+            if ("color" in m && m.color instanceof THREE.Color) {
+              m.color.set(effectiveTint);
+            }
+            if ("roughness" in m) (m as THREE.MeshStandardMaterial).roughness = 0.92;
+            if ("metalness" in m) (m as THREE.MeshStandardMaterial).metalness = 0.05;
           }
         }
       }
@@ -73,8 +100,7 @@ function LoadedInklineModel({
       addOutlines(clonedScene, '#494c46', 0.65);
     }
 
-    // Apply Inkline foreground cutaway shader discard
-    globalCutaway.apply(clonedScene);
+    // Foreground cutaway hole discard removed in favor of full solid geometry and occluded X-Ray outlines
 
     if (onLoaded && groupRef.current) {
       onLoaded(groupRef.current);

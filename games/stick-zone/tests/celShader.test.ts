@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import {
   applyCelShading,
   updatePaleInkContour,
+  updateXraySilhouette,
   addOutlines,
   disposeInstance,
   UNIFIED_SHADER_CACHE_KEY,
@@ -89,6 +90,46 @@ describe('celShader', () => {
 
       expect(outline1).toBe(outline2);
       expect(mesh.children.filter((c) => c.userData.inkContour).length).toBe(1);
+    });
+  });
+
+  describe('updateXraySilhouette', () => {
+    function createMockSkinnedMesh(color = '#292e36'): THREE.SkinnedMesh {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const bone = new THREE.Bone();
+      const skeleton = new THREE.Skeleton([bone]);
+      const material = new THREE.MeshStandardMaterial({ color });
+      const mesh = new THREE.SkinnedMesh(geometry, material);
+      mesh.bind(skeleton);
+      return mesh;
+    }
+
+    it('attaches an X-Ray occluded silhouette skinned mesh with GreaterDepth', () => {
+      const mesh = createMockSkinnedMesh();
+      const xray = updateXraySilhouette(mesh, '#ef4444');
+
+      expect(xray).toBeDefined();
+      expect(xray.name).toBe('avatar-xray-silhouette');
+      expect(xray.userData.xraySilhouette).toBe(true);
+      expect(xray.skeleton).toBe(mesh.skeleton);
+      expect(mesh.children).toContain(xray);
+
+      const mat = xray.material as THREE.MeshBasicMaterial;
+      expect(mat.depthFunc).toBe(THREE.GreaterDepth);
+      expect(mat.depthWrite).toBe(false);
+      expect(mat.transparent).toBe(true);
+      expect('#' + mat.color.getHexString()).toBe('#ef4444');
+    });
+
+    it('is idempotent on repeated calls and updates silhouette color', () => {
+      const mesh = createMockSkinnedMesh();
+      const xray1 = updateXraySilhouette(mesh, '#38bdf8');
+      const xray2 = updateXraySilhouette(mesh, '#ef4444');
+
+      expect(xray1).toBe(xray2);
+      expect(mesh.children.filter((c) => c.userData.xraySilhouette).length).toBe(1);
+      const mat = xray2.material as THREE.MeshBasicMaterial;
+      expect('#' + mat.color.getHexString()).toBe('#ef4444');
     });
   });
 

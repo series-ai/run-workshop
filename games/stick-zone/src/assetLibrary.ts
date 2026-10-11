@@ -113,10 +113,13 @@ export const ASSET_REFS = {
 
   // Modular Industrial Props
   pipeStraight: { pack: 'city', path: 'pipe-straight.glb' },
-  pipeCurve: { pack: 'city', path: 'pipe-curve.glb' },
-  valveWheel: { pack: 'city', path: 'valve-wheel.glb' },
-  catwalkStraight: { pack: 'city', path: 'catwalk-straight.glb' },
-  watertankIndustrial: { pack: 'city', path: 'watertank-industrial.glb' },
+  pipeCurve: { pack: 'city', path: 'pipe-elbow.glb' },
+  valveWheel: { pack: 'city', path: 'pipe-valve.glb' },
+  catwalkStraight: { pack: 'city', path: 'catwalk.glb' },
+  watertankIndustrial: { pack: 'city', path: 'tank-silo.glb' },
+  crateMilitary: { pack: 'city', path: 'crate-military.glb' },
+  stackedPallets: { pack: 'city', path: 'stacked-pallets.glb' },
+  generatorLarge: { pack: 'city', path: 'generator-diesel-large.glb' },
 
   // Weapons Arsenal
   rifle: { pack: 'weapons', path: 'rifle.glb' },

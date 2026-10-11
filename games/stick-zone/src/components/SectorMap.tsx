@@ -144,23 +144,23 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       if (!ctx) return null;
 
       ctx.clearRect(0, 0, 512, 96);
-      ctx.fillStyle = "#f3f4f6";
+      ctx.fillStyle = "rgba(22, 28, 24, 0.94)";
       ctx.roundRect(4, 4, 504, 88, 4);
       ctx.fill();
 
-      ctx.strokeStyle = "#151716";
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(173, 197, 139, 0.6)";
+      ctx.lineWidth = 3;
       ctx.roundRect(4, 4, 504, 88, 4);
       ctx.stroke();
 
-      ctx.font = "bold 26px monospace";
-      ctx.fillStyle = "#151716";
+      ctx.font = "bold 24px monospace";
+      ctx.fillStyle = "#adc58b";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(title, 256, 36);
 
-      ctx.font = "16px monospace";
-      ctx.fillStyle = accent;
+      ctx.font = "14px monospace";
+      ctx.fillStyle = "#94a3b8";
       ctx.fillText(sub, 256, 68);
 
       const tex = new THREE.CanvasTexture(canvas);
@@ -239,7 +239,7 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* Heavy Industrial Ground Floor (Tactical Military Concrete Tarmac) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
         <planeGeometry args={[240, 240]} />
-        <meshStandardMaterial color="#3c443d" roughness={0.92} metalness={0.02} />
+        <meshStandardMaterial color="#464238" roughness={0.94} metalness={0.02} />
       </mesh>
 
       {/* Concrete Slab Grid Joint Seams (6m Slabs with Dark Joints) */}
@@ -259,7 +259,7 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* Central Tactical Logistics Runway (Concrete Slabs) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} receiveShadow>
         <planeGeometry args={[22, 126]} />
-        <meshStandardMaterial color="#4a534b" roughness={0.88} metalness={0.03} />
+        <meshStandardMaterial color="#545044" roughness={0.90} metalness={0.02} />
       </mesh>
 
       {/* Flanking Luminous Guide Strips */}
@@ -304,7 +304,7 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       {/* FOB Outpost Elevated Foundation Slab (Solid 3D block at y=0.08, zero z-fighting with terrain) */}
       <mesh position={[0, 0.08, -63]} receiveShadow castShadow>
         <boxGeometry args={[15.6, 0.16, 21]} />
-        <meshStandardMaterial color="#151c28" roughness={0.7} metalness={0.12} />
+        <meshStandardMaterial color="#38352f" roughness={0.92} metalness={0.02} />
       </mesh>
 
       {/* FOB North Wall Behind Outpost */}
@@ -448,9 +448,42 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
           4. INSTANCED RAID SPOKE: SECTOR 7 DEPOT CONTAINERS & COVER
          ========================================================================= */}
       {/* Real 3D Inkline Cargo Containers derived directly from unified MAP_CONTAINERS definition */}
-      {MAP_CONTAINERS.map((c) => (
-        <InklineContainer key={c.id} position={c.position} rotation={c.rotation} />
+      {MAP_CONTAINERS.map((c, idx) => (
+        <InklineContainer key={c.id} position={c.position} rotation={c.rotation} index={idx} />
       ))}
+
+      
+      {/* =========================================================================
+          4B. TACTICAL LEVEL DESIGN: INTERMEDIATE COVER, BARRELS & INDUSTRIAL CHICANES
+         ========================================================================= */}
+      {/* Western Freight CQB Alley (x: -35 to -15, z: -35 to 35) */}
+      <InklineModel assetKey="barrierConcrete" position={[-25, 0, -18]} rotation={[0, Math.PI / 4, 0]} scale={1.3} />
+      <InklineModel assetKey="barrel" position={[-23, 0, -16]} scale={1.3} />
+      <InklineModel assetKey="barrel" position={[-22, 0, -17]} scale={1.3} />
+      <InklineModel assetKey="dumpster" position={[-38, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={1.3} />
+      <InklineModel assetKey="barrierConcrete" position={[-32, 0, 24]} scale={1.3} />
+      <InklineModel assetKey="barrel" position={[-30, 0, 25.5]} scale={1.3} />
+
+      {/* Central Logistics Highway Chicanes (Providing leap-frogging cover) */}
+      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, -8]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, 16]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, 40]} rotation={[0, 0, 0]} scale={1.25} />
+
+      {/* Eastern Fuel & Power Yard (x: 18 to 45, z: -25 to 40) */}
+      <InklineModel assetKey="watertankIndustrial" position={[35, 0, 10]} scale={1.7} />
+      <InklineModel assetKey="barrel" position={[31.5, 0, 7]} scale={1.3} />
+      <InklineModel assetKey="barrel" position={[33, 0, 8.5]} scale={1.3} />
+      <InklineModel assetKey="barrierConcrete" position={[22, 0, -8]} rotation={[0, Math.PI / 3, 0]} scale={1.3} />
+      <InklineModel assetKey="barrierConcrete" position={[42, 0, 28]} rotation={[0, -Math.PI / 4, 0]} scale={1.3} />
+
+      {/* Fortified Emergency Bunker Compound Perimeter */}
+      <InklineModel assetKey="barrierConcrete" position={[-40, 0, -41]} rotation={[0, Math.PI / 4, 0]} scale={1.35} />
+      <InklineModel assetKey="barrel" position={[-42, 0, -38]} scale={1.2} />
+
+      {/* Extraction LZ-01 Fortified Barrier Revetment */}
+      <InklineModel assetKey="barrierConcrete" position={[40, 0, 41]} rotation={[0, Math.PI / 4, 0]} scale={1.35} />
+      <InklineModel assetKey="barrel" position={[46, 0, 41]} scale={1.2} />
+      <InklineModel assetKey="barrel" position={[41, 0, 46]} scale={1.2} />
 
       {/* Depot Corner Floodlight Towers (Outside perimeter fence per R7) */}
       <InklineModel assetKey="floodlightTower" position={[-86, 0, 86]} scale={2.0} />
@@ -559,10 +592,19 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
   );
 };
 
+const CONTAINER_PALETTES = [
+  { bottom: "#3d4a36", top: "#242b26" }, // Olive / Charcoal
+  { bottom: "#5c4033", top: "#3d4a36" }, // Coyote Rust / Olive
+  { bottom: "#b48228", top: "#242b26" }, // Safety Amber / Charcoal
+  { bottom: "#2d3a3d", top: "#5c4033" }, // Industrial Navy / Rust
+];
+
 const InklineContainer: React.FC<{
   position: [number, number, number];
   rotation?: [number, number, number];
-}> = ({ position, rotation = [0, 0, 0] }) => {
+  index?: number;
+}> = ({ position, rotation = [0, 0, 0], index = 0 }) => {
+  const palette = CONTAINER_PALETTES[Math.abs(index) % CONTAINER_PALETTES.length];
   return (
     <group position={position} rotation={rotation}>
       {/* Ground Container */}
@@ -570,12 +612,14 @@ const InklineContainer: React.FC<{
         assetKey="cargoContainer"
         position={[0, 0, 0]}
         scale={[1.15, 1.0, 1.3]}
+        tintColor={palette.bottom}
       />
       {/* Upper Stacked Container */}
       <InklineModel
         assetKey="cargoContainer"
         position={[0, 2.6, 0]}
         scale={[1.15, 1.0, 1.3]}
+        tintColor={palette.top}
       />
     </group>
   );

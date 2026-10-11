@@ -647,31 +647,65 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       <div className="hud-station hud-telemetry">
         <div className="hud-shell">
           <div className="hud-shell__body">
-            <div className="hud-telemetry-row">
-              <span className="hud-label">EXFIL WINDOW</span>
-              <span className="hud-exfil-timer">{timeFormatted}</span>
-            </div>
-            <div className="hud-telemetry-status">
-              <span
-                className="hud-status-indicator"
-                style={{
-                  background: isHoldingLZ
-                    ? "var(--hud-warning)"
-                    : exfilState.kind === "extracted"
-                    ? "#10b981"
-                    : "var(--hud-phosphor)",
-                }}
-              />
-              <span>
-                {isHoldingLZ
-                  ? `HOLDING LZ [${Math.floor(holdTicks / 30)}s]`
-                  : exfilState.kind === "extracted"
-                  ? "EXFIL CONFIRMED"
-                  : sim.zoneMode === "hub"
-                  ? "STAGING PHASE"
-                  : "LZ AVAILABLE"}
-              </span>
-            </div>
+            {sim.zoneMode === "hub" ? (
+              <>
+                <div className="hud-telemetry-row">
+                  <span className="hud-label">BASE CAMP</span>
+                  <span className="hud-exfil-timer" style={{ color: "var(--hud-phosphor)", fontSize: "14px" }}>
+                    SECURE
+                  </span>
+                </div>
+                <div className="hud-telemetry-status">
+                  <span className="hud-status-indicator" style={{ background: "var(--hud-phosphor)" }} />
+                  <span>AIRLOCK READY (z: -52)</span>
+                </div>
+                <div style={{ fontSize: "8.5px", color: "var(--hud-muted)", marginBottom: "6px" }}>
+                  OBJ: STEP ONTO AIRLOCK PAD TO INGRESS
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="hud-telemetry-row">
+                  <span className="hud-label">RAID CLOCK</span>
+                  <span
+                    className="hud-exfil-timer"
+                    style={{ color: totalSeconds < 180 ? "var(--hud-danger)" : "var(--hud-warning)" }}
+                  >
+                    {timeFormatted}
+                  </span>
+                </div>
+                <div className="hud-telemetry-status">
+                  <span
+                    className="hud-status-indicator"
+                    style={{
+                      background: isHoldingLZ
+                        ? "var(--hud-warning)"
+                        : exfilState.kind === "extracted"
+                        ? "#10b981"
+                        : "var(--hud-phosphor)",
+                    }}
+                  />
+                  <span>
+                    {isHoldingLZ
+                      ? `EXTRACTING: ${((SIM_CONFIG.EXFIL_HOLD_TICKS - holdTicks) / 60).toFixed(1)}s`
+                      : exfilState.kind === "extracted"
+                      ? "EXTRACTION COMPLETE"
+                      : "EXFIL SITES OPEN"}
+                  </span>
+                </div>
+                {/* Tactical Extraction Points List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "2px", fontSize: "8.5px", marginBottom: "6px", fontFamily: "var(--hud-mono)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: isHoldingLZ ? "var(--hud-warning)" : "var(--hud-phosphor)" }}>
+                    <span>LZ-01 [45, 45]:</span>
+                    <span>{isHoldingLZ ? "HOLDING..." : "ACTIVE"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: player.hasKeycard ? "#c084fc" : "var(--hud-muted)" }}>
+                    <span>BUNKER [-45, -45]:</span>
+                    <span>{player.hasKeycard ? "UNLOCKED" : "KEYCARD REQ"}</span>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Tactical Radar Display with Scope Crosshair & Scanlines */}
             <div className="hud-radar">
