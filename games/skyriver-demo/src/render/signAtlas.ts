@@ -1,24 +1,13 @@
 /**
- * @file signAtlas.ts — the legible neon signage, drawn at boot into one Canvas2D atlas (T7).
- *
- * Both cycle-2 reviews read the signs as "blank glowing rectangles": the T6R glyphs were hashed
- * strokes, never letters. This module draws real lettering — a small fictional brand language
- * (NEO-KYOTO, ラーメン, CYBERNETICS, 未来銀行 …) in kana/kanji and latin — into an offscreen canvas
- * once, and city.ts samples it as the sign's emissive mask. Bloom then turns each lettered tube
- * into glowing signage.
- *
- * Zero shipped assets: the text is drawn with the platform's own system fonts at runtime (Hiragino
- * on Apple, Noto Sans CJK on Android/ChromeOS). Nothing is downloaded or bundled.
- *
- * Layout (one 2048 x 2048 RGBA canvas, mipmapped; T7-2 grew it so no sign text repeats):
- *   - 32 vertical cells, 128 x 768 px, in two bands: stacked kana/kanji, or latin set sideways.
- *     Cells 0..HERO_VERTICAL_CELLS-1 are reserved for the giant hero blades.
- *   - 16 horizontal cells, 512 x 128 px, in a 4 x 4 grid below: one-line wordmarks.
- *     Cells 0..HERO_HORIZONTAL_CELLS-1 are reserved for the giant wall panels.
- * The canvas holds white-on-black luminance only; the sign shader tints it per sign and adds a
- * white-hot tube core where the mask saturates.
+ * Draw seeded sign species in one boot atlas.
+ * System fonts supply glyphs. Canvas paths supply all other art.
+ * Red controls emission. Green stores the accent mask.
+ * The sign material applies the district tint.
+ * Hero cells keep their reserved brand text.
  */
 import * as THREE from 'three';
+import { signCellSpecies } from './signDesign';
+import { drawSignArt } from './signArt';
 
 export const SIGN_ATLAS_WIDTH = 2048;
 export const SIGN_ATLAS_HEIGHT = 2048;
@@ -152,8 +141,13 @@ export function createSignAtlas(): SignAtlas {
     ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-    if (i % 3 !== 2) frame(ctx, x, y, w, h);
-    if (i < VERTICAL_STACKED.length) {
+    const species = signCellSpecies(i, true);
+    if (species !== 'glyph') {
+      drawSignArt(ctx, species, x, y, w, h, i - 17);
+    } else if (i < VERTICAL_STACKED.length) {
+      if (i % 4 === 0) frame(ctx, x, y, w, h);
+      if (i % 4 === 1) { ctx.translate(x + w / 2, y + h / 2); ctx.rotate(-0.055); ctx.translate(-x - w / 2, -y - h / 2); }
+      if (i % 4 === 2) drawSignArt(ctx, 'emblem', x + w * .24, y + 10, w * .52, w * .52, i);
       const chars = [...VERTICAL_STACKED[i]!];
       const pitch = Math.min(118, (h - 60) / chars.length);
       ctx.font = `800 ${Math.round(pitch * 0.82)}px ${CJK_FONT}`;
@@ -190,16 +184,39 @@ export function createSignAtlas(): SignAtlas {
       ctx.beginPath();
       ctx.rect(x, y, w, h);
       ctx.clip();
-      if (index % 4 !== 3) frame(ctx, x, y, w, h);
+      const species = signCellSpecies(index, false);
+      if (species !== 'glyph') {
+        drawSignArt(ctx, species, x, y, w, h, index - 4);
+        ctx.restore();
+        horizontal.push(rectFor(x, y, w, h));
+        continue;
+      }
+      if (index % 4 === 3) frame(ctx, x, y, w, h);
       const cjk = /[぀-ヿ一-鿿]/u.test(word);
       let size = 74;
       ctx.font = `800 ${size}px ${cjk ? CJK_FONT : LATIN_FONT}`;
-      const fit = (w - 56) / ctx.measureText(word).width;
+      const fitWidth = index < HERO_HORIZONTAL_CELLS ? w - 56 : w * .62;
+      const fit = fitWidth / ctx.measureText(word).width;
       if (fit < 1) {
         size = Math.floor(size * fit);
         ctx.font = `800 ${size}px ${cjk ? CJK_FONT : LATIN_FONT}`;
       }
-      neonText(ctx, word, x + w / 2, y + h / 2 + 3);
+      if (index === 0) {
+        const chars = [...word];
+        const radius = w * .62;
+        ctx.font = `800 56px ${LATIN_FONT}`;
+        chars.forEach((char, k) => {
+          const angle = (k - (chars.length - 1) * .5) * .12;
+          ctx.save(); ctx.translate(x + w * .5 + Math.sin(angle) * radius, y + h * .36 + (1 - Math.cos(angle)) * radius);
+          ctx.rotate(angle); neonText(ctx, char, 0, 0); ctx.restore();
+        });
+      } else if (index === 1) {
+        drawSignArt(ctx, 'tube', x + 8, y + 8, h - 16, h - 16, 1);
+        ctx.save(); ctx.translate(x + w * .6, y + h * .5); ctx.scale(.72, .9); neonText(ctx, word, 0, 0); ctx.restore();
+      } else {
+        ctx.save(); ctx.translate(x + w / 2, y + h / 2 + 3); ctx.rotate(index === 2 ? -.08 : 0);
+        neonText(ctx, word, 0, 0); ctx.restore();
+      }
       ctx.restore();
       horizontal.push(rectFor(x, y, w, h));
     }

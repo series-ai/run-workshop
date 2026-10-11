@@ -51,6 +51,8 @@ import { skyriverDeclareStageRole } from './stageRoles';
 import { SKYRIVER_STRUCTURED_LIGHT_GLSL } from './structuredLight';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
+import { planSignDesign, SIGN_SPECIES, SIGN_SHAPES } from './signDesign';
+import { applySignDesignMaterial } from './signShaders';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
 import {
   FACADE_FACE_EDGE_MARGIN_M,
@@ -14814,27 +14816,34 @@ export class SkyriverCity {
     const sizes = new Float32Array(count * 2);
     const kinds = new Float32Array(count);
     const atlasRects = new Float32Array(count * 4);
+    const designData = new Float32Array(Math.max(count, 1) * 8);
     // Hero blades keep stable atlas slots; ordinary signs use the remaining cells.
     const heroes = deriveHeroBlades(this.layout);
     const { vertical, horizontal } = this.atlas;
-    // Hero cells are reserved: ordinary signs draw only from the cells after them, so no hero text
-    // ever repeats on a small sign (cycle-3 caught duplicates reading as repetition).
     const verticalPool = vertical.length - HERO_VERTICAL_CELLS - 1;
     const horizontalPool = horizontal.length - HERO_HORIZONTAL_CELLS;
+    const heroBuildings = new Set(this.signs.buildingId.slice(0, this.signs.heroCount));
 
     for (let i = 0; i < count; i += 1) {
-      let rect: readonly number[] = [0, 0, -1, -1];
       const hero = heroes[i];
-      if (i < heroes.length && hero !== undefined) {
-        rect = hero.kind === 'panel'
-          ? horizontal[hero.cell % HERO_HORIZONTAL_CELLS]!
-          : vertical[hero.cell % HERO_VERTICAL_CELLS]!;
-      } else if (kind[i] === SKYRIVER_SIGN_BANNER) {
-        rect = vertical[HERO_VERTICAL_CELLS + 1 + (Math.floor(seedValue[i]! * verticalPool) % verticalPool)]!;
-      } else if (kind[i] === SKYRIVER_SIGN_STRIP) {
-        rect = horizontal[HERO_HORIZONTAL_CELLS + (Math.floor(seedValue[i]! * horizontalPool) % horizontalPool)]!;
-      }
-      atlasRects.set(rect, i * 4);
+      const isHero = i < heroes.length && hero !== undefined;
+      const isVertical = isHero ? hero.kind !== 'panel' : sh[i]! > sw[i]!;
+      const building = this.signs.buildingId[i] ?? `sign-${i}`;
+      let design = planSignDesign(building, seedValue[i]!, isVertical, heroBuildings.has(building));
+      const atlasVertical = isVertical && design.species !== 'ticker';
+      if (!atlasVertical && isVertical) design = planSignDesign(building, seedValue[i]!, false, heroBuildings.has(building));
+      const rect = isHero
+        ? hero.kind === 'panel' ? horizontal[hero.cell % HERO_HORIZONTAL_CELLS]! : vertical[hero.cell % HERO_VERTICAL_CELLS]!
+        : atlasVertical ? vertical[design.cell]! : horizontal[design.cell]!;
+      designData[i * 8] = isHero ? 0 : SIGN_SPECIES.indexOf(design.species);
+      designData[i * 8 + 1] = isHero ? hero.kind === 'panel' ? 6 : 0 : SIGN_SHAPES.indexOf(design.shape);
+      designData.set(rect, i * 8 + 4);
+      const sourceRect = isHero ? rect : kind[i] === SKYRIVER_SIGN_BANNER
+        ? vertical[HERO_VERTICAL_CELLS + 1 + Math.floor(seedValue[i]! * verticalPool) % verticalPool]!
+        : kind[i] === SKYRIVER_SIGN_STRIP
+          ? horizontal[HERO_HORIZONTAL_CELLS + Math.floor(seedValue[i]! * horizontalPool) % horizontalPool]!
+          : [0, 0, -1, -1];
+      atlasRects.set(sourceRect, i * 4);
       // T7-3: canyon space -> the winding loop; the facade normal turns with the local heading.
       const world = placeNeonSign(this.signs.owner[i]!, cx[i]!, cy[i]!, cz[i]!, nx[i]!, nz[i]!);
       centres[i * 3] = world.x;
@@ -14864,6 +14873,7 @@ export class SkyriverCity {
       districtTint[i * 4 + 3] = this.signDistricts.saturation[i]!;
     }
     geometry.setAttribute('aDistrictTint', new THREE.InstancedBufferAttribute(districtTint, 4));
+    applySignDesignMaterial(this.signMaterial, designData);
     this.signWorldCentres = centres.slice(0, count * 3);
     this.signDrawnNormal = normals.slice(0, count * 2);
 

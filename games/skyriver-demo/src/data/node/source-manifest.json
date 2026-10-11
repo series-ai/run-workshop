@@ -66,8 +66,8 @@
   },
   {
     "path": "src/render/city.ts",
-    "sha256": "aec0db054bb5b764d702b8ee59cb4a1eecb5c4d2a8c207ff7759412d64b4f861",
-    "byteLength": 647088
+    "sha256": "b22b2345cea6c007f0536d0b37b1d0910549b9b4ce44a41431416f3d1d7fa218",
+    "byteLength": 647962
   },
   {
     "path": "src/render/citySnapshotCodec.ts",
@@ -155,9 +155,24 @@
     "byteLength": 47308
   },
   {
+    "path": "src/render/signArt.ts",
+    "sha256": "3fcfdf4d752226deba78dc744097f724b1f2c2e5fc2aca2654e4dcc88fc4c00a",
+    "byteLength": 7298
+  },
+  {
     "path": "src/render/signAtlas.ts",
-    "sha256": "b1d1d18762866c848d54d6ec86b8ecaf39fddc627e15185eecc7b1a7867aed63",
-    "byteLength": 7861
+    "sha256": "70c57e5721aaab512e93de4f6d1637b3d4a9b0ee49eab1a663def674a5aff9ef",
+    "byteLength": 8363
+  },
+  {
+    "path": "src/render/signDesign.ts",
+    "sha256": "c3abf0a2201ff6c65ce23d694fe3892b4a8c3485efe31d7c4a1b8af0e3fb153c",
+    "byteLength": 1814
+  },
+  {
+    "path": "src/render/signShaders.ts",
+    "sha256": "3191f2ddf14ce14e28d5d9ce9b1a109b6bb40e26fed7798af70a1f547924d861",
+    "byteLength": 8154
   },
   {
     "path": "src/render/smog.ts",
