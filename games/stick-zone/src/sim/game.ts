@@ -317,6 +317,29 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   // Emergency Bunker Keycard Terminal Console
   { minX: -45.6, maxX: -44.4, minZ: -45.4, maxZ: -44.2 },
 
+  // Heavy Industrial Architecture Obstacles (West Compound)
+  // West Warehouse Alpha
+  { minX: -32.0, maxX: -20.0, minZ: 2.0, maxZ: 14.0 },
+  // West Warehouse Beta
+  { minX: -32.0, maxX: -20.0, minZ: -31.0, maxZ: -19.0 },
+  // West Loading Platform
+  { minX: -40.0, maxX: -32.0, minZ: 21.0, maxZ: 29.0 },
+  // Gantry Crane Supports
+  { minX: -16.5, maxX: -13.5, minZ: -9.5, maxZ: -6.5 },
+
+  // Heavy Industrial Architecture Obstacles (East Compound)
+  // East Vertical Fuel Tanks
+  { minX: 31.0, maxX: 47.0, minZ: -21.0, maxZ: -15.0 },
+  // East Backup Generator
+  { minX: 39.0, maxX: 45.0, minZ: -8.0, maxZ: -2.0 },
+  // East Horizontal Tank
+  { minX: 35.0, maxX: 41.0, minZ: 2.0, maxZ: 8.0 },
+  // East Chemical Silo
+  { minX: 25.0, maxX: 31.0, minZ: 19.0, maxZ: 25.0 },
+  // East Smokestacks
+  { minX: 50.0, maxX: 54.0, minZ: -34.0, maxZ: -30.0 },
+  { minX: 50.0, maxX: 54.0, minZ: 36.0, maxZ: 40.0 },
+
   // Placed Loot Containers in Sector 7 Depot
   // crate_01: Military Dumpster (-8, -6)
   { minX: -9.2, maxX: -6.8, minZ: -6.8, maxZ: -5.3 },
@@ -3753,24 +3776,57 @@ export class SectorDepotSimulation {
           const aimDirX = aimDx / aimDist;
           const aimDirZ = aimDz / aimDist;
 
-          const rawDmg = rival.weapon === "shotgun" ? 20 : 12;
-          this.spawnProjectile({
-            id: "proj_" + rival.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
-            shooterId: rival.id,
-            shooterIsPlayer: false,
-            x: rMuzzle.origin.x,
-            y: rMuzzle.origin.y,
-            z: rMuzzle.origin.z,
-            vx: aimDirX * 52.0,
-            vy: 0,
-            vz: aimDirZ * 52.0,
-            speed: 52.0,
-            damage: rawDmg,
-            radius: 0.21,
-            maxRange: 22.0,
-            distanceTraveled: 0,
-            weapon: (rival.weapon as any) || "rifle",
-          });
+          if (rival.weapon === "shotgun") {
+            const PELLETS_OFFSETS = [-0.174, -0.104, -0.035, 0.035, 0.104, 0.174]; // ~20° fan
+            const pelletSpeed = 38.0;
+            const pelletDmg = 4; // 6 pellets * 4 = 24 dmg point-blank
+            for (let i = 0; i < PELLETS_OFFSETS.length; i++) {
+              const pAngle = PELLETS_OFFSETS[i];
+              const cosA = Math.cos(pAngle);
+              const sinA = Math.sin(pAngle);
+              const dirX = aimDirX * cosA - aimDirZ * sinA;
+              const dirZ = aimDirX * sinA + aimDirZ * cosA;
+
+              this.spawnProjectile({
+                id: `pellet_${rival.id}_${this.tick}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+                shooterId: rival.id,
+                shooterIsPlayer: false,
+                x: rMuzzle.origin.x,
+                y: rMuzzle.origin.y,
+                z: rMuzzle.origin.z,
+                vx: dirX * pelletSpeed,
+                vy: 0,
+                vz: dirZ * pelletSpeed,
+                speed: pelletSpeed,
+                damage: pelletDmg,
+                radius: 0.165,
+                maxRange: 14.0,
+                distanceTraveled: 0,
+                weapon: "shotgun",
+                isPellet: true,
+              });
+            }
+          } else {
+            const rawDmg = 12;
+            const speed = 52.0;
+            this.spawnProjectile({
+              id: "proj_" + rival.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
+              shooterId: rival.id,
+              shooterIsPlayer: false,
+              x: rMuzzle.origin.x,
+              y: rMuzzle.origin.y,
+              z: rMuzzle.origin.z,
+              vx: aimDirX * speed,
+              vy: 0,
+              vz: aimDirZ * speed,
+              speed,
+              damage: rawDmg,
+              radius: 0.21,
+              maxRange: 22.0,
+              distanceTraveled: 0,
+              weapon: "rifle",
+            });
+          }
         }
       }
     }

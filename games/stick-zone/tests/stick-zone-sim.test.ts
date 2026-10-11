@@ -1920,7 +1920,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
     // 2. Turret emitted "fire" presentation event with muzzle origin and aim direction
     const events = testSim.drainPresentationEvents();
-    const fireEvent = events.find(e => e.type === "fire" && e.shooterId === turret.id);
+    const fireEvent = events.find(e => e.type === "fire" && (e as any).shooterId === turret.id) as any;
     expect(fireEvent).toBeDefined();
     expect(fireEvent?.weapon).toBe("rifle");
     expect(fireEvent?.origin.z).toBeGreaterThan(-10); // Muzzle is offset in front of turret
@@ -1952,5 +1952,42 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
     // Player takes damage when the projectile physically contacts the player
     expect(testSim.player.health).toBe(86); // 100 - 14 = 86
+  });
+  it("Scav Enforcer fires authentic 6-pellet buckshot spread fan instead of instant single hit", () => {
+    const testSim = new SectorDepotSimulation("test_pellet_seed");
+    testSim.zoneMode = "spoke";
+    testSim.spawnScavSquad();
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.health = 100;
+
+    // Find shotgun scav enforcer
+    const enforcer = testSim.rivals.find(r => r.weapon === "shotgun");
+    expect(enforcer).toBeDefined();
+    if (!enforcer) return;
+
+    enforcer.isAlive = true;
+    enforcer.x = 0;
+    enforcer.z = -8; // 8 meters away
+    enforcer.aimTicks = 1; // ready to complete aim telegraph on this tick
+    enforcer.shootCooldownTicks = 0;
+
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: false,
+      interact: false,
+    });
+
+    // Check spawned projectiles
+    const pellets = testSim.activeProjectiles.filter(p => p.shooterId === enforcer.id);
+    expect(pellets.length).toBe(6);
+    expect(pellets[0].isPellet).toBe(true);
+    expect(pellets[0].speed).toBe(38.0);
+    expect(pellets[0].damage).toBe(4);
   });
 });

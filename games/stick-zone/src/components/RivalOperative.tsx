@@ -229,11 +229,13 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
         <InklineStickCharacter
           operative={operative}
           assetKey={
-            operative.badge === 'SECTOR BOSS'
-              ? 'scavBoss'
-              : operative.badge === 'SCAV PATROL'
-              ? 'scavRunner'
-              : 'rivalStickman'
+            operative.badge === "SECTOR BOSS"
+              ? "scavBoss"
+              : operative.badge === "SCAV ENFORCER"
+              ? "scavEnforcer"
+              : operative.badge === "SCAV PATROL"
+              ? "scavRunner"
+              : "rivalStickman"
           }
           weapon={operative.weapon || 'rifle'}
           isMoving={isMoving}
