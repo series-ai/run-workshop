@@ -166,6 +166,7 @@ function LoadedCharacter({
     const liveIsAlive = operative ? operative.isAlive : isAlive;
     const liveIsRolling = operative ? operative.isRolling : isRolling;
     const liveWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
+    const liveAction = operative ? operative.action : operativeAction;
     const isHoldingFirearm = hasWeapon && (liveWeapon === "shotgun" || liveWeapon === "rifle" || liveWeapon === "pistol");
 
     const curX = operative ? operative.x : 0;
@@ -267,7 +268,11 @@ function LoadedCharacter({
     let targetTorsoTwist = 0;
     let isBackpedaling = false;
 
-    if (liveIsMoving && liveMoveAngle !== undefined) {
+    if (liveAction === "kick" || liveAction === "throw") {
+      targetBaseRotation = liveFacing;
+      targetTorsoTwist = 0;
+      isBackpedaling = false;
+    } else if (liveIsMoving && liveMoveAngle !== undefined) {
       let angleDiff = liveFacing - liveMoveAngle;
       angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
 
@@ -618,7 +623,7 @@ function LoadedCharacter({
       )}
 
       {/* Primary Weapon Physically Socketed Inside Hand_R Bone Hierarchy (Zero Float, Zero Latency) */}
-      {isHoldingFirearm && isAlive && !isRolling && handBone && (
+      {isHoldingFirearm && isAlive && !isRolling && liveAction !== "kick" && handBone && (
         createPortal(
           <group position={gripPos} rotation={gripEuler}>
             <group position={[0, 0, recoilKickRef.current]}>

@@ -2504,6 +2504,8 @@ export class SectorDepotSimulation {
     const kickRange = 2.5;
     const forwardX = Math.sin(this.player.facing);
     const forwardZ = Math.cos(this.player.facing);
+    this.walkVx = forwardX * 2.2;
+    this.walkVz = forwardZ * 2.2;
 
     const machineHits: KickActionPayload['machineHits'] = [];
     const rivalHits: KickActionPayload['rivalHits'] = [];
