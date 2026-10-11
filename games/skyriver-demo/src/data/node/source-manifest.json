@@ -1,0 +1,277 @@
+[
+  {
+    "path": "index.html",
+    "sha256": "8aa84c2ab935e9eab0ec1d68d9c4b27a41f098658c9e72a283f7d28838053be7",
+    "byteLength": 801
+  },
+  {
+    "path": "node_modules/@series-inc/rundot-syncplay/dist/index.js",
+    "sha256": "714829dcb29e5209f2bf0e931052081219872f3a3c9b855604378afe982d75ff",
+    "byteLength": 8384
+  },
+  {
+    "path": "node_modules/@series-inc/rundot-syncplay/dist/math.js",
+    "sha256": "b224798268549bd3fdcf6d1324cc4d7e92847df29d240f9935e2a31b79f615f0",
+    "byteLength": 24107
+  },
+  {
+    "path": "node_modules/@series-inc/rundot-syncplay/dist/noise.js",
+    "sha256": "e6a468251aef6c5c5357a8ac964daa14f4b59c9f76fab3644ebb515a79b6f4d5",
+    "byteLength": 1966
+  },
+  {
+    "path": "node_modules/@series-inc/rundot-syncplay/dist/random.js",
+    "sha256": "e3b66aa337eef5b591828e01493d8bc9551b08198200867b395b2780f994393a",
+    "byteLength": 3730
+  },
+  {
+    "path": "node_modules/@series-inc/rundot-syncplay/package.json",
+    "sha256": "4b10e765989629bfa2eb40a3a21ade80dfde0b48951662efe35b12583f5f040c",
+    "byteLength": 20083
+  },
+  {
+    "path": "package-lock.json",
+    "sha256": "824604718981af7188c52315d352c05536ea81c0d66b3dc6ea08decdc515dbd2",
+    "byteLength": 97221
+  },
+  {
+    "path": "package.json",
+    "sha256": "1dc54d1ed79c0b8be66d0c46005161c2544eadc77a92c518cff54f44d9f6c1dc",
+    "byteLength": 723
+  },
+  {
+    "path": "src/main.ts",
+    "sha256": "4547c10197169c5ee2f0ea58ef20845d92879587821c5c196a8665b3e4b465ea",
+    "byteLength": 51251
+  },
+  {
+    "path": "src/render/atmosphere.ts",
+    "sha256": "ac8c84620e462a69621724a80fd372f4ea96f7e27dbbf0bc5b9e05e28a1303ce",
+    "byteLength": 70414
+  },
+  {
+    "path": "src/render/blueNoiseTile.ts",
+    "sha256": "8061e7b946bbe8935d781ddaf541de6c127932c8153547c81c260b168c815653",
+    "byteLength": 20640
+  },
+  {
+    "path": "src/render/cameraRig.ts",
+    "sha256": "264ec00a7ec6b861a93ed42973162cd7eda0028f4e5eaacc136292402681e6dc",
+    "byteLength": 14983
+  },
+  {
+    "path": "src/render/canyonWarp.ts",
+    "sha256": "3c4bbdf99588244d3681d2ce438d5b19b03395769c0e624af5f632e700b55670",
+    "byteLength": 9663
+  },
+  {
+    "path": "src/render/city.ts",
+    "sha256": "9d977d34f7c4d5560030445d91e55a694cef06837da647a2c2c8196ac1b12c0e",
+    "byteLength": 639148
+  },
+  {
+    "path": "src/render/citySnapshotCodec.ts",
+    "sha256": "3f09221a51b0f581b50319c24e2ceae67c72db1880ff7f352eb72df44919fced",
+    "byteLength": 59394
+  },
+  {
+    "path": "src/render/citySnapshotLoader.ts",
+    "sha256": "f8def8de82345e23fcbb58a6d587026c7b782b4d59198b322d448789407bf6ae",
+    "byteLength": 14812
+  },
+  {
+    "path": "src/render/citySnapshotSchema.ts",
+    "sha256": "d1308db97c4e402dd5760bdf7aff61d42bc44907f67e589b4177636276fc760d",
+    "byteLength": 53609
+  },
+  {
+    "path": "src/render/clearance.ts",
+    "sha256": "478e10ab9146b8e3de2548f35c1ff5b6efeb128c7528c76e1debd2e568882708",
+    "byteLength": 7485
+  },
+  {
+    "path": "src/render/depthFade.ts",
+    "sha256": "35fde2069ec46571552ed1d7cf6bcae96700256c130aefd83dc674d3471fdeff",
+    "byteLength": 25550
+  },
+  {
+    "path": "src/render/districts.ts",
+    "sha256": "3a6e7adbd37fa9e9c0f11f03e6e7b88aee84e93738db3eb35dcdd9e480c6d667",
+    "byteLength": 45674
+  },
+  {
+    "path": "src/render/facadeGeometry.ts",
+    "sha256": "de2f3defb6aa0d3b9fc5c3a3416c72af9c307101b9937da9b8e5291f56808664",
+    "byteLength": 8993
+  },
+  {
+    "path": "src/render/flightPresentation.ts",
+    "sha256": "4d480c22653a9d81ea8d3dd3861ddfc2948bc284b5541baf32c3b1f67b95b995",
+    "byteLength": 33932
+  },
+  {
+    "path": "src/render/impostorAtlas.ts",
+    "sha256": "151f059c6e177203a79b2fc45f578e2cbafd5f2306cbedd51d4072296002c3c6",
+    "byteLength": 6213
+  },
+  {
+    "path": "src/render/interiorAtlas.ts",
+    "sha256": "7c3812d93ee193efedd727c22b31293f773fb366e9eaf30e6c64122522b08e8a",
+    "byteLength": 21868
+  },
+  {
+    "path": "src/render/interiorResponse.ts",
+    "sha256": "104203bb157f48f731735956ce6eaffe738438d4df52ed8cb023340a69e66f8c",
+    "byteLength": 5533
+  },
+  {
+    "path": "src/render/lightHandover.ts",
+    "sha256": "11aa5f1c80a389292ea1f4f460c5fe4edb5c4eebb53de24ff0ec096edc040e9e",
+    "byteLength": 9385
+  },
+  {
+    "path": "src/render/presentationLayout.ts",
+    "sha256": "3eb697820b1a5e6cfb1d5d064cbb8003c67e8213819ea3062a4a01bfe75c7287",
+    "byteLength": 9828
+  },
+  {
+    "path": "src/render/renderLightSet.ts",
+    "sha256": "ff6e267c08b8f43e646102a3e35766eec5794879515769c544f64a1331346ea7",
+    "byteLength": 37345
+  },
+  {
+    "path": "src/render/routeProfile.ts",
+    "sha256": "b38925d9c74da62980b473b77b7002f6e23fe02a8e7f79d30e690e8407e11e2f",
+    "byteLength": 3219
+  },
+  {
+    "path": "src/render/scene.ts",
+    "sha256": "f3480c4460c0910b703286206b36827a32494074ffe02934b5d90258e9bcc49d",
+    "byteLength": 87809
+  },
+  {
+    "path": "src/render/shuttle.ts",
+    "sha256": "d6bcbb9829e5a5d7e88d7bdad313a3f5e4840c496b315e7817e72dd49c05d711",
+    "byteLength": 47308
+  },
+  {
+    "path": "src/render/signAtlas.ts",
+    "sha256": "b1d1d18762866c848d54d6ec86b8ecaf39fddc627e15185eecc7b1a7867aed63",
+    "byteLength": 7861
+  },
+  {
+    "path": "src/render/smog.ts",
+    "sha256": "49c9d95f62d7c022c8458505a0015e00b454531a0b4d8b0d5c74926b39293ff3",
+    "byteLength": 20774
+  },
+  {
+    "path": "src/render/stageRoles.ts",
+    "sha256": "b5d3ccda6b7ca28e1a5c1fd2e6501d01808d1190d130f75e305dfd33152a0286",
+    "byteLength": 17840
+  },
+  {
+    "path": "src/render/structureMaterial.ts",
+    "sha256": "caec1b77a1b17870f235ca1c66df621c8b91ab160e915568f068cbbfc46b9a7e",
+    "byteLength": 8813
+  },
+  {
+    "path": "src/render/structuredLight.ts",
+    "sha256": "d6b38818f9d6d89c21bfb329d6374fea60a04535169a831c8d61f02cd49c89f9",
+    "byteLength": 1664
+  },
+  {
+    "path": "src/render/threeMipBloom.ts",
+    "sha256": "b977177d9bad16f44455c26cda06bbf4b0db8852330e8a3b93ebebe6e785450d",
+    "byteLength": 18473
+  },
+  {
+    "path": "src/render/traffic.ts",
+    "sha256": "5f882ce28a1c9af87ba789441bd6688b29a6bf67c0734a4138a8ec65296900db",
+    "byteLength": 124503
+  },
+  {
+    "path": "src/render/trafficAppearance.ts",
+    "sha256": "1058fb8b56f48476feecb0d0a22e2d117dd805344f4acfbe768c225317179325",
+    "byteLength": 18365
+  },
+  {
+    "path": "src/render/trafficAppearanceModel.ts",
+    "sha256": "ca75d48896ec5d977394c31c860fe24ecdcb97a21c63cf3678c407fe08da67c8",
+    "byteLength": 62406
+  },
+  {
+    "path": "src/render/trafficStreams.ts",
+    "sha256": "93de633f864b6103b77bd7f34ab988fa797a60fdc378605794f45e777602177a",
+    "byteLength": 65453
+  },
+  {
+    "path": "src/render/trafficTypes.ts",
+    "sha256": "fa2be8acd67c95d91f77e0306f0fbf0e53615ba84536278b52444d23a3454580",
+    "byteLength": 6976
+  },
+  {
+    "path": "src/render/volumeFog.ts",
+    "sha256": "6f4a0a6c0da863fd6f616576f91e82bdda17e35b57224a11681ba3691dfc5d32",
+    "byteLength": 78036
+  },
+  {
+    "path": "src/render/windowPalette.ts",
+    "sha256": "de8d4b9af88795f862f07bf0f6386873ceb7bda0690a448428078f288342ad03",
+    "byteLength": 8728
+  },
+  {
+    "path": "src/sim/derive.ts",
+    "sha256": "d851f1a95f766bc88df9484a4148498f23b9dff1197988f3b0f273f3bda72ded",
+    "byteLength": 9183
+  },
+  {
+    "path": "src/sim/identity.ts",
+    "sha256": "a8b88d907eeaaf6b9f545166f23180a810e90db0c8dad0b22df5e5716d79407d",
+    "byteLength": 8176
+  },
+  {
+    "path": "src/sim/input.ts",
+    "sha256": "d6e11404707d6535fe1581b077ad251b771fe56408976fae9a381283dcdc7b8a",
+    "byteLength": 7373
+  },
+  {
+    "path": "src/sim/module-manifest.ts",
+    "sha256": "fa67e4deb40e0db3f11ec84fa39011b777f9f9857e842bf7883123c214e26d71",
+    "byteLength": 2080
+  },
+  {
+    "path": "src/sim/runtime.ts",
+    "sha256": "dd7ba63859ab81016ca5894db6ff73cea9cad76db1f491f53d665a57bbe10f0a",
+    "byteLength": 13169
+  },
+  {
+    "path": "src/sim/session.ts",
+    "sha256": "d270ab8fd1abb3bf5cab8c39362d74890fad1cc364939a14f1bdb3cb005a77c2",
+    "byteLength": 19031
+  },
+  {
+    "path": "src/sim/systems.ts",
+    "sha256": "147eb556eb81d38ba4e03443029a25ee3e3d573ce7e58bbcbcffd7c268b6dc48",
+    "byteLength": 19365
+  },
+  {
+    "path": "src/ui/hud.ts",
+    "sha256": "b950651792bd84bad8a57b66e0498ce47c895a0503dd3f20d3f9a396cf09f66c",
+    "byteLength": 17211
+  },
+  {
+    "path": "tools/generate-city-snapshot.cjs",
+    "sha256": "0b831517d06a3fb11ce6c9baecd7160a9c8f4f1f952f67d61f1486c2d4318623",
+    "byteLength": 15262
+  },
+  {
+    "path": "tsconfig.json",
+    "sha256": "3f52e65665a35bf6f075edd60a5c0500f09649e5453b34aed67d7728a0a2f246",
+    "byteLength": 602
+  },
+  {
+    "path": "vite.config.ts",
+    "sha256": "255ed04617b2d36883b06e1d50853526ab824f859fe9d58fd4b9d11bfafbcd47",
+    "byteLength": 495
+  }
+]

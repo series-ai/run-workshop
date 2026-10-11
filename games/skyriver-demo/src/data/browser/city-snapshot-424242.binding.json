@@ -1,0 +1,12 @@
+{
+  "codecVersion": 2,
+  "runtime": "browser",
+  "canonicalSeed": 424242,
+  "sourceManifestDigest": "56525cc08f141bdc9e6d7d1e1103b6efa46ef25ad0f4fcb2208915073d5cc7eb",
+  "layoutSignature": "96cf1452cdb6c85d482b8cc0302d9a8d072818828d391d9408c24414831e5995",
+  "payloadHash": "aac02ce040fff65ea202b509b5264c17d5d2fb1b339276fbba54be6886be1742",
+  "payloadBytes": 13351226,
+  "payloadSha256": "2f891edf58982f3d7b480a9163d1c5332db7a3771237d3cb6e7d8bee28fe71ec",
+  "gzipBytes": 1962250,
+  "gzipSha256": "bb01586635fe0319078fed37a632188251eeac1ee0629a752fddd40b6757d734"
+}

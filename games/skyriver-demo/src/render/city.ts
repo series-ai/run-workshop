@@ -124,6 +124,8 @@ import { podiumLotHeight } from './presentationLayout';
 import { autopilotTrackPose } from './flightPresentation';
 import { createCameraPoseScratch, writeCameraPose } from './cameraRig';
 import { CLEARANCE_CAMERA_RADIUS_M, CLEARANCE_SHUTTLE_RADIUS_M } from './clearance';
+import { parseCitySnapshot } from './citySnapshotSchema';
+export { parseCitySnapshot };
 
 /** Draw calls this module may spend (plan T3 allows 10 city-only; the shared budget allots 8). */
 export const SKYRIVER_CITY_DRAW_CALL_BUDGET = 8;
@@ -9419,6 +9421,207 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
   signCache.set(layout.seed, mounted);
   return mounted;
 }
+
+/** Complete snapshot of derived city cache families for one seed. */
+export interface SkyriverCitySnapshot {
+  readonly trims: SkyriverCityTrims;
+  readonly masses: readonly SkyriverMass[];
+  readonly massSeedOrdinals: readonly (number | undefined)[];
+  readonly roofDetails: SkyriverRoofDetailDerivation;
+  readonly reconciliation: SkyriverLegacyTrimReconciliation;
+  readonly retainedSupport: readonly SkyriverRetainedMassSupportRecord[];
+  readonly far: readonly SkyriverFarTower[];
+  readonly mega: readonly { readonly x: number; readonly v: number }[];
+  readonly tiers: Map<string, readonly FacadeTier[]>;
+  readonly facadeFaces: readonly SkyriverFacadeFace[];
+  readonly legacyFaces: readonly SkyriverFacadeFace[];
+  readonly towerProfiles: readonly SkyriverTowerProfileRow[];
+  readonly signs: SkyriverNeonSigns;
+  readonly roofDetailHeroBoxes: readonly RoofDetailObb[];
+  readonly heroes: readonly SkyriverHeroBlade[];
+}
+
+/** Presence flags of derived city cache families for one seed. */
+export interface CitySnapshotFamilyPresence {
+  readonly trims: boolean;
+  readonly masses: boolean;
+  readonly massSeedOrdinals: boolean;
+  readonly roofDetails: boolean;
+  readonly reconciliation: boolean;
+  readonly retainedSupport: boolean;
+  readonly far: boolean;
+  readonly mega: boolean;
+  readonly tiers: boolean;
+  readonly facadeFaces: boolean;
+  readonly legacyFaces: boolean;
+  readonly towerProfiles: boolean;
+  readonly signs: boolean;
+  readonly roofDetailHeroBoxes: boolean;
+  readonly heroes: boolean;
+}
+
+/** Check presence of all 15 cached city families for one seed without derivation. */
+export function citySnapshotFamilyPresence(seed: number): CitySnapshotFamilyPresence {
+  return {
+    trims: trimCache.has(seed),
+    masses: massCache.has(seed),
+    massSeedOrdinals: massSeedIndexCache.has(seed),
+    roofDetails: roofDetailCache.has(seed),
+    reconciliation: trimReconciliationCache.has(seed),
+    retainedSupport: retainedMassSupportCache.has(seed),
+    far: farTowerCache.has(seed),
+    mega: megaAnchorCache.has(seed),
+    tiers: tierCache.has(seed),
+    facadeFaces: facadeFaceCache.has(seed),
+    legacyFaces: legacyFaceCache.has(seed),
+    towerProfiles: towerProfileCache.has(seed),
+    signs: signCache.has(seed),
+    roofDetailHeroBoxes: roofDetailHeroBoxCache.has(seed),
+    heroes: heroCache.has(seed),
+  };
+}
+
+/** Clear all cached city families for one seed. */
+export function clearCitySnapshot(seed: number): void {
+  trimCache.delete(seed);
+  massCache.delete(seed);
+  massSeedIndexCache.delete(seed);
+  roofDetailCache.delete(seed);
+  trimReconciliationCache.delete(seed);
+  retainedMassSupportCache.delete(seed);
+  farTowerCache.delete(seed);
+  megaAnchorCache.delete(seed);
+  tierCache.delete(seed);
+  facadeFaceCache.delete(seed);
+  legacyFaceCache.delete(seed);
+  towerProfileCache.delete(seed);
+  signCache.delete(seed);
+  roofDetailHeroBoxCache.delete(seed);
+  heroCache.delete(seed);
+}
+
+/** Collect and return all cached city families for one seed if all exist. */
+function collectCitySnapshot(seed: number): SkyriverCitySnapshot | undefined {
+  if (!massSeedIndexCache.has(seed)) return undefined;
+  const seedIndexMap = massSeedIndexCache.get(seed);
+  const trims = trimCache.get(seed);
+  const masses = massCache.get(seed);
+  const roofDetails = roofDetailCache.get(seed);
+  const reconciliation = trimReconciliationCache.get(seed);
+  const retainedSupport = retainedMassSupportCache.get(seed);
+  const far = farTowerCache.get(seed);
+  const mega = megaAnchorCache.get(seed);
+  const tiers = tierCache.get(seed);
+  const facadeFaces = facadeFaceCache.get(seed);
+  const legacyFaces = legacyFaceCache.get(seed);
+  const towerProfiles = towerProfileCache.get(seed);
+  const signs = signCache.get(seed);
+  const roofDetailHeroBoxes = roofDetailHeroBoxCache.get(seed);
+  const heroes = heroCache.get(seed);
+
+  if (
+    trims === undefined
+    || masses === undefined
+    || seedIndexMap === undefined
+    || roofDetails === undefined
+    || reconciliation === undefined
+    || retainedSupport === undefined
+    || far === undefined
+    || mega === undefined
+    || tiers === undefined
+    || facadeFaces === undefined
+    || legacyFaces === undefined
+    || towerProfiles === undefined
+    || signs === undefined
+    || roofDetailHeroBoxes === undefined
+    || heroes === undefined
+  ) {
+    return undefined;
+  }
+
+  const massSeedOrdinals: readonly (number | undefined)[] = masses.map(
+    (mass) => (seedIndexMap.has(mass) ? seedIndexMap.get(mass) : undefined),
+  );
+
+  return {
+    trims,
+    masses,
+    massSeedOrdinals,
+    roofDetails,
+    reconciliation,
+    retainedSupport,
+    far,
+    mega,
+    tiers,
+    facadeFaces,
+    legacyFaces,
+    towerProfiles,
+    signs,
+    roofDetailHeroBoxes,
+    heroes,
+  };
+}
+
+/** Non-deriving reader for cached city snapshot of a layout. */
+export function readCitySnapshot(layout: SkyriverCityLayout): SkyriverCitySnapshot | undefined {
+  return collectCitySnapshot(layout.seed);
+}
+
+/** Collect and return all cached city families for one layout after real derivation. */
+export function exportCitySnapshot(layout: SkyriverCityLayout): SkyriverCitySnapshot {
+  deriveCityTrims(layout);
+  deriveNeonSigns(layout);
+  const snapshot = collectCitySnapshot(layout.seed);
+  if (snapshot === undefined) {
+    fail('SKYRIVER_CITY_SNAPSHOT_INCOMPLETE');
+  }
+  return snapshot;
+}
+
+/** Clear seed cache and perform pure derivation once to export snapshot. */
+export function pureCitySnapshot(layout: SkyriverCityLayout): SkyriverCitySnapshot {
+  clearCitySnapshot(layout.seed);
+  return exportCitySnapshot(layout);
+}
+
+/** Validate and install all 15 cached city families atomically for a layout. */
+export function installCitySnapshot(layout: SkyriverCityLayout, snapshot: unknown): void {
+  const parsed = parseCitySnapshot(snapshot);
+
+  if (parsed.signs.seed !== layout.seed || parsed.trims.seed !== layout.seed || parsed.reconciliation.seed !== layout.seed) {
+    fail('SKYRIVER_CITY_SNAPSHOT_INVALID_SIGNS');
+  }
+
+  const weakMap = new WeakMap<SkyriverMass, number>();
+  for (let i = 0; i < parsed.masses.length; i += 1) {
+    const ordinal = parsed.massSeedOrdinals[i];
+    if (ordinal !== undefined) {
+      weakMap.set(parsed.masses[i]!, ordinal);
+    }
+  }
+
+  const seed = layout.seed;
+  clearCitySnapshot(seed);
+
+  massCache.set(seed, parsed.masses as SkyriverMass[]);
+  massSeedIndexCache.set(seed, weakMap);
+  roofDetailCache.set(seed, parsed.roofDetails);
+  trimReconciliationCache.set(seed, parsed.reconciliation);
+  retainedMassSupportCache.set(seed, parsed.retainedSupport);
+  farTowerCache.set(seed, parsed.far as SkyriverFarTower[]);
+  megaAnchorCache.set(seed, parsed.mega as { x: number; v: number }[]);
+  tierCache.set(seed, parsed.tiers as Map<string, readonly FacadeTier[]>);
+  facadeFaceCache.set(seed, parsed.facadeFaces);
+  legacyFaceCache.set(seed, parsed.legacyFaces);
+  towerProfileCache.set(seed, parsed.towerProfiles);
+  signCache.set(seed, parsed.signs);
+  roofDetailHeroBoxCache.set(seed, parsed.roofDetailHeroBoxes as readonly RoofDetailObb[]);
+  heroCache.set(seed, parsed.heroes);
+
+  trimCache.set(seed, parsed.trims);
+}
+
+
 
 
 // --- tower shader ---------------------------------------------------------------------------------

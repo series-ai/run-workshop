@@ -38,6 +38,7 @@ import type {
   SkyriverGeometryIdentity,
   SkyriverLightSource,
 } from './render/city';
+import { prepareBrowserCitySnapshot, type SkyriverColdStartDiagnostic } from './render/citySnapshotLoader';
 import { type SkyriverDistrict, type SkyriverDistrictModel } from './render/districts';
 import type { SkyriverDistrictHazeEvidence } from './render/atmosphere';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
@@ -346,6 +347,8 @@ export interface SkyriverAppOptions {
    * raised to fit). Undefined keeps the tier's own count.
    */
   readonly impostors?: number;
+  readonly onFirstFrameSubmitted?: (firstFrameMs: number) => void;
+  readonly onStartupError?: (error: unknown) => void;
 }
 
 /** Live numbers for the HUD debug line, T6's measurements and the A3/A5/A6 browser probe. */
@@ -367,7 +370,7 @@ export interface SkyriverAppStats {
   readonly paused: boolean;
   /** Largest tick advance seen in one rendered frame since the last resetTickJump(). A6 evidence. */
   readonly maxTickJump: number;
-  /** performance.now() at the first fully rendered frame: cold load, navigation-relative. */
+  /** Navigation time after the first frame submission. GPU completion is not included. */
   readonly firstFrameMs: number | null;
   readonly adapter: string | null;
 }
@@ -728,128 +731,140 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
     rafHandle = null;
     if (!running || suspended) return;
 
-    const rawDeltaMs = lastFrameMs === null ? SKYRIVER_MAX_DELTA_MS / 2 : nowMs - lastFrameMs;
-    lastFrameMs = nowMs;
-    // Clamped twice on purpose: here, so a long frame cannot ask for a burst, and inside the runner,
-    // which also discards the excess accumulator (maxOfflineStepsPerUpdate). Plan A6.
-    const deltaMs = rawDeltaMs < 0 ? 0 : Math.min(rawDeltaMs, SKYRIVER_MAX_DELTA_MS);
+    try {
+      const rawDeltaMs = lastFrameMs === null ? SKYRIVER_MAX_DELTA_MS / 2 : nowMs - lastFrameMs;
+      lastFrameMs = nowMs;
+      // Clamped twice on purpose: here, so a long frame cannot ask for a burst, and inside the runner,
+      // which also discards the excess accumulator (maxOfflineStepsPerUpdate). Plan A6.
+      const deltaMs = rawDeltaMs < 0 ? 0 : Math.min(rawDeltaMs, SKYRIVER_MAX_DELTA_MS);
 
-    session.update(deltaMs);
+      session.update(deltaMs);
 
-    if (session.runner.ready) {
-      syncPresentationTimeline();
-      const state = session.runner.getRenderState();
-      renderState = state;
+      if (session.runner.ready) {
+        syncPresentationTimeline();
+        const state = session.runner.getRenderState();
+        renderState = state;
 
-      if (lastTick >= 0) {
-        const jump = state.current.tick - lastTick;
-        if (jump > maxTickJump) maxTickJump = jump;
+        if (state !== null) {
+          if (lastTick >= 0) {
+            const jump = state.current.tick - lastTick;
+            if (jump > maxTickJump) maxTickJump = jump;
+          }
+          lastTick = state.current.tick;
+
+          const presented = presenter.present(state, presentationEpoch);
+          scene.atmosphere.setBoost(presented.boostVisual);
+          writeCameraPose(poseScratch, presented, state.camera, {
+            boost: presented.boostVisual,
+            time: (state.current.tick + state.alpha) / 30,
+          });
+          if (presented.revealWeight > 0.001) {
+            // R12 landmark reveal: lean the aim toward the bend's floodlit mega-tower so its lit edge
+            // frames one side of the view (at most ~35% of the way, eased in and out).
+            // R13: a sustained 28% hold toward the tower at the showcase bend (weight 1), 15% elsewhere.
+            // The target is re-projected to the boom's look-ahead distance so the lean is an angle, not
+            // a zoom toward the tower.
+            const k = 0.28 * presented.revealWeight;
+            const ax = poseScratch.target.x - poseScratch.position.x;
+            const az = poseScratch.target.z - poseScratch.position.z;
+            const aimLen = Math.hypot(ax, az) || 1;
+            let tx = presented.revealX - poseScratch.position.x;
+            let tz = presented.revealZ - poseScratch.position.z;
+            const tl = Math.hypot(tx, tz) || 1;
+            tx = (tx / tl) * aimLen;
+            tz = (tz / tl) * aimLen;
+            poseScratch.target.x = poseScratch.position.x + ax + (tx - ax) * k;
+            poseScratch.target.z = poseScratch.position.z + az + (tz - az) * k;
+            // Tilt up toward the crown: up to ~12 degrees at the full hold.
+            poseScratch.target.y += aimLen * 0.11 * presented.revealWeight;
+          }
+          applyCameraPose(scene.camera, poseScratch);
+
+          // T6R-2: the drawn nose follows under half the climb angle (the sim allows 54 degrees), so the
+          // chase view keeps reading the wedge from behind, never a capsule from above or a belly from below.
+          const time = (state.current.tick + state.alpha) / 30;
+          sampleWorldWake(presented, time, wakeSamples);
+          shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch * SHUTTLE_DRAW_PITCH_SHARE, presented.roll);
+          traffic.setAnchor(
+            presented.x, presented.y, presented.z, presented.yaw,
+            // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts).
+            presented.speed * (presented.mode !== 0 && presented.boostT > 0 ? 1.8 : 1),
+            presented.canyonV, presented.canyonX,
+          );
+          const districtAllowed = scene.city.districtColourAllowed;
+          shuttle.update({
+            boostVisual: presented.boostVisual,
+            time,
+            districtAllowed,
+            wake: wakeSamples,
+          });
+
+          // R22: the colour districts and the district haze are queried with the presented canyon route
+          // position, never with a warped world z, so the frame and every diagnostic read the same value.
+          scene.setRoutePosition(presented.canyonV);
+
+          scene.update(state.current.tick, state.current, state.alpha);
+
+          if (firstFrameMs === null) {
+            firstFrameMs = performance.now();
+            options.onFirstFrameSubmitted?.(firstFrameMs);
+            if (adapter === null) {
+              const diagnostics = scene.glDiagnostics();
+              adapter = diagnostics.renderer;
+              // One line, once: the GPU adapter string every performance claim has to be read against
+              // (plan P1-9 — SwiftShader must never be mistaken for a GPU run).
+              console.info(
+                '[skyriver] gl adapter:', diagnostics.renderer ?? 'unavailable',
+                '| vendor:', diagnostics.vendor ?? 'unavailable',
+                '|', diagnostics.version ?? '',
+                '| timer query:', diagnostics.timerQuery,
+              );
+            }
+          }
+
+          hud.update({
+            mode: state.flight.mode,
+            // T7-3: the drawn ground speed (autopilot covers the long winding loop in one sim lap).
+            speed: presented.speed,
+            boosting: state.flight.boostT > 0,
+            boostT: state.flight.boostT,
+            boostCapacity: BOOST_CAPACITY_SECONDS,
+            paused: suspended,
+          });
+        }
       }
-      lastTick = state.current.tick;
 
-      const presented = presenter.present(state, presentationEpoch);
-      scene.atmosphere.setBoost(presented.boostVisual);
-      writeCameraPose(poseScratch, presented, state.camera, {
-        boost: presented.boostVisual,
-        time: (state.current.tick + state.alpha) / 30,
-      });
-      if (presented.revealWeight > 0.001) {
-        // R12 landmark reveal: lean the aim toward the bend's floodlit mega-tower so its lit edge
-        // frames one side of the view (at most ~35% of the way, eased in and out).
-        // R13: a sustained 28% hold toward the tower at the showcase bend (weight 1), 15% elsewhere.
-        // The target is re-projected to the boom's look-ahead distance so the lean is an angle, not
-        // a zoom toward the tower.
-        const k = 0.28 * presented.revealWeight;
-        const ax = poseScratch.target.x - poseScratch.position.x;
-        const az = poseScratch.target.z - poseScratch.position.z;
-        const aimLen = Math.hypot(ax, az) || 1;
-        let tx = presented.revealX - poseScratch.position.x;
-        let tz = presented.revealZ - poseScratch.position.z;
-        const tl = Math.hypot(tx, tz) || 1;
-        tx = (tx / tl) * aimLen;
-        tz = (tz / tl) * aimLen;
-        poseScratch.target.x = poseScratch.position.x + ax + (tx - ax) * k;
-        poseScratch.target.z = poseScratch.position.z + az + (tz - az) * k;
-        // Tilt up toward the crown: up to ~12 degrees at the full hold.
-        poseScratch.target.y += aimLen * 0.11 * presented.revealWeight;
+      frames += 1;
+
+      tiers.sample(deltaMs);
+
+      hud.setFps(tiers.fps);
+
+      if (hud.debugVisible) {
+        const debug = scene.debug();
+        const trafficStats = traffic.stats();
+        hud.updateDebug({
+          tier: tiers.tier,
+          fps: tiers.fps,
+          drawCalls: debug.calls,
+          drawCallBudget: SKYRIVER_FRAME_DRAW_CALL_CEILING,
+          cars: trafficStats.activeCars,
+          tick: renderState?.current.tick ?? 0,
+          alpha: renderState?.alpha ?? 0,
+          adapter,
+          rollbacks: session.runner.rollbackCount,
+        });
       }
-      applyCameraPose(scene.camera, poseScratch);
 
-      // T6R-2: the drawn nose follows under half the climb angle (the sim allows 54 degrees), so the
-      // chase view keeps reading the wedge from behind, never a capsule from above or a belly from below.
-      const time = (state.current.tick + state.alpha) / 30;
-      sampleWorldWake(presented, time, wakeSamples);
-      shuttle.setPose(presented.x, presented.y, presented.z, presented.yaw, presented.pitch * SHUTTLE_DRAW_PITCH_SHARE, presented.roll);
-      traffic.setAnchor(
-        presented.x, presented.y, presented.z, presented.yaw,
-        // 1.8 matches the sim's BOOST_MULTIPLIER (systems.ts).
-        presented.speed * (presented.mode !== 0 && presented.boostT > 0 ? 1.8 : 1),
-        presented.canyonV, presented.canyonX,
-      );
-      const districtAllowed = scene.city.districtColourAllowed;
-      shuttle.update({
-        boostVisual: presented.boostVisual,
-        time,
-        districtAllowed,
-        wake: wakeSamples,
-      });
-
-      // R22: the colour districts and the district haze are queried with the presented canyon route
-      // position, never with a warped world z, so the frame and every diagnostic read the same value.
-      scene.setRoutePosition(presented.canyonV);
-
-      scene.update(state.current.tick, state.current, state.alpha);
-
-      hud.update({
-        mode: state.flight.mode,
-        // T7-3: the drawn ground speed (autopilot covers the long winding loop in one sim lap).
-        speed: presented.speed,
-        boosting: state.flight.boostT > 0,
-        boostT: state.flight.boostT,
-        boostCapacity: BOOST_CAPACITY_SECONDS,
-        paused: suspended,
-      });
-    }
-
-    frames += 1;
-    if (firstFrameMs === null) {
-      firstFrameMs = nowMs;
-      if (adapter === null) {
-        const diagnostics = scene.glDiagnostics();
-        adapter = diagnostics.renderer;
-        // One line, once: the GPU adapter string every performance claim has to be read against
-        // (plan P1-9 — SwiftShader must never be mistaken for a GPU run).
-        console.info(
-          '[skyriver] gl adapter:', diagnostics.renderer ?? 'unavailable',
-          '| vendor:', diagnostics.vendor ?? 'unavailable',
-          '|', diagnostics.version ?? '',
-          '| timer query:', diagnostics.timerQuery,
-        );
+      schedule();
+    } catch (error) {
+      if (firstFrameMs === null) {
+        options.onStartupError?.(error);
       }
+      throw error;
     }
-
-    tiers.sample(deltaMs);
-
-    hud.setFps(tiers.fps);
-
-    if (hud.debugVisible) {
-      const debug = scene.debug();
-      const trafficStats = traffic.stats();
-      hud.updateDebug({
-        tier: tiers.tier,
-        fps: tiers.fps,
-        drawCalls: debug.calls,
-        drawCallBudget: SKYRIVER_FRAME_DRAW_CALL_CEILING,
-        cars: trafficStats.activeCars,
-        tick: renderState?.current.tick ?? 0,
-        alpha: renderState?.alpha ?? 0,
-        adapter,
-        rollbacks: session.runner.rollbackCount,
-      });
-    }
-
-    schedule();
   }
+
 
   function schedule(): void {
     if (!running || suspended || rafHandle !== null || view === null) return;
@@ -864,13 +879,18 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
     tiers,
 
     async start(): Promise<void> {
-      resetPresentationTimeline();
-      await session.start();
-      syncPresentationTimeline();
-      running = true;
-      lastFrameMs = null;
-      scene.resetFrameClock();
-      schedule();
+      try {
+        resetPresentationTimeline();
+        await session.start();
+        syncPresentationTimeline();
+        running = true;
+        lastFrameMs = null;
+        scene.resetFrameClock();
+        schedule();
+      } catch (error) {
+        options.onStartupError?.(error);
+        throw error;
+      }
     },
 
     suspend,
@@ -946,41 +966,128 @@ export interface SkyriverProbeHandle extends SkyriverApp {
   readonly hudEventCount: number;
 }
 
-/**
- * Boots the demo into #app.
- *
- * The app handle is published on `window.__skyriver` because every A3/A5/A6 measurement is taken from
- * a real browser against the built bundle, and the probe needs the same numbers the HUD shows.
- */
-export function boot(): SkyriverApp {
-  const root = document.getElementById('app');
-  if (root === null) fail('SKYRIVER_ROOT_MISSING: #app');
+/** Observable startup boundary state handle published on window.__skyriverStartup. */
+export interface SkyriverStartupHandle {
+  readonly state: 'loading' | 'ready' | 'error';
+  readonly ready: Promise<void>;
+  readonly error: unknown | null;
+}
 
-  // index.html is T1's and ships no stylesheet, so #app has no height of its own. The page layout is
-  // applied here rather than there: it is this entry point's business how the demo fills the webview,
-  // and createSkyriverApp stays embeddable in a host that sizes its own container.
-  const html = document.documentElement;
-  html.style.height = '100%';
-  html.style.overflow = 'hidden';
-  document.body.style.margin = '0';
-  document.body.style.height = '100%';
-  document.body.style.overflow = 'hidden';
-  document.body.style.overscrollBehavior = 'none';
-  document.body.style.background = '#04060b';
-  root.style.position = 'fixed';
-  root.style.inset = '0';
+interface SkyriverStartupBoundary {
+  readonly handle: SkyriverStartupHandle;
+  markReady(firstFrameMs: number): void;
+  markError(error: unknown): void;
+}
 
-  const params = new URLSearchParams(window.location.search);
-  const app = createSkyriverApp({
-    root,
-    seed: SKYRIVER_DEMO_SEED,
-    startMode: params.get('mode') === 'freefly' ? 'freefly' : 'autopilot',
-    debug: params.get('debug') === '1',
-    // R18 phone density test: ?impostors=N (0 = off) overrides the tier's GPU impostor count.
-    ...(params.get('impostors') !== null && Number.isFinite(Number(params.get('impostors')))
-      ? { impostors: Math.min(60000, Math.max(0, Math.floor(Number(params.get('impostors'))))) }
-      : {}),
+function createStartupBoundary(root: HTMLElement): SkyriverStartupBoundary {
+  root.setAttribute('aria-busy', 'true');
+
+  const doc = root.ownerDocument;
+  let veil = doc.getElementById('skyriver-loading-veil');
+  if (veil === null) {
+    veil = doc.createElement('div');
+    veil.id = 'skyriver-loading-veil';
+    veil.setAttribute('role', 'status');
+    veil.setAttribute('aria-live', 'polite');
+    veil.textContent = 'Loading city...';
+    veil.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#04060b;color:#8ecfff;font:16px monospace;padding:24px;box-sizing:border-box;';
+    root.appendChild(veil);
+  }
+
+  let state: 'loading' | 'ready' | 'error' = 'loading';
+  let error: unknown | null = null;
+  let resolveReady!: () => void;
+  let rejectReady!: (err: unknown) => void;
+  const ready = new Promise<void>((resolve, reject) => {
+    resolveReady = resolve;
+    rejectReady = reject;
   });
+  ready.catch(() => {});
+
+  const handle: SkyriverStartupHandle = {
+    get state(): 'loading' | 'ready' | 'error' {
+      return state;
+    },
+    get ready(): Promise<void> {
+      return ready;
+    },
+    get error(): unknown | null {
+      return error;
+    },
+  };
+
+  const boundary: SkyriverStartupBoundary = {
+    handle,
+    markReady(_firstFrameMs: number): void {
+      if (state !== 'loading') return;
+      state = 'ready';
+      root.removeAttribute('aria-busy');
+      if (veil !== null && veil.parentNode === root) {
+        root.removeChild(veil);
+      }
+      resolveReady();
+    },
+    markError(err: unknown): void {
+      if (state !== 'loading') return;
+      state = 'error';
+      error = err;
+      root.removeAttribute('aria-busy');
+      if (veil !== null && veil.parentNode === root) {
+        root.removeChild(veil);
+      }
+      let alertBox = doc.getElementById('skyriver-startup-error');
+      if (alertBox === null) {
+        alertBox = doc.createElement('div');
+        alertBox.id = 'skyriver-startup-error';
+        alertBox.setAttribute('role', 'alert');
+        alertBox.style.cssText = 'position:fixed;inset:0;z-index:10000;display:block;overflow-y:auto;overflow-wrap:anywhere;width:100%;max-width:100%;background:#04060b;color:#ff6b6b;font:16px monospace;padding:24px;box-sizing:border-box;';
+        root.appendChild(alertBox);
+      }
+      alertBox.textContent = `Skyriver failed to start: ${String(err)}`;
+      rejectReady(err);
+    },
+  };
+
+  if (typeof window !== 'undefined') {
+    (window as unknown as { __skyriverStartup?: SkyriverStartupHandle }).__skyriverStartup = handle;
+  }
+  return boundary;
+}
+
+function bootWithBoundary(root: HTMLElement, boundary: SkyriverStartupBoundary): SkyriverApp {
+  try {
+    // index.html is T1's and ships no stylesheet, so #app has no height of its own. The page layout is
+    // applied here rather than there: it is this entry point's business how the demo fills the webview,
+    // and createSkyriverApp stays embeddable in a host that sizes its own container.
+    const html = document.documentElement;
+    html.style.height = '100%';
+    html.style.overflow = 'hidden';
+    document.body.style.margin = '0';
+    document.body.style.height = '100%';
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.background = '#04060b';
+    root.style.position = 'fixed';
+    root.style.inset = '0';
+
+    const params = new URLSearchParams(window.location.search);
+    const app = createSkyriverApp({
+      root,
+      seed: SKYRIVER_DEMO_SEED,
+      startMode: params.get('mode') === 'freefly' ? 'freefly' : 'autopilot',
+      debug: params.get('debug') === '1',
+      onFirstFrameSubmitted: (firstFrameMs: number): void => {
+        boundary.markReady(firstFrameMs);
+      },
+      onStartupError: (error: unknown): void => {
+        boundary.markError(error);
+      },
+      // R18 phone density test: ?impostors=N (0 = off) overrides the tier's GPU impostor count.
+      ...(params.get('impostors') !== null && Number.isFinite(Number(params.get('impostors')))
+        ? { impostors: Math.min(60000, Math.max(0, Math.floor(Number(params.get('impostors'))))) }
+        : {}),
+    });
+
 
   // T7 A/B evidence: ?bloom=0 renders the same frame without the post chain.
   if (params.get('bloom') === '0') app.scene.setBloomAllowed(false);
@@ -1122,14 +1229,57 @@ export function boot(): SkyriverApp {
     },
   };
 
-  void app.start().catch((error: unknown) => {
-    console.error('[skyriver] start failed', error);
-    root.textContent = `Skyriver failed to start: ${String(error)}`;
-  });
+    void app.start().catch((error: unknown) => {
+      console.error('[skyriver] start failed', error);
+      boundary.markError(error);
+    });
 
-  return app;
+    return app;
+  } catch (error) {
+    boundary.markError(error);
+    throw error;
+  }
 }
 
-if (typeof document !== 'undefined' && document.getElementById('app') !== null) {
-  boot();
+/**
+ * Boots the demo into #app.
+ *
+ * The app handle is published on `window.__skyriver` because every A3/A5/A6 measurement is taken from
+ * a real browser against the built bundle, and the probe needs the same numbers the HUD shows.
+ */
+export function boot(): SkyriverApp {
+  const root = document.getElementById('app');
+  if (root === null) fail('SKYRIVER_ROOT_MISSING: #app');
+  const boundary = createStartupBoundary(root);
+  return bootWithBoundary(root, boundary);
+}
+
+if (typeof document !== 'undefined') {
+  const root = document.getElementById('app');
+  if (root !== null) {
+    const boundary = createStartupBoundary(root);
+
+    let prepResult: Awaited<ReturnType<typeof prepareBrowserCitySnapshot>> | null = null;
+    let prepEnd = performance.now();
+    try {
+      prepResult = await prepareBrowserCitySnapshot();
+      prepEnd = performance.now();
+    } catch (prepError) {
+      console.warn('[skyriver] prepareBrowserCitySnapshot fallback', prepError);
+    }
+
+    bootWithBoundary(root, boundary);
+    const appPublishMs = performance.now();
+
+    if (prepResult !== null) {
+      const diagnostic: SkyriverColdStartDiagnostic = {
+        ...prepResult,
+        preparationEndMs: prepEnd,
+        appPublishMs,
+        derivationCompleteMs: appPublishMs,
+      };
+
+      (window as unknown as { __skyriverColdStart?: SkyriverColdStartDiagnostic }).__skyriverColdStart = Object.freeze(diagnostic);
+    }
+  }
 }
