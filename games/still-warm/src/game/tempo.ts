@@ -1,20 +1,8 @@
-import type { Emotion, Stage } from "./model";
+import type { Emotion, Stage, TempoState, TempoTracker } from "./model";
+import { createInitialTempo } from "./model";
 
-export type TempoState = "calm" | "buildup" | "peak" | "lull";
-
-export interface TempoTracker {
-  stagnantTurns: number;
-  state: TempoState;
-  lastStage: Stage;
-}
-
-export function createInitialTempo(stage: Stage = "pinned"): TempoTracker {
-  return {
-    stagnantTurns: 0,
-    state: "calm",
-    lastStage: stage,
-  };
-}
+export { createInitialTempo };
+export type { TempoState, TempoTracker };
 
 export interface TurnProgressInput {
   actionSucceeded: boolean;

@@ -4023,3 +4023,187 @@ describe("Portable lantern and room areas", () => {
     ).toMatch(/lantern must be lit/i);
   });
 });
+
+describe("Store-owned tempo tracker", () => {
+  const playing = () => new GameStore({ ...createInitialState(), phase: "playing" });
+
+  it("starts calm and lives on the game state", () => {
+    const state = createInitialState();
+    expect(state.tempo).toEqual({
+      stagnantTurns: 0,
+      state: "calm",
+      lastStage: "pinned",
+    });
+  });
+
+  it("counts a wholly unproductive turn as stagnant", () => {
+    const store = playing();
+    const turn = store.beginTurn();
+    store.settleTurn({
+      turnId: turn.turnId,
+      epoch: turn.epoch,
+      stateBefore: store.getSnapshot(),
+      actionSucceeded: false,
+      gateFailed: false,
+    });
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(1);
+    expect(store.getSnapshot().tempo.state).toBe("buildup");
+  });
+
+  it("resets the wave when a turn makes physical progress", () => {
+    const store = playing();
+    for (let i = 0; i < 3; i++) {
+      const turn = store.beginTurn();
+      store.settleTurn({
+        turnId: turn.turnId,
+        epoch: turn.epoch,
+        stateBefore: store.getSnapshot(),
+        actionSucceeded: false,
+        gateFailed: false,
+      });
+    }
+    expect(store.getSnapshot().tempo.state).toBe("peak");
+
+    const turn = store.beginTurn();
+    store.settleTurn({
+      turnId: turn.turnId,
+      epoch: turn.epoch,
+      stateBefore: store.getSnapshot(),
+      actionSucceeded: true,
+      gateFailed: false,
+    });
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(0);
+    expect(store.getSnapshot().tempo.state).toBe("calm");
+  });
+
+  it("treats a failed emotional gate as no progress even when an action succeeded", () => {
+    const store = playing();
+    const turn = store.beginTurn();
+    store.settleTurn({
+      turnId: turn.turnId,
+      epoch: turn.epoch,
+      stateBefore: store.getSnapshot(),
+      actionSucceeded: true,
+      gateFailed: true,
+    });
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(1);
+  });
+
+  it("settles a turn exactly once, however often it is retried", () => {
+    const store = playing();
+    const turn = store.beginTurn();
+    const snapshot = store.getSnapshot();
+    const settle = () =>
+      store.settleTurn({
+        turnId: turn.turnId,
+        epoch: turn.epoch,
+        stateBefore: snapshot,
+        actionSucceeded: false,
+        gateFailed: false,
+      });
+    settle();
+    settle();
+    settle();
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(1);
+  });
+
+  it("publishes no intermediate tempo for a turn's several actions", async () => {
+    const store = new GameStore({
+      ...createInitialState(),
+      phase: "playing",
+      emotion: "focused",
+    });
+    store.start();
+    const seen: number[] = [];
+    store.subscribe(() => seen.push(store.getSnapshot().tempo.stagnantTurns));
+
+    const turn = store.beginTurn();
+    const before = store.getSnapshot();
+    for (const action of [
+      { kind: "vocalize", cue: "fear" } as const,
+      { kind: "vocalize", cue: "effort" } as const,
+    ]) {
+      await store.run(action, new AbortController().signal, { instant: true });
+    }
+    store.settleTurn({
+      turnId: turn.turnId,
+      epoch: turn.epoch,
+      stateBefore: before,
+      actionSucceeded: false,
+      gateFailed: false,
+    });
+
+    // Actions alone never move the tracker: every earlier notification still
+    // reports 0, and the single settle is what produces 1.
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.slice(0, -1).every((value) => value === 0)).toBe(true);
+    expect(seen.at(-1)).toBe(1);
+  });
+
+  it("settles emotional progress made by a non-physical turn", async () => {
+    const store = new GameStore({
+      ...createInitialState(),
+      phase: "playing",
+      emotion: "scared",
+    });
+    store.start();
+    const turn = store.beginTurn();
+    const before = store.getSnapshot();
+    const result = await store.run(
+      { kind: "react", stimulus: "reassure" },
+      new AbortController().signal,
+      { instant: true },
+    );
+    expect(result.ok).toBe(true);
+    store.settleTurn({
+      turnId: turn.turnId,
+      epoch: turn.epoch,
+      stateBefore: before,
+      actionSucceeded: false,
+      gateFailed: false,
+    });
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(0);
+  });
+
+  it("ignores settlement from a game that has been reset", () => {
+    const store = playing();
+    store.start();
+    const staleTurn = store.beginTurn();
+    const stale = store.getSnapshot();
+    store.reset();
+    store.settleTurn({
+      turnId: staleTurn.turnId,
+      epoch: staleTurn.epoch,
+      stateBefore: stale,
+      actionSucceeded: false,
+      gateFailed: false,
+    });
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(0);
+  });
+});
+
+describe("Tempo settlement contract", () => {
+  it("moves once per turn, in turn order", () => {
+    const store = new GameStore({ ...createInitialState(), phase: "playing" });
+    const first = store.beginTurn();
+    const firstSnapshot = store.getSnapshot();
+    store.settleTurn({
+      turnId: first.turnId,
+      epoch: first.epoch,
+      stateBefore: firstSnapshot,
+      actionSucceeded: false,
+      gateFailed: false,
+    });
+
+    const second = store.beginTurn();
+    store.settleTurn({
+      turnId: second.turnId,
+      epoch: second.epoch,
+      stateBefore: store.getSnapshot(),
+      actionSucceeded: false,
+      gateFailed: false,
+    });
+
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(2);
+  });
+});

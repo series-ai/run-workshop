@@ -7,7 +7,7 @@ import {
 } from "@series-inc/rundot-agent";
 import type { GameStore } from "../game/store";
 import type { GameState, ItemId, VocalCue } from "../game/model";
-import { updateTempo, type TempoTracker } from "../game/tempo";
+import type { TempoTracker } from "../game/tempo";
 import { formatSensoryNarration, formatInspectNarration } from "./sensoryNarration";
 
 export type TriageIntent =
@@ -28,8 +28,8 @@ export type TriageIntent =
 
 export interface CreatureTriageContext {
   store: GameStore;
-  getTempo: () => TempoTracker;
-  setTempo: (tempo: TempoTracker) => void;
+  /** Settle the finished turn into the store-owned pacing tracker. */
+  settleTurn: () => void;
   getSnapshotBefore: () => GameState;
   getPlayerInputText: () => string | null;
   isPlayerTurn: () => boolean;
@@ -87,26 +87,9 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
   context: CreatureTriageContext,
 ): AgentTriageConfig<TTools, typeof TRIAGE_QUESTIONS> {
   const commitReply = (narration: string) => {
-    const snapBefore = context.getSnapshotBefore();
-    const snapAfter = context.store.getSnapshot();
-    const updatedTempo = updateTempo(context.getTempo(), {
-      actionSucceeded: context.getActionSucceeded(),
-      gateFailed: Boolean(context.getGateFailureReason()),
-      stateBefore: {
-        stage: snapBefore.stage,
-        emotion: snapBefore.emotion,
-        disposition: { ...snapBefore.disposition },
-        holding: snapBefore.holding,
-      },
-      stateAfter: {
-        stage: snapAfter.stage,
-        emotion: snapAfter.emotion,
-        disposition: { ...snapAfter.disposition },
-        holding: snapAfter.holding,
-      },
-    });
-    context.setTempo(updatedTempo);
-    context.onTempoChange?.(updatedTempo);
+    // The store owns the pacing tracker; hand it the finished turn. The
+    // settle path publishes the new tempo to the UI exactly once.
+    context.settleTurn();
     context.markResponded();
     context.onResponse(narration);
     return narration;
@@ -138,7 +121,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
         action: "pick_up",
         targetItem: item,
         actionSucceeded: succeeded,
-        tempoState: context.getTempo().state,
+        tempoState: context.store.getSnapshot().tempo.state,
         currentStage: snap.stage,
         creatureEmotion: snap.emotion,
         vocalText: succeeded
@@ -192,7 +175,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
             actionSucceeded: succeeded,
             movedFrom: snapBefore.creatureArea,
             movedTo: snap.creatureArea,
-            tempoState: context.getTempo().state,
+            tempoState: context.store.getSnapshot().tempo.state,
             currentStage: snap.stage,
             creatureEmotion: snap.emotion,
             vocalText: succeeded
@@ -219,7 +202,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
           const narration = formatSensoryNarration({
             action: "react",
             actionSucceeded: true,
-            tempoState: context.getTempo().state,
+            tempoState: context.store.getSnapshot().tempo.state,
             currentStage: snap.stage,
             creatureEmotion: snap.emotion,
             vocalText:
@@ -264,7 +247,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
             action: "lift_debris",
             actionSucceeded: !failed,
             gateFailureReason: failed ? "lift_scared" : undefined,
-            tempoState: context.getTempo().state,
+            tempoState: context.store.getSnapshot().tempo.state,
             currentStage: snap.stage,
             creatureEmotion: snap.emotion,
             vocalText: failed
@@ -292,7 +275,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
             action: "none",
             actionSucceeded: false,
             gateFailureReason: "stand_injured",
-            tempoState: context.getTempo().state,
+            tempoState: context.store.getSnapshot().tempo.state,
             currentStage: snap.stage,
             creatureEmotion: snap.emotion,
             vocalText:
@@ -346,7 +329,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
             action: pinned ? "none" : "roll_patient",
             actionSucceeded: !pinned && context.getActionSucceeded(),
             gateFailureReason: pinned ? "roll_pinned" : undefined,
-            tempoState: context.getTempo().state,
+            tempoState: context.store.getSnapshot().tempo.state,
             currentStage: snap.stage,
             creatureEmotion: snap.emotion,
             vocalText: pinned
@@ -370,7 +353,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
           const narration = formatSensoryNarration({
             action: "light_lantern",
             actionSucceeded: succeeded,
-            tempoState: context.getTempo().state,
+            tempoState: context.store.getSnapshot().tempo.state,
             currentStage: snap.stage,
             creatureEmotion: snap.emotion,
             vocalText: succeeded

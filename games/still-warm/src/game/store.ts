@@ -17,6 +17,7 @@ import {
 } from "./transitions";
 import { EMOTION_PROFILES } from "./emotions";
 import { actionPerformance, APPROACH_SECONDS } from "./performance";
+import { updateTempo } from "./tempo";
 
 export function getActionDuration(
   action: PhysicalAction,
@@ -46,6 +47,13 @@ export class GameStore {
   private state: GameState;
   private listeners: Set<() => void> = new Set();
   private generation: number = 0;
+  /**
+   * Changes only when the running game is replaced (reset or start). A turn
+   * that began under an earlier epoch must not settle into the new game.
+   */
+  private tempoEpoch: number = 0;
+  private turnCounter: number = 0;
+  private lastSettledTurnId: number = -1;
   private currentTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingResolver:
     ((res: { ok: boolean; message: string }) => void) | null = null;
@@ -98,6 +106,8 @@ export class GameStore {
     if (this.disposed) return;
     this.cancel("Operation reset");
     this.state = createInitialState();
+    this.tempoEpoch += 1;
+    this.lastSettledTurnId = -1;
     this.notify();
   }
 
@@ -352,6 +362,75 @@ export class GameStore {
         }
       }, this.actionDuration);
     });
+  }
+
+  /**
+   * Settles the pacing tracker for a completed turn. This is the only writer:
+   * individual actions never move the tracker, so subscribers only ever see
+   * the settled value for a turn.
+   *
+   * `turnId` makes settlement idempotent and ordered: only a strictly newer
+   * turn than the last settled one moves the tracker, so a retry or a
+   * duplicate is ignored. `epoch` rejects a turn that began before the
+   * running game was replaced. See beginTurn for the one-turn-in-flight rule.
+   */
+  settleTurn(input: {
+    turnId: number;
+    stateBefore: GameState;
+    actionSucceeded: boolean;
+    gateFailed: boolean;
+    epoch: number;
+  }): void {
+    if (this.disposed) return;
+    if (input.epoch !== this.tempoEpoch) return;
+    // Monotonic: a duplicate or late retry of an already-settled turn is
+    // ignored rather than counted twice.
+    if (input.turnId <= this.lastSettledTurnId) return;
+    this.lastSettledTurnId = input.turnId;
+
+    const after = this.state;
+    this.state = {
+      ...after,
+      // Advance from the store's current tracker rather than the caller's
+      // snapshot, so the move follows the settled order. The monotonic turn
+      // guard above keeps this to one move per turn.
+      tempo: updateTempo(after.tempo, {
+        actionSucceeded: input.actionSucceeded,
+        gateFailed: input.gateFailed,
+        stateBefore: {
+          stage: input.stateBefore.stage,
+          emotion: input.stateBefore.emotion,
+          disposition: { ...input.stateBefore.disposition },
+          holding: input.stateBefore.holding,
+        },
+        stateAfter: {
+          stage: after.stage,
+          emotion: after.emotion,
+          disposition: { ...after.disposition },
+          holding: after.holding,
+        },
+      }),
+    };
+    this.notify();
+  }
+
+  /**
+   * Opens a turn and returns its identity. The caller passes the id and epoch
+   * back to settleTurn so the tracker moves exactly once per turn.
+   *
+   * Contract: one turn is in flight at a time. The agent runtime already
+   * rejects concurrent turns; settlement is monotonic and a newer turn that
+   * settles first closes the window for earlier ones. Settlement of two
+   * turns that are open at once is not supported.
+   */
+  beginTurn(): { turnId: number; epoch: number } {
+    this.turnCounter += 1;
+    return { turnId: this.turnCounter, epoch: this.tempoEpoch };
+  }
+
+  /** Epoch of the running game; a turn captures it and passes it to settleTurn. */
+  getTempoEpoch(): number {
+    return this.tempoEpoch;
   }
 
   dispose(): void {

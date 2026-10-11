@@ -63,6 +63,23 @@ export type RoomArea = (typeof ROOM_AREAS)[number];
 export type RuleId = (typeof RULE_IDS)[number];
 export type Stage = (typeof STAGES)[number];
 export type Posture = (typeof POSTURES)[number];
+
+/** Left-4-Dead style pacing wave state. */
+export type TempoState = "calm" | "buildup" | "peak" | "lull";
+
+/**
+ * Pacing tracker owned by the game state. It counts turns that made no
+ * physical or emotional progress and derives the wave state from that count.
+ */
+export interface TempoTracker {
+  stagnantTurns: number;
+  state: TempoState;
+  lastStage: Stage;
+}
+
+export function createInitialTempo(stage: Stage = "pinned"): TempoTracker {
+  return { stagnantTurns: 0, state: "calm", lastStage: stage };
+}
 export type Phase = "ready" | "playing" | "blackout" | "won" | "lost";
 export type Outcome = "saved" | "blood_loss" | "fire" | "creature_lost";
 export const EMOTIONS = [
@@ -400,6 +417,7 @@ export interface GameState {
   elapsed: number;
   stage: Stage;
   posture: Posture;
+  tempo: TempoTracker;
   patient: PatientState;
   items: Record<ItemId, ItemState>;
   holding: PortableItemId | null;
@@ -445,6 +463,7 @@ export function createInitialState(): GameState {
     elapsed: 0,
     stage: "pinned",
     posture: "prone",
+    tempo: createInitialTempo("pinned"),
     patient: {
       health: 86,
       pain: 36,

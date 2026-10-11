@@ -179,7 +179,8 @@ export class CreatureController {
       canResume: false,
       needsInstruction: false,
       response: null,
-      tempo: createInitialTempo("pinned"),
+      // The store owns the tracker; mirror its post-reset value.
+      tempo: this.store.getSnapshot().tempo,
     });
     if (old) void old.close().catch(() => undefined);
     if (epoch !== this.epoch || this.closed) return;

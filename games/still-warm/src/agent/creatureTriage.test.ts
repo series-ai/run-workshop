@@ -9,7 +9,36 @@ import {
 import { GameStore } from "../game/store";
 import { createInitialState, type PhysicalAction } from "../game/model";
 import { createCreatureTriage, type TriageIntent } from "./creatureTriage";
-import { createInitialTempo, type TempoTracker } from "../game/tempo";
+
+
+/**
+ * Mirrors how liveSession settles a turn: a turn identity is opened before
+ * the send, and the real recorded outcome plus gate reason are handed to the
+ * store once the route has committed.
+ */
+function makeTurnSettler(
+  store: GameStore,
+  read: () => { actionSucceeded: boolean; gateFailed: boolean },
+): { open: () => void; settle: () => void } {
+  let turn = store.beginTurn();
+  let snapshotBefore = store.getSnapshot();
+  return {
+    open() {
+      snapshotBefore = store.getSnapshot();
+      turn = store.beginTurn();
+    },
+    settle() {
+      const outcome = read();
+      store.settleTurn({
+        turnId: turn.turnId,
+        epoch: turn.epoch,
+        stateBefore: snapshotBefore,
+        actionSucceeded: outcome.actionSucceeded,
+        gateFailed: outcome.gateFailed,
+      });
+    },
+  };
+}
 
 function createMockTools(
   store: GameStore,
@@ -64,19 +93,19 @@ describe("creatureTriage", () => {
   it("routes soothe intent to reassurance, relief vocalization, and first-person sensory narration", async () => {
     const store = new GameStore();
     store.start();
-    let tempo: TempoTracker = createInitialTempo("pinned");
     let responded = false;
     let lastResponseText = "";
     let actionSucceeded = false;
     let gateFailureReason: any = undefined;
 
     const mockTools = createMockTools(store);
+    const settler = makeTurnSettler(store, () => ({
+      actionSucceeded,
+      gateFailed: Boolean(gateFailureReason),
+    }));
     const triage = createCreatureTriage(mockTools, {
       store,
-      getTempo: () => tempo,
-      setTempo: (t) => {
-        tempo = t;
-      },
+      settleTurn: () => settler.settle(),
       getSnapshotBefore: () => store.getSnapshot(),
       getPlayerInputText: () => "It is okay, I am here.",
       isPlayerTurn: () => true,
@@ -91,9 +120,7 @@ describe("creatureTriage", () => {
       onResponse: (text) => {
         lastResponseText = text;
       },
-      onTempoChange: (t) => {
-        tempo = t;
-      },
+      onTempoChange: vi.fn(),
       onVocalize: vi.fn(),
       markResponded: () => {
         responded = true;
@@ -118,6 +145,7 @@ describe("creatureTriage", () => {
     });
 
     const session = await agent.createSession();
+    settler.open();
     const result = await session.send({
       text: "PLAYER COMMAND: It is okay, I am here.",
     });
@@ -138,7 +166,6 @@ describe("creatureTriage", () => {
       emotion: "focused",
     });
     store.start();
-    let tempo: TempoTracker = createInitialTempo("pinned");
     let responded = false;
     let lastResponseText = "";
     let actionSucceeded = false;
@@ -150,12 +177,13 @@ describe("creatureTriage", () => {
         actionSucceeded = result.ok;
       }
     });
+    const settler = makeTurnSettler(store, () => ({
+      actionSucceeded,
+      gateFailed: false,
+    }));
     const triage = createCreatureTriage(mockTools, {
       store,
-      getTempo: () => tempo,
-      setTempo: (t) => {
-        tempo = t;
-      },
+      settleTurn: () => settler.settle(),
       getSnapshotBefore: () => ({ ...store.getSnapshot(), creatureArea: "tray" as const }),
       getPlayerInputText: () => "come here",
       isPlayerTurn: () => true,
@@ -168,9 +196,7 @@ describe("creatureTriage", () => {
       onResponse: (text) => {
         lastResponseText = text;
       },
-      onTempoChange: (t) => {
-        tempo = t;
-      },
+      onTempoChange: vi.fn(),
       onVocalize: vi.fn(),
       markResponded: () => {
         responded = true;
@@ -195,6 +221,7 @@ describe("creatureTriage", () => {
     });
 
     const session = await agent.createSession();
+    settler.open();
     const result = await session.send({ text: "PLAYER COMMAND: come here" });
 
     expect(result.finishReason).toBe("stop");
@@ -217,7 +244,6 @@ describe("creatureTriage", () => {
     });
     store.start();
 
-    let tempo: TempoTracker = createInitialTempo("pinned");
     let actionSucceeded = false;
     const executedActions: PhysicalAction[] = [];
 
@@ -228,12 +254,13 @@ describe("creatureTriage", () => {
       }
     });
 
+    const settler = makeTurnSettler(store, () => ({
+      actionSucceeded,
+      gateFailed: false,
+    }));
     const triage = createCreatureTriage(mockTools, {
       store,
-      getTempo: () => tempo,
-      setTempo: (t) => {
-        tempo = t;
-      },
+      settleTurn: () => settler.settle(),
       getSnapshotBefore: () => store.getSnapshot(),
       getPlayerInputText: () => "Lift the cabinet",
       isPlayerTurn: () => true,
@@ -267,6 +294,7 @@ describe("creatureTriage", () => {
     });
 
     const session = await agent.createSession();
+    settler.open();
     const result = await session.send({
       text: "PLAYER COMMAND: Lift the cabinet",
     });
@@ -288,16 +316,16 @@ describe("creatureTriage", () => {
   it("routes stand_self intent to agonizing physical sensory line without moving", async () => {
     const store = new GameStore();
     store.start();
-    let tempo: TempoTracker = createInitialTempo("pinned");
     let gateFailureReason: any = undefined;
 
     const mockTools = createMockTools(store);
+    const settler = makeTurnSettler(store, () => ({
+      actionSucceeded: false,
+      gateFailed: Boolean(gateFailureReason),
+    }));
     const triage = createCreatureTriage(mockTools, {
       store,
-      getTempo: () => tempo,
-      setTempo: (t) => {
-        tempo = t;
-      },
+      settleTurn: () => settler.settle(),
       getSnapshotBefore: () => store.getSnapshot(),
       getPlayerInputText: () => "I try to stand up",
       isPlayerTurn: () => true,
@@ -331,6 +359,7 @@ describe("creatureTriage", () => {
     });
 
     const session = await agent.createSession();
+    settler.open();
     const result = await session.send({
       text: "PLAYER COMMAND: I try to stand up",
     });
@@ -343,15 +372,15 @@ describe("creatureTriage", () => {
   it("escalates chat intent to the generative model transport", async () => {
     const store = new GameStore();
     store.start();
-    let tempo: TempoTracker = createInitialTempo("pinned");
 
     const mockTools = createMockTools(store);
+    const settler = makeTurnSettler(store, () => ({
+      actionSucceeded: false,
+      gateFailed: false,
+    }));
     const triage = createCreatureTriage(mockTools, {
       store,
-      getTempo: () => tempo,
-      setTempo: (t) => {
-        tempo = t;
-      },
+      settleTurn: () => settler.settle(),
       getSnapshotBefore: () => store.getSnapshot(),
       getPlayerInputText: () => "Who created you?",
       isPlayerTurn: () => true,
@@ -392,6 +421,7 @@ describe("creatureTriage", () => {
     });
 
     const session = await agent.createSession();
+    settler.open();
     const result = await session.send({
       text: "PLAYER COMMAND: Who created you?",
     });
@@ -401,12 +431,71 @@ describe("creatureTriage", () => {
   });
 });
 
+describe("fast path settles the store-owned tempo", () => {
+  it("advances the pacing tracker when a route reply commits", async () => {
+    const base = createInitialState();
+    const store = new GameStore({ ...base, emotion: "focused" });
+    store.start();
+    let responded = false;
+
+    const mockTools = createMockTools(store);
+    const settler = makeTurnSettler(store, () => ({
+      // The inspect route answers without moving the world.
+      actionSucceeded: false,
+      gateFailed: false,
+    }));
+    const triage = createCreatureTriage(mockTools, {
+      store,
+      settleTurn: () => settler.settle(),
+      getSnapshotBefore: () => store.getSnapshot(),
+      getPlayerInputText: () => "inspect the wound",
+      isPlayerTurn: () => true,
+      getActionSucceeded: () => false,
+      setActionSucceeded: () => undefined,
+      getGateFailureReason: () => undefined,
+      setGateFailureReason: () => undefined,
+      onResponse: () => undefined,
+      onTempoChange: vi.fn(),
+      onVocalize: vi.fn(),
+      markResponded: () => {
+        responded = true;
+      },
+    });
+
+    const agent = createAgent({
+      model: {
+        stream: async function* () {},
+        complete: async () => ({
+          model: "test",
+          content: [],
+          finishReason: "stop",
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+        }),
+      },
+      models: ["quick"],
+      tools: mockTools,
+      judge: createMockJudge("inspect"),
+      triage,
+      store: new InMemoryAgentSessionStore(),
+    });
+
+    const session = await agent.createSession();
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(0);
+
+    await session.send({ text: "PLAYER COMMAND: inspect the wound" });
+
+    // The route answered, so ensureResponse never runs. Tempo must still move.
+    expect(responded).toBe(true);
+    expect(store.getSnapshot().tempo.stagnantTurns).toBe(1);
+    expect(store.getSnapshot().tempo.state).toBe("buildup");
+  });
+});
+
 describe("fetch narration stays inside hearing", () => {
   it("names the item but never claims where it came from", async () => {
     const base = createInitialState();
     const store = new GameStore({ ...base, emotion: "focused" });
     store.start();
-    let tempo: TempoTracker = createInitialTempo("pinned");
     let lastResponseText = "";
     let actionSucceeded = false;
     const executedActions: PhysicalAction[] = [];
@@ -415,12 +504,13 @@ describe("fetch narration stays inside hearing", () => {
       executedActions.push(action);
       if (action.kind === "pick_up") actionSucceeded = result.ok;
     });
+    const settler = makeTurnSettler(store, () => ({
+      actionSucceeded,
+      gateFailed: false,
+    }));
     const triage = createCreatureTriage(mockTools, {
       store,
-      getTempo: () => tempo,
-      setTempo: (t) => {
-        tempo = t;
-      },
+      settleTurn: () => settler.settle(),
       getSnapshotBefore: () => store.getSnapshot(),
       getPlayerInputText: () => "fetch the cloth",
       isPlayerTurn: () => true,
@@ -433,9 +523,7 @@ describe("fetch narration stays inside hearing", () => {
       onResponse: (text) => {
         lastResponseText = text;
       },
-      onTempoChange: (t) => {
-        tempo = t;
-      },
+      onTempoChange: vi.fn(),
       onVocalize: vi.fn(),
       markResponded: () => undefined,
     });
@@ -458,6 +546,7 @@ describe("fetch narration stays inside hearing", () => {
     });
 
     const session = await agent.createSession();
+    settler.open();
     await session.send({ text: "PLAYER COMMAND: fetch the cloth" });
 
     expect(executedActions.some((a) => a.kind === "pick_up")).toBe(true);

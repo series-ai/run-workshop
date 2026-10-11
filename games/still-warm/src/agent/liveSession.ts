@@ -60,7 +60,7 @@ import {
 } from "./responseEvidence";
 import { logConversation } from "./conversationLogger";
 import { getMonsterResponse } from "../game/monsterResponse";
-import { createInitialTempo, updateTempo, type TempoTracker } from "../game/tempo";
+import type { TempoTracker } from "../game/tempo";
 import { formatSensoryNarration } from "./sensoryNarration";
 import { isStandAttempt, isRollAttempt } from "../game/waitingThoughts";
 import { createCreatureTriage } from "./creatureTriage";
@@ -116,7 +116,22 @@ export async function createLiveSession(
     | undefined = undefined;
   let actionSucceeded = false;
   let snapshotBefore = store.getSnapshot();
-  let tempo: TempoTracker = createInitialTempo("pinned");
+  let turn: { turnId: number; epoch: number } = store.beginTurn();
+  /**
+   * Hands the finished turn to the store, which owns the pacing tracker.
+   * The agent layer supplies what only it knows: whether the intended action
+   * succeeded, and whether an emotional gate blocked it.
+   */
+  const settleTempo = () => {
+    store.settleTurn({
+      turnId: turn.turnId,
+      epoch: turn.epoch,
+      stateBefore: snapshotBefore,
+      actionSucceeded,
+      gateFailed: Boolean(gateFailureReason),
+    });
+    hooks.onTempoChange?.(store.getSnapshot().tempo);
+  };
   const responseEvidence = new ResponseEvidence();
   const withEvidence = <T extends object>(result: T) => ({
     ...result,
@@ -240,24 +255,7 @@ export async function createLiveSession(
         }
         context.signal.throwIfAborted();
         respondedThisTurn = true;
-        const snapshotAfter = store.getSnapshot();
-        tempo = updateTempo(tempo, {
-          actionSucceeded,
-          gateFailed: Boolean(gateFailureReason),
-          stateBefore: {
-            stage: snapshotBefore.stage,
-            emotion: snapshotBefore.emotion,
-            disposition: { ...snapshotBefore.disposition },
-            holding: snapshotBefore.holding,
-          },
-          stateAfter: {
-            stage: snapshotAfter.stage,
-            emotion: snapshotAfter.emotion,
-            disposition: { ...snapshotAfter.disposition },
-            holding: snapshotAfter.holding,
-          },
-        });
-        hooks.onTempoChange?.(tempo);
+        settleTempo();
         logConversation("TOOL_INTERPRET_RESPONSE_ACCEPTED", decision.text);
         hooks.onResponse(decision.text);
         return { ok: true, message: "Narration thought shown." };
@@ -280,10 +278,7 @@ export async function createLiveSession(
   const judgeTransport = createTextGenJudgeTransport(run.textGen);
   const triage = createCreatureTriage(tools, {
     store,
-    getTempo: () => tempo,
-    setTempo: (t) => {
-      tempo = t;
-    },
+    settleTurn: settleTempo,
     getSnapshotBefore: () => snapshotBefore,
     getPlayerInputText: () => playerInputText,
     isPlayerTurn: () => isPlayerTurn,
@@ -351,6 +346,7 @@ export async function createLiveSession(
       reactionAvailable = isPlayer;
       playerInputText = isPlayer ? (inputText ?? null) : null;
       snapshotBefore = store.getSnapshot();
+      turn = store.beginTurn();
       gateFailureReason = undefined;
       actionSucceeded = false;
       const snap = store.getSnapshot();
@@ -371,31 +367,14 @@ export async function createLiveSession(
     ensureResponse() {
       if (isPlayerTurn && !respondedThisTurn) {
         respondedThisTurn = true;
+        settleTempo();
         const snapshotAfter = store.getSnapshot();
-        tempo = updateTempo(tempo, {
-          actionSucceeded,
-          gateFailed: Boolean(gateFailureReason),
-          stateBefore: {
-            stage: snapshotBefore.stage,
-            emotion: snapshotBefore.emotion,
-            disposition: { ...snapshotBefore.disposition },
-            holding: snapshotBefore.holding,
-          },
-          stateAfter: {
-            stage: snapshotAfter.stage,
-            emotion: snapshotAfter.emotion,
-            disposition: { ...snapshotAfter.disposition },
-            holding: snapshotAfter.holding,
-          },
-        });
-        hooks.onTempoChange?.(tempo);
-
         const fallback = getMonsterResponse(snapshotAfter.emotion);
         const text = formatSensoryNarration({
           action: "none",
           actionSucceeded,
           gateFailureReason,
-          tempoState: tempo.state,
+          tempoState: store.getSnapshot().tempo.state,
           currentStage: snapshotAfter.stage,
           creatureEmotion: snapshotAfter.emotion,
           vocalText: fallback.text,
@@ -406,7 +385,7 @@ export async function createLiveSession(
       }
     },
     getTempo() {
-      return tempo;
+      return store.getSnapshot().tempo;
     },
     async close() {
       subscriptions.forEach((subscription) => subscription.unsubscribe());
