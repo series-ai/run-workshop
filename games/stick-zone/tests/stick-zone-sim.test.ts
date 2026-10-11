@@ -518,6 +518,19 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       shoot: false,
       interact: false,
     });
+    // Step through 16-tick chambering windup to the strike impact frame (actionTicks <= 26)
+    for (let i = 0; i < 16; i++) {
+      sim.step({
+        dx: 0,
+        dz: 0,
+        sprint: false,
+        slide: false,
+        roll: false,
+        kick: false,
+        shoot: false,
+        interact: false,
+      });
+    }
 
     expect(hitBroadcast).toBe(true);
     expect(sim.rivals[0].health).toBe(65);
@@ -1388,6 +1401,19 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
       interact: false,
     });
     expect(hubSim.player.action).toBe("kick");
+    // Step through chambering windup to strike impact frame
+    for (let i = 0; i < 16; i++) {
+      hubSim.step({
+        dx: 0,
+        dz: 0,
+        sprint: false,
+        slide: false,
+        roll: false,
+        kick: false,
+        shoot: false,
+        interact: false,
+      });
+    }
     expect(hubSim.dummyHitCount).toBeGreaterThan(1);
   });
 
@@ -1688,4 +1714,98 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(targetRival.health).toBeLessThanOrEqual(30); // 120 - 96 = 24
     expect(targetRival.z).toBeLessThan(-2.5); // Pushed backwards North (-Z)
   });
+
+  it("41. Kick damage arc & size synchronized with animation timing: windup delay, 2.8m reach, and 125-degree sweep arc", () => {
+    const testSim = new SectorDepotSimulation("raid_kick_timing_test", "spoke");
+    testSim.admitOperative();
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.facing = 0; // Facing South (+Z)
+
+    // Add target in front within 2.8m reach at z = 2.0
+    const targetFront = {
+      id: "target_kick_front",
+      isPlayer: false,
+      isRival: true,
+      isAI: false,
+      name: "Front Target",
+      x: 0,
+      y: 0,
+      z: 2.0,
+      facing: 0,
+      health: 100,
+      armor: 0,
+      cash: 0,
+      action: "idle" as const,
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+    };
+    testSim.rivals.push(targetFront);
+
+    // Frame 0: Initiate melee kick
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: true,
+      shoot: false,
+      interact: false,
+    });
+
+    expect(testSim.player.action).toBe("kick");
+    expect(testSim.player.actionTicks).toBe(SIM_CONFIG.KICK_TICKS); // 42 ticks
+    expect(testSim.kickStrikePending).toBe(true);
+    // At frame 0: Chambering windup, no damage dealt yet!
+    expect(targetFront.health).toBe(100);
+
+    // Frames 1 to 15: Chambering / hip pivot phase (still pending, zero premature damage)
+    for (let i = 0; i < 15; i++) {
+      testSim.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
+      expect(targetFront.health).toBe(100);
+      expect(testSim.kickStrikePending).toBe(true);
+    }
+
+    // Frame 16: Active strike frame (actionTicks <= 26, elapsed 0.267s) - foot extends and impacts!
+    testSim.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
+    expect(testSim.kickStrikePending).toBe(false);
+    expect(targetFront.health).toBe(65); // -35 HP damage
+    expect(targetFront.z).toBeCloseTo(2.0 + 4.5); // 4.5m physical knockback
+
+    // Arc Geometry Validation:
+    // Reset player position and facing 0 (+Z)
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.facing = 0;
+    testSim.kickCooldownTicks = 0;
+
+    // Target A: In sweep arc on right flank (+45 deg, +0.78 rad) at dist 2.0m -> (1.414, 1.414)
+    // Target B: In sweep arc on forward-left (-35 deg, -0.61 rad) at dist 2.0m -> (-1.15, 1.64)
+    // Target C: Outside sweep arc on far-left (-65 deg, -1.13 rad) at dist 2.0m -> (-1.81, 0.85)
+    // Target D: Beyond 2.8m reach (3.2m straight ahead) -> (0, 3.2)
+    const targetRight = { ...targetFront, id: "target_right", x: 1.414, z: 1.414, health: 100 };
+    const targetLeft = { ...targetFront, id: "target_left", x: -1.15, z: 1.64, health: 100 };
+    const targetFarLeft = { ...targetFront, id: "target_far_left", x: -1.81, z: 0.85, health: 100 };
+    const targetTooFar = { ...targetFront, id: "target_too_far", x: 0, z: 3.2, health: 100 };
+    testSim.rivals = [targetRight, targetLeft, targetFarLeft, targetTooFar];
+
+    // Fire second kick
+    testSim.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: true, shoot: false, interact: false });
+    for (let i = 0; i < 16; i++) {
+      testSim.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
+    }
+
+    // Inside sweep arc: right flank and forward-left hit!
+    expect(targetRight.health).toBe(65);
+    expect(targetLeft.health).toBe(65);
+    // Outside sweep arc (far left outside right-leg sweep) and beyond reach: untouched!
+    expect(targetFarLeft.health).toBe(100);
+    expect(targetTooFar.health).toBe(100);
+  });
 });
+

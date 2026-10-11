@@ -165,11 +165,17 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     boss.isAlive = true;
     boss.health = 20;
     boss.armor = 0;
+    boss.x = 0;
+    boss.z = 43.5;
+    (boss as any).playerAlertTicks = 120;
     sim.player.x = 0;
     sim.player.z = 42;
     sim.player.facing = 0;
 
     sim.step(makeInput({ dx: 0, dz: 0, shoot: false, interact: false, kick: true }));
+    for (let i = 0; i < 16; i++) {
+      sim.step(makeInput({ dx: 0, dz: 0, shoot: false, interact: false, kick: false }));
+    }
     expect(boss.isAlive).toBe(false);
     expect(sim.player.hasKeycard).toBe(true);
   });

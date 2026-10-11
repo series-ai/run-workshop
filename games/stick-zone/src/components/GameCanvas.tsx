@@ -787,19 +787,19 @@ const PresentationFXManager: React.FC<{
       } else if (ev.type === "kick") {
         const kickPos = _scratchKick.set(ev.position.x, ev.position.y, ev.position.z);
         const screenFacing = Math.atan2(-Math.cos(ev.facing), Math.sin(ev.facing));
-        // Kinetic Xiao Xiao melee slash sweep
-        effects.trigger("sword-slash", kickPos, "#eeece5", 1.9, screenFacing);
+        // Kinetic Xiao Xiao roundhouse sweep scaled to 2.8m physical reach
+        effects.trigger("sword-slash", kickPos, "#eeece5", 2.4, screenFacing);
         // Kinetic air compression shockwave ring
-        effects.trigger("plasma-pulse", kickPos, "#38bdf8", 1.4, screenFacing);
+        effects.trigger("plasma-pulse", kickPos, "#38bdf8", 1.8, screenFacing);
         if (ev.isHit) {
           const hitPos = _scratchHit.set(
-            ev.position.x + Math.sin(ev.facing) * 1.5,
+            ev.position.x + Math.sin(ev.facing) * 1.6,
             ev.position.y,
-            ev.position.z + Math.cos(ev.facing) * 1.5
+            ev.position.z + Math.cos(ev.facing) * 1.6
           );
-          effects.trigger("heavy-impact", hitPos, undefined, 1.6);
-          effects.trigger("metal-sparks", hitPos, undefined, 1.3);
-          effects.trigger("critical-hit", hitPos, "#ef4444", 1.3);
+          effects.trigger("heavy-impact", hitPos, undefined, 1.8);
+          effects.trigger("metal-sparks", hitPos, undefined, 1.5);
+          effects.trigger("critical-hit", hitPos, "#ef4444", 1.5);
         }
       } else if (ev.type === "stim") {
         effects.trigger(

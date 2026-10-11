@@ -703,6 +703,7 @@ export class SectorDepotSimulation {
   public shootCooldownTicks = 0;
   public rollCooldownTicks = 0;
   public kickCooldownTicks = 0;
+  public kickStrikePending = false;
   public slideVx = 0;
   public slideVz = 0;
   public walkVx = 0;
@@ -2077,6 +2078,7 @@ export class SectorDepotSimulation {
       // so 12 iframes apply immediately on frame 1
       if (!this.isInputLocked() && input.roll && this.rollCooldownTicks <= 0 && this.player.action !== 'roll' && this.player.action !== 'slide' && this.slideTicksRemaining <= 0) {
         this.player.action = 'roll';
+        this.kickStrikePending = false;
       if (this.zoneMode === 'hub') this.trainingProgress.agilityUsed = true;
         this.player.actionTicks = SIM_CONFIG.ROLL_TICKS;
         this.rollCooldownTicks = 30;
@@ -2093,14 +2095,20 @@ export class SectorDepotSimulation {
           const elapsed = SIM_CONFIG.ROLL_TICKS - this.player.actionTicks;
           this.player.isInvulnerable = elapsed <= SIM_CONFIG.ROLL_IFRAMES;
         }
+        if (this.player.action === 'kick' && this.kickStrikePending && this.player.actionTicks <= 26) {
+          this.kickStrikePending = false;
+          this.performMeleeKick();
+        }
         if (this.player.actionTicks === 0) {
           this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
           this.player.isInvulnerable = false;
+          this.kickStrikePending = false;
           if (this.player.weapon === 'grenade' && (this.player.fragGrenades ?? 0) <= 0) {
             this.setWeapon('rifle');
           }
         }
       } else {
+        this.kickStrikePending = false;
         if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'kick' || this.player.action === 'throw' || this.player.action === 'shoot' || this.player.action === 'reload') {
           this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
           if (this.player.weapon === 'grenade' && (this.player.fragGrenades ?? 0) <= 0) {
@@ -2343,7 +2351,11 @@ export class SectorDepotSimulation {
       this.player.action = 'kick';
       this.player.actionTicks = SIM_CONFIG.KICK_TICKS;
       this.kickCooldownTicks = SIM_CONFIG.KICK_TICKS;
-      this.performMeleeKick();
+      this.kickStrikePending = true;
+      const forwardX = Math.sin(this.player.facing);
+      const forwardZ = Math.cos(this.player.facing);
+      this.walkVx = forwardX * 1.5;
+      this.walkVz = forwardZ * 1.5;
     }
 
     // Weapon switch (1/2 or Q)
@@ -2501,14 +2513,27 @@ export class SectorDepotSimulation {
   }
 
   private performMeleeKick(): void {
-    const kickRange = 2.5;
+    // Roundhouse kick physical reach: 2.8m (martial arts leg reach + forward lunge)
+    const kickRange = 2.8;
     const forwardX = Math.sin(this.player.facing);
     const forwardZ = Math.cos(this.player.facing);
-    this.walkVx = forwardX * 2.2;
-    this.walkVz = forwardZ * 2.2;
+    this.walkVx = forwardX * 0.8;
+    this.walkVz = forwardZ * 0.8;
 
     const machineHits: KickActionPayload['machineHits'] = [];
     const rivalHits: KickActionPayload['rivalHits'] = [];
+
+    // Right-leg roundhouse sweep arc check:
+    // Right leg sweeps from right flank (+1.35 rad ~77°) across front centerline (0 rad)
+    // through to left flank (-0.85 rad ~-48°). Total arc ~125°.
+    const inSweepArc = (targetX: number, targetZ: number): boolean => {
+      const dx = targetX - this.player.x;
+      const dz = targetZ - this.player.z;
+      let diff = Math.atan2(dx, dz) - this.player.facing;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      return diff >= -0.85 && diff <= 1.35;
+    };
 
     // FOB Training Dummies Kick Interaction
     let dummyKicked = false;
@@ -2521,9 +2546,8 @@ export class SectorDepotSimulation {
         const ddx = d.x - this.player.x;
         const ddz = d.z - this.player.z;
         const ddist = Math.hypot(ddx, ddz);
-        if (ddist <= kickRange) {
-          const dot = (ddx * forwardX + ddz * forwardZ) / (ddist || 1);
-          if (dot > 0.2) {
+        if (ddist <= kickRange && ddist > 0.1) {
+          if (inSweepArc(d.x, d.z)) {
             dummyKicked = true;
             this.player.lastHitmarkerTick = this.tick;
             this.dummyHitCount++;
@@ -2550,8 +2574,7 @@ export class SectorDepotSimulation {
       const mdz = machine.z - this.player.z;
       const mdist = Math.hypot(mdx, mdz);
       if (mdist <= kickRange && mdist > 0.1) {
-        const dot = (mdx * forwardX + mdz * forwardZ) / mdist;
-        if (dot < 0.2) continue; // Must be in forward attack cone (~78 degrees)
+        if (!inSweepArc(machine.x, machine.z)) continue; // Must be in roundhouse sweep arc
         if (this.checkContainerRayObstruction(this.player.x, this.player.z, machine.x, machine.z, 1.0, 1.0)) continue;
         const isAggregateWired = !!this.onKickAction;
         const isPrediction = isAggregateWired || !!this.onMachineHit;
@@ -2583,8 +2606,7 @@ export class SectorDepotSimulation {
       const dz = rival.z - this.player.z;
       const dist = Math.hypot(dx, dz);
       if (dist <= kickRange && dist > 0.1) {
-        const dot = (dx * forwardX + dz * forwardZ) / dist;
-        if (dot < 0.2) continue; // Must be in front of player (forward attack cone)
+        if (!inSweepArc(rival.x, rival.z)) continue; // Must be in roundhouse sweep arc
         // Physical cover check: cannot kick through containers
         if (this.checkContainerRayObstruction(this.player.x, this.player.z, rival.x, rival.z, 1.0, 1.0)) {
           this.combatLog.push(`[TICK ${this.tick}] Melee kick deflected by container cover`);
@@ -2682,7 +2704,11 @@ export class SectorDepotSimulation {
       this.player.action = "kick";
       this.player.actionTicks = SIM_CONFIG.KICK_TICKS;
       this.kickCooldownTicks = SIM_CONFIG.KICK_TICKS;
-      this.performMeleeKick();
+      this.kickStrikePending = true;
+      const forwardX = Math.sin(this.player.facing);
+      const forwardZ = Math.cos(this.player.facing);
+      this.walkVx = forwardX * 1.5;
+      this.walkVz = forwardZ * 1.5;
       return true;
     }
 
