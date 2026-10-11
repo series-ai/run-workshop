@@ -126,7 +126,7 @@ export function computeVisibilityPolygon(
   _scratchSortedAngles.length = 0;
   _scratchRayDistances.length = 0;
 
-  // Filter obstacles in beam range
+  // Filter obstacles in beam range and cone angle
   const searchDistSq = (maxRange + 8.0) * (maxRange + 8.0);
   for (let i = 0; i < obstacles.length; i++) {
     const b = obstacles[i];
@@ -134,8 +134,16 @@ export function computeVisibilityPolygon(
     const cz = (b.minZ + b.maxZ) * 0.5;
     const dx = cx - ox;
     const dz = cz - oz;
-    if (dx * dx + dz * dz <= searchDistSq) {
-      _scratchRelevantBoxes.push(b);
+    const distSq = dx * dx + dz * dz;
+    if (distSq <= searchDistSq) {
+      const halfDiag = Math.hypot(b.maxX - b.minX, b.maxZ - b.minZ) * 0.5;
+      const dist = Math.sqrt(distSq);
+      const angRadius = dist > halfDiag ? Math.asin(halfDiag / dist) : Math.PI;
+      const angToCenter = Math.atan2(dx, dz);
+      const angDiff = Math.abs(normalizeAngle(angToCenter - facing));
+      if (angDiff <= halfAngle + angRadius + 0.08) {
+        _scratchRelevantBoxes.push(b);
+      }
     }
   }
 

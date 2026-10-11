@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { clone as skeletonClone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useAssetUrl } from "../useAssetUrl.js";
 import { InklineModel } from "./InklineModel.js";
+import { SharedMaterials } from "../render/materials.js";
 import {
   applyCelShading,
   updatePaleInkContour,
@@ -449,17 +450,14 @@ function LoadedCharacter({
           ) : isCurrentPlayer ? (
             /* Player Cyber Visor with Glowing Cyan Lens Band */
             <group position={[0, 0.08, 0.12]}>
-              <mesh>
+              <mesh material={SharedMaterials.darkNavy}>
                 <boxGeometry args={[0.22, 0.05, 0.08]} />
-                <meshBasicMaterial color="#0f172a" />
               </mesh>
-              <mesh position={[0, 0, 0.045]}>
+              <mesh position={[0, 0, 0.045]} material={SharedMaterials.cyanVisor}>
                 <boxGeometry args={[0.18, 0.03, 0.02]} />
-                <meshBasicMaterial color="#51E5F0" />
               </mesh>
-              <mesh position={[-0.10, -0.04, 0.08]} rotation={[0, 0, -0.2]}>
+              <mesh position={[-0.10, -0.04, 0.08]} rotation={[0, 0, -0.2]} material={SharedMaterials.slateJoint}>
                 <cylinderGeometry args={[0.008, 0.008, 0.12]} />
-                <meshBasicMaterial color="#475569" />
               </mesh>
             </group>
           ) : (
@@ -587,9 +585,8 @@ function LoadedCharacter({
 
               {/* Laser Aiming Beam Co-axial to Gun Barrel */}
               {isCurrentPlayer && (
-                <mesh position={weapon === "shotgun" ? [0, 0.04, 6.0] : [0, 0.04, 8.0]} rotation={[Math.PI / 2, 0, 0]}>
+                <mesh position={weapon === "shotgun" ? [0, 0.04, 6.0] : [0, 0.04, 8.0]} rotation={[Math.PI / 2, 0, 0]} material={SharedMaterials.cyanGlow}>
                   <cylinderGeometry args={[0.005, 0.005, 16, 4]} />
-                  <meshBasicMaterial color="#38bdf8" transparent opacity={0.4} />
                 </mesh>
               )}
             </group>

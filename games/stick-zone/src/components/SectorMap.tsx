@@ -68,21 +68,17 @@ const FOBTargetDummy: React.FC<{
         </mesh>
 
         {/* Concentric Bullseye Scoring Rings */}
-        <mesh position={[0, 1.4, 0.052]}>
+        <mesh position={[0, 1.4, 0.052]} material={SharedMaterials.pureWhite}>
           <circleGeometry args={[0.24, 24]} />
-          <meshBasicMaterial color="#ffffff" />
         </mesh>
-        <mesh position={[0, 1.4, 0.054]}>
+        <mesh position={[0, 1.4, 0.054]} material={SharedMaterials.darkNavy}>
           <circleGeometry args={[0.18, 24]} />
-          <meshBasicMaterial color="#0f172a" />
         </mesh>
-        <mesh position={[0, 1.4, 0.056]}>
+        <mesh position={[0, 1.4, 0.056]} material={SharedMaterials.redDamage}>
           <circleGeometry args={[0.12, 24]} />
-          <meshBasicMaterial color="#ef4444" />
         </mesh>
-        <mesh position={[0, 1.4, 0.058]}>
+        <mesh position={[0, 1.4, 0.058]} material={SharedMaterials.targetYellow}>
           <circleGeometry args={[0.05, 16]} />
-          <meshBasicMaterial color="#facc15" />
         </mesh>
 
         {/* Silhouette Head Plate */}
@@ -91,22 +87,21 @@ const FOBTargetDummy: React.FC<{
           <meshStandardMaterial color={color} roughness={0.5} />
         </mesh>
         {/* Head Lethal Hit Ring */}
-        <mesh position={[0, 1.88, 0.052]}>
+        <mesh position={[0, 1.88, 0.052]} material={SharedMaterials.redDamage}>
           <circleGeometry args={[0.09, 16]} />
-          <meshBasicMaterial color="#ef4444" />
         </mesh>
-        <mesh position={[0, 1.88, 0.054]}>
+        <mesh position={[0, 1.88, 0.054]} material={SharedMaterials.targetYellow}>
           <circleGeometry args={[0.04, 16]} />
-          <meshBasicMaterial color="#facc15" />
         </mesh>
       </group>
     </group>
   );
 };
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { SharedMaterials } from "../render/materials.js";
 import type { LootCrate } from "../sim/game.js";
 import { MAP_CONTAINERS } from "../sim/game.js";
 import { InklineModel } from "./InklineModel.js";
@@ -230,6 +225,79 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
     );
   }, []);
 
+  const mergedSeamsGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    const positions: number[] = [];
+    const indices: number[] = [];
+    let vertOffset = 0;
+
+    function addQuad(minX: number, maxX: number, minZ: number, maxZ: number, y: number) {
+      positions.push(
+        minX, y, minZ,
+        maxX, y, minZ,
+        maxX, y, maxZ,
+        minX, y, maxZ
+      );
+      indices.push(
+        vertOffset, vertOffset + 1, vertOffset + 2,
+        vertOffset, vertOffset + 2, vertOffset + 3
+      );
+      vertOffset += 4;
+    }
+
+    // 27 Z seams
+    for (let i = 0; i < 27; i++) {
+      const z = -80 + i * 6;
+      addQuad(-80, 80, z - 0.025, z + 0.025, -0.045);
+    }
+    // 27 X seams
+    for (let i = 0; i < 27; i++) {
+      const x = -80 + i * 6;
+      addQuad(x - 0.025, x + 0.025, -80, 80, -0.045);
+    }
+
+    geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    return geom;
+  }, []);
+
+  const mergedRunwayMarkersGeometry = useMemo(() => {
+    const geom = new THREE.BufferGeometry();
+    const positions: number[] = [];
+    const indices: number[] = [];
+    let vertOffset = 0;
+
+    function addQuad(minX: number, maxX: number, minZ: number, maxZ: number, y: number) {
+      positions.push(
+        minX, y, minZ,
+        maxX, y, minZ,
+        maxX, y, maxZ,
+        minX, y, maxZ
+      );
+      indices.push(
+        vertOffset, vertOffset + 1, vertOffset + 2,
+        vertOffset, vertOffset + 2, vertOffset + 3
+      );
+      vertOffset += 4;
+    }
+
+    // Flanking guide strips (-11.2 and +11.2)
+    addQuad(-11.35, -11.05, -46, 80, 0.02);
+    addQuad(11.05, 11.35, -46, 80, 0.02);
+
+    // 6 transverse vehicle markers
+    const markers = [-35, -15, 5, 25, 45, 65];
+    for (const z of markers) {
+      addQuad(-8, 8, z - 0.3, z + 0.3, 0.025);
+    }
+
+    geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geom.setIndex(indices);
+    geom.computeVertexNormals();
+    return geom;
+  }, []);
+
   return (
     <group ref={mapRootRef}>
       {/* =========================================================================
@@ -241,43 +309,16 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         <meshStandardMaterial color="#dde0e4" roughness={0.90} metalness={0.05} />
       </mesh>
 
-      {/* Concrete Slab Grid Joint Seams (6m Slabs with Dark Joints) */}
-      {Array.from({ length: 27 }, (_, i) => -80 + i * 6).map((zPos) => (
-        <mesh key={`seam_z_${zPos}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.045, zPos]} receiveShadow>
-          <planeGeometry args={[160, 0.05]} />
-          <meshBasicMaterial color="#151716" transparent opacity={0.25} />
-        </mesh>
-      ))}
-      {Array.from({ length: 27 }, (_, i) => -80 + i * 6).map((xPos) => (
-        <mesh key={`seam_x_${xPos}`} rotation={[-Math.PI / 2, 0, 0]} position={[xPos, -0.045, 0]} receiveShadow>
-          <planeGeometry args={[0.05, 160]} />
-          <meshBasicMaterial color="#151716" transparent opacity={0.25} />
-        </mesh>
-      ))}
+      {/* Concrete Slab Grid Joint Seams (Merged Geometry - 1 draw call) */}
+      <mesh geometry={mergedSeamsGeometry} material={SharedMaterials.seamJoint} receiveShadow />
 
       {/* Central Tactical Logistics Runway (Concrete Slabs) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} material={SharedMaterials.runwayConcrete} receiveShadow>
         <planeGeometry args={[22, 126]} />
-        <meshStandardMaterial color="#dde0e4" roughness={0.85} metalness={0.05} />
       </mesh>
 
-      {/* Flanking Luminous Guide Strips */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.2, 0.02, 17]} receiveShadow>
-        <planeGeometry args={[0.3, 126]} />
-        <meshBasicMaterial color="#151716" />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.2, 0.02, 17]} receiveShadow>
-        <planeGeometry args={[0.3, 126]} />
-        <meshBasicMaterial color="#151716" />
-      </mesh>
-
-      {/* Transverse Heavy-Vehicle Runway Markers */}
-      {[-35, -15, 5, 25, 45, 65].map((zPos) => (
-        <mesh key={zPos} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.025, zPos]} receiveShadow>
-          <planeGeometry args={[16, 0.6]} />
-          <meshBasicMaterial color="#151716" />
-        </mesh>
-      ))}
+      {/* Flanking Guide Strips & Runway Vehicle Markers (Merged Geometry - 1 draw call) */}
+      <mesh geometry={mergedRunwayMarkersGeometry} material={SharedMaterials.inkBlack} receiveShadow />
 
       {/* Spoke Perimeter Boundary Walls (Slate Metal with Ink Linework) */}
       <mesh position={[0, 2, 80]} receiveShadow castShadow>
@@ -485,20 +526,20 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       <InklineModel assetKey="barrel" position={[41, 0, 46]} scale={1.2} />
 
       {/* Depot Corner Floodlight Towers (Outside perimeter fence per R7) */}
-      <InklineModel assetKey="floodlightTower" position={[-86, 0, 86]} scale={2.0} />
-      <InklineModel assetKey="floodlightTower" position={[86, 0, 86]} scale={2.0} />
-      <InklineModel assetKey="floodlightTower" position={[-86, 0, -86]} scale={2.0} />
-      <InklineModel assetKey="floodlightTower" position={[86, 0, -86]} scale={2.0} />
+      <InklineModel assetKey="floodlightTower" position={[-86, 0, 86]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="floodlightTower" position={[86, 0, 86]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="floodlightTower" position={[-86, 0, -86]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="floodlightTower" position={[86, 0, -86]} scale={2.0} castShadow={false} />
 
       {/* =========================================================================
           5. MODULAR DISTRICT STRUCTURES (Strictly outside playable bounds |x| > 82 or |z| > 82)
          ========================================================================= */}
-      <InklineModel assetKey="floodlightTower" position={[95, 0, 0]} scale={2.0} />
-      <InklineModel assetKey="cargoContainer" position={[95, 0, 20]} scale={2.0} />
-      <InklineModel assetKey="floodlightTower" position={[-95, 0, 0]} scale={2.0} />
-      <InklineModel assetKey="cargoContainer" position={[-95, 0, -20]} scale={2.0} />
-      <InklineModel assetKey="barrierConcrete" position={[0, 0, 95]} scale={3.0} />
-      <InklineModel assetKey="barrierConcrete" position={[0, 0, -95]} scale={3.0} />
+      <InklineModel assetKey="floodlightTower" position={[95, 0, 0]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="cargoContainer" position={[95, 0, 20]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="floodlightTower" position={[-95, 0, 0]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="cargoContainer" position={[-95, 0, -20]} scale={2.0} castShadow={false} />
+      <InklineModel assetKey="barrierConcrete" position={[0, 0, 95]} scale={3.0} castShadow={false} />
+      <InklineModel assetKey="barrierConcrete" position={[0, 0, -95]} scale={3.0} castShadow={false} />
 
       {/* =========================================================================
           6. TARKOV TACTICAL CONTAINERS & LOOT CRATES

@@ -6,6 +6,7 @@ import type { SectorDepotSimulation } from "../sim/game.js";
 import { DEPOT_CONTAINERS } from "../sim/game.js";
 import { globalCutaway } from "../render/cutaway.js";
 import { SectorMap } from "./SectorMap.js";
+import { SharedGeometries, SharedMaterials } from "../render/materials.js";
 import { StickOperative } from "./StickOperative.js";
 import { RivalOperative } from "./RivalOperative.js";
 import { MachineEnemy } from "./MachineEnemy.js";
@@ -32,13 +33,20 @@ const cameraObstacles = createCameraObstacles(DEPOT_CONTAINERS);
 const DynamicShadowLight: React.FC<{ playerPos: { x: number; y: number; z: number } }> = ({ playerPos }) => {
   const lightRef = useRef<THREE.DirectionalLight>(null);
   const targetRef = useRef<THREE.Object3D>(null);
+  const lastPosRef = useRef({ x: -9999, z: -9999 });
 
   useFrame(() => {
     if (lightRef.current && targetRef.current) {
-      targetRef.current.position.set(playerPos.x, 0, playerPos.z);
-      targetRef.current.updateMatrixWorld();
-      lightRef.current.target = targetRef.current;
-      lightRef.current.position.set(playerPos.x + 30, 50, playerPos.z + 20);
+      const snapX = Math.round(playerPos.x * 2) / 2;
+      const snapZ = Math.round(playerPos.z * 2) / 2;
+      if (snapX !== lastPosRef.current.x || snapZ !== lastPosRef.current.z) {
+        lastPosRef.current.x = snapX;
+        lastPosRef.current.z = snapZ;
+        targetRef.current.position.set(snapX, 0, snapZ);
+        targetRef.current.updateMatrixWorld();
+        lightRef.current.target = targetRef.current;
+        lightRef.current.position.set(snapX + 25, 45, snapZ + 18);
+      }
     }
   });
 
@@ -47,18 +55,18 @@ const DynamicShadowLight: React.FC<{ playerPos: { x: number; y: number; z: numbe
       <object3D ref={targetRef} position={[playerPos.x, 0, playerPos.z]} />
       <directionalLight
         ref={lightRef}
-        position={[playerPos.x + 30, 50, playerPos.z + 20]}
+        position={[playerPos.x + 25, 45, playerPos.z + 18]}
         intensity={2.2}
         color="#ffffff"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-near={5}
-        shadow-camera-far={110}
-        shadow-camera-left={-35}
-        shadow-camera-right={35}
-        shadow-camera-top={35}
-        shadow-camera-bottom={-35}
+        shadow-camera-far={95}
+        shadow-camera-left={-22}
+        shadow-camera-right={22}
+        shadow-camera-top={22}
+        shadow-camera-bottom={-22}
         shadow-bias={-0.0005}
       />
     </>
@@ -292,98 +300,38 @@ const _scratchLocomotion = new THREE.Vector3();
 
 
 const PROJECTILE_POOL_SIZE = 48;
-
-interface PooledProjectileItem {
-  root: THREE.Group;
-  coreMesh: THREE.Mesh;
-  coreMaterial: THREE.MeshBasicMaterial;
-  outlineMesh: THREE.Mesh;
-  outlineMaterial: THREE.MeshBasicMaterial;
-  tailMesh: THREE.Mesh;
-  tailMaterial: THREE.MeshBasicMaterial;
-  shadowMesh: THREE.Mesh;
-  shadowMaterial: THREE.MeshBasicMaterial;
-}
-
-const _projDir = new THREE.Vector3();
-const _projTarget = new THREE.Vector3();
+const _dummy = new THREE.Object3D();
+const _colCore = new THREE.Color();
+const _colTail = new THREE.Color();
 
 const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
-  const containerGroup = useMemo(() => new THREE.Group(), []);
-  const shadowGroup = useMemo(() => new THREE.Group(), []);
+  const { coreInstanced, outlineInstanced, tailInstanced, shadowInstanced } = useMemo(() => {
+    const core = new THREE.InstancedMesh(SharedGeometries.projectileCore, SharedMaterials.goldBullet.clone(), PROJECTILE_POOL_SIZE);
+    const outline = new THREE.InstancedMesh(SharedGeometries.projectileOutline, SharedMaterials.darkNavy.clone(), PROJECTILE_POOL_SIZE);
+    const tail = new THREE.InstancedMesh(SharedGeometries.projectileTail, SharedMaterials.amberWarning.clone(), PROJECTILE_POOL_SIZE);
+    const shadow = new THREE.InstancedMesh(SharedGeometries.projectileShadow, SharedMaterials.shadowDark.clone(), PROJECTILE_POOL_SIZE);
 
-  const pool = useMemo<PooledProjectileItem[]>(() => {
-    const items: PooledProjectileItem[] = [];
-    const coreGeo = new THREE.SphereGeometry(0.08, 8, 8);
-    const outlineGeo = new THREE.SphereGeometry(0.11, 8, 8);
-    const tailGeo = new THREE.CylinderGeometry(0.015, 0.075, 1.0, 6);
-    tailGeo.rotateX(Math.PI / 2);
-    tailGeo.translate(0, 0, -0.5);
-    const shadowGeo = new THREE.CircleGeometry(0.18, 12);
+    core.frustumCulled = false;
+    outline.frustumCulled = false;
+    tail.frustumCulled = false;
+    shadow.frustumCulled = false;
 
-    for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) {
-      const root = new THREE.Group();
-      root.visible = false;
+    core.count = 0;
+    outline.count = 0;
+    tail.count = 0;
+    shadow.count = 0;
 
-      const coreMaterial = new THREE.MeshBasicMaterial({ color: "#fde047" });
-      const coreMesh = new THREE.Mesh(coreGeo, coreMaterial);
-      root.add(coreMesh);
-
-      const outlineMaterial = new THREE.MeshBasicMaterial({
-        color: "#0f172a",
-        side: THREE.BackSide,
-      });
-      const outlineMesh = new THREE.Mesh(outlineGeo, outlineMaterial);
-      root.add(outlineMesh);
-
-      const tailMaterial = new THREE.MeshBasicMaterial({
-        color: "#f59e0b",
-        transparent: true,
-        opacity: 0.85,
-      });
-      const tailMesh = new THREE.Mesh(tailGeo, tailMaterial);
-      root.add(tailMesh);
-
-      const shadowMaterial = new THREE.MeshBasicMaterial({
-        color: "#000000",
-        transparent: true,
-        opacity: 0.45,
-      });
-      const shadowMesh = new THREE.Mesh(shadowGeo, shadowMaterial);
-      shadowMesh.rotation.x = -Math.PI / 2;
-      shadowMesh.visible = false;
-
-      containerGroup.add(root);
-      shadowGroup.add(shadowMesh);
-
-      items.push({
-        root,
-        coreMesh,
-        coreMaterial,
-        outlineMesh,
-        outlineMaterial,
-        tailMesh,
-        tailMaterial,
-        shadowMesh,
-        shadowMaterial,
-      });
-    }
-
-    return items;
-  }, [containerGroup, shadowGroup]);
+    return { coreInstanced: core, outlineInstanced: outline, tailInstanced: tail, shadowInstanced: shadow };
+  }, []);
 
   useEffect(() => {
     return () => {
-      for (const item of pool) {
-        containerGroup.remove(item.root);
-        shadowGroup.remove(item.shadowMesh);
-        item.coreMaterial.dispose();
-        item.outlineMaterial.dispose();
-        item.tailMaterial.dispose();
-        item.shadowMaterial.dispose();
-      }
+      coreInstanced.dispose();
+      outlineInstanced.dispose();
+      tailInstanced.dispose();
+      shadowInstanced.dispose();
     };
-  }, [pool, containerGroup, shadowGroup]);
+  }, [coreInstanced, outlineInstanced, tailInstanced, shadowInstanced]);
 
   useFrame(() => {
     const isPaused =
@@ -392,57 +340,71 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
     if (isPaused) return;
 
     const projs = sim.activeProjectiles;
-    const count = Math.min(projs.length, pool.length);
+    const count = Math.min(projs.length, PROJECTILE_POOL_SIZE);
 
-    for (let i = 0; i < pool.length; i++) {
-      const item = pool[i];
-      if (i < count) {
-        const p = projs[i];
-        item.root.visible = true;
-        item.shadowMesh.visible = true;
+    for (let i = 0; i < count; i++) {
+      const p = projs[i];
+      const speed = Math.hypot(p.vx, p.vy, p.vz) || 1;
+      const dirX = p.vx / speed;
+      const dirY = p.vy / speed;
+      const dirZ = p.vz / speed;
 
-        item.root.position.set(p.x, p.y, p.z);
-        item.shadowMesh.position.set(p.x, 0.02, p.z);
+      const baseScale = p.isPellet ? 0.72 : 1.1;
 
-        const speed = Math.hypot(p.vx, p.vy, p.vz) || 1;
-        const dirX = p.vx / speed;
-        const dirY = p.vy / speed;
-        const dirZ = p.vz / speed;
+      // Core & Outline matrix
+      _dummy.position.set(p.x, p.y, p.z);
+      _dummy.lookAt(p.x + dirX, p.y + dirY, p.z + dirZ);
+      _dummy.scale.set(baseScale, baseScale, baseScale * 1.3);
+      _dummy.updateMatrix();
+      coreInstanced.setMatrixAt(i, _dummy.matrix);
+      outlineInstanced.setMatrixAt(i, _dummy.matrix);
 
-        _projDir.set(dirX, dirY, dirZ);
-        _projTarget.copy(item.root.position).add(_projDir);
-        item.root.lookAt(_projTarget);
+      // Tail matrix
+      const tailLen = p.isPellet ? 0.5 : 0.85;
+      _dummy.scale.set(baseScale * 0.75, baseScale * 0.75, tailLen);
+      _dummy.updateMatrix();
+      tailInstanced.setMatrixAt(i, _dummy.matrix);
 
-        const isPlayer = p.shooterIsPlayer;
-        if (isPlayer) {
-          item.coreMaterial.color.set(p.isPellet ? "#fef08a" : "#fde047");
-          item.outlineMaterial.color.set("#0f172a");
-          item.tailMaterial.color.set(p.isPellet ? "#facc15" : "#f59e0b");
-          item.shadowMaterial.opacity = 0.45;
-        } else {
-          item.coreMaterial.color.set("#ef4444");
-          item.outlineMaterial.color.set("#450a0a");
-          item.tailMaterial.color.set("#dc2626");
-          item.shadowMaterial.opacity = 0.55;
-        }
+      // Shadow matrix on ground plane
+      _dummy.position.set(p.x, 0.02, p.z);
+      _dummy.rotation.set(-Math.PI / 2, 0, 0);
+      _dummy.scale.set(baseScale, baseScale, 1);
+      _dummy.updateMatrix();
+      shadowInstanced.setMatrixAt(i, _dummy.matrix);
 
-        const baseScale = p.isPellet ? 0.72 : 1.1;
-        item.coreMesh.scale.set(baseScale, baseScale, baseScale * 1.3);
-        item.outlineMesh.scale.set(baseScale, baseScale, baseScale * 1.3);
-
-        const tailLen = p.isPellet ? 0.5 : 0.85;
-        item.tailMesh.scale.set(baseScale * 0.75, baseScale * 0.75, tailLen);
+      // Dynamic colors
+      if (p.shooterIsPlayer) {
+        _colCore.set(p.isPellet ? "#fef08a" : "#fde047");
+        _colTail.set(p.isPellet ? "#facc15" : "#f59e0b");
       } else {
-        item.root.visible = false;
-        item.shadowMesh.visible = false;
+        _colCore.set("#ef4444");
+        _colTail.set("#dc2626");
       }
+      coreInstanced.setColorAt(i, _colCore);
+      tailInstanced.setColorAt(i, _colTail);
+    }
+
+    coreInstanced.count = count;
+    outlineInstanced.count = count;
+    tailInstanced.count = count;
+    shadowInstanced.count = count;
+
+    if (count > 0) {
+      coreInstanced.instanceMatrix.needsUpdate = true;
+      outlineInstanced.instanceMatrix.needsUpdate = true;
+      tailInstanced.instanceMatrix.needsUpdate = true;
+      shadowInstanced.instanceMatrix.needsUpdate = true;
+      if (coreInstanced.instanceColor) coreInstanced.instanceColor.needsUpdate = true;
+      if (tailInstanced.instanceColor) tailInstanced.instanceColor.needsUpdate = true;
     }
   });
 
   return (
     <>
-      <primitive object={containerGroup} />
-      <primitive object={shadowGroup} />
+      <primitive object={coreInstanced} />
+      <primitive object={outlineInstanced} />
+      <primitive object={tailInstanced} />
+      <primitive object={shadowInstanced} />
     </>
   );
 };

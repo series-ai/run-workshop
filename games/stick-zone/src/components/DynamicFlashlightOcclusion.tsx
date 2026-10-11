@@ -35,6 +35,7 @@ export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProp
   const edgesRef = useRef<THREE.LineSegments>(null);
   const spotLightRef = useRef<THREE.SpotLight>(null);
   const targetRef = useRef<THREE.Object3D>(null);
+  const lastStateRef = useRef({ x: -9999, z: -9999, facing: -9999 });
 
   // Pre-allocate fixed buffers to prevent runtime GC garbage
   const meshGeom = useMemo(() => {
@@ -87,6 +88,17 @@ export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProp
     if (meshRef.current) meshRef.current.visible = true;
     if (edgesRef.current) edgesRef.current.visible = true;
     if (spotLightRef.current) spotLightRef.current.visible = showSpotLight;
+
+    const last = lastStateRef.current;
+    const dx = origin.x - last.x;
+    const dz = origin.z - last.z;
+    const df = Math.abs(facing - last.facing);
+    if (dx * dx + dz * dz < 0.0001 && df < 0.002) {
+      return;
+    }
+    last.x = origin.x;
+    last.z = origin.z;
+    last.facing = facing;
 
     const poly = computeVisibilityPolygon(
       origin.x,

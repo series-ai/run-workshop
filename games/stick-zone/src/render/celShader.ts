@@ -103,6 +103,21 @@ export const updateInkContour = updatePaleInkContour;
 /**
  * Attaches sharp edge outlines to static scene props and weapons using EdgesGeometry.
  */
+const outlineMaterialCache = new Map<string, THREE.LineBasicMaterial>();
+export function getSharedOutlineMaterial(color: string, opacity: number): THREE.LineBasicMaterial {
+  const key = `${color}_${opacity}`;
+  let mat = outlineMaterialCache.get(key);
+  if (!mat) {
+    mat = new THREE.LineBasicMaterial({
+      color,
+      transparent: opacity < 1,
+      opacity,
+    });
+    outlineMaterialCache.set(key, mat);
+  }
+  return mat;
+}
+
 export function addOutlines(
   root: THREE.Object3D,
   color: string = OUTLINE_LINE_COLOR,
@@ -123,14 +138,11 @@ export function addOutlines(
       child.name !== 'bow-string'
     ) {
       const edges = new THREE.EdgesGeometry(child.geometry, 24);
-      const lineMaterial = new THREE.LineBasicMaterial({
-        color,
-        transparent: opacity < 1,
-        opacity,
-      });
+      const lineMaterial = getSharedOutlineMaterial(color, opacity);
       const line = new THREE.LineSegments(edges, lineMaterial);
       line.userData.inkOutline = true;
       line.userData.ownedGeometry = true;
+      line.userData.isSharedMaterial = true;
       linesGroup.add(line);
     }
   });
@@ -148,7 +160,9 @@ export function disposeInstance(root: THREE.Object3D): void {
     if (!(object instanceof THREE.Mesh || object instanceof THREE.LineSegments)) return;
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     for (const material of materials) {
-      material.dispose();
+      if (!object.userData.isSharedMaterial) {
+        material.dispose();
+      }
     }
     if (object.geometry) {
       object.geometry.dispose();
