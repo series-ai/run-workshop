@@ -41,8 +41,8 @@
   },
   {
     "path": "src/main.ts",
-    "sha256": "4547c10197169c5ee2f0ea58ef20845d92879587821c5c196a8665b3e4b465ea",
-    "byteLength": 51251
+    "sha256": "7fdf012395974fed8f30ddc18721bcea9ff7380407345917729888668153770b",
+    "byteLength": 52491
   },
   {
     "path": "src/render/atmosphere.ts",
@@ -258,6 +258,11 @@
     "path": "src/ui/hud.ts",
     "sha256": "b950651792bd84bad8a57b66e0498ce47c895a0503dd3f20d3f9a396cf09f66c",
     "byteLength": 17211
+  },
+  {
+    "path": "src/ui/loadingVeil.ts",
+    "sha256": "3b5adfa32d69682ff1cc7b20bc96b567622ba871aa09f4df76c33ee6c516876c",
+    "byteLength": 7854
   },
   {
     "path": "tools/generate-city-snapshot.cjs",

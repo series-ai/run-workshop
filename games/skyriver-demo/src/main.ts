@@ -61,6 +61,11 @@ import {
   type SkyriverRunnerSession,
 } from './sim/session';
 import { createSkyriverHud, type SkyriverHud } from './ui/hud';
+import {
+  createLoadingVeil,
+  SKYRIVER_LOADING_STAGE,
+  type SkyriverLoadingVeil,
+} from './ui/loadingVeil';
 import * as THREE from 'three';
 
 /** The demo's world. One constant, so every run and every probe sees the same city and swarm. */
@@ -975,6 +980,10 @@ export interface SkyriverStartupHandle {
 
 interface SkyriverStartupBoundary {
   readonly handle: SkyriverStartupHandle;
+  /** Names the boot phase now in progress on the loading veil. */
+  setStage(stageIndex: number): void;
+  /** Resolves after the browser has had a chance to paint the veil. */
+  flush(): Promise<void>;
   markReady(firstFrameMs: number): void;
   markError(error: unknown): void;
 }
@@ -983,16 +992,10 @@ function createStartupBoundary(root: HTMLElement): SkyriverStartupBoundary {
   root.setAttribute('aria-busy', 'true');
 
   const doc = root.ownerDocument;
-  let veil = doc.getElementById('skyriver-loading-veil');
-  if (veil === null) {
-    veil = doc.createElement('div');
-    veil.id = 'skyriver-loading-veil';
-    veil.setAttribute('role', 'status');
-    veil.setAttribute('aria-live', 'polite');
-    veil.textContent = 'Loading city...';
-    veil.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#04060b;color:#8ecfff;font:16px monospace;padding:24px;box-sizing:border-box;';
-    root.appendChild(veil);
-  }
+  // A veil left by an earlier boot in the same document is replaced, so the phase text on screen
+  // always belongs to the boot that is actually running.
+  doc.getElementById('skyriver-loading-veil')?.remove();
+  const veil: SkyriverLoadingVeil = createLoadingVeil(root);
 
   let state: 'loading' | 'ready' | 'error' = 'loading';
   let error: unknown | null = null;
@@ -1018,13 +1021,28 @@ function createStartupBoundary(root: HTMLElement): SkyriverStartupBoundary {
 
   const boundary: SkyriverStartupBoundary = {
     handle,
+    setStage(stageIndex: number): void {
+      if (state !== 'loading') return;
+      veil.setStage(stageIndex);
+    },
+    /**
+     * Yields one animation frame plus a macrotask, which is what a synchronous build needs before it
+     * starts: without it the veil's new phase text would be overwritten and never reach the screen.
+     */
+    flush(): Promise<void> {
+      return new Promise<void>((resolve) => {
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(() => setTimeout(resolve, 0));
+        } else {
+          setTimeout(resolve, 0);
+        }
+      });
+    },
     markReady(_firstFrameMs: number): void {
       if (state !== 'loading') return;
       state = 'ready';
       root.removeAttribute('aria-busy');
-      if (veil !== null && veil.parentNode === root) {
-        root.removeChild(veil);
-      }
+      veil.dispose();
       resolveReady();
     },
     markError(err: unknown): void {
@@ -1032,9 +1050,7 @@ function createStartupBoundary(root: HTMLElement): SkyriverStartupBoundary {
       state = 'error';
       error = err;
       root.removeAttribute('aria-busy');
-      if (veil !== null && veil.parentNode === root) {
-        root.removeChild(veil);
-      }
+      veil.dispose();
       let alertBox = doc.getElementById('skyriver-startup-error');
       if (alertBox === null) {
         alertBox = doc.createElement('div');
@@ -1229,10 +1245,16 @@ function bootWithBoundary(root: HTMLElement, boundary: SkyriverStartupBoundary):
     },
   };
 
-    void app.start().catch((error: unknown) => {
-      console.error('[skyriver] start failed', error);
-      boundary.markError(error);
-    });
+    // Name the last phase, let it paint, then start. The first submitted frame is what ends the veil,
+    // so the phase that covers shader compilation and the first draw stays on screen until then.
+    boundary.setStage(SKYRIVER_LOADING_STAGE.warmingFirstFrame);
+    void boundary
+      .flush()
+      .then(() => app.start())
+      .catch((error: unknown) => {
+        console.error('[skyriver] start failed', error);
+        boundary.markError(error);
+      });
 
     return app;
   } catch (error) {
@@ -1259,6 +1281,10 @@ if (typeof document !== 'undefined') {
   if (root !== null) {
     const boundary = createStartupBoundary(root);
 
+    // The snapshot check is the first real phase. Name it and let it paint BEFORE the work starts.
+    boundary.setStage(SKYRIVER_LOADING_STAGE.verifyingSnapshot);
+    await boundary.flush();
+
     let prepResult: Awaited<ReturnType<typeof prepareBrowserCitySnapshot>> | null = null;
     let prepEnd = performance.now();
     try {
@@ -1267,6 +1293,10 @@ if (typeof document !== 'undefined') {
     } catch (prepError) {
       console.warn('[skyriver] prepareBrowserCitySnapshot fallback', prepError);
     }
+
+    // Raising the skyline is synchronous and long, so its label is painted first for the same reason.
+    boundary.setStage(SKYRIVER_LOADING_STAGE.raisingSkyline);
+    await boundary.flush();
 
     bootWithBoundary(root, boundary);
     const appPublishMs = performance.now();
