@@ -127,4 +127,20 @@ describe('SoundSystem: Master Bus, Dynamics Compression and Volume Calibration',
     const sfxGain = (sound as any).sfxGain;
     expect(sfxGain.connect).toHaveBeenCalled();
   });
+  it("5. stopAll immediately clears active scheduled audio timeouts and resets SFX bus", () => {
+    sound.playReload();
+    expect((sound as any).activeTimeouts.size).toBeGreaterThan(0);
+
+    sound.stopAll();
+    expect((sound as any).activeTimeouts.size).toBe(0);
+  });
+
+  it("6. playDeath triggers single low-pass filtered comfortable sub-bass pulse without looping", () => {
+    expect(() => {
+      sound.playDeath();
+    }).not.toThrow();
+
+    const sfxGain = (sound as any).sfxGain;
+    expect(sfxGain.connect).toHaveBeenCalled();
+  });
 });

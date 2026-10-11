@@ -100,6 +100,10 @@ const MainApp: React.FC = () => {
   const prevWeaponRef = useRef<string | undefined>(sim.player.weapon);
   const pendingNextRaidId = useRef<string | null>(null);
   const isRestartingRef = useRef<boolean>(false);
+  const lastHandledDamageTickRef = useRef<number>(-1);
+  const lastHandledBarkTickRef = useRef<number>(-1);
+  const lastHandledHitmarkerTickRef = useRef<number>(-1);
+  const hasPlayedDeathAudioRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Instantiate multiplayer coordinator
@@ -412,56 +416,70 @@ const MainApp: React.FC = () => {
           }
         }
 
-        // Hitmarker sound feedback
-        if (sim.player.lastHitmarkerTick === sim.tick) {
+        // Terminal death audio silencing & single comfortable flatline cue
+        if (!sim.player.isAlive) {
+          if (!hasPlayedDeathAudioRef.current) {
+            hasPlayedDeathAudioRef.current = true;
+            sound.stopAll();
+            sound.playDeath();
+          }
+        } else {
+          hasPlayedDeathAudioRef.current = false;
+        }
+
+        // Hitmarker sound feedback (strictly once per hit tick and only while operative is alive)
+        if (sim.player.isAlive && sim.player.lastHitmarkerTick === sim.tick && lastHandledHitmarkerTickRef.current !== sim.player.lastHitmarkerTick) {
+          lastHandledHitmarkerTickRef.current = sim.player.lastHitmarkerTick;
           sound.playHitmarker(!!sim.player.lastHitmarkerCrit);
         }
 
-        // Tarkov Micro: Player damage pain grunt and armor impact audio
-        if (sim.lastPlayerDamageTick === sim.tick) {
+        // Tarkov Micro: Player damage pain grunt and armor impact audio (strictly once per damage tick and only while operative is alive)
+        if (sim.player.isAlive && sim.lastPlayerDamageTick === sim.tick && lastHandledDamageTickRef.current !== sim.lastPlayerDamageTick) {
+          lastHandledDamageTickRef.current = sim.lastPlayerDamageTick;
           sound.playHitGrunt();
           if (sim.player.armor > 0) {
             sound.playArmorHit();
           }
         }
 
-        // Tarkov Micro: Enemy tactical voice bark audio
-        if (sim.recentBark && sim.recentBark.tick === sim.tick) {
+        // Tarkov Micro: Enemy tactical voice bark audio (strictly once per bark tick and only while operative is alive)
+        if (sim.player.isAlive && sim.recentBark && sim.recentBark.tick === sim.tick && lastHandledBarkTickRef.current !== sim.recentBark.tick) {
+          lastHandledBarkTickRef.current = sim.recentBark.tick;
           sound.playScavBark();
         }
 
         // Weapon switch tactical sling & bolt slap audio
-        if (sim.player.weapon !== prevWeaponRef.current) {
+        if (sim.player.isAlive && sim.player.weapon !== prevWeaponRef.current) {
           sound.playWeaponSwitch();
           prevWeaponRef.current = sim.player.weapon;
         }
 
-        // Critical low health heartbeat
-        if (sim.player.isAlive && sim.player.health < 30 && sim.tick % 50 === 0) {
+        // Critical low health heartbeat (only while operative is alive and HP is low)
+        if (sim.player.isAlive && sim.player.health > 0 && sim.player.health < 30 && sim.tick % 50 === 0) {
           sound.playHeartbeat();
         }
 
         // Automatic Scav Squad deployment in Sector 7 Spoke
-        if (sim.zoneMode === 'spoke' && sim.rivals.length === 0 && !sim.aiSpawned) {
+        if (sim.player.isAlive && sim.zoneMode === "spoke" && sim.rivals.length === 0 && !sim.aiSpawned) {
           sim.spawnScavSquad();
           sound.playScavBark();
         }
 
         // Cash loot chime
-        if (sim.player.cash > prevCashRef.current) {
+        if (sim.player.isAlive && sim.player.cash > prevCashRef.current) {
           sound.playLootChime();
           prevCashRef.current = sim.player.cash;
         }
 
         // Radar alert ping on state flip
-        if (sim.proximityAlert.active && !prevProximityRef.current) {
+        if (sim.player.isAlive && sim.proximityAlert.active && !prevProximityRef.current) {
           sound.playRadarPing();
         }
         prevProximityRef.current = sim.proximityAlert.active;
 
-        // Exfil siren pulse
+        // Exfil siren pulse (only while holding zone and alive)
         const exState = sim.exfilController.getState();
-        if (exState.kind === "holding_zone" && sim.tick % 45 === 0) {
+        if (sim.player.isAlive && exState.kind === "holding_zone" && sim.tick % 45 === 0) {
           sound.playExfilSiren();
         }
 
@@ -508,6 +526,10 @@ const MainApp: React.FC = () => {
       const candidateRaidId = overrideRaidId || (pendingNextRaidId.current && pendingNextRaidId.current !== sim.raidId ? pendingNextRaidId.current : `raid_sector7_${Date.now()}`);
       pendingNextRaidId.current = null;
 
+      hasPlayedDeathAudioRef.current = false;
+      lastHandledDamageTickRef.current = -1;
+      lastHandledBarkTickRef.current = -1;
+      lastHandledHitmarkerTickRef.current = -1;
       const newSim = new SectorDepotSimulation(candidateRaidId);
       registerDeployment(newSim.player.id, candidateRaidId);
 

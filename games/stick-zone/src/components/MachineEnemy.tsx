@@ -126,6 +126,17 @@ export const MachineEnemy: React.FC<MachineEnemyProps> = React.memo(({ machine }
           </mesh>
           <pointLight color="#f97316" intensity={4.0} distance={15} />
         </group>
+
+        {/* Tactical Red Targeting Laser telegraph */}
+        {typeof (machine as any).targetDistance === "number" && (machine as any).targetDistance > 0 && (
+          <mesh
+            position={[0, machine.type === "turret" ? 1.1 : 0.8, 1.2 + ((machine as any).targetDistance || 10) / 2]}
+            rotation={[Math.PI / 2, 0, 0]}
+          >
+            <cylinderGeometry args={[0.012, 0.012, (machine as any).targetDistance || 10, 4]} />
+            <meshBasicMaterial color="#ef4444" transparent opacity={0.45} depthWrite={false} />
+          </mesh>
+        )}
       </group>
 
       {/* Silhouette Fill Light */}

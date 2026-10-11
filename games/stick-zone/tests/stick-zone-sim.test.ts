@@ -1878,6 +1878,79 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const dryEvents = testSim.drainPresentationEvents();
     expect(dryEvents.some(e => e.type === "dry_fire")).toBe(true);
   });
+  it("43. Automated machine defense ballistics: turrets and drones spawn visible projectiles and emit fire presentation events instead of silent hitscan", () => {
+    const testSim = new SectorDepotSimulation("raid_turret_ballistics", "spoke");
+    testSim.admitOperative(0);
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.health = 100;
+    testSim.player.armor = 0;
+    testSim.rivals = []; // Isolate machine combat
+    testSim.activeProjectiles = [];
+
+    // Position automated turret 10 meters North of player
+    const turret = testSim.machines.find(m => m.id === "turret_depot_alpha")!;
+    turret.x = 0;
+    turret.y = 0;
+    turret.z = -10;
+    turret.cooldownTicks = 0;
+    turret.isAlive = true;
+
+    // Remove the drone so only the turret engages
+    testSim.machines = [turret];
+
+    // Clear initial presentation events
+    testSim.drainPresentationEvents();
+
+    // Step 1: Turret detects player, tracks facing South towards player, and fires
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: false,
+      interact: false,
+    });
+
+    // 1. Turret has telegraphed facing and distance
+    expect(turret.facing).toBeCloseTo(0, 1); // Facing South towards player (z=0 from z=-10)
+    expect((turret as any).targetDistance).toBeCloseTo(10, 1);
+
+    // 2. Turret emitted "fire" presentation event with muzzle origin and aim direction
+    const events = testSim.drainPresentationEvents();
+    const fireEvent = events.find(e => e.type === "fire" && e.shooterId === turret.id);
+    expect(fireEvent).toBeDefined();
+    expect(fireEvent?.weapon).toBe("rifle");
+    expect(fireEvent?.origin.z).toBeGreaterThan(-10); // Muzzle is offset in front of turret
+
+    // 3. Turret spawned a visible ballistic projectile instead of instant hitscan
+    expect(testSim.activeProjectiles.length).toBe(1);
+    const proj = testSim.activeProjectiles[0];
+    expect(proj.shooterId).toBe(turret.id);
+    expect(proj.shooterIsPlayer).toBe(false);
+    expect(proj.speed).toBe(44.0);
+    expect(proj.damage).toBe(14);
+    // At frame 0: Projectile just left muzzle, player is NOT damaged instantly!
+    expect(testSim.player.health).toBe(100);
+
+    // 4. Step simulation until projectile travels to player (~13 ticks: 9m / (44m/s * 0.01667s) ≈ 12.3 ticks)
+    for (let t = 0; t < 15; t++) {
+      testSim.step({
+        dx: 0,
+        dz: 0,
+        sprint: false,
+        slide: false,
+        roll: false,
+        kick: false,
+        shoot: false,
+        interact: false,
+      });
+      if (testSim.player.health < 100) break;
+    }
+
+    // Player takes damage when the projectile physically contacts the player
+    expect(testSim.player.health).toBe(86); // 100 - 14 = 86
+  });
 });
-
-

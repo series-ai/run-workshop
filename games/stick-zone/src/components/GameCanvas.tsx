@@ -681,6 +681,13 @@ const PresentationFXManager: React.FC<{
 
     for (const ev of events) {
       if (ev.type === "fire") {
+        if (ev.shooterId !== sim.player.id) {
+          if (ev.weapon === "shotgun") {
+            sound.playShotgun();
+          } else {
+            sound.playGunshot();
+          }
+        }
         // Resolve exact physical 3D muzzle tip origin from shooter bone hierarchy if sampled
         const shooter = ev.shooterId === sim.player.id
           ? sim.player

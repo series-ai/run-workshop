@@ -1363,7 +1363,7 @@ export class SectorDepotSimulation {
         facing: Math.PI,
         health: 120,
         isAlive: true,
-        cooldownTicks: 0,
+        cooldownTicks: 45,
       },
       {
         id: 'drone_patrol_beta',
@@ -1374,7 +1374,7 @@ export class SectorDepotSimulation {
         facing: -Math.PI / 2,
         health: 75,
         isAlive: true,
-        cooldownTicks: 0,
+        cooldownTicks: 30,
       },
     ];
 
@@ -3261,6 +3261,33 @@ export class SectorDepotSimulation {
             }
           }
         }
+
+        // Machine projectile checking AI Rivals
+        if (!hitEntity && (p.shooterId.startsWith("turret") || p.shooterId.startsWith("drone") || p.shooterId.startsWith("machine"))) {
+          for (const r of this.rivals) {
+            if (!r.isAlive || r.isExtracted || r.id === p.shooterId) continue;
+            const seg = distanceToSegmentSquared(p.x, p.z, nextX, nextZ, r.x, r.z);
+            if (seg.distSq <= (0.8 + p.radius) * (0.8 + p.radius)) {
+              hitEntity = true;
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: r.x, y: 1.5, z: r.z },
+                surface: "flesh",
+                damage: p.damage,
+                label: "-" + p.damage,
+              });
+              const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, p.damage);
+              r.health = newHealth;
+              r.armor = newArmor;
+              if (r.health <= 0) {
+                r.isAlive = false;
+                this.combatLog.push(`[TICK ${this.tick}] Enemy eliminated by machine defense: ${r.name}`);
+              }
+              break;
+            }
+          }
+        }
+
         if (hitEntity) continue;
       }
 
@@ -3768,8 +3795,8 @@ export class SectorDepotSimulation {
         candidates.push({ id: this.player.id, x: this.player.x, z: this.player.z, isPlayer: true, isAI: false });
       }
       for (const r of this.rivals) {
-        if (r.isAlive && !r.isExtracted && r.health > 0) {
-          candidates.push({ id: r.id, x: r.x, z: r.z, isPlayer: false, isAI: !!r.isAI });
+        if (!isHub && r.isAlive && !r.isExtracted && r.health > 0 && r.isAI) {
+          candidates.push({ id: r.id, x: r.x, z: r.z, isPlayer: false, isAI: true });
         }
       }
 
@@ -3816,15 +3843,15 @@ export class SectorDepotSimulation {
 
       if (closestTarget) {
         machine.facing = Math.atan2(closestTarget.x - machine.x, closestTarget.z - machine.z);
+        (machine as any).targetDistance = Math.hypot(closestTarget.x - machine.x, closestTarget.z - machine.z);
+        (machine as any).targetY = 1.0;
+        (machine as any).targetX = closestTarget.x;
+        (machine as any).targetZ = closestTarget.z;
 
         if (machine.cooldownTicks <= 0) {
           machine.cooldownTicks = machine.type === 'turret' ? 45 : 30;
           machine.lastFiredAtMs = Date.now();
           machine.lastFiredTick = this.tick;
-          (machine as any).targetDistance = Math.hypot(closestTarget.x - machine.x, closestTarget.z - machine.z);
-          (machine as any).targetY = 1.0;
-          (machine as any).targetX = closestTarget.x;
-          (machine as any).targetZ = closestTarget.z;
 
           const machineY = typeof machine.y === "number" ? machine.y : (machine.type === "drone" ? 3.5 : 1.0);
           const isCovered = this.checkContainerRayObstruction(machine.x, machine.z, closestTarget.x, closestTarget.z, machineY, 1.0);
@@ -3833,29 +3860,54 @@ export class SectorDepotSimulation {
             continue;
           }
 
-          if (closestTarget.isPlayer) {
-            if (!this.player.isInvulnerable && !this.serverMachineDamageAuthority) {
-              const rawDmg = machine.type === 'turret' ? 14 : 10;
-              this.applyDamageToPlayer(rawDmg, machine.x, machine.z);
-              damageToPlayer += rawDmg;
-            }
-            // When serverMachineDamageAuthority is active, the authoritative damage is
-            // applied by the relay's machine_attack broadcast — local application is
-            // suppressed so the two paths never double-apply.
-          } else if (closestTarget.isAI) {
-            const r = this.rivals.find((riv) => riv.id === closestTarget!.id && riv.isAI);
-            if (r && r.isAlive && !r.isInvulnerable) {
-              const rawDmg = machine.type === 'turret' ? 14 : 10;
-              const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, rawDmg);
-              r.health = newHealth;
-              r.armor = newArmor;
-              if (r.health <= 0) {
-                r.isAlive = false;
-                this.combatLog.push(`[TICK ${this.tick}] Enemy eliminated by machine defense: ${r.name}`);
-              }
-            }
-          }
+          // Calculate 3D physical muzzle origin point
+          const muzzleOffset = 1.2;
+          const muzzleX = machine.x + Math.sin(machine.facing) * muzzleOffset;
+          const muzzleY = machine.type === 'turret' ? 1.1 : machineY;
+          const muzzleZ = machine.z + Math.cos(machine.facing) * muzzleOffset;
+
+          const aimDx = closestTarget.x - muzzleX;
+          const aimDz = closestTarget.z - muzzleZ;
+          const aimDist = Math.max(0.001, Math.hypot(aimDx, aimDz));
+          const aimDirX = aimDx / aimDist;
+          const aimDirZ = aimDz / aimDist;
+
+          // Enqueue presentation event for muzzle flash, audio, and bullet tracer
+          this.enqueuePresentationEvent({
+            type: "fire",
+            shooterId: machine.id,
+            origin: { x: muzzleX, y: muzzleY, z: muzzleZ },
+            dir: { x: aimDirX, y: 0, z: aimDirZ },
+            weapon: "rifle",
+          });
+
+          // Spawn visible ballistic projectile traveling towards target with crimson tracer
+          const rawDmg = this.serverMachineDamageAuthority ? 0 : (machine.type === 'turret' ? 14 : 10);
+          const projSpeed = 44.0;
+          this.spawnProjectile({
+            id: `proj_${machine.id}_${this.tick}_${Math.random().toString(36).slice(2, 6)}`,
+            shooterId: machine.id,
+            shooterIsPlayer: false,
+            x: muzzleX,
+            y: muzzleY,
+            z: muzzleZ,
+            vx: aimDirX * projSpeed,
+            vy: 0,
+            vz: aimDirZ * projSpeed,
+            speed: projSpeed,
+            damage: rawDmg,
+            radius: 0.21,
+            maxRange: detectionRange + 4.0,
+            distanceTraveled: 0,
+            weapon: "rifle",
+          });
+
+          this.combatLog.push(`[DEFENSE FIRE] ${machine.id} discharged round at ${closestTarget.isPlayer ? "Operative" : closestTarget.id}`);
         }
+      } else {
+        (machine as any).targetDistance = 0;
+        (machine as any).targetX = undefined;
+        (machine as any).targetZ = undefined;
       }
     }
 

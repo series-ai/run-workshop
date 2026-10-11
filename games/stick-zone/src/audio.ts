@@ -6,6 +6,15 @@
  */
 
 class SoundSystem {
+  private activeTimeouts: Set<ReturnType<typeof setTimeout>> = new Set();
+
+  private scheduleTimeout(fn: () => void, delayMs: number): void {
+    const id = setTimeout(() => {
+      this.activeTimeouts.delete(id);
+      fn();
+    }, delayMs);
+    this.activeTimeouts.add(id);
+  }
   private ctx: AudioContext | null = null;
 
     private masterGain: GainNode | null = null;
@@ -198,7 +207,7 @@ class SoundSystem {
     noise.start(t);
 
     // 3. Pump action mechanical rack (at t + 160ms)
-    setTimeout(() => {
+    this.scheduleTimeout(() => {
       const c = this.getContext();
       if (!c) return;
       const tPump = c.currentTime;
@@ -359,7 +368,7 @@ class SoundSystem {
     osc1.stop(t + 0.03);
 
     // Stage 2: Mag rock and lock
-    setTimeout(() => {
+    this.scheduleTimeout(() => {
       const c = this.getContext();
       if (!c) return;
       const t2 = c.currentTime;
@@ -377,7 +386,7 @@ class SoundSystem {
     }, 160);
 
     // Stage 3: Bolt carrier release
-    setTimeout(() => {
+    this.scheduleTimeout(() => {
       const c = this.getContext();
       if (!c) return;
       const t3 = c.currentTime;
@@ -782,6 +791,59 @@ class SoundSystem {
     gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.025);
+  }
+
+  /**
+   * Immediately silences and halts all ongoing transient sounds and scheduled audio timeouts.
+   * Eliminates unwanted looping background noise, ear-piercing ringing, or stuck oscillators upon player death.
+   */
+  public stopAll(): void {
+    for (const t of this.activeTimeouts) {
+      clearTimeout(t);
+    }
+    this.activeTimeouts.clear();
+    if (this.sfxGain && this.ctx) {
+      try {
+        const t = this.ctx.currentTime;
+        this.sfxGain.gain.cancelScheduledValues(t);
+        this.sfxGain.gain.setValueAtTime(0, t);
+        this.sfxGain.gain.setValueAtTime(1.0, t + 0.05);
+      } catch {
+        // Fallback for mock environments
+      }
+    }
+  }
+
+  /**
+   * Tactical Operative K.I.A. / Elimination sound cue:
+   * A single, clean, deep sub-bass flatline thud with heavy low-pass dampening.
+   * Completely non-repeating and comfortable on the ears (no high-frequency pierce).
+   */
+  public playDeath(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(160, t);
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(75, t);
+    osc.frequency.exponentialRampToValueAtTime(28, t + 0.6);
+
+    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.getDestination());
+
+    osc.start(t);
+    osc.stop(t + 0.6);
   }
 }
 
