@@ -1,6 +1,6 @@
 /**
  * @file traffic.ts — the Skyriver traffic (T4, reworked in T6R): thousands of free-flying vehicles
- * that read as crossing rivers of light, in four draw calls.
+ * that read as crossing streams of light, in eight draw calls.
  *
  * Plan anchors (.plans/skyriver-syncplay-demo.html):
  *   R4 — ">= 2,000 flying vehicles as a street-free open-air swarm with Fifth Element altitude
@@ -26,7 +26,7 @@
  *     to speed, with a pixel-size floor so a 3 m lamp 2 km away still covers ~2 px. Each lamp is
  *     directional: headlights show to the cars' front, taillights to their rear. Lights penetrate
  *     the haze further than concrete (a softer fog curve), which is what makes distant rivers read.
- * Draw calls: 3 hull archetypes + 1 streak batch = 4 (plan R4 ceiling, unchanged).
+ * Draw calls: 6 hull batches + streaks + far lamps = 8.
  *
  * Street-free by construction: no ground plane, no road, no lane geometry. A "river" exists only as
  * the shared course of the cars on it. Rivers keep clear of the T6R skybridge altitudes, so no car
@@ -35,6 +35,7 @@
  * GC discipline: per-car constants are precomputed into typed arrays; the per-frame loop writes
  * instance matrices and streak attributes by index arithmetic and allocates nothing.
  */
+import { SKYRIVER_STRUCTURED_LIGHT_GLSL } from './structuredLight';
 import {
   BufferAttribute,
   BufferGeometry,
@@ -74,6 +75,7 @@ import {
   IMPOSTORS_MEDIUM as SHARED_IMPOSTORS_MEDIUM,
   IMPOSTOR_INTENSITY as SHARED_IMPOSTOR_INTENSITY,
   TRAIL_MAX_CAR_LENGTHS as SHARED_TRAIL_MAX_CAR_LENGTHS,
+  trafficRenderProfile,
   trafficCpuTierFade,
   trafficCpuTierProgress,
   trafficDistanceDim,
@@ -160,6 +162,7 @@ import {
   pathOfBakedRow,
   renderTrafficModel,
   sampleStreamFlow,
+  streamClass,
   sampleStreamPath,
   sampleWarpRow,
   scatterRowOf,
@@ -193,18 +196,8 @@ const TAU = Math.PI * 2;
 /** Per-archetype triangle ceiling from the brief. Exceeding it is a build error, not a warning. */
 const MAX_TRIANGLES_PER_ARCHETYPE = 800;
 
-/** Draw calls this module adds: one InstancedMesh per archetype, plus one streak batch (R4: <= 4). */
-/**
- * T7-5: six render archetypes from the sim's three. Each derived archetype splits into its own
- * shape and a variant (cab -> hunchback van, interceptor -> saucer commuter, commuter -> long bus
- * with a window strip), so near traffic reads as many kinds of vehicle. Presentation only.
- */
-const RENDER_ARCHETYPES = TRAFFIC_ARCHETYPE_COUNT * 2 + 1;
-/** R14: the seventh render archetype, a flatbed truck (freight). Share of all cars. */
-const FLATBED_ARCHETYPE = TRAFFIC_ARCHETYPE_COUNT * 2;
-const FLATBED_SHARE = 0.12;
-const VARIANT_SHARE = 0.45;
-/** R18: + one GPU impostor batch (the call came from merging the god-ray and searchlight beams). */
+/** Six hull batches and the two shared light batches. */
+const RENDER_ARCHETYPES = TRAFFIC_APPEARANCE_PROFILES.length;
 const TRAFFIC_DRAW_CALLS = RENDER_ARCHETYPES + 2;
 
 /**
@@ -372,13 +365,14 @@ function hash01(a: number, b: number): number {
  * ---------------------------------------------------------------------------------------------- */
 
 interface MeshBuild {
+  readonly glass: number[];
   readonly position: number[];
   readonly normal: number[];
   readonly color: number[];
 }
 
 function newBuild(): MeshBuild {
-  return { position: [], normal: [], color: [] };
+  return { position: [], normal: [], color: [], glass: [] };
 }
 
 function buildTriangles(build: MeshBuild): number {
@@ -397,6 +391,7 @@ function pushTriOut(
   cx: number, cy: number, cz: number,
   ix: number, iy: number, iz: number,
   r: number, g: number, b: number,
+  glass = 0,
 ): void {
   const e1x = bx - ax;
   const e1y = by - ay;
@@ -433,6 +428,7 @@ function pushTriOut(
   for (let vertex = 0; vertex < 3; vertex += 1) {
     n.push(nx, ny, nz);
     c.push(r, g, b);
+    build.glass.push(glass);
   }
 }
 
@@ -445,9 +441,10 @@ function pushQuadOut(
   dx: number, dy: number, dz: number,
   ix: number, iy: number, iz: number,
   r: number, g: number, b: number,
+  glass = 0,
 ): void {
-  pushTriOut(build, ax, ay, az, bx, by, bz, cx, cy, cz, ix, iy, iz, r, g, b);
-  pushTriOut(build, ax, ay, az, cx, cy, cz, dx, dy, dz, ix, iy, iz, r, g, b);
+  pushTriOut(build, ax, ay, az, bx, by, bz, cx, cy, cz, ix, iy, iz, r, g, b, glass);
+  pushTriOut(build, ax, ay, az, cx, cy, cz, dx, dy, dz, ix, iy, iz, r, g, b, glass);
 }
 
 /** Baked face shades, brightest on top. A cheap stand-in for a light rig, in vertex colours. */
@@ -634,217 +631,461 @@ function pushProfileLights(build: MeshBuild, type: number): void {
   }
 }
 
-/**
- * Archetype 0 — "cab": a boxy yellow compact, the workhorse silhouette of the swarm.
- * Forward is +Z throughout, matching the orientation basis evaluate() builds.
- */
+type HullPoint = readonly [number, number, number];
+type HullPanel = readonly [HullPoint, HullPoint, HullPoint, HullPoint];
+type HullStation = readonly [z: number, low: number, high: number, lowerHalf: number, upperHalf: number, cut: number];
+
+/** The panel owns its frame, cavity walls, and back face. No face covers the opening. */
+function pushRecessedPanel(build: MeshBuild, corners: HullPanel, inside: HullPoint, depth: number, glass = true): void {
+  const centre = corners.reduce<number[]>((sum, p) => sum.map((v, k) => v + p[k]! / 4), [0, 0, 0]);
+  const a = corners[0]!,
+    b = corners[1]!,
+    c = corners[2]!;
+  const e = b.map((v, k) => v - a[k]!);
+  const f = c.map((v, k) => v - a[k]!);
+  let n = [e[1]! * f[2]! - e[2]! * f[1]!, e[2]! * f[0]! - e[0]! * f[2]!, e[0]! * f[1]! - e[1]! * f[0]!];
+  const length = Math.hypot(...n);
+  if (!Number.isFinite(length) || length <= 1e-10) throw new Error('INVALID_HULL_PANEL_NORMAL');
+  n = n.map((v) => v / length);
+  if (n.reduce((sum, v, k) => sum + v * (centre[k]! - inside[k]!), 0) < 0) n = n.map((v) => -v);
+  const inner = corners.map<HullPoint>((p) => [0, 1, 2].map((k) => centre[k]! + (p[k]! - centre[k]!) * 0.78) as [number, number, number]);
+  const back = inner.map<HullPoint>((p) => [p[0] - n[0]! * depth, p[1] - n[1]! * depth, p[2] - n[2]! * depth]);
+  for (let j = 0; j < 4; j += 1) {
+    const k = (j + 1) % 4;
+    pushQuadOut(build, ...corners[j]!, ...corners[k]!, ...inner[k]!, ...inner[j]!, ...inside, 0.16, 0.165, 0.17);
+    const wall = inner[j]!.map((v, axis) => (v + inner[k]![axis]! + back[k]![axis]! + back[j]![axis]!) / 4);
+    const reference = wall.map((v, axis) => 2 * v - (centre[axis]! - n[axis]! * depth * 0.5)) as [number, number, number];
+    pushQuadOut(build, ...inner[j]!, ...inner[k]!, ...back[k]!, ...back[j]!, ...reference, 0.045, 0.048, 0.052);
+  }
+  pushQuadOut(
+    build,
+    ...back[0]!,
+    ...back[1]!,
+    ...back[2]!,
+    ...back[3]!,
+    ...inside,
+    glass ? 0.026 : 0.014,
+    glass ? 0.029 : 0.015,
+    glass ? 0.033 : 0.017,
+    glass ? 1 : 0,
+  );
+}
+
+/** Eight-sided stations make the broad canted shoulder and lower frame. */
+function pushVehicleLoft(build: MeshBuild, stations: readonly HullStation[], paint: number, glazed = false): void {
+  const rings = stations.map(([z, low, high, lower, upper, cut]): readonly HullPoint[] => [
+    [-lower + cut, low, z],
+    [lower - cut, low, z],
+    [lower, low + cut, z],
+    [upper, high - cut, z],
+    [upper - cut, high, z],
+    [-upper + cut, high, z],
+    [-upper, high - cut, z],
+    [-lower, low + cut, z],
+  ]);
+  const middle = stations[Math.floor(stations.length / 2)]!;
+  const inside: HullPoint = [0, (middle[1] + middle[2]) / 2, middle[0]];
+  for (let s = 0; s + 1 < rings.length; s += 1) {
+    const a = rings[s]!,
+      b = rings[s + 1]!;
+    const before = stations[s]!,
+      after = stations[s + 1]!;
+    const segmentInside: HullPoint = [0, (before[1] + before[2] + after[1] + after[2]) / 4, (before[0] + after[0]) / 2];
+    for (let j = 0; j < 8; j += 1) {
+      const k = (j + 1) % 8;
+      const corners: HullPanel = [a[j]!, b[j]!, b[k]!, a[k]!];
+      if (glazed && j >= 2 && j <= 6) pushRecessedPanel(build, corners, segmentInside, 0.065);
+      else {
+        const shade = [0.36, 0.57, 0.69, 0.9, 1, 0.82, 0.61, 0.48][j]!;
+        pushQuadOut(
+          build,
+          ...corners[0]!,
+          ...corners[1]!,
+          ...corners[2]!,
+          ...corners[3]!,
+          ...segmentInside,
+          paint * shade,
+          paint * shade,
+          paint * shade,
+        );
+      }
+    }
+  }
+  for (const end of [0, rings.length - 1]) {
+    const ring = rings[end]!,
+      station = stations[end]!;
+    const centre: HullPoint = [0, (station[1] + station[2]) / 2, station[0]];
+    for (let j = 0; j < 8; j += 1) {
+      pushTriOut(build, ...centre, ...ring[j]!, ...ring[(j + 1) % 8]!, ...inside, paint * 0.64, paint * 0.64, paint * 0.64);
+    }
+  }
+}
+
+/** A solid fin has two side faces and four edge faces. */
+function pushVehicleFin(build: MeshBuild, side: number): void {
+  const outline: readonly HullPoint[] = [
+    [side * 0.9, -0.05, -1.0],
+    [side * 1.9, 0.72, -2.5],
+    [side * 1.9, 0.52, -2.72],
+    [side * 0.9, -0.25, -1.3],
+  ];
+  const a = outline.map((p) => [p[0] - 0.045, p[1], p[2]] as HullPoint);
+  const b = outline.map((p) => [p[0] + 0.045, p[1], p[2]] as HullPoint);
+  const centre: HullPoint = [side * 1.4, 0.235, -1.88];
+  pushQuadOut(build, ...a[0]!, ...a[1]!, ...a[2]!, ...a[3]!, ...centre, 0.095, 0.095, 0.095);
+  pushQuadOut(build, ...b[0]!, ...b[1]!, ...b[2]!, ...b[3]!, ...centre, 0.145, 0.145, 0.145);
+  for (let j = 0; j < 4; j += 1) {
+    const k = (j + 1) % 4;
+    pushQuadOut(build, ...a[j]!, ...a[k]!, ...b[k]!, ...b[j]!, ...centre, 0.18, 0.18, 0.18);
+  }
+}
+
+/** The canted intake and rear exhaust have separate framed cavities. */
+function pushIntakePod(build: MeshBuild, x: number, y: number, z: number, width: number, height: number, length: number): void {
+  const front: HullPanel = [
+    [x - width / 2, y - height / 2, z + height / 2],
+    [x + width / 2, y - height / 2, z + height / 2],
+    [x + width / 2, y + height / 2, z - height / 2],
+    [x - width / 2, y + height / 2, z - height / 2],
+  ];
+  const rear: HullPanel = [
+    [front[0][0], front[0][1], z - length],
+    [front[1][0], front[1][1], z - length],
+    [front[2][0], front[2][1], z - length],
+    [front[3][0], front[3][1], z - length],
+  ];
+  const inside: HullPoint = [x, y, z - length / 2];
+  pushRecessedPanel(build, front, inside, 0.16, false);
+  pushRecessedPanel(build, rear, inside, 0.18, false);
+  for (let j = 0; j < 4; j += 1) {
+    const k = (j + 1) % 4;
+    const shade = [0.055, 0.1, 0.17, 0.08][j]!;
+    pushQuadOut(build, ...front[j]!, ...front[k]!, ...rear[k]!, ...rear[j]!, ...inside, shade, shade, shade);
+  }
+}
+
+function pushVehicleSkids(build: MeshBuild, x: number, y: number, z: number, length: number): void {
+  for (const side of [-1, 1]) pushChamferedPrism(build, side * x, y, z, 0.22, 0.24, length, 0.07, 0.12, 0.12, 0.12);
+}
+
+/** Upright utility cab with a stepped glass house and a short nose shelf. */
 function buildCab(): MeshBuild {
   const build = newBuild();
-  // T6R: dark paint; the instance tint picks the hue, the lamps carry the light.
-  const body = 0.075;
-  const r = body;
-  const g = body * 0.9;
-  const b = body * 0.85;
-
-  pushChamferedPrism(build, 0, 0, 0, 2, 0.8, 4.4, 0.16, r, g, b);
-  pushChamferedPrism(build, 0, 0.72, -0.2, 1.72, 0.76, 2.4, 0.18, r * 0.82, g * 0.82, b * 0.82);
-  pushBox(build, 0, -0.08, 2.32, 1.6, 0.52, 0.56, r * 0.9, g * 0.9, b * 0.9);
-  // Keep the taxi lamp's original faces, vertices, and profile. The hull below gains the chamfers.
+  pushVehicleLoft(
+    build,
+    [
+      [-2.2, -0.4, 0.35, 1.04, 1.02, 0.22],
+      [-1.7, -0.4, 0.46, 1.1, 1.06, 0.25],
+      [1.15, -0.4, 0.38, 1.06, 0.96, 0.23],
+      [2.6, -0.34, 0.25, 0.96, 0.86, 0.18],
+    ],
+    0.15,
+  );
+  pushVehicleLoft(
+    build,
+    [
+      [-1.48, 0.42, 0.97, 0.84, 0.75, 0.17],
+      [-0.9, 0.42, 1.12, 0.86, 0.75, 0.2],
+      [0.55, 0.38, 1.12, 0.86, 0.73, 0.2],
+      [1.1, 0.32, 0.68, 0.83, 0.64, 0.12],
+    ],
+    0.17,
+    true,
+  );
   pushBox(build, 0, 1.2, 0.1, 0.9, 0.24, 0.5, SIGN_R, SIGN_G, SIGN_B);
-  pushChamferedPrism(build, 1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.08, 0.2, 0.2, 0.22);
-  pushChamferedPrism(build, -1.14, -0.16, -0.6, 0.36, 0.5, 1.9, 0.08, 0.2, 0.2, 0.22);
-  pushTopSeam(build, 0, 0.405, -1.82, 1.1, 1.62, 0.018, 0.016, 0.02);
-  pushTopSeam(build, 0, 1.12, -1.04, 0.76, 1.48, 0.026, 0.03, 0.038);
   for (const side of [-1, 1]) {
-    pushQuadOut(build, side * 0.58, -0.405, -1.36, side * 0.7, -0.405, -1.36,
-      side * 0.7, -0.405, 1.78, side * 0.58, -0.405, 1.78,
-      0, -0.1, 0, 0.018, 0.02, 0.024);
+    pushIntakePod(build, side * 1.4, -0.16, 0.9, 0.45, 0.34, 1.2);
+    pushBox(build, side * 0.88, 0.14, -1.7, 0.06, 0.2, 0.22, 0.22, 0.22, 0.22);
   }
-
+  pushVehicleSkids(build, 0.72, -0.48, -0.35, 3.15);
+  pushBox(build, 0, 0.325, 1.68, 1.38, 0.035, 0.06, 0.035, 0.035, 0.035);
   pushProfileLights(build, 0);
-
   return build;
 }
 
-/** Archetype 1 — "interceptor": a sharp gunmetal wedge, the fast traffic of the upper bands. */
+/** A swept wedge with a low glass spine, canted intakes, and solid fins. */
 function buildInterceptor(): MeshBuild {
   const build = newBuild();
-  const r = 0.06;
-  const g = 0.064;
-  const b = 0.075;
-
-  // Tapered prism: nose point, a mid ring at z = 0.4, a tail ring at z = -2.6.
-  const noseZ = 3.1;
-  const midZ = 0.4;
-  const tailZ = -2.6;
-  const mx = 0.95;
-  const myLow = -0.3;
-  const myHigh = 0.42;
-  const mxTop = 0.74;
-  const tx = 0.55;
-  const tyLow = -0.22;
-  const tyHigh = 0.3;
-  const txTop = 0.44;
-
-  // Mid ring, clockwise from the lower right: lower-right, lower-left, upper-left, upper-right.
-  const m0x = mx; const m0y = myLow;
-  const m1x = -mx; const m1y = myLow;
-  const m2x = -mxTop; const m2y = myHigh;
-  const m3x = mxTop; const m3y = myHigh;
-  const t0x = tx; const t0y = tyLow;
-  const t1x = -tx; const t1y = tyLow;
-  const t2x = -txTop; const t2y = tyHigh;
-  const t3x = txTop; const t3y = tyHigh;
-
-  const shades = [SHADE_BOTTOM, SHADE_SIDE_LEFT, SHADE_TOP, SHADE_SIDE_RIGHT];
-  const ringX = [m0x, m1x, m2x, m3x];
-  const ringY = [m0y, m1y, m2y, m3y];
-  const tipX = [t0x, t1x, t2x, t3x];
-  const tipY = [t0y, t1y, t2y, t3y];
-
-  for (let edge = 0; edge < 4; edge += 1) {
-    const next = (edge + 1) % 4;
-    const shade = shades[edge];
-    const sr = r * shade;
-    const sg = g * shade;
-    const sb = b * shade;
-    // Nose fan.
-    pushTriOut(build,
-      ringX[edge], ringY[edge], midZ,
-      ringX[next], ringY[next], midZ,
-      0, 0.05, noseZ,
-      0, 0, 0, sr * 1.08, sg * 1.08, sb * 1.08);
-    // Body panel.
-    pushQuadOut(build,
-      ringX[edge], ringY[edge], midZ,
-      ringX[next], ringY[next], midZ,
-      tipX[next], tipY[next], tailZ,
-      tipX[edge], tipY[edge], tailZ,
-      0, 0, 0, sr, sg, sb);
-  }
-  // Tail cap.
-  pushQuadOut(build, t0x, t0y, tailZ, t1x, t1y, tailZ, t2x, t2y, tailZ, t3x, t3y, tailZ,
-    0, 0, 0, r * SHADE_BACK, g * SHADE_BACK, b * SHADE_BACK);
-
-  pushChamferedPrism(build, 0, 0.48, 1, 0.56, 0.32, 1.3, 0.09, 0.1, 0.16, 0.2);
-  pushChamferedPrism(build, 0.52, -0.02, -2.78, 0.4, 0.4, 0.36, 0.07, 0.14, 0.15, 0.17);
-  pushChamferedPrism(build, -0.52, -0.02, -2.78, 0.4, 0.4, 0.36, 0.07, 0.14, 0.15, 0.17);
-
-  // Swept fins, one quad each. Interior reference below the fin so both faces wind outward-ish;
-  // fins are thin plates, so a single-sided plate is the honest low-poly choice here.
-  pushQuadOut(build, 0.9, -0.1, -1.1, 1.9, 0.72, -2.5, 1.9, 0.52, -2.72, 0.9, -0.3, -1.3,
-    0, -2, -1.8, r * 0.9, g * 0.9, b * 0.9);
-  pushQuadOut(build, -0.9, -0.1, -1.1, -1.9, 0.72, -2.5, -1.9, 0.52, -2.72, -0.9, -0.3, -1.3,
-    0, -2, -1.8, r * 0.9, g * 0.9, b * 0.9);
-  pushTopSeam(build, 0, 0.422, -1.85, 2.3, 0.8, 0.014, 0.018, 0.022);
+  pushVehicleLoft(
+    build,
+    [
+      [-2.95, -0.27, 0.29, 0.76, 0.64, 0.14],
+      [-1.55, -0.3, 0.4, 1.03, 0.86, 0.24],
+      [0.55, -0.27, 0.32, 0.98, 0.78, 0.23],
+      [3.13, -0.12, 0.15, 0.56, 0.55, 0.06],
+    ],
+    0.13,
+  );
+  pushVehicleLoft(
+    build,
+    [
+      [-1.32, 0.4, 0.56, 0.5, 0.43, 0.06],
+      [-0.5, 0.4, 0.76, 0.54, 0.42, 0.1],
+      [1.48, 0.26, 0.47, 0.43, 0.28, 0.06],
+    ],
+    0.16,
+    true,
+  );
   for (const side of [-1, 1]) {
-    pushQuadOut(build, side * 0.23, -0.27, -1.9, side * 0.34, -0.27, -1.9,
-      side * 0.34, -0.27, 1.4, side * 0.23, -0.27, 1.4,
-      0, -0.55, 0, 0.018, 0.02, 0.024);
+    pushVehicleFin(build, side);
+    pushIntakePod(build, side * 1.21, -0.04, 0.5, 0.46, 0.38, 1.65);
+    pushBox(build, side * 0.76, 0.41, -1.95, 0.16, 0.06, 0.42, 0.23, 0.23, 0.23);
   }
-
+  pushVehicleSkids(build, 0.5, -0.36, -0.45, 3.25);
   pushProfileLights(build, 1);
-
   return build;
 }
 
-/** Archetype 2 — "commuter": a pale bus-like hull under a bubble canopy, the slow mid bands. */
+/** A long tapered dart carries a rounded faceted canopy bubble. */
 function buildCommuter(): MeshBuild {
   const build = newBuild();
-  const r = 0.07;
-  const g = 0.076;
-  const b = 0.085;
-
-  pushChamferedPrism(build, 0, -0.26, 0, 2.2, 0.72, 4.2, 0.18, r, g, b);
-  pushDome(build, 0, 0.06, 0.1, 1.02, 1.1, 1.9, 8, 3, 0.05, 0.09, 0.12);
-  pushChamferedPrism(build, 0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.07, 0.16, 0.17, 0.19);
-  pushChamferedPrism(build, -0.96, -0.74, -0.1, 0.26, 0.4, 2.6, 0.07, 0.16, 0.17, 0.19);
-  pushTopSeam(build, 0, 0.1, -1.3, 1.5, 1.8, 0.016, 0.019, 0.022);
-  for (const side of [-1, 1]) {
-    pushQuadOut(build, side * 0.48, -0.64, -1.45, side * 0.66, -0.64, -1.45,
-      side * 0.66, -0.64, 1.45, side * 0.48, -0.64, 1.45,
-      0, -0.9, 0, 0.014, 0.018, 0.022);
+  pushVehicleLoft(
+    build,
+    [
+      [-2.1, -0.61, 0.08, 0.94, 0.86, 0.18],
+      [-1.4, -0.62, 0.16, 1.1, 1.01, 0.22],
+      [0.3, -0.61, 0.14, 1.1, 1.03, 0.22],
+      [1.9, -0.46, 0.01, 0.83, 0.71, 0.15],
+      [3.0, -0.33, -0.03, 0.56, 0.55, 0.045],
+    ],
+    0.16,
+  );
+  const inside: HullPoint = [0, 0.24, -0.2];
+  const ring = (stack: number): HullPoint[] => {
+    const elevation = (stack * Math.PI) / 6;
+    return Array.from({ length: 8 }, (_, segment) => {
+      const angle = (segment * Math.PI) / 4;
+      return [
+        0.91 * Math.cos(elevation) * Math.cos(angle),
+        0.16 + 0.85 * Math.sin(elevation),
+        -0.2 + 1.72 * Math.cos(elevation) * Math.sin(angle),
+      ];
+    });
+  };
+  for (let stack = 0; stack < 2; stack += 1) {
+    const lower = ring(stack),
+      upper = ring(stack + 1);
+    for (let j = 0; j < 8; j += 1) {
+      const k = (j + 1) % 8;
+      pushRecessedPanel(build, [lower[j]!, lower[k]!, upper[k]!, upper[j]!], inside, 0.055);
+    }
   }
-
+  const crown = ring(2);
+  for (let j = 0; j < 8; j += 1) pushTriOut(build, ...crown[j]!, ...crown[(j + 1) % 8]!, 0, 1.01, -0.2, ...inside, 0.026, 0.029, 0.033, 1);
+  for (const side of [-1, 1]) pushIntakePod(build, side * 1.28, -0.51, 0.8, 0.25, 0.3, 1.9);
+  pushVehicleSkids(build, 0.74, -0.81, -0.15, 2.9);
+  pushBox(build, 0, 0.2, -1.74, 1.3, 0.035, 0.08, 0.21, 0.21, 0.21);
   pushProfileLights(build, 2);
-
   return build;
 }
 
-/** T7-5 variant — hunchback van: a tall rear box over a short sloped nose. */
+/** A tall ribbed cargo body sits behind the sloped nose shelf. */
 function buildVan(): MeshBuild {
   const build = newBuild();
-  const r = 0.085;
-  const g = 0.08;
-  const b = 0.075;
-  pushChamferedPrism(build, 0, 0, -0.3, 2.3, 1.1, 3.6, 0.2, r, g, b);
-  pushChamferedPrism(build, 0, 0.95, -0.7, 2.1, 0.95, 2.6, 0.18, r * 0.9, g * 0.9, b * 0.9);
-  pushChamferedPrism(build, 0, -0.15, 1.85, 2.1, 0.75, 0.9, 0.14, r, g, b);
-  pushChamferedPrism(build, 0, 0.55, 1.2, 1.8, 0.35, 0.5, 0.1, 0.04, 0.07, 0.1);
-  pushChamferedPrism(build, 1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.07, 0.15, 0.15, 0.16);
-  pushChamferedPrism(build, -1.2, -0.45, -0.4, 0.3, 0.45, 2.6, 0.07, 0.15, 0.15, 0.16);
-  pushTopSeam(build, 0, 1.425, -1.8, 0.48, 1.65, 0.022, 0.024, 0.026);
-  for (let slot = 0; slot < 3; slot += 1) {
-    const z = -1.6 + slot * 0.52;
-    pushTopSeam(build, 0, 1.425, z, z + 0.06, 1.55, 0.018, 0.02, 0.022);
+  pushVehicleLoft(
+    build,
+    [
+      [-2.1, -0.52, 1.31, 1.12, 1.15, 0.2],
+      [-1.5, -0.55, 1.43, 1.15, 1.04, 0.29],
+      [0.4, -0.52, 1.39, 1.12, 1.01, 0.27],
+      [0.76, -0.46, 0.61, 1.08, 0.85, 0.17],
+      [1.65, -0.45, 0.39, 1.04, 0.9, 0.13],
+      [2.3, -0.45, 0.38, 1.04, 0.9, 0.2],
+    ],
+    0.17,
+  );
+  pushVehicleLoft(
+    build,
+    [
+      [0.76, 0.69, 1.14, 0.85, 0.69, 0.13],
+      [1.32, 0.47, 0.87, 0.83, 0.65, 0.12],
+      [1.66, 0.39, 0.61, 0.8, 0.67, 0.06],
+    ],
+    0.18,
+    true,
+  );
+  for (const side of [-1, 1]) {
+    for (const z of [-1.56, -0.88, -0.2, 0.46]) pushBox(build, side * 1.14, 0.35, z, 0.1, 1.38, 0.1, 0.21, 0.21, 0.21);
+    pushIntakePod(build, side * 1.42, -0.32, 1.65, 0.35, 0.33, 1.0);
   }
+  pushVehicleSkids(build, 0.88, -0.68, -0.25, 3.5);
+  pushBox(build, 0, 1.44, -0.45, 1.55, 0.055, 0.12, 0.055, 0.055, 0.055);
   pushProfileLights(build, 3);
   return build;
 }
 
-/** T7-5 variant — saucer commuter: a flat disc with a raised dome and a lit rim. */
-function buildSaucer(): MeshBuild {
+/** A long low slab has repeated recessed windows and a faceted roof spine. */
+function buildBus(): MeshBuild {
   const build = newBuild();
-  const r = 0.07;
-  const g = 0.075;
-  const b = 0.085;
-  // Disc: a low dome above and an inverted shallow dome below, as two half-ellipsoids.
-  pushDome(build, 0, 0, 0, 2.2, 0.45, 2.6, 12, 2, r, g, b);
-  pushBox(build, 0, -0.18, 0, 2.6, 0.32, 3.0, r * 0.6, g * 0.6, b * 0.6);
-  pushDome(build, 0, 0.3, -0.2, 0.95, 0.75, 1.2, 8, 3, 0.05, 0.1, 0.14);
+  const bodyStations: readonly HullStation[] = [
+    [-4.1, -0.8, 0.17, 1.09, 1.2, 0.2],
+    [-3.65, -0.8, 0.18, 1.2, 1.2, 0.23],
+    [3.5, -0.8, 0.18, 1.2, 1.2, 0.23],
+    [4.1, -0.74, 0.18, 1.06, 1.11, 0.19],
+  ];
+  const roofStations: readonly HullStation[] = [
+    [-4.105, 0.74, 0.82, 1.04, 1.0, 0.025],
+    [-3.6, 0.74, 0.9, 1.12, 0.88, 0.07],
+    [0, 0.74, 1.14, 1.13, 0.83, 0.12],
+    [2.4, 0.74, 1.06, 1.13, 0.86, 0.1],
+    [3.6, 0.74, 0.86, 1.1, 0.88, 0.05],
+    [4.105, 0.74, 0.82, 1.04, 1.0, 0.025],
+  ];
+  pushVehicleLoft(build, bodyStations, 0.18);
+  pushVehicleLoft(build, roofStations, 0.2);
+  for (const side of [-1, 1]) {
+    // The closed belts share the actual chamfer edges of the body and roof.
+    const bodyJoin = bodyStations.map(([z, , high, , upper, cut], i): readonly [HullPoint, HullPoint, HullPoint] => {
+      const windowZ = i === 0 ? -4.105 : i === bodyStations.length - 1 ? 4.105 : z;
+      const taper = Math.max(0, (Math.abs(windowZ) - 3.6) / 0.505);
+      return [[side * (upper - cut), high, z], [side * upper, high - cut, z], [side * (1.2 - taper * 0.09), 0.18, windowZ]];
+    });
+    const roofJoin = roofStations.map(([z, low, , lower, , cut]): readonly [HullPoint, HullPoint, HullPoint] => {
+      const taper = Math.max(0, (Math.abs(z) - 3.6) / 0.505);
+      return [[side * (lower - cut), low, z], [side * lower, low + cut, z], [side * (1.12 - taper * 0.08), 0.74, z]];
+    });
+    for (const rings of [bodyJoin, roofJoin]) {
+      for (let i = 0; i + 1 < rings.length; i += 1) {
+        const a = rings[i]!, b = rings[i + 1]!;
+        const inside = [0, 1, 2].map(axis => [...a, ...b].reduce((sum, point) => sum + point[axis]! / 6, 0)) as [number, number, number];
+        pushQuadOut(build, ...a[0], ...b[0], ...b[2], ...a[2], ...inside, 0.16, 0.16, 0.16);
+        pushQuadOut(build, ...a[2], ...b[2], ...b[1], ...a[1], ...inside, 0.12, 0.12, 0.12);
+      }
+      for (const i of [0, rings.length - 1]) {
+        const ring = rings[i]!, adjacent = rings[i === 0 ? 1 : i - 1]!;
+        const inside = [0, 1, 2].map(axis => [...ring, ...adjacent].reduce((sum, point) => sum + point[axis]! / 6, 0)) as [number, number, number];
+        pushTriOut(build, ...ring[0], ...ring[1], ...ring[2], ...inside, 0.14, 0.14, 0.14);
+      }
+    }
+    for (let i = 0; i < 8; i += 1) {
+      const z0 = -3.6 + i * 0.9,
+        z1 = z0 + 0.9;
+      pushRecessedPanel(
+        build,
+        [
+          [side * 1.2, 0.18, z0],
+          [side * 1.2, 0.18, z1],
+          [side * 1.12, 0.74, z1],
+          [side * 1.12, 0.74, z0],
+        ],
+        [0, 0.4, 0],
+        0.085,
+      );
+    }
+    pushIntakePod(build, side * 0.75, -0.97, 3.4, 0.35, 0.34, 0.9);
+  }
+  pushRecessedPanel(
+    build,
+    [
+      [-1.08, 0.18, 4.105],
+      [1.08, 0.18, 4.105],
+      [1.04, 0.74, 4.105],
+      [-1.04, 0.74, 4.105],
+    ],
+    [0, 0.4, 0],
+    0.08,
+  );
+  pushRecessedPanel(
+    build,
+    [
+      [-1.04, 0.74, -4.105],
+      [1.04, 0.74, -4.105],
+      [1.08, 0.18, -4.105],
+      [-1.08, 0.18, -4.105],
+    ],
+    [0, 0.4, 0],
+    0.08,
+  );
+  for (const side of [-1, 1])
+    for (const end of [-1, 1]) {
+      pushQuadOut(
+        build,
+        side * 1.2,
+        0.18,
+        end * 3.6,
+        side * 1.11,
+        0.18,
+        end * 4.105,
+        side * 1.04,
+        0.74,
+        end * 4.105,
+        side * 1.12,
+        0.74,
+        end * 3.6,
+        0,
+        0.4,
+        0,
+        0.12,
+        0.12,
+        0.12,
+      );
+    }
+  pushVehicleSkids(build, 0.88, -0.84, 0, 6.6);
   pushProfileLights(build, 4);
   return build;
 }
 
-/** T7-5 variant — long bus: an elongated box with a lit window strip down each side. */
-function buildBus(): MeshBuild {
+/** Open freight deck with separate stacked loads and a tall front cab. */
+function buildFlatbed(): MeshBuild {
   const build = newBuild();
-  const r = 0.09;
-  const g = 0.085;
-  const b = 0.07;
-  pushBox(build, 0, 0, 0, 2.4, 1.6, 8.2, r, g, b);
-  pushBox(build, 0, 0.95, -0.3, 2.0, 0.3, 6.6, r * 0.8, g * 0.8, b * 0.8);
-  for (const side of [-1, 1]) {
-    // Window strip: warm cabin light along the flank (planar patch facing out).
-    pushQuadOut(build,
-      side * 1.215, 0.15, -3.5,
-      side * 1.215, 0.15, 3.3,
-      side * 1.215, 0.6, 3.3,
-      side * 1.215, 0.6, -3.5,
-      0, 0.3, 0, 1.0, 0.62, 0.3);
+  pushVehicleLoft(
+    build,
+    [
+      [-4.2, -0.53, -0.17, 1.2, 1.2, 0.1],
+      [-3.85, -0.53, -0.12, 1.25, 1.25, 0.13],
+      [1.56, -0.53, -0.12, 1.25, 1.25, 0.13],
+    ],
+    0.16,
+  );
+  pushVehicleLoft(
+    build,
+    [
+      [1.55, -0.42, 0.98, 1.15, 1.02, 0.22],
+      [2.5, -0.42, 1.13, 1.15, 1.02, 0.25],
+      [3.55, -0.4, 0.62, 1.05, 0.86, 0.22],
+    ],
+    0.17,
+  );
+  pushVehicleLoft(
+    build,
+    [
+      [1.64, 0.98, 1.23, 0.94, 0.78, 0.07],
+      [2.26, 1.1, 1.34, 0.94, 0.78, 0.07],
+      [3.06, 0.84, 1.08, 0.88, 0.72, 0.07],
+    ],
+    0.19,
+    true,
+  );
+  for (const [x, y, z, w, h, l, paint] of [
+    [-0.51, 0.25, -0.18, 0.94, 0.74, 1.25, 0.2],
+    [0.54, 0.31, -1.85, 1, 0.86, 1.47, 0.17],
+    [0.51, 1.03, -1.81, 0.78, 0.55, 1.05, 0.21],
+    [-0.45, 0.39, -3.5, 1.15, 1.03, 0.92, 0.19],
+  ]) {
+    const cargo = newBuild();
+    pushVehicleLoft(
+      cargo,
+      [
+        [z! - l! / 2, y! - h! / 2, y! + h! / 2, w! / 2, w! / 2, 0.12],
+        [z! + l! / 2, y! - h! / 2, y! + h! / 2, w! / 2, w! / 2, 0.12],
+      ],
+      paint!,
+    );
+    for (let at = 0; at < cargo.position.length; at += 3) cargo.position[at]! += x!;
+    build.position.push(...cargo.position);
+    build.normal.push(...cargo.normal);
+    build.color.push(...cargo.color);
+    build.glass.push(...cargo.glass);
   }
+  for (const side of [-1, 1]) {
+    pushBox(build, side * 1.22, -0.025, -1.2, 0.1, 0.19, 5.35, 0.22, 0.22, 0.22);
+    pushIntakePod(build, side * 1.35, -0.14, 2.95, 0.28, 0.33, 0.75);
+    for (const z of [-3.55, -1.8, -0.14]) pushBox(build, side * 1.07, 0.15, z, 0.08, 0.54, 0.08, 0.07, 0.07, 0.07);
+  }
+  pushVehicleSkids(build, 1.04, -0.68, -0.4, 6.6);
   pushProfileLights(build, 5);
   return build;
 }
-
-/** R14 — flatbed truck: a low cab up front and a long open bed carrying crates (freight streams). */
-function buildFlatbed(): MeshBuild {
-  const build = newBuild();
-  const r = 0.08;
-  const g = 0.078;
-  const b = 0.072;
-  pushBox(build, 0, 0.35, 2.6, 2.3, 1.5, 1.9, r, g, b);
-  pushBox(build, 0, 0.75, 2.2, 2.0, 0.5, 0.6, 0.04, 0.07, 0.1);
-  pushBox(build, 0, -0.35, -1.3, 2.5, 0.35, 5.8, r * 0.9, g * 0.9, b * 0.9);
-  pushBox(build, -0.5, 0.3, -0.4, 1.0, 0.95, 1.4, 0.16, 0.11, 0.07);
-  pushBox(build, 0.55, 0.15, -2.2, 1.1, 0.65, 1.6, 0.09, 0.12, 0.13);
-  pushBox(build, 0, 0.55, -3.6, 1.6, 1.15, 1.0, 0.14, 0.1, 0.08);
-  pushBox(build, 1.3, -0.6, -1.3, 0.3, 0.4, 5.0, 0.15, 0.15, 0.16);
-  pushBox(build, -1.3, -0.6, -1.3, 0.3, 0.4, 5.0, 0.15, 0.15, 0.16);
-  pushProfileLights(build, 6);
-  return build;
-}
-
 /** Converts a build to a non-indexed, flat-shaded BufferGeometry and enforces the triangle budget. */
 function toGeometry(build: MeshBuild, label: string): BufferGeometry {
   const triangles = buildTriangles(build);
@@ -879,6 +1120,7 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
   const indexedPosition: number[] = [];
   const indexedNormal: number[] = [];
   const indexedColor: number[] = [];
+  const indexedGlass: number[] = [];
   const index: number[] = [];
   const vertexSlots = new Map<string, number>();
   for (let vertex = 0; vertex < build.position.length / 3; vertex += 1) {
@@ -886,7 +1128,7 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
     const values = [
       build.position[offset]!, build.position[offset + 1]!, build.position[offset + 2]!,
       build.normal[offset]!, build.normal[offset + 1]!, build.normal[offset + 2]!,
-      build.color[offset]!, build.color[offset + 1]!, build.color[offset + 2]!,
+      build.color[offset]!, build.color[offset + 1]!, build.color[offset + 2]!, build.glass[vertex]!,
     ];
     const key = values.join(',');
     let slot = vertexSlots.get(key);
@@ -896,12 +1138,14 @@ function toGeometry(build: MeshBuild, label: string): BufferGeometry {
       indexedPosition.push(values[0]!, values[1]!, values[2]!);
       indexedNormal.push(values[3]!, values[4]!, values[5]!);
       indexedColor.push(values[6]!, values[7]!, values[8]!);
+      indexedGlass.push(values[9]!);
     }
     index.push(slot);
   }
   geometry.setAttribute('position', new BufferAttribute(new Float32Array(indexedPosition), 3));
   geometry.setAttribute('normal', new BufferAttribute(new Float32Array(indexedNormal), 3));
   geometry.setAttribute('color', new BufferAttribute(new Float32Array(indexedColor), 3));
+  geometry.setAttribute('aGlass', new BufferAttribute(new Float32Array(indexedGlass), 1));
   geometry.setIndex(index);
   geometry.computeBoundingSphere();
   return geometry;
@@ -968,6 +1212,7 @@ void main() {
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
       * trafficTrailFarFade(length(cameraPosition - aCarPos))
+      * trafficTrailViewGain(dot(dir, normalize(cameraPosition - lamp)))
     : 0.0;
   vec3 tailEnd = lamp - dir * trail;
   vec4 v1 = viewMatrix * vec4(tailEnd, 1.0);
@@ -1026,7 +1271,7 @@ void main() {
     // Seen from the front the trail is the headlamps' warm white, from behind the tails' red
     // (vWarm carries the blend); it never slices through the camera.
     vWarm = smoothstep( ${TRAFFIC_TRAIL_WARM_FACING_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_WARM_FACING_BAND[1].toFixed(1)}, dot( dir, toCam ) );
-    vIntensity = aCarFade.x * aCarFade.w * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
+    vIntensity = aCarFade.x * aCarFade.w * trafficTrailViewGain(dot(dir, toCam)) * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
   }
 
   vIntensity *= lampGain;
@@ -1641,9 +1886,10 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   for (let car = 0; car < maxCarCount; car += 1) {
     const archetype = params.archetype[car];
     if (archetype >= TRAFFIC_ARCHETYPE_COUNT) fail('SKYRIVER_TRAFFIC_ARCHETYPE_OUT_OF_RANGE');
-    const render = hash01(car, 0xf1a7) < FLATBED_SHARE
-      ? FLATBED_ARCHETYPE
-      : archetype + (hash01(car, 0x7e57) < VARIANT_SHARE ? TRAFFIC_ARCHETYPE_COUNT : 0);
+    carTrafficPlan(options.seed, car, carPlan);
+    const freight = carPlan.role === 'stream' && streamClass(carPlan.stream) === 'freight';
+    const variant = (Math.floor(hash01(car, 0x7e57) * 0x100000000) & 1) !== 0;
+    const render = trafficRenderProfile(archetype, variant, freight);
     renderArchetype[car] = render;
     archetypeTotals[render] = archetypeTotals[render] + 1;
   }
@@ -1777,14 +2023,65 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   carMaterial.name = 'skyriver.traffic.hull';
   // T6R: the shared fog was never wired to the hulls, so distant cars stayed full-bright pills.
   applySkyriverFog(carMaterial);
+  const fogCompile = carMaterial.onBeforeCompile;
+  carMaterial.onBeforeCompile = (shader, renderer) => {
+    fogCompile.call(carMaterial, shader, renderer);
+    shader.uniforms.uTrafficGlassReflection = { value: 1 };
+    shader.vertexShader = 'attribute float aHullCoverage;\nattribute float aGlass;\nvarying float vHullCoverage;\nvarying float vTrafficGlass;\nvarying vec3 vTrafficWorld;\nvarying vec3 vTrafficNormal;\n' + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+vHullCoverage = aHullCoverage;
+vTrafficGlass = aGlass;
+vec4 trafficWorld = vec4(transformed, 1.0);
+vec3 trafficNormal = normal;
+#ifdef USE_INSTANCING
+trafficWorld = instanceMatrix * trafficWorld;
+trafficNormal = mat3(instanceMatrix) * trafficNormal;
+#endif
+vTrafficWorld = (modelMatrix * trafficWorld).xyz;
+vTrafficNormal = normalize(mat3(modelMatrix) * trafficNormal);`);
+    shader.fragmentShader = `uniform float uTrafficGlassReflection;
+varying float vHullCoverage;
+varying float vTrafficGlass;
+varying vec3 vTrafficWorld;
+varying vec3 vTrafficNormal;
+${SKYRIVER_STRUCTURED_LIGHT_GLSL}
+` + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace('#include <color_fragment>', `
+#include <color_fragment>
+if (vTrafficGlass > 0.5) {
+  vec3 paneNormal = normalize(vTrafficNormal);
+  vec3 paneView = normalize(cameraPosition - vTrafficWorld);
+  vec3 paneReflection = reflect(-paneView, paneNormal);
+  float paneFresnel = pow(1.0 - abs(dot(paneNormal, paneView)), 3.0);
+  float overcast = smoothstep(-0.15, 0.65, paneReflection.y);
+  float paneDetail = wetMicrodetail(vTrafficWorld, 0.61);
+  float neutralPane = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(neutralPane * 0.65), vTrafficGlass);
+  diffuseColor.rgb += uTrafficGlassReflection * vTrafficGlass * vec3(0.018) * overcast * (0.18 + 0.82 * paneFresnel) * paneDetail;
+}
+`);
+    // Ordered coverage leaves surviving fragments in the opaque depth stage.
+    shader.fragmentShader = shader.fragmentShader.replace('#include <clipping_planes_fragment>', `
+      #include <clipping_planes_fragment>
+      vec2 cell = mod(floor(gl_FragCoord.xy), 4.0);
+      vec2 low = mod(cell, 2.0);
+      vec2 high = floor(cell / 2.0);
+      float rank = 4.0 * (2.0 * low.x + 3.0 * low.y - 4.0 * low.x * low.y)
+        + (2.0 * high.x + 3.0 * high.y - 4.0 * high.x * high.y);
+      if (vHullCoverage <= (rank + 0.5) / 16.0) discard;
+    `);
+  };
+  carMaterial.customProgramCacheKey = () => 'skyriver-hull-coverage-glass-v3';
 
-  const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildSaucer(), buildBus(), buildFlatbed()];
-  const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'];
+  const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildBus(), buildFlatbed()];
+  const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'];
   const trianglesPerArchetype: number[] = [];
   const geometries: BufferGeometry[] = [];
   const meshes: InstancedMesh[] = [];
   const matrixArrays: Float32Array[] = [];
   const colorArrays: Float32Array[] = [];
+  const coverageArrays: Float32Array[] = [];
 
   for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
     const build = archetypeBuilds[archetype];
@@ -1794,6 +2091,10 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     geometries.push(geometry);
 
     const capacity = Math.max(1, archetypeTotals[archetype]);
+    const coverage = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+    coverage.setUsage(DynamicDrawUsage);
+    geometry.setAttribute('aHullCoverage', coverage);
+    coverageArrays.push(coverage.array as Float32Array);
     const mesh = new InstancedMesh(geometry, carMaterial, capacity);
     mesh.name = 'skyriver.traffic.' + label;
     // Every matrix changes per frame across the whole canyon.
@@ -2388,17 +2689,13 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const toCarX = px - camX;
         const toCarY = py - camY;
         const toCarZ = pz - camZ;
-        // T7 hull LOD: past HULL_DRAW_DISTANCE_M a body is a few pixels that only bites dark beads
-        // out of the ribbon behind it, so it collapses to nothing and the light carries the read.
-        // R15 glitch fix: the hard cut made ~20 bodies a second blink in or out on screen; bodies now
-        // shrink away over the last 220 m (sub-pixel by then), so nothing pops.
+        // Keep physical size through the distance handover. Fade opaque coverage.
         const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
         const hullLod = 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
         fade *= tierFadeFor(car);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
-        // Bodies vanish with their fade (a faded car is never left as a small dark block).
-        const scale = sizeScale[car]! * hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
+        const scale = sizeScale[car]!;
         const pitchY = clamp(fy, -TRAFFIC_DIRECTION_PITCH_CLAMP, TRAFFIC_DIRECTION_PITCH_CLAMP);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;
@@ -2444,6 +2741,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         const distanceM = Math.sqrt(distanceSq);
         const legacyFarAlpha = trafficThinFarAlpha(distanceSq, carThinFar[car] === 1);
         writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
+        coverageArrays[archetype]![slot] = hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade) * sameCarLodScratch.totalAlpha;
         const nearFade = fade * sameCarLodScratch.nearAlpha;
         const totalFade = fade * sameCarLodScratch.totalAlpha;
         // Hull bars and instance colour use the near share.
@@ -2483,6 +2781,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       }
 
       const mesh = meshes[archetype];
+      mesh.geometry.getAttribute('aHullCoverage').needsUpdate = true;
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
     }

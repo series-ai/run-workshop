@@ -122,9 +122,9 @@ describe('R28b actual material floor', () => {
 
   it('has continuous screen-space distance derivatives for real scale-two profiles', () => {
     const profiles = [...gpuMaterial.vertexShader.matchAll(/TrafficLampShape\(vec4\(([^)]+)\),\s*[\d.-]+\)/g)];
-    expect(profiles).toHaveLength(15);
+    expect(profiles).toHaveLength(13);
     const focal = 720 / (2 * Math.tan(62 * Math.PI / 360));
-    for (const row of profiles.slice(0, 14)) {
+    for (const row of profiles.slice(0, 12)) {
       const [centre, width, height, z] = row[1]!.split(',').map(Number);
       expect(centre).toBeGreaterThan(0);
       for (const size of [width!, height!]) {
@@ -214,9 +214,9 @@ describe('R28b actual shared floor gain', () => {
 
   it('bounds the area-energy correction and keeps C1 distance curves for fixed real profiles', () => {
     const profiles = [...gpuMaterial.vertexShader.matchAll(/TrafficLampShape\(vec4\(([^)]+)\),\s*[\d.-]+\)/g)];
-    expect(profiles).toHaveLength(15);
+    expect(profiles).toHaveLength(13);
     const focal = 720 / (2 * Math.tan(62 * Math.PI / 360));
-    for (const row of profiles.slice(0, 14)) {
+    for (const row of profiles.slice(0, 12)) {
       const [, width, height, z] = row[1]!.split(',').map(Number);
       for (const scale of [1, 2, 3, 6]) {
         const energy = (depth: number): { corrected: number; floored: number; physical: number } => {
@@ -359,7 +359,7 @@ function actualInView(camera: PerspectiveCamera, pos: Vector3, type: number, sca
     v => new Vector4(v[0], v[1], v[2], 1).applyMatrix4(camera.matrixWorldInverse).toArray(),
     (...v) => v, Math.max, radiusRun, actualOutside, vectorAdd, vectorSub);
 }
-const names = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'] as const;
+const names = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'] as const;
 // These are original emissive vertices from the real constructor, not profile-table vertices.
 const physicalVertices = names.map((name, type) => {
   const hull = traffic.objects.find(o => o.name === 'skyriver.traffic.' + name);
@@ -375,7 +375,7 @@ const physicalVertices = names.map((name, type) => {
     if (lamp) for (const i of ids) vertices.push(new Vector3(position.getX(i), position.getY(i), position.getZ(i)));
   }
   // These literal counts come from the old physical lamp triangles. Index reuse cannot change them.
-  const oldLampTriangleCount = [6, 4, 6, 6, 4, 6, 4][type]!;
+  const oldLampTriangleCount = [6, 4, 6, 6, 6, 4][type]!;
   if (vertices.length !== oldLampTriangleCount * 3) throw new Error('R28B_ORIGINAL_LAMP_TRIANGLES_CHANGED:' + name);
   return vertices;
 });
@@ -582,8 +582,8 @@ describe('R32 independent CSS coverage and physical pixel filter', () => {
   });
 
   it('retains CSS footprint and integrated pair energy across DPR and sample phase', () => {
-    const rows = [...gpuMaterial.vertexShader.matchAll(/TrafficLampShape\(vec4\(([^)]+)\),\s*[\d.-]+\)/g)].slice(0, 14);
-    expect(rows).toHaveLength(14);
+    const rows = [...gpuMaterial.vertexShader.matchAll(/TrafficLampShape\(vec4\(([^)]+)\),\s*[\d.-]+\)/g)].slice(0, 12);
+    expect(rows).toHaveLength(12);
     const cssAngle = 2 * Math.tan(62 * Math.PI / 360) / 720;
     for (const row of rows) {
       const [separation, width, height] = row[1]!.split(',').map(Number);

@@ -897,20 +897,6 @@ varying vec2 vRainUv;
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
 
-vec3 speedLines() {
-  // Radial streaks rushing out from just above the vanishing point; brighter toward the edges.
-  vec2 p = ( vRainUv - vec2( 0.5, 0.62 ) ) * vec2( uAspect, 1.0 );
-  float r = length( p );
-  float angle = atan( p.y, p.x );
-  float lane = floor( ( angle + 3.14159265 ) / 6.2831853 * 240.0 );
-  float live = step( 0.72, skyHash11( lane * 3.7 + 1.0 ) );
-  float rush = fract( r * ( 1.6 + skyHash11( lane ) * 1.4 ) - uTime * ( 2.4 + 2.0 * skyHash11( lane + 9.0 ) ) );
-  float streak = smoothstep( 0.0, 0.05, rush ) * ( 1.0 - smoothstep( 0.05, 0.4, rush ) );
-  float across = abs( fract( ( angle + 3.14159265 ) / 6.2831853 * 240.0 ) - 0.5 ) * 2.0;
-  streak *= 1.0 - smoothstep( 0.1, 0.6, across );
-  float vignette = smoothstep( 0.18, 0.75, r );
-  return vec3( 0.75, 0.85, 1.0 ) * ( streak * live * vignette * uBoost * 0.55 );
-}
 
 void main() {
   // R16: world-consistent rain. Streaks fall along lines from uFoe, the screen point the rain comes
@@ -941,7 +927,6 @@ void main() {
   streak *= 1.0 - smoothstep( 0.05, 0.4, across );
 
   vec3 color = uColor * ( streak * live * uIntensity * uRainOn );
-  if ( uBoost > 0.001 ) color += speedLines();
   gl_FragColor = vec4( color, 1.0 );
 
   #include <tonemapping_fragment>

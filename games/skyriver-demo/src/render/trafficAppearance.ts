@@ -13,7 +13,7 @@ export interface TrafficLampProfile {
 }
 
 export interface TrafficAppearanceProfile {
-  readonly name: string;
+  readonly name: 'cab' | 'interceptor' | 'commuter' | 'van' | 'bus' | 'flatbed';
   readonly front: TrafficLampProfile;
   readonly rear: TrafficLampProfile;
 }
@@ -21,12 +21,23 @@ export interface TrafficAppearanceProfile {
 export const TRAFFIC_APPEARANCE_PROFILES: readonly TrafficAppearanceProfile[] = Object.freeze(([
   { name: 'cab', front: { kind: 'pair', centreXM: 0.56, yM: -0.04, zM: 2.61, widthM: 0.5, heightM: 0.3 }, rear: { kind: 'bar', centreXM: 0, yM: 0.1, zM: -2.21, widthM: 1.75, heightM: 0.2 } },
   { name: 'interceptor', front: { kind: 'bar', centreXM: 0, yM: 0.06, zM: 3.14, widthM: 0.9, heightM: 0.12 }, rear: { kind: 'bar', centreXM: 0, yM: -0.02, zM: -2.97, widthM: 1.4, heightM: 0.16 } },
-  { name: 'commuter', front: { kind: 'pair', centreXM: 0.62, yM: -0.26, zM: 2.11, widthM: 0.5, heightM: 0.26 }, rear: { kind: 'bar', centreXM: 0, yM: -0.26, zM: -2.11, widthM: 1.5, heightM: 0.2 } },
+  { name: 'commuter', front: { kind: 'pair', centreXM: 0.35, yM: -0.18, zM: 3.01, widthM: 0.32, heightM: 0.2 }, rear: { kind: 'bar', centreXM: 0, yM: -0.26, zM: -2.11, widthM: 1.5, heightM: 0.2 } },
   { name: 'van', front: { kind: 'pair', centreXM: 0.7, yM: -0.1, zM: 2.31, widthM: 0.45, heightM: 0.25 }, rear: { kind: 'bar', centreXM: 0, yM: 1.05, zM: -2.11, widthM: 1.9, heightM: 0.18 } },
-  { name: 'saucer', front: { kind: 'bar', centreXM: 0, yM: -0.05, zM: 1.52, widthM: 1.6, heightM: 0.14 }, rear: { kind: 'bar', centreXM: 0, yM: -0.05, zM: -1.52, widthM: 1.8, heightM: 0.16 } },
   { name: 'bus', front: { kind: 'pair', centreXM: 0.75, yM: -0.3, zM: 4.12, widthM: 0.5, heightM: 0.3 }, rear: { kind: 'bar', centreXM: 0, yM: 0.3, zM: -4.12, widthM: 2, heightM: 0.22 } },
   { name: 'flatbed', front: { kind: 'bar', centreXM: 0, yM: 0.1, zM: 3.56, widthM: 1.7, heightM: 0.18 }, rear: { kind: 'bar', centreXM: 0, yM: -0.35, zM: -4.21, widthM: 2.1, heightM: 0.16 } },
 ] satisfies TrafficAppearanceProfile[]).map((profile) => Object.freeze({ ...profile, front: Object.freeze(profile.front), rear: Object.freeze(profile.rear) })));
+
+
+/** Stable render routes. The simulation keeps its three archetypes. */
+const PRIMARY_TRAFFIC_PROFILES = [0, 1, 2] as const;
+const VARIANT_TRAFFIC_PROFILES = [3, 2, 4] as const;
+
+export function trafficRenderProfile(archetype: number, variant: boolean, freight: boolean): number {
+  if (!Number.isInteger(archetype) || archetype < 0 || archetype >= PRIMARY_TRAFFIC_PROFILES.length) {
+    throw new Error('SKYRIVER_TRAFFIC_ARCHETYPE_OUT_OF_RANGE');
+  }
+  return freight ? 5 : (variant ? VARIANT_TRAFFIC_PROFILES : PRIMARY_TRAFFIC_PROFILES)[archetype]!;
+}
 
 export const IMPOSTORS_HIGH = 20000;
 export const IMPOSTORS_MEDIUM = 10000;
@@ -61,6 +72,7 @@ export const TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE = 1.6;
 export const TRAFFIC_TRAIL_SCREEN_CAP_REFINEMENTS = 2;
 export const TRAFFIC_DIRECTION_PITCH_CLAMP = 0.35;
 export const TRAFFIC_HULL_FADE_RAMP_END = 0.45;
+export const TRAFFIC_TRAIL_END_ON_BAND = Object.freeze([0.9, 1] as const);
 export const TRAFFIC_TRAIL_END_FADE_EXPONENT = 1.4;
 export const TRAFFIC_TRAIL_HEAD_FADE_EXPONENT = 0.7;
 export const TRAFFIC_TRAIL_TAIL_FADE_EXPONENT = 1.2;
@@ -128,6 +140,11 @@ export function trafficTrailFarFade(distanceM: number): number {
   const linear = (distanceM - startM) / (endM - startM);
   const progress = linear * linear * (3 - 2 * linear);
   return Math.exp(Math.log(TRAFFIC_TRAIL_FAR_FADE_END_LENGTH_SCALE) * progress);
+}
+
+/** End-on trails lose length and light before they form a lamp-sized disc. */
+export function trafficTrailViewGain(facing: number): number {
+  return 1 - trafficAppearanceSmoothstep(TRAFFIC_TRAIL_END_ON_BAND[0], TRAFFIC_TRAIL_END_ON_BAND[1], Math.abs(facing));
 }
 
 export function trafficCpuTierFade(
@@ -214,7 +231,7 @@ export function packTrafficAppearance(type: number, scale: number): number {
   return Math.fround(type + scale / 8);
 }
 
-/** Decode the uploaded Float32 scalar. Valid storage is [0.125, 6.75]. */
+/** Decode the uploaded Float32 scalar. Valid storage is [0.125, 5.75]. */
 export function unpackTrafficAppearance(packed: number): { type: number; scale: number } {
   const type = Math.floor(packed);
   const scale = (packed - type) * 8;
@@ -228,6 +245,9 @@ function glslNumber(value: number): string {
 
 /** Two kernels cover a bar. Their outer span equals the source bar width. */
 export const TRAFFIC_APPEARANCE_GLSL = /* glsl */ `
+float trafficTrailViewGain(float facing) {
+  return 1.0 - smoothstep(${TRAFFIC_TRAIL_END_ON_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_END_ON_BAND[1].toFixed(1)}, abs(facing));
+}
 float trafficTrailFarFade(float distanceM) {
   float progress = clamp((distanceM - ${TRAFFIC_TRAIL_FAR_FADE_BAND_M[0].toFixed(1)})
     / ${(TRAFFIC_TRAIL_FAR_FADE_BAND_M[1] - TRAFFIC_TRAIL_FAR_FADE_BAND_M[0]).toFixed(1)}, 0.0, 1.0);

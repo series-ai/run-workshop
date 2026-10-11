@@ -83,3 +83,58 @@ describe('flyer continuity: actual interrupted tier transitions', () => {
     } finally { traffic.dispose(); }
   });
 });
+
+import { InstancedMesh } from 'three';
+import { closureSamples } from './support/flyerContinuityTemporal';
+import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanceModel';
+import { continuityInput } from './support/flyerContinuityMatrix';
+
+describe('R37 actual rear approach at timed closure speed', () => {
+  it.each([125, 250, 500])('keeps physical hull scale at %i m/s and fades opaque coverage', closingVelocity => {
+    const traffic = createTraffic();
+    try {
+      const samples = closureSamples(closingVelocity);
+      expect(samples.at(-1)!.timeS).toBeCloseTo(700 / closingVelocity, 12);
+      traffic.update(10, { x: 0, y: 1500, z: 0 });
+      const target = carRecord(traffic, 100);
+      const mesh = traffic.objects.find(o => o instanceof InstancedMesh && Array.from({ length: o.count }, (_, i) => {
+        const a = o.instanceMatrix.array, j = i * 16;
+        return Math.hypot(a[j + 12]! - target.position.x, a[j + 13]! - target.position.y, a[j + 14]! - target.position.z) < 0.01;
+      }).some(Boolean));
+      if (!(mesh instanceof InstancedMesh)) throw Error('R37_HULL_MISSING');
+      const slot = Array.from({ length: mesh.count }, (_, i) => i).find(i => {
+        const a = mesh.instanceMatrix.array, j = i * 16;
+        return Math.hypot(a[j + 12]! - target.position.x, a[j + 13]! - target.position.y, a[j + 14]! - target.position.z) < 0.01;
+      })!;
+      let physicalScale = 0, previousCoverage = 0, maxFrameCoverageStep = 0;
+      for (const sample of samples) {
+        // Advance the real traffic. Then place the camera behind this same car.
+        traffic.update(10 + sample.timeS, target.position);
+        const current = carRecord(traffic, 100);
+        const streak = traffic.objects.find(o => o.name === 'skyriver.traffic.streaks') as Mesh;
+        const direction = streak.geometry.getAttribute('aCarDir');
+        const forward = new Vector3(direction.getX(current.row), direction.getY(current.row), direction.getZ(current.row)).normalize();
+        const camera = current.position.clone().addScaledVector(forward, -sample.distanceM);
+        traffic.update(10 + sample.timeS, camera);
+        const matrix = mesh.instanceMatrix.array, j = slot * 16;
+        const scale = Math.hypot(matrix[j]!, matrix[j + 1]!, matrix[j + 2]!);
+        const alpha = mesh.geometry.getAttribute('aHullCoverage').getX(slot);
+        if (sample.frame === 0) physicalScale = scale;
+        expect(scale).toBeCloseTo(physicalScale, 5);
+        expect(alpha).toBeGreaterThanOrEqual(previousCoverage - 1e-6);
+        maxFrameCoverageStep = Math.max(maxFrameCoverageStep, alpha - previousCoverage);
+        previousCoverage = alpha;
+        const expected = sample.distanceM >= 1300 ? 0 : sample.distanceM <= 1080 ? 1
+          : (() => { const x = (sample.distanceM - 1080) / 220; return 1 - (3 * x * x - 2 * x * x * x); })();
+        expect(alpha).toBeCloseTo(expected, 5);
+        const model = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', sample.distanceM), sizeScale: physicalScale });
+        expect(model.hull.scale).toBeCloseTo(scale, 5);
+        expect(model.hull.coverage).toBeCloseTo(alpha, 5);
+      }
+      expect(previousCoverage).toBe(1);
+      expect(maxFrameCoverageStep).toBeLessThanOrEqual(1.5 * closingVelocity / (60 * 220) + 1e-6);
+      expect(traffic.stats().drawCalls).toBeLessThanOrEqual(32);
+      expect(mesh.material).toMatchObject({ transparent: false, depthWrite: true, depthTest: true });
+    } finally { traffic.dispose(); }
+  });
+});

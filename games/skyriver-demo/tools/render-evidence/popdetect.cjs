@@ -161,7 +161,7 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
     // LAYER=traffic: after the real frame, re-render only the traffic lights (CPU streaks + GPU
     // impostors) with the opaque city as occluders (towers, far-city cards, hulls), sky/signs/trims/
     // beams/rain/shuttle hidden, and track blobs on that layer. Isolates traffic-light pops.
-    const keep = new Set([...(window.__POP_NOCARDS ? [] : ['skyriver.city.impostors']), 'skyriver.city.towers', 'skyriver.traffic.streaks', 'skyriver.traffic.impostors', 'skyriver.traffic.cab', 'skyriver.traffic.interceptor', 'skyriver.traffic.commuter', 'skyriver.traffic.van', 'skyriver.traffic.saucer', 'skyriver.traffic.bus', 'skyriver.traffic.flatbed']);
+    const keep = new Set([...(window.__POP_NOCARDS ? [] : ['skyriver.city.impostors']), 'skyriver.city.towers', 'skyriver.traffic.streaks', 'skyriver.traffic.impostors', ...hulls.map(o => o.name)]);
     const only = window.__POP_ONLY ? new Set(window.__POP_ONLY.split(',')) : null;
     const layerRender = () => {
       const hidden = [];

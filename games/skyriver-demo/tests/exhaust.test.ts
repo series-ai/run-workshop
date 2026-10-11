@@ -170,7 +170,7 @@ describe('analytic shuttle exhaust', () => {
     const material = plume!.material as THREE.ShaderMaterial;
     expect(material.uniforms.uWakeRootWidth!.value).toBe(wake.rootWidthM);
     expect(material.uniforms.uWakeTailWidth!.value).toBe(wake.tailWidthM);
-    expect(material.uniforms.uWidth!.value).toBe(2.3);
+    expect(material.uniforms.uWidth!.value).toBe(1.1);
 
     const kind = plume!.geometry.getAttribute('aKind') as THREE.BufferAttribute;
     let ribbonVertices = 0;

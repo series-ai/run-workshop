@@ -53,7 +53,7 @@ async function capture(page,target,tier,referenceCamera){
    for(let i=bodyStart;i<source.length;i++){if(source[i]==='{')depth++;else if(source[i]==='}'&&--depth===0){bodyEnd=i;break;}}
    if(bodyEnd<0)throw new Error('Live lamp profile function is not closed.');const body=source.slice(bodyStart+1,bodyEnd),number='([-+]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][-+]?\\d+)?)';
    const re=new RegExp(`if\\s*\\(\\s*type\\s*<\\s*${number}\\s*\\)\\s*\\{\\s*if\\s*\\(\\s*front\\s*\\)\\s*return\\s+TrafficLampShape\\(\\s*vec4\\(([^)]*)\\)\\s*,\\s*${number}\\s*\\)\\s*;\\s*return\\s+TrafficLampShape\\(\\s*vec4\\(([^)]*)\\)\\s*,\\s*${number}\\s*\\)\\s*;\\s*\\}`, 'g');
-   const rows=[...body.matchAll(re)];if(rows.length!==7)throw new Error(`Expected seven live lamp profiles. Found ${rows.length}.`);
+   const rows=[...body.matchAll(re)];if(rows.length!==6)throw new Error(`Expected six live lamp profiles. Found ${rows.length}.`);
    const shape=(dimensions,y)=>{const values=dimensions.split(',').map(v=>Number(v.trim()));if(values.length!==4||values.some(v=>!Number.isFinite(v))||!Number.isFinite(y))throw new Error('Invalid value in live lamp profile.');return{sideCenterM:values[0],widthParamM:values[1],heightM:values[2],zM:values[3],yM:y};};
    return rows.map((m,index)=>({index,front:shape(m[2],Number(m[3])),rear:shape(m[4],Number(m[5]))}));
   };

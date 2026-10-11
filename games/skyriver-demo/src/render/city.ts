@@ -48,6 +48,7 @@ import {
   skyriverFogUniforms,
 } from './atmosphere';
 import { skyriverDeclareStageRole } from './stageRoles';
+import { SKYRIVER_STRUCTURED_LIGHT_GLSL } from './structuredLight';
 import type { SkyriverFrame, SkyriverQualitySettings } from './scene';
 import { HERO_HORIZONTAL_CELLS, HERO_VERTICAL_CELLS, createSignAtlas, type SignAtlas } from './signAtlas';
 import { createInteriorAtlas, type InteriorAtlas } from './interiorAtlas';
@@ -9084,6 +9085,7 @@ uniform vec3 uMegaTint;
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+${SKYRIVER_STRUCTURED_LIGHT_GLSL}
 ${SKYRIVER_INTERIOR_RESPONSE_GLSL}
 ${SKYRIVER_STRUCTURE_MATERIAL_GLSL}
 ${WINDOW_PALETTE_GLSL}
@@ -9249,10 +9251,10 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float fresnel = pow( 1.0 - clamp( dot( vNormalW, viewDir ), 0.0, 1.0 ), 4.0 );
   float runnel = skyHash11( floor( vSurf.x / 2.6 ) + vSeed * 131.0 + vFaceId * 17.0 );
   float wet = mix( 0.42, smoothstep( 0.58, 1.0, runnel ), fineDetail )
+    * mix( 1.0, wetMicrodetail( vWorldPos, vSeed ), fineDetail )
     * ( 0.3 + 0.7 * ( 1.0 - smoothstep( 0.0, 0.45, vUp ) ) );
-  // T6R: the wet sheen picks up the neon around it — a slow cyan/magenta drift over the facade.
-  float neonDrift = skyValueNoise( vWorldPos.yz * vec2( 0.004, 0.003 ) + vSeed * 7.0 );
-  vec3 sheen = mix( uWetTint, mix( vec3( 0.15, 0.55, 0.75 ), vec3( 0.7, 0.18, 0.55 ), neonDrift ), 0.55 );
+  // Overcast reflection is neutral. Local signs supply the colored reflection below.
+  vec3 sheen = vec3( dot( uWetTint, vec3( 0.2126, 0.7152, 0.0722 ) ) * 0.12 );
   vec3 wetSheen = sheen * fresnel * ( 0.2 + 0.8 * wet ) * vIsSide * paneStepMask * ( 1.0 - 0.6 * smoothstep( 1750.0, 2250.0, vWorldPos.y ) ) * 0.45;
 
   // Wet arrises: a 1-2 px highlight on every box edge, so each mass separates from the one behind.
@@ -9260,7 +9262,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec2 surfPerPixel = max( fwidth( vSurf ), vec2( 1e-4 ) );
   float edgePixels = min( edgeDistance.x / surfPerPixel.x, edgeDistance.y / surfPerPixel.y );
   float arrisLine = 1.0 - smoothstep( 0.5, 2.0, edgePixels );
-  vec3 wetArris = mix( sheen, vec3( 0.55, 0.7, 0.85 ), 0.5 ) * arrisLine * ( 0.1 + 0.18 * faceShade ) * 0.3;
+  vec3 wetArris = mix( sheen, vec3( 0.06 ), 0.5 ) * arrisLine * ( 0.1 + 0.18 * faceShade ) * 0.3;
 
   // T7 mass: a contact shadow along the foot of every box (under terraces, crowns, seam blocks) —
   // the deep recesses that make stacked massing read as weight, not decals.
@@ -9293,12 +9295,15 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     vec4 blade = uHeroBlades[ i ];
     vec3 nearest = vec3( blade.x, clamp( vWorldPos.y, blade.y - blade.w, blade.y + blade.w ), blade.z );
     float d = length( vWorldPos - nearest );
-    heroSpill += uHeroColors[ i ] * exp( - d / 60.0 );
-    heroShadow = max( heroShadow, exp( - d / 90.0 ) * uHeroWeight[ i ] );
+    float response = localAreaLight( max( blade.w * 48.0, 1.0 ), d );
+    heroSpill += uHeroColors[ i ] * response * lightBreakup( vWorldPos, blade.x * 0.01 + blade.z * 0.007 );
+    heroShadow = max( heroShadow, response * uHeroWeight[ i ] );
   }
   color += heroSpill * 0.2 * contactAo;
   // T7 wet sheen: the rain-slick facade mirrors the nearest giant sign's colour at grazing angles.
-  color += heroSpill / ( 1.0 + length( heroSpill ) ) * fresnel * 1.4 * vIsSide * contactAo;
+  vec3 wetSpill = heroSpill / ( 1.0 + length( heroSpill ) )
+    * ( 0.3 + 0.7 * wet ) * paneStepMask;
+  color += wetSpill * fresnel * 0.65 * vIsSide * contactAo;
 
   // --- window grid ------------------------------------------------------------------------------
   // Coarse blocks gate whole stacks dark, so the lit windows stay sparse and clustered instead of
@@ -9468,7 +9473,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
 ${SKYRIVER_OUTPUT_APPLY_GLSL}
   #include <fog_fragment>
-  // R13 landmark wash, after the fog: the floodlit mega-tower stays a block of light through the haze.
+  // The landmark wash follows the drawn stage rim and closes at 200 m.
   float megaMatch = 1.0 - step( 0.02, distance( vTint, uMegaTint ) );
   if ( megaMatch > 0.5 ) {
     float wash = 0.0;
@@ -9477,18 +9482,17 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
       float dxz = length( vWorldPos.xz - m.xy );
       wash = max( wash, m.w * step( dxz, m.z * 1.5 ) );
     }
-    // Floodlights on every ~300 m ledge throw light up the faces and decay with height (the classic
-    // floodlit-landmark look); the faces keep their windows; the upper stages burn brightest.
-    float band = fract( vWorldPos.y / 300.0 );
-    // R15: the ledge is a hard dark->bright step; antialias it over the pixel footprint so distant
-    // bands do not shimmer or crawl as the camera moves.
-    float bandAA = max( fwidth( vWorldPos.y / 300.0 ), 1e-4 );
-    float throwUp = exp( - band * 5.5 ) * smoothstep( 0.0, bandAA * 1.5, band ) + exp( - 5.5 ) * ( 1.0 - smoothstep( 0.0, bandAA * 1.5, band ) );
-    float rise = smoothstep( 1400.0, 3400.0, vWorldPos.y );
-    // R14: no flat base term (it read as a pale sheet at exposure 1.75); light only rises off ledges.
-    float face = vIsSide * ( 0.02 + 0.3 * throwUp ) * ( 0.6 + 0.9 * rise );
+    // The drawn stage rim is 6 m wide. Its center is 2.5 m above the stage top.
+    // The rim center is 1.3 m outside the facade. Face bounds are the uploaded stage bounds.
+    float ledgeHeight = max( vFaceHalf.y - vSurf.y + 2.5, 0.0 );
+    float roofEdge = max( min( vFaceHalf.x - abs(vSurf.x), vFaceHalf.y - abs(vSurf.y) ), 0.0 );
+    float ledgeDistance = mix( length(vec2(roofEdge + 1.3, 2.5)), length(vec2(1.3, ledgeHeight)), vIsSide );
+    float ledgeArea = max( vFaceHalf.x * 2.0 * 6.0, 1.0 );
+    float ledgeResponse = localAreaLight( ledgeArea, ledgeDistance )
+      * lightBreakup( vWorldPos, vSeed );
+    float face = vIsSide * ledgeResponse * 0.3;
     // Saturated cool cyan-blue: a coloured floodlight, so the landmark is colour as well as light.
-    vec3 washColor = vec3( 0.12, 0.55, 1.0 ) * face + vec3( 0.5, 0.8, 1.0 ) * ( 1.0 - vIsSide ) * 0.5;
+    vec3 washColor = vec3( 0.12, 0.55, 1.0 ) * face + vec3( 0.5, 0.8, 1.0 ) * ( 1.0 - vIsSide ) * ledgeResponse * 0.5;
     #ifdef USE_FOG
       float through = pow( max( 1.0 - skyriverFogFactor(), 0.0 ), 0.3 );
     #else
@@ -9496,8 +9500,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
     #endif
     // Close by, the wash eases off so the face keeps its windows instead of reading as a flat slab.
     float near = 0.35 + 0.65 * smoothstep( 250.0, 900.0, vFogDepth );
-    // R22: the complete face-and-roof wash, recoloured at equal luminance. Its brightness curve and
-    // its fog response are the pre-R22 terms.
+    // R22 keeps the face and roof source roles at equal luminance.
     gl_FragColor.rgb += skyriverDistrictTint( washColor * wash * through * near * EMISSIVE_GAIN,
       vDistrict, DISTRICT_WASH_SATURATION );
   }
@@ -9867,6 +9870,7 @@ uniform sampler2D uAtlas;
 #include <fog_pars_fragment>
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+${SKYRIVER_STRUCTURED_LIGHT_GLSL}
 ${SKYRIVER_DISTRICT_COLOUR_GLSL}
 
 float roundedRect( vec2 uv, vec2 halfExtent, float radius ) {
@@ -9947,8 +9951,9 @@ void main() {
   // edge — the T7 rectangle-distance spill read as glowing cards.
   vec2 q = vLocal / ( vSignSize * 0.5 + vMargin * 0.5 );
   vec2 edge = abs( vLocal ) / ( vSignSize * 0.5 + vMargin );
-  float edgeFade = ( 1.0 - smoothstep( 0.7, 1.0, edge.x ) ) * ( 1.0 - smoothstep( 0.7, 1.0, edge.y ) );
-  float halo = exp( - dot( q, q ) * 1.4 ) * edgeFade * ( 1.0 - inside * 0.5 );
+  float edgeFade = ( 1.0 - smoothstep( 0.65, 0.95, edge.x ) ) * ( 1.0 - smoothstep( 0.65, 0.95, edge.y ) );
+  float halo = exp( - dot( q, q ) * 1.4 ) * edgeFade * ( 1.0 - inside * 0.5 )
+    * ( 1.0 + 1.25 * ( lightBreakup( vWorldPos, vSignSeed ) - 1.0 ) );
   float plate = inside * 0.03;
 
   // Signs are double-sided: blades are seen from both canyon directions. Grazing views dim, but

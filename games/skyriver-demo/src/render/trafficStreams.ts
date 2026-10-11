@@ -1291,7 +1291,7 @@ export function deriveImpostorAttributes(seed: number, count: number, model?: Re
   for (let i = 0; i < count; i += 1) {
     deriveImpostorCar(resolved, i, car);
     // Separate avalanche channels. Motion and route records do not read these values.
-    const type = Math.floor(impostorHash(i ^ resolved.carSalt, 0x201) * TRAFFIC_APPEARANCE_PROFILES.length);
+    const type = car.flow.kind === 'freight' ? 5 : Math.floor(impostorHash(i ^ resolved.carSalt, 0x201) * 5);
     const scale = 1.5 + impostorHash(i ^ resolved.carSalt, 0x202);
     appearance[i] = packTrafficAppearance(type, scale);
     streamArcPhaseSeed[i * 4] = car.path;

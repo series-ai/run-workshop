@@ -27,8 +27,8 @@ export function appearanceMetrics(output: SameCarTrafficAppearance, headWidth: n
   for (const patches of output.hull.patches) {
     for (const patch of patches) {
       const visible = patch.facesCameraOnOutwardSide && patch.hasHullRecord
-        && output.hull.scale > 0 && patch.projectedAreaCssPx2 > 0;
-      const peak = visible ? continuityLuminance(patch.foggedRgb) : 0;
+        && output.hull.coverage > 0 && patch.projectedAreaCssPx2 > 0;
+      const peak = visible ? continuityLuminance(patch.foggedRgb) * output.hull.coverage : 0;
       components.push({ size: Math.max(patch.widthCssPx, patch.heightCssPx), peak,
         energy: patch.projectedAreaCssPx2 * peak });
     }
@@ -144,7 +144,8 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     const expectedHull = 1 - independentSmoothstep(IMPOSTOR_LIGHT_HANDOVER_BAND_M[0], IMPOSTOR_LIGHT_HANDOVER_BAND_M[1], row.distanceM);
     const expectedNear = row.input.impostorPresence === 0 ? referenceTarget(row.input) : expectedHull;
     check(row.distanceM, 'near handover assignment', Math.abs(lod.nearAlpha - expectedNear), 1e-12);
-    check(row.distanceM, 'hull LOD scale', Math.abs(row.output.hull.scale - row.input.sizeScale * expectedHull), 1e-12);
+    check(row.distanceM, 'physical hull scale', Math.abs(row.output.hull.scale - row.input.sizeScale), 1e-12);
+    check(row.distanceM, 'hull LOD coverage', Math.abs(row.output.hull.coverage - expectedHull * referenceTarget(row.input)), 1e-12);
     const expectedDim = 1 - (1 - TRAFFIC_DISTANCE_DIM_FLOOR) * Math.min(1, row.distanceM ** 2 / TRAFFIC_DISTANCE_DIM_RANGE_M ** 2);
     for (const [side, patches] of row.output.hull.patches.entries()) {
       const color = side === 0 ? TRAFFIC_HULL_HEADLIGHT_RGB : TRAFFIC_HULL_TAILLIGHT_RGB;
@@ -198,7 +199,8 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     const floorGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
       * independentSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
     const trailPickup = independentSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], row.referenceTail.lampDistance);
-    const trailGain = row.input.sourceFade * expectedNear * baseTrail * trailPickup * floorGain;
+    const viewGain = 1 - independentSmoothstep(0.9, 1, Math.abs(row.referenceTail.facing));
+    const trailGain = row.input.sourceFade * expectedNear * baseTrail * trailPickup * floorGain * viewGain;
     check(row.distanceM, 'trail source gain', Math.abs(row.output.streak.trail.sourceGain - trailGain), 1e-9);
     const parent = referenceTarget(row.input) > 0 ? baseTrail * expectedNear / referenceTarget(row.input) : 0;
     check(row.distanceM, 'trail clip eligibility', row.output.streak.trail.clippedByAttributeCutoff === (parent <= TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF) ? 0 : 1, 0);

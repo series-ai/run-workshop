@@ -11,11 +11,11 @@
   },
   "shaderHashes": {
     "towerVertex": "9cf010a690d6394cd9048c141e2974d0e5fc06947447ba3f66f8006ef6ba9760",
-    "towerFragment": "922c026e3cea0831c90706eb637f1ba6b596e558090e62e7347f0158a42bd0f9",
+    "towerFragment": "61a573805f866fd659e3a3c3f52d82709feca4090ec97dbed6390bc8c1aa1ee0",
     "trimVertex": "d0ffee8f790a551af95c333dd4ec895a033accb5cea9a9cdab9516b646418b03",
     "trimFragment": "63bc1df082457731686d702ccfaa7b08f69f4425675c30660607daf2827a82aa",
     "signVertex": "b14b03b960c311a458b84cf7fe168a3e37b6b7f5d5d524a580783f32ff38d57e",
-    "signFragment": "22638d5914625dfe9da0de8cb02cdb3cbb9919736c3ec8de65c1e9b44bff9fbe",
+    "signFragment": "82d421bf62ee121e19c97368f34f57fa91607f632d02d8341941fd8a6de2a3cd",
     "impostorVertex": "dacc61fadf59ae59efaa94f59e88a0840f65531cc658d079592546198d787ba7",
     "impostorFragment": "8992a4538d4922f5e228cf6aa80caf546a46fb42d4a72a9af224aa74baf60c02",
     "districtColour": "905a45c717badd7b1394d7231fd497ed8696c689e7ef018e288ced9d0b5116ae",

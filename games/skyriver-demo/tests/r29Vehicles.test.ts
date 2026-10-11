@@ -235,11 +235,11 @@ describe('R29 independent vehicle and presentation contracts', () => {
     const traffic = createSkyriverTraffic({ seed: 424242, quality: TRAFFIC_QUALITY_TIERS.high, maxImpostors: 20000 });
     const shuttle = createSkyriverShuttle();
     try {
-      expect(traffic.objects).toHaveLength(9);
+      expect(traffic.objects).toHaveLength(8);
       expect(shuttle.objects).toHaveLength(1);
       const meshes: THREE.Mesh[] = [];
       for (const object of [...traffic.objects, ...shuttle.objects]) object.traverse(o => { if (o instanceof THREE.Mesh) meshes.push(o); });
-      expect(meshes).toHaveLength(11);
+      expect(meshes).toHaveLength(10);
       for (const before of baseline.meshes) {
         const mesh = meshes.find(m => m.name === before.name)!;
         expect(mesh, before.name).toBeDefined();
@@ -300,12 +300,11 @@ describe('R29 independent vehicle and presentation contracts', () => {
       const shader = { vertexShader: THREE.ShaderLib.basic.vertexShader, fragmentShader: THREE.ShaderLib.basic.fragmentShader, uniforms: {} };
       Reflect.apply(material.onBeforeCompile, material, [shader, null]);
       expect(shader.vertexShader).toContain('aSurfaceNormal');
-      expect(shader.fragmentShader).toContain('uniform vec4 uDistrictTint;');
-      expect(shader.fragmentShader).toContain('uDistrictTint.rgb * vGlass * glassGrazing * glassStreak');
-      const tint = Reflect.get(shader.uniforms, 'uDistrictTint') as { value: THREE.Vector4 };
-      expect(tint.value).toBeInstanceOf(THREE.Vector4);
-      expect(tint.value.toArray().every(Number.isFinite)).toBe(true);
-      expect(shader.fragmentShader).toContain('* uDistrictTint.w;');
+      expect(shader.fragmentShader).toContain('uniform vec3 uPickupColor[8];');
+      expect(shader.fragmentShader).toContain('diffuseColor.rgb += pickup;');
+      expect(shader.fragmentShader).toContain('localAreaLight( uPickupPosition[i].w, distanceM )');
+      const count = Reflect.get(shader.uniforms, 'uPickupCount') as { value: number };
+      expect(count.value).toBe(0);
     } finally { shuttle.dispose(); }
   });
 
