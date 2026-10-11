@@ -1,3 +1,4 @@
+import { telemetry } from "../render/telemetry.js";
 import React, { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
@@ -856,6 +857,7 @@ const PresentationFXManager: React.FC<{
     effects.update(delta, camera);
     trails.update(elapsedTime);
     shatter.update(delta);
+    telemetry.recordFrame(state.gl, delta * 1000, effects.activeCount, sim.activeProjectiles.length);
   });
 
   return (
@@ -868,7 +870,7 @@ const PresentationFXManager: React.FC<{
   );
 };
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
+export const GameCanvas: React.FC<GameCanvasProps> = React.memo(({ sim }) => {
   const recoilImpulseRef = useRef<[number, number]>([0, 0]);
   const harnessRef = useRef<{
     effects: InkEffects;
@@ -1103,4 +1105,4 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
       </Canvas>
     </div>
   );
-};
+});

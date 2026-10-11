@@ -8,7 +8,7 @@ interface MachineEnemyProps {
   machine: MachineDefense;
 }
 
-export const MachineEnemy: React.FC<MachineEnemyProps> = ({ machine }) => {
+export const MachineEnemy: React.FC<MachineEnemyProps> = React.memo(({ machine }) => {
   const groupRef = useRef<THREE.Group>(null);
   const hudRef = useRef<THREE.Group>(null);
   const muzzleFlashRef = useRef<THREE.Group>(null);
@@ -166,4 +166,4 @@ export const MachineEnemy: React.FC<MachineEnemyProps> = ({ machine }) => {
       </group>
     </>
   );
-};
+});

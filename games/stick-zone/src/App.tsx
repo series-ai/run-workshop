@@ -1,3 +1,4 @@
+import { PerformanceOverlay } from "./components/PerformanceOverlay.js";
 import { hydrateStashFromCloud } from "./progression/stashStore.js";
 import { HideoutMenu } from "./components/HideoutMenu.js";
 import { MobileControls, type TouchInputUpdate } from "./components/MobileControls.js";
@@ -68,7 +69,11 @@ const MainApp: React.FC = () => {
     }
     return s;
   });
-  const [, setFrame] = useState(0);
+    // Track root App render count for performance telemetry
+  if (typeof window !== "undefined") {
+    (window as any).__STICK_ZONE_APP_RENDER_COUNT__ = ((window as any).__STICK_ZONE_APP_RENDER_COUNT__ || 0) + 1;
+  }
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       (window as any).__stickZoneSim = sim;
@@ -453,9 +458,8 @@ const MainApp: React.FC = () => {
         steps++;
       }
 
-      if (steps > 0) {
-        setFrame((f) => f + 1);
-      }
+      // Simulation steps run at 60Hz without forcing full React virtual DOM reconciliation
+      // Three.js Canvas renders via internal useFrame; TacticalHud updates at 10Hz
 
       animId = requestAnimationFrame(loop);
     };
@@ -536,6 +540,7 @@ const MainApp: React.FC = () => {
     <div className="game-viewport">
       <GameCanvas sim={sim} />
       <TacticalHud sim={sim} onOpenHideout={() => setShowHideout(true)} />
+      <PerformanceOverlay />
 
       {/* Landscape Orientation Advisory for Mobile/Tablet */}
       {isTouchDevice && isPortrait && !dismissRotate && (

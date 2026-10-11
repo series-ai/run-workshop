@@ -8,19 +8,84 @@
 class SoundSystem {
   private ctx: AudioContext | null = null;
 
+    private masterGain: GainNode | null = null;
+  private compressor: DynamicsCompressorNode | null = null;
+  private sfxGain: GainNode | null = null;
+  private isMuted: boolean = false;
+  private masterVolume: number = 0.32; // Calibrated safe comfortable default (prevents deafening audio)
+
   private getContext(): AudioContext | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) {
         this.ctx = new AudioCtx();
       }
     }
-    if (this.ctx && this.ctx.state === 'suspended') {
+    if (this.ctx && this.ctx.state === "suspended") {
       this.ctx.resume().catch(() => {});
+    }
+    if (this.ctx && !this.masterGain) {
+      this.setupMasterBus();
     }
     return this.ctx;
   }
+
+  private setupMasterBus(): void {
+    if (!this.ctx) return;
+    try {
+      // 1. Dynamics compressor to transparently tame transients and eliminate digital clipping
+      this.compressor = this.ctx.createDynamicsCompressor();
+      this.compressor.threshold.setValueAtTime(-12, this.ctx.currentTime);
+      this.compressor.knee.setValueAtTime(10, this.ctx.currentTime);
+      this.compressor.ratio.setValueAtTime(4, this.ctx.currentTime);
+      this.compressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+      this.compressor.release.setValueAtTime(0.15, this.ctx.currentTime);
+
+      // 2. Master Gain Node
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.masterVolume, this.ctx.currentTime);
+
+      // 3. SFX Bus
+      this.sfxGain = this.ctx.createGain();
+      this.sfxGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+
+      // Chain: sfxGain -> compressor -> masterGain -> destination
+      this.sfxGain.connect(this.compressor);
+      this.compressor.connect(this.masterGain);
+      this.masterGain.connect(this.ctx.destination);
+    } catch {
+      // Fallback for mock environments
+    }
+  }
+
+  public getDestination(): AudioNode {
+    this.getContext();
+    return this.sfxGain ?? (this.ctx?.destination as any);
+  }
+
+  public setMasterVolume(volume: number): void {
+    this.masterVolume = Math.max(0, Math.min(1, volume));
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.masterVolume, this.ctx.currentTime);
+    }
+  }
+
+  public getMasterVolume(): number {
+    return this.masterVolume;
+  }
+
+  public setMuted(muted: boolean): void {
+    this.isMuted = muted;
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.masterVolume, this.ctx.currentTime);
+    }
+  }
+
+  public isAudioMuted(): boolean {
+    return this.isMuted;
+  }
+
 
   /**
    * Meaty, punchy 5.56 tactical rifle shot:
@@ -47,11 +112,11 @@ class SoundSystem {
     crackFilter.type = 'highpass';
     crackFilter.frequency.setValueAtTime(3200, t);
     const crackGain = ctx.createGain();
-    crackGain.gain.setValueAtTime(0.85, t);
+    crackGain.gain.setValueAtTime(0.30, t);
     crackGain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
     crackNode.connect(crackFilter);
     crackFilter.connect(crackGain);
-    crackGain.connect(ctx.destination);
+    crackGain.connect(this.getDestination());
     crackNode.start(t);
 
     // 2. Concussive gunpowder punch body (185Hz -> 42Hz)
@@ -60,10 +125,10 @@ class SoundSystem {
     subOsc.type = 'triangle';
     subOsc.frequency.setValueAtTime(185, t);
     subOsc.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-    subGain.gain.setValueAtTime(0.75, t);
+    subGain.gain.setValueAtTime(0.28, t);
     subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
     subOsc.connect(subGain);
-    subGain.connect(ctx.destination);
+    subGain.connect(this.getDestination());
     subOsc.start(t);
     subOsc.stop(t + 0.16);
 
@@ -81,11 +146,11 @@ class SoundSystem {
     tailFilter.frequency.setValueAtTime(1800, t);
     tailFilter.frequency.exponentialRampToValueAtTime(250, t + 0.22);
     const tailGain = ctx.createGain();
-    tailGain.gain.setValueAtTime(0.45, t);
+    tailGain.gain.setValueAtTime(0.18, t);
     tailGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
     tailNode.connect(tailFilter);
     tailFilter.connect(tailGain);
-    tailGain.connect(ctx.destination);
+    tailGain.connect(this.getDestination());
     tailNode.start(t);
   }
 
@@ -104,10 +169,10 @@ class SoundSystem {
     subOsc.type = 'sine';
     subOsc.frequency.setValueAtTime(160, t);
     subOsc.frequency.exponentialRampToValueAtTime(32, t + 0.32);
-    subGain.gain.setValueAtTime(0.95, t);
+    subGain.gain.setValueAtTime(0.35, t);
     subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
     subOsc.connect(subGain);
-    subGain.connect(ctx.destination);
+    subGain.connect(this.getDestination());
     subOsc.start(t);
     subOsc.stop(t + 0.32);
 
@@ -125,11 +190,11 @@ class SoundSystem {
     filter.frequency.setValueAtTime(3200, t);
     filter.frequency.exponentialRampToValueAtTime(180, t + 0.28);
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.85, t);
+    gain.gain.setValueAtTime(0.32, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     noise.start(t);
 
     // 3. Pump action mechanical rack (at t + 160ms)
@@ -145,7 +210,7 @@ class SoundSystem {
       pGain.gain.setValueAtTime(0.25, tPump);
       pGain.gain.exponentialRampToValueAtTime(0.001, tPump + 0.05);
       pOsc.connect(pGain);
-      pGain.connect(c.destination);
+      pGain.connect(this.getDestination());
       pOsc.start(tPump);
       pOsc.stop(tPump + 0.05);
     }, 160);
@@ -161,10 +226,10 @@ class SoundSystem {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(2400, t);
     osc.frequency.exponentialRampToValueAtTime(800, t + 0.02);
-    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.setValueAtTime(0.18, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.02);
   }
@@ -183,7 +248,7 @@ class SoundSystem {
       gain.gain.setValueAtTime(0.12 - idx * 0.04, t + offset);
       gain.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.035);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.getDestination());
       osc.start(t + offset);
       osc.stop(t + offset + 0.035);
     });
@@ -204,7 +269,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(isCrit ? 0.45 : 0.28, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.05);
   }
@@ -223,7 +288,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.2, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.18);
   }
@@ -243,7 +308,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.4, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.04);
 
@@ -265,7 +330,7 @@ class SoundSystem {
     nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
     noise.connect(filter);
     filter.connect(nGain);
-    nGain.connect(ctx.destination);
+    nGain.connect(this.getDestination());
     noise.start(t + 0.02);
   }
 
@@ -286,10 +351,10 @@ class SoundSystem {
     osc1.type = 'triangle';
     osc1.frequency.setValueAtTime(1600, t);
     osc1.frequency.exponentialRampToValueAtTime(450, t + 0.03);
-    gain1.gain.setValueAtTime(0.3, t);
+    gain1.gain.setValueAtTime(0.16, t);
     gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
     osc1.connect(gain1);
-    gain1.connect(ctx.destination);
+    gain1.connect(this.getDestination());
     osc1.start(t);
     osc1.stop(t + 0.03);
 
@@ -306,7 +371,7 @@ class SoundSystem {
       gain2.gain.setValueAtTime(0.4, t2);
       gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.05);
       osc2.connect(gain2);
-      gain2.connect(c.destination);
+      gain2.connect(this.getDestination());
       osc2.start(t2);
       osc2.stop(t2 + 0.05);
     }, 160);
@@ -324,7 +389,7 @@ class SoundSystem {
       gain3.gain.setValueAtTime(0.45, t3);
       gain3.gain.exponentialRampToValueAtTime(0.001, t3 + 0.07);
       osc3.connect(gain3);
-      gain3.connect(c.destination);
+      gain3.connect(this.getDestination());
       osc3.start(t3);
       osc3.stop(t3 + 0.07);
     }, 340);
@@ -342,7 +407,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.4, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.15);
   }
@@ -356,10 +421,10 @@ class SoundSystem {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(140, t);
     osc.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-    gain.gain.setValueAtTime(0.45, t);
+    gain.gain.setValueAtTime(0.20, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.12);
   }
@@ -382,11 +447,11 @@ class SoundSystem {
     filter.frequency.setValueAtTime(1400, t);
     filter.frequency.exponentialRampToValueAtTime(220, t + 0.45);
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.setValueAtTime(0.16, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     noise.start(t);
   }
 
@@ -403,7 +468,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.28, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.4);
   }
@@ -420,7 +485,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.7, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.22);
   }
@@ -437,7 +502,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.2, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.22);
   }
@@ -455,7 +520,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.15, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.8);
   }
@@ -472,7 +537,7 @@ class SoundSystem {
       gain.gain.setValueAtTime(0.15, t + i * 0.06);
       gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.3);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.getDestination());
       osc.start(t + i * 0.06);
       osc.stop(t + i * 0.06 + 0.3);
     });
@@ -490,7 +555,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.15, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.025);
   }
@@ -509,7 +574,7 @@ class SoundSystem {
     gain1.gain.setValueAtTime(0.6, t);
     gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
     osc1.connect(gain1);
-    gain1.connect(ctx.destination);
+    gain1.connect(this.getDestination());
     osc1.start(t);
     osc1.stop(t + 0.3);
 
@@ -522,7 +587,7 @@ class SoundSystem {
     gain2.gain.setValueAtTime(0.28, t + 0.04);
     gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
     osc2.connect(gain2);
-    gain2.connect(ctx.destination);
+    gain2.connect(this.getDestination());
     osc2.start(t + 0.04);
     osc2.stop(t + 0.22);
   }
@@ -539,7 +604,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.35, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.07);
   }
@@ -566,7 +631,7 @@ class SoundSystem {
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     noise.start(t);
 
     // Mechanical clamp
@@ -578,7 +643,7 @@ class SoundSystem {
     oGain.gain.setValueAtTime(0.4, t + 0.1);
     oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
     osc.connect(oGain);
-    oGain.connect(ctx.destination);
+    oGain.connect(this.getDestination());
     osc.start(t + 0.1);
     osc.stop(t + 0.35);
   }
@@ -595,7 +660,7 @@ class SoundSystem {
       gain.gain.setValueAtTime(0.25, t + i * 0.08);
       gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.4);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.getDestination());
       osc.start(t + i * 0.08);
       osc.stop(t + i * 0.08 + 0.4);
     });
@@ -613,10 +678,10 @@ class SoundSystem {
     subOsc.type = 'triangle';
     subOsc.frequency.setValueAtTime(120, t);
     subOsc.frequency.exponentialRampToValueAtTime(25, t + 0.65);
-    subGain.gain.setValueAtTime(1.0, t);
+    subGain.gain.setValueAtTime(0.38, t);
     subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
     subOsc.connect(subGain);
-    subGain.connect(ctx.destination);
+    subGain.connect(this.getDestination());
     subOsc.start(t);
     subOsc.stop(t + 0.65);
 
@@ -634,11 +699,11 @@ class SoundSystem {
     filter.frequency.setValueAtTime(4200, t);
     filter.frequency.exponentialRampToValueAtTime(90, t + 0.75);
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.9, t);
+    gain.gain.setValueAtTime(0.35, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.75);
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     noise.start(t);
   }
 
@@ -655,7 +720,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.35, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.05);
   }
@@ -683,7 +748,7 @@ class SoundSystem {
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
     noise.connect(filter);
     filter.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     noise.start(t);
 
     // 2. Heavy steel bolt chamber slap (metallic click at t + 40ms)
@@ -695,7 +760,7 @@ class SoundSystem {
     boltGain.gain.setValueAtTime(0.4, t + 0.04);
     boltGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
     boltOsc.connect(boltGain);
-    boltGain.connect(ctx.destination);
+    boltGain.connect(this.getDestination());
     boltOsc.start(t + 0.04);
     boltOsc.stop(t + 0.11);
   }
@@ -714,7 +779,7 @@ class SoundSystem {
     gain.gain.setValueAtTime(0.25, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.getDestination());
     osc.start(t);
     osc.stop(t + 0.025);
   }

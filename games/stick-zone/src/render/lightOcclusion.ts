@@ -91,6 +91,21 @@ function hexToRgb(hex: string): [number, number, number] {
   return [(num >> 16) / 255, ((num >> 8) & 0xff) / 255, (num & 0xff) / 255];
 }
 
+
+// Pre-allocated static scratch buffers to eliminate runtime heap allocations and GC spikes in useFrame
+const MAX_SCRATCH_RAYS = 384;
+const MAX_SCRATCH_VERTS = MAX_SCRATCH_RAYS + 1;
+const _scratchPositions = new Float32Array(MAX_SCRATCH_VERTS * 3);
+const _scratchColors = new Float32Array(MAX_SCRATCH_VERTS * 4);
+const _scratchIndices = new Uint16Array((MAX_SCRATCH_RAYS - 1) * 3);
+const _scratchEdgeLines = new Float32Array(MAX_SCRATCH_RAYS * 6);
+const _scratchAngles: number[] = [];
+const _scratchSortedAngles: number[] = [];
+const _scratchRelevantBoxes: ObstacleAABB[] = [];
+const _scratchRayDistances: number[] = [];
+const _scratchPerimeterPoints: Array<[number, number]> = Array.from({ length: MAX_SCRATCH_RAYS }, () => [0, 0]);
+
+
 export function computeVisibilityPolygon(
   ox: number,
   oz: number,
@@ -105,139 +120,159 @@ export function computeVisibilityPolygon(
   const groundY = options.groundY ?? 0.03;
   const [cr, cg, cb] = hexToRgb(options.colorHex ?? "#fffbeb");
 
+  // Reuse pre-allocated scratch arrays
+  _scratchRelevantBoxes.length = 0;
+  _scratchAngles.length = 0;
+  _scratchSortedAngles.length = 0;
+  _scratchRayDistances.length = 0;
+
   // Filter obstacles in beam range
-  const relevantBoxes: ObstacleAABB[] = [];
   const searchDistSq = (maxRange + 8.0) * (maxRange + 8.0);
-  for (const b of obstacles) {
+  for (let i = 0; i < obstacles.length; i++) {
+    const b = obstacles[i];
     const cx = (b.minX + b.maxX) * 0.5;
     const cz = (b.minZ + b.maxZ) * 0.5;
     const dx = cx - ox;
     const dz = cz - oz;
     if (dx * dx + dz * dz <= searchDistSq) {
-      relevantBoxes.push(b);
+      _scratchRelevantBoxes.push(b);
     }
   }
-
-  const angleSet = new Set<number>();
 
   // 1. Uniform baseline rays across cone
   for (let i = 0; i <= baseRayCount; i++) {
     const frac = i / baseRayCount;
-    angleSet.add(facing - halfAngle + frac * 2 * halfAngle);
+    _scratchAngles.push(facing - halfAngle + frac * 2 * halfAngle);
   }
 
   // 2. Corner-directed rays for sharp shadow silhouettes
   const epsilon = 0.0008;
-  for (const b of relevantBoxes) {
-    const corners = [
-      [b.minX, b.minZ],
-      [b.maxX, b.minZ],
-      [b.minX, b.maxZ],
-      [b.maxX, b.maxZ],
-    ];
-    for (const [cx, cz] of corners) {
-      const dx = cx - ox;
-      const dz = cz - oz;
+  for (let i = 0; i < _scratchRelevantBoxes.length; i++) {
+    const b = _scratchRelevantBoxes[i];
+    // Inline corner evaluation to avoid allocating sub-arrays
+    const c0x = b.minX; const c0z = b.minZ;
+    const c1x = b.maxX; const c1z = b.minZ;
+    const c2x = b.minX; const c2z = b.maxZ;
+    const c3x = b.maxX; const c3z = b.maxZ;
+
+    const cornersX = [c0x, c1x, c2x, c3x];
+    const cornersZ = [c0z, c1z, c2z, c3z];
+
+    for (let c = 0; c < 4; c++) {
+      const dx = cornersX[c] - ox;
+      const dz = cornersZ[c] - oz;
       const theta = Math.atan2(dx, dz);
       const diff = normalizeAngle(theta - facing);
       if (Math.abs(diff) < halfAngle - 0.003) {
-        angleSet.add(theta - epsilon);
-        angleSet.add(theta);
-        angleSet.add(theta + epsilon);
+        _scratchAngles.push(theta - epsilon);
+        _scratchAngles.push(theta);
+        _scratchAngles.push(theta + epsilon);
       }
     }
   }
 
-  // 3. Sort angles monotonically from -halfAngle to +halfAngle
-  const sortedAngles = Array.from(angleSet).sort((a, b) => {
-    return normalizeAngle(a - facing) - normalizeAngle(b - facing);
-  });
+  // 3. Sort angles monotonically from -halfAngle to +halfAngle and deduplicate in-place
+  _scratchAngles.sort((a, b) => normalizeAngle(a - facing) - normalizeAngle(b - facing));
 
-  const numRays = sortedAngles.length;
-  // Vertex 0 is light origin, followed by numRays perimeter vertices
+  for (let i = 0; i < _scratchAngles.length; i++) {
+    const a = _scratchAngles[i];
+    if (i === 0 || Math.abs(a - _scratchAngles[i - 1]) > 1e-6) {
+      _scratchSortedAngles.push(a);
+      if (_scratchSortedAngles.length >= MAX_SCRATCH_RAYS) break;
+    }
+  }
+
+  const numRays = _scratchSortedAngles.length;
   const totalVertices = numRays + 1;
-  const positions = new Float32Array(totalVertices * 3);
-  const colors = new Float32Array(totalVertices * 4);
-  const indices = new Uint16Array((numRays - 1) * 3);
 
   // Set origin vertex
-  positions[0] = ox;
-  positions[1] = groundY;
-  positions[2] = oz;
-  colors[0] = cr;
-  colors[1] = cg;
-  colors[2] = cb;
-  colors[3] = baseAlpha;
-
-  const rayDistances: number[] = new Array(numRays);
-  const perimeterPoints: Array<[number, number]> = new Array(numRays);
+  _scratchPositions[0] = ox;
+  _scratchPositions[1] = groundY;
+  _scratchPositions[2] = oz;
+  _scratchColors[0] = cr;
+  _scratchColors[1] = cg;
+  _scratchColors[2] = cb;
+  _scratchColors[3] = baseAlpha;
 
   for (let i = 0; i < numRays; i++) {
-    const angle = sortedAngles[i];
+    const angle = _scratchSortedAngles[i];
     const dirX = Math.sin(angle);
     const dirZ = Math.cos(angle);
 
     let hitDist = maxRange;
-    for (const b of relevantBoxes) {
-      const d = rayAABBIntersection(ox, oz, dirX, dirZ, b, hitDist);
+    for (let b = 0; b < _scratchRelevantBoxes.length; b++) {
+      const d = rayAABBIntersection(ox, oz, dirX, dirZ, _scratchRelevantBoxes[b], hitDist);
       if (d < hitDist) {
         hitDist = d;
       }
     }
 
-    rayDistances[i] = hitDist;
+    _scratchRayDistances.push(hitDist);
     const px = ox + dirX * hitDist;
     const pz = oz + dirZ * hitDist;
-    perimeterPoints[i] = [px, pz];
+    _scratchPerimeterPoints[i][0] = px;
+    _scratchPerimeterPoints[i][1] = pz;
 
     const vIdx = i + 1;
-    positions[vIdx * 3 + 0] = px;
-    positions[vIdx * 3 + 1] = groundY;
-    positions[vIdx * 3 + 2] = pz;
+    _scratchPositions[vIdx * 3 + 0] = px;
+    _scratchPositions[vIdx * 3 + 1] = groundY;
+    _scratchPositions[vIdx * 3 + 2] = pz;
 
-    // Attenuate alpha based on distance ratio
     const distRatio = hitDist / maxRange;
     const isObstacleStop = hitDist < maxRange - 0.2;
-    // When stopping on a container, maintain high illumination splash
     const vertexAlpha = isObstacleStop
       ? Math.max(0.12, baseAlpha * (1.0 - Math.pow(distRatio, 1.8)))
       : Math.max(0.0, baseAlpha * (1.0 - Math.pow(distRatio, 1.2)));
 
-    colors[vIdx * 4 + 0] = cr;
-    colors[vIdx * 4 + 1] = cg;
-    colors[vIdx * 4 + 2] = cb;
-    colors[vIdx * 4 + 3] = vertexAlpha;
+    _scratchColors[vIdx * 4 + 0] = cr;
+    _scratchColors[vIdx * 4 + 1] = cg;
+    _scratchColors[vIdx * 4 + 2] = cb;
+    _scratchColors[vIdx * 4 + 3] = vertexAlpha;
   }
 
   // Build triangle fan indices: (0, i, i+1)
   let triCount = 0;
   for (let i = 1; i < numRays; i++) {
-    indices[triCount * 3 + 0] = 0;
-    indices[triCount * 3 + 1] = i;
-    indices[triCount * 3 + 2] = i + 1;
+    _scratchIndices[triCount * 3 + 0] = 0;
+    _scratchIndices[triCount * 3 + 1] = i;
+    _scratchIndices[triCount * 3 + 2] = i + 1;
     triCount++;
   }
 
-  // Collect sharp shadow boundary line segments where ray step discontinuity occurs
-  const edgeLineCoords: number[] = [];
-  for (let i = 1; i < numRays; i++) {
-    const d1 = rayDistances[i - 1];
-    const d2 = rayDistances[i];
-    if (Math.abs(d1 - d2) > 0.8) {
-      // Step discontinuity: shadow silhouette boundary
-      const [p1x, p1z] = perimeterPoints[i - 1];
-      const [p2x, p2z] = perimeterPoints[i];
-      edgeLineCoords.push(p1x, groundY + 0.005, p1z, p2x, groundY + 0.005, p2z);
+  // Detect shadow step edges along obstacle silhouettes
+  let edgeCount = 0;
+  const shadowDistStepThreshold = 1.2;
+  for (let i = 0; i < numRays - 1; i++) {
+    const d1 = _scratchRayDistances[i];
+    const d2 = _scratchRayDistances[i + 1];
+    if (Math.abs(d1 - d2) > shadowDistStepThreshold) {
+      const nearIdx = d1 < d2 ? i : i + 1;
+      const farIdx = d1 < d2 ? i + 1 : i;
+
+      const pNear = _scratchPerimeterPoints[nearIdx];
+      const pFar = _scratchPerimeterPoints[farIdx];
+
+      const eOffset = edgeCount * 6;
+      _scratchEdgeLines[eOffset + 0] = pNear[0];
+      _scratchEdgeLines[eOffset + 1] = groundY + 0.005;
+      _scratchEdgeLines[eOffset + 2] = pNear[1];
+
+      _scratchEdgeLines[eOffset + 3] = pFar[0];
+      _scratchEdgeLines[eOffset + 4] = groundY + 0.005;
+      _scratchEdgeLines[eOffset + 5] = pFar[1];
+
+      edgeCount++;
+      if (edgeCount >= MAX_SCRATCH_RAYS) break;
     }
   }
 
   return {
-    positions,
-    colors,
-    indices,
-    edgeLines: new Float32Array(edgeLineCoords),
+    positions: _scratchPositions.subarray(0, totalVertices * 3),
+    colors: _scratchColors.subarray(0, totalVertices * 4),
+    indices: _scratchIndices.subarray(0, triCount * 3),
+    edgeLines: _scratchEdgeLines.subarray(0, edgeCount * 6),
     vertexCount: totalVertices,
     triangleCount: triCount,
-    edgeLineCount: edgeLineCoords.length / 6,
+    edgeLineCount: edgeCount,
   };
 }

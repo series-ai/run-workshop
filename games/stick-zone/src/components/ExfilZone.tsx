@@ -9,7 +9,7 @@ interface ExfilZoneProps {
   exfilState: ExfilState;
 }
 
-export const ExfilZone: React.FC<ExfilZoneProps> = ({ exfilState }) => {
+export const ExfilZone: React.FC<ExfilZoneProps> = React.memo(({ exfilState }) => {
   const ringsRef = useRef<THREE.Group>(null);
   const smokeGroupRef = useRef<THREE.Group>(null);
   const zone = SIM_CONFIG.EXFIL_ZONE;
@@ -93,4 +93,4 @@ export const ExfilZone: React.FC<ExfilZoneProps> = ({ exfilState }) => {
       </group>
     </group>
   );
-};
+});

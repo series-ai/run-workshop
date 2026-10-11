@@ -14,7 +14,7 @@ interface TacticalHudProps {
   onOpenHideout?: () => void;
 }
 
-export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) => {
+export const TacticalHud: React.FC<TacticalHudProps> = React.memo(({ sim, onOpenHideout }) => {
   const { player, proximityAlert, exfilController, tick } = sim;
   const isSlidingActive =
     player.action === "slide" ||
@@ -37,6 +37,15 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
 
   const [showIngressBanner, setShowIngressBanner] = React.useState(false);
   const [isFobMinimized, setIsFobMinimized] = React.useState(true);
+  // Throttled tactical HUD refresh (10 Hz / 100ms) to eliminate 60 FPS React DOM reconciliations
+  const [, setHudTick] = React.useState(0);
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setHudTick((t) => t + 1);
+    }, 100);
+    return () => clearInterval(timer);
+  }, []);
+
   const hasShownIngressRef = React.useRef(false);
   const lastCombatLogCountRef = React.useRef(sim.combatLog.length);
 
@@ -1005,4 +1014,4 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       )}
     </div>
   );
-};
+});

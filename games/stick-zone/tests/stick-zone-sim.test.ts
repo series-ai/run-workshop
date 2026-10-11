@@ -1536,7 +1536,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     testSim.admitOperative(0);
     testSim.player.x = 0;
     testSim.player.z = 0;
-    testSim.player.hp = 100;
+    testSim.player.health = 100;
 
     // Clear any pre-existing active projectiles
     testSim.activeProjectiles = [];
@@ -1594,7 +1594,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     }
 
     // Because player had active roll i-frames when bullet swept through, player deflected damage
-    expect(testSim.player.hp).toBe(100);
+    expect(testSim.player.health).toBe(100);
   });
 
   it("40. Surviv.io tactical cover blocking & point-blank shotgun blast", () => {

@@ -7,24 +7,23 @@ const FOBTargetDummy: React.FC<{
   hitSide?: "left" | "right";
 }> = ({ position, color, side, lastHitTick, hitSide }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const [wobbleAmp, setWobbleAmp] = useState(0);
+  const wobbleAmpRef = useRef(0);
   const lastProcessedTickRef = useRef(0);
 
   useEffect(() => {
     if (lastHitTick && lastHitTick > lastProcessedTickRef.current && hitSide === side) {
       lastProcessedTickRef.current = lastHitTick;
-      setWobbleAmp(1.0);
+      wobbleAmpRef.current = 1.0;
     }
   }, [lastHitTick, hitSide, side]);
 
   useFrame((_, delta) => {
     if (!groupRef.current) return;
-    if (wobbleAmp > 0.005) {
+    if (wobbleAmpRef.current > 0.005) {
       const decay = Math.exp(-delta * 8.5);
-      const nextAmp = wobbleAmp * decay;
-      setWobbleAmp(nextAmp);
-      groupRef.current.rotation.x = -Math.sin(Date.now() * 0.025) * nextAmp * 0.4;
-      groupRef.current.rotation.z = Math.cos(Date.now() * 0.03) * nextAmp * 0.15;
+      wobbleAmpRef.current *= decay;
+      groupRef.current.rotation.x = -Math.sin(Date.now() * 0.025) * wobbleAmpRef.current * 0.4;
+      groupRef.current.rotation.z = Math.cos(Date.now() * 0.03) * wobbleAmpRef.current * 0.15;
     } else {
       groupRef.current.rotation.x = 0;
       groupRef.current.rotation.z = 0;
@@ -120,7 +119,7 @@ interface SectorMapProps {
   lastDummyHitSide?: "left" | "right";
 }
 
-export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, lastDummyHitSide }) => {
+export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDummyHitTick, lastDummyHitSide }) => {
   const mapRootRef = React.useRef<THREE.Group>(null);
   const [gateLabelTex, setGateLabelTex] = useState<THREE.CanvasTexture | null>(null);
   const [fobLabelTex, setFobLabelTex] = useState<THREE.CanvasTexture | null>(null);
@@ -590,7 +589,7 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, 
       </group>
     </group>
   );
-};
+});
 
 const CONTAINER_PALETTES = [
   { bottom: "#3d4a36", top: "#242b26" }, // Olive / Charcoal
