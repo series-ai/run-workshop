@@ -70,9 +70,9 @@ export const STREAMS: readonly (readonly number[])[] = Object.freeze([
  * up the canyon slot, and two deep lanes in the grime above the service deck.
  */
 export const IMPOSTOR_LANES: readonly (readonly number[])[] = Object.freeze([
-  [-150, 2650, 1, 4, 160, 140, 90, 40, 10, 0.1],  // upper canyon
-  [170, 2900, -1, 5, 220, 120, 110, 50, 9, 0.1],
-  [-60, 3150, 1, 4, 200, 160, 120, 60, 11, 0.08],
+  [-150, 2650, 1, 4, 160, 140, 90, 20, 10, 0.1],  // upper canyon
+  [170, 2900, -1, 5, 220, 120, 110, 20, 9, 0.1],
+  [-60, 3150, 1, 4, 200, 160, 120, 20, 11, 0.08],
   [120, 3400, -1, 3, 140, 190, 100, 50, 13, 0.07],
   [-120, 200, -1, 3, 120, 70, 80, 25, 9, 0.06],   // deep
   [160, 290, 1, 3, 110, 80, 70, 25, 8, 0.05],
@@ -350,8 +350,8 @@ function swapWeightRate(v: number, at: number): number {
     - smoothstep(0, INTERCHANGE_RAMP_M, d) * smoothstepRate(half, half + INTERCHANGE_RAMP_M, d);
 }
 
-/** Stream k's centre (canyon x across, altitude y) at arc length v, analytically. */
-export function streamCentreAnalytic(k: number, v: number, out: { x: number; y: number }): void {
+/** Unperturbed stream k's centre (canyon x across, altitude y) at arc length v. */
+function streamBaseCentreAnalytic(k: number, v: number, out: { x: number; y: number }): void {
   const st = IMPOSTOR_PATHS[k]!;
   let x = st[0]!;
   let y = st[1]!;
@@ -364,6 +364,36 @@ export function streamCentreAnalytic(k: number, v: number, out: { x: number; y: 
   }
   out.x = x + st[6]! * Math.sin((TAU * v) / streamMeanderPeriod(k) + k * 1.3);
   out.y = y + st[7]! * Math.sin((TAU * v) / streamWobblePeriod(k) + k * 2.1);
+}
+
+/** Local deflection ramp definition for stream path clearance. */
+interface StreamPathDeflection {
+  readonly stream: number;
+  readonly startArcM: number;
+  readonly lengthM: number;
+  readonly rampM: number;
+  readonly lateralOffsetM: number;
+  readonly verticalOffsetM: number;
+}
+
+const STREAM_PATH_DEFLECTIONS: readonly StreamPathDeflection[] = Object.freeze([
+  { stream: 2, startArcM: 3804, lengthM: 600, rampM: 300, lateralOffsetM: -60, verticalOffsetM: 0 },
+  { stream: 4, startArcM: 6836, lengthM: 400, rampM: 200, lateralOffsetM: 25, verticalOffsetM: 0 },
+  { stream: 8, startArcM: 11000, lengthM: 1000, rampM: 350, lateralOffsetM: 0, verticalOffsetM: 100 },
+]);
+
+/** Stream k's centre (canyon x across, altitude y) at arc length v, analytically. */
+export function streamCentreAnalytic(k: number, v: number, out: { x: number; y: number }): void {
+  streamBaseCentreAnalytic(k, v, out);
+  for (const def of STREAM_PATH_DEFLECTIONS) {
+    if (def.stream !== k) continue;
+    const d = wrapArc(v - def.startArcM);
+    if (d < def.lengthM) {
+      const b = forkBump(d, def.lengthM, def.rampM);
+      if (def.lateralOffsetM !== 0) out.x += def.lateralOffsetM * b;
+      if (def.verticalOffsetM !== 0) out.y += def.verticalOffsetM * b;
+    }
+  }
 }
 
 /**
@@ -386,6 +416,15 @@ export function streamCentreSlopeAnalytic(k: number, v: number, out: { x: number
   const wp = streamWobblePeriod(k);
   out.x = x + st[6]! * (TAU / mp) * Math.cos((TAU * v) / mp + k * 1.3);
   out.y = y + st[7]! * (TAU / wp) * Math.cos((TAU * v) / wp + k * 2.1);
+  for (const def of STREAM_PATH_DEFLECTIONS) {
+    if (def.stream !== k) continue;
+    const d = wrapArc(v - def.startArcM);
+    if (d < def.lengthM) {
+      const rate = forkBumpRate(d, def.lengthM, def.rampM);
+      if (def.lateralOffsetM !== 0) out.x += def.lateralOffsetM * rate;
+      if (def.verticalOffsetM !== 0) out.y += def.verticalOffsetM * rate;
+    }
+  }
 }
 
 /* ------------------------------------------------------------------------------------------------
@@ -788,8 +827,8 @@ function buildRenderTrafficModel(seed: number): RenderTrafficModel {
     const separation = (startM: number): number => {
       let worst = 0;
       for (let d = 0; d <= rampM; d += PLACEMENT_CELL_M) {
-        streamCentreAnalytic(k, startM + d, centreA);
-        streamCentreAnalytic(b, startM + d, centreB);
+        streamBaseCentreAnalytic(k, startM + d, centreA);
+        streamBaseCentreAnalytic(b, startM + d, centreB);
         worst = Math.max(worst, Math.hypot(centreB.x - centreA.x, centreB.y - centreA.y));
       }
       return worst;

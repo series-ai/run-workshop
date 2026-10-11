@@ -1,6 +1,7 @@
 /** R26 source contracts. These tests use actual seeded traffic, not GPU output. */
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import R42_MAIN_PATHS from './fixtures/r42-main-path-geometry.json';
 import { deriveTrafficParams } from '../src/sim/derive';
 import { carTrafficPlan, type CarPlan } from '../src/render/traffic';
 import { CANYON_LOOP_LENGTH_M } from '../src/render/canyonWarp';
@@ -115,7 +116,7 @@ function count(list: Counts[], path: number, bits: number): void {
 }
 
 describe('R26 fork visibility contracts', () => {
-  it('keeps all 80000 spawn, speed, convoy, passing and main-path records unchanged', () => {
+  it('keeps all 80000 spawn, speed, convoy, passing, fork and hop records unchanged', () => {
     for (const before of BEFORE) {
       const model = renderTrafficModel(before.seed);
       const attrs = deriveImpostorAttributes(before.seed, POPULATION, model);
@@ -123,7 +124,6 @@ describe('R26 fork visibility contracts', () => {
       expect(model.impostorSalt).toBe(before.impostorSalt);
       expect(sha(JSON.stringify(model.forks.map(nodes => nodes.map(n => [n.startM, n.lengthM, n.rampM]))))).toBe(before.placement);
       expect(sha(JSON.stringify(model.hops))).toBe(before.hops);
-      expect(sha(unchangedRows(model))).toBe(before.unchangedRows);
       expect(sha(attrs.streamArcPhaseSeed)).toBe(before.streamArcPhaseSeed);
       expect(sha(attrs.row)).toBe(before.row);
       expect(sha(attrs.flow)).toBe(before.flow);
@@ -135,6 +135,42 @@ describe('R26 fork visibility contracts', () => {
           car.flow.convoy ? 1 : 0, car.flow.convoyRatio, car.pulse], i * 6);
       }
       expect(sha(speed)).toBe(before.speedTraits);
+    }
+  });
+
+  it('keeps every main row exact outside the five approved R42 paths', () => {
+    expect(R42_MAIN_PATHS.allowedChangedLogicalPaths).toEqual([2, 4, 8, 9, 10]);
+    expect(R42_MAIN_PATHS.rows).toHaveLength(15);
+    for (const before of BEFORE) {
+      const model = renderTrafficModel(before.seed);
+      const table = model.table;
+      expect(R42_MAIN_PATHS.historicalR26AggregateSha256).toBe(before.unchangedRows);
+      expect({ width: table.width, height: table.height, channels: 4,
+        bytesPerElement: table.data.BYTES_PER_ELEMENT, floatCount: table.data.length,
+        encoding: 'Float32 native little-endian' }).toEqual(R42_MAIN_PATHS.table);
+      expect(sha(unchangedRows(model))).toBe(R42_MAIN_PATHS.currentMainAggregateSha256);
+      const rows = Array.from({ length: 14 }, (_, path) => bakedPathRow(path, 0));
+      rows.push(table.height - 1);
+      expect(R42_MAIN_PATHS.rows.map(row => row.tableRow)).toEqual(rows);
+      const changedPaths: number[] = [];
+      for (const record of R42_MAIN_PATHS.rows) {
+        const stride = table.width * 4;
+        const row = table.data.subarray(record.tableRow * stride, (record.tableRow + 1) * stride);
+        const header = JSON.stringify([table.width, table.height, record.tableRow,
+          record.logicalPath, table.data.BYTES_PER_ELEMENT]);
+        const bytes = Buffer.from(row.buffer, row.byteOffset, row.byteLength);
+        const current = { float32Sha256: sha(row),
+          headerAndFloat32Sha256: sha(Buffer.concat([Buffer.from(header + '\n'), bytes])) };
+        expect(current).toEqual(record.current);
+        if (record.changed) {
+          expect(record.logicalPath).not.toBeNull();
+          changedPaths.push(record.logicalPath!);
+          expect(current.float32Sha256).not.toBe(record.historical.float32Sha256);
+        } else {
+          expect(current).toEqual(record.historical);
+        }
+      }
+      expect(changedPaths).toEqual([2, 4, 8, 9, 10]);
     }
   });
 

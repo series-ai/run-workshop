@@ -201,8 +201,8 @@
   },
   {
     "path": "src/render/trafficStreams.ts",
-    "sha256": "93de633f864b6103b77bd7f34ab988fa797a60fdc378605794f45e777602177a",
-    "byteLength": 65453
+    "sha256": "af5f4bc024cf087b977d5206e52da8f1cc602b9524195f62896f5e54241a2103",
+    "byteLength": 67080
   },
   {
     "path": "src/render/trafficTypes.ts",
