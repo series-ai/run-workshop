@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
 import { useFrame, createPortal } from "@react-three/fiber";
 import * as THREE from "three";
@@ -123,11 +123,15 @@ function LoadedCharacter({
   const muzzleTipRef = useRef<THREE.Group>(null);
   const _scratchMuzzlePos = useMemo(() => new THREE.Vector3(), []);
   const _scratchMuzzleDir = useMemo(() => new THREE.Vector3(), []);
-  const currentWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
-  const isHoldingFirearm = hasWeapon && (currentWeapon === "shotgun" || currentWeapon === "rifle" || currentWeapon === "pistol");
+
+  // Reactively track weapon changes on the operative
+  const [activeWeapon, setActiveWeapon] = useState<string>(() => operative ? (operative.weapon || weapon || "rifle") : (weapon || "rifle"));
+  const activeWeaponRef = useRef<string>(activeWeapon);
+
   const liveAction = operative ? operative.action : operativeAction;
+  const isHoldingFirearm = hasWeapon && (activeWeapon === "shotgun" || activeWeapon === "rifle" || activeWeapon === "pistol");
   const isHoldingGrenade =
-    currentWeapon === "grenade" &&
+    activeWeapon === "grenade" &&
     ((operative?.fragGrenades ?? 2) > 0) &&
     (liveAction !== "throw" || (operative?.actionTicks ?? 0) > 18);
 
@@ -167,6 +171,11 @@ function LoadedCharacter({
     const liveIsRolling = operative ? operative.isRolling : isRolling;
     const liveWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
     const liveAction = operative ? operative.action : operativeAction;
+
+    if (liveWeapon !== activeWeaponRef.current) {
+      activeWeaponRef.current = liveWeapon;
+      setActiveWeapon(liveWeapon);
+    }
     const isHoldingFirearm = hasWeapon && (liveWeapon === "shotgun" || liveWeapon === "rifle" || liveWeapon === "pistol");
 
     const curX = operative ? operative.x : 0;
@@ -451,7 +460,7 @@ function LoadedCharacter({
     }
     const liveAliveCheck = operative ? operative.isAlive : isAlive;
     const liveRollingCheck = operative ? operative.isRolling : isRolling;
-    if (muzzleTipRef.current && liveAliveCheck && !liveRollingCheck) {
+    if (muzzleTipRef.current && isHoldingFirearm && liveAliveCheck && !liveRollingCheck && liveAction !== "kick") {
       muzzleTipRef.current.getWorldPosition(_scratchMuzzlePos);
       muzzleTipRef.current.getWorldDirection(_scratchMuzzleDir);
       onMuzzleSample?.({ pos: _scratchMuzzlePos, dir: _scratchMuzzleDir });
@@ -459,21 +468,21 @@ function LoadedCharacter({
   });
 
   const weaponKey: AssetKey =
-    weapon === "shotgun" ? "shotgun" : weapon === "pistol" ? "pistol" : "rifle";
+    activeWeapon === "shotgun" ? "shotgun" : activeWeapon === "pistol" ? "pistol" : "rifle";
 
   // Exact grip rotation angles in right hand palm (Euler radians)
   const gripEuler: [number, number, number] =
-    weapon === "shotgun"
+    activeWeapon === "shotgun"
       ? [(-24 * Math.PI) / 180, (-38 * Math.PI) / 180, (10 * Math.PI) / 180]
-      : weapon === "pistol"
+      : activeWeapon === "pistol"
       ? [(-15 * Math.PI) / 180, (-35 * Math.PI) / 180, (5 * Math.PI) / 180]
       : [(-27.37 * Math.PI) / 180, (-40.81 * Math.PI) / 180, (12.82 * Math.PI) / 180];
 
   // Exact grip translation offsets within Hand_R palm
   const gripPos: [number, number, number] =
-    weapon === "shotgun"
+    activeWeapon === "shotgun"
       ? [0, 0.04, 0.03]
-      : weapon === "pistol"
+      : activeWeapon === "pistol"
       ? [0, 0.06, 0.01]
       : [0, 0.05, 0.02];
 
@@ -629,11 +638,11 @@ function LoadedCharacter({
             <group position={[0, 0, recoilKickRef.current]}>
               <InklineModel
                 assetKey={weaponKey}
-                scale={weapon === "shotgun" ? 1.05 : weapon === "pistol" ? 0.95 : 1.1}
+                scale={activeWeapon === "shotgun" ? 1.05 : activeWeapon === "pistol" ? 0.95 : 1.1}
               />
 
               {/* Physical Barrel Socket Muzzle Tip Reference & Flash */}
-              <group ref={muzzleTipRef} position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
+              <group ref={muzzleTipRef} position={activeWeapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
                 {(isFiring || (typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 65)) && (
                   <>
                     {/* Central high-intensity white core */}
@@ -660,7 +669,7 @@ function LoadedCharacter({
 
               {/* Laser Aiming Beam Co-axial to Gun Barrel (Weapon Upgrade / Attachment - Off by Default) */}
               {isCurrentPlayer && Boolean(operative ? operative.hasLaser : hasLaser) && (
-                <mesh position={weapon === "shotgun" ? [0, 0.04, 6.0] : [0, 0.04, 8.0]} rotation={[Math.PI / 2, 0, 0]} material={SharedMaterials.cyanGlow}>
+                <mesh position={activeWeapon === "shotgun" ? [0, 0.04, 6.0] : [0, 0.04, 8.0]} rotation={[Math.PI / 2, 0, 0]} material={SharedMaterials.cyanGlow}>
                   <cylinderGeometry args={[0.005, 0.005, 16, 4]} />
                 </mesh>
               )}

@@ -30,6 +30,8 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   const lastArmorRef = useRef(operative.armor || 0);
   const hitFlashUntilRef = useRef(0);
   const lastShootTimeRef = useRef(0);
+  const [currentWeapon, setCurrentWeapon] = useState<string>(() => operative.weapon || "rifle");
+  const weaponRef = useRef(operative.weapon || "rifle");
 
   const isAlly = operative.squad === "alpha" || operative.id === "op_squadmate" || isCurrentPlayer;
   const accentColor = isAlly ? "#38bdf8" : "#f97316";
@@ -115,6 +117,10 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     if (distinctFireTime > 0 && distinctFireTime > lastShootTimeRef.current) {
       lastShootTimeRef.current = distinctFireTime;
     }
+    if (operative.weapon && operative.weapon !== weaponRef.current) {
+      weaponRef.current = operative.weapon;
+      setCurrentWeapon(operative.weapon);
+    }
     const flashElapsed =
       lastShootTimeRef.current > 0 ? Date.now() - lastShootTimeRef.current : 999999;
 
@@ -187,7 +193,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
           operative={operative}
           assetKey={characterAssetKey}
           isCurrentPlayer={isCurrentPlayer}
-          weapon={operative.weapon || 'rifle'}
+          weapon={currentWeapon as any}
           isMoving={isMoving}
           isFiring={isFiring}
           flashElapsed={flashElapsed}
