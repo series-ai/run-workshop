@@ -63,165 +63,260 @@ const BackpackIcon: React.FC = () => (
 );
 
 /* =========================================================================
-   SURVIV.IO STYLE MOVING MINIMAP
+   SURVIV.IO STYLE MOVING MINIMAP (60 FPS Canvas-Driven)
    ========================================================================= */
 
-const SurvivMinimap: React.FC<{ sim: SectorDepotSimulation }> = React.memo(({ sim }) => {
-  const { player } = sim;
+const SurvivMinimap: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
   const [zoomLevel, setZoomLevel] = useState<1 | 2>(1); // 1 = 42m radius, 2 = 75m radius
-  const radarRadius = zoomLevel === 1 ? 42 : 75;
-  const boxSize = 176;
-  const center = boxSize / 2; // 88px
-  const pxPerMeter = center / radarRadius;
+  const zoomLevelRef = useRef<1 | 2>(zoomLevel);
+  zoomLevelRef.current = zoomLevel;
 
-  // Heading angle in degrees for screen rotation: 0 rad (+Z / South) = 180 deg
-  const headingDeg = (player.facing * 180) / Math.PI;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const coordsRef = useRef<HTMLSpanElement>(null);
 
-  // Background grid translation (modulo 12m cell)
-  const gridCellPx = 12 * pxPerMeter;
-  const gridOffsetX = (-player.x * pxPerMeter) % gridCellPx;
-  const gridOffsetY = (-player.z * pxPerMeter) % gridCellPx;
+  useEffect(() => {
+    let animId: number;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  // Extraction sites in spoke / hub
-  const isHub = sim.zoneMode === "hub";
-  const exfilSites = isHub
-    ? [{ id: "airlock", name: "AIRLOCK", x: 0, z: -52, color: "#38bdf8" }]
-    : [
-        { id: "lz1", name: "LZ-1", x: 45, z: 45, color: "#10b981" },
-        { id: "bnk", name: "BNK", x: -45, z: -45, color: "#c084fc" },
-        { id: "fob", name: "FOB", x: 0, z: -48, color: "#38bdf8" },
-      ];
+    const width = canvas.width;
+    const height = canvas.height;
+    const center = width / 2; // 88px
 
-  return (
-    <div className="surviv-minimap-root">
-      {/* North Compass Indicator */}
-      <div className="surviv-minimap-compass-n">N</div>
+    const render = () => {
+      const isPaused =
+        typeof window !== "undefined" &&
+        Boolean((window as any).__STICK_ZONE_TEST__?.isPaused);
 
-      {/* Viewport Canvas Clip */}
-      <div className="surviv-minimap-viewport">
-        {/* Smooth Scrolling Terrain Grid */}
-        <div
-          className="surviv-minimap-grid-scroll"
-          style={{
-            backgroundSize: `${gridCellPx}px ${gridCellPx}px`,
-            backgroundPosition: `${gridOffsetX}px ${gridOffsetY}px`,
-          }}
-        />
+      if (!isPaused) {
+        const player = sim.player;
+        const currentZoom = zoomLevelRef.current;
+        const radarRadius = currentZoom === 1 ? 42 : 75;
+        const pxPerMeter = center / radarRadius;
 
-        {/* Cargo Containers relative to player */}
-        {DEPOT_CONTAINERS.map((box, idx) => {
+        // Update footer coords text directly without React re-render
+        if (coordsRef.current) {
+          coordsRef.current.textContent = `${Math.round(player.x)}, ${Math.round(player.z)}`;
+        }
+
+        ctx.clearRect(0, 0, width, height);
+
+        // 1. Tactical dark background
+        ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+        ctx.fillRect(0, 0, width, height);
+
+        // 2. Smooth scrolling terrain grid lines (12m cells)
+        const gridCellPx = 12 * pxPerMeter;
+        const gridOffsetX = ((-player.x * pxPerMeter) % gridCellPx + gridCellPx) % gridCellPx;
+        const gridOffsetY = ((-player.z * pxPerMeter) % gridCellPx + gridCellPx) % gridCellPx;
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = gridOffsetX; x <= width; x += gridCellPx) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+        }
+        for (let y = gridOffsetY; y <= height; y += gridCellPx) {
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+        }
+        ctx.stroke();
+
+        // 3. Cargo containers relative to player
+        for (const box of DEPOT_CONTAINERS) {
           const x1 = center + (box.minX - player.x) * pxPerMeter;
           const y1 = center + (box.minZ - player.z) * pxPerMeter;
           const w = (box.maxX - box.minX) * pxPerMeter;
           const h = (box.maxZ - box.minZ) * pxPerMeter;
 
           // Cull out of bounds
-          if (x1 + w < -10 || x1 > boxSize + 10 || y1 + h < -10 || y1 > boxSize + 10) return null;
+          if (x1 + w < -10 || x1 > width + 10 || y1 + h < -10 || y1 > height + 10) continue;
 
-          return (
-            <div
-              key={idx}
-              className="surviv-minimap-box"
-              style={{
-                left: `${x1}px`,
-                top: `${y1}px`,
-                width: `${w}px`,
-                height: `${h}px`,
-              }}
-            />
-          );
-        })}
+          ctx.fillStyle = "rgba(51, 65, 85, 0.78)";
+          ctx.fillRect(x1, y1, w, h);
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.65)";
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(x1, y1, w, h);
+        }
 
-        {/* Supply Crates */}
-        {sim.crates.map((c) => {
-          if (c.opened) return null;
+        // 4. Supply Crates (golden diamonds/dots)
+        for (const c of sim.crates) {
+          if (c.opened) continue;
           const cx = center + (c.x - player.x) * pxPerMeter;
           const cy = center + (c.z - player.z) * pxPerMeter;
-          if (cx < 4 || cx > boxSize - 4 || cy < 4 || cy > boxSize - 4) return null;
+          if (cx < 4 || cx > width - 4 || cy < 4 || cy > height - 4) continue;
 
-          return (
-            <div
-              key={c.id}
-              className="surviv-minimap-crate-dot"
-              style={{ left: `${cx}px`, top: `${cy}px` }}
-              title="Supply Cache"
-            />
-          );
-        })}
+          ctx.fillStyle = "#fbbf24";
+          ctx.beginPath();
+          ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#000000";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
 
-        {/* Enemy Scav Contacts */}
-        {sim.rivals.map((r) => {
-          if (!r.isAlive || r.isExtracted) return null;
+        // 5. Enemy Scavs and Boss Contacts
+        for (const r of sim.rivals) {
+          if (!r.isAlive || r.isExtracted) continue;
           const rx = center + (r.x - player.x) * pxPerMeter;
           const ry = center + (r.z - player.z) * pxPerMeter;
+          if (rx < 4 || rx > width - 4 || ry < 4 || ry > height - 4) continue;
+
           const isBoss = r.id === "scav_boss_warlord" || /boss|warlord/i.test(r.name);
+          if (isBoss) {
+            // Boss: Crimson dot + outer ring
+            ctx.fillStyle = "#ef4444";
+            ctx.beginPath();
+            ctx.arc(rx, ry, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#f87171";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          } else {
+            // Scav: Orange dot
+            ctx.fillStyle = "#f97316";
+            ctx.beginPath();
+            ctx.arc(rx, ry, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#000000";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
 
-          if (rx < 4 || rx > boxSize - 4 || ry < 4 || ry > boxSize - 4) return null;
+        // 6. Extraction Points: In-View or Clamped to Edge
+        const isHub = sim.zoneMode === "hub";
+        const exfilSites = isHub
+          ? [{ id: "airlock", name: "AIRLOCK", x: 0, z: -52, color: "#38bdf8" }]
+          : [
+              { id: "lz1", name: "LZ-1", x: 45, z: 45, color: "#10b981" },
+              { id: "bnk", name: "BNK", x: -45, z: -45, color: "#c084fc" },
+              { id: "fob", name: "FOB", x: 0, z: -48, color: "#38bdf8" },
+            ];
 
-          return (
-            <div
-              key={r.id}
-              className={`surviv-minimap-enemy-dot ${isBoss ? "boss" : ""}`}
-              style={{ left: `${rx}px`, top: `${ry}px` }}
-              title={r.name}
-            />
-          );
-        })}
-
-        {/* Extraction Points: In-View or Clamped to Edge */}
-        {exfilSites.map((site) => {
+        for (const site of exfilSites) {
           const dx = site.x - player.x;
           const dz = site.z - player.z;
           const dist = Math.hypot(dx, dz);
           const rawX = center + dx * pxPerMeter;
           const rawY = center + dz * pxPerMeter;
 
-          const isInside = rawX >= 14 && rawX <= boxSize - 14 && rawY >= 14 && rawY <= boxSize - 14;
-
+          const isInside = rawX >= 16 && rawX <= width - 16 && rawY >= 16 && rawY <= height - 16;
           if (isInside) {
-            return (
-              <div
-                key={site.id}
-                className="surviv-minimap-exfil-pin"
-                style={{ left: `${rawX}px`, top: `${rawY}px`, color: site.color }}
-              >
-                <div className="exfil-dot" style={{ background: site.color }} />
-                <span>{site.name}</span>
-              </div>
-            );
+            // Draw in-bounds pin
+            ctx.fillStyle = site.color;
+            ctx.beginPath();
+            ctx.arc(rawX, rawY, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.font = "900 9px monospace";
+            ctx.fillStyle = site.color;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(site.name, rawX, rawY + 6);
+          } else {
+            // Clamped edge pointer with distance
+            const angle = Math.atan2(dz, dx);
+            const clampRadius = center - 14;
+            const edgeX = center + Math.cos(angle) * clampRadius;
+            const edgeY = center + Math.sin(angle) * clampRadius;
+
+            // Draw small directional triangle
+            ctx.save();
+            ctx.translate(edgeX, edgeY);
+            ctx.rotate(angle);
+            ctx.fillStyle = site.color;
+            ctx.beginPath();
+            ctx.moveTo(6, 0);
+            ctx.lineTo(-4, -4);
+            ctx.lineTo(-4, 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+
+            // Distance label
+            ctx.font = "800 8.5px monospace";
+            ctx.fillStyle = site.color;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            const textRadius = clampRadius - 10;
+            ctx.fillText(`${Math.round(dist)}m`, center + Math.cos(angle) * textRadius, center + Math.sin(angle) * textRadius);
           }
+        }
 
-          // Edge clamping with distance tag
-          const angle = Math.atan2(dz, dx);
-          const clampRadius = center - 14;
-          const edgeX = center + Math.cos(angle) * clampRadius;
-          const edgeY = center + Math.sin(angle) * clampRadius;
+        // 7. Central Player Marker & Sight Cone
+        // Forward vector in 3D: forwardX = sin(facing), forwardZ = cos(facing)
+        const aimDirX = Math.sin(player.facing);
+        const aimDirY = Math.cos(player.facing);
 
-          return (
-            <div
-              key={site.id}
-              className="surviv-minimap-edge-pointer"
-              style={{ left: `${edgeX}px`, top: `${edgeY}px`, color: site.color }}
-              title={`${site.name} (${Math.round(dist)}m)`}
-            >
-              <div className="edge-arrow" style={{ transform: `rotate(${(angle * 180) / Math.PI}deg)` }}>
-                ▶
-              </div>
-              <span className="edge-label">{site.name} {Math.round(dist)}m</span>
-            </div>
-          );
-        })}
+        // Sight FOV cone
+        ctx.fillStyle = "rgba(56, 189, 248, 0.18)";
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        const halfFov = 0.45; // ~26 degrees
+        const coneLen = 28;
+        const leftAngle = player.facing - halfFov;
+        const rightAngle = player.facing + halfFov;
+        ctx.lineTo(center + Math.sin(leftAngle) * coneLen, center + Math.cos(leftAngle) * coneLen);
+        ctx.arc(
+          center,
+          center,
+          coneLen,
+          Math.atan2(Math.cos(leftAngle), Math.sin(leftAngle)),
+          Math.atan2(Math.cos(rightAngle), Math.sin(rightAngle)),
+          false
+        );
+        ctx.closePath();
+        ctx.fill();
 
-        {/* Central Player Marker */}
-        <div className="surviv-minimap-player-center">
-          {/* Aiming / View Direction Ray */}
-          <div
-            className="surviv-player-aim-line"
-            style={{ transform: `rotate(${headingDeg}deg)` }}
-          />
-          {/* Player core dot */}
-          <div className="surviv-player-dot" />
-        </div>
+        // Forward aim line
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.lineTo(center + aimDirX * 18, center + aimDirY * 18);
+        ctx.stroke();
+
+        // Player core dot
+        ctx.fillStyle = "#38bdf8";
+        ctx.beginPath();
+        ctx.arc(center, center, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(center, center, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+
+      animId = requestAnimationFrame(render);
+    };
+
+    animId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animId);
+  }, [sim]);
+
+  return (
+    <div className="surviv-minimap-root">
+      {/* North Compass Indicator */}
+      <div className="surviv-minimap-compass-n">N</div>
+
+      {/* Viewport 2D Canvas */}
+      <div className="surviv-minimap-viewport">
+        <canvas
+          ref={canvasRef}
+          width={176}
+          height={176}
+          style={{ width: "100%", height: "100%", display: "block" }}
+        />
       </div>
 
       {/* Minimap Footer Controls */}
@@ -233,13 +328,13 @@ const SurvivMinimap: React.FC<{ sim: SectorDepotSimulation }> = React.memo(({ si
         >
           🔍 {zoomLevel}x
         </button>
-        <span className="surviv-minimap-coords">
-          {Math.round(player.x)}, {Math.round(player.z)}
+        <span ref={coordsRef} className="surviv-minimap-coords">
+          {Math.round(sim.player.x)}, {Math.round(sim.player.z)}
         </span>
       </div>
     </div>
   );
-});
+};
 
 /* =========================================================================
    MAIN TACTICAL HUD
