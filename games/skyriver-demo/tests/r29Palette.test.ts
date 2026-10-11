@@ -21,6 +21,10 @@ vi.mock('../src/render/impostorAtlas', async importOriginal => {
   const original = await importOriginal<typeof import('../src/render/impostorAtlas')>();
   return { ...original, createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) };
 });
+vi.mock('../src/render/signMedia', async importOriginal => {
+  const original = await importOriginal<typeof import('../src/render/signMedia')>();
+  return { ...original, createSignMediaAtlas: () => ({ ...original.deriveSignMediaLayout(), texture: new THREE.Texture(), dispose() {} }) };
+});
 import { SkyriverCity, buildingSeedOf, deriveCityMasses, deriveFarTowers, deriveCityTrims, deriveHeroBlades, skyriverTrimBlocksHero, SKYRIVER_CITY_SHADER_SOURCE } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';

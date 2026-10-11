@@ -2,7 +2,6 @@
  * @file signMedia.ts - R47 media layer definitions, ad atlas generation, and metadata.
  *
  * This file defines media categories, motion classes, ad metadata, and atlas drawing.
- * All prose uses ASD-STE100 Simplified Technical English.
  */
 
 import * as THREE from 'three';
@@ -72,7 +71,6 @@ export interface MediaAdMetadata {
 export interface SignMediaAtlas {
   readonly texture: THREE.Texture;
   readonly horizontalAds: readonly MediaAdMetadata[];
-  readonly verticalAds: readonly MediaAdMetadata[];
   readonly hologramAds: readonly MediaAdMetadata[];
   readonly allAds: readonly MediaAdMetadata[];
   readonly width: number;
@@ -542,9 +540,34 @@ function indexSeed(str: string): number {
   return Math.abs(h);
 }
 
+interface CategoryPalette {
+  readonly primary: string;
+  readonly secondary: string;
+  readonly accent: string;
+  readonly bg: string;
+}
+
+const CATEGORY_PALETTES: Readonly<Record<MediaCategory, CategoryPalette>> = Object.freeze({
+  food: { primary: '#ff9922', secondary: '#ffdd66', accent: '#ff4422', bg: '#140c06' },
+  mood: { primary: '#cc44ff', secondary: '#ee88ff', accent: '#33ffff', bg: '#100614' },
+  body_mods: { primary: '#ff2255', secondary: '#ff6688', accent: '#44ffcc', bg: '#14060a' },
+  memory: { primary: '#22ccff', secondary: '#88eeff', accent: '#ff44aa', bg: '#060e14' },
+  water: { primary: '#22eecc', secondary: '#88ffee', accent: '#3388ff', bg: '#041210' },
+  insurance: { primary: '#33ff88', secondary: '#99ffbb', accent: '#ffff44', bg: '#06140a' },
+  sleep: { primary: '#8866ff', secondary: '#bb99ff', accent: '#44eedd', bg: '#0a0614' },
+  air: { primary: '#33eebb', secondary: '#aaffdd', accent: '#33aaff', bg: '#061210' },
+  vat_protein: { primary: '#ff4488', secondary: '#ff99bb', accent: '#66ff44', bg: '#14060e' },
+  loyalty: { primary: '#ffcc22', secondary: '#ffee77', accent: '#ff4444', bg: '#141004' },
+});
+
 /**
  * Draws one horizontal advertisement frame into canvas.
  * Dimensions: 512 x 128.
+ * Four cuts have distinct layouts:
+ * Cut 0: Brand Hero.
+ * Cut 1: Promo Flash / Sale Banner.
+ * Cut 2: Technical Telemetry / Equaliser.
+ * Cut 3: Retail Dispenser CTA / QR Matrix.
  */
 function drawHorizontalAdFrame(
   ctx: CanvasRenderingContext2D,
@@ -560,61 +583,291 @@ function drawHorizontalAdFrame(
   ctx.rect(x, y, w, h);
   ctx.clip();
 
-  // Dark matrix display face backing with subtle grid.
-  ctx.fillStyle = '#060a0f';
-  ctx.fillRect(x, y, w, h);
+  const pal = CATEGORY_PALETTES[ad.category] ?? {
+    primary: '#33ffff',
+    secondary: '#ffffff',
+    accent: '#ffcc00',
+    bg: '#060a0f',
+  };
 
-  // Border frame with slight accent corner tabs.
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-  ctx.lineWidth = 2.5;
-  ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
+  const cut = frame % 4;
 
-  // Corner accents.
-  ctx.fillStyle = 'rgba(120, 255, 160, 0.9)';
-  ctx.fillRect(x + 2, y + 2, 8, 3);
-  ctx.fillRect(x + 2, y + 2, 3, 8);
-  ctx.fillRect(x + w - 10, y + 2, 8, 3);
-  ctx.fillRect(x + w - 5, y + 2, 3, 8);
-  ctx.fillRect(x + 2, y + h - 5, 8, 3);
-  ctx.fillRect(x + 2, y + h - 10, 3, 8);
-  ctx.fillRect(x + w - 10, y + h - 5, 8, 3);
-  ctx.fillRect(x + w - 5, y + h - 10, 3, 8);
+  if (cut === 0) {
+    // Cut 0: Brand Hero
+    ctx.fillStyle = pal.bg;
+    ctx.fillRect(x, y, w, h);
 
-  // Left side: Invented Mark.
-  drawInventedMark(ctx, ad.markVariant, x + 40, y + h * 0.5, 28);
+    // Subtle background grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let gx = x + 16; gx < x + w; gx += 32) {
+      ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
+    }
 
-  // Center-left: Wordmark and Tagline.
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.font = '800 24px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(ad.brandName, x + 82, y + 14);
+    // Outer border
+    ctx.strokeStyle = pal.primary;
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
 
-  ctx.fillStyle = 'rgba(160, 240, 255, 0.85)';
-  ctx.font = '700 13px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(ad.tagLine, x + 84, y + 42);
+    // Corner tabs
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(x + 2, y + 2, 10, 3); ctx.fillRect(x + 2, y + 2, 3, 10);
+    ctx.fillRect(x + w - 12, y + 2, 10, 3); ctx.fillRect(x + w - 5, y + 2, 3, 10);
+    ctx.fillRect(x + 2, y + h - 5, 10, 3); ctx.fillRect(x + 2, y + h - 12, 3, 10);
+    ctx.fillRect(x + w - 12, y + h - 5, 10, 3); ctx.fillRect(x + w - 5, y + h - 12, 3, 10);
 
-  // Dense fake lines.
-  drawDenseFakeLines(ctx, ad.fakeLines, x + 84, y + 62, 180, 8.5);
+    // Left: Invented Mark
+    drawInventedMark(ctx, ad.markVariant, x + 44, y + h * 0.5, 28);
 
-  // Center-right: Product Silhouette.
-  drawProductSilhouette(ctx, ad.silhouetteVariant, x + 340, y + h * 0.5, 75, 75, frame);
+    // Center-left: Wordmark, Category tag, Tagline
+    ctx.fillStyle = pal.primary;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = '900 24px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(ad.brandName, x + 86, y + 14);
 
-  // Right side: Price / Countdown badge.
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-  ctx.fillRect(x + 400, y + 18, 98, h - 36);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(x + 400, y + 18, 98, h - 36);
+    ctx.fillStyle = pal.secondary;
+    ctx.font = '700 13px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(ad.tagLine, x + 88, y + 43);
 
-  ctx.fillStyle = 'rgba(100, 255, 140, 0.95)';
-  ctx.textAlign = 'center';
-  ctx.font = '800 15px "Helvetica Neue", monospace';
-  ctx.fillText(ad.priceOrCountdown, x + 449, y + 36);
+    // Dense fake lines
+    drawDenseFakeLines(ctx, ad.fakeLines, x + 88, y + 64, 210, 8.5);
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.font = '700 10px sans-serif';
-  ctx.fillText(frame % 2 === 0 ? 'OFFER VALID' : 'LIMITED RUN', x + 449, y + 66);
+    // Center-right: Product silhouette
+    drawProductSilhouette(ctx, ad.silhouetteVariant, x + 345, y + h * 0.5, 78, 78, frame);
+
+    // Right: Price badge
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.fillRect(x + 406, y + 18, 94, h - 36);
+    ctx.strokeStyle = pal.primary;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 406, y + 18, 94, h - 36);
+
+    ctx.fillStyle = pal.accent;
+    ctx.textAlign = 'center';
+    ctx.font = '800 15px "Helvetica Neue", monospace';
+    ctx.fillText(ad.priceOrCountdown, x + 453, y + 36);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = '700 10px sans-serif';
+    ctx.fillText('AUTHORIZED', x + 453, y + 66);
+  } else if (cut === 1) {
+    // Cut 1: Promo Flash / Sale Banner
+    ctx.fillStyle = '#080810';
+    ctx.fillRect(x, y, w, h);
+
+    // Top flash banner
+    ctx.fillStyle = pal.primary;
+    ctx.fillRect(x + 4, y + 4, w - 8, 24);
+
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 12px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText(`★ LIMITED PROMO // 50% REBATE // ${ad.brandName} ★`, x + w * 0.5, y + 16);
+
+    // Outer border
+    ctx.strokeStyle = pal.accent;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 4, y + 4, w - 8, h - 8);
+
+    // Left: Countdown box
+    ctx.fillStyle = 'rgba(255, 40, 60, 0.2)';
+    ctx.fillRect(x + 16, y + 36, 175, 76);
+    ctx.strokeStyle = '#ff3344';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 16, y + 36, 175, 76);
+
+    ctx.fillStyle = '#ff4455';
+    ctx.font = '800 11px sans-serif';
+    ctx.fillText('EXPIRES AT CYCLE END', x + 103, y + 50);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 19px monospace';
+    ctx.fillText('00:14:59', x + 103, y + 72);
+
+    ctx.fillStyle = pal.secondary;
+    ctx.font = '700 9px monospace';
+    ctx.fillText('SECURE ALLOCATION NOW', x + 103, y + 96);
+
+    // Center: Large Brand & Tagline
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 18px "Helvetica Neue", sans-serif';
+    ctx.fillText(ad.brandName, x + 204, y + 38);
+
+    ctx.fillStyle = pal.secondary;
+    ctx.font = '700 11px sans-serif';
+    ctx.fillText(ad.tagLine, x + 204, y + 62);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '600 8.5px monospace';
+    ctx.fillText(ad.fakeLines[0] ?? '', x + 204, y + 84);
+
+    // Right: Large angled product with discount stamp
+    drawProductSilhouette(ctx, ad.silhouetteVariant, x + 440, y + 72, 70, 70, frame);
+
+    ctx.save();
+    ctx.translate(x + 440, y + 72);
+    ctx.rotate(-0.25);
+    ctx.fillStyle = 'rgba(255, 220, 0, 0.92)';
+    ctx.fillRect(-45, -12, 90, 24);
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 12px sans-serif';
+    ctx.fillText(ad.priceOrCountdown, 0, 0);
+    ctx.restore();
+  } else if (cut === 2) {
+    // Cut 2: Technical Telemetry / Equaliser
+    ctx.fillStyle = '#04080c';
+    ctx.fillRect(x, y, w, h);
+
+    // Technical grid
+    ctx.strokeStyle = 'rgba(60, 160, 220, 0.18)';
+    ctx.lineWidth = 1;
+    for (let gx = x; gx < x + w; gx += 20) {
+      ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx, y + h); ctx.stroke();
+    }
+    for (let gy = y; gy < y + h; gy += 16) {
+      ctx.beginPath(); ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); ctx.stroke();
+    }
+
+    // Border with corner crosshairs
+    ctx.strokeStyle = 'rgba(60, 200, 255, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 4, y + 4, w - 8, h - 8);
+
+    // Left: Procedural 6-band equaliser telemetry bars
+    const barX = x + 16;
+    const barY = y + 24;
+    const barW = 18;
+    const barSpacing = 24;
+    const heights = [0.85, 0.55, 0.95, 0.40, 0.75, 0.60];
+
+    for (let b = 0; b < 6; b += 1) {
+      const bh = heights[b]! * 70;
+      const bx = barX + b * barSpacing;
+      const by = barY + 70 - bh;
+
+      // Segmented bar
+      const segCount = 8;
+      for (let s = 0; s < segCount; s += 1) {
+        const sy = barY + 70 - (s + 1) * 9;
+        const lit = (s / segCount) < heights[b]!;
+        ctx.fillStyle = lit ? (s > 5 ? '#ff3344' : s > 3 ? '#ffcc00' : '#33ff88') : 'rgba(255, 255, 255, 0.08)';
+        ctx.fillRect(bx, sy, barW, 7);
+      }
+    }
+
+    ctx.fillStyle = 'rgba(160, 240, 255, 0.8)';
+    ctx.font = '700 8.5px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('DIAG // TELEMETRY CH 1-6 // SYNC 99.8%', barX, y + 112);
+
+    // Center: Product silhouette in technical reticle
+    drawProductSilhouette(ctx, ad.silhouetteVariant, x + 235, y + 64, 65, 65, frame);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 200, y + 30, 70, 70);
+
+    // Right: Spec lines and price
+    ctx.fillStyle = pal.primary;
+    ctx.font = '900 16px "Helvetica Neue", sans-serif';
+    ctx.fillText(ad.brandName, x + 288, y + 22);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 11px monospace';
+    ctx.fillText(`STATUS: NOMINAL // ${ad.tagLine}`, x + 288, y + 42);
+
+    drawDenseFakeLines(ctx, ad.fakeLines, x + 288, y + 60, 210, 8);
+
+    ctx.fillStyle = pal.accent;
+    ctx.font = '800 13px monospace';
+    ctx.fillText(`UNIT VALUE: ${ad.priceOrCountdown}`, x + 288, y + 112);
+  } else {
+    // Cut 3: Retail Dispenser CTA / QR Matrix
+    ctx.fillStyle = '#060a12';
+    ctx.fillRect(x, y, w, h);
+
+    // Outer border
+    ctx.strokeStyle = pal.primary;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 4, y + 4, w - 8, h - 8);
+
+    // Left: 2D Data-matrix QR block (74x74)
+    const qrX = x + 16;
+    const qrY = y + 18;
+    const qrSize = 74;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+
+    ctx.fillStyle = '#000000';
+    // Corner finder patterns
+    ctx.fillRect(qrX + 4, qrY + 4, 20, 20);
+    ctx.fillRect(qrX + 8, qrY + 8, 12, 12);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(qrX + 8, qrY + 8, 12, 12);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(qrX + 11, qrY + 11, 6, 6);
+
+    ctx.fillRect(qrX + qrSize - 24, qrY + 4, 20, 20);
+    ctx.fillRect(qrX + 4, qrY + qrSize - 24, 20, 20);
+
+    // Bit grid
+    for (let r = 0; r < 8; r += 1) {
+      for (let c = 0; c < 8; c += 1) {
+        if ((r * 7 + c * 13 + ad.markVariant * 5) % 3 === 0) {
+          ctx.fillRect(qrX + 28 + c * 5, qrY + 8 + r * 7, 4, 5);
+        }
+      }
+    }
+
+    ctx.fillStyle = pal.secondary;
+    ctx.textAlign = 'center';
+    ctx.font = '800 8.5px monospace';
+    ctx.fillText('SCAN TO ORDER', qrX + qrSize * 0.5, y + 108);
+
+    // Center: Brand, Review Stars, Verification
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 20px "Helvetica Neue", sans-serif';
+    ctx.fillText(ad.brandName, x + 105, y + 20);
+
+    // 5 Gold Stars
+    ctx.fillStyle = '#ffcc00';
+    ctx.font = '800 13px sans-serif';
+    ctx.fillText('★★★★★  4.9 (14K REVIEWS)', x + 105, y + 44);
+
+    ctx.fillStyle = pal.secondary;
+    ctx.font = '700 11px sans-serif';
+    ctx.fillText(`VERIFIED DISPENSER // ${ad.tagLine}`, x + 105, y + 64);
+
+    drawDenseFakeLines(ctx, [ad.fakeLines[0] ?? ''], x + 105, y + 84, 180, 8);
+
+    // Right: Large Interactive Button
+    const btnX = x + 348;
+    const btnY = y + 36;
+    const btnW = 148;
+    const btnH = 56;
+
+    ctx.fillStyle = pal.primary;
+    ctx.beginPath();
+    ctx.roundRect(btnX, btnY, btnW, btnH, 8);
+    ctx.fill();
+
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'center';
+    ctx.font = '900 13px "Helvetica Neue", sans-serif';
+    ctx.fillText('TOUCH TO DISPENSE', btnX + btnW * 0.5, btnY + 22);
+
+    ctx.font = '800 15px monospace';
+    ctx.fillText(ad.priceOrCountdown, btnX + btnW * 0.5, btnY + 42);
+
+    // Product preview icon
+    drawProductSilhouette(ctx, ad.silhouetteVariant, x + 320, y + 64, 45, 45, frame);
+  }
 
   ctx.restore();
 }
@@ -622,73 +875,6 @@ function drawHorizontalAdFrame(
 /**
  * Draws one vertical advertisement frame into canvas.
  * Dimensions: 128 x 512.
- */
-function drawVerticalAdFrame(
-  ctx: CanvasRenderingContext2D,
-  ad: MediaAdDefinition,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  frame: number,
-): void {
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-
-  // Dark display backing.
-  ctx.fillStyle = '#060a0f';
-  ctx.fillRect(x, y, w, h);
-
-  // Border.
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-  ctx.lineWidth = 2.5;
-  ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
-
-  // Top: Invented Mark.
-  drawInventedMark(ctx, ad.markVariant, x + w * 0.5, y + 42, 28);
-
-  // Upper section: Brand Wordmark (stacked or rotated).
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '800 16px "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(ad.brandName, x + w * 0.5, y + 95);
-
-  ctx.fillStyle = 'rgba(160, 240, 255, 0.85)';
-  ctx.font = '700 11px sans-serif';
-  ctx.fillText(ad.tagLine, x + w * 0.5, y + 118);
-
-  // Center: Category-specific product silhouette.
-  drawProductSilhouette(ctx, ad.silhouetteVariant, x + w * 0.5, y + 215, 80, 110, frame);
-
-  // Lower section: Dense fake lines.
-  ctx.textAlign = 'left';
-  drawDenseFakeLines(ctx, ad.fakeLines, x + 10, y + 300, w - 20, 8);
-
-  // Bottom: Price / Countdown badge.
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-  ctx.fillRect(x + 12, y + 430, w - 24, 60);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(x + 12, y + 430, w - 24, 60);
-
-  ctx.fillStyle = 'rgba(100, 255, 140, 0.95)';
-  ctx.textAlign = 'center';
-  ctx.font = '800 14px "Helvetica Neue", monospace';
-  ctx.fillText(ad.priceOrCountdown, x + w * 0.5, y + 452);
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.font = '700 9px sans-serif';
-  ctx.fillText(frame % 2 === 0 ? 'OFFER' : 'BUY NOW', x + w * 0.5, y + 472);
-
-  ctx.restore();
-}
-
-/**
- * Draws one hologram asset frame into canvas.
- * Dimensions: 256 x 256. Transparent background, high contrast silhouette and glyphs.
  */
 function drawHologramFrame(
   ctx: CanvasRenderingContext2D,
@@ -708,165 +894,119 @@ function drawHologramFrame(
   ctx.fillStyle = '#000000';
   ctx.fillRect(x, y, w, h);
 
-  // Outer radial ring with tick marks.
   const cx = x + w * 0.5;
   const cy = y + h * 0.5;
-  const r = w * 0.42;
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  // Top Section: Fixed upright mark and wordmark
+  drawInventedMark(ctx, ad.markVariant, cx, y + 26, 15);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 14px "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(ad.brandName, cx, y + 50);
+
+  // Center Circle (r = 60): Tech ring and product silhouette
+  const r = 58;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Fine angle tick marks.
+  // Angle tick marks
   ctx.lineWidth = 1.5;
   for (let i = 0; i < 24; i += 1) {
     const ang = (i * Math.PI * 2) / 24;
-    const inner = (i % 6 === 0) ? r - 12 : r - 6;
+    const inner = (i % 6 === 0) ? r - 10 : r - 5;
     ctx.beginPath();
     ctx.moveTo(cx + Math.cos(ang) * inner, cy + Math.sin(ang) * inner);
     ctx.lineTo(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r);
     ctx.stroke();
   }
 
-  // Inner product silhouette.
-  drawProductSilhouette(ctx, ad.silhouetteVariant, cx, cy, w * 0.5, h * 0.5, frame);
+  // Inner product silhouette (inside center circle)
+  drawProductSilhouette(ctx, ad.silhouetteVariant, cx, cy, 68, 68, frame);
 
-  // Arc text or wordmark top and bottom.
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  // Bottom Section: Fixed upright price and short dense line
+  ctx.fillStyle = 'rgba(100, 255, 180, 0.95)';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = '800 12px "Helvetica Neue", sans-serif';
-  ctx.fillText(ad.brandName, cx, cy - r * 0.65);
+  ctx.font = '900 13px monospace';
+  ctx.fillText(ad.priceOrCountdown, cx, y + h - 36);
 
-  ctx.fillStyle = 'rgba(120, 255, 160, 0.9)';
-  ctx.font = '700 11px monospace';
-  ctx.fillText(ad.priceOrCountdown, cx, cy + r * 0.68);
+  ctx.fillStyle = 'rgba(200, 230, 255, 0.75)';
+  ctx.font = '600 8.5px monospace';
+  ctx.fillText(ad.fakeLines[0] ?? 'VERIFIED ASSET // GEN-4', cx, y + h - 18);
 
   ctx.restore();
 }
 
-/**
- * Creates the boot-generated media advertising atlas.
- * Renders all procedural frames into a single 2048 by 2048 CanvasTexture.
- */
-export function createSignMediaAtlas(): SignMediaAtlas {
+export interface SignMediaLayout {
+  readonly horizontalAds: readonly MediaAdMetadata[];
+  readonly hologramAds: readonly MediaAdMetadata[];
+  readonly allAds: readonly MediaAdMetadata[];
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Derive the frame addresses without a browser texture. */
+export function deriveSignMediaLayout(): SignMediaLayout {
+  const horizontalAds = AD_DEFINITIONS.map((ad, i): MediaAdMetadata => ({
+    id: ad.id + '-horiz', category: ad.category, brandName: ad.brandName,
+    tagLine: ad.tagLine, priceOrCountdown: ad.priceOrCountdown,
+    frameCount: 4,
+    frames: Array.from({ length: 4 }, (_, f) => rectFor(f * 512, i * 128, 512, 128)),
+    isVertical: false, isHologram: false,
+  }));
+  const hologramAds = Array.from({ length: 8 }, (_, i): MediaAdMetadata => {
+    const ad = AD_DEFINITIONS[i % AD_DEFINITIONS.length]!;
+    return {
+      id: `${ad.id}-holo-${i}`, category: ad.category, brandName: ad.brandName,
+      tagLine: ad.tagLine, priceOrCountdown: ad.priceOrCountdown,
+      frameCount: 1, frames: [rectFor(i * 256, 1792, 256, 256)],
+      isVertical: false, isHologram: true,
+    };
+  });
+  return { horizontalAds, hologramAds, allAds: [...horizontalAds, ...hologramAds], width: MEDIA_ATLAS_WIDTH, height: MEDIA_ATLAS_HEIGHT };
+}
+
+// Cache the immutable canvas. Each material owns its texture and its disposal.
+let bootCanvas: HTMLCanvasElement | null = null;
+function signMediaCanvas(): HTMLCanvasElement {
+  if (bootCanvas !== null) return bootCanvas;
   const canvas = document.createElement('canvas');
   canvas.width = MEDIA_ATLAS_WIDTH;
   canvas.height = MEDIA_ATLAS_HEIGHT;
   const ctx = canvas.getContext('2d');
-  if (ctx === null) {
-    throw new Error('SKYRIVER_SIGN_MEDIA_ATLAS_NO_2D_CONTEXT');
-  }
-
+  if (ctx === null) throw new Error('SKYRIVER_SIGN_MEDIA_ATLAS_NO_2D_CONTEXT');
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const horizontalAds: MediaAdMetadata[] = [];
-  const verticalAds: MediaAdMetadata[] = [];
-  const hologramAds: MediaAdMetadata[] = [];
-
-  // Section 1: Horizontal Ads. Rows 0 to 9 (y: 0 to 1280).
-  // Each ad has 4 horizontal frames of 512 x 128 across one row.
-  const HORIZ_W = 512;
-  const HORIZ_H = 128;
-  const FRAMES_PER_AD = 4;
-
   for (let i = 0; i < AD_DEFINITIONS.length; i += 1) {
-    const ad = AD_DEFINITIONS[i]!;
-    const rowY = i * HORIZ_H;
-    const frames: MediaFrameRect[] = [];
-    for (let f = 0; f < FRAMES_PER_AD; f += 1) {
-      const colX = f * HORIZ_W;
-      drawHorizontalAdFrame(ctx, ad, colX, rowY, HORIZ_W, HORIZ_H, f);
-      frames.push(rectFor(colX, rowY, HORIZ_W, HORIZ_H));
+    for (let f = 0; f < 4; f += 1) {
+      drawHorizontalAdFrame(ctx, AD_DEFINITIONS[i]!, f * 512, i * 128, 512, 128, f);
     }
-    horizontalAds.push({
-      id: ad.id + '-horiz',
-      category: ad.category,
-      brandName: ad.brandName,
-      tagLine: ad.tagLine,
-      priceOrCountdown: ad.priceOrCountdown,
-      frameCount: FRAMES_PER_AD,
-      frames,
-      isVertical: false,
-      isHologram: false,
-    });
   }
-
-  // Section 2: Vertical Ads. (y: 1280 to 1792, h: 512).
-  // 16 columns of 128 x 512.
-  const VERT_BASE_Y = 1280;
-  const VERT_W = 128;
-  const VERT_H = 512;
-  const VERT_COLS = 16;
-
-  for (let c = 0; c < VERT_COLS; c += 1) {
-    const adIndex = c % AD_DEFINITIONS.length;
-    const ad = AD_DEFINITIONS[adIndex]!;
-    const frame = Math.floor(c / AD_DEFINITIONS.length);
-    const colX = c * VERT_W;
-    drawVerticalAdFrame(ctx, ad, colX, VERT_BASE_Y, VERT_W, VERT_H, frame);
-    const frameRect = rectFor(colX, VERT_BASE_Y, VERT_W, VERT_H);
-    verticalAds.push({
-      id: `${ad.id}-vert-${c}`,
-      category: ad.category,
-      brandName: ad.brandName,
-      tagLine: ad.tagLine,
-      priceOrCountdown: ad.priceOrCountdown,
-      frameCount: 1,
-      frames: [frameRect],
-      isVertical: true,
-      isHologram: false,
-    });
+  for (let i = 0; i < 8; i += 1) {
+    drawHologramFrame(ctx, AD_DEFINITIONS[i % AD_DEFINITIONS.length]!, i * 256, 1792, 256, 256, i);
   }
+  bootCanvas = canvas;
+  return canvas;
+}
 
-  // Section 3: Hologram Assets. (y: 1792 to 2048, h: 256).
-  // 8 square columns of 256 x 256.
-  const HOLO_BASE_Y = 1792;
-  const HOLO_SIZE = 256;
-  const HOLO_COLS = 8;
+/** Prepare the canvas while the city cache request is in progress. */
+export function prepareSignMediaAtlas(): void {
+  signMediaCanvas();
+}
 
-  for (let c = 0; c < HOLO_COLS; c += 1) {
-    const adIndex = c % AD_DEFINITIONS.length;
-    const ad = AD_DEFINITIONS[adIndex]!;
-    const colX = c * HOLO_SIZE;
-    drawHologramFrame(ctx, ad, colX, HOLO_BASE_Y, HOLO_SIZE, HOLO_SIZE, c);
-    const frameRect = rectFor(colX, HOLO_BASE_Y, HOLO_SIZE, HOLO_SIZE);
-    hologramAds.push({
-      id: `${ad.id}-holo-${c}`,
-      category: ad.category,
-      brandName: ad.brandName,
-      tagLine: ad.tagLine,
-      priceOrCountdown: ad.priceOrCountdown,
-      frameCount: 1,
-      frames: [frameRect],
-      isVertical: false,
-      isHologram: true,
-    });
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
+/** Create one material-owned texture from the cached procedural frames. */
+export function createSignMediaAtlas(): SignMediaAtlas {
+  const texture = new THREE.CanvasTexture(signMediaCanvas());
   texture.name = 'skyriver.signMediaAtlas';
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = 8;
   texture.needsUpdate = true;
-
-  const allAds = [...horizontalAds, ...verticalAds, ...hologramAds];
-
-  return {
-    texture,
-    horizontalAds,
-    verticalAds,
-    hologramAds,
-    allAds,
-    width: MEDIA_ATLAS_WIDTH,
-    height: MEDIA_ATLAS_HEIGHT,
-    dispose(): void {
-      texture.dispose();
-    },
-  };
+  return { ...deriveSignMediaLayout(), texture, dispose(): void { texture.dispose(); } };
 }

@@ -831,6 +831,7 @@ export class SkyriverScene {
     });
     this.scene.add(this.city.group);
     this.city.setInteriorMode(this.quality.interiors, true);
+    this.syncSignMediaTier();
 
     // R23 smog: allocated once at the high count, so a tier change only moves `instanceCount`.
     this.smog = new SkyriverSmog({
@@ -1035,6 +1036,11 @@ export class SkyriverScene {
     this.city.setProjectionScale(this.projectionScale());
   }
 
+  private syncSignMediaTier(): void {
+    this.city.signMesh.userData.mediaQualityTier = this.quality.tier === SkyriverQualityTier.High
+      ? 2 : this.quality.tier === SkyriverQualityTier.Medium ? 1 : 0;
+  }
+
   /** Presentation-only (plan R7). Re-applies the tier's DPR unless one was pinned explicitly. */
   setTier(tier: SkyriverQualityTier, maxPixelRatio?: number): void {
     this.quality = SKYRIVER_QUALITY[tier];
@@ -1042,6 +1048,7 @@ export class SkyriverScene {
     this.frame.quality = this.quality;
     this.atmosphere.setQuality(this.quality);
     this.city.setInteriorMode(this.interiorsAllowed ? this.quality.interiors : 'off');
+    this.syncSignMediaTier();
     this.applyComposition();
     this.volumePass.resetHistory('profile');
     this.resize(this.width, this.height);

@@ -41,8 +41,8 @@
   },
   {
     "path": "src/main.ts",
-    "sha256": "7fdf012395974fed8f30ddc18721bcea9ff7380407345917729888668153770b",
-    "byteLength": 52491
+    "sha256": "5fb3638a5f4cd74b62f49dea5bb1705c2fd7d680450cf4f1f0ae2df35809ffe1",
+    "byteLength": 52629
   },
   {
     "path": "src/render/atmosphere.ts",
@@ -146,8 +146,8 @@
   },
   {
     "path": "src/render/scene.ts",
-    "sha256": "b67ccbca79d991092224a5f8c22904d81f06c154774331354f7e746f039dd894",
-    "byteLength": 88080
+    "sha256": "722d30174d9ab6c371fbafefb801d93d6aeec109209f8dce76bf300ee7450993",
+    "byteLength": 88351
   },
   {
     "path": "src/render/shuttle.ts",
@@ -171,13 +171,13 @@
   },
   {
     "path": "src/render/signMedia.ts",
-    "sha256": "38f898f320505ba9440ab46b2ef2dd69bf507fa4c4d5da20afcd7a26b320d39a",
-    "byteLength": 25996
+    "sha256": "81f5b66e02c9bdadc05630c31b3e8c760dba5374715a662ca3f4808c3ad9aaa0",
+    "byteLength": 32111
   },
   {
     "path": "src/render/signShaders.ts",
-    "sha256": "0ff1b39a1e07536189c51b3f0f3541c063d32d2fa439189afbcfdac25db00a3e",
-    "byteLength": 8167
+    "sha256": "56b2be0a0c2d1865774acd624bd849ce994b1fbf0c87cd60801a89fedf4ee5aa",
+    "byteLength": 19394
   },
   {
     "path": "src/render/smog.ts",

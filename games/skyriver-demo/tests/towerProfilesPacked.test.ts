@@ -5,6 +5,10 @@ import * as THREE from 'three';
 vi.mock('../src/render/signAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/signAtlas')>(), createSignAtlas: () => ({ texture: new THREE.Texture(), vertical: Array.from({ length: 32 }, () => [0, 0, 1, 1] as const), horizontal: Array.from({ length: 16 }, () => [0, 0, 1, 1] as const), dispose() {} }) }));
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
+vi.mock('../src/render/signMedia', async importOriginal => {
+  const original = await importOriginal<typeof import('../src/render/signMedia')>();
+  return { ...original, createSignMediaAtlas: () => ({ ...original.deriveSignMediaLayout(), texture: new THREE.Texture(), dispose() {} }) };
+});
 import { SkyriverCity, deriveCityMasses, deriveCityTrims, deriveTowerProfiles, deriveFacadeFaces, deriveHeroBlades, buildingSeedOf, SKYRIVER_CITY } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';

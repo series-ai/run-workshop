@@ -39,6 +39,7 @@ import type {
   SkyriverLightSource,
 } from './render/city';
 import { prepareBrowserCitySnapshot, type SkyriverColdStartDiagnostic } from './render/citySnapshotLoader';
+import { prepareSignMediaAtlas } from './render/signMedia';
 import { type SkyriverDistrict, type SkyriverDistrictModel } from './render/districts';
 import type { SkyriverDistrictHazeEvidence } from './render/atmosphere';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
@@ -1288,7 +1289,9 @@ if (typeof document !== 'undefined') {
     let prepResult: Awaited<ReturnType<typeof prepareBrowserCitySnapshot>> | null = null;
     let prepEnd = performance.now();
     try {
-      prepResult = await prepareBrowserCitySnapshot();
+      const cityPreparation = prepareBrowserCitySnapshot();
+      prepareSignMediaAtlas();
+      prepResult = await cityPreparation;
       prepEnd = performance.now();
     } catch (prepError) {
       console.warn('[skyriver] prepareBrowserCitySnapshot fallback', prepError);

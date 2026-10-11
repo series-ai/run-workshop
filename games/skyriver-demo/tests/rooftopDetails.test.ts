@@ -10,6 +10,10 @@ import { withoutR43bWindowCells } from './support/r43bTowerSeparation';
 vi.mock('../src/render/signAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/signAtlas')>(), createSignAtlas: () => ({ texture: new THREE.Texture(), vertical: Array.from({ length: 32 }, () => [0, 0, 1, 1] as const), horizontal: Array.from({ length: 16 }, () => [0, 0, 1, 1] as const), dispose() {} }) }));
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
+vi.mock('../src/render/signMedia', async importOriginal => {
+  const original = await importOriginal<typeof import('../src/render/signMedia')>();
+  return { ...original, createSignMediaAtlas: () => ({ ...original.deriveSignMediaLayout(), texture: new THREE.Texture(), dispose() {} }) };
+});
 import { SkyriverCity, deriveRoofDetails, deriveCityMasses, deriveCityTrims, deriveFacadeFaces, deriveFarTowers, deriveHeroBlades, deriveNeonSigns, skyriverTrimBlocksHero, trimMaterialOwnerSeed, buildingSeedOf, skyriverTrimSourceTermId, placeNeonSign, warpBoxPoint, warpRigid, SKYRIVER_CITY, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_TRIM_ROOF_PLANT } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { canyonBendApexes, warpCanyon } from '../src/render/canyonWarp';
