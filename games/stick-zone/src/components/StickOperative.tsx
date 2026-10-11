@@ -20,25 +20,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   const rootGroupRef = useRef<THREE.Group>(null);
   const groundHaloRef = useRef<THREE.Mesh>(null);
   const labelRef = useRef<THREE.Group>(null);
-  const muzzleFlashRef = useRef<THREE.Group>(null);
-  const tracersGroupRef = useRef<THREE.Group>(null);
-  const tracerMeshRef = useRef<THREE.Mesh>(null);
-
   const [labelTexture, setLabelTexture] = useState<THREE.CanvasTexture | null>(null);
-  const [laserLine] = useState(() => {
-    const geom = new THREE.BufferGeometry();
-    const pts = new Float32Array([0, 0, 0, 0, 0, 35]);
-    geom.setAttribute("position", new THREE.BufferAttribute(pts, 3));
-    const mat = new THREE.LineBasicMaterial({
-      color: "#38bdf8",
-      transparent: true,
-      opacity: 0.65,
-      linewidth: 1.5,
-    });
-    const line = new THREE.Line(geom, mat);
-    line.frustumCulled = false;
-    return line;
-  });
 
   const lastPosRef = useRef({ x: operative.x, z: operative.z });
   const speedRef = useRef(0);
@@ -136,72 +118,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     const flashElapsed =
       lastShootTimeRef.current > 0 ? Date.now() - lastShootTimeRef.current : 999999;
 
-    // Laser raycast check against containers
-    let laserLen = 35.0;
-    const wepOriginX = operative.x;
-    const wepOriginY = 1.1;
-    const wepOriginZ = operative.z;
-    const dirX = Math.sin(operative.facing);
-    const dirZ = Math.cos(operative.facing);
 
-    for (const box of DEPOT_CONTAINERS) {
-      if (wepOriginY > 5.2) continue;
-      let tmin = -Infinity;
-      let tmax = Infinity;
-      if (Math.abs(dirX) > 0.0001) {
-        let t1 = (box.minX - wepOriginX) / dirX;
-        let t2 = (box.maxX - wepOriginX) / dirX;
-        if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
-        tmin = Math.max(tmin, t1);
-        tmax = Math.min(tmax, t2);
-      } else if (wepOriginX < box.minX || wepOriginX > box.maxX) {
-        continue;
-      }
-      if (Math.abs(dirZ) > 0.0001) {
-        let t1 = (box.minZ - wepOriginZ) / dirZ;
-        let t2 = (box.maxZ - wepOriginZ) / dirZ;
-        if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
-        tmin = Math.max(tmin, t1);
-        tmax = Math.min(tmax, t2);
-      } else if (wepOriginZ < box.minZ || wepOriginZ > box.maxZ) {
-        continue;
-      }
-      if (tmax >= tmin) {
-        if (tmin > 0 && tmin < laserLen) {
-          laserLen = tmin;
-        } else if (tmin <= 0 && tmax > 0) {
-          laserLen = 0;
-          break;
-        }
-      }
-    }
-
-    if (laserLen <= 0) {
-      laserLine.visible = false;
-      laserLine.scale.set(0, 0, 0);
-    } else {
-      laserLine.visible = true;
-      laserLine.scale.set(1, 1, laserLen / 35.0);
-    }
-
-    if (muzzleFlashRef.current) {
-      muzzleFlashRef.current.visible =
-        lastShootTimeRef.current > 0 && flashElapsed >= 0 && flashElapsed <= 80;
-    }
-    if (tracersGroupRef.current) {
-      tracersGroupRef.current.visible =
-        lastShootTimeRef.current > 0 && flashElapsed >= 0 && flashElapsed <= 300;
-    }
-    if (tracerMeshRef.current) {
-      if (laserLen <= 0) {
-        tracerMeshRef.current.visible = false;
-      } else {
-        tracerMeshRef.current.visible = true;
-        const clampedLen = Math.max(0.01, Math.min(35.0, laserLen));
-        tracerMeshRef.current.scale.set(1, clampedLen / 12, 1);
-        tracerMeshRef.current.position.set(0, 0, 0.4 + clampedLen / 2);
-      }
-    }
 
     // Billboard label orienting towards camera
     if (labelRef.current) {

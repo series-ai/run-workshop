@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStashStore } from '../src/progression/stashStore.js';
+import { SectorDepotSimulation } from '../src/sim/game.js';
 import { updateContractProgress, INITIAL_CONTRACTS } from '../src/progression/contracts.js';
 import { gamepad } from '../src/input/gamepadController.js';
 
@@ -313,3 +314,33 @@ describe('Player Progression, Economy & Armory Store', () => {
     // Bank cash cannot be arbitrarily set by client-side local storage manipulation
     expect(useStashStore.getState().bankCash).toBe(initialCash);
   });
+
+  it("14. Laser Pointer Upgrade: off by default, equippable in armory loadout, and togglable in simulation", () => {
+    const store = useStashStore.getState();
+    store.resetProgress();
+
+    // Default loadout must have laser pointer disabled
+    expect(useStashStore.getState().loadout.hasLaserPointer).toBe(false);
+
+    // Equip laser pointer attachment
+    useStashStore.getState().setLaserPointer(true);
+    expect(useStashStore.getState().loadout.hasLaserPointer).toBe(true);
+
+    // Unequip laser pointer attachment
+    useStashStore.getState().setLaserPointer(false);
+    expect(useStashStore.getState().loadout.hasLaserPointer).toBe(false);
+
+    // Simulation operative default state
+    const sim = new SectorDepotSimulation("test_laser_raid", "spoke");
+    expect(sim.player.hasLaser).toBe(false);
+
+    // Toggle laser sight
+    const turnedOn = sim.toggleLaser();
+    expect(turnedOn).toBe(true);
+    expect(sim.player.hasLaser).toBe(true);
+
+    const turnedOff = sim.toggleLaser();
+    expect(turnedOff).toBe(false);
+    expect(sim.player.hasLaser).toBe(false);
+  });
+

@@ -27,6 +27,7 @@ interface HideoutMenuProps {
     secondaryWeapon: WeaponType;
     armorTier: ArmorTier;
     stims: number;
+    hasLaserPointer?: boolean;
   }) => void;
   onClose?: () => void;
 }
@@ -47,6 +48,7 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
     contracts,
     equipArmor,
     setStimsCount,
+    setLaserPointer,
     buyShopItem,
     sellStashItem,
     claimContractReward,
@@ -65,6 +67,7 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
       secondaryWeapon: loadout.secondaryWeapon,
       armorTier: loadout.armorTier,
       stims: loadout.stims,
+      hasLaserPointer: Boolean(loadout.hasLaserPointer),
     });
   };
 
@@ -72,6 +75,7 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
     { id: "shop_m855a1", name: "5.56 M855A1 AP Ammo (30 Rnd)", type: "ammo" as const, rarity: "rare" as const, icon: "📦", price: 1200 },
     { id: "shop_magnum12g", name: "12-Gauge Magnum Buckshot (8 Rnd)", type: "ammo" as const, rarity: "common" as const, icon: "💥", price: 600 },
     { id: "shop_propital", name: "Propital Emergency Stim", type: "med" as const, rarity: "rare" as const, icon: "💉", price: 500 },
+    { id: "shop_laser_pointer", name: "PEQ-15 Tactical Laser Sight", type: "weapon" as const, rarity: "rare" as const, icon: "🔦", price: 1500 },
     { id: "shop_trooper", name: "Class 4 Trooper Ceramic Plate", type: "armor" as const, rarity: "epic" as const, icon: "🛡️", price: 2800 },
     { id: "shop_zabralo", name: "Class 6 Zabralo Heavy Carrier", type: "armor" as const, rarity: "legendary" as const, icon: "🦺", price: 5500 },
     { id: "shop_violet_card", name: "Violet Lab Access Keycard", type: "keycard" as const, rarity: "legendary" as const, icon: "💳", price: 7500 },
@@ -581,6 +585,60 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
                     +
                   </button>
                 </div>
+              </div>
+
+              {/* Tactical Weapon Attachment: PEQ-15 Visible Laser Pointer */}
+              <div style={{
+                background: "rgba(30, 41, 59, 0.5)",
+                border: `1px solid ${loadout.hasLaserPointer ? "#38bdf8" : "#334155"}`,
+                borderRadius: "10px",
+                padding: "18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "18px" }}>🔦</span>
+                    <span style={{ fontSize: "13px", fontWeight: 900, color: "#f8fafc" }}>
+                      TACTICAL ATTACHMENT: PEQ-15 VISIBLE LASER POINTER
+                    </span>
+                    <span style={{
+                      fontSize: "9px",
+                      fontWeight: 900,
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      background: loadout.hasLaserPointer ? "rgba(56, 189, 248, 0.2)" : "#1e293b",
+                      color: loadout.hasLaserPointer ? "#38bdf8" : "#64748b",
+                      textTransform: "uppercase",
+                    }}>
+                      {loadout.hasLaserPointer ? "EQUIPPED" : "OFFLINE"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                    Weapon-mounted cyan laser aiming beam for downrange targeting (off by default, toggle in-raid with [T]).
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setLaserPointer(!loadout.hasLaserPointer);
+                    if (soundEnabled) sound.playClick();
+                  }}
+                  style={{
+                    background: loadout.hasLaserPointer ? "#0284c7" : "#1e293b",
+                    border: `1px solid ${loadout.hasLaserPointer ? "#38bdf8" : "#475569"}`,
+                    color: loadout.hasLaserPointer ? "#ffffff" : "#94a3b8",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  {loadout.hasLaserPointer ? "UNEQUIP" : "EQUIP ATTACHMENT"}
+                </button>
               </div>
             </div>
           )}

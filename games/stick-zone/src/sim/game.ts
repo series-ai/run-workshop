@@ -470,6 +470,7 @@ export interface OperativeState {
   isAlive: boolean;
   isExtracted: boolean;
   isFlashlightOn?: boolean;
+  hasLaser?: boolean;
   ammo: number;
   maxAmmo: number;
   shootCooldownTicks?: number;
@@ -624,6 +625,11 @@ export class SectorDepotSimulation {
   public toggleFlashlight(): boolean {
     this.player.isFlashlightOn = !(this.player.isFlashlightOn ?? true);
     return this.player.isFlashlightOn;
+  }
+
+  public toggleLaser(): boolean {
+    this.player.hasLaser = !(this.player.hasLaser ?? false);
+    return this.player.hasLaser;
   }
 
   public consumeFireEvent(): boolean {
@@ -1279,6 +1285,7 @@ export class SectorDepotSimulation {
       isAlive: true,
       isExtracted: false,
       isFlashlightOn: true,
+      hasLaser: false,
       ammo: 30,
       maxAmmo: 30,
       weapon: 'rifle',

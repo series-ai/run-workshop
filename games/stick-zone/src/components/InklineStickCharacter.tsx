@@ -32,6 +32,7 @@ export interface InklineStickCharacterProps {
   facing: number;
   accentColor: string;
   hasWeapon?: boolean;
+  hasLaser?: boolean;
   speed?: number;
   moveAngle?: number;
   action?: string;
@@ -106,6 +107,7 @@ function LoadedCharacter({
   facing,
   accentColor,
   hasWeapon = true,
+  hasLaser = false,
   isCurrentPlayer = false,
   speed,
   moveAngle,
@@ -616,8 +618,8 @@ function LoadedCharacter({
                 )}
               </group>
 
-              {/* Laser Aiming Beam Co-axial to Gun Barrel */}
-              {isCurrentPlayer && (
+              {/* Laser Aiming Beam Co-axial to Gun Barrel (Weapon Upgrade / Attachment - Off by Default) */}
+              {isCurrentPlayer && Boolean(operative ? operative.hasLaser : hasLaser) && (
                 <mesh position={weapon === "shotgun" ? [0, 0.04, 6.0] : [0, 0.04, 8.0]} rotation={[Math.PI / 2, 0, 0]} material={SharedMaterials.cyanGlow}>
                   <cylinderGeometry args={[0.005, 0.005, 16, 4]} />
                 </mesh>

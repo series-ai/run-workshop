@@ -42,6 +42,7 @@ export interface Loadout {
   secondaryWeapon: WeaponType;
   armorTier: ArmorTier;
   stims: number;
+  hasLaserPointer?: boolean;
 }
 
 export interface VerifiedSettlementParams {
@@ -104,6 +105,7 @@ export interface StashState {
   equipWeapon: (slot: "primary" | "secondary", weapon: WeaponType) => void;
   equipArmor: (tier: ArmorTier) => void;
   setStimsCount: (count: number) => void;
+  setLaserPointer: (enabled: boolean) => void;
 
   // Contracts
   claimContractReward: (contractId: string) => void;
@@ -123,6 +125,7 @@ const DEFAULT_LOADOUT: Loadout = {
   secondaryWeapon: "shotgun",
   armorTier: "medium",
   stims: 2,
+  hasLaserPointer: false,
 };
 
 const DEFAULT_STATS: PlayerStats = {
@@ -459,6 +462,12 @@ export const useStashStore = create<StashState>((set, get) => {
     setStimsCount: (count) => {
       const state = get();
       const newLoadout = { ...state.loadout, stims: Math.max(0, Math.min(4, count)) };
+      set({ loadout: newLoadout });
+    },
+
+    setLaserPointer: (enabled) => {
+      const state = get();
+      const newLoadout = { ...state.loadout, hasLaserPointer: enabled };
       set({ loadout: newLoadout });
     },
 

@@ -175,9 +175,12 @@ const MainApp: React.FC = () => {
         queuedReload.current = true;
       } else if (e.code === "KeyE" || e.code === "KeyF") {
         queuedInteract.current = true;
-      } else if (e.code === "KeyL" || e.code === "KeyT") {
+      } else if (e.code === "KeyL") {
         const isOn = sim.toggleFlashlight();
         sound.playFlashlightClick(isOn);
+      } else if (e.code === "KeyT") {
+        const isLaserOn = sim.toggleLaser();
+        sound.playFlashlightClick(isLaserOn);
       }
     };
 
@@ -599,6 +602,7 @@ const MainApp: React.FC = () => {
               sim.player.armor = 100;
             }
             sim.player.stimsRemaining = loadout.stims;
+            sim.player.hasLaser = Boolean(loadout.hasLaserPointer);
             setShowHideout(false);
             sound.playDeploy();
           }}
