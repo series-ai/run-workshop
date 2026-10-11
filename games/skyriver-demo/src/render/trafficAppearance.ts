@@ -72,7 +72,7 @@ export const TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE = 1.6;
 export const TRAFFIC_TRAIL_SCREEN_CAP_REFINEMENTS = 2;
 export const TRAFFIC_DIRECTION_PITCH_CLAMP = 0.35;
 export const TRAFFIC_HULL_FADE_RAMP_END = 0.45;
-export const TRAFFIC_TRAIL_END_ON_BAND = Object.freeze([0.9, 1] as const);
+export const TRAFFIC_TRAIL_END_ON_BAND = Object.freeze([0.72, 0.90] as const);
 export const TRAFFIC_TRAIL_END_FADE_EXPONENT = 1.4;
 export const TRAFFIC_TRAIL_HEAD_FADE_EXPONENT = 0.7;
 export const TRAFFIC_TRAIL_TAIL_FADE_EXPONENT = 1.2;
@@ -142,9 +142,9 @@ export function trafficTrailFarFade(distanceM: number): number {
   return Math.exp(Math.log(TRAFFIC_TRAIL_FAR_FADE_END_LENGTH_SCALE) * progress);
 }
 
-/** End-on trails lose length and light before they form a lamp-sized disc. */
+/** Reduce trail intensity when the camera sees the car from behind. */
 export function trafficTrailViewGain(facing: number): number {
-  return 1 - trafficAppearanceSmoothstep(TRAFFIC_TRAIL_END_ON_BAND[0], TRAFFIC_TRAIL_END_ON_BAND[1], Math.abs(facing));
+  return 1 - trafficAppearanceSmoothstep(TRAFFIC_TRAIL_END_ON_BAND[0], TRAFFIC_TRAIL_END_ON_BAND[1], -facing);
 }
 
 export function trafficCpuTierFade(
@@ -245,9 +245,6 @@ function glslNumber(value: number): string {
 
 /** Two kernels cover a bar. Their outer span equals the source bar width. */
 export const TRAFFIC_APPEARANCE_GLSL = /* glsl */ `
-float trafficTrailViewGain(float facing) {
-  return 1.0 - smoothstep(${TRAFFIC_TRAIL_END_ON_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_END_ON_BAND[1].toFixed(1)}, abs(facing));
-}
 float trafficTrailFarFade(float distanceM) {
   float progress = clamp((distanceM - ${TRAFFIC_TRAIL_FAR_FADE_BAND_M[0].toFixed(1)})
     / ${(TRAFFIC_TRAIL_FAR_FADE_BAND_M[1] - TRAFFIC_TRAIL_FAR_FADE_BAND_M[0]).toFixed(1)}, 0.0, 1.0);

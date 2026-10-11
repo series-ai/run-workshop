@@ -1,6 +1,7 @@
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
+const { checkPhysicalScale, checkTrailIntensity } = require('./approach-acceptance.cjs');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const [url, directory] = process.argv.slice(2);
 const closingVelocity = Number(process.env.CLOSING_VELOCITY || 250);
@@ -31,6 +32,7 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
       const shape = g.getAttribute('aCarShape');
       const row = Array.from({ length: g.instanceCount }, (_, i) => i).find(i => hullType ? types[shape.getX(i)] === hullType : ids.getZ(i) === 100);
       if (row === undefined) throw Error('Car 100 is absent.');
+      const carId = ids.getZ(row);
       const pos = camera.position.clone().set(positions.getX(row), positions.getY(row), positions.getZ(row));
       const dirA = g.getAttribute('aCarDir');
       const dir = pos.clone().set(dirA.getX(row), dirA.getY(row), dirA.getZ(row)).normalize();
@@ -68,9 +70,15 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
         camera.position.copy(pos).addScaledVector(dir, distance * Math.cos(radians)).addScaledVector(right, distance * Math.sin(radians));
         camera.lookAt(pos); camera.updateMatrixWorld(true);
         traffic.update(time, camera.position);
+        if (ids.getZ(row) !== carId) throw Error('The uploaded car row changed identity.');
+        const fadeAttribute = g.getAttribute('aCarFade');
+        const baseScale = fadeAttribute.getY(row);
+        const lightAlpha = ids.getX(row) + ids.getY(row);
+        if (!(lightAlpha > 0)) throw Error('The uploaded source and tier fade cannot be recovered from zero light alpha.');
+        const sourceTierFade = fadeAttribute.getX(row) / lightAlpha;
         const ma = hull.instanceMatrix.array, ca = hull.instanceColor.array;
         ma.copyWithin(0, slot * 16, slot * 16 + 16); ca.copyWithin(0, slot * 3, slot * 3 + 3);
-        const alpha = hull.geometry.getAttribute('aHullCoverage');
+        const alpha = hull.geometry.getAttribute('aFade');
         if (alpha) { alpha.array[0] = alpha.array[slot]; alpha.needsUpdate = true; }
         hull.count = 1; hull.instanceMatrix.needsUpdate = true; hull.instanceColor.needsUpdate = true;
         hull.visible = !trails && visibilityControl !== 'hidden' && !(visibilityControl === 'drop-frame' && Math.abs(distance - 950) < 0.1); streak.visible = trails;
@@ -85,7 +93,40 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
         gl.readPixels(0, 0, 1280, 720, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
         let litPixels = 0, energy = 0;
         for (let i = 0; i < pixels.length; i += 4) { const v = pixels[i] + pixels[i + 1] + pixels[i + 2]; if (v > 0) litPixels++; energy += v; }
+        const actualDraws = renderer.info.render.calls;
+        let trailControl = null;
+        if (trails) {
+          const actualPixels = pixels.slice();
+          const productionMaterial = streak.material;
+          const signedTerm = 'vIntensity *= 1.0 - smoothstep( 0.72, 0.90, - facing );';
+          if (productionMaterial.vertexShader.split(signedTerm).length !== 2) throw Error('The shipped signed trail term is absent or repeated.');
+          const referenceMaterial = productionMaterial.clone();
+          referenceMaterial.vertexShader = referenceMaterial.vertexShader.replace(signedTerm, '');
+          referenceMaterial.uniforms = productionMaterial.uniforms;
+          referenceMaterial.onBeforeCompile = productionMaterial.onBeforeCompile;
+          referenceMaterial.customProgramCacheKey = productionMaterial.customProgramCacheKey;
+          try {
+            streak.material = referenceMaterial;
+            renderer.info.reset(); renderer.render(isolated, camera);
+            gl.readPixels(0, 0, 1280, 720, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            let referenceLitPixels = 0, referenceEnergy = 0, mismatchedReferenceChannels = 0;
+            for (let i = 0; i < pixels.length; i += 4) {
+              const v = pixels[i] + pixels[i + 1] + pixels[i + 2];
+              if (v > 0) referenceLitPixels++;
+              referenceEnergy += v;
+              for (let channel = 0; channel < 3; channel++) if (pixels[i + channel] !== actualPixels[i + channel]) mismatchedReferenceChannels++;
+            }
+            trailControl = { referenceLitPixels, referenceEnergy, mismatchedReferenceChannels,
+              facing: Math.max(-1, Math.min(1, dir.dot(camera.position.clone().sub(pos).normalize()))),
+              facingOrigin: 'Uploaded car centre. Use only saturated front and rear endpoint checks.',
+              method: 'Same uploaded attributes, camera, fog, and uniforms. Remove only the shipped signed trail intensity term in the reference shader.' };
+          } finally {
+            streak.material = productionMaterial;
+            referenceMaterial.dispose(); pixels.set(actualPixels);
+          }
+        }
         const scale = Math.hypot(ma[0], ma[1], ma[2]);
+        const measuredDistanceM = Math.hypot(ma[12] - camera.position.x, ma[13] - camera.position.y, ma[14] - camera.position.z);
         const verts = hull.geometry.getAttribute('position'), index = hull.geometry.index;
         const matrix = hull.matrixWorld.clone().fromArray(ma), point = pos.clone();
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -100,8 +141,10 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
           const a = projected[index.getX(i)], b = projected[index.getX(i + 1)], c = projected[index.getX(i + 2)];
           rawTriangleAreaPx2 += Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) * 0.5;
         }
-        return { distanceM: distance, scale, hullCoverage: alpha?.array[0] ?? null, rawTriangleAreaPx2,
-          normalizedRawArea: rawTriangleAreaPx2 * distance * distance, extentPx: Math.max(maxX - minX, maxY - minY), litPixels, energy, draws: renderer.info.render.calls };
+        return { distanceM: distance, measuredDistanceM, scale, baseScale, sourceTierFade,
+          sourceTierFadeMethod: 'aCarFade.x / (aCarLod.x + aCarLod.y). The upload does not expose the two fade factors separately.',
+          trailControl, hullFade: alpha?.array[0] ?? null, rawTriangleAreaPx2,
+          normalizedRawArea: rawTriangleAreaPx2 * distance * distance, extentPx: Math.max(maxX - minX, maxY - minY), litPixels, energy, draws: actualDraws };
       }
       const frames = [];
       for (let frame = 0; frame <= Math.ceil(700 / closingVelocity * 60); frame++) {
@@ -112,23 +155,34 @@ if (!url || !directory || !(closingVelocity > 0)) throw Error('Provide URL, outp
       const rear200 = render(200); captures.push({ name: 'rear-200m.png', image: image() });
       const trails = [];
       for (const angle of [180, 170, 155, 90, 0]) { trails.push({ angle, ...render(200, angle, true) }); captures.push({ name: `trail-${angle}-200m.png`, image: image() }); }
-      return { url: location.href, visibilityControl, sourceTimeS: time, cameraFov: camera.fov, closingVelocity, fps: 60, originalStats, trafficDraws, hullStage, hull: hull.name, carId: ids.getZ(row), frames, rear200, trails, captures, glError: gl.getError() };
+      return { url: location.href, visibilityControl, sourceTimeS: time, cameraFov: camera.fov, closingVelocity, fps: 60, originalStats, trafficDraws, hullStage, hull: hull.name, carId, frames, rear200, trails, captures, glError: gl.getError() };
     }, { closingVelocity, hullType, visibilityControl });
     for (const capture of result.captures) fs.writeFileSync(path.join(directory, capture.name), Buffer.from(capture.image.split(',')[1], 'base64'));
     delete result.captures; result.errors = errors;
-    const scales = result.frames.map(frame => frame.scale);
+    result.physicalScale = checkPhysicalScale([...result.frames, result.rear200, ...result.trails].map(frame => ({
+      distanceM: frame.measuredDistanceM, scale: frame.scale, baseScale: frame.baseScale, sourceTierFade: frame.sourceTierFade,
+    })));
+    const front = result.trails.find(frame => frame.angle === 0);
+    const rear = result.trails.find(frame => frame.angle === 180);
+    result.trailIntensity = checkTrailIntensity([front, rear].map(frame => ({
+      facing: frame.trailControl.facing, ungatedIntensity: frame.trailControl.referenceEnergy, intensity: frame.energy,
+    })));
+    result.trailIntensity.method = 'Actual readback RGB energy versus the controlled ungated shader. Scalar comparison applies only to saturated endpoint gains 1 and 0.';
     const area = result.frames.map(frame => frame.normalizedRawArea);
     const maxAreaStep = Math.max(...area.slice(1).map((value, i) => Math.abs(value - area[i]) / Math.max(value, area[i], 1)));
     const peakPixels = Math.max(...result.frames.map(frame => frame.litPixels));
     const maxPixelStep = Math.max(...result.frames.slice(1).map((frame, i) => Math.abs(frame.litPixels - result.frames[i].litPixels))) / Math.max(peakPixels, 1);
     result.pixelContinuity = { maxAdjacentStepOverPeak: maxPixelStep, limit: 0.15,
       method: 'Actual readback lit-pixel count. Absolute adjacent change divided by the 600 to 1300 m peak. The 15 percent limit permits small raster steps in a 5 to 15 pixel wide hull. Full coverage at 600 and 200 m must remain visible.' };
-    result.acceptance = { visibleNearHull: result.frames.at(-1).hullCoverage > 0.99 && result.frames.at(-1).litPixels >= 10 && result.frames.at(-1).energy > 500 && result.rear200.hullCoverage > 0.99 && result.rear200.litPixels >= 50 && result.rear200.energy > 3000,
-      noFullCoverageGap: result.frames.filter(frame => frame.hullCoverage > 0.99).every(frame => frame.litPixels > 0),
+    result.acceptance = { visibleNearHull: result.frames.at(-1).hullFade > 0.99 && result.frames.at(-1).litPixels >= 10 && result.frames.at(-1).energy > 500 && result.rear200.hullFade > 0.99 && result.rear200.litPixels >= 50 && result.rear200.energy > 3000,
+      noFullCoverageGap: result.frames.filter(frame => frame.hullFade > 0.99).every(frame => frame.litPixels > 0),
       pixelContinuity: maxPixelStep < 0.15,
-      constantPhysicalScale: Math.max(...scales) - Math.min(...scales) < 1e-5,
+      shippedPhysicalScale: result.physicalScale.pass,
       normalizedAreaStep: maxAreaStep < 0.015, maxNormalizedAreaStep: maxAreaStep,
-      zeroEndOnTrail: result.trails.filter(frame => frame.angle === 0 || frame.angle === 180).every(frame => frame.litPixels === 0),
+      zeroRearTrail: rear.litPixels === 0 && rear.energy === 0 && rear.trailControl.referenceLitPixels > 0 && rear.trailControl.referenceEnergy > 0,
+      preservedFrontTrail: front.litPixels > 0 && front.energy > 0 && front.trailControl.referenceLitPixels > 0
+        && front.trailControl.mismatchedReferenceChannels === 0,
+      signedTrailIntensity: result.trailIntensity.pass,
       trafficDrawBudget: result.trafficDraws <= 8, gl: result.glError === 0 && errors.length === 0 };
     result.pass = Object.entries(result.acceptance).filter(([name]) => name !== 'maxNormalizedAreaStep').every(([, value]) => value === true);
     fs.writeFileSync(path.join(directory, 'closure.json'), JSON.stringify(result, null, 2));

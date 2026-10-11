@@ -9,7 +9,7 @@ function carRecord(traffic: SkyriverTraffic, id: number) {
   if (!(mesh instanceof Mesh) || !(mesh.geometry instanceof InstancedBufferGeometry)) throw new Error('R33_REAL_STREAK_BATCH_MISSING');
   const g = mesh.geometry, lod = g.getAttribute('aCarLod'), pos = g.getAttribute('aCarPos'), fade = g.getAttribute('aCarFade');
   for (let row = 0; row < g.instanceCount; row += 1) {
-    if (lod.getZ(row) === id) return { id, row, position: new Vector3(pos.getX(row), pos.getY(row), pos.getZ(row)), fade: fade.getX(row), trail: fade.getW(row), near: lod.getX(row), proxy: lod.getY(row) };
+    if (lod.getZ(row) === id) return { id, row, position: new Vector3(pos.getX(row), pos.getY(row), pos.getZ(row)), fade: fade.getX(row), sizeScale: fade.getY(row), trail: fade.getW(row), near: lod.getX(row), proxy: lod.getY(row) };
   }
   throw new Error('R33_ACTUAL_CAR_ROW_MISSING:' + id);
 }
@@ -87,10 +87,47 @@ describe('flyer continuity: actual interrupted tier transitions', () => {
 import { InstancedMesh } from 'three';
 import { closureSamples } from './support/flyerContinuityTemporal';
 import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanceModel';
-import { continuityInput } from './support/flyerContinuityMatrix';
+import { continuityInput, shippedHullResponse } from './support/flyerContinuityMatrix';
 
-describe('R37 actual rear approach at timed closure speed', () => {
-  it.each([125, 250, 500])('keeps physical hull scale at %i m/s and fades opaque coverage', closingVelocity => {
+describe('R33 actual rear approach at timed closure speed', () => {
+  it('keeps distance fade separate from actual tier lifecycle scale', () => {
+    const traffic = createTraffic();
+    const rows: unknown[] = [];
+    try {
+      traffic.update(10, { x: 0, y: 1500, z: 0 });
+      traffic.setQuality(TRAFFIC_QUALITY_TIERS.low);
+      traffic.update(10, { x: 0, y: 1500, z: 0 });
+      for (const elapsed of [0, 0.12, 0.36, 0.54, 1.08]) {
+        traffic.update(10 + elapsed, { x: 0, y: 1500, z: 0 });
+        const car = carRecord(traffic, 1000);
+        const camera = car.position.clone().add(new Vector3(0, 0, 200));
+        traffic.update(10 + elapsed, camera);
+        const current = carRecord(traffic, 1000);
+        let actual: { scale: number; fade: number } | null = null;
+        for (const object of traffic.objects) {
+          if (!(object instanceof InstancedMesh)) continue;
+          for (let slot = 0; slot < object.count; slot += 1) {
+            const matrix = object.instanceMatrix.array, offset = slot * 16;
+            if (Math.hypot(matrix[offset + 12]! - current.position.x,
+              matrix[offset + 13]! - current.position.y, matrix[offset + 14]! - current.position.z) >= 1e-4) continue;
+            if (actual) throw new Error('R33_AMBIGUOUS_REAL_HULL');
+            actual = { scale: Math.hypot(matrix[offset]!, matrix[offset + 1]!, matrix[offset + 2]!),
+              fade: object.geometry.getAttribute('aFade').getX(slot) };
+          }
+        }
+        if (!actual) throw new Error('R33_REAL_TIER_HULL_MISSING');
+        // At 200 m the total lamp share is one. Its fade is the source and tier product.
+        const expected = shippedHullResponse(200, current.fade);
+        expect(actual.fade).toBe(1);
+        expect(actual.scale).toBeCloseTo(current.sizeScale * expected.scale, 5);
+        rows.push({ elapsed, carId: current.id, sourceTierFade: current.fade,
+          baseScale: current.sizeScale, actual, expected });
+      }
+      save('shipped-lifecycle', { rows, gpuReadback: false });
+    } finally { traffic.dispose(); }
+  });
+
+  it.each([125, 250, 500])('keeps the shipped scale and aFade response at %i m/s', closingVelocity => {
     const traffic = createTraffic();
     try {
       const samples = closureSamples(closingVelocity);
@@ -101,12 +138,13 @@ describe('R37 actual rear approach at timed closure speed', () => {
         const a = o.instanceMatrix.array, j = i * 16;
         return Math.hypot(a[j + 12]! - target.position.x, a[j + 13]! - target.position.y, a[j + 14]! - target.position.z) < 0.01;
       }).some(Boolean));
-      if (!(mesh instanceof InstancedMesh)) throw Error('R37_HULL_MISSING');
+      if (!(mesh instanceof InstancedMesh)) throw Error('R33_HULL_MISSING');
       const slot = Array.from({ length: mesh.count }, (_, i) => i).find(i => {
         const a = mesh.instanceMatrix.array, j = i * 16;
         return Math.hypot(a[j + 12]! - target.position.x, a[j + 13]! - target.position.y, a[j + 14]! - target.position.z) < 0.01;
       })!;
-      let physicalScale = 0, previousCoverage = 0, maxFrameCoverageStep = 0;
+      let previousFade = 0, maxFrameFadeStep = 0;
+      const rows: unknown[] = [];
       for (const sample of samples) {
         // Advance the real traffic. Then place the camera behind this same car.
         traffic.update(10 + sample.timeS, target.position);
@@ -118,21 +156,28 @@ describe('R37 actual rear approach at timed closure speed', () => {
         traffic.update(10 + sample.timeS, camera);
         const matrix = mesh.instanceMatrix.array, j = slot * 16;
         const scale = Math.hypot(matrix[j]!, matrix[j + 1]!, matrix[j + 2]!);
-        const alpha = mesh.geometry.getAttribute('aHullCoverage').getX(slot);
-        if (sample.frame === 0) physicalScale = scale;
-        expect(scale).toBeCloseTo(physicalScale, 5);
-        expect(alpha).toBeGreaterThanOrEqual(previousCoverage - 1e-6);
-        maxFrameCoverageStep = Math.max(maxFrameCoverageStep, alpha - previousCoverage);
-        previousCoverage = alpha;
-        const expected = sample.distanceM >= 1300 ? 0 : sample.distanceM <= 1080 ? 1
-          : (() => { const x = (sample.distanceM - 1080) / 220; return 1 - (3 * x * x - 2 * x * x * x); })();
-        expect(alpha).toBeCloseTo(expected, 5);
-        const model = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', sample.distanceM), sizeScale: physicalScale });
+        const uploadedFade = mesh.geometry.getAttribute('aFade');
+        expect(uploadedFade.itemSize).toBe(1);
+        expect(uploadedFade.array).toBeInstanceOf(Float32Array);
+        const alpha = uploadedFade.getX(slot);
+        const expected = shippedHullResponse(sample.distanceM);
+        expect(scale).toBeCloseTo(current.sizeScale * expected.scale, 5);
+        expect(scale / current.sizeScale).toBeGreaterThanOrEqual(0.85 - 1e-6);
+        expect(scale / current.sizeScale).toBeLessThanOrEqual(1 + 1e-6);
+        expect(alpha).toBeGreaterThanOrEqual(previousFade - 1e-6);
+        maxFrameFadeStep = Math.max(maxFrameFadeStep, alpha - previousFade);
+        previousFade = alpha;
+        expect(alpha).toBeCloseTo(expected.fade, 5);
+        const model = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', sample.distanceM), sizeScale: current.sizeScale });
         expect(model.hull.scale).toBeCloseTo(scale, 5);
-        expect(model.hull.coverage).toBeCloseTo(alpha, 5);
+        expect(model.hull.fade).toBeCloseTo(alpha, 5);
+        expect(model.uploaded.aFade).toBeCloseTo(alpha, 5);
+        rows.push({ ...sample, carId: current.id, scale, baseScale: current.sizeScale, aFade: alpha, expected });
       }
-      expect(previousCoverage).toBe(1);
-      expect(maxFrameCoverageStep).toBeLessThanOrEqual(1.5 * closingVelocity / (60 * 220) + 1e-6);
+      expect(previousFade).toBe(1);
+      // Keep the existing 220 m band step limit. The shipped band is wider.
+      expect(maxFrameFadeStep).toBeLessThanOrEqual(1.5 * closingVelocity / (60 * 220) + 1e-6);
+      save('shipped-closure-' + closingVelocity, { rows, maxFrameFadeStep, unchangedStepLimit: 1.5 * closingVelocity / (60 * 220) + 1e-6, gpuReadback: false });
       expect(traffic.stats().drawCalls).toBeLessThanOrEqual(32);
       expect(mesh.material).toMatchObject({ transparent: false, depthWrite: true, depthTest: true });
     } finally { traffic.dispose(); }

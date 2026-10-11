@@ -187,7 +187,7 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
         const tick = a.stats().tick;
         const state = a.stats();
         const snapshot = { tick, alpha: state.alpha, tier: state.tier, cameraWorld: Array.from(cam.matrixWorld.elements), cameraProjection: Array.from(cam.projectionMatrix.elements) };
-        const cur = hulls.map((h) => ({ count: h.count, arr: h.instanceMatrix.array.slice(0, h.count * 16), coverage: h.geometry.getAttribute('aHullCoverage').array.slice(0, h.count) }));
+        const cur = hulls.map((h) => ({ count: h.count, arr: h.instanceMatrix.array.slice(0, h.count * 16), fade: h.geometry.getAttribute('aFade').array.slice(0, h.count) }));
         const fade = streak.geometry.getAttribute('aCarFade');
         const position = streak.geometry.getAttribute('aCarPos');
         const lod = streak.geometry.getAttribute('aCarLod');
@@ -206,7 +206,7 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
           const carId = carsAtPosition.get([matrix[12], matrix[13], matrix[14]].join(',')) ?? null;
           identityAudit.hullSamples += 1;
           identityAudit[carId === null ? 'hullSamplesWithoutCarId' : 'hullSamplesWithCarId'] += 1;
-          return { mesh: hulls[mi].name, slot, carId, matrix, coverage: batch.coverage[slot] };
+          return { mesh: hulls[mi].name, slot, carId, matrix, fade: batch.fade[slot] };
         }));
         counts.frames += 1;
         const hit = inside();
@@ -232,7 +232,7 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
     a.scene.update = origUpdate;
     const impostorEvents = lightEvents.filter(e => ['stream','lane','ring','free','same_car_impostor'].includes(e.cls) && e.occluded === false).map(e => ({...e, eventClass: 'impostorPop'}));
     counts.impostorPop = window.__POP_LAYER === 'traffic' ? impostorEvents.length : null;
-    return { counts, identityAudit, hullBayerMinimum: continuity.HULL_BAYER_MINIMUM, impostorAttributionEnabled: window.__POP_LAYER === 'traffic', events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
+    return { counts, identityAudit, hullDissolve: 'interleaved-gradient-noise', impostorAttributionEnabled: window.__POP_LAYER === 'traffic', events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
   }, secs);
   result.display = await page.evaluate(() => {
     const a = window.__skyriver; const r = a.scene.renderer; const gl = r.getContext();

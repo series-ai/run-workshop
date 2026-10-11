@@ -129,8 +129,9 @@ import {
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
   createImpostorTierTransition,
+  HULL_DISSOLVE_FLOOR_SCALE,
+  HULL_DISSOLVE_START_M,
   HULL_DRAW_DISTANCE_M,
-  HULL_DRAW_FADE_START_M,
   IMPOSTOR_FAR_FALLOFF_BAND_M,
   IMPOSTOR_LIGHT_HANDOVER_BAND_M,
   IMPOSTOR_SUPPORT_TAPER_BAND,
@@ -1212,7 +1213,6 @@ void main() {
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
       * trafficTrailFarFade(length(cameraPosition - aCarPos))
-      * trafficTrailViewGain(dot(dir, normalize(cameraPosition - lamp)))
     : 0.0;
   vec3 tailEnd = lamp - dir * trail;
   vec4 v1 = viewMatrix * vec4(tailEnd, 1.0);
@@ -1271,7 +1271,8 @@ void main() {
     // Seen from the front the trail is the headlamps' warm white, from behind the tails' red
     // (vWarm carries the blend); it never slices through the camera.
     vWarm = smoothstep( ${TRAFFIC_TRAIL_WARM_FACING_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_WARM_FACING_BAND[1].toFixed(1)}, dot( dir, toCam ) );
-    vIntensity = aCarFade.x * aCarFade.w * trafficTrailViewGain(dot(dir, toCam)) * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
+    vIntensity = aCarFade.x * aCarFade.w * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
+    vIntensity *= 1.0 - smoothstep( 0.72, 0.90, - facing );
   }
 
   vIntensity *= lampGain;
@@ -2027,10 +2028,9 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   carMaterial.onBeforeCompile = (shader, renderer) => {
     fogCompile.call(carMaterial, shader, renderer);
     shader.uniforms.uTrafficGlassReflection = { value: 1 };
-    shader.vertexShader = 'attribute float aHullCoverage;\nattribute float aGlass;\nvarying float vHullCoverage;\nvarying float vTrafficGlass;\nvarying vec3 vTrafficWorld;\nvarying vec3 vTrafficNormal;\n' + shader.vertexShader;
+    shader.vertexShader = 'attribute float aGlass;\nvarying float vTrafficGlass;\nvarying vec3 vTrafficWorld;\nvarying vec3 vTrafficNormal;\n' + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>',
       `#include <begin_vertex>
-vHullCoverage = aHullCoverage;
 vTrafficGlass = aGlass;
 vec4 trafficWorld = vec4(transformed, 1.0);
 vec3 trafficNormal = normal;
@@ -2041,7 +2041,6 @@ trafficNormal = mat3(instanceMatrix) * trafficNormal;
 vTrafficWorld = (modelMatrix * trafficWorld).xyz;
 vTrafficNormal = normalize(mat3(modelMatrix) * trafficNormal);`);
     shader.fragmentShader = `uniform float uTrafficGlassReflection;
-varying float vHullCoverage;
 varying float vTrafficGlass;
 varying vec3 vTrafficWorld;
 varying vec3 vTrafficNormal;
@@ -2061,18 +2060,18 @@ if (vTrafficGlass > 0.5) {
   diffuseColor.rgb += uTrafficGlassReflection * vTrafficGlass * vec3(0.018) * overcast * (0.18 + 0.82 * paneFresnel) * paneDetail;
 }
 `);
-    // Ordered coverage leaves surviving fragments in the opaque depth stage.
-    shader.fragmentShader = shader.fragmentShader.replace('#include <clipping_planes_fragment>', `
-      #include <clipping_planes_fragment>
-      vec2 cell = mod(floor(gl_FragCoord.xy), 4.0);
-      vec2 low = mod(cell, 2.0);
-      vec2 high = floor(cell / 2.0);
-      float rank = 4.0 * (2.0 * low.x + 3.0 * low.y - 4.0 * low.x * low.y)
-        + (2.0 * high.x + 3.0 * high.y - 4.0 * high.x * high.y);
-      if (vHullCoverage <= (rank + 0.5) / 16.0) discard;
-    `);
   };
-  carMaterial.customProgramCacheKey = () => 'skyriver-hull-coverage-glass-v3';
+  const carDissolvePrev = carMaterial.onBeforeCompile;
+  carMaterial.onBeforeCompile = (shader, renderer) => {
+    carDissolvePrev.call(carMaterial, shader, renderer);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aFade;\nvarying float vHullFade;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n  vHullFade = aFade;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vHullFade;\nfloat skyriverIgn(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }')
+      .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n  if (skyriverIgn(gl_FragCoord.xy) > vHullFade) discard;');
+  };
+  carMaterial.customProgramCacheKey = () => 'skyriver-hull-ign-dissolve-glass-v4';
 
   const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildBus(), buildFlatbed()];
   const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'];
@@ -2081,7 +2080,7 @@ if (vTrafficGlass > 0.5) {
   const meshes: InstancedMesh[] = [];
   const matrixArrays: Float32Array[] = [];
   const colorArrays: Float32Array[] = [];
-  const coverageArrays: Float32Array[] = [];
+  const hullFadeArrays: Float32Array[] = [];
 
   for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
     const build = archetypeBuilds[archetype];
@@ -2091,10 +2090,10 @@ if (vTrafficGlass > 0.5) {
     geometries.push(geometry);
 
     const capacity = Math.max(1, archetypeTotals[archetype]);
-    const coverage = new InstancedBufferAttribute(new Float32Array(capacity), 1);
-    coverage.setUsage(DynamicDrawUsage);
-    geometry.setAttribute('aHullCoverage', coverage);
-    coverageArrays.push(coverage.array as Float32Array);
+    const hullFade = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+    hullFade.setUsage(DynamicDrawUsage);
+    geometry.setAttribute('aFade', hullFade);
+    hullFadeArrays.push(hullFade.array as Float32Array);
     const mesh = new InstancedMesh(geometry, carMaterial, capacity);
     mesh.name = 'skyriver.traffic.' + label;
     // Every matrix changes per frame across the whole canyon.
@@ -2689,13 +2688,13 @@ if (vTrafficGlass > 0.5) {
         const toCarX = px - camX;
         const toCarY = py - camY;
         const toCarZ = pz - camZ;
-        // Keep physical size through the distance handover. Fade opaque coverage.
+        // Use the shipped distance scale and dissolve.
         const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
-        const hullLod = 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
+        const hullLod = 1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
         fade *= tierFadeFor(car);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
-        const scale = sizeScale[car]!;
+        const scale = sizeScale[car]! * (HULL_DISSOLVE_FLOOR_SCALE + (1 - HULL_DISSOLVE_FLOOR_SCALE) * hullLod) * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
         const pitchY = clamp(fy, -TRAFFIC_DIRECTION_PITCH_CLAMP, TRAFFIC_DIRECTION_PITCH_CLAMP);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;
@@ -2741,7 +2740,7 @@ if (vTrafficGlass > 0.5) {
         const distanceM = Math.sqrt(distanceSq);
         const legacyFarAlpha = trafficThinFarAlpha(distanceSq, carThinFar[car] === 1);
         writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
-        coverageArrays[archetype]![slot] = hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade) * sameCarLodScratch.totalAlpha;
+        hullFadeArrays[archetype]![slot] = hullLod;
         const nearFade = fade * sameCarLodScratch.nearAlpha;
         const totalFade = fade * sameCarLodScratch.totalAlpha;
         // Hull bars and instance colour use the near share.
@@ -2781,7 +2780,7 @@ if (vTrafficGlass > 0.5) {
       }
 
       const mesh = meshes[archetype];
-      mesh.geometry.getAttribute('aHullCoverage').needsUpdate = true;
+      mesh.geometry.getAttribute('aFade').needsUpdate = true;
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
     }

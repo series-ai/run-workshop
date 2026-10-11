@@ -7,6 +7,9 @@ export const IMPOSTOR_FAR_FALLOFF_BAND_M = Object.freeze([2500, 6500] as const);
 export const IMPOSTOR_SUPPORT_TAPER_BAND = Object.freeze([0.65, 1] as const);
 export const CPU_LIGHT_HANDOVER_BLEND_PRESENCE = 0.5;
 export const HULL_DRAW_FADE_START_M = IMPOSTOR_LIGHT_HANDOVER_BAND_M[0];
+/** Start the hull dissolve before the light handover. Keep at least 85 percent distance scale. */
+export const HULL_DISSOLVE_START_M = 750;
+export const HULL_DISSOLVE_FLOOR_SCALE = 0.85;
 export const HULL_DRAW_DISTANCE_M = IMPOSTOR_LIGHT_HANDOVER_BAND_M[1];
 
 function clamp01(value: number): number {

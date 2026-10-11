@@ -2,8 +2,6 @@
 
 // Compare actual traffic buffers without a browser or a render call.
 (() => {
-  const HULL_BAYER_MINIMUM = 1 / 32;
-
   function byCar(samples) {
     const indexed = new Map();
     for (const sample of samples) {
@@ -58,10 +56,8 @@
         mesh: sample.mesh, i: sample.slot, carId: sample.carId ?? null,
         identityKnown: sample.carId !== null && sample.carId !== undefined && sample.carId === prior.carId,
         previousMatrix: Array.from(pm), currentMatrix: Array.from(cm),
-        previousCoverage: prior.coverage, currentCoverage: sample.coverage,
-        bayerMinimum: HULL_BAYER_MINIMUM,
-        previousHullFullyDiscarded: prior.coverage <= HULL_BAYER_MINIMUM,
-        currentHullFullyDiscarded: sample.coverage <= HULL_BAYER_MINIMUM,
+        previousHullFade: prior.fade, currentHullFade: sample.fade,
+        hullDissolve: 'interleaved-gradient-noise',
       };
       const scaleBlink = Math.abs(sa - sb) > 0.5 * maximumScale;
       if (scaleBlink) { events.push({ type: 'blink', ...witness }); continue; }
@@ -74,7 +70,7 @@
     return events;
   }
 
-  const api = Object.freeze({ HULL_BAYER_MINIMUM, compareStreakFrames, compareHullFrames });
+  const api = Object.freeze({ compareStreakFrames, compareHullFrames });
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else globalThis.__skyriverPopContinuity = api;
 })();

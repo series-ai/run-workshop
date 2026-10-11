@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { InstancedBufferGeometry, InstancedMesh, Mesh, PerspectiveCamera, ShaderLib, UniformsUtils, Vector3 } from 'three';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { TRAFFIC_APPEARANCE_PROFILES } from '../src/render/trafficAppearance';
+import { trafficHullIgnNoise, trafficHullFragmentDiscarded } from '../src/render/trafficAppearanceModel';
 
 type Position = [number, number, number];
 interface StreakSample {
@@ -20,7 +21,7 @@ interface HullSample {
   slot: number;
   carId: number | null;
   matrix: number[];
-  coverage: number;
+  fade: number;
 }
 interface PopEvent {
   type: string;
@@ -32,20 +33,22 @@ interface Frame {
   hulls: HullSample[];
 }
 interface Detector {
-  HULL_BAYER_MINIMUM: number;
   compareStreakFrames(previous: StreakSample[], current: StreakSample[], project: (p: Position) => number[] | null): PopEvent[];
   compareHullFrames(previous: HullSample[], current: HullSample[], project: (p: Position) => number[] | null): PopEvent[];
 }
 const imported: unknown = createRequire(import.meta.url)('../tools/render-evidence/pop-continuity.cjs');
 if (typeof imported !== 'object' || imported === null ||
   !('compareStreakFrames' in imported) || typeof imported.compareStreakFrames !== 'function' ||
-  !('compareHullFrames' in imported) || typeof imported.compareHullFrames !== 'function' ||
-  !('HULL_BAYER_MINIMUM' in imported) || typeof imported.HULL_BAYER_MINIMUM !== 'number') {
+  !('compareHullFrames' in imported) || typeof imported.compareHullFrames !== 'function') {
   throw new Error('R39_POP_HELPER_API_MISSING');
 }
 const detector = imported as Detector;
 const proofDirectory = process.env.R39_POP_PROOF_DIR;
 const loadedSourceHashes = {
+  traffic: createHash('sha256').update(readFileSync(new URL('../src/render/traffic.ts', import.meta.url))).digest('hex'),
+  appearance: createHash('sha256').update(readFileSync(new URL('../src/render/trafficAppearance.ts', import.meta.url))).digest('hex'),
+  model: createHash('sha256').update(readFileSync(new URL('../src/render/trafficAppearanceModel.ts', import.meta.url))).digest('hex'),
+  handover: createHash('sha256').update(readFileSync(new URL('../src/render/lightHandover.ts', import.meta.url))).digest('hex'),
   helper: createHash('sha256').update(readFileSync(new URL('../tools/render-evidence/pop-continuity.cjs', import.meta.url))).digest('hex'),
   test: createHash('sha256').update(readFileSync(new URL('./r39PopIdentity.test.ts', import.meta.url))).digest('hex'),
 };
@@ -84,12 +87,13 @@ function snapshot(traffic: ReturnType<typeof createSkyriverTraffic>): Frame {
     const profile = TRAFFIC_APPEARANCE_PROFILES.findIndex(p => object.name === 'skyriver.traffic.' + p.name);
     const rows = streaks.filter(s => s.profile === profile).sort((a, b) => a.carId - b.carId);
     if (rows.length !== object.count) throw new Error('R39_REAL_BATCH_COUNT_MISMATCH');
-    const coverage = object.geometry.getAttribute('aHullCoverage');
+    const hullFade = object.geometry.getAttribute('aFade');
+    if (hullFade.itemSize !== 1 || !(hullFade.array instanceof Float32Array)) throw new Error('R33_REAL_HULL_FADE_MISSING');
     for (let slot = 0; slot < object.count; slot += 1) {
       const matrix = Array.from(object.instanceMatrix.array.slice(slot * 16, slot * 16 + 16));
       const row = rows[slot]!;
       if (row.position.some((v, axis) => Math.abs(v - matrix[12 + axis]!) > 1e-4)) throw new Error('R39_REAL_CAR_CENTRE_MISMATCH');
-      hulls.push({ mesh: object.name, slot, carId: row.carId, matrix, coverage: coverage.getX(slot) });
+      hulls.push({ mesh: object.name, slot, carId: row.carId, matrix, fade: hullFade.getX(slot) });
     }
   }
   if (new Set(streaks.map(s => s.carId)).size !== streaks.length) throw new Error('R39_REAL_CAR_IDS_NOT_UNIQUE');
@@ -190,14 +194,14 @@ describe('R39 independent real-buffer pop identity', () => {
     } finally { traffic.dispose(); }
   });
 
-  it.each([0, 1 / 32, 1 / 32 + 1e-6, 1])('keeps raw same-ID relocation with coverage %f', coverage => {
+  it.each([0, 1e-6, 0.5, 1])('keeps raw same-ID relocation with aFade %f', fade => {
     const { traffic, cam, project } = setup();
     try {
       const before = snapshot(traffic), car = before.streaks.find(row => row.fade > 0.9 && project(row.position));
       const hull = before.hulls.find(row => row.carId === car?.carId);
       if (!car || !hull) throw new Error('R39_VISIBLE_REAL_HULL_MISSING');
       const mesh = actualHull(traffic, hull), streak = actualStreak(traffic);
-      mesh.geometry.getAttribute('aHullCoverage').setX(hull.slot, coverage);
+      mesh.geometry.getAttribute('aFade').setX(hull.slot, fade);
       const prior = snapshot(traffic), movedX = car.position[0] + 100;
       mesh.instanceMatrix.array[hull.slot * 16 + 12] = movedX;
       streak.getAttribute('aCarPos').setX(car.slot, movedX);
@@ -205,12 +209,13 @@ describe('R39 independent real-buffer pop identity', () => {
       expect(events).toHaveLength(1);
       const event = events[0]!;
       expect(event.type).toBe('teleport');
-      expect(event.previousHullFullyDiscarded).toBe(coverage <= detector.HULL_BAYER_MINIMUM);
-      expect(event.currentHullFullyDiscarded).toBe(coverage <= detector.HULL_BAYER_MINIMUM);
-      expect(event.previousCoverage).toBeCloseTo(coverage, 7);
-      expect(event.currentCoverage).toBeCloseTo(coverage, 7);
+      expect(event.previousHullFade).toBeCloseTo(fade, 7);
+      expect(event.currentHullFade).toBeCloseTo(fade, 7);
+      expect(event).not.toHaveProperty('previousHullFullyDiscarded');
+      expect(event).not.toHaveProperty('currentHullFullyDiscarded');
+      expect(event).not.toHaveProperty('bayerMinimum');
       expect(after.streaks.find(row => row.carId === car.carId)!.fade).toBeGreaterThan(0.9);
-      receipt('relocation-coverage-' + coverage, { event, previousStreak: car, currentStreak: after.streaks.find(row => row.carId === car.carId), actualBufferFault: true, lampInvisibilityClaim: false, rendererTimeSeconds: 12, seed: 424242, camera: { position: cam.position.toArray(), quaternion: cam.quaternion.toArray(), fov: cam.fov } });
+      receipt('relocation-fade-' + fade, { event, previousStreak: car, currentStreak: after.streaks.find(row => row.carId === car.carId), actualBufferFault: true, lampInvisibilityClaim: false, rendererTimeSeconds: 12, seed: 424242, camera: { position: cam.position.toArray(), quaternion: cam.quaternion.toArray(), fov: cam.fov } });
     } finally { traffic.dispose(); }
   });
 
@@ -272,27 +277,45 @@ describe('R39 independent real-buffer pop identity', () => {
     } finally { traffic.dispose(); }
   });
 
-  it('uses the actual material hook and its exact sixteen Bayer thresholds', () => {
+  it('uses aFade and the strict IGN discard term in all six actual hull materials', () => {
     const { traffic } = setup();
     try {
-      const mesh = traffic.objects.find(o => o instanceof InstancedMesh);
-      if (!(mesh instanceof InstancedMesh)) throw new Error('R39_REAL_MATERIAL_MISSING');
-      const shader = { uniforms: UniformsUtils.clone(ShaderLib.basic.uniforms), vertexShader: ShaderLib.basic.vertexShader, fragmentShader: ShaderLib.basic.fragmentShader };
-      const material = Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material;
-      Reflect.apply(material.onBeforeCompile, material, [shader, undefined]);
-      const rankMatch = shader.fragmentShader.match(/float rank = ([\s\S]*?);/), condition = shader.fragmentShader.match(/if \(vHullCoverage ([<=>]+) \(rank \+ ([\d.]+)\) \/ ([\d.]+)\) discard;/);
-      if (!rankMatch || !condition) throw new Error('R39_ACTUAL_BAYER_TERM_MISSING');
-      const expression = rankMatch[1]!.replaceAll('low.x', 'lx').replaceAll('low.y', 'ly').replaceAll('high.x', 'hx').replaceAll('high.y', 'hy');
-      const rank = new Function('lx', 'ly', 'hx', 'hy', 'return (' + expression + ')') as (lx: number, ly: number, hx: number, hy: number) => number;
-      const ranks = Array.from({ length: 16 }, (_, i) => rank(i % 4 % 2, Math.floor(i / 4) % 2, Math.floor(i % 4 / 2), Math.floor(i / 8)));
-      expect(ranks).toEqual([0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]);
-      expect(condition[1]).toBe('<=');
-      const thresholds = ranks.map(r => (r + Number(condition[2])) / Number(condition[3]));
-      expect(Math.min(...thresholds)).toBe(detector.HULL_BAYER_MINIMUM);
-      expect(detector.HULL_BAYER_MINIMUM).toBe(1 / 32);
-      const rows = [0, 1 / 32, 1 / 32 + 1e-6, 1].map(coverage => ({ coverage, survivingCells: thresholds.filter(t => coverage > t).length }));
-      expect(rows.map(r => r.survivingCells)).toEqual([0, 0, 1, 16]);
-      receipt('actual-fragment-bayer', { shaderSha256: createHash('sha256').update(shader.fragmentShader).digest('hex'), cacheKey: material.customProgramCacheKey(), condition: condition[0], actualRankExpression: rankMatch[1], ranks, thresholds, minimum: Math.min(...thresholds), rows, gpuReadback: false });
+      const meshes = traffic.objects.filter((o): o is InstancedMesh => o instanceof InstancedMesh);
+      expect(meshes).toHaveLength(6);
+      const hooks: unknown[] = [];
+      for (const mesh of meshes) {
+        const shader = { uniforms: UniformsUtils.clone(ShaderLib.basic.uniforms), vertexShader: ShaderLib.basic.vertexShader, fragmentShader: ShaderLib.basic.fragmentShader };
+        const material = Array.isArray(mesh.material) ? mesh.material[0]! : mesh.material;
+        Reflect.apply(material.onBeforeCompile, material, [shader, undefined]);
+        expect(shader.vertexShader).toContain('attribute float aFade;');
+        expect(shader.vertexShader).toContain('vHullFade = aFade;');
+        expect(mesh.geometry.getAttribute('aFade').itemSize).toBe(1);
+        const expression = shader.fragmentShader.match(/return fract\(([\d.]+) \* fract\(dot\(p, vec2\(([\d.]+), ([\d.]+)\)\)\)\);/);
+        const condition = shader.fragmentShader.match(/if \(skyriverIgn\(gl_FragCoord.xy\) ([<=>]+) vHullFade\) discard;/);
+        if (!expression || !condition) throw new Error('R33_ACTUAL_IGN_TERM_MISSING');
+        expect(expression.slice(1).map(Number)).toEqual([52.9829189, 0.06711056, 0.00583715]);
+        expect(condition[1]).toBe('>');
+        const fract = (value: number) => value - Math.floor(value);
+        const actual = (x: number, y: number) => fract(Number(expression[1]) * fract(x * Number(expression[2]) + y * Number(expression[3])));
+        const samples = Array.from({ length: 1024 }, (_, i) => {
+          const point: [number, number] = [i % 32 + 0.5, Math.floor(i / 32) + 0.5];
+          const independent = fract(52.9829189 * fract(point[0] * 0.06711056 + point[1] * 0.00583715));
+          expect(actual(...point)).toBe(independent);
+          expect(trafficHullIgnNoise(point)).toBe(independent);
+          for (const fade of [0, 1e-6, 0.5, 1]) expect(trafficHullFragmentDiscarded(fade, point)).toBe(independent > fade);
+          expect(trafficHullFragmentDiscarded(independent, point)).toBe(false);
+          expect(trafficHullFragmentDiscarded(independent - 1e-9, point)).toBe(true);
+          return { point, noise: actual(...point) };
+        });
+        expect(actual(0, 0)).toBe(0);
+        expect(trafficHullFragmentDiscarded(0, [0, 0])).toBe(false);
+        const fades = [0, 1e-6, 0.5, 1].map(fade => ({ fade, survivingSamples: samples.filter(s => !(s.noise > fade)).length }));
+        expect(fades[2]!.survivingSamples).toBeGreaterThan(450);
+        expect(fades[2]!.survivingSamples).toBeLessThan(575);
+        expect(fades[3]!.survivingSamples).toBe(1024);
+        hooks.push({ mesh: mesh.name, shaderSha256: createHash('sha256').update(shader.fragmentShader).digest('hex'), cacheKey: material.customProgramCacheKey(), condition: condition[0], actualExpression: expression[0], fades, samples });
+      }
+      receipt('actual-fragment-ign', { hooks, gpuReadback: false, precision: 'CPU scalar checks do not prove GPU rounding or visible hull area.', universalFullyDiscardedClaim: false, lampInvisibilityClaim: false });
     } finally { traffic.dispose(); }
   });
 });

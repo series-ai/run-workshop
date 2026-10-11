@@ -100,6 +100,21 @@ export function independentSmoothstep(a: number, b: number, value: number): numb
   const x = Math.max(0, Math.min(1, (value - a) / (b - a)));
   return 3 * x * x - 2 * x * x * x;
 }
+/** Independent values from the shipped 04f8393a runtime contract. */
+export function shippedHullResponse(distanceM: number, sourceFade = 1, tierFade = 1) {
+  const fade = 1 - independentSmoothstep(750, 1300, distanceM);
+  const distanceScale = 0.85 + 0.15 * fade;
+  const lifecycleScale = independentSmoothstep(0, 0.45, sourceFade * tierFade);
+  return { fade, distanceScale, lifecycleScale, scale: distanceScale * lifecycleScale };
+}
+function referenceTierFade(input: SameCarTrafficAppearanceInput): number {
+  const tier = input.cpuTier;
+  if (tier.fromCount < 0) return input.carIndex < tier.targetCount ? 1 : 0;
+  const from = tier.fromAlphaSnapshot?.[input.carIndex]
+    ?? (input.carIndex < tier.fromCount ? 1 : 0);
+  const target = input.carIndex < tier.targetCount ? 1 : 0;
+  return from * (1 - tier.progress) + target * tier.progress;
+}
 function referenceTarget(input: SameCarTrafficAppearanceInput): number {
   if (input.impostorPresence === 0) {
     return input.thinFar ? 1 - independentSmoothstep(TRAFFIC_THIN_FAR_BAND_M[0] ** 2,
@@ -144,8 +159,10 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     const expectedHull = 1 - independentSmoothstep(IMPOSTOR_LIGHT_HANDOVER_BAND_M[0], IMPOSTOR_LIGHT_HANDOVER_BAND_M[1], row.distanceM);
     const expectedNear = row.input.impostorPresence === 0 ? referenceTarget(row.input) : expectedHull;
     check(row.distanceM, 'near handover assignment', Math.abs(lod.nearAlpha - expectedNear), 1e-12);
-    check(row.distanceM, 'physical hull scale', Math.abs(row.output.hull.scale - row.input.sizeScale), 1e-12);
-    check(row.distanceM, 'hull LOD coverage', Math.abs(row.output.hull.coverage - expectedHull * referenceTarget(row.input)), 1e-12);
+    const expectedResponse = shippedHullResponse(row.distanceM, row.input.sourceFade, referenceTierFade(row.input));
+    check(row.distanceM, 'physical hull scale', Math.abs(row.output.hull.scale - row.input.sizeScale * expectedResponse.scale), 1e-12);
+    check(row.distanceM, 'hull distance fade', Math.abs(row.output.hull.fade - expectedResponse.fade), 1e-12);
+    check(row.distanceM, 'hull mean coverage estimate', Math.abs(row.output.hull.coverage - expectedResponse.fade), 1e-12);
     const expectedDim = 1 - (1 - TRAFFIC_DISTANCE_DIM_FLOOR) * Math.min(1, row.distanceM ** 2 / TRAFFIC_DISTANCE_DIM_RANGE_M ** 2);
     for (const [side, patches] of row.output.hull.patches.entries()) {
       const color = side === 0 ? TRAFFIC_HULL_HEADLIGHT_RGB : TRAFFIC_HULL_TAILLIGHT_RGB;
@@ -199,7 +216,7 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     const floorGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
       * independentSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
     const trailPickup = independentSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], row.referenceTail.lampDistance);
-    const viewGain = 1 - independentSmoothstep(0.9, 1, Math.abs(row.referenceTail.facing));
+    const viewGain = 1 - independentSmoothstep(0.72, 0.90, -row.referenceTail.facing);
     const trailGain = row.input.sourceFade * expectedNear * baseTrail * trailPickup * floorGain * viewGain;
     check(row.distanceM, 'trail source gain', Math.abs(row.output.streak.trail.sourceGain - trailGain), 1e-9);
     const parent = referenceTarget(row.input) > 0 ? baseTrail * expectedNear / referenceTarget(row.input) : 0;

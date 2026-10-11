@@ -11,7 +11,7 @@ import {
 
 function sampleDistanceShares(distanceM: number, presence: number) {
   const lod = writeSameCarLightLod(distanceM, presence, 1);
-  return { ...lod, hull: hullLodAlpha(distanceM) };
+  return { ...lod, lightNearCap: hullLodAlpha(distanceM) };
 }
 function sumError(near: number, far: number, target: number): number {
   return Math.abs(near + far - target);
@@ -73,7 +73,7 @@ import { TRAFFIC_APPEARANCE_PROFILES, TRAFFIC_LAMP_HEAD_FACING_BAND, TRAFFIC_LAM
   TRAFFIC_TRAIL_FAR_FADE_BAND_M } from '../src/render/trafficAppearance';
 import { projectTrafficLampKernel } from '../src/render/trafficAppearanceModel';
 import {
-  continuityProfile, continuityRow, continuityInput, continuityViolations, appearanceMetrics,
+  continuityProfile, continuityRow, continuityInput, continuityViolations, appearanceMetrics, shippedHullResponse,
 } from './support/flyerContinuityMatrix';
 import {
   FLYER_MATRIX_DPRS, FLYER_MATRIX_FACINGS, FLYER_MATRIX_TIERS,
@@ -229,34 +229,70 @@ describe('flyer continuity: captured temporal state', () => {
 import { trafficTrailViewGain } from '../src/render/trafficAppearance';
 import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanceModel';
 
-describe('R37 rear fade and end-on trail limits', () => {
-  it('keeps the hull physical size through source and quality fades', () => {
-    for (const sourceFade of [0, 0.1, 0.3, 0.45, 1]) {
-      const result = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', 1190), sourceFade });
-      expect(result.hull.scale).toBe(2);
-      expect(result.hull.coverage).toBeGreaterThanOrEqual(0);
-      expect(result.hull.coverage).toBeLessThanOrEqual(0.5);
-      if (sourceFade === 0) expect(result.hull.patches.flat().every(patch => !patch.rendered)).toBe(true);
+describe('R33 shipped hull dissolve and trail contract', () => {
+  it('separates distance size from source and tier lifecycle size', () => {
+    for (const distance of [600, 750, 900, 1190, 1300, 1500]) {
+      for (const sourceFade of [0, 0.1, 0.3, 0.45, 1]) {
+        const response = shippedHullResponse(distance, sourceFade);
+        const result = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', distance), sourceFade });
+        expect(result.hull.scale).toBeCloseTo(2 * response.scale, 12);
+        expect(result.hull.fade).toBeCloseTo(response.fade, 12);
+        expect(result.hull.coverage).toBeCloseTo(response.fade, 12);
+        expect(result.hull.distanceScale).toBeCloseTo(response.distanceScale, 12);
+        expect(result.hull.lifecycleScale).toBeCloseTo(response.lifecycleScale, 12);
+        if (sourceFade === 1) {
+          expect(result.hull.scale).toBeGreaterThanOrEqual(2 * 0.85);
+          expect(result.hull.scale).toBeLessThanOrEqual(2);
+        }
+        if (sourceFade === 0) expect(result.hull.patches.flat().every(patch => !patch.rendered)).toBe(true);
+      }
     }
     const zero = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'low', 1150, true), fogColor: { r: 1, g: 1, b: 1 }, fogFactor: 1 });
-    expect(zero.hull.scale).toBe(2);
-    expect(zero.hull.coverage).toBe(0);
-    expect(zero.hull.patches.flat().every(patch => !patch.rendered && patch.projectedFoggedEnergyRgb.r === 0)).toBe(true);
+    expect(zero.hull.scale).toBeCloseTo(2 * shippedHullResponse(1150).scale, 12);
+    expect(zero.hull.fade).toBeGreaterThan(0);
+    expect(zero.hull.patches.flat().every(patch => Object.values(patch.preFogRgb).every(value => value === 0)
+      && Object.values(patch.projectedPreFogEnergyRgb).every(value => value === 0))).toBe(true);
   });
-  it('preserves side-on trails and fades both end-on directions with zero edge slopes', () => {
-    expect(trafficTrailViewGain(0)).toBe(1);
-    expect(trafficTrailViewGain(0.9)).toBe(1);
-    expect(trafficTrailViewGain(1)).toBe(0);
-    expect(trafficTrailViewGain(-1)).toBe(0);
-    expect(trafficTrailViewGain(0.95)).toBeCloseTo(0.5, 12);
-    const h = 1e-6;
-    for (const edge of [0.9, 1]) expect(Math.abs(trafficTrailViewGain(edge + h) - trafficTrailViewGain(edge - h)) / (2 * h)).toBeLessThan(0.001);
-    for (const angle of [0, 180]) {
-      const result = evaluateSameCarTrafficAppearance(continuityInput(0, 1, angle, 'high', 200));
-      expect(result.streak.trail.lengthM).toBeLessThan(1e-8);
-      expect(result.streak.trail.sourceGain).toBeLessThan(1e-8);
-      for (const energy of Object.values(result.streak.trail.renderedContinuousEnergyRgb)) expect(energy).toBeLessThan(1e-8);
+
+  it('keeps continuous distance fade and scale at the shipped boundaries', () => {
+    for (const edge of [750, 1080, 1300]) {
+      for (const field of ['fade', 'distanceScale'] as const) {
+        const fn = (distance: number) => evaluateSameCarTrafficAppearance(continuityInput(0, 1, 180, 'high', distance)).hull[field];
+        const expected = (distance: number) => shippedHullResponse(distance)[field];
+        if (edge === 1080) {
+          const h = 1e-3;
+          // This light edge is inside the wider physical dissolve band.
+          expect(Math.abs((fn(edge + h) - fn(edge - h))
+            - (expected(edge + h) - expected(edge - h)))).toBeLessThan(1e-6);
+        } else expect(boundaryError(fn, edge)).toBeLessThan(1e-6);
+        expect(slopeError(fn, edge)).toBeLessThan(5e-6);
+      }
     }
+  });
+
+  it('rejects the old constant scale and narrow hull dissolve band', () => {
+    const actual = continuityRow(continuityInput(0, 1, 45, 'high', 900));
+    const constantScale = { ...actual, output: { ...actual.output,
+      hull: { ...actual.output.hull, scale: actual.input.sizeScale } } };
+    expect(continuityViolations([constantScale]).some(failure => failure.channel === 'physical hull scale')).toBe(true);
+    const oldFade = { ...actual, output: { ...actual.output,
+      hull: { ...actual.output.hull, fade: 1, coverage: 1 } } };
+    expect(continuityViolations([oldFade]).some(failure => failure.channel === 'hull distance fade')).toBe(true);
+  });
+
+  it('fades rear-view trail intensity without adding a length fade', () => {
+    expect(trafficTrailViewGain(0)).toBe(1);
+    expect(trafficTrailViewGain(1)).toBe(1);
+    expect(trafficTrailViewGain(-0.72)).toBe(1);
+    expect(trafficTrailViewGain(-0.90)).toBe(0);
+    expect(trafficTrailViewGain(-1)).toBe(0);
+    expect(trafficTrailViewGain(-0.81)).toBeCloseTo(0.5, 12);
+    const h = 1e-6;
+    for (const edge of [-0.90, -0.72]) expect(Math.abs(trafficTrailViewGain(edge + h) - trafficTrailViewGain(edge - h)) / (2 * h)).toBeLessThan(0.001);
+    const rear = evaluateSameCarTrafficAppearance(continuityInput(0, 1, 180, 'high', 200));
+    expect(rear.streak.trail.lengthM).toBeGreaterThan(0);
+    expect(rear.streak.trail.sourceGain).toBeLessThan(1e-8);
+    for (const energy of Object.values(rear.streak.trail.renderedContinuousEnergyRgb)) expect(energy).toBeLessThan(1e-8);
     expect(evaluateSameCarTrafficAppearance(continuityInput(0, 1, 90, 'high', 200)).streak.trail.sourceGain).toBeGreaterThan(0);
   });
 });

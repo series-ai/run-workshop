@@ -4,9 +4,9 @@
  */
 import {
   farImpostorBrightness,
+  HULL_DISSOLVE_FLOOR_SCALE,
+  HULL_DISSOLVE_START_M,
   HULL_DRAW_DISTANCE_M,
-  HULL_DRAW_FADE_START_M,
-  hullLodAlpha,
   impostorLightHandoverAlpha,
   impostorSupportTaperAlpha,
   writeSameCarLightLod,
@@ -199,7 +199,7 @@ export interface TrafficHullLampPatch {
   readonly sourceRgb: TrafficRgb;
   readonly preFogRgb: TrafficRgb;
   readonly foggedRgb: TrafficRgb;
-  /** Coverage-averaged pixel energy before and after fog. Individual dither pixels differ. */
+  /** Mean coverage estimate before and after fog. Actual IGN raster samples can differ. */
   readonly projectedPreFogEnergyRgb: TrafficRgb;
   readonly projectedFoggedEnergyRgb: TrafficRgb;
   /** Diagnostic estimate weighted by the outward normal. It does not resolve hull self-occlusion. */
@@ -210,6 +210,7 @@ export interface TrafficHullLampPatch {
   readonly frontFaceFactor: number;
   readonly facesCameraOnOutwardSide: boolean;
   readonly hasHullRecord: boolean;
+  /** The patch has nonzero geometry. This does not prove that an IGN fragment survives. */
   readonly rendered: boolean;
 }
 
@@ -278,8 +279,13 @@ export interface SameCarTrafficAppearance {
   readonly hull: {
     readonly hasInstance: boolean;
     readonly hullLodAlpha: number;
+    readonly fade: number;
+    readonly distanceScale: number;
+    readonly lifecycleScale: number;
     readonly scale: number;
+    /** Continuous mean coverage estimate. This is not a raster survival test. */
     readonly coverage: number;
+    readonly dissolve: 'interleaved-gradient-noise';
     readonly distanceDim: number;
     readonly tintGain: number;
     readonly patches: readonly [readonly TrafficHullLampPatch[], readonly TrafficHullLampPatch[]];
@@ -292,9 +298,10 @@ export interface SameCarTrafficAppearance {
     readonly tailPickup: number;
     readonly trail: TrafficTrailAppearance;
   };
-  /** Exact values uploaded into aCarFade and aCarLod. */
+  /** Exact values uploaded into aFade, aCarFade, and aCarLod. */
   readonly uploaded: {
     readonly hasRecord: boolean;
+    readonly aFade: number | null;
     readonly aCarFade: TrafficVec4 | null;
     readonly aCarLod: TrafficVec3 | null;
   };
@@ -896,7 +903,7 @@ function hullPatchAppearance(
         frontFaceCosine > 0 ? bounds.projectedAreaCssPx2 * coverage : 0,
       ),
       hasHullRecord,
-      rendered: hasHullRecord && coverage > 0,
+      rendered: hasHullRecord && hullScale > 0 && bounds.projectedAreaCssPx2 > 0,
     };
   });
 }
@@ -1193,9 +1200,10 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const pickup = trafficAppearanceSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], pickupDistanceM);
   const forward = trafficForward(input.direction);
   const toCameraAtLamp = [input.camera.position[0] - trailKernel.lampWorld[0], input.camera.position[1] - trailKernel.lampWorld[1], input.camera.position[2] - trailKernel.lampWorld[2]] as TrafficVec3;
-  const viewGain = trafficTrailViewGain(dot3(forward, scale3(toCameraAtLamp, 1 / Math.max(Math.hypot(...toCameraAtLamp), 1e-8))));
+  const facing = dot3(forward, scale3(toCameraAtLamp, 1 / Math.max(Math.hypot(...toCameraAtLamp), 1e-8)));
+  const viewGain = trafficTrailViewGain(facing);
   let lengthM = Math.min(input.speedMps * TRAFFIC_TRAIL_SECONDS,
-    Math.min(TRAFFIC_TRAIL_MAX_M, TRAIL_MAX_CAR_LENGTHS * carProfileLength(input.typeIndex) * input.sizeScale)) * distanceFade * viewGain;
+    Math.min(TRAFFIC_TRAIL_MAX_M, TRAIL_MAX_CAR_LENGTHS * carProfileLength(input.typeIndex) * input.sizeScale)) * distanceFade;
   const lamp = trailKernel.lampWorld;
   let end = add3(lamp, scale3(forward, -lengthM));
   let toEndView = viewPoint(end, input.camera);
@@ -1303,6 +1311,19 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   };
 }
 
+/** Evaluate the shipped IGN equation. GPU float precision can change individual samples. */
+export function trafficHullIgnNoise(fragmentBufferPx: TrafficVec2): number {
+  const dot = fragmentBufferPx[0] * 0.06711056 + fragmentBufferPx[1] * 0.00583715;
+  const inner = dot - Math.floor(dot);
+  const value = 52.9829189 * inner;
+  return value - Math.floor(value);
+}
+
+/** Apply the shipped strict discard comparison. Equality retains the fragment. */
+export function trafficHullFragmentDiscarded(fade: number, fragmentBufferPx: TrafficVec2): boolean {
+  return trafficHullIgnNoise(fragmentBufferPx) > fade;
+}
+
 /** Full CPU same-car evaluator: hull, streak lamps, the existing proxy share, and near trail. */
 export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearanceInput): SameCarTrafficAppearance {
   const distanceSq = input.distanceM * input.distanceM;
@@ -1316,9 +1337,11 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
   const finalFade = input.sourceFade * cpuTierFade;
   const legacyFarAlpha = evaluateThinFarAlpha(distanceSq, input.thinFar);
   const lod = writeSameCarLightLod(input.distanceM, input.impostorPresence, legacyFarAlpha);
-  const hullLod = hullLodAlpha(input.distanceM);
-  const hullScale = input.sizeScale;
-  const hullCoverage = hullLod * trafficAppearanceSmoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, finalFade) * lod.totalAlpha;
+  const hullLod = 1 - trafficAppearanceSmoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, input.distanceM);
+  const distanceScale = HULL_DISSOLVE_FLOOR_SCALE + (1 - HULL_DISSOLVE_FLOOR_SCALE) * hullLod;
+  const lifecycleScale = trafficAppearanceSmoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, finalFade);
+  const hullScale = input.sizeScale * distanceScale * lifecycleScale;
+  const hullCoverage = hullLod;
   const nearFade = finalFade * lod.nearAlpha;
   const distanceDim = evaluateTrafficDistanceDim(distanceSq);
   const tintGain = distanceDim * nearFade;
@@ -1360,8 +1383,12 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
     hull: {
       hasInstance: hasHullRecord,
       hullLodAlpha: hullLod,
+      fade: hullLod,
+      distanceScale,
+      lifecycleScale,
       scale: hullScale,
       coverage: hullCoverage,
+      dissolve: 'interleaved-gradient-noise',
       distanceDim,
       tintGain,
       patches: [hullHead, hullTail],
@@ -1369,6 +1396,7 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
     streak: { hasRecord: hasStreakRecord, head, tail, headPickup, tailPickup, trail },
     uploaded: {
       hasRecord: hasStreakRecord,
+      aFade: hasHullRecord ? hullLod : null,
       aCarFade: hasStreakRecord ? aCarFade : null,
       aCarLod: hasStreakRecord ? [lod.nearAlpha, lod.impostorAlpha, input.carIndex] : null,
     },

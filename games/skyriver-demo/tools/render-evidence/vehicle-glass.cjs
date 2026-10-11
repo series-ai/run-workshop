@@ -38,7 +38,7 @@ if (!url || !directory) throw Error('Provide URL and output directory.');
           const target = pane.getX(index.getX(i)) === 1 ? paneIndex : bodyIndex;
           target.push(index.getX(i), index.getX(i + 1), index.getX(i + 2));
         }
-        geometry.setIndex(paneIndex); geometry.getAttribute('aHullCoverage').setX(0, 1);
+        geometry.setIndex(paneIndex); geometry.getAttribute('aFade').setX(0, 1);
         const material = original.material.clone(); material.onBeforeCompile = original.material.onBeforeCompile;
         let shader;
         const compile = material.onBeforeCompile;

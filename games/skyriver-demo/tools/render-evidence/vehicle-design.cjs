@@ -96,8 +96,8 @@ const R = require('./experiment-runtime.cjs');
           model = new T.Mesh(geometry, material);
           model.scale.setScalar(p.scale);
         } else {
-          geometry.getAttribute('aHullCoverage').setX(0, 1);
-          geometry.getAttribute('aHullCoverage').needsUpdate = true;
+          geometry.getAttribute('aFade').setX(0, 1);
+          geometry.getAttribute('aFade').needsUpdate = true;
           model = new T.InstancedMesh(geometry, material, 1);
           model.setMatrixAt(0, new T.Matrix4().makeScale(p.scale, p.scale, p.scale));
           const tint =

@@ -6,7 +6,7 @@ import {
   evaluateCpuTierFade, evaluateSameCarTrafficAppearance, evaluateTrailModeFade,
 } from '../../src/render/trafficAppearanceModel';
 import { IMPOSTOR_TIER_FADE_S } from '../../src/render/lightHandover';
-import { continuityInput, appearanceMetrics, independentSmoothstep } from './flyerContinuityMatrix';
+import { continuityInput, appearanceMetrics, independentSmoothstep, shippedHullResponse } from './flyerContinuityMatrix';
 import { projectTrafficLampKernel } from '../../src/render/trafficAppearanceModel';
 import type { TrafficTrailMode } from '../../src/render/trafficTypes';
 
@@ -93,6 +93,13 @@ export function appearanceRetargetFailures(): TemporalFailure[] {
         const h = kernel('head'), tail = kernel('tail');
         const metrics = (output: typeof before) => appearanceMetrics(output, 2 * (h.floorHalfSizeCssPx[0] + h.pairHalfSpanCssPx),
           2 * h.floorHalfSizeCssPx[1], 2 * (tail.floorHalfSizeCssPx[0] + tail.pairHalfSpanCssPx), 2 * tail.floorHalfSizeCssPx[1]);
+        const expected = shippedHullResponse(distance, common.sourceFade, alpha);
+        for (const output of [before, after]) {
+          const scaleError = Math.abs(output.hull.scale - common.sizeScale * expected.scale);
+          if (scaleError > 1e-6) errors.push({ channel: 'shipped lifecycle scale', error: scaleError, limit: 1e-6 });
+          const fadeError = Math.abs(output.hull.fade - expected.fade);
+          if (fadeError > 1e-6) errors.push({ channel: 'shipped distance fade', error: fadeError, limit: 1e-6 });
+        }
         const a = metrics(before), b = metrics(after);
         for (const channel of ['sizeCssPx', 'energyY', 'sizeIntensity'] as const) {
           const error = Math.abs(a[channel] - b[channel]) / Math.max(Math.abs(a[channel]), Math.abs(b[channel]), 1);
@@ -107,7 +114,7 @@ export function appearanceRetargetFailures(): TemporalFailure[] {
 /** Rear closure samples use seconds and metres per second. */
 export function closureSamples(closingVelocity = 250, fps = 60) {
   if (!Number.isFinite(closingVelocity) || closingVelocity <= 0 || !Number.isFinite(fps) || fps <= 0)
-    throw new Error('R37_INVALID_CLOSURE_RATE');
+    throw new Error('R33_INVALID_CLOSURE_RATE');
   const durationS = (1300 - 600) / closingVelocity;
   return Array.from({ length: Math.ceil(durationS * fps) + 1 }, (_, frame) => {
     const timeS = Math.min(frame / fps, durationS);
