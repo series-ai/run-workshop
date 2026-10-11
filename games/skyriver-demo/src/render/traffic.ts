@@ -127,6 +127,8 @@ import {
 import { TRAFFIC_TICK_RATE_HZ } from './trafficTypes';
 import {
   createImpostorTierTransition,
+  HULL_DISSOLVE_FLOOR_SCALE,
+  HULL_DISSOLVE_START_M,
   HULL_DRAW_DISTANCE_M,
   HULL_DRAW_FADE_START_M,
   IMPOSTOR_FAR_FALLOFF_BAND_M,
@@ -1027,6 +1029,9 @@ void main() {
     // (vWarm carries the blend); it never slices through the camera.
     vWarm = smoothstep( ${TRAFFIC_TRAIL_WARM_FACING_BAND[0].toFixed(1)}, ${TRAFFIC_TRAIL_WARM_FACING_BAND[1].toFixed(1)}, dot( dir, toCam ) );
     vIntensity = aCarFade.x * aCarFade.w * smoothstep( ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
+    // R37: approached from behind the trail points straight at the camera and collapses to a
+    // blob; fade it out when the view runs within ~25 degrees of its axis.
+    vIntensity *= 1.0 - smoothstep( 0.72, 0.90, - facing );
   }
 
   vIntensity *= lampGain;
@@ -1777,6 +1782,20 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   carMaterial.name = 'skyriver.traffic.hull';
   // T6R: the shared fog was never wired to the hulls, so distant cars stayed full-bright pills.
   applySkyriverFog(carMaterial);
+  // R37 (operator: "crazy pop in, especially when I approach them from behind"): hulls used to
+  // SCALE TO ZERO across the handover band, so at closing speed the body visibly grew from nothing.
+  // Bodies now hold near-constant size (HULL_DISSOLVE_FLOOR_SCALE) and DISSOLVE via a screen-door
+  // fade keyed to the per-instance aFade (interleaved-gradient noise, no sorting, opaque-safe).
+  const carDissolvePrev = carMaterial.onBeforeCompile;
+  carMaterial.onBeforeCompile = (shader, renderer) => {
+    carDissolvePrev.call(carMaterial, shader, renderer);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aFade;\nvarying float vHullFade;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n  vHullFade = aFade;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vHullFade;\nfloat skyriverIgn(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }')
+      .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n  if (skyriverIgn(gl_FragCoord.xy) > vHullFade) discard;');
+  };
 
   const archetypeBuilds: MeshBuild[] = [buildCab(), buildInterceptor(), buildCommuter(), buildVan(), buildSaucer(), buildBus(), buildFlatbed()];
   const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'saucer', 'bus', 'flatbed'];
@@ -1785,6 +1804,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   const meshes: InstancedMesh[] = [];
   const matrixArrays: Float32Array[] = [];
   const colorArrays: Float32Array[] = [];
+  const hullFadeArrays: Float32Array[] = [];
 
   for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
     const build = archetypeBuilds[archetype];
@@ -1802,12 +1822,17 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     const instanceColor = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
     instanceColor.setUsage(DynamicDrawUsage);
     mesh.instanceColor = instanceColor;
+    // R37 dissolve attribute: 1 = fully visible, 0 = dissolved (see carMaterial's patch).
+    const hullFade = new InstancedBufferAttribute(new Float32Array(capacity), 1);
+    hullFade.setUsage(DynamicDrawUsage);
+    geometry.setAttribute('aFade', hullFade);
     mesh.count = 0;
     // R23 draw role, declared here where the hull material is built: opaque, depth-writing.
     skyriverDeclareStageRole(mesh, 'opaque');
     meshes.push(mesh);
     matrixArrays.push(mesh.instanceMatrix.array as Float32Array);
     colorArrays.push(instanceColor.array as Float32Array);
+    hullFadeArrays.push(hullFade.array as Float32Array);
   }
 
   const streakCapacity = Math.max(1, options.maxThrusterBudget ?? options.quality.thrusterBudget);
@@ -2241,6 +2266,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       const active = groupActive[archetype];
       const matrices = matrixArrays[archetype];
       const colors = colorArrays[archetype];
+      const hullFades = hullFadeArrays[archetype];
 
       for (let slot = 0; slot < active; slot += 1) {
         const car = group[slot];
@@ -2393,12 +2419,14 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         // R15 glitch fix: the hard cut made ~20 bodies a second blink in or out on screen; bodies now
         // shrink away over the last 220 m (sub-pixel by then), so nothing pops.
         const toCarDist = Math.sqrt(toCarX * toCarX + toCarY * toCarY + toCarZ * toCarZ);
-        const hullLod = 1 - smoothstep(HULL_DRAW_FADE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
+        // R37: wide runway + near-constant size; visibility rides the aFade dissolve instead of
+        // the scale. Scale-collapse made approach-from-behind read as a body growing from nothing.
+        const hullLod = 1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, toCarDist);
         fade *= tierFadeFor(car);
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
         // Bodies vanish with their fade (a faded car is never left as a small dark block).
-        const scale = sizeScale[car]! * hullLod * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
+        const scale = sizeScale[car]! * (HULL_DISSOLVE_FLOOR_SCALE + (1 - HULL_DISSOLVE_FLOOR_SCALE) * hullLod) * smoothstep(0, TRAFFIC_HULL_FADE_RAMP_END, fade);
         const pitchY = clamp(fy, -TRAFFIC_DIRECTION_PITCH_CLAMP, TRAFFIC_DIRECTION_PITCH_CLAMP);
         const fl = Math.sqrt(1 + pitchY * pitchY);
         const f0 = fx / fl;
@@ -2452,6 +2480,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
         colors[colorOffset] = tintR[car] * dim;
         colors[colorOffset + 1] = tintG[car] * dim;
         colors[colorOffset + 2] = tintB[car] * dim;
+        // R37: per-instance dissolve fraction (1 near, 0 dissolved past the band).
+        hullFades[slot] = hullLod;
 
         if (streaksUsed < streakBudget) {
           streakShapeArray[streaksUsed * 2] = archetype;
@@ -2485,6 +2515,8 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
       const mesh = meshes[archetype];
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
+      const aFadeAttr = mesh.geometry.getAttribute('aFade');
+      if (aFadeAttr !== undefined) aFadeAttr.needsUpdate = true;
     }
 
     streakGeometry.instanceCount = streaksUsed;
