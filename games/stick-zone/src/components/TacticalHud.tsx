@@ -418,20 +418,22 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
             bottom: "108px",
             left: "50%",
             transform: "translateX(-50%)",
-            background: "linear-gradient(135deg, rgba(2, 132, 199, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)",
-            border: "2px solid #38bdf8",
-            borderRadius: "8px",
-            padding: "10px 22px",
-            boxShadow: "0 0 24px rgba(56, 189, 248, 0.6)",
+            background: "rgba(12, 16, 22, 0.88)",
+            border: "1px solid rgba(74, 222, 128, 0.35)",
+            borderRadius: "4px",
+            padding: "8px 20px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
             pointerEvents: "none",
             textAlign: "center",
           }}
         >
-          <div style={{ fontSize: "13px", fontWeight: 900, color: "#ffffff", letterSpacing: "1px" }}>
-            ⚡ COMBAT AIRLOCK READY // STEP ONTO GATE OR PRESS [E] TO DEPLOY ⚡
+          <div style={{ fontSize: "12px", fontWeight: 800, color: "#f8fafc", letterSpacing: "0.08em", fontFamily: "var(--hud-mono)" }}>
+            [E] ENTER COMBAT AIRLOCK // DEPLOY INTO SECTOR 7
           </div>
-          <div style={{ fontSize: "11px", color: "#bae6fd", marginTop: "2px" }}>
-            Ingress into Sector 7 Extraction Raid // Weapons Hot
+          <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--hud-mono)" }}>
+            Step onto airlock threshold or interact to commence extraction run
           </div>
         </div>
       )}

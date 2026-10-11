@@ -1121,15 +1121,19 @@ export class SectorDepotSimulation {
 
   public confirmedEliminatedIds: Set<string> = new Set<string>();
   private presentationEvents: PresentationEvent[] = [];
+  private drainedPresentationEvents: PresentationEvent[] = [];
 
   public enqueuePresentationEvent(event: PresentationEvent): void {
     this.presentationEvents.push(event);
   }
 
   public drainPresentationEvents(): PresentationEvent[] {
-    const events = this.presentationEvents;
-    this.presentationEvents = [];
-    return events;
+    const drained = this.presentationEvents;
+    const recycled = this.drainedPresentationEvents;
+    recycled.length = 0;
+    this.presentationEvents = recycled;
+    this.drainedPresentationEvents = drained;
+    return drained;
   }
 
   public confirmElimination(id: string, position: { x: number; y: number; z: number }): boolean {

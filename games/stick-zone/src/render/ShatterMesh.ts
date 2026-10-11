@@ -21,6 +21,7 @@ interface Shard {
 export class ShatterMesh {
   public readonly group = new THREE.Group();
   private readonly shards: Shard[] = [];
+  private readonly pool: Shard[];
   private readonly geometry = new THREE.TetrahedronGeometry(0.14);
   private readonly material = new THREE.MeshBasicMaterial({
     color: RUBY_SHATTER_COLOR,
@@ -37,6 +38,17 @@ export class ShatterMesh {
     this.instancedMesh.frustumCulled = false;
     this.instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.group.add(this.instancedMesh);
+
+    // Pre-allocate complete shard object pool to eliminate runtime allocations
+    this.pool = Array.from({ length: maxShards }, () => ({
+      position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
+      rotation: new THREE.Euler(),
+      rotSpeed: new THREE.Vector3(),
+      age: 0,
+      maxAge: 0,
+      scale: 0,
+    }));
   }
 
   private random(): number {
@@ -48,40 +60,36 @@ export class ShatterMesh {
    * Spawns exactly 28 crystalline shards at the elimination position.
    */
   public trigger(at: THREE.Vector3): void {
-    for (let i = 0; i < SHARD_COUNT; i++) {
+    const canSpawn = Math.min(SHARD_COUNT, this.instancedMesh.instanceMatrix.count - this.shards.length);
+    for (let i = 0; i < canSpawn; i++) {
       const theta = this.random() * Math.PI * 2;
       const phi = (this.random() - 0.5) * Math.PI * 0.8;
       const speed = 2.4 + this.random() * 1.8; // 2.4 to 4.2 m/s
 
-      const velocity = new THREE.Vector3(
+      const shard = this.pool[this.shards.length];
+      shard.position.set(
+        at.x + (this.random() - 0.5) * 0.2,
+        at.y + 0.6 + (this.random() - 0.5) * 0.4,
+        at.z + (this.random() - 0.5) * 0.2
+      );
+      shard.velocity.set(
         Math.cos(phi) * Math.sin(theta) * speed,
         Math.abs(Math.sin(phi)) * speed + 1.2,
         Math.cos(phi) * Math.cos(theta) * speed
       );
-
-      const shard: Shard = {
-        position: at.clone().add(
-          new THREE.Vector3(
-            (this.random() - 0.5) * 0.2,
-            0.6 + (this.random() - 0.5) * 0.4,
-            (this.random() - 0.5) * 0.2
-          )
-        ),
-        velocity,
-        rotation: new THREE.Euler(
-          this.random() * Math.PI * 2,
-          this.random() * Math.PI * 2,
-          this.random() * Math.PI * 2
-        ),
-        rotSpeed: new THREE.Vector3(
-          (this.random() - 0.5) * 24, // ~12 rad/s tumbling
-          (this.random() - 0.5) * 24,
-          (this.random() - 0.5) * 24
-        ),
-        age: 0,
-        maxAge: SHATTER_LIFETIME * (0.8 + this.random() * 0.4),
-        scale: 0.8 + this.random() * 0.6,
-      };
+      shard.rotation.set(
+        this.random() * Math.PI * 2,
+        this.random() * Math.PI * 2,
+        this.random() * Math.PI * 2
+      );
+      shard.rotSpeed.set(
+        (this.random() - 0.5) * 24,
+        (this.random() - 0.5) * 24,
+        (this.random() - 0.5) * 24
+      );
+      shard.age = 0;
+      shard.maxAge = SHATTER_LIFETIME * (0.8 + this.random() * 0.4);
+      shard.scale = 0.8 + this.random() * 0.6;
 
       this.shards.push(shard);
     }
@@ -92,7 +100,10 @@ export class ShatterMesh {
       const s = this.shards[i];
       s.age += delta;
       if (s.age >= s.maxAge) {
-        this.shards.splice(i, 1);
+        const last = this.shards.pop()!;
+        if (i < this.shards.length) {
+          this.shards[i] = last;
+        }
         continue;
       }
 

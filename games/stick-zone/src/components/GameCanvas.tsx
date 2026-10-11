@@ -220,6 +220,32 @@ const CameraController: React.FC<{
   return null;
 };
 
+const HIT_POOL_SIZE = 32;
+
+interface PooledFloatingHit {
+  sprite: THREE.Sprite;
+  material: THREE.SpriteMaterial;
+  texture: THREE.CanvasTexture;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+  startX: number;
+  startY: number;
+  startZ: number;
+  birth: number;
+  duration: number;
+  isCrit: boolean;
+  active: boolean;
+}
+
+// Pre-allocated scratch vectors to eliminate runtime object allocations in useFrame
+const _scratchOrigin = new THREE.Vector3();
+const _scratchImpact = new THREE.Vector3();
+const _scratchElim = new THREE.Vector3();
+const _scratchKick = new THREE.Vector3();
+const _scratchHit = new THREE.Vector3();
+const _scratchBlast = new THREE.Vector3();
+const _scratchLocomotion = new THREE.Vector3();
+
 const PresentationFXManager: React.FC<{
   sim: SectorDepotSimulation;
   recoilImpulseRef: React.MutableRefObject<[number, number]>;
@@ -233,19 +259,42 @@ const PresentationFXManager: React.FC<{
   const effects = useMemo(() => new InkEffects(2048), []);
   const trails = useMemo(() => new InkTrails(), []);
   const shatter = useMemo(() => new ShatterMesh(256), []);
-  // Floating tactical damage numbers directly over targets
+  // Floating tactical damage numbers directly over targets (Object-pooled)
   const floatingGroup = useMemo(() => new THREE.Group(), []);
-  const activeHitsRef = useRef<Array<{
-    sprite: THREE.Sprite;
-    material: THREE.SpriteMaterial;
-    texture: THREE.CanvasTexture;
-    startX: number;
-    startY: number;
-    startZ: number;
-    birth: number;
-    duration: number;
-    isCrit: boolean;
-  }>>([]);
+  const floatingHitPool = useMemo<PooledFloatingHit[]>(() => {
+    if (typeof document === "undefined") return [];
+    return Array.from({ length: HIT_POOL_SIZE }, () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d")!;
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      const material = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      });
+      const sprite = new THREE.Sprite(material);
+      sprite.visible = false;
+      floatingGroup.add(sprite);
+      return {
+        sprite,
+        material,
+        texture,
+        canvas,
+        ctx,
+        startX: 0,
+        startY: 0,
+        startZ: 0,
+        birth: 0,
+        duration: 750,
+        isCrit: false,
+        active: false,
+      };
+    });
+  }, [floatingGroup]);
 
   const spawnFloatingHit = useCallback((
     pos: { x: number; y: number; z: number },
@@ -253,13 +302,29 @@ const PresentationFXManager: React.FC<{
     color: string,
     isCrit: boolean
   ) => {
-    if (typeof document === "undefined") return;
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 128;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (floatingHitPool.length === 0) return;
+    let slot = floatingHitPool.find((h) => !h.active);
+    if (!slot) {
+      let oldestBirth = Infinity;
+      slot = floatingHitPool[0];
+      for (const h of floatingHitPool) {
+        if (h.birth < oldestBirth) {
+          oldestBirth = h.birth;
+          slot = h;
+        }
+      }
+    }
 
+    slot.active = true;
+    slot.startX = pos.x;
+    slot.startY = pos.y + 0.6;
+    slot.startZ = pos.z;
+    slot.birth = performance.now();
+    slot.duration = 750;
+    slot.isCrit = isCrit;
+
+    const ctx = slot.ctx;
+    ctx.clearRect(0, 0, 256, 128);
     ctx.font = isCrit ? "900 48px monospace" : "900 40px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -270,33 +335,13 @@ const PresentationFXManager: React.FC<{
     ctx.fillStyle = color;
     ctx.fillText(text, 128, 64);
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = THREE.LinearFilter;
-    const material = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-    });
-    const sprite = new THREE.Sprite(material);
+    slot.texture.needsUpdate = true;
+    slot.material.opacity = 1.0;
     const baseScale = isCrit ? 1.8 : 1.4;
-    sprite.scale.set(baseScale, baseScale * 0.5, 1);
-    const startY = pos.y + 0.6;
-    sprite.position.set(pos.x, startY, pos.z);
-    floatingGroup.add(sprite);
-
-    activeHitsRef.current.push({
-      sprite,
-      material,
-      texture,
-      startX: pos.x,
-      startY,
-      startZ: pos.z,
-      birth: performance.now(),
-      duration: 750,
-      isCrit,
-    });
-  }, [floatingGroup]);
+    slot.sprite.scale.set(baseScale, baseScale * 0.5, 1);
+    slot.sprite.position.set(pos.x, slot.startY, pos.z);
+    slot.sprite.visible = true;
+  }, [floatingHitPool]);
 
   const recoilAgeRef = useRef(-1);
   const aimPunchAgeRef = useRef(-1);
@@ -312,12 +357,11 @@ const PresentationFXManager: React.FC<{
       effects.dispose();
       trails.dispose();
       shatter.dispose();
-      for (const h of activeHitsRef.current) {
+      for (const h of floatingHitPool) {
         floatingGroup.remove(h.sprite);
         h.material.dispose();
         h.texture.dispose();
       }
-      activeHitsRef.current = [];
     };
   }, [effects, trails, shatter]);
 
@@ -336,7 +380,7 @@ const PresentationFXManager: React.FC<{
         const fireAngle = Math.atan2(ev.dir.x, ev.dir.z);
         const flashPreset = ev.weapon === "shotgun" ? "shotgun-flash" : "rifle-flash";
         const flashScale = ev.weapon === "shotgun" ? 1.7 : 1.35;
-        const originVec = new THREE.Vector3(ev.origin.x, ev.origin.y, ev.origin.z);
+        const originVec = _scratchOrigin.set(ev.origin.x, ev.origin.y, ev.origin.z);
 
         // Directional comic muzzle flash with paper core burst
         effects.trigger(flashPreset, originVec, undefined, flashScale, fireAngle);
@@ -405,7 +449,7 @@ const PresentationFXManager: React.FC<{
           );
         }
       } else if (ev.type === "impact") {
-        const impactVec = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        const impactVec = _scratchImpact.set(ev.position.x, ev.position.y, ev.position.z);
         effects.trigger("bullet-impact", impactVec, undefined, 1.35);
         if (ev.surface === "metal") {
           effects.trigger("metal-sparks", impactVec, undefined, 1.6);
@@ -421,19 +465,19 @@ const PresentationFXManager: React.FC<{
           spawnFloatingHit(ev.position, text, color, isCrit);
         }
       } else if (ev.type === "elimination") {
-        const elimVec = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        const elimVec = _scratchElim.set(ev.position.x, ev.position.y, ev.position.z);
         shatter.trigger(elimVec);
         effects.trigger("explosion", elimVec, undefined, 1.9);
         effects.trigger("metal-sparks", elimVec, undefined, 1.6);
         effects.trigger("critical-hit", elimVec, "#ef4444", 1.4);
       } else if (ev.type === "kick") {
-        const kickPos = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        const kickPos = _scratchKick.set(ev.position.x, ev.position.y, ev.position.z);
         // Kinetic Xiao Xiao melee slash sweep
         effects.trigger("sword-slash", kickPos, "#eeece5", 1.9, ev.facing);
         // Kinetic air compression shockwave ring
         effects.trigger("plasma-pulse", kickPos, "#38bdf8", 1.4, ev.facing);
         if (ev.isHit) {
-          const hitPos = new THREE.Vector3(
+          const hitPos = _scratchHit.set(
             ev.position.x + Math.sin(ev.facing) * 1.5,
             ev.position.y,
             ev.position.z + Math.cos(ev.facing) * 1.5
@@ -458,13 +502,13 @@ const PresentationFXManager: React.FC<{
         );
         effects.trigger(
           "metal-sparks",
-          new THREE.Vector3(ev.position.x, 0.4, ev.position.z),
+          _scratchImpact.set(ev.position.x, 0.4, ev.position.z),
           "#f59e0b",
           1.2
         );
         effects.trigger(
           "crate-break",
-          new THREE.Vector3(ev.position.x, 0.4, ev.position.z),
+          _scratchImpact.set(ev.position.x, 0.4, ev.position.z),
           undefined,
           0.8
         );
@@ -472,14 +516,14 @@ const PresentationFXManager: React.FC<{
         if (ev.subtype === "roll" || ev.subtype === "slide") {
           effects.trigger(
             "slide-dust",
-            new THREE.Vector3(ev.position.x, 0.05, ev.position.z),
+            _scratchLocomotion.set(ev.position.x, 0.05, ev.position.z),
             undefined,
             1.2
           );
           if (ev.subtype === "slide") {
             effects.trigger(
               "sprint-streak",
-              new THREE.Vector3(ev.position.x, 0.2, ev.position.z),
+              _scratchLocomotion.set(ev.position.x, 0.2, ev.position.z),
               "#eeece5",
               1.0
             );
@@ -489,13 +533,13 @@ const PresentationFXManager: React.FC<{
         sound.playGrenadePin();
         effects.trigger(
           "metal-sparks",
-          new THREE.Vector3(ev.origin.x, ev.origin.y, ev.origin.z),
+          _scratchOrigin.set(ev.origin.x, ev.origin.y, ev.origin.z),
           "#f97316",
           1.2
         );
       } else if (ev.type === "explosion") {
         sound.playExplosion();
-        const blastPos = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        const blastPos = _scratchBlast.set(ev.position.x, ev.position.y, ev.position.z);
         effects.trigger("explosion", blastPos, undefined, 2.2);
         effects.trigger("plasma-pulse", blastPos, "#f97316", 2.4);
         effects.trigger("metal-sparks", blastPos, undefined, 1.8);
@@ -564,7 +608,7 @@ const PresentationFXManager: React.FC<{
       if (Math.random() < 0.35) {
         effects.trigger(
           "slide-dust",
-          new THREE.Vector3(sim.player.x, 0.05, sim.player.z),
+          _scratchLocomotion.set(sim.player.x, 0.05, sim.player.z),
           undefined,
           1.15
         );
@@ -572,23 +616,22 @@ const PresentationFXManager: React.FC<{
     } else if (sim.player.action === "sprint" && sim.tick % 8 === 0) {
       effects.trigger(
         "footstep-dust",
-        new THREE.Vector3(sim.player.x, 0.05, sim.player.z),
+        _scratchLocomotion.set(sim.player.x, 0.05, sim.player.z),
         undefined,
         0.95
       );
     }
 
-    // Animate floating damage numbers over targets
+    // Animate floating damage numbers from pre-allocated object pool
     const now = performance.now();
-    for (let i = activeHitsRef.current.length - 1; i >= 0; i--) {
-      const h = activeHitsRef.current[i];
+    for (let i = 0; i < floatingHitPool.length; i++) {
+      const h = floatingHitPool[i];
+      if (!h.active) continue;
       const elapsed = now - h.birth;
       const progress = elapsed / h.duration;
       if (progress >= 1.0) {
-        floatingGroup.remove(h.sprite);
-        h.material.dispose();
-        h.texture.dispose();
-        activeHitsRef.current.splice(i, 1);
+        h.active = false;
+        h.sprite.visible = false;
       } else {
         const yOffset = Math.sin(progress * Math.PI * 0.5) * 0.9;
         h.sprite.position.set(h.startX, h.startY + yOffset, h.startZ);

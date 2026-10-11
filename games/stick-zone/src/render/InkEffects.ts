@@ -115,6 +115,7 @@ export function shapeGeometry(kind: ShapeKind): THREE.BufferGeometry {
  */
 export class InkEffects {
   private readonly particles: ParticleInternal[] = [];
+  private readonly pool: ParticleInternal[];
   private readonly bursts: number[] = [];
   private readonly meshes = new Map<ShapeKind, THREE.InstancedMesh>();
   private readonly dummy = new THREE.Object3D();
@@ -122,6 +123,20 @@ export class InkEffects {
   private readonly localTurn = new THREE.Quaternion();
   private readonly axis = new THREE.Vector3(0, 0, 1);
   private readonly floorTurn = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+  private static readonly _scratchBounds = new THREE.Vector3();
+  private readonly scratchStarAnchor: StarAnchorInternal = {
+    pairId: 0,
+    time: 0,
+    life: 0,
+    position: new THREE.Vector3(),
+    velocity: new THREE.Vector3(),
+    size: 0,
+    rotation: 0,
+    gravity: 0,
+    floor: false,
+    spiral: 0,
+    orbitRadius: 0,
+  };
   private seed = PREVIEW_SEED;
   private nextPairId = 1;
   public readonly group = new THREE.Group();
@@ -131,6 +146,24 @@ export class InkEffects {
       throw new Error('Particle capacity must be between 1 and 8192.');
     }
     this.group.name = 'ink-effects-layer';
+
+    // Pre-allocate complete particle object pool to eliminate runtime allocations
+    this.pool = Array.from({ length: capacity }, () => ({
+      shape: 'stroke' as ShapeKind,
+      time: 0,
+      life: 0,
+      position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
+      size: 0,
+      rotation: 0,
+      gravity: 0,
+      color: new THREE.Color(),
+      floor: false,
+      spiral: 0,
+      orbitRadius: 0,
+      pairId: 0,
+      pairRole: 'none' as const,
+    }));
 
     for (const kind of ['stroke', 'spark', 'ring', 'arc', 'dust', 'chip', 'star'] as ShapeKind[]) {
       const mesh = new THREE.InstancedMesh(
@@ -198,14 +231,17 @@ export class InkEffects {
       box.max.set(0, 0, 0);
       return box;
     }
+    box.makeEmpty();
     for (const p of this.particles) {
       const t = Math.max(0, p.time);
       const px = p.position.x + p.velocity.x * t;
       const py = p.position.y + p.velocity.y * t - 0.5 * p.gravity * t * t;
       const pz = p.position.z + p.velocity.z * t;
       const r = Math.max(0.01, p.size);
-      box.expandByPoint(new THREE.Vector3(px - r, py - r, pz - r));
-      box.expandByPoint(new THREE.Vector3(px + r, py + r, pz + r));
+      InkEffects._scratchBounds.set(px - r, py - r, pz - r);
+      box.expandByPoint(InkEffects._scratchBounds);
+      InkEffects._scratchBounds.set(px + r, py + r, pz + r);
+      box.expandByPoint(InkEffects._scratchBounds);
     }
     return box;
   }
@@ -246,88 +282,73 @@ export class InkEffects {
         const colorRole = effect.colorRole ?? (effect.accent ? 'accent' : 'ink');
         const isPaperCore = effect.shape === 'star' && colorRole === 'paper' && sharedStar !== undefined;
         const isStarOuter = effect.shape === 'star' && colorRole !== 'paper';
+        const p = this.pool[this.particles.length];
+
         let pairId = 0;
         let pairRole: ParticleInternal['pairRole'] = 'none';
-        let position: THREE.Vector3;
-        let velocity: THREE.Vector3;
-        let size: number;
-        let rotation: number;
-        let gravity: number;
-        let floor: boolean;
-        let spiral: number;
-        let orbitRadius: number;
-        let time: number;
-        let life: number;
 
         if (isPaperCore) {
           const anchor = sharedStar!;
           pairId = anchor.pairId;
           pairRole = 'core';
-          position = anchor.position.clone();
-          velocity = anchor.velocity.clone();
-          size = anchor.size * PAPER_CORE_SCALE;
-          rotation = anchor.rotation;
-          gravity = anchor.gravity;
-          floor = anchor.floor;
-          spiral = anchor.spiral;
-          orbitRadius = anchor.orbitRadius;
-          time = anchor.time;
-          life = anchor.life;
+          p.position.copy(anchor.position);
+          p.velocity.copy(anchor.velocity);
+          p.size = anchor.size * PAPER_CORE_SCALE;
+          p.rotation = anchor.rotation;
+          p.gravity = anchor.gravity;
+          p.floor = anchor.floor;
+          p.spiral = anchor.spiral;
+          p.orbitRadius = anchor.orbitRadius;
+          p.time = anchor.time;
+          p.life = anchor.life;
         } else {
           const angle = direction + (effect.angle ?? 0) + (this.random() - 0.5) * Math.PI * 2 * effect.spread;
           const speed = effect.speed * (0.45 + this.random() * 0.7);
-          floor = effect.floor ?? false;
-          time = -this.random() * effect.duration * 0.1 * lifetime;
-          life = effect.duration * (0.8 + this.random() * 0.35) * lifetime;
-          position = at
-            .clone()
-            .add(new THREE.Vector3((this.random() - 0.5) * 0.08 * scale, 0, (this.random() - 0.5) * 0.08 * scale));
-          velocity = new THREE.Vector3(
-            Math.cos(angle) * speed,
-            floor ? 0.1 + this.random() * 0.15 : Math.sin(angle) * speed + 0.3,
-            floor ? Math.sin(angle) * speed : (this.random() - 0.5) * speed * 0.4
-          ).multiplyScalar(scale);
-          size = effect.size * (0.65 + this.random() * 0.6) * scale;
-          rotation = angle - (effect.shape === 'arc' ? 0 : Math.PI / 2);
-          gravity = effect.gravity * scale;
-          spiral = effect.spiral ?? 0;
-          orbitRadius = (effect.orbitRadius ?? 0.5) * scale;
+          const floor = effect.floor ?? false;
+          p.floor = floor && effect.shape !== 'dust';
+          p.time = -this.random() * effect.duration * 0.1 * lifetime;
+          p.life = effect.duration * (0.8 + this.random() * 0.35) * lifetime;
+          p.position.set(
+            at.x + (this.random() - 0.5) * 0.08 * scale,
+            at.y,
+            at.z + (this.random() - 0.5) * 0.08 * scale
+          );
+          p.velocity.set(
+            Math.cos(angle) * speed * scale,
+            (floor ? 0.1 + this.random() * 0.15 : Math.sin(angle) * speed + 0.3) * scale,
+            (floor ? Math.sin(angle) * speed : (this.random() - 0.5) * speed * 0.4) * scale
+          );
+          p.size = effect.size * (0.65 + this.random() * 0.6) * scale;
+          p.rotation = angle - (effect.shape === 'arc' ? 0 : Math.PI / 2);
+          p.gravity = effect.gravity * scale;
+          p.spiral = effect.spiral ?? 0;
+          p.orbitRadius = (effect.orbitRadius ?? 0.5) * scale;
 
           if (isStarOuter && sharedStar === undefined) {
             pairId = this.nextPairId++;
             pairRole = 'outer';
-            sharedStar = {
-              pairId,
-              time,
-              life,
-              position: position.clone(),
-              velocity: velocity.clone(),
-              size,
-              rotation,
-              gravity,
-              floor,
-              spiral,
-              orbitRadius,
-            };
+            const anchor = this.scratchStarAnchor;
+            anchor.pairId = pairId;
+            anchor.time = p.time;
+            anchor.life = p.life;
+            anchor.position.copy(p.position);
+            anchor.velocity.copy(p.velocity);
+            anchor.size = p.size;
+            anchor.rotation = p.rotation;
+            anchor.gravity = p.gravity;
+            anchor.floor = p.floor;
+            anchor.spiral = p.spiral;
+            anchor.orbitRadius = p.orbitRadius;
+            sharedStar = anchor;
           }
         }
-        duration = Math.max(duration, life - time);
-        this.particles.push({
-          shape: effect.shape,
-          time,
-          life,
-          position,
-          velocity,
-          size,
-          rotation,
-          gravity,
-          color: new THREE.Color(resolveEffectColor(colorRole, color, effect.shape === 'dust')),
-          floor: floor && effect.shape !== 'dust',
-          spiral,
-          orbitRadius,
-          pairId,
-          pairRole,
-        });
+        duration = Math.max(duration, p.life - p.time);
+        p.shape = effect.shape;
+        p.color.set(resolveEffectColor(colorRole, color, effect.shape === 'dust'));
+        p.pairId = pairId;
+        p.pairRole = pairRole;
+
+        this.particles.push(p);
       }
     }
     if (duration) this.bursts.push(duration);
@@ -359,8 +380,10 @@ export class InkEffects {
       const p = this.particles[i];
       p.time += delta;
       if (p.time >= p.life) {
-        this.particles[i] = this.particles[this.particles.length - 1];
-        this.particles.pop();
+        const last = this.particles.pop()!;
+        if (i < this.particles.length) {
+          this.particles[i] = last;
+        }
         continue;
       }
       if (p.time < 0) continue;

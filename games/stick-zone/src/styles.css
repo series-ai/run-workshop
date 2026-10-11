@@ -1635,14 +1635,15 @@ html, body, #root {
    AUTHENTIC DIEGETIC TACTICAL SHOOTER GAME HUD (Sol 6.1 High Architecture)
    ========================================================================= */
 .tactical-hud {
-  --hud-ink: #d5dbc6;
-  --hud-muted: #95a28d;
-  --hud-line: rgba(56, 189, 248, 0.22);
-  --hud-line-glow: rgba(56, 189, 248, 0.12);
-  --hud-panel: rgba(15, 23, 42, 0.65);
-  --hud-empty: rgba(30, 41, 59, 0.55);
-  --hud-phosphor: #38bdf8;
-  --hud-warning: #eab308;
+  --hud-ink: #f8fafc;
+  --hud-muted: #64748b;
+  --hud-line: rgba(255, 255, 255, 0.08);
+  --hud-line-glow: transparent;
+  --hud-panel: rgba(12, 16, 22, 0.72);
+  --hud-empty: rgba(255, 255, 255, 0.06);
+  --hud-phosphor: #4ade80;
+  --hud-armor: #38bdf8;
+  --hud-warning: #fbbf24;
   --hud-danger: #ef4444;
   --hud-cut: 10px;
   --hud-mono: "JetBrains Mono", "Courier New", monospace;
@@ -1700,18 +1701,16 @@ html, body, #root {
 /* Chamfered Tactical Shells */
 .hud-shell {
   position: relative;
-  padding: 1px;
-  background: var(--hud-line);
-  border-radius: 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  background: var(--hud-panel);
+  border: 1px solid var(--hud-line);
+  border-radius: 4px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .hud-shell__body {
-  padding: 10px 13px;
-  background: var(--hud-panel);
-  border-radius: 5px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 12px;
 }
 
 /* Label & Typography */
@@ -1805,7 +1804,7 @@ html, body, #root {
 
 .hud-cell {
   position: relative;
-  height: 12px;
+  height: 8px;
   background: var(--hud-empty);
   border: 1px solid var(--hud-line);
   overflow: hidden;
@@ -1944,25 +1943,25 @@ html, body, #root {
 
 /* Mil-Spec Buttons & Switches */
 .hud-switch {
-  min-height: 25px;
-  padding: 3px 8px;
-  border: 1px solid var(--hud-line);
-  background: rgba(18, 24, 20, 0.95);
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--hud-ink);
   font-family: var(--hud-mono);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  border-radius: 3px;
   cursor: pointer;
   pointer-events: auto;
   transition: all 0.12s ease-in-out;
 }
 
 .hud-switch:hover {
-  border-color: var(--hud-phosphor);
-  color: var(--hud-phosphor);
-  background: rgba(30, 42, 32, 0.95);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .hud-switch.illum-active {
@@ -2178,34 +2177,49 @@ html, body, #root {
 
 /* Real Functional Tactical Minimap */
 .hud-minimap-container {
-  width: 100%;
-  height: 125px;
-  background: rgba(8, 12, 20, 0.85);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 4px;
+  width: 130px;
+  height: 130px;
+  background: rgba(8, 11, 16, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
   position: relative;
   overflow: hidden;
-  margin-top: 4px;
+  margin: 6px auto;
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.7);
 }
 
 .hud-minimap-grid {
   position: absolute;
   inset: 0;
+  border-radius: 50%;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 16px 16px;
+    radial-gradient(circle, transparent 38%, rgba(255, 255, 255, 0.06) 39%, rgba(255, 255, 255, 0.06) 40%, transparent 41%),
+    radial-gradient(circle, transparent 68%, rgba(255, 255, 255, 0.06) 69%, rgba(255, 255, 255, 0.06) 70%, transparent 71%);
   pointer-events: none;
 }
 
-.hud-minimap-runway {
+.hud-minimap-grid::after {
+  content: "";
   position: absolute;
-  left: calc(50% - 1px);
-  top: 8%;
-  bottom: 8%;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.12);
-  pointer-events: none;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hud-minimap-grid::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hud-minimap-runway {
+  display: none;
 }
 
 .hud-minimap-player {
@@ -2220,10 +2234,10 @@ html, body, #root {
 }
 
 .hud-minimap-player .player-arrow {
-  color: #38bdf8;
-  font-size: 12px;
+  color: #4ade80;
+  font-size: 11px;
   line-height: 1;
-  text-shadow: 0 0 4px #38bdf8;
+  text-shadow: 0 0 4px rgba(74, 222, 128, 0.5);
 }
 
 .hud-minimap-crate {
