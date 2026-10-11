@@ -12,6 +12,9 @@ export type PresentationEvent =
       type: 'impact';
       position: { x: number; y: number; z: number };
       surface?: 'metal' | 'concrete' | 'flesh';
+      damage?: number;
+      label?: string;
+      isCrit?: boolean;
     }
   | {
       type: 'elimination';
@@ -2336,8 +2339,10 @@ export class SectorDepotSimulation {
             this.trainingProgress.dummyHit = true;
             this.enqueuePresentationEvent({
               type: "impact",
-              position: { x: d.x, y: 1.4, z: d.z },
+              position: { x: d.x, y: 1.6, z: d.z },
               surface: "metal",
+              damage: 35,
+              label: "35",
             });
             this.combatLog.push(`[TARGET RANGE] Melee kick impacted ${d.side.toUpperCase()} target dummy!`);
           }
@@ -2577,8 +2582,10 @@ export class SectorDepotSimulation {
             this.trainingProgress.dummyHit = true;
             this.enqueuePresentationEvent({
               type: "impact",
-              position: { x: d.x, y: 1.4, z: d.z },
+              position: { x: d.x, y: 1.6, z: d.z },
               surface: "metal",
+              damage: hitRes.pelletsHit * 20,
+              label: `${hitRes.pelletsHit * 20}`,
             });
             this.combatLog.push(`[TARGET RANGE] Shotgun pellets impacted ${d.side.toUpperCase()} dummy!`);
           }
@@ -2592,8 +2599,11 @@ export class SectorDepotSimulation {
         for (const [, h] of machineHits) {
           this.enqueuePresentationEvent({
             type: 'impact',
-            position: { x: h.ref.x, y: 1.0, z: h.ref.z },
+            position: { x: h.ref.x, y: 1.5, z: h.ref.z },
             surface: 'metal',
+            damage: h.damage,
+            label: `-${h.damage}`,
+            isCrit: hasPointBlankHit,
           });
           const m = h.ref;
           if (this.onMachineHit) {
@@ -2611,8 +2621,11 @@ export class SectorDepotSimulation {
         for (const [, h] of rivalHits) {
           this.enqueuePresentationEvent({
             type: 'impact',
-            position: { x: h.ref.x, y: 1.0, z: h.ref.z },
+            position: { x: h.ref.x, y: 1.5, z: h.ref.z },
             surface: 'flesh',
+            damage: h.damage,
+            label: `-${h.damage}`,
+            isCrit: h.pointBlank,
           });
           const r = h.ref;
           const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, h.damage);
@@ -2739,8 +2752,10 @@ export class SectorDepotSimulation {
         this.trainingProgress.dummyHit = true;
         this.enqueuePresentationEvent({
           type: "impact",
-          position: { x: d.x, y: 1.4, z: d.z },
+          position: { x: d.x, y: 1.6, z: d.z },
           surface: "metal",
+          damage: 100,
+          label: "100",
         });
         this.combatLog.push(`[TARGET RANGE] Direct hit on ${d.side.toUpperCase()} target dummy! // 100 DMG`);
         return;
@@ -2750,8 +2765,10 @@ export class SectorDepotSimulation {
         const m = closestHit.ref;
         this.enqueuePresentationEvent({
           type: 'impact',
-          position: { x: m.x, y: 1.0, z: m.z },
+          position: { x: m.x, y: 1.5, z: m.z },
           surface: 'metal',
+          damage: weaponDamage,
+          label: `-${weaponDamage}`,
         });
         if (this.onMachineHit) {
           m.health = Math.max(1, m.health - weaponDamage);
@@ -2767,8 +2784,11 @@ export class SectorDepotSimulation {
         const r = closestHit.ref;
         this.enqueuePresentationEvent({
           type: 'impact',
-          position: { x: r.x, y: 1.0, z: r.z },
+          position: { x: r.x, y: 1.5, z: r.z },
           surface: 'flesh',
+          damage: weaponDamage,
+          label: `-${weaponDamage}`,
+          isCrit: this.player.lastHitmarkerCrit,
         });
         const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, weaponDamage);
         r.health = newHealth;

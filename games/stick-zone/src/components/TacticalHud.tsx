@@ -90,15 +90,9 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
     }
     lastReloadRef.current = isReloadingNow;
 
-    // Target Dummy Hit Callout
+    // Target Dummy Hit Callout (Rendered directly over target in 3D world space)
     if (sim.lastDummyHitTick && sim.lastDummyHitTick !== lastDummyHitRef.current) {
       lastDummyHitRef.current = sim.lastDummyHitTick;
-      newEntries.push({
-        id: `dummy_${now}`,
-        text: "THWACK!",
-        sub: "TARGET IMPACT // 100 DMG",
-        kind: "amber",
-      });
     }
 
     // Kinetic Slide Callout
@@ -123,22 +117,12 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
     }
     lastKickRef.current = isKickingNow;
 
-    // Dynamic Hitmarker Callout
+    // Dynamic Hitmarker Callout (Rendered directly over target in 3D world space)
     if (
       player.lastHitmarkerTick &&
       player.lastHitmarkerTick !== lastHitmarkerRef.current
     ) {
       lastHitmarkerRef.current = player.lastHitmarkerTick;
-      newEntries.push({
-        id: `hit_${now}`,
-        text: player.lastHitmarkerCrit
-          ? "CRITICAL HIT!"
-          : player.weapon === "shotgun"
-          ? "12G BLAST"
-          : "DIRECT HIT",
-        sub: player.lastHitmarkerCrit ? "-60 HP" : "-35 HP",
-        kind: player.lastHitmarkerCrit ? "crit" : "default",
-      });
     }
 
     // Scavenged Cash Callout

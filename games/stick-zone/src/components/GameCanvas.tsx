@@ -233,6 +233,71 @@ const PresentationFXManager: React.FC<{
   const effects = useMemo(() => new InkEffects(2048), []);
   const trails = useMemo(() => new InkTrails(), []);
   const shatter = useMemo(() => new ShatterMesh(256), []);
+  // Floating tactical damage numbers directly over targets
+  const floatingGroup = useMemo(() => new THREE.Group(), []);
+  const activeHitsRef = useRef<Array<{
+    sprite: THREE.Sprite;
+    material: THREE.SpriteMaterial;
+    texture: THREE.CanvasTexture;
+    startX: number;
+    startY: number;
+    startZ: number;
+    birth: number;
+    duration: number;
+    isCrit: boolean;
+  }>>([]);
+
+  const spawnFloatingHit = useCallback((
+    pos: { x: number; y: number; z: number },
+    text: string,
+    color: string,
+    isCrit: boolean
+  ) => {
+    if (typeof document === "undefined") return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.font = isCrit ? "900 48px monospace" : "900 40px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = "rgba(10, 15, 20, 0.95)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(text, 128, 64);
+    ctx.fillStyle = color;
+    ctx.fillText(text, 128, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    });
+    const sprite = new THREE.Sprite(material);
+    const baseScale = isCrit ? 1.8 : 1.4;
+    sprite.scale.set(baseScale, baseScale * 0.5, 1);
+    const startY = pos.y + 0.6;
+    sprite.position.set(pos.x, startY, pos.z);
+    floatingGroup.add(sprite);
+
+    activeHitsRef.current.push({
+      sprite,
+      material,
+      texture,
+      startX: pos.x,
+      startY,
+      startZ: pos.z,
+      birth: performance.now(),
+      duration: 750,
+      isCrit,
+    });
+  }, [floatingGroup]);
+
   const recoilAgeRef = useRef(-1);
   const aimPunchAgeRef = useRef(-1);
   const aimPunchDirRef = useRef<[number, number]>([0, 0]);
@@ -247,6 +312,12 @@ const PresentationFXManager: React.FC<{
       effects.dispose();
       trails.dispose();
       shatter.dispose();
+      for (const h of activeHitsRef.current) {
+        floatingGroup.remove(h.sprite);
+        h.material.dispose();
+        h.texture.dispose();
+      }
+      activeHitsRef.current = [];
     };
   }, [effects, trails, shatter]);
 
@@ -342,6 +413,12 @@ const PresentationFXManager: React.FC<{
           effects.trigger("critical-hit", impactVec, "#ef4444", 1.4);
         } else {
           effects.trigger("concrete-chips", impactVec, undefined, 1.3);
+        }
+        if (ev.label || ev.damage) {
+          const text = ev.label ?? `${ev.damage}`;
+          const isCrit = Boolean(ev.isCrit);
+          const color = isCrit ? "#ef4444" : ev.surface === "metal" ? "#fbbf24" : "#ffffff";
+          spawnFloatingHit(ev.position, text, color, isCrit);
         }
       } else if (ev.type === "elimination") {
         const elimVec = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
@@ -501,6 +578,27 @@ const PresentationFXManager: React.FC<{
       );
     }
 
+    // Animate floating damage numbers over targets
+    const now = performance.now();
+    for (let i = activeHitsRef.current.length - 1; i >= 0; i--) {
+      const h = activeHitsRef.current[i];
+      const elapsed = now - h.birth;
+      const progress = elapsed / h.duration;
+      if (progress >= 1.0) {
+        floatingGroup.remove(h.sprite);
+        h.material.dispose();
+        h.texture.dispose();
+        activeHitsRef.current.splice(i, 1);
+      } else {
+        const yOffset = Math.sin(progress * Math.PI * 0.5) * 0.9;
+        h.sprite.position.set(h.startX, h.startY + yOffset, h.startZ);
+        h.material.opacity = progress < 0.6 ? 1.0 : 1.0 - (progress - 0.6) / 0.4;
+        const pop = progress < 0.15 ? 1.0 + (0.15 - progress) * 1.5 : 1.0;
+        const s = (h.isCrit ? 1.8 : 1.4) * pop;
+        h.sprite.scale.set(s, s * 0.5, 1);
+      }
+    }
+
     effects.update(delta, camera);
     trails.update(elapsedTime);
     shatter.update(delta);
@@ -511,6 +609,7 @@ const PresentationFXManager: React.FC<{
       <primitive object={effects.group} />
       <primitive object={trails.group} />
       <primitive object={shatter.group} />
+      <primitive object={floatingGroup} />
     </>
   );
 };
