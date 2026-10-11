@@ -9,6 +9,7 @@ import { verifiedR36DarkMassIds } from './support/r36DarkMassIds';
 import { readRetainedBridgeRecords } from './support/retainedStructuralSupport';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 import { withoutR43EdgeLighting } from './support/r43EdgeLighting';
+import { withoutR43bWindowCells } from './support/r43bTowerSeparation';
 // External texture stubs permit the real factory. They do not provide the oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
   const original = await importOriginal<typeof import('../src/render/signAtlas')>();
@@ -16,7 +17,7 @@ vi.mock('../src/render/signAtlas', async importOriginal => {
 });
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
-import { SkyriverCity, deriveCityMasses, deriveTowerProfiles, deriveRetainedMassSupportRecords, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_CITY } from '../src/render/city';
+import { SkyriverCity, deriveCityMasses, deriveTowerProfiles, deriveRetainedMassSupportRecords, SKYRIVER_CITY_SHADER_SOURCE } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { skyriverQualityFor, SkyriverQualityTier } from '../src/render/scene';
@@ -24,6 +25,16 @@ import { SkyriverDistrictColourSwitch, SKYRIVER_DISTRICT_SOURCE_TERMS } from '..
 
 const sha = (a: ArrayBufferView) => createHash('sha256').update(Buffer.from(a.buffer, a.byteOffset, a.byteLength)).digest('hex');
 interface BeforeMesh { count: number; index: string | null; instanceMatrix: string | null; attributes: Record<string, { itemSize: number; count: number; sha256: string }>; }
+
+/** Independent R43b pitch contract. The uploaded material owner selects the cell area. */
+function expectedCellArea(seed32: number): number {
+  const q = Math.floor(Math.min(Math.max(Math.fround(seed32), 0), 1 - 1 / 65536) * 65536);
+  const row = [[36, 2, 30, 2], [72, 5, 36, 2], [36, 2, 56, 4], [52, 3, 40, 2]][Math.floor(q / 16384)]!;
+  const owner = ((q % 16384) * 251 + 97) % 16384;
+  const widthM = (row[0]! + row[1]! * (owner % 5)) / 8;
+  const heightM = (row[2]! + row[3]! * (Math.floor(owner / 5) % 5)) / 8;
+  return widthM * heightM;
+}
 
 describe('R31 independent roof emission policy', () => {
   it.each([424242, 0, 2147483647, 4294967295])('maps only real equipment rows and preserves all old geometry for seed %i', seed => {
@@ -47,7 +58,7 @@ describe('R31 independent roof emission policy', () => {
           const mass = rows[i]!, allowed = mass.baseRecord?.kind === 'equipment' || darkMasses.has(mass) ? 0 : 1;
           expect(mask.getX(i), `actual row${i}`).toBe(allowed);
           if (mass.baseRecord?.kind === 'equipment') equipment += 1; else if (mass.supportRole === 'retained-child-bridge') structuralSupports += 1; else if (Reflect.get(mass, 'crownRole') === 'ordinary-dark-crown') ordinaryCrowns += 1; else if (darkMasses.has(mass)) auxiliary += 1; else kept.add(mass.baseRecord?.kind ?? 'legacy');
-          if ((mass.layer ?? 0) === 0 && allowed) cells += Math.floor(2 * (mass.width + mass.depth) * mass.height / (SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM));
+          if ((mass.layer ?? 0) === 0 && allowed) cells += Math.floor(2 * (mass.width + mass.depth) * mass.height / expectedCellArea(tower.geometry.getAttribute('aMaterial').getX(i)));
         }
         expect(equipment).toBeGreaterThan(50);
         expect(kept).toEqual(new Set(['legacy', 'skirt', 'infill', 'link']));
@@ -95,7 +106,7 @@ describe('R31 independent roof emission policy', () => {
   });
 
   it('retains the roof shader rules with the approved R38 lighting', () => {
-    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR32RoofPolicy(withoutR43EdgeLighting(source, key), key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
+    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR32RoofPolicy(withoutR43EdgeLighting(withoutR43bWindowCells(source, key), key), key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
     const source = SKYRIVER_CITY_SHADER_SOURCE;
     expect(source.towerVertex).toContain('vEmissionAllowed = aEmissionAllowed;');
     expect(source.towerFragment).toContain('flat varying float vEmissionAllowed;');

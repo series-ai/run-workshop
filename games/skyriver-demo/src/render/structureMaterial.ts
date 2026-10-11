@@ -22,6 +22,61 @@ export const STRUCTURE_MATERIAL_COMBINED_GAIN_RANGE = Object.freeze([
 
 export const STRUCTURE_MATERIAL_FAMILIES = 4;
 
+/** Cell pitches use units of 0.125 m. Pane widths use 1/1024 cell units. */
+export const WINDOW_CELL_FAMILIES = Object.freeze([
+  Object.freeze({ name: 'dense fine', widthBase: 36, widthStep: 2, heightBase: 30, heightStep: 2, paneWidthBase: 368, paneWidthStep: 8 }),
+  Object.freeze({ name: 'wide sparse', widthBase: 72, widthStep: 5, heightBase: 36, heightStep: 2, paneWidthBase: 450, paneWidthStep: 8 }),
+  Object.freeze({ name: 'tall narrow', widthBase: 36, widthStep: 2, heightBase: 56, heightStep: 4, paneWidthBase: 320, paneWidthStep: 8 }),
+  Object.freeze({ name: 'medium grid', widthBase: 52, widthStep: 3, heightBase: 40, heightStep: 2, paneWidthBase: 404, paneWidthStep: 8 }),
+] as const);
+
+export interface WindowCellProfile {
+  readonly family: number;
+  readonly widthM: number;
+  readonly heightM: number;
+  /** Half extents in cell units. */
+  readonly paneHalfWidth: number;
+  readonly paneHalfHeight: number;
+}
+
+/** One owner controls every facade cell on its building. */
+export function windowCellProfile(q: number): WindowCellProfile {
+  const family = Math.floor(q / 16384);
+  const row = WINDOW_CELL_FAMILIES[family]!;
+  // The largest integer is 4,112,230, below the Float32 exact limit.
+  const owner = ((q % 16384) * 251 + 97) % 16384;
+  const widthChoice = owner % 5;
+  const heightChoice = Math.floor(owner / 5) % 5;
+  const paneChoice = Math.floor(owner / 25) % 5;
+  const paneHalfWidth = (row.paneWidthBase + row.paneWidthStep * paneChoice) / 1024;
+  return {
+    family,
+    widthM: (row.widthBase + row.widthStep * widthChoice) / 8,
+    heightM: (row.heightBase + row.heightStep * heightChoice) / 8,
+    paneHalfWidth,
+    paneHalfHeight: Math.fround(Math.fround(0.41 * 0.29) / paneHalfWidth),
+  };
+}
+
+/** The CPU table also defines the vertex shader profile. */
+export const WINDOW_CELL_PROFILE_GLSL = /* glsl */ `
+vec4 windowCellProfile( float q ) {
+  float family = floor( q / 16384.0 );
+  float owner = mod( mod( q, 16384.0 ) * 251.0 + 97.0, 16384.0 );
+  float widthChoice = mod( owner, 5.0 );
+  float heightChoice = mod( floor( owner / 5.0 ), 5.0 );
+  float paneChoice = mod( floor( owner / 25.0 ), 5.0 );
+  vec4 cell = vec4( 0.0 );
+${WINDOW_CELL_FAMILIES.map((row, i) => `  ${i === 0 ? 'if' : 'else if'} ( family < ${(i + 0.5).toFixed(1)} ) {
+    cell.x = ( ${row.widthBase}.0 + ${row.widthStep}.0 * widthChoice ) / 8.0;
+    cell.y = ( ${row.heightBase}.0 + ${row.heightStep}.0 * heightChoice ) / 8.0;
+    cell.z = ( ${row.paneWidthBase}.0 + ${row.paneWidthStep}.0 * paneChoice ) / 1024.0;
+  }`).join('\n')}
+  cell.w = ${Math.fround(0.41 * 0.29)} / cell.z;
+  return cell;
+}
+`;
+
 export interface StructureMaterialProfile {
   readonly family: number;
   readonly base: number;

@@ -34,7 +34,7 @@
 import { DeterministicRandom } from '@series-inc/rundot-syncplay';
 import * as THREE from 'three';
 
-import { decodeCard, encodeCard, quantize, SKYRIVER_STRUCTURE_MATERIAL_GLSL } from './structureMaterial.js';
+import { decodeCard, encodeCard, quantize, SKYRIVER_STRUCTURE_MATERIAL_GLSL, windowCellProfile, WINDOW_CELL_PROFILE_GLSL } from './structureMaterial.js';
 import { WINDOW_PALETTE_GLSL, windowPaletteCode, windowPaletteCodeFromQ, windowPaletteHash, windowPaletteMean } from './windowPalette';
 
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
@@ -9715,10 +9715,12 @@ varying vec2 vStepEdges;
 varying float vDistrict;
 flat varying float vMaterial;
 flat varying float vWindowPalette;
+flat varying vec4 vWindowCell;
 flat varying float vEmissionAllowed;
 
 #include <fog_pars_vertex>
 ${WINDOW_PALETTE_GLSL}
+${WINDOW_CELL_PROFILE_GLSL}
 
 void main() {
   vec3 transformed = vec3( position );
@@ -9754,7 +9756,9 @@ void main() {
   vDistrict = aDistrict;
   vMaterial = aMaterial;
   vEmissionAllowed = aEmissionAllowed;
-  vWindowPalette = windowPaletteCodeFromQ(floor(clamp(aMaterial, 0.0, 1.0 - 1.0 / 65536.0) * 65536.0), aDistrict);
+  float ownerQ = floor(clamp(aMaterial, 0.0, 1.0 - 1.0 / 65536.0) * 65536.0);
+  vWindowPalette = windowPaletteCodeFromQ(ownerQ, aDistrict);
+  vWindowCell = windowCellProfile(ownerQ);
 
   vec4 world = modelMatrix * instanceMatrix * vec4( transformed, 1.0 );
   vWorldPos = world.xyz;
@@ -9775,8 +9779,6 @@ void main() {
 const TOWER_FRAGMENT = /* glsl */ `
 #define EMISSIVE_GAIN ${SKYRIVER_EMISSIVE_GAIN.toFixed(4)}
 uniform float uTime;
-uniform float uCellWidth;
-uniform float uCellHeight;
 uniform float uRibSpacing;
 uniform float uProjScale;
 uniform float uConcreteLevel;
@@ -9800,6 +9802,7 @@ varying vec2 vStepEdges;
 varying float vDistrict;
 flat varying float vMaterial;
 flat varying float vWindowPalette;
+flat varying vec4 vWindowCell;
 flat varying float vEmissionAllowed;
 
 // --- T7-4 interior mapping ------------------------------------------------------------------------
@@ -9894,7 +9897,7 @@ ${SKYRIVER_DISTANCE_GRADE_GLSL}
 float windowSdf( vec2 cellLocal, float ribbon ) {
   const float radius = 0.055;
   // T7-4: the pristine heights glaze in near-continuous ribbons (curtain wall), not punched windows.
-  vec2 halfExtent = mix( vec2( 0.41, 0.29 ), vec2( 0.495, 0.36 ), ribbon );
+  vec2 halfExtent = mix( vWindowCell.zw, vec2( 0.495, 0.36 ), ribbon );
   vec2 d = abs( cellLocal - 0.5 ) - halfExtent + radius;
   return length( max( d, 0.0 ) ) + min( max( d.x, d.y ), 0.0 ) - radius;
 }
@@ -9927,19 +9930,26 @@ void main() {
   // layer; no interiors, signs or wet sheen. Same fog as the city, so depth still grades with haze.
   if ( vLayer > 0.5 ) {
     float layerDim = vLayer < 1.5 ? 0.6 : ( vLayer < 2.5 ? 0.34 : 0.18 );
-    vec2 farCell = vSurf / vec2( 14.0, 9.0 );
+    vec2 farCellSize = vec2( 14.0, 9.0 ) * vWindowCell.xy / vec2( 7.2, 5.4 );
+    vec2 farCell = vSurf / farCellSize;
     vec2 farId = floor( farCell );
     vec2 farLocal = fract( farCell );
     float farZone = step( 0.45, skyHash12( vec2( floor( farId.y / 9.0 ), vSeed * 31.0 + vFaceId ) ) );
     float farLit = step( 0.86, skyHash12( farId + vSeed * 17.0 ) ) * farZone * vIsSide;
-    float farGlass = step( 0.2, farLocal.x ) * step( farLocal.x, 0.8 ) * step( 0.3, farLocal.y ) * step( farLocal.y, 0.7 );
-    float farPixels = 9.0 * uProjScale / max( vFogDepth, 1.0 );
+    vec2 farPaneHalf = vWindowCell.zw * vec2( 0.3 / 0.41, 0.2 / 0.29 );
+    vec2 farPaneDistance = abs( farLocal - 0.5 ) - farPaneHalf;
+    vec2 farAa = max( 0.5 * fwidth( farCell ), vec2( 0.001 ) );
+    vec2 farGlassAxes = 1.0 - smoothstep( -farAa, farAa, farPaneDistance );
+    float farGlass = farGlassAxes.x * farGlassAxes.y;
+    vec2 farPixelsXY = min( farCellSize * uProjScale / max( vFogDepth, 1.0 ),
+      1.0 / max( fwidth( farCell ), vec2( 1e-4 ) ) );
+    float farPixels = min( farPixelsXY.x, farPixelsXY.y );
     float farResolve = smoothstep( 1.5, 4.0, farPixels );
     float farTemp = skyHash11( farId.x * 3.1 + farId.y * 7.7 + vSeed * 11.0 );
     vec3 farPane = mix( vec3( 1.0, 0.55, 0.22 ), vec3( 0.45, 0.65, 1.0 ), step( 0.6, farTemp ) );
     float farAverage = 0.14 * 0.24 * farZone * vIsSide;
-    float farBottomClearance = vFaceHalf.y + farId.y * 9.0;
-    float farTopClearance = vFaceHalf.y - ( farId.y + 1.0 ) * 9.0;
+    float farBottomClearance = vFaceHalf.y + farId.y * farCellSize.y;
+    float farTopClearance = vFaceHalf.y - ( farId.y + 1.0 ) * farCellSize.y;
     float farStepMask = 1.0;
     if ( vIsSide > 0.5 && vStepEdges.x > 0.5 && farBottomClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
     if ( vIsSide > 0.5 && vStepEdges.y > 0.5 && farTopClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) farStepMask = 0.0;
@@ -9969,22 +9979,21 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   }
   vec3 viewDir = normalize( cameraPosition - vWorldPos );
 
-  // Procedural-detail antialiasing. A 3.6 m floor seen from 600 m covers well under a pixel, and
-  // point-sampling a hash at that rate turns the whole far wall into white noise. uProjScale is
-  // drawingBufferHeight / (2 * tan(fov/2)), so this is the cell's height in pixels; below a few
-  // pixels the grid is blended out to its own average instead of being sampled.
+  // Both cell dimensions must resolve before pane and room detail appears.
+  vec2 cellSize = vWindowCell.xy;
+  vec2 cellUv = vSurf / cellSize;
   float viewDepth = max( vFogDepth, 1.0 );
-  float cellPixels = uCellHeight * uProjScale / viewDepth;
+  vec2 cellPixelsXY = min( cellSize * uProjScale / viewDepth,
+    1.0 / max( fwidth( cellUv ), vec2( 1e-4 ) ) );
+  float cellPixels = min( cellPixelsXY.x, cellPixelsXY.y );
   float detail = smoothstep( 1.1, 4.5, cellPixels );
   float fineDetail = smoothstep( 2.5, 9.0, cellPixels );
 
-  vec2 cellSize = vec2( uCellWidth, uCellHeight );
-  vec2 cellUv = vSurf / cellSize;
   vec2 cell = floor( cellUv );
   vec2 cellLocal = fract( cellUv );
   float paneStepMask = 1.0;
-  float bottomStepClearance = vFaceHalf.y + cell.y * uCellHeight;
-  float topStepClearance = vFaceHalf.y - ( cell.y + 1.0 ) * uCellHeight;
+  float bottomStepClearance = vFaceHalf.y + cell.y * cellSize.y;
+  float topStepClearance = vFaceHalf.y - ( cell.y + 1.0 ) * cellSize.y;
   if ( vIsSide > 0.5 && vStepEdges.x > 0.5 && bottomStepClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) paneStepMask = 0.0;
   if ( vIsSide > 0.5 && vStepEdges.y > 0.5 && topStepClearance < ${FACADE_STEP_MASK_BAND_M.toFixed(1)} ) paneStepMask = 0.0;
   // Per-face offset so opposite facades never mirror each other.
@@ -10012,7 +10021,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   float groove = smoothstep( 0.78, 0.97, ribWave );
   float arris = smoothstep( 0.62, 0.76, ribWave ) * ( 1.0 - groove );
   // Floor-slab banding on the window pitch.
-  float slabWave = abs( fract( vSurf.y / uCellHeight + 0.5 ) - 0.5 ) * 2.0;
+  float slabWave = abs( fract( vSurf.y / cellSize.y + 0.5 ) - 0.5 ) * 2.0;
   float slab = smoothstep( 0.84, 0.99, slabWave ) * detail;
 
   float grain = skyValueNoise( vSurf * 0.07 + faceOffset * 0.013 ) * ( 0.5 + 0.5 * ( 1.0 - detail ) );
@@ -10066,7 +10075,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   concrete = mix( concrete, cleanTone * ( 0.55 + 0.45 * faceShade ), pristine * vIsSide );
 
   // R12: the structural bands are a darker, smoother concrete with a thin lit soffit line under each.
-  float bandRow = mod( floor( vSurf.y / uCellHeight + vSeed * 37.0 ), 12.0 );
+  float bandRow = mod( floor( vSurf.y / cellSize.y + vSeed * 37.0 ), 12.0 );
   concrete *= mix( 1.0, 0.55, step( bandRow, 1.4 ) * vIsSide );
 
   // --- wet reflection ---------------------------------------------------------------------------
@@ -10138,9 +10147,10 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
   float sd = windowSdf( cellLocal, pristine );
   // R12: no glass in the structural bands (spandrel), computed again below for the lit gate.
-  float bandFloor = mod( floor( vSurf.y / uCellHeight + vSeed * 37.0 ), 12.0 );
+  float bandFloor = mod( floor( vSurf.y / cellSize.y + vSeed * 37.0 ), 12.0 );
   sd = mix( sd, 1.0, step( bandFloor, 1.4 ) * vIsSide );
-  float glass = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * vIsSide * blockLive * paneStepMask;
+  float paneAa = max( 0.012, 0.5 * fwidth( sd ) );
+  float glass = ( 1.0 - smoothstep( -paneAa, paneAa, sd ) ) * vIsSide * blockLive * paneStepMask;
   // Soft halo: the glow the wet haze smears around every lit pane.
   float halo = ( 1.0 - smoothstep( -0.02, 0.3, sd ) ) * vIsSide * blockLive * paneStepMask;
 
@@ -10166,7 +10176,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // no windows. Between bands, each zone of a tower is either a lit zone or a dark-glass run, so a
   // tower reads as stacked shapes in depth rather than one even noise of windows. Mid-city lit
   // fraction drops to about half (the dark zones), the grime stays crowded.
-  float floorIndex = floor( vSurf.y / uCellHeight + vSeed * 37.0 );
+  float floorIndex = floor( vSurf.y / cellSize.y + vSeed * 37.0 );
   float bandPhase = mod( floorIndex, 12.0 );
   float structuralBand = step( bandPhase, 1.4 ) * vIsSide;
   float zone = floor( floorIndex / 12.0 );
@@ -10206,7 +10216,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // lit panes), so the crown rim's light separates cleanly from the facade texture below it.
   float crownGap = ( 1.0 - step( 0.02, distance( vTint, uMegaTint ) ) ) * ( 1.0 - smoothstep( 50.0, 64.0, vFaceHalf.y - vSurf.y ) ) * vIsSide;
   lit *= 1.0 - crownGap;
-  float glassRaw = ( 1.0 - smoothstep( -0.012, 0.012, sd ) ) * paneStepMask;
+  float glassRaw = ( 1.0 - smoothstep( -paneAa, paneAa, sd ) ) * paneStepMask;
   float interiorDepthMix = interiorDepthWeight( viewDepth, uInteriorFade );
   float roomHash = skyHash12( cell * vec2( 1.7, 2.3 ) + faceOffset * 0.71 );
   float dimShare = mix( ${SKYRIVER_INTERIOR_DIM_SHARE.mid.toFixed(2)}, ${SKYRIVER_INTERIOR_DIM_SHARE.grime.toFixed(2)}, grime );
@@ -10230,7 +10240,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
 
   // --- T7-4 interiors: within uInteriorFade of the camera, the glass shows a traced room. -----------
   if ( S > 0.001 && glassRaw > 0.001 ) {
-    vec3 ray = vec3( dot( d, vTangentW ) / uCellWidth, d.y / uCellHeight, - dot( d, vNormalW ) / ROOM_DEPTH_M );
+    vec3 ray = vec3( dot( d, vTangentW ) / cellSize.x, d.y / cellSize.y, - dot( d, vNormalW ) / ROOM_DEPTH_M );
     // Strata pick the room set: grime 0-9, mid 10-21, pristine 22-31 (dithered at the borders).
     float bandPick = vWorldPos.y + ( skyHash11( roomHash * 91.0 ) - 0.5 ) * 160.0;
     // R16: each stratum's set includes the new archetypes (grime + noodle, laundry, workshop; mid +
@@ -13632,6 +13642,7 @@ export class SkyriverCity {
       fragmentShader: TOWER_FRAGMENT,
       uniforms: {
         uTime: { value: 0 },
+        // Nominal pitch stays available to the frame identity report.
         uCellWidth: { value: SKYRIVER_CITY.windowCellWidthM },
         uCellHeight: { value: SKYRIVER_CITY.windowCellHeightM },
         uRibSpacing: { value: SKYRIVER_CITY.ribSpacingM },
@@ -14064,7 +14075,7 @@ export class SkyriverCity {
         masses: 'Drawn tower-batch instances (slabs, tiers, crowns, seam blocks and the far boxes still drawn as geometry).',
         trims: 'Drawn trim instances after the hero-sign clearance pass.',
         signs: 'Sign instances in the one neon draw. Heroes occupy the first heroSigns slots.',
-        paneCells: 'Facade window cells on emitting near-city masses, from side area / (7.2 m x 5.4 m). Equipment is excluded. This is procedural source capacity, not a per-instance population.',
+        paneCells: 'Facade window cells on emitting near-city masses, from side area / seeded cell area. Equipment is excluded. This is procedural source capacity, not a per-instance population.',
         roomCells: 'The same cells: a room is the traced interior of one pane cell inside the R19.7 fade window.',
         farCards: 'R16 impostor card instances in the far-city draw.',
       }),
@@ -14616,7 +14627,6 @@ export class SkyriverCity {
     this.drawnMassesByDistrict.fill(0);
     this.towerSourceIndices.length = 0;
     this.paneCellCapacity = 0;
-    const cellArea = SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM;
     let i = 0;
     for (let m = 0; m < masses.length; m += 1) {
       const mass = masses[m]!;
@@ -14638,7 +14648,8 @@ export class SkyriverCity {
       this.drawnMassesByDistrict[districts[i]!] += 1;
       if ((mass.layer ?? 0) === 0 && emissionAllowed[i] === 1) {
         const sideArea = 2 * (mass.width + mass.depth) * mass.height;
-        this.paneCellCapacity += Math.floor(sideArea / cellArea);
+        const cellProfile = windowCellProfile(quantize(materials[i]!));
+        this.paneCellCapacity += Math.floor(sideArea / (cellProfile.widthM * cellProfile.heightM));
       }
       // T7-3: canyon space -> the winding loop. Each box keeps its shape, placed at its warped centre
       // and turned to the local canyon heading. R16: tiers and annexes ride their slab's frame.

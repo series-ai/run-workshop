@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import materialBaseline from './fixtures/r29b-material-baseline.json';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 import { withoutR43EdgeLighting } from './support/r43EdgeLighting';
+import { withoutR43bWindowCells } from './support/r43bTowerSeparation';
 import * as THREE from 'three';
 // These external texture stubs permit real geometry construction. They do not supply an oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -52,7 +53,7 @@ describe('R29 independent building palette and value controls', () => {
     }
     const withoutBaseGain = (source: string) => source.replaceAll('(structureFamilyGain(family) * 0.65)', 'structureFamilyGain(family)');
     for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) {
-      expect(createHash('sha256').update(withoutBaseGain(withoutR32RoofPolicy(withoutR43EdgeLighting(source, key), key))).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
+      expect(createHash('sha256').update(withoutBaseGain(withoutR32RoofPolicy(withoutR43EdgeLighting(withoutR43bWindowCells(source, key), key), key))).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
     }
     const city = new SkyriverCity({ layout: presentCityLayout(deriveCityLayout(424242)), quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     try {
@@ -194,7 +195,8 @@ describe('R29 independent building palette and value controls', () => {
 
   it('wires one owner code to all shader stages and keeps the screen darkening setting', () => {
     const { towerVertex: v, towerFragment: f, impostorVertex: cv, impostorFragment: cf } = SKYRIVER_CITY_SHADER_SOURCE;
-    expect(v).toMatch(/vWindowPalette = windowPaletteCodeFromQ\([^;]*aMaterial[^;]*aDistrict\)/);
+    expect(v).toContain('float ownerQ = floor(clamp(aMaterial, 0.0, 1.0 - 1.0 / 65536.0) * 65536.0);');
+    expect(v).toContain('vWindowPalette = windowPaletteCodeFromQ(ownerQ, aDistrict);');
     expect(v).toContain('vBuilding = aBuilding;');
     expect(f).toContain('recolourWindow(resolved, windowPaletteUnit(vWindowPalette, roomHash), uDistrictColour)');
     expect(f).toContain('recolourWindow(averaged, windowPaletteMean(vWindowPalette), uDistrictColour)');

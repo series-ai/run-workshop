@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import baseline from './fixtures/r35-roof-baseline.json';
 import { assertR36PreservedIdentity } from './support/r36PreservedIdentity';
 import { withoutR43EdgeLighting } from './support/r43EdgeLighting';
+import { withoutR43bWindowCells } from './support/r43bTowerSeparation';
 // Canvas textures are boundary stubs. All derived and uploaded geometry is real.
 vi.mock('../src/render/signAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/signAtlas')>(), createSignAtlas: () => ({ texture: new THREE.Texture(), vertical: Array.from({ length: 32 }, () => [0, 0, 1, 1] as const), horizontal: Array.from({ length: 16 }, () => [0, 0, 1, 1] as const), dispose() {} }) }));
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
@@ -161,7 +162,7 @@ describe('R35 independent dark roof details', () => {
   });
 
   it('keeps the approved R38 shader bytes and dark kind2 source rule', () => {
-    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(sha(withoutR43EdgeLighting(source, key)), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
+    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(sha(withoutR43EdgeLighting(withoutR43bWindowCells(source, key), key)), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
     expect(skyriverTrimSourceTermId(2, 0)).toBeNull(); expect(skyriverTrimSourceTermId(2, 1)).toBeNull();
   });
 

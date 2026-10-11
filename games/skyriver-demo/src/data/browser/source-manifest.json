@@ -66,8 +66,8 @@
   },
   {
     "path": "src/render/city.ts",
-    "sha256": "b22b2345cea6c007f0536d0b37b1d0910549b9b4ce44a41431416f3d1d7fa218",
-    "byteLength": 647962
+    "sha256": "7246f8669fc291e72f37c824e6cf248d623be2ea880e5656c257b3d4c397ef7b",
+    "byteLength": 648472
   },
   {
     "path": "src/render/citySnapshotCodec.ts",
@@ -191,8 +191,8 @@
   },
   {
     "path": "src/render/structureMaterial.ts",
-    "sha256": "caec1b77a1b17870f235ca1c66df621c8b91ab160e915568f068cbbfc46b9a7e",
-    "byteLength": 8813
+    "sha256": "0ddc4616ed74578657ef367269687a468424d5cc91937067e6382c00510e3480",
+    "byteLength": 11429
   },
   {
     "path": "src/render/structuredLight.ts",
