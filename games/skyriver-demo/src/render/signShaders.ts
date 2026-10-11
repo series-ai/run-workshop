@@ -173,7 +173,7 @@ varying vec4 vAtlas;
   return source;
 }
 
-export function applySignDesignMaterial(material: ShaderMaterial, data: Float32Array): void {
+export function applySignDesignMaterial(material: ShaderMaterial, data: Float32Array<ArrayBuffer>): void {
   if (data.length < 8 || data.length % 8 !== 0) throw new Error('SIGN_DESIGN_DATA_SIZE');
   const width = data.length / 4;
   const texture = new DataTexture(data, width, 1, RGBAFormat, FloatType);
