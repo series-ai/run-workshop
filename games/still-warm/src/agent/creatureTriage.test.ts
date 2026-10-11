@@ -11,7 +11,10 @@ import { createInitialState, type PhysicalAction } from "../game/model";
 import { createCreatureTriage, type TriageIntent } from "./creatureTriage";
 import { createInitialTempo, type TempoTracker } from "../game/tempo";
 
-function createMockTools(store: GameStore, onActionRun?: (action: any) => void) {
+function createMockTools(
+  store: GameStore,
+  onActionRun?: (action: PhysicalAction, result: { ok: boolean; message: string }) => void,
+) {
   return {
     inspect_room: defineAgentTool({
       description: "inspect",
@@ -23,9 +26,12 @@ function createMockTools(store: GameStore, onActionRun?: (action: any) => void) 
       description: "act",
       inputSchema: { type: "object" },
       validate: (v) => ({ success: true, value: v }),
-      execute: async (input: any) => {
-        onActionRun?.(input);
-        return store.run(input, new AbortController().signal, { instant: true });
+      execute: async (input: PhysicalAction) => {
+        const result = await store.run(input, new AbortController().signal, {
+          instant: true,
+        });
+        onActionRun?.(input, result);
+        return result;
       },
     }),
     interpret_response: defineAgentTool({
@@ -136,12 +142,12 @@ describe("creatureTriage", () => {
     let responded = false;
     let lastResponseText = "";
     let actionSucceeded = false;
-    const executedActions: any[] = [];
+    const executedActions: PhysicalAction[] = [];
 
-    const mockTools = createMockTools(store, (action) => {
+    const mockTools = createMockTools(store, (action, result) => {
       executedActions.push(action);
       if (action.kind === "move_to") {
-        actionSucceeded = true;
+        actionSucceeded = result.ok;
       }
     });
     const triage = createCreatureTriage(mockTools, {
@@ -213,12 +219,12 @@ describe("creatureTriage", () => {
 
     let tempo: TempoTracker = createInitialTempo("pinned");
     let actionSucceeded = false;
-    const executedActions: any[] = [];
+    const executedActions: PhysicalAction[] = [];
 
-    const mockTools = createMockTools(store, (action) => {
+    const mockTools = createMockTools(store, (action, result) => {
       executedActions.push(action);
       if (action.kind === "lift_debris") {
-        actionSucceeded = true;
+        actionSucceeded = result.ok;
       }
     });
 
@@ -405,9 +411,9 @@ describe("fetch narration stays inside hearing", () => {
     let actionSucceeded = false;
     const executedActions: PhysicalAction[] = [];
 
-    const mockTools = createMockTools(store, (action) => {
-      executedActions.push(action as PhysicalAction);
-      if (action.kind === "pick_up") actionSucceeded = true;
+    const mockTools = createMockTools(store, (action, result) => {
+      executedActions.push(action);
+      if (action.kind === "pick_up") actionSucceeded = result.ok;
     });
     const triage = createCreatureTriage(mockTools, {
       store,
