@@ -19,6 +19,16 @@ const { chromium } = req(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fs = require('fs');
 const path = require('path');
 const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] || 50)];
+if (!url || typeof url !== 'string') throw new Error('URL must be provided.');
+let parsedUrl;
+try {
+  parsedUrl = new URL(url);
+} catch {
+  throw new Error('Invalid URL: ' + url);
+}
+if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+  throw new Error('URL protocol must be http: or https:');
+}
 (async () => {
   let browser;
   try {
@@ -35,12 +45,16 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
   if (process.env.TIER_TEST) await page.evaluate(() => { const t = window.__skyriver.tiers; setTimeout(() => t.pin('medium'), 3000); setTimeout(() => t.pin('low'), 7000); setTimeout(() => t.pin('high'), 11000); });
   const result = await page.evaluate(async (secs) => {
     const a = window.__skyriver; const s = a.scene; const cam = s.camera;
-    const hulls = []; let streak = null; let towers = null;
+    const hulls = []; let streak = null; let towers = null; let trim = null;
     s.scene.traverse((o) => {
       if (o.name && o.name.startsWith('skyriver.traffic.') && o.isInstancedMesh) hulls.push(o);
       if (o.name === 'skyriver.traffic.streaks') streak = o;
       if (o.name === 'skyriver.city.towers') towers = o;
+      if (o.name === 'skyriver.city.trim') trim = o;
     });
+    if (!trim || !trim.isInstancedMesh) {
+      throw new Error('skyriver.city.trim instanced mesh is required.');
+    }
     // Tower boxes as inverse matrices (static city): local = M^-1 * p, unit box [-0.5, 0.5]^3.
     const M = towers.instanceMatrix.array; const n = towers.count;
     const inv = []; const sc = [];
@@ -160,79 +174,171 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
       }
     };
     const origUpdate = a.scene.update;
-    // LAYER=traffic: after the real frame, re-render only the traffic lights (CPU streaks + GPU
-    // impostors) with the opaque city as occluders (towers, far-city cards, hulls), sky/signs/trims/
-    // beams/rain/shuttle hidden, and track blobs on that layer. Isolates traffic-light pops.
-    const keep = new Set([...(window.__POP_NOCARDS ? [] : ['skyriver.city.impostors']), 'skyriver.city.towers', 'skyriver.traffic.streaks', 'skyriver.traffic.impostors', ...hulls.map(o => o.name)]);
+    const origComposerRender = s.composer.render;
+    // LAYER=traffic: mask the scene immediately before the composer render.
+    // Render only traffic lights (CPU streaks and GPU impostors) with depth occluders:
+    // towers, city trim batch, far-city cards, and hulls.
+    // Masking occurs after traffic and city updates set visibility.
+    // Restore exact visibility, background, and material flags in finally after that one render.
+    // This removes the duplicate composer render.
+    const keep = new Set([
+      ...(window.__POP_NOCARDS ? [] : ['skyriver.city.impostors']),
+      'skyriver.city.towers',
+      'skyriver.city.trim',
+      'skyriver.traffic.streaks',
+      'skyriver.traffic.impostors',
+      ...hulls.map((o) => o.name),
+    ]);
     const only = window.__POP_ONLY ? new Set(window.__POP_ONLY.split(',')) : null;
-    const layerRender = () => {
-      const hidden = [];
-      s.scene.traverse((o) => { if (o.isMesh && o.visible && !keep.has(o.name)) { o.visible = false; hidden.push(o); } if (o.isMesh && o.visible && only && o.name.startsWith('skyriver.traffic.') && !only.has(o.name)) { o.visible = false; hidden.push(o); } });
-      const bg = s.scene.background; s.scene.background = null;
-      // Occluders draw depth only: their windows/light patches would add their own sparkle.
-      const masked = [];
-      s.scene.traverse((o) => { if (o.isMesh && o.visible && !(o.name === 'skyriver.traffic.streaks' || o.name === 'skyriver.traffic.impostors') && o.material.colorWrite !== false) { o.material.colorWrite = false; masked.push(o.material); } });
-      s.composer.render(0);
-      for (const m of masked) m.colorWrite = true;
-      for (const o of hidden) o.visible = true; s.scene.background = bg;
+
+    s.composer.render = function (dt) {
+      if (window.__POP_LAYER === 'traffic') {
+        const savedVisibility = [];
+        const savedMaterials = [];
+        const bg = s.scene.background;
+        try {
+          s.scene.traverse((o) => {
+            if (o.isMesh && o.visible && !keep.has(o.name)) {
+              savedVisibility.push({ obj: o, visible: o.visible });
+              o.visible = false;
+            }
+            if (o.isMesh && o.visible && only && o.name.startsWith('skyriver.traffic.') && !only.has(o.name)) {
+              savedVisibility.push({ obj: o, visible: o.visible });
+              o.visible = false;
+            }
+          });
+          s.scene.background = null;
+          const visitedMaterials = new Set();
+          s.scene.traverse((o) => {
+            if (o.isMesh && o.visible && o.name !== 'skyriver.traffic.streaks' && o.name !== 'skyriver.traffic.impostors') {
+              const mats = Array.isArray(o.material) ? o.material : [o.material];
+              for (const m of mats) {
+                if (m && !visitedMaterials.has(m)) {
+                  visitedMaterials.add(m);
+                  if (m.colorWrite !== false) {
+                    savedMaterials.push({ material: m, colorWrite: m.colorWrite });
+                    m.colorWrite = false;
+                  }
+                }
+              }
+            }
+          });
+          return origComposerRender.call(this, dt);
+        } finally {
+          for (const sm of savedMaterials) sm.material.colorWrite = sm.colorWrite;
+          for (const sv of savedVisibility) sv.obj.visible = sv.visible;
+          s.scene.background = bg;
+        }
+      }
+      return origComposerRender.call(this, dt);
     };
-    a.scene.update = function (tick, proj, alpha) { origUpdate.call(this, tick, proj, alpha); if (window.__POP_LAYER === 'traffic') layerRender(); if (!window.__POP_NO_LIGHT) analyze(tick); };
+
+    a.scene.update = function (tick, proj, alpha) {
+      origUpdate.call(this, tick, proj, alpha);
+      if (!window.__POP_NO_LIGHT) analyze(tick);
+    };
     const events = [];
     const continuity = window.__skyriverPopContinuity;
     const identityAudit = { hullSamples: 0, hullSamplesWithCarId: 0, hullSamplesWithoutCarId: 0 };
     let prev = null;
+    let rafId = null;
+    const cancelQueuedRaf = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    };
     const end = performance.now() + secs * 1000;
-    await new Promise((done) => {
-      const frame = () => {
-        const tick = a.stats().tick;
-        const state = a.stats();
-        const snapshot = { tick, alpha: state.alpha, tier: state.tier, cameraWorld: Array.from(cam.matrixWorld.elements), cameraProjection: Array.from(cam.projectionMatrix.elements) };
-        const cur = hulls.map((h) => ({ count: h.count, arr: h.instanceMatrix.array.slice(0, h.count * 16), fade: h.geometry.getAttribute('aFade').array.slice(0, h.count) }));
-        const fade = streak.geometry.getAttribute('aCarFade');
-        const position = streak.geometry.getAttribute('aCarPos');
-        const lod = streak.geometry.getAttribute('aCarLod');
-        const streakSamples = [];
-        const carsAtPosition = new Map();
-        for (let i = 0; i < streak.geometry.instanceCount; i += 1) {
-          const carId = lod.array[i * lod.itemSize + 2];
-          const point = Array.from(position.array.slice(i * position.itemSize, i * position.itemSize + 3));
-          streakSamples.push({ carId, fade: fade.array[i * fade.itemSize], position: point });
-          const key = point.join(',');
-          carsAtPosition.set(key, carsAtPosition.has(key) ? null : carId);
-        }
-        const hullSamples = cur.flatMap((batch, mi) => Array.from({ length: batch.count }, (_, slot) => {
-          const matrix = batch.arr.slice(slot * 16, (slot + 1) * 16);
-          // Both arrays contain the same uploaded Float32 centre. Do not guess ambiguous IDs.
-          const carId = carsAtPosition.get([matrix[12], matrix[13], matrix[14]].join(',')) ?? null;
-          identityAudit.hullSamples += 1;
-          identityAudit[carId === null ? 'hullSamplesWithoutCarId' : 'hullSamplesWithCarId'] += 1;
-          return { mesh: hulls[mi].name, slot, carId, matrix, fade: batch.fade[slot] };
-        }));
-        counts.frames += 1;
-        const hit = inside();
-        if (hit >= 0) { counts.cameraInsideBuilding += 1; if (events.length < 400) events.push({ tick, type: 'cameraInsideBuilding', box: hit, cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)) }); }
-        if (prev) {
-          for (let mi = 0; mi < hulls.length; mi += 1) {
-            const P = prev.m[mi]; const C = cur[mi];
-            if (P.count !== C.count) { counts.countChange += 1; events.push({ tick, type: 'countChange', mesh: hulls[mi].name, from: P.count, to: C.count }); }
+    try {
+      await new Promise((done, reject) => {
+        const frame = () => {
+          rafId = null;
+          try {
+            const tick = a.stats().tick;
+            const state = a.stats();
+            const snapshot = { tick, alpha: state.alpha, tier: state.tier, cameraWorld: Array.from(cam.matrixWorld.elements), cameraProjection: Array.from(cam.projectionMatrix.elements) };
+            const cur = hulls.map((h) => ({ count: h.count, arr: h.instanceMatrix.array.slice(0, h.count * 16), fade: h.geometry.getAttribute('aFade').array.slice(0, h.count) }));
+            const fade = streak.geometry.getAttribute('aCarFade');
+            const position = streak.geometry.getAttribute('aCarPos');
+            const lod = streak.geometry.getAttribute('aCarLod');
+            const streakSamples = [];
+            const carsAtPosition = new Map();
+            for (let i = 0; i < streak.geometry.instanceCount; i += 1) {
+              const carId = lod.array[i * lod.itemSize + 2];
+              const point = Array.from(position.array.slice(i * position.itemSize, i * position.itemSize + 3));
+              streakSamples.push({ carId, fade: fade.array[i * fade.itemSize], position: point });
+              const key = point.join(',');
+              carsAtPosition.set(key, carsAtPosition.has(key) ? null : carId);
+            }
+            const hullSamples = cur.flatMap((batch, mi) => Array.from({ length: batch.count }, (_, slot) => {
+              const matrix = batch.arr.slice(slot * 16, (slot + 1) * 16);
+              // Both arrays contain the same uploaded Float32 centre. Do not guess ambiguous IDs.
+              const carId = carsAtPosition.get([matrix[12], matrix[13], matrix[14]].join(',')) ?? null;
+              identityAudit.hullSamples += 1;
+              identityAudit[carId === null ? 'hullSamplesWithoutCarId' : 'hullSamplesWithCarId'] += 1;
+              return { mesh: hulls[mi].name, slot, carId, matrix, fade: batch.fade[slot] };
+            }));
+            counts.frames += 1;
+            const hit = inside();
+            if (hit >= 0) { counts.cameraInsideBuilding += 1; if (events.length < 400) events.push({ tick, type: 'cameraInsideBuilding', box: hit, cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)) }); }
+            if (prev) {
+              for (let mi = 0; mi < hulls.length; mi += 1) {
+                const P = prev.m[mi]; const C = cur[mi];
+                if (P.count !== C.count) { counts.countChange += 1; events.push({ tick, type: 'countChange', mesh: hulls[mi].name, from: P.count, to: C.count }); }
+              }
+              for (const event of [
+                ...continuity.compareHullFrames(prev.hulls, hullSamples, point => proj(...point)),
+                ...continuity.compareStreakFrames(prev.streaks, streakSamples, point => proj(...point)),
+              ]) {
+                counts[event.type] += 1;
+                if (events.length < 400) events.push({ tick, ...event, previousFrame: prev.snapshot, currentFrame: snapshot });
+              }
+            }
+            prev = { m: cur, hulls: hullSamples, streaks: streakSamples, snapshot };
+            if (performance.now() < end) {
+              rafId = requestAnimationFrame(frame);
+            } else {
+              cancelQueuedRaf();
+              done();
+            }
+          } catch (error) {
+            cancelQueuedRaf();
+            reject(error);
           }
-          for (const event of [
-            ...continuity.compareHullFrames(prev.hulls, hullSamples, point => proj(...point)),
-            ...continuity.compareStreakFrames(prev.streaks, streakSamples, point => proj(...point)),
-          ]) {
-            counts[event.type] += 1;
-            if (events.length < 400) events.push({ tick, ...event, previousFrame: prev.snapshot, currentFrame: snapshot });
-          }
-        }
-        prev = { m: cur, hulls: hullSamples, streaks: streakSamples, snapshot };
-        if (performance.now() < end) requestAnimationFrame(frame); else done();
-      };
-      requestAnimationFrame(frame);
-    });
-    a.scene.update = origUpdate;
+        };
+        rafId = requestAnimationFrame(frame);
+      });
+    } finally {
+      cancelQueuedRaf();
+      s.composer.render = origComposerRender;
+      a.scene.update = origUpdate;
+    }
     const impostorEvents = lightEvents.filter(e => ['stream','lane','ring','free','same_car_impostor'].includes(e.cls) && e.occluded === false).map(e => ({...e, eventClass: 'impostorPop'}));
     counts.impostorPop = window.__POP_LAYER === 'traffic' ? impostorEvents.length : null;
-    return { counts, identityAudit, hullDissolve: 'interleaved-gradient-noise', impostorAttributionEnabled: window.__POP_LAYER === 'traffic', events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
+    return {
+      counts,
+      identityAudit,
+      hullDissolve: 'interleaved-gradient-noise',
+      impostorAttributionEnabled: window.__POP_LAYER === 'traffic',
+      trafficLayerDiagnostic: {
+        enabled: window.__POP_LAYER === 'traffic',
+        description: 'Controlled visibility and colorWrite masking during composer render.',
+        singleRender: true,
+        occluders: ['skyriver.city.towers', 'skyriver.city.trim', ...(window.__POP_NOCARDS ? [] : ['skyriver.city.impostors']), 'hulls'],
+        trimInstances: trim.count,
+      },
+      limitations: [
+        'Counts cannot certify a pop-free sequence.',
+        'Current nearest-body candidate attribution and tower-only CPU occlusion lack full raster ownership.',
+        'Candidate attribution matches nearby bodies without full raster proof.'
+      ],
+      events,
+      lightEvents,
+      impostorEvents,
+      endTick: a.stats().tick,
+      towers: n,
+      dumps: window.__dumps || []
+    };
   }, secs);
   result.display = await page.evaluate(() => {
     const a = window.__skyriver; const r = a.scene.renderer; const gl = r.getContext();
