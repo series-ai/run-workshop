@@ -44,7 +44,8 @@ export function applyCelShading(material: THREE.Material): void {
  */
 export function updatePaleInkContour(
   mesh: THREE.SkinnedMesh,
-  baseWidth: number = DEFAULT_CONTOUR_WIDTH
+  baseWidth: number = DEFAULT_CONTOUR_WIDTH,
+  contourColor: string = INK_CONTOUR_COLOR
 ): THREE.SkinnedMesh {
   let outline = mesh.children.find((child) => child.userData.inkContour) as THREE.SkinnedMesh | undefined;
 
@@ -52,7 +53,7 @@ export function updatePaleInkContour(
     const viewport = new THREE.Vector2(1, 1);
     const width = { value: baseWidth };
     const material = new THREE.MeshBasicMaterial({
-      color: INK_CONTOUR_COLOR,
+      color: contourColor,
       side: THREE.BackSide,
     });
 
@@ -90,6 +91,9 @@ export function updatePaleInkContour(
   }
 
   outline.geometry = mesh.geometry;
+  if (outline.material instanceof THREE.MeshBasicMaterial) {
+    outline.material.color.set(contourColor);
+  }
   outline.visible = true;
   return outline;
 }

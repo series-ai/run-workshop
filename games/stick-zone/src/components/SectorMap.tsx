@@ -61,18 +61,18 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
       </mesh>
 
       {/* Central Tactical Logistics Runway (Concrete Slabs) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 15]} receiveShadow>
-        <planeGeometry args={[22, 130]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} receiveShadow>
+        <planeGeometry args={[22, 126]} />
         <meshStandardMaterial color="#dde0e4" roughness={0.85} metalness={0.05} />
       </mesh>
 
       {/* Flanking Pitch-Black Ink Linework Strips */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.2, 0.02, 15]} receiveShadow>
-        <planeGeometry args={[0.5, 130]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-11.2, 0.02, 17]} receiveShadow>
+        <planeGeometry args={[0.5, 126]} />
         <meshBasicMaterial color="#151716" />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.2, 0.02, 15]} receiveShadow>
-        <planeGeometry args={[0.5, 130]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[11.2, 0.02, 17]} receiveShadow>
+        <planeGeometry args={[0.5, 126]} />
         <meshBasicMaterial color="#151716" />
       </mesh>
 
@@ -105,12 +105,11 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
       {/* =========================================================================
           2. SOCIAL PRESENCE HUB: FORWARD OPERATIONS BASE (FOB) OUTPOST (z: -85 to -50)
          ========================================================================= */}
-      {/* FOB Outpost Floor Platform */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, -66.5]} receiveShadow>
-        <planeGeometry args={[15, 13]} />
-        <meshStandardMaterial color="#dde0e4" roughness={0.8} metalness={0.1} />
+      {/* FOB Outpost Elevated Foundation Slab (Solid 3D block at y=0.08, zero z-fighting with terrain) */}
+      <mesh position={[0, 0.08, -63]} receiveShadow castShadow>
+        <boxGeometry args={[15.6, 0.16, 21]} />
+        <meshStandardMaterial color="#dde0e4" roughness={0.8} metalness={0.08} />
       </mesh>
-      <gridHelper args={[15, 10, "#151716", "#64748b"]} position={[0, 0.03, -66.5]} />
 
       {/* FOB North Wall Behind Outpost */}
       <mesh position={[0, 2.5, -73]} receiveShadow castShadow>
@@ -135,11 +134,72 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
         </mesh>
       </group>
 
-      {/* Outpost Concrete Security Barriers */}
-      <InklineModel assetKey="barrierConcrete" position={[-3.6, 0, -62.5]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
-      <InklineModel assetKey="barrierConcrete" position={[-1.2, 0, -62.5]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
-      <InklineModel assetKey="barrierConcrete" position={[1.2, 0, -62.5]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
-      <InklineModel assetKey="barrierConcrete" position={[3.6, 0, -62.5]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
+      {/* FOB Perimeter Security Barriers (Flanking perimeter walls, leaving wide open central staging floor) */}
+      <InklineModel assetKey="barrierConcrete" position={[-6.2, 0, -63.5]} rotation={[0, 0, 0]} scale={1.4} />
+      <InklineModel assetKey="barrierConcrete" position={[6.2, 0, -63.5]} rotation={[0, 0, 0]} scale={1.4} />
+
+      {/* Central Tactical Guidance Runway (Elevated cleanly atop FOB foundation slab) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.165, -61]} receiveShadow>
+        <planeGeometry args={[3.2, 16]} />
+        <meshBasicMaterial color="#1e293b" transparent opacity={0.65} />
+      </mesh>
+
+      {/* Luminous Chevron Directional Ingress Stripes */}
+      {[-67, -64, -61, -58, -55].map((zPos, idx) => (
+        <group key={`chevron_${idx}`} position={[0, 0.170, zPos]} rotation={[-Math.PI / 2, 0, 0]}>
+          <mesh position={[0, 0, 0]}>
+            <planeGeometry args={[1.8, 0.28]} />
+            <meshBasicMaterial color="#38bdf8" />
+          </mesh>
+          <mesh position={[-0.7, 0.2, 0]} rotation={[0, 0, -Math.PI / 4]}>
+            <planeGeometry args={[0.5, 0.2]} />
+            <meshBasicMaterial color="#38bdf8" />
+          </mesh>
+          <mesh position={[0.7, 0.2, 0]} rotation={[0, 0, Math.PI / 4]}>
+            <planeGeometry args={[0.5, 0.2]} />
+            <meshBasicMaterial color="#38bdf8" />
+          </mesh>
+        </group>
+      ))}
+
+      {/* FOB Ballistic Training Range & Target Dummies (Safe Weapon Practice Area) */}
+      <group position={[-5.0, 0, -64]}>
+        <mesh position={[0, 0.1, 0]} receiveShadow>
+          <cylinderGeometry args={[0.5, 0.6, 0.2, 16]} />
+          <meshStandardMaterial color="#151716" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.9, 0]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 1.4, 8]} />
+          <meshStandardMaterial color="#64748b" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 1.4, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.75, 0.08]} />
+          <meshStandardMaterial color="#d97706" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 1.45, 0.05]}>
+          <circleGeometry args={[0.16, 16]} />
+          <meshBasicMaterial color="#ef4444" />
+        </mesh>
+      </group>
+
+      <group position={[5.0, 0, -64]}>
+        <mesh position={[0, 0.1, 0]} receiveShadow>
+          <cylinderGeometry args={[0.5, 0.6, 0.2, 16]} />
+          <meshStandardMaterial color="#151716" roughness={0.8} />
+        </mesh>
+        <mesh position={[0, 0.9, 0]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 1.4, 8]} />
+          <meshStandardMaterial color="#64748b" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 1.4, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.75, 0.08]} />
+          <meshStandardMaterial color="#0284c7" roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 1.45, 0.05]}>
+          <circleGeometry args={[0.16, 16]} />
+          <meshBasicMaterial color="#ef4444" />
+        </mesh>
+      </group>
 
 
 

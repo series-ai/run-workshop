@@ -46,7 +46,8 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   const hitFlashUntilRef = useRef(0);
   const lastShootTimeRef = useRef(0);
 
-  const accentColor = operative.squad === "alpha" ? "#38bdf8" : "#f97316";
+  const isAlly = operative.squad === "alpha" || operative.id === "op_squadmate" || isCurrentPlayer;
+  const accentColor = isAlly ? "#38bdf8" : "#f97316";
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -56,24 +57,20 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, 384, 72);
-    ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-    ctx.roundRect(4, 4, 376, 64, 8);
+    ctx.fillStyle = "rgba(15, 23, 42, 0.55)";
+    ctx.roundRect(48, 14, 288, 44, 22);
     ctx.fill();
 
     ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 3;
-    ctx.roundRect(4, 4, 376, 64, 8);
+    ctx.lineWidth = 2.5;
+    ctx.roundRect(48, 14, 288, 44, 22);
     ctx.stroke();
 
-    ctx.font = "bold 24px monospace";
-    ctx.fillStyle = "#f8fafc";
+    ctx.font = "900 20px monospace";
+    ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(operative.name || "OPERATIVE ALPHA", 192, 26);
-
-    ctx.font = "14px monospace";
-    ctx.fillStyle = accentColor;
-    ctx.fillText("TACTICAL PRESENCE // SYNCED", 192, 50);
+    ctx.fillText(isAlly ? `▼ ${operative.name || "SQUADMATE"}` : `▲ ${operative.name || "HOSTILE"}`, 192, 36);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.needsUpdate = true;
@@ -215,37 +212,59 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
   const flashElapsed = lastShootTimeRef.current > 0 ? Date.now() - lastShootTimeRef.current : 999999;
   const isFiring = flashElapsed >= 0 && flashElapsed <= 70;
 
+  const characterAssetKey = isCurrentPlayer
+    ? "playerStickman"
+    : operative.isRival
+    ? "rivalStickman"
+    : "squadmateStickman";
+
   return (
     <>
-      {/* Tactical Label Billboard */}
-      <group ref={labelRef}>
-        <mesh>
-          <planeGeometry args={[1.5, 0.28]} />
-          {labelTexture ? (
-            <meshBasicMaterial map={labelTexture} transparent side={THREE.DoubleSide} />
-          ) : (
-            <meshBasicMaterial color="#0f172a" transparent opacity={0.85} side={THREE.DoubleSide} />
-          )}
-        </mesh>
-      </group>
+      {/* Tactical Label Billboard (Only for squadmates/rivals - never for local player) */}
+      {!isCurrentPlayer && (
+        <group ref={labelRef}>
+          <mesh>
+            <planeGeometry args={[1.4, 0.26]} />
+            {labelTexture ? (
+              <meshBasicMaterial map={labelTexture} transparent side={THREE.DoubleSide} />
+            ) : (
+              <meshBasicMaterial color="#0f172a" transparent opacity={0.65} side={THREE.DoubleSide} />
+            )}
+          </mesh>
+        </group>
+      )}
 
       <group ref={rootGroupRef} position={[operative.x, operative.y || 0, operative.z]}>
-        {/* Ground Tactical Halo */}
-        <mesh ref={groundHaloRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-          <ringGeometry args={[0.55, 0.68, 32]} />
-          <meshBasicMaterial
-            color={accentColor}
-            transparent
-            opacity={operative.isInvulnerable ? 0.95 : 0.75}
-          />
-        </mesh>
+        {/* Ground Tactical Halo & Aim Direction Indicator */}
+        <group rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+          <mesh ref={groundHaloRef}>
+            <ringGeometry args={[0.55, 0.68, 32]} />
+            <meshBasicMaterial
+              color={accentColor}
+              transparent
+              opacity={operative.isInvulnerable ? 0.95 : 0.75}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          {/* Directional Aim Cone (Only for current player) */}
+          {isCurrentPlayer && (
+            <group rotation={[0, 0, -operative.facing]}>
+              <mesh position={[0, 0.82, 0]}>
+                <coneGeometry args={[0.10, 0.22, 3]} />
+                <meshBasicMaterial color="#38bdf8" side={THREE.DoubleSide} />
+              </mesh>
+            </group>
+          )}
+        </group>
 
         {/* Rigged Animated Inkline 3D Stick Character */}
         <InklineStickCharacter
-          assetKey="playerStickman"
+          assetKey={characterAssetKey}
+          isCurrentPlayer={isCurrentPlayer}
           weapon={operative.weapon || 'rifle'}
           isMoving={isMoving}
           isFiring={isFiring}
+          flashElapsed={flashElapsed}
           isAlive={operative.isAlive}
           isRolling={operative.isRolling}
           isBleeding={operative.isBleeding}
@@ -255,47 +274,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
           onSampleBones={onSampleBones}
         />
 
-        {/* Attached Laser Aiming Beam */}
-        {operative.isAlive && !operative.isRolling && (
-          <group position={[-0.02, 1.18, 0.32]} rotation={[0, operative.facing, 0]}>
-            <primitive object={laserLine} position={[0, 0, 0.4]} />
 
-            {/* Muzzle Flash Discharge (80ms) */}
-            <group ref={muzzleFlashRef} visible={false}>
-              <mesh position={[0, 0, 0.75]}>
-                <sphereGeometry args={[0.22, 10, 10]} />
-                <meshBasicMaterial color={operative.weapon === 'shotgun' ? "#f59e0b" : "#fef08a"} />
-              </mesh>
-            </group>
-
-            {/* Ballistic Tracers & Shotgun Pellets (300ms) */}
-            <group ref={tracersGroupRef} visible={false}>
-              {operative.weapon === 'shotgun' ? (
-                <group>
-                  {[-0.2618, -0.1571, -0.0524, 0.0524, 0.1571, 0.2618].map((angle, idx) => (
-                    <group key={idx} rotation={[0, angle, 0]}>
-                      {/* Compact Tactical Pellet Streaks */}
-                      <mesh position={[0, 0, 2.2]} rotation={[Math.PI / 2, 0, 0]}>
-                        <cylinderGeometry args={[0.045, 0.025, 3.2, 6]} />
-                        <meshBasicMaterial color="#fbbf24" transparent opacity={0.95} />
-                      </mesh>
-                      {/* High-Luminance White-Hot Core */}
-                      <mesh position={[0, 0, 2.2]} rotation={[Math.PI / 2, 0, 0]}>
-                        <cylinderGeometry args={[0.022, 0.012, 3.2, 6]} />
-                        <meshBasicMaterial color="#ffffff" />
-                      </mesh>
-                    </group>
-                  ))}
-                </group>
-              ) : (
-                <mesh ref={tracerMeshRef} position={[0, 0, 6.4]} rotation={[Math.PI / 2, 0, 0]}>
-                  <cylinderGeometry args={[0.02, 0.02, 12, 6]} />
-                  <meshBasicMaterial color="#fef08a" transparent opacity={0.85} />
-                </mesh>
-              )}
-            </group>
-          </group>
-        )}
       </group>
     </>
   );

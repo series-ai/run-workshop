@@ -15,10 +15,12 @@ import type { AssetKey } from "../assetLibrary.js";
 const GUNMETAL_BODY_COLOR = "#292e36";
 
 export interface InklineStickCharacterProps {
+  isCurrentPlayer?: boolean;
   assetKey?: AssetKey;
   weapon?: "rifle" | "shotgun" | "pistol";
   isMoving: boolean;
   isFiring: boolean;
+  flashElapsed?: number;
   isAlive: boolean;
   isRolling?: boolean;
   isBleeding?: boolean;
@@ -87,11 +89,13 @@ function LoadedCharacter({
   weapon = "rifle",
   isMoving,
   isFiring,
+  flashElapsed,
   isAlive,
   isRolling = false,
   facing,
   accentColor,
   hasWeapon = true,
+  isCurrentPlayer = false,
   onSampleBones,
 }: InklineStickCharacterProps & { url: string }) {
   const { scene, animations } = useGLTF(url);
@@ -204,8 +208,9 @@ function LoadedCharacter({
           applyCelShading(mat);
         }
 
-        // Attach screen-space back-face ink contour
-        updatePaleInkContour(child, 1.35);
+        // Attach authentic Inkline screen-space back-face contour with squad/team accent
+        const contourColor = isCurrentPlayer ? "#38bdf8" : accentColor;
+        updatePaleInkContour(child, 1.45, contourColor);
       }
     });
 
@@ -228,10 +233,43 @@ function LoadedCharacter({
     return handR;
   }, [clonedScene]);
 
+  const headBone = useMemo(() => {
+    if (!clonedScene) return null;
+    let head = clonedScene.getObjectByName('Head');
+    if (!head) {
+      clonedScene.traverse((obj) => {
+        if (obj instanceof THREE.Bone && !head && /head/i.test(obj.name)) {
+          head = obj;
+        }
+      });
+    }
+    return head;
+  }, [clonedScene]);
+
+  const chestBone = useMemo(() => {
+    if (!clonedScene) return null;
+    let chest = clonedScene.getObjectByName('Chest') || clonedScene.getObjectByName('Spine1');
+    if (!chest) {
+      clonedScene.traverse((obj) => {
+        if (obj instanceof THREE.Bone && !chest && /(chest|spine)/i.test(obj.name)) {
+          chest = obj;
+        }
+      });
+    }
+    return chest;
+  }, [clonedScene]);
+
   const footPos = useMemo(() => new THREE.Vector3(), []);
   const handPos = useMemo(() => new THREE.Vector3(), []);
+  const recoilKickRef = useRef(0);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
+    if (isFiring) {
+      recoilKickRef.current = -0.05;
+    } else {
+      recoilKickRef.current = THREE.MathUtils.lerp(recoilKickRef.current, 0, Math.min(1, delta * 20));
+    }
+
     if (typeof window !== "undefined" && Boolean((window as any).__STICK_ZONE_TEST__?.isPaused)) {
       if (mixer.timeScale !== 0) mixer.timeScale = 0;
     }
@@ -276,14 +314,137 @@ function LoadedCharacter({
       {/* 3D Skeletal Mesh with Cel-Shading and Ink Contours */}
       <primitive object={clonedScene} />
 
+      {/* DISTINCT CHARACTER PROPS & TACTICAL GEAR */}
+      {/* Head Gear: Player Cyber Visor vs Squadmate Recon Beret vs Rival Faceplate */}
+      {isAlive && headBone && (
+        createPortal(
+          isCurrentPlayer ? (
+            /* Player Cyber Visor with Glowing Cyan Lens Band */
+            <group position={[0, 0.08, 0.12]}>
+              <mesh>
+                <boxGeometry args={[0.22, 0.05, 0.08]} />
+                <meshBasicMaterial color="#0f172a" />
+              </mesh>
+              <mesh position={[0, 0, 0.045]}>
+                <boxGeometry args={[0.18, 0.03, 0.02]} />
+                <meshBasicMaterial color="#38bdf8" />
+              </mesh>
+              {/* Comms Boom Mic */}
+              <mesh position={[-0.10, -0.04, 0.08]} rotation={[0, 0, -0.2]}>
+                <cylinderGeometry args={[0.008, 0.008, 0.12]} />
+                <meshBasicMaterial color="#475569" />
+              </mesh>
+            </group>
+          ) : (
+            /* Squadmate Recon Beret with Antenna */
+            <group position={[0.04, 0.17, -0.02]} rotation={[0.1, 0, -0.25]}>
+              <mesh>
+                <cylinderGeometry args={[0.13, 0.11, 0.06, 16]} />
+                <meshStandardMaterial color="#1e3a8a" roughness={0.9} />
+              </mesh>
+              {/* Recon Antenna */}
+              <mesh position={[-0.10, 0.08, -0.02]} rotation={[0.15, 0, -0.1]}>
+                <cylinderGeometry args={[0.006, 0.006, 0.28]} />
+                <meshBasicMaterial color="#94a3b8" />
+              </mesh>
+            </group>
+          ),
+          headBone
+        )
+      )}
+
+      {/* Chest Gear: Player Plate Carrier vs Squadmate Radio Pack */}
+      {isAlive && chestBone && (
+        createPortal(
+          isCurrentPlayer ? (
+            /* Tactical Plate Harness */
+            <group position={[0, 0.08, 0.08]}>
+              <mesh>
+                <boxGeometry args={[0.24, 0.22, 0.05]} />
+                <meshStandardMaterial color="#1e293b" roughness={0.7} />
+              </mesh>
+              {/* Dual Mag Pouches */}
+              <mesh position={[-0.06, -0.02, 0.03]}>
+                <boxGeometry args={[0.06, 0.09, 0.03]} />
+                <meshStandardMaterial color="#334155" roughness={0.8} />
+              </mesh>
+              <mesh position={[0.06, -0.02, 0.03]}>
+                <boxGeometry args={[0.06, 0.09, 0.03]} />
+                <meshStandardMaterial color="#334155" roughness={0.8} />
+              </mesh>
+            </group>
+          ) : (
+            /* Squadmate Radio Backpack */
+            <group position={[0, 0.08, -0.10]}>
+              <mesh>
+                <boxGeometry args={[0.20, 0.24, 0.10]} />
+                <meshStandardMaterial color="#172554" roughness={0.8} />
+              </mesh>
+              {/* Radio Antenna */}
+              <mesh position={[-0.08, 0.22, -0.02]} rotation={[-0.1, 0, 0.1]}>
+                <cylinderGeometry args={[0.006, 0.006, 0.40]} />
+                <meshBasicMaterial color="#94a3b8" />
+              </mesh>
+            </group>
+          ),
+          chestBone
+        )
+      )}
+
       {/* Primary Weapon Physically Socketed Inside Hand_R Bone Hierarchy (Zero Float, Zero Latency) */}
       {hasWeapon && isAlive && !isRolling && handBone && (
         createPortal(
           <group position={gripPos} rotation={gripEuler}>
-            <InklineModel
-              assetKey={weaponKey}
-              scale={weapon === "shotgun" ? 1.05 : weapon === "pistol" ? 0.95 : 1.1}
-            />
+            <group position={[0, 0, recoilKickRef.current]}>
+              <InklineModel
+                assetKey={weaponKey}
+                scale={weapon === "shotgun" ? 1.05 : weapon === "pistol" ? 0.95 : 1.1}
+              />
+
+              {/* Barrel Socket Muzzle Flash (0-80ms physically rooted at barrel tip) */}
+              {(isFiring || (typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 80)) && (
+                <group position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
+                  <mesh rotation={[0, 0, Math.random() * Math.PI]}>
+                    <ringGeometry args={[0.03, 0.28, 4]} />
+                    <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
+                  </mesh>
+                  <mesh rotation={[0, 0, (Math.random() + 0.5) * Math.PI]}>
+                    <ringGeometry args={[0.05, 0.38, 4]} />
+                    <meshBasicMaterial color={weapon === "shotgun" ? "#f59e0b" : "#fbbf24"} side={THREE.DoubleSide} />
+                  </mesh>
+                  <pointLight intensity={4.0} distance={6} color="#fef08a" />
+                </group>
+              )}
+
+              {/* Physical Ballistic Tracers Extending Directly from Barrel Tip (Zero Offset) */}
+              {typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 240 && (
+                <group position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
+                  {weapon === "shotgun" ? (
+                    <group>
+                      {[-0.08, -0.04, 0, 0.04, 0.08].map((spreadX, idx) => (
+                        <mesh key={idx} position={[spreadX, (idx % 2 - 0.5) * 0.03, 2.6]} rotation={[Math.PI / 2, 0, 0]}>
+                          <cylinderGeometry args={[0.022, 0.012, 5.2, 5]} />
+                          <meshBasicMaterial color="#fbbf24" transparent opacity={0.9} />
+                        </mesh>
+                      ))}
+                    </group>
+                  ) : (
+                    <mesh position={[0, 0, 7.5]} rotation={[Math.PI / 2, 0, 0]}>
+                      <cylinderGeometry args={[0.018, 0.018, 15, 5]} />
+                      <meshBasicMaterial color="#fef08a" transparent opacity={0.9} />
+                    </mesh>
+                  )}
+                </group>
+              )}
+
+              {/* Laser Aiming Beam Co-axial to Gun Barrel */}
+              {isCurrentPlayer && (
+                <mesh position={weapon === "shotgun" ? [0, 0.04, 6.0] : [0, 0.04, 8.0]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.005, 0.005, 16, 4]} />
+                  <meshBasicMaterial color="#38bdf8" transparent opacity={0.4} />
+                </mesh>
+              )}
+            </group>
           </group>,
           handBone
         )

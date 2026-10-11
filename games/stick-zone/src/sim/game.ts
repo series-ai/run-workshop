@@ -251,9 +251,9 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   // FOB Side Enclosure Walls
   { minX: -8.5, maxX: -7.5, minZ: -73.0, maxZ: -52.0 },
   { minX: 7.5, maxX: 8.5, minZ: -73.0, maxZ: -52.0 },
-  // FOB Concrete Security Barriers (wings flanking central checkpoint walkway at x = 0)
-  { minX: -4.5, maxX: -0.6, minZ: -63.2, maxZ: -61.8 },
-  { minX: 0.6, maxX: 4.5, minZ: -63.2, maxZ: -61.8 },
+  // FOB Concrete Security Barriers (wings flanking perimeter, central walkway |x| < 4.8 completely open)
+  { minX: -7.5, maxX: -4.8, minZ: -64.2, maxZ: -62.8 },
+  { minX: 4.8, maxX: 7.5, minZ: -64.2, maxZ: -62.8 },
   // FOB Power Cores & Consoles
   { minX: -5.4, maxX: -3.8, minZ: -71.8, maxZ: -70.2 },
   { minX: 3.8, maxX: 5.4, minZ: -71.8, maxZ: -70.2 },
@@ -1142,18 +1142,23 @@ export class SectorDepotSimulation {
     });
     registerDeployment(this.player.id, this.raidId);
 
-    // Spawn companion scout
+    // Spawn companion scout right beside the player
+    const squadmateX = initialZone === 'hub' ? 2.2 : SIM_CONFIG.SPAWN_SQUAD_A.x + 2;
+    const squadmateZ = initialZone === 'hub' ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z - 2;
+    const squadmateFacing = initialZone === 'hub' ? Math.PI : 0;
+
     this.squadmate = {
       id: 'op_squadmate',
       isPlayer: false,
       isRival: false,
       isAI: true,
+      squad: 'alpha',
       name: 'SCOUT VIPER-2',
       badge: 'SQUAD ALPHA',
-      x: SIM_CONFIG.SPAWN_SQUAD_A.x + 2,
+      x: squadmateX,
       y: 0,
-      z: SIM_CONFIG.SPAWN_SQUAD_A.z - 2,
-      facing: 0,
+      z: squadmateZ,
+      facing: squadmateFacing,
       health: 100,
       armor: 100,
       cash: 0,
@@ -1500,7 +1505,8 @@ export class SectorDepotSimulation {
   }
 
   public applyDamageToPlayer(rawDmg: number): void {
-    if (this.player.isInvulnerable || !this.player.isAlive || this.isSocketDisconnected) return;
+    // Total invulnerability in FOB hub, airlock corridor, or while ingress shield active
+    if (this.zoneMode === 'hub' || this.zoneMode === 'airlock_corridor' || this.player.isInvulnerable || !this.player.isAlive || this.isSocketDisconnected) return;
 
     const { newHealth, newArmor } = applyStandardDamage(this.player.health, this.player.armor, rawDmg);
     this.player.health = newHealth;
@@ -1577,7 +1583,7 @@ export class SectorDepotSimulation {
       return;
     }
 
-    if (this.tick >= SIM_CONFIG.RAID_DEADLINE_TICK) {
+    if (this.zoneMode === 'spoke' && this.tick >= SIM_CONFIG.RAID_DEADLINE_TICK) {
       const exfilState = this.exfilController.getState();
       const serverHoldTick = (this as any).serverHoldCompletedAtTick || 0;
       const isEligibleGrace = (exfilState.kind === "corridor_presentation" ||
@@ -1600,14 +1606,17 @@ export class SectorDepotSimulation {
       if (Date.now() >= this.airlockTimerMs) {
         this.zoneMode = 'spoke';
         this.player.z = -46;
+        this.player.isInvulnerable = true;
+        (this.player as any).ingressShieldTicks = 180; // 3.0s invulnerability grace
         this.ingressController.activate(this.tick);
-        this.combatLog.push();
+        this.combatLog.push('[INGRESS] Operative deployed into Sector 7. 3.0s tactical shield active.');
       }
       return;
     }
 
     if (this.zoneMode === 'hub') {
-      if (Math.hypot(this.player.x, this.player.z - (-52)) < 3.2) {
+      const distToAirlock = Math.hypot(this.player.x, this.player.z - (-52));
+      if (distToAirlock < 3.2 || (input.interact && distToAirlock < 6.0)) {
         this.enterSpatialAirlock();
         return;
       }
@@ -1628,6 +1637,16 @@ export class SectorDepotSimulation {
           this.interruptStimTreatment('movement');
         }
       }
+      // Handle ingress grace shield countdown
+      if ((this.player as any).ingressShieldTicks && (this.player as any).ingressShieldTicks > 0) {
+        (this.player as any).ingressShieldTicks -= 1;
+        this.player.isInvulnerable = true;
+        if ((this.player as any).ingressShieldTicks <= 0) {
+          this.player.isInvulnerable = false;
+          this.combatLog.push('[TACTICAL] Ingress shield expired. Weapons hot.');
+        }
+      }
+
       // Handle ongoing action countdowns and cooldowns
       if (this.shootCooldownTicks > 0) this.shootCooldownTicks -= 1;
       this.player.shootCooldownTicks = this.shootCooldownTicks;
@@ -2597,7 +2616,7 @@ export class SectorDepotSimulation {
         if (!isIngressPending && distToPlayer <= 22.0 && (rival.shootCooldownTicks || 0) <= 0) {
           rival.action = 'shoot';
           rival.actionTicks = 6;
-          rival.shootCooldownTicks = 18; // ~3.3 bursts/sec
+          rival.shootCooldownTicks = 42; // ~1.4 bursts/sec for balanced tactical combat
           rival.facing = Math.atan2(dx, dz);
           rival.lastFiredAtMs = Date.now();
           rival.lastFireTimestamp = Date.now();
@@ -2762,10 +2781,11 @@ export class SectorDepotSimulation {
       // Tactical weapon fire cadence: attacks when in range <= 22m and cooldown ready
       const ingressKind = this.ingressController.getState().kind;
       const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
-      if (!isIngressPending && distToPlayer <= 22.0 && (rival.shootCooldownTicks || 0) <= 0) {
+      const isPlayerInHub = this.zoneMode === 'hub' || this.zoneMode === 'airlock_corridor';
+      if (!isIngressPending && !isPlayerInHub && distToPlayer <= 22.0 && (rival.shootCooldownTicks || 0) <= 0) {
         rival.action = 'shoot';
         rival.actionTicks = 6;
-        rival.shootCooldownTicks = 18; // ~3.3 bursts/sec
+        rival.shootCooldownTicks = 42; // ~1.4 bursts/sec for balanced tactical combat
         rival.lastFiredAtMs = Date.now();
         rival.lastFireTimestamp = Date.now();
         rival.lastFireTick = this.tick;

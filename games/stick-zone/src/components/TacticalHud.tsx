@@ -248,7 +248,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
   return (
     <div className="hud-layer">
       {/* Anime Kinetic Speed Lines Canvas Overlay */}
-      {!isTestMode && (isSlidingActive || player.action === "sprint") && (
+      {!isTestMode && (isSlidingActive || player.action === "sprint" || sim.zoneMode === "airlock_corridor") && (
         <canvas
           ref={speedLinesCanvasRef}
           className="anime-speed-lines-canvas"
@@ -280,6 +280,102 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
 
       {/* Critical Health Vignette */}
       {isCriticalHealth && <div className="critical-health-vignette" />}
+
+      {/* FOB Hub Staging Guidance Banner */}
+      {sim.zoneMode === "hub" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "64px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            background: "rgba(15, 23, 42, 0.88)",
+            border: "1px solid #38bdf8",
+            borderRadius: "8px",
+            padding: "8px 18px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+            pointerEvents: "none",
+            maxWidth: "90vw",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: "12px", fontWeight: 900, color: "#38bdf8", letterSpacing: "1px" }}>
+            ⚡ FORWARD OPERATING BASE // STAGING HUB
+          </div>
+          <div style={{ fontSize: "10px", color: "#cbd5e1", fontWeight: 700 }}>
+            SAFE ZONE • PRACTICE SHOOTING & EVASION ON TEST DUMMIES • STEP ONTO AIRLOCK PAD (z: -52) TO START RAID
+          </div>
+        </div>
+      )}
+
+      {/* Contextual Airlock Proximity Prompt */}
+      {sim.zoneMode === "hub" && Math.hypot(player.x, player.z - (-52)) < 7.5 && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "108px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "linear-gradient(135deg, rgba(2, 132, 199, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)",
+            border: "2px solid #38bdf8",
+            borderRadius: "8px",
+            padding: "10px 22px",
+            boxShadow: "0 0 24px rgba(56, 189, 248, 0.6)",
+            pointerEvents: "none",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: "13px", fontWeight: 900, color: "#ffffff", letterSpacing: "1px" }}>
+            ⚡ COMBAT AIRLOCK READY // STEP ONTO GATE OR PRESS [E] TO DEPLOY ⚡
+          </div>
+          <div style={{ fontSize: "11px", color: "#bae6fd", marginTop: "2px" }}>
+            Ingress into Sector 7 Extraction Raid // Weapons Hot
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Kinetic Manga Ingress Splash */}
+      {sim.zoneMode === "airlock_corridor" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "40%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "10px",
+            pointerEvents: "none",
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              fontSize: "22px",
+              fontWeight: 900,
+              color: "#f8fafc",
+              background: "rgba(15, 23, 42, 0.94)",
+              border: "3px solid #38bdf8",
+              padding: "14px 28px",
+              borderRadius: "12px",
+              boxShadow: "0 0 32px rgba(56, 189, 248, 0.8)",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              textAlign: "center",
+            }}
+          >
+            ⚡ INGRESS AUTHORIZED // DEPLOYING INTO SECTOR 7 ⚡
+          </div>
+          <div style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 800, fontFamily: "monospace" }}>
+            WEAPONS HOT • EXTRACTION CLOCK COMMENCING
+          </div>
+        </div>
+      )}
 
       {/* Centered Hitmarker Indicator */}
       {showHitmarker && (
@@ -528,34 +624,42 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       </div>
 
       {/* ============================================================
-          BOTTOM BAR: Unified, Matching, Zero Clutter
+          BOTTOM BAR: Unified Translucent Modern Shooter HUD
           ============================================================ */}
       <div className="tactical-bottom-bar" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", width: "100%" }}>
-        {/* Bottom Left: Operative Vitals & Controls */}
+        {/* Bottom Left: Streamlined Vital Status */}
         <div
           className="tactical-ink-card"
           style={{
-            padding: "10px 14px",
-            minWidth: "220px",
+            padding: "8px 14px",
+            minWidth: "200px",
+            maxWidth: "240px",
             display: "flex",
             flexDirection: "column",
-            gap: "6px",
+            gap: "5px",
           }}
         >
+          {/* Ingress Shield Banner if active */}
+          {(player as any).ingressShieldTicks > 0 && (
+            <div style={{ fontSize: "10px", fontWeight: 800, color: "#38bdf8", letterSpacing: "0.5px" }}>
+              ⚡ INGRESS SHIELD ACTIVE
+            </div>
+          )}
+
           {/* Health Bar */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 900, color: "#151716" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 800, color: "#f8fafc" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <Heart size={13} color={player.health > 35 ? "#16a34a" : "#ff2212"} /> HP
+                <Heart size={12} color="#22c55e" /> HP
               </span>
               <span style={{ fontFamily: "monospace" }}>{player.health}/100</span>
             </div>
-            <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", overflow: "hidden", border: "1px solid #151716" }}>
+            <div style={{ height: "4px", background: "rgba(51, 65, 85, 0.6)", borderRadius: "2px", overflow: "hidden" }}>
               <div
                 style={{
                   width: `${player.health}%`,
                   height: "100%",
-                  background: player.health > 35 ? "#16a34a" : "#ff2212",
+                  background: player.health > 35 ? "#22c55e" : "#ef4444",
                   transition: "width 0.15s ease",
                 }}
               />
@@ -564,18 +668,18 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
 
           {/* Armor Bar */}
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 900, color: "#151716" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 800, color: "#f8fafc" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <Shield size={13} color="#0284c7" /> ARMOR
+                <Shield size={12} color="#38bdf8" /> AP
               </span>
               <span style={{ fontFamily: "monospace" }}>{player.armor}/100</span>
             </div>
-            <div style={{ height: "6px", background: "#e2e8f0", borderRadius: "3px", overflow: "hidden", border: "1px solid #151716" }}>
+            <div style={{ height: "4px", background: "rgba(51, 65, 85, 0.6)", borderRadius: "2px", overflow: "hidden" }}>
               <div
                 style={{
                   width: `${player.armor}%`,
                   height: "100%",
-                  background: "#0284c7",
+                  background: "#38bdf8",
                   transition: "width 0.15s ease",
                 }}
               />
@@ -583,21 +687,21 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
           </div>
 
           {/* Clean Controls Hint */}
-          <div style={{ display: "flex", gap: "4px", fontSize: "9px", fontWeight: 800, fontFamily: "monospace", color: "#64748b", marginTop: "2px" }}>
-            <span>[SHIFT] RUN</span> &bull; <span>[C] SLIDE</span> &bull; <span>[SPACE] ROLL</span> &bull; <span>[V] KICK</span>
+          <div style={{ display: "flex", gap: "4px", fontSize: "8.5px", fontWeight: 700, fontFamily: "monospace", color: "#94a3b8", marginTop: "1px" }}>
+            <span>SHIFT RUN</span> &bull; <span>C SLIDE</span> &bull; <span>SPACE ROLL</span> &bull; <span>V KICK</span>
           </div>
         </div>
 
         {/* Bottom Center: Minimal Combat Ticker */}
         {sim.combatLog.length > 0 && (
-          <div style={{ maxWidth: "380px", display: "flex", flexDirection: "column", gap: "3px", pointerEvents: "none" }}>
+          <div style={{ maxWidth: "340px", display: "flex", flexDirection: "column", gap: "3px", pointerEvents: "none" }}>
             {sim.combatLog.slice(-2).map((log, idx) => (
               <div
                 key={idx}
                 className="tactical-ink-card"
                 style={{
                   padding: "3px 10px",
-                  fontSize: "11px",
+                  fontSize: "10px",
                   fontFamily: "monospace",
                   fontWeight: 700,
                   opacity: 0.9,
@@ -609,11 +713,11 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
           </div>
         )}
 
-        {/* Bottom Right: Unified Combat Arsenal & Loot Widget */}
+        {/* Bottom Right: Clean High-Craft Arsenal & Resources Widget */}
         <div
           className="tactical-ink-card hud-interactive"
           style={{
-            padding: "8px 14px",
+            padding: "6px 12px",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -622,44 +726,46 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
         >
           {/* Current Weapon & Ammo */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Crosshair size={22} color={player.weapon === "shotgun" ? "#d45538" : "#151716"} />
+            <Crosshair size={20} color={player.weapon === "shotgun" ? "#f59e0b" : "#38bdf8"} />
             <div>
-              <div style={{ fontSize: "11px", fontWeight: 900, textTransform: "uppercase", color: player.weapon === "shotgun" ? "#d45538" : "#151716", fontStyle: "italic" }}>
+              <div style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", color: player.weapon === "shotgun" ? "#f59e0b" : "#38bdf8", letterSpacing: "0.5px" }}>
                 {player.weapon === "shotgun" ? "M590 SHOTGUN" : "M4A1 RIFLE"}
               </div>
-              <div style={{ fontSize: "18px", fontWeight: 900, fontFamily: "monospace", color: "#151716", lineHeight: 1.1 }}>
-                {player.ammo} <span style={{ fontSize: "11px", color: "#64748b" }}>/ {player.maxAmmo} ({player.weapon === "shotgun" ? player.reserveShotgunAmmo ?? 24 : player.reserveRifleAmmo ?? 90})</span>
+              <div style={{ fontSize: "20px", fontWeight: 900, fontFamily: "monospace", color: "#f8fafc", lineHeight: 1.1 }}>
+                {player.ammo} <span style={{ fontSize: "11px", color: "#94a3b8" }}>/ {player.weapon === "shotgun" ? player.reserveShotgunAmmo ?? 24 : player.reserveRifleAmmo ?? 90}</span>
               </div>
             </div>
           </div>
 
-          {/* Weapon Swap & Reload Buttons */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          {/* Quick Action Chips */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             <button
               onClick={() => sim.switchWeapon()}
               className="tactical-ink-btn"
-              style={{ padding: "2px 8px", fontSize: "9px" }}
+              style={{ padding: "1px 6px", fontSize: "8.5px" }}
+              title="Swap Weapon [1/2 or Q]"
             >
-              SWAP [1/2]
+              [1/2] SWAP
             </button>
             <button
               onClick={() => {
                 if (sim.reload()) sound.playReload();
               }}
               className="tactical-ink-btn"
-              style={{ background: "#f3f4f6", color: "#151716", padding: "2px 8px", fontSize: "9px" }}
+              style={{ padding: "1px 6px", fontSize: "8.5px" }}
+              title="Reload Weapon [R]"
             >
-              RELOAD [R]
+              [R] RELOAD
             </button>
           </div>
 
           {/* Divider */}
-          <div style={{ width: "1px", height: "30px", background: "#cbd5e1" }} />
+          <div style={{ width: "1px", height: "24px", background: "rgba(148, 163, 184, 0.25)" }} />
 
           {/* Scavenged Cash */}
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-            <span style={{ fontSize: "9px", fontWeight: 800, color: "#64748b", textTransform: "uppercase" }}>LOOT</span>
-            <span style={{ fontSize: "16px", fontWeight: 900, color: "#151716", fontFamily: "monospace" }}>
+            <span style={{ fontSize: "8.5px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>LOOT</span>
+            <span style={{ fontSize: "15px", fontWeight: 900, color: "#10b981", fontFamily: "monospace" }}>
               ${player.cash.toLocaleString()}
             </span>
           </div>
@@ -671,16 +777,17 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
             }}
             className="tactical-ink-btn"
             style={{
-              padding: "5px 9px",
+              padding: "3px 7px",
               display: "flex",
               alignItems: "center",
               gap: "4px",
-              background: (player.stimsRemaining || 0) > 0 ? "#151716" : "#94a3b8",
+              background: (player.stimsRemaining || 0) > 0 ? "rgba(30, 41, 59, 0.9)" : "rgba(15, 23, 42, 0.6)",
+              borderColor: (player.stimsRemaining || 0) > 0 ? "#38bdf8" : "rgba(148, 163, 184, 0.2)",
             }}
             title="Inject Stim [H]"
           >
             <span>💉</span>
-            <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{player.stimsRemaining || 0} [H]</span>
+            <span style={{ fontSize: "10px", fontFamily: "monospace", color: "#f8fafc" }}>{player.stimsRemaining || 0} [H]</span>
           </button>
         </div>
       </div>
