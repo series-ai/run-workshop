@@ -207,7 +207,7 @@ function LoadedCharacter({
       } else if (liveIsRolling && actions["roll"]) {
         targetClip = "roll";
       } else if (liveAction === "kick") {
-        targetClip = actions["kick-roundhouse"] ? "kick-roundhouse" : actions["kick-front"] ? "kick-front" : "sweep";
+        targetClip = actions["kick-air"] ? "kick-air" : actions["kick-roundhouse"] ? "kick-roundhouse" : actions["kick-front"] ? "kick-front" : "sweep";
       } else if (liveAction === "throw") {
         targetClip = actions["throw"] ? "throw" : actions["ball-throw"] ? "ball-throw" : "punch-heavy";
       } else if (liveAction === "reload") {
@@ -248,6 +248,7 @@ function LoadedCharacter({
             nextAction.clampWhenFinished = true;
             nextAction.loop = THREE.LoopOnce;
           } else if (
+            targetClip === "kick-air" ||
             targetClip === "kick-roundhouse" ||
             targetClip === "kick-front" ||
             targetClip === "throw" ||
@@ -315,6 +316,7 @@ function LoadedCharacter({
     const isSpecialAction =
       currentActionNameRef.current === "death" ||
       currentActionNameRef.current === "roll" ||
+      currentActionNameRef.current === "kick-air" ||
       currentActionNameRef.current === "kick-roundhouse" ||
       currentActionNameRef.current === "kick-front" ||
       currentActionNameRef.current === "throw" ||

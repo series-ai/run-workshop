@@ -2362,7 +2362,7 @@ export class SectorDepotSimulation {
       });
     }
 
-    // Melee kick initiation (F) with 42-tick recovery cooldown
+    // Melee jump kick initiation (F) with 42-tick recovery cooldown
     if (input.kick && this.kickCooldownTicks <= 0 && this.player.action !== 'roll') {
       this.player.action = 'kick';
       this.player.actionTicks = SIM_CONFIG.KICK_TICKS;
@@ -2370,8 +2370,12 @@ export class SectorDepotSimulation {
       this.kickStrikePending = true;
       const forwardX = Math.sin(this.player.facing);
       const forwardZ = Math.cos(this.player.facing);
-      this.walkVx = forwardX * 1.5;
-      this.walkVz = forwardZ * 1.5;
+      this.walkVx = forwardX * 2.2;
+      this.walkVz = forwardZ * 2.2;
+      if (this.player.y <= 0) {
+        this.jumpVy = 2.4;
+        this.player.isJumping = true;
+      }
     }
 
     // Weapon switch (1/2 or Q)
@@ -2655,7 +2659,7 @@ export class SectorDepotSimulation {
 
         (rival as any).knockbackVx = 0;
         (rival as any).knockbackVz = 0;
-        this.combatLog.push(`[TICK ${this.tick}] Roundhouse Kick connected on ${rival.name} (-35 HP${isAITarget ? "" : ", 4.5m knockback"})`);
+        this.combatLog.push(`[TICK ${this.tick}] Flying Jump Kick connected on ${rival.name} (-35 HP${isAITarget ? "" : ", 4.5m knockback"})`);
         rivalHits.push({
           id: rival.id,
           x: rival.x,
@@ -2672,7 +2676,7 @@ export class SectorDepotSimulation {
             this.combatLog.push(`[TICK ${this.tick}] Rival operator eliminated by melee kick: ${rival.name}`);
             if (isBossTarget) {
               this.grantKeycard(BOSS_CONFIG.id);
-              this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated by martial arts kick! Dropped Violet Lab Access Keycard!`);
+              this.combatLog.push(`[BOSS SLAIN] Sector Warlord eliminated by martial arts jump kick! Dropped Violet Lab Access Keycard!`);
             }
           } else {
             // For multiplayer / networked rivals, local hit is a prediction; keep at 1 HP until server confirms death
@@ -2728,8 +2732,12 @@ export class SectorDepotSimulation {
       this.kickStrikePending = true;
       const forwardX = Math.sin(this.player.facing);
       const forwardZ = Math.cos(this.player.facing);
-      this.walkVx = forwardX * 1.5;
-      this.walkVz = forwardZ * 1.5;
+      this.walkVx = forwardX * 2.2;
+      this.walkVz = forwardZ * 2.2;
+      if (this.player.y <= 0) {
+        this.jumpVy = 2.4;
+        this.player.isJumping = true;
+      }
       return true;
     }
 
