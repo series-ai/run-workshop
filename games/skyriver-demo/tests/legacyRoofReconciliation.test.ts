@@ -7,7 +7,8 @@ import * as THREE from 'three';
 vi.mock('../src/render/signAtlas', async original => ({ ...await original<typeof import('../src/render/signAtlas')>(), createSignAtlas: () => ({ texture: new THREE.Texture(), vertical: Array.from({ length: 32 }, () => [0, 0, 1, 1] as const), horizontal: Array.from({ length: 16 }, () => [0, 0, 1, 1] as const), dispose() {} }) }));
 vi.mock('../src/render/interiorAtlas', async original => ({ ...await original<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async original => ({ ...await original<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
-import { buildingSeedOf, deriveCityMasses, deriveCityTrims, deriveHeroBlades, deriveLegacyTrimReconciliation, deriveRoofDetails, deriveTowerProfiles, SkyriverCity, skyriverTrimBlocksHero, SKYRIVER_TRIM_ANTENNA, SKYRIVER_TRIM_ROOF_PLANT, type SkyriverCityTrims } from '../src/render/city';
+import { buildingSeedOf, deriveCityMasses, deriveCityTrims, deriveHeroBlades, deriveFacadeFaces, deriveLegacyTrimReconciliation, deriveRoofDetails, deriveTowerProfiles, SkyriverCity, skyriverTrimBlocksHero, placeNeonSign, warpBoxPoint, warpRigid, SKYRIVER_TRIM_ANTENNA, SKYRIVER_TRIM_ROOF_PLANT, type SkyriverCityTrims } from '../src/render/city';
+import { canyonBendApexes, warpCanyon } from '../src/render/canyonWarp';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { SkyriverDistrictColourSwitch } from '../src/render/districts';
@@ -16,6 +17,7 @@ import before from './fixtures/r36-legacy-roof-source-before.json';
 import { assertLegacyTrimOneToOne, type LegacyTrimInventoryEvidence, type LegacyTrimSource } from './support/legacyTrimInventory';
 import { legacyRoofCandidateFailures, legacyRoofVoidBoxes, roofConflictQuery, type LegacyRoofCandidate, type LegacyRoofContext } from './support/legacyRoofGeometry';
 import { massRoofBox, roofBoxTolerance, roofSupportFailures, trimRoofBox, uploadedRoofBox } from './support/rooftopDetailsGeometry';
+import { uploadedPhysicalScene, physicalSignAudit, sourceArtworkBoxes } from './support/r37SignOracle';
 
 const SEEDS = [424242, 0, 2147483647, 4294967295, 20240917] as const;
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -38,17 +40,20 @@ function actualContext(seed: typeof SEEDS[number]) {
   const data = DATA.get(seed)!, { layout, trims, masses, heroes, evidence } = data;
   const city = new SkyriverCity({ layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
   try {
-    const sign = city.group.getObjectByName('skyriver.city.signs'), trim = city.group.getObjectByName('skyriver.city.trim');
-    if (!(sign instanceof THREE.Mesh) || !(trim instanceof THREE.InstancedMesh)) throw new Error('R36_D2_ACTUAL_BATCH');
-    const centres = sign.geometry.getAttribute('aCentre'), normals = sign.geometry.getAttribute('aNormal'), sizes = sign.geometry.getAttribute('aSize');
-    if (!centres || !normals || !sizes) throw new Error('R36_D2_ACTUAL_HERO_ATTRIBUTES');
-    const heroBoxes = Array.from({ length: city.sourceCounts().heroSigns }, (_, index) => {
-      const nx = normals.getX(index), nz = normals.getY(index), length = Math.hypot(nx, nz);
-      if (!(length > 0)) throw new Error('R36_D2_HERO_NORMAL');
-      return { x: centres.getX(index), y: centres.getY(index), z: centres.getZ(index), hx: sizes.getX(index) / 2 + 14, hy: sizes.getY(index) / 2 + 18, hz: 14, c: nz / length, s: nx / length };
+    const sign = city.group.getObjectByName('skyriver.city.signs'), trim = city.group.getObjectByName('skyriver.city.trim'), tower = city.group.getObjectByName('skyriver.city.towers');
+    if (!(sign instanceof THREE.Mesh) || !(trim instanceof THREE.InstancedMesh) || !(tower instanceof THREE.InstancedMesh)) throw new Error('R36_D2_ACTUAL_BATCH');
+    const draw = city.signMountEvidence();
+    const physical = uploadedPhysicalScene(draw.signs, draw, { towers: tower, trims: trim, signs: sign }, placeNeonSign, (owner, point) => {
+      const out = warpBoxPoint(owner, point.x, point.z, { x: 0, z: 0, heading: 0 });
+      return [out.x, point.y, out.z];
     });
+    const audit = physicalSignAudit(physical.boards, physical.mounts, physical.solids);
+    expect(audit.overlaps).toEqual([]);
+    expect(audit.roots.filter(root => root.failures.length)).toEqual([]);
+    const artwork = sourceArtworkBoxes(heroes, deriveFacadeFaces(layout), canyonBendApexes(900), warpRigid, warpCanyon);
+    const heroHits = roofConflictQuery(artwork);
     const prefixBoxes = evidence.sourceInventory.map((row, index) => skyriverTrimBlocksHero(trims, index, heroes) ? null : trimRoofBox(trims, index));
-    const context: LegacyRoofContext = { masses, massHits: roofConflictQuery(masses.map(massRoofBox)), heroHits: roofConflictQuery(heroBoxes), voidHits: roofConflictQuery(legacyRoofVoidBoxes(masses, deriveTowerProfiles(layout))), prefixHits: roofConflictQuery(prefixBoxes) };
+    const context: LegacyRoofContext = { masses, massHits: roofConflictQuery(masses.map(massRoofBox)), heroHits, voidHits: roofConflictQuery(legacyRoofVoidBoxes(masses, deriveTowerProfiles(layout))), prefixHits: roofConflictQuery(prefixBoxes) };
     const uploaded = new Map<number, ReturnType<typeof uploadedRoofBox>>(); let slot = 0;
     for (const [index, box] of prefixBoxes.entries()) {
       if (box === null) continue;
@@ -59,7 +64,7 @@ function actualContext(seed: typeof SEEDS[number]) {
       slot++;
     }
     expect(city.getRoofDetailEvidence().legacyDrawnCount).toBe(slot);
-    return { context, prefixBoxes, uploaded };
+    return { context, prefixBoxes, uploaded, artwork };
   } finally { city.dispose(); }
 }
 
@@ -107,8 +112,8 @@ describe('R36 D2 exact legacy roofs and actual joint placement', () => {
     expect(failures, JSON.stringify(result)).toEqual([]); expect(moved.length).toBeGreaterThan(0);
   });
 
-  it.each(['host', 'height', 'joint-collision'] as const)('rejects an injected actual %s placement fault', fault => {
-    const data = DATA.get(424242)!, { context, prefixBoxes } = actualContext(424242);
+  it.each(['host', 'height', 'joint-collision', 'source-artwork'] as const)('rejects an injected actual %s placement fault', fault => {
+    const data = DATA.get(424242)!, { context, prefixBoxes, artwork } = actualContext(424242);
     const row = data.evidence.dispositions.find(record => record.kind === 'roof-rehosted');
     if (!row || row.kind !== 'roof-rehosted') throw new Error('R36_D2_NO_ACTUAL_REHOSTED_ROOF');
     const probe: LegacyRoofCandidate = { source: data.evidence.sourceInventory[row.sourceIndex]!, newGeometry: row.newGeometry, box: trimRoofBox(data.trims, row.finalIndex), hostMassIndex: row.hostMassIndex, horizontalScale: row.horizontalScale };
@@ -121,6 +126,11 @@ describe('R36 D2 exact legacy roofs and actual joint placement', () => {
       const height = probe.source.sy / 2, bottom = probe.box.y - probe.box.hy;
       const clipped = { ...probe, newGeometry: { ...probe.newGeometry, sy: height, cy: Math.fround(bottom + height / 2) }, box: { ...probe.box, hy: height / 2, y: bottom + height / 2 } };
       expect(legacyRoofCandidateFailures(clipped, context)).toContain('height-changed');
+    } else if (fault === 'source-artwork') {
+      const source = artwork[0];
+      if (!source) throw new Error('R36_D2_SOURCE_ARTWORK_CONTROL');
+      expect(context.heroHits(source)).toContain(0);
+      expect(legacyRoofCandidateFailures({ ...probe, box: source }, context)).toContain('hero-collision');
     } else {
       const other = prefixBoxes.findIndex((box, index) => box !== null && index !== row.sourceIndex);
       expect(other).toBeGreaterThanOrEqual(0);

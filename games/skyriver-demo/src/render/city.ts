@@ -464,6 +464,21 @@ export type PushTrim = (
   to?: SkyriverTrimOwner | null,
 ) => void;
 
+export interface SkyriverSignPoint {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+export interface SkyriverSignMount {
+  readonly mode: 'panel' | 'blade';
+  readonly host: { readonly kind: 'mass' | 'trim'; readonly index: number };
+  readonly edgeIndex: number;
+  /** Edge and root use the sign owner frame. */
+  readonly edge: readonly [SkyriverSignPoint, SkyriverSignPoint];
+  readonly root: readonly [SkyriverSignPoint, SkyriverSignPoint];
+}
+
 export interface SkyriverNeonSigns {
   readonly seed: number;
   readonly count: number;
@@ -485,6 +500,7 @@ export interface SkyriverNeonSigns {
   readonly buildingId: readonly (string | null)[];
   readonly compositionId: readonly (string | null)[];
   readonly rootHalfWidthM: Float32Array;
+  readonly mount: readonly SkyriverSignMount[];
   readonly ordinaryCount: number;
   readonly heroCount: number;
   readonly acceptedByLoopSection: readonly number[];
@@ -498,6 +514,8 @@ export interface SkyriverNeonSigns {
    */
   readonly anchorV: Float64Array;
 }
+
+export type SkyriverNeonSignArtwork = Omit<SkyriverNeonSigns, 'mount'>;
 
 export type SkyriverLowBaseKind = 'skirt' | 'infill' | 'link' | 'equipment';
 export type SkyriverLowBaseCluster = 0 | 1 | 2 | 3;
@@ -7891,6 +7909,7 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
   let heroCompositionConflicts = 0;
   const facadeFaces = deriveFacadeFaces(layout);
   const faceById = new Map(facadeFaces.map((face) => [face.id, face]));
+  const mountSolids = new Map(deriveSignMountSolids(layout).map(solid => [`${solid.host.kind}:${solid.host.index}`, solid]));
   const ordinaryReservations: FacadeReservation[] = [];
   const heroByComposition = new Map<string, FacadeReservation>();
   for (let i = 0; i < signs.count; i += 1) {
@@ -7905,24 +7924,51 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
       wrongPlaneFailures += 1;
       continue;
     }
-    const alongCentre = face.planeAxis === 'x' ? cz : cx;
-    const halfAlong = face.planeAxis === 'z' || signs.nz[i] === 0 ? signs.sw[i]! * 0.5 : signs.rootHalfWidthM[i]!;
-    const faceRect: FacadeRect = {
-      u0: alongCentre - halfAlong,
-      u1: alongCentre + halfAlong,
-      y0: signs.cy[i]! - signs.sh[i]! * 0.5,
-      y1: signs.cy[i]! + signs.sh[i]! * 0.5,
+    const attachment = signs.mount[i];
+    if (attachment === undefined) {
+      signsOff += 1;
+      wrongPlaneFailures += 1;
+      continue;
+    }
+    const world = placeNeonSign(mount, cx, signs.cy[i]!, cz, signs.nx[i]!, signs.nz[i]!);
+    const normalLength = Math.hypot(world.nx, world.nz);
+    const normal = [world.nx / normalLength, world.nz / normalLength] as const;
+    const tangent = [-normal[1], normal[0]] as const;
+    const worldPoint = (point: SkyriverSignPoint): SkyriverSignPoint => {
+      warpBoxPoint(mount, point.x, point.z, auditPoint);
+      return { x: auditPoint.x, y: point.y, z: auditPoint.z };
     };
-    if (!facadeFaceContains(face, faceRect)) signsOff += 1;
-    const expectedPlane = face.planeAxis === 'z'
-      ? face.plane + face.outward * 1.2
-      : face.plane + face.outward * (signs.nz[i] !== 0 ? signs.sw[i]! * 0.5 + 0.8 : (i < signs.heroCount ? 0.8 : SKYRIVER_CITY.signStandoffM));
-    const placedPlane = face.planeAxis === 'z' ? cz : cx;
-    if (Math.abs(placedPlane - expectedPlane) > 0.05) wrongPlaneFailures += 1;
+    const edge = attachment.edge.map(worldPoint), root = attachment.root.map(worldPoint);
+    const host = mountSolids.get(`${attachment.host.kind}:${attachment.host.index}`);
+    let rootValid = host !== undefined;
+    if (host !== undefined) {
+      const a = host.footprint[attachment.edgeIndex]!, b = host.footprint[(attachment.edgeIndex + 1) % 4]!;
+      const dx = b[0] - a[0], dz = b[1] - a[1], lengthSquared = dx * dx + dz * dz;
+      for (const point of edge) {
+        const along = Math.max(0, Math.min(1, ((point.x - a[0]) * dx + (point.z - a[1]) * dz) / lengthSquared));
+        if (Math.hypot(point.x - a[0] - along * dx, point.z - a[1] - along * dz,
+          point.y - host.y1) >= .05) rootValid = false;
+      }
+    }
+    const a = edge[0]!, b = edge[1]!, dx = b.x - a.x, dz = b.z - a.z;
+    const lengthSquared = dx * dx + dz * dz;
+    if (lengthSquared <= 0 || Math.hypot(root[1]!.x - root[0]!.x, root[1]!.z - root[0]!.z) <= 0) rootValid = false;
+    for (const point of root) {
+      const along = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.z - a.z) * dz) / lengthSquared));
+      if (Math.hypot(point.x - a.x - along * dx, point.z - a.z - along * dz, point.y - a.y) > 3) rootValid = false;
+      const u = (point.x - world.x) * tangent[0] + (point.z - world.z) * tangent[1];
+      const v = (point.x - world.x) * normal[0] + (point.z - world.z) * normal[1];
+      const onBoard = Math.abs(point.y - (world.y - signs.sh[i]! * .5)) < .05
+        && (attachment.mode === 'panel' ? Math.abs(v + .2) < .05 && Math.abs(u) <= signs.sw[i]! * .5 + .05
+          : Math.abs(Math.abs(u) - signs.sw[i]! * .5) < .05 && Math.abs(v) <= .2 + .05);
+      if (!onBoard) wrongPlaneFailures += 1;
+    }
+    if (!rootValid) signsOff += 1;
     warpBoxPoint(mount, cx, cz, auditPoint);
     const drawn = check(mount, mount.anchorV, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
     signMaxDrift = Math.max(signMaxDrift, drawn.drift);
-    // Along-face overrun past the tower's end (the across offset is the standoff, exact either way).
+    const halfAlong = face.planeAxis === 'z' || attachment.mode === 'panel' ? signs.sw[i]! * .5 : signs.rootHalfWidthM[i]!;
+    // Compare the old point warp with the current owner frame.
     warpCanyon(cx, cz, auditPoint);
     const point = check(mount, mount.z, auditPoint.x, auditPoint.z, cx, cz, 0, 0);
     // Along-face position of the pre-R16 placement in the tower's frame.
@@ -7933,7 +7979,7 @@ export function auditCityAnchors(layout: SkyriverCityLayout): SkyriverAnchorAudi
     const legacyOverrun = (d: number): boolean => d + halfAlong > mount.depth * 0.5 + 0.5;
     if (point.drift > 0.5 && legacyOverrun(Math.abs(lz))) pointSignsOff += 1;
 
-    const alongHalfForSpacing = face.planeAxis === 'z' ? 4 : (signs.nz[i] !== 0 ? signs.rootHalfWidthM[i]! : signs.sw[i]! * 0.5);
+    const alongHalfForSpacing = face.planeAxis === 'z' ? 4 : (attachment.mode === 'blade' ? signs.rootHalfWidthM[i]! : signs.sw[i]! * .5);
     const reservation: FacadeReservation = {
       side: face.side,
       buildingId: face.buildingId,
@@ -8655,9 +8701,503 @@ export function deriveHeroBlades(layout: SkyriverCityLayout): readonly SkyriverH
  */
 export const SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET = 12000;
 
-export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
-  const cached = signCache.get(layout.seed);
-  if (cached !== undefined) return cached;
+export interface SkyriverSignSolid {
+  readonly host: SkyriverSignMount['host'];
+  readonly owner: SkyriverTrimOwner;
+  readonly footprint: readonly (readonly [number, number])[];
+  readonly y0: number;
+  readonly y1: number;
+  readonly ledge: boolean;
+}
+
+/** Use the renderer's draw exclusions and Float32 instance matrices. */
+export function deriveSignMountSolids(layout: SkyriverCityLayout): readonly SkyriverSignSolid[] {
+  const masses = deriveCityMasses(layout);
+  const trims = deriveCityTrims(layout);
+  const details = deriveRoofDetails(layout);
+  const detailByIndex = new Map(details.records.map(record => [record.trimIndex, record]));
+  const heroes = deriveHeroBlades(layout);
+  const heroBoxes = roofDetailHeroBoxCache.get(layout.seed) ?? [];
+  const result: SkyriverSignSolid[] = [];
+  const matrix = new THREE.Matrix4();
+  const rotation = new THREE.Quaternion();
+  const centre = new THREE.Vector3();
+  const extent = new THREE.Vector3();
+  const placed: SkyriverTrimPlacement = { x: 0, z: 0, heading: 0, length: 0 };
+  const add = (host: SkyriverSignMount['host'], owner: SkyriverTrimOwner, x: number, y: number, z: number,
+    sx: number, sy: number, sz: number, heading: number, ledge: boolean): void => {
+    rotation.setFromAxisAngle(UP, heading);
+    matrix.compose(centre.set(x, y, z), rotation, extent.set(sx, sy, sz));
+    const m = matrix.elements.map(Math.fround);
+    const footprint = [[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]].map(([u, v]) =>
+      [m[12]! + u! * m[0]! + v! * m[8]!, m[14]! + u! * m[2]! + v! * m[10]!] as const);
+    result.push({ host, owner, footprint, y0: m[13]! - Math.abs(m[5]!) * .5,
+      y1: m[13]! + Math.abs(m[5]!) * .5, ledge });
+  };
+  for (let index = 0; index < masses.length; index += 1) {
+    const mass = masses[index]!;
+    if ((mass.layer ?? 0) >= IMPOSTOR_MIN_LAYER) continue;
+    warpBoxPoint(mass, mass.x, mass.z, roofDetailWarp);
+    add({ kind: 'mass', index }, ownerOf({ ...mass, materialOwner: mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z) }, mass.anchorV ?? mass.z),
+      roofDetailWarp.x, mass.y0 + mass.height * .5, roofDetailWarp.z,
+      mass.width, mass.height, mass.depth, roofDetailWarp.heading,
+      (mass.layer ?? 0) === 0 && mass.artBacking === undefined && mass.baseRecord === undefined);
+  }
+  for (let index = 0; index < trims.count; index += 1) {
+    const detail = detailByIndex.get(index);
+    if (detail === undefined && skyriverTrimBlocksHero(trims, index, heroes)) continue;
+    placeTrim(trims, index, placed);
+    const sx = placed.length > 0 && trims.sx[index]! > trims.sz[index]! ? placed.length : trims.sx[index]!;
+    const sz = placed.length > 0 && trims.sz[index]! >= trims.sx[index]! ? placed.length : trims.sz[index]!;
+    if (detail !== undefined && roofDetailBlocksHero(roofDetailBox(placed.x, trims.cy[index]!, placed.z,
+      sx, trims.sy[index]!, sz, placed.heading), heroBoxes)) continue;
+    add({ kind: 'trim', index }, trims.owner[index]!, placed.x, trims.cy[index]!, placed.z,
+      sx, trims.sy[index]!, sz, placed.heading, detail === undefined
+        && ([SKYRIVER_TRIM_BAND, SKYRIVER_TRIM_CANTILEVER, SKYRIVER_TRIM_BALCONY].includes(trims.kind[index]!)
+          || trims.kind[index] === SKYRIVER_TRIM_FLOOD && trims.sy[index]! <= Math.min(sx, sz)));
+  }
+  return result;
+}
+
+interface SignMountEdge {
+  readonly solid: SkyriverSignSolid;
+  readonly edgeIndex: number;
+  readonly a: readonly [number, number];
+  readonly b: readonly [number, number];
+  readonly outward: readonly [number, number];
+}
+
+function signMountOwnerKey(owner: SkyriverTrimOwner): string {
+  return `${owner.anchorV}:${trimMaterialOwnerSeed(owner)}`;
+}
+
+function signMountPositiveOverlap(a: SkyriverSignSolid, b: SkyriverSignSolid): boolean {
+  if (Math.min(a.y1, b.y1) <= Math.max(a.y0, b.y0)) return false;
+  for (const polygon of [a.footprint, b.footprint]) {
+    for (let i = 0; i < polygon.length; i += 1) {
+      const p = polygon[i]!, q = polygon[(i + 1) % polygon.length]!;
+      const ax = p[1] - q[1], az = q[0] - p[0];
+      const project = (points: SkyriverSignSolid['footprint']): readonly [number, number] => {
+        let lo = Infinity, hi = -Infinity;
+        for (const point of points) {
+          const value = (point[0] - p[0]) * ax + (point[1] - p[1]) * az;
+          lo = Math.min(lo, value); hi = Math.max(hi, value);
+        }
+        return [lo, hi];
+      };
+      const pa = project(a.footprint), pb = project(b.footprint);
+      if (Math.min(pa[1], pb[1]) <= Math.max(pa[0], pb[0])) return false;
+    }
+  }
+  return true;
+}
+
+function signMountCoveredInterval(a: readonly [number, number], b: readonly [number, number],
+  polygon: SkyriverSignSolid['footprint']): readonly [number, number] | undefined {
+  let lo = 0, hi = 1;
+  for (let i = 0; i < polygon.length; i += 1) {
+    const p = polygon[i]!, q = polygon[(i + 1) % polygon.length]!;
+    const cross = (r: readonly [number, number]): number =>
+      (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+    const da = cross(a), db = cross(b);
+    if (da <= 0 && db <= 0) return undefined;
+    if (da < 0) lo = Math.max(lo, da / (da - db));
+    if (db < 0) hi = Math.min(hi, da / (da - db));
+    if (hi <= lo) return undefined;
+  }
+  return [lo, hi];
+}
+
+function signMountCanonicalPoint(owner: SkyriverTrimOwner, x: number, y: number, z: number): SkyriverSignPoint {
+  const origin: WarpOut = { x: 0, z: 0, heading: 0 };
+  warpBoxPoint(owner, owner.x, owner.z, origin);
+  const dx = x - origin.x, dz = z - origin.z;
+  const c = Math.cos(origin.heading), sn = Math.sin(origin.heading);
+  return { x: owner.x + dx * c - dz * sn, y, z: owner.z + dx * sn + dz * c };
+}
+
+export interface SkyriverSignWorldPose {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly nx: number;
+  readonly nz: number;
+}
+
+/** Return the Float32 pose written to the sign attributes. */
+export function placeNeonSign(owner: SkyriverTrimOwner | null, cx: number, cy: number, cz: number,
+  nx: number, nz: number): SkyriverSignWorldPose {
+  const frame: WarpOut = { x: 0, z: 0, heading: 0 };
+  if (owner !== null) warpBoxPoint(owner, cx, cz, frame);
+  else warpRigid(cx, cz, cz, frame);
+  const normal = { x: 0, z: 0 };
+  warpDirection(nx, nz, frame.heading, normal);
+  return { x: Math.fround(frame.x), y: Math.fround(cy), z: Math.fround(frame.z),
+    nx: Math.fround(normal.x), nz: Math.fround(normal.z) };
+}
+
+function signMountSafeCentre(roofY: number, height: number): number {
+  const rounded = Math.fround(roofY + height * .5);
+  if (rounded - height * .5 >= roofY) return rounded;
+  const value = new Float32Array([rounded]);
+  const bits = new Uint32Array(value.buffer);
+  bits[0] = bits[0]! + 1;
+  return value[0]!;
+}
+
+export function mountNeonSigns(layout: SkyriverCityLayout, signs: SkyriverNeonSignArtwork): SkyriverNeonSigns {
+  const started = performance.now();
+  const solids = deriveSignMountSolids(layout);
+  const sourceFaces = deriveFacadeFaces(layout);
+  const faceIds = new Set(signs.faceId);
+  const wantedOwners = new Set(sourceFaces.filter(face => faceIds.has(face.id)).map(face => signMountOwnerKey(face.owner)));
+  for (const owner of signs.owner) if (owner !== null) wantedOwners.add(signMountOwnerKey(owner));
+  const cellM = 256;
+  const cells = new Map<string, number[]>();
+  const bounds = (box: SkyriverSignSolid): readonly [number, number, number, number] => [
+    Math.min(...box.footprint.map(p => p[0])), Math.max(...box.footprint.map(p => p[0])),
+    Math.min(...box.footprint.map(p => p[1])), Math.max(...box.footprint.map(p => p[1])),
+  ];
+  const solidBounds = new Map(solids.map(solid => [solid, bounds(solid)]));
+  solids.forEach((solid, index) => {
+    const [x0, x1, z0, z1] = solidBounds.get(solid)!;
+    for (let x = Math.floor(x0 / cellM); x <= Math.floor(x1 / cellM); x += 1)
+      for (let z = Math.floor(z0 / cellM); z <= Math.floor(z1 / cellM); z += 1) {
+        const key = `${x}:${z}`, list = cells.get(key) ?? [];
+        if (!cells.has(key)) cells.set(key, list);
+        list.push(index);
+      }
+  });
+  const stamps = new Int32Array(solids.length);
+  let stamp = 0;
+  const nearby = (box: SkyriverSignSolid): SkyriverSignSolid[] => {
+    const [x0, x1, z0, z1] = solidBounds.get(box) ?? bounds(box), result: SkyriverSignSolid[] = [];
+    stamp += 1;
+    for (let x = Math.floor(x0 / cellM); x <= Math.floor(x1 / cellM); x += 1)
+      for (let z = Math.floor(z0 / cellM); z <= Math.floor(z1 / cellM); z += 1)
+        for (const index of cells.get(`${x}:${z}`) ?? []) {
+          if (stamps[index] === stamp) continue;
+          stamps[index] = stamp;
+          const solid = solids[index]!;
+          if (Math.min(box.y1, solid.y1) >= Math.max(box.y0, solid.y0)) result.push(solid);
+        }
+    return result;
+  };
+  const byOwner = new Map<string, SignMountEdge[]>();
+  for (const solid of solids) {
+    if (!solid.ledge || solid.y1 < 0 || !wantedOwners.has(signMountOwnerKey(solid.owner))) continue;
+    const covering = nearby({ ...solid, y0: solid.y1, y1: solid.y1 });
+    for (let edgeIndex = 0; edgeIndex < 4; edgeIndex += 1) {
+      const a = solid.footprint[edgeIndex]!, b = solid.footprint[(edgeIndex + 1) % 4]!;
+      const dx = b[0] - a[0], dz = b[1] - a[1], length = Math.hypot(dx, dz);
+      let intervals: (readonly [number, number])[] = [[0, 1]];
+      for (const cover of covering) {
+        if (cover === solid || cover.y1 <= solid.y1 || cover.y0 > solid.y1) continue;
+        const cut = signMountCoveredInterval(a, b, cover.footprint);
+        if (cut === undefined) continue;
+        intervals = intervals.flatMap(([lo, hi]) => {
+          if (cut[1] <= lo || cut[0] >= hi) return [[lo, hi] as const];
+          const pieces: (readonly [number, number])[] = [];
+          if (cut[0] > lo) pieces.push([lo, cut[0]]);
+          if (cut[1] < hi) pieces.push([cut[1], hi]);
+          return pieces;
+        });
+      }
+      const key = signMountOwnerKey(solid.owner), edges = byOwner.get(key) ?? [];
+      for (const [lo, hi] of intervals) if ((hi - lo) * length > .402) edges.push({ solid, edgeIndex,
+        a: [a[0] + dx * (lo + .001 / length), a[1] + dz * (lo + .001 / length)],
+        b: [a[0] + dx * (hi - .001 / length), a[1] + dz * (hi - .001 / length)],
+        outward: [dz / length, -dx / length] });
+      byOwner.set(key, edges);
+    }
+  }
+  const heroes = deriveHeroBlades(layout);
+  const faces = new Map(sourceFaces.map(face => [face.id, face]));
+  const merge = (a: FacadeReservation | undefined, b: FacadeReservation): FacadeReservation => a === undefined ? b : {
+    ...b, u0: Math.min(a.u0, b.u0), u1: Math.max(a.u1, b.u1), y0: Math.min(a.y0, b.y0),
+    y1: Math.max(a.y1, b.y1), heightM: Math.max(a.heightM, b.heightM),
+  };
+  const groupKey = (index: number): string => index < signs.heroCount ? signs.compositionId[index]! : `ordinary:${index}`;
+  const sourceGroups = new Map<string, FacadeReservation>();
+  for (let index = 0; index < signs.count; index += 1) {
+    const face = faces.get(signs.faceId[index]!)!;
+    const blade = index < signs.heroCount ? heroes[index]!.kind === 'blade' : signs.nz[index] !== 0;
+    const half = face.planeAxis === 'z' ? 4 : blade ? signs.rootHalfWidthM[index]! : signs.sw[index]! * .5;
+    const reservation: FacadeReservation = { side: face.side, buildingId: face.buildingId,
+      compositionId: signs.compositionId[index]!, role: index < signs.heroCount ? 'hero' : 'ordinary',
+      u0: signs.cz[index]! - half, u1: signs.cz[index]! + half,
+      y0: signs.cy[index]! - signs.sh[index]! * .5, y1: signs.cy[index]! + signs.sh[index]! * .5,
+      heightM: signs.sh[index]! };
+    sourceGroups.set(groupKey(index), merge(sourceGroups.get(groupKey(index)), reservation));
+  }
+  const reservations = [...sourceGroups.values()];
+  interface Candidate {
+    readonly score: number;
+    readonly pose: readonly [number, number, number, number, number];
+    readonly owner: SkyriverTrimOwner;
+    readonly mount: SkyriverSignMount;
+    readonly reservation: FacadeReservation;
+    readonly box: SkyriverSignSolid;
+  }
+  const domains: Candidate[][] = [];
+  const receipts: object[] = [];
+  const candidateMaps = Array.from({ length: signs.count }, () => new Map<string, Candidate>());
+  const checkedWorldPoses = Array.from({ length: signs.count }, () => new Set<string>());
+  const generateCandidates = (index: number, reservations: readonly FacadeReservation[]): void => {
+    const originalOwner = signs.owner[index]!;
+    if (originalOwner === null) fail('SKYRIVER_SIGN_MOUNT_OWNER');
+    const face = sourceFaces.find(candidate => candidate.id === signs.faceId[index]
+      && (byOwner.get(signMountOwnerKey(candidate.owner))?.length ?? 0) > 0) ?? faces.get(signs.faceId[index]!)!;
+    const mode = index < signs.heroCount ? heroes[index]!.kind === 'blade' ? 'blade' : 'panel'
+      : signs.nz[index] !== 0 ? 'blade' : 'panel';
+    const original: WarpOut = { x: 0, z: 0, heading: 0 };
+    warpBoxPoint(originalOwner, signs.cx[index]!, signs.cz[index]!, original);
+    const originalNormal = { x: 0, z: 0 };
+    warpDirection(signs.nx[index]!, signs.nz[index]!, original.heading, originalNormal);
+    const width = signs.sw[index]!, height = signs.sh[index]!;
+    const matchedEdges = byOwner.get(signMountOwnerKey(face.owner)) ?? [];
+    const originalEdges = byOwner.get(signMountOwnerKey(originalOwner)) ?? [];
+    const edges = matchedEdges.length > 0 ? matchedEdges : originalEdges.length > 0 ? originalEdges
+      : [...byOwner.values()].flatMap(group => {
+      const owner = group[0]?.solid.owner;
+      return owner !== undefined && owner.anchorV === face.owner.anchorV
+        && Math.abs(owner.x - face.owner.x) < 1e-6 && Math.abs(owner.z - face.owner.z) < 1e-6
+        && owner.width === face.owner.width && owner.depth === face.owner.depth ? group : [];
+    });
+    const receipt = { index, faceId: signs.faceId[index], compositionId: signs.compositionId[index],
+      edgeCount: edges.length, candidates: 0, solid: 0 };
+    const candidates = candidateMaps[index]!;
+    const checked = checkedWorldPoses[index]!;
+    const orderedEdges = [...edges].sort((a, b) => Math.abs(a.solid.y1 + height * .5 - signs.cy[index]!)
+      - Math.abs(b.solid.y1 + height * .5 - signs.cy[index]!));
+    for (const edge of orderedEdges) {
+      const dx = edge.b[0] - edge.a[0], dz = edge.b[1] - edge.a[1], length = Math.hypot(dx, dz);
+      const ex = dx / length, ez = dz / length, out = edge.outward;
+      const alignment = mode === 'panel' ? out[0] * originalNormal.x + out[1] * originalNormal.z
+        : Math.abs(ex * originalNormal.x + ez * originalNormal.z);
+      if (alignment < .5) continue;
+      const minimumAlong = mode === 'panel' ? .2 - width * .5 : .2;
+      const maximumAlong = mode === 'panel' ? length + width * .5 - .2 : length - .2;
+      const near = ((original.x - edge.a[0]) * ex + (original.z - edge.a[1]) * ez);
+      const clampAlong = (value: number): number => Math.max(minimumAlong, Math.min(maximumAlong, value));
+      const parameters = new Set([clampAlong(near), minimumAlong, maximumAlong, length * .5]);
+      const ca = signMountCanonicalPoint(edge.solid.owner, edge.a[0], edge.solid.y1, edge.a[1]);
+      const cb = signMountCanonicalPoint(edge.solid.owner, edge.b[0], edge.solid.y1, edge.b[1]);
+      const alongZ = (cb.z - ca.z) / length;
+      if (Math.abs(alongZ) > .01) {
+        const halfAlong = face.planeAxis === 'z' ? 4 : mode === 'blade' ? signs.rootHalfWidthM[index]! : width * .5;
+        for (const placed of reservations) {
+          if (placed.side !== face.side) continue;
+          const required = index < signs.heroCount
+            ? 1.5 * Math.max(height, placed.heightM)
+            : placed.role === 'ordinary' ? 2 * Math.max(height, placed.heightM) : 1.5 * placed.heightM;
+          const dy = Math.max(0, edge.solid.y1 - placed.y1, placed.y0 - (edge.solid.y1 + height));
+          if (dy >= required) continue;
+          const du = Math.sqrt(required * required - dy * dy);
+          for (const shift of [-CANYON_LOOP_LENGTH_M, 0, CANYON_LOOP_LENGTH_M]) {
+            parameters.add(clampAlong((placed.u0 + shift - halfAlong - du - .01 - ca.z) / alongZ));
+            parameters.add(clampAlong((placed.u1 + shift + halfAlong + du + .01 - ca.z) / alongZ));
+          }
+        }
+      }
+      for (const along of parameters) {
+        const rx = edge.a[0] + ex * along, rz = edge.a[1] + ez * along;
+        for (const outwardM of [.001, .25, 1, 2]) {
+          receipt.candidates += 1;
+          const normalSign = ex * originalNormal.x + ez * originalNormal.z >= 0 ? 1 : -1;
+          const nx = mode === 'panel' ? out[0] : ex * normalSign;
+          const nz = mode === 'panel' ? out[1] : ez * normalSign;
+          const wx = rx + out[0] * (outwardM + (mode === 'panel' ? .2 : width * .5));
+          const wz = rz + out[1] * (outwardM + (mode === 'panel' ? .2 : width * .5));
+          const wy = signMountSafeCentre(edge.solid.y1, height);
+          const owner = edge.solid.owner;
+          const canonical = signMountCanonicalPoint(owner, wx, wy, wz);
+          const frame: WarpOut = { x: 0, z: 0, heading: 0 };
+          warpBoxPoint(owner, owner.x, owner.z, frame);
+          const c = Math.cos(frame.heading), sn = Math.sin(frame.heading);
+          const cnx = Math.fround(nx * c - nz * sn), cnz = Math.fround(nx * sn + nz * c);
+          const pose = [Math.fround(canonical.x), Math.fround(canonical.y), Math.fround(canonical.z), cnx, cnz] as const;
+          const world = placeNeonSign(owner, ...pose);
+          const nl = Math.hypot(world.nx, world.nz);
+          const n = [world.nx / nl, world.nz / nl] as const, t = [-n[1], n[0]] as const;
+          const x = world.x, z = world.z;
+          const score = Math.hypot(x - original.x, pose[1] - signs.cy[index]!, z - original.z);
+          const key = `${world.x}:${world.y}:${world.z}:${world.nx}:${world.nz}`;
+          if (checked.has(key)) continue;
+          checked.add(key);
+          const points = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) =>
+            [x + u! * width * .5 * t[0] + v! * .2 * n[0], z + u! * width * .5 * t[1] + v! * .2 * n[1]] as const);
+          const box: SkyriverSignSolid = { host: edge.solid.host, owner, footprint: points,
+            y0: pose[1] - height * .5, y1: pose[1] + height * .5, ledge: false };
+          if (nearby(box).some(solid => signMountPositiveOverlap(box, solid))) { receipt.solid += 1; continue; }
+          const halfAlong = face.planeAxis === 'z' ? 4 : mode === 'blade' ? signs.rootHalfWidthM[index]! : width * .5;
+          const rowReservation: FacadeReservation = { side: face.side, buildingId: face.buildingId,
+            compositionId: signs.compositionId[index]!, role: index < signs.heroCount ? 'hero' : 'ordinary',
+            u0: pose[2] - halfAlong, u1: pose[2] + halfAlong,
+            y0: pose[1] - height * .5, y1: pose[1] + height * .5, heightM: height };
+          const reservation = rowReservation;
+          const rootPoints: readonly (readonly [number, number])[] = mode === 'panel'
+            ? (() => {
+              const bx = x - .2 * n[0], bz = z - .2 * n[1];
+              const aa = (edge.a[0] - bx) * t[0] + (edge.a[1] - bz) * t[1];
+              const bb = (edge.b[0] - bx) * t[0] + (edge.b[1] - bz) * t[1];
+              const lo = Math.max(-width * .5, Math.min(aa, bb));
+              const hi = Math.min(width * .5, Math.max(aa, bb));
+              return [[bx + lo * t[0], bz + lo * t[1]], [bx + hi * t[0], bz + hi * t[1]]] as const;
+            })()
+            : (() => { const side = t[0] * out[0] + t[1] * out[1] > 0 ? -1 : 1;
+              return [[x + side * width * .5 * t[0] - .2 * n[0], z + side * width * .5 * t[1] - .2 * n[1]],
+                [x + side * width * .5 * t[0] + .2 * n[0], z + side * width * .5 * t[1] + .2 * n[1]]] as const; })();
+          const edgeDistance = (point: readonly [number, number]): number => {
+            const u = Math.max(0, Math.min(length, (point[0] - edge.a[0]) * ex + (point[1] - edge.a[1]) * ez));
+            return Math.hypot(point[0] - edge.a[0] - u * ex, point[1] - edge.a[1] - u * ez,
+              box.y0 - edge.solid.y1);
+          };
+          if (rootPoints.some(point => edgeDistance(point) > 3)
+            || Math.hypot(rootPoints[1]![0] - rootPoints[0]![0], rootPoints[1]![1] - rootPoints[0]![1]) <= 0) continue;
+          const toCanonical = (point: readonly [number, number], y: number): SkyriverSignPoint =>
+            signMountCanonicalPoint(owner, point[0], y, point[1]);
+          const mount: SkyriverSignMount = { mode, host: edge.solid.host, edgeIndex: edge.edgeIndex,
+            edge: [toCanonical(edge.a, edge.solid.y1), toCanonical(edge.b, edge.solid.y1)],
+            root: [toCanonical(rootPoints[0]!, box.y0), toCanonical(rootPoints[1]!, box.y0)] };
+          const sharedRow = index < signs.heroCount && signs.compositionId[index]!.startsWith('hero-row-');
+          const signature = JSON.stringify([reservation.side, reservation.buildingId, reservation.compositionId,
+            reservation.role, reservation.u0, reservation.u1, reservation.y0, reservation.y1, reservation.heightM,
+            ...(sharedRow ? [world.x, world.z, world.nx, world.nz] : [])]);
+          const previous = candidates.get(signature);
+          if (previous === undefined || score < previous.score) candidates.set(signature, { score, pose, owner, mount, reservation, box });
+        }
+      }
+    }
+    domains[index] = [...candidates.values()].sort((a, b) => a.score - b.score);
+    receipts[index] = { ...receipt, clear: domains[index]!.length };
+  };
+  for (let index = 0; index < signs.count; index += 1) generateCandidates(index, reservations);
+  if (domains.some(domain => domain.length === 0)) {
+    throw Error(`SKYRIVER_SIGN_MOUNT_NO_CANDIDATES:${JSON.stringify(receipts.filter((_, index) => domains[index]!.length === 0))}`);
+  }
+
+  const nearestGroups = new Map<string, FacadeReservation>();
+  for (let index = 0; index < signs.count; index += 1) {
+    const key = groupKey(index);
+    nearestGroups.set(key, merge(nearestGroups.get(key), domains[index]![0]!.reservation));
+  }
+  const nearestReservations = [...nearestGroups.values()];
+  for (let index = 0; index < signs.count; index += 1) generateCandidates(index, nearestReservations);
+
+  const members = new Map<string, number[]>();
+  const envelopes = new Map<string, FacadeReservation>();
+  for (let index = 0; index < signs.count; index += 1) {
+    const key = groupKey(index), rows = members.get(key) ?? [];
+    rows.push(index); members.set(key, rows);
+    for (const candidate of domains[index]!) envelopes.set(key, merge(envelopes.get(key), candidate.reservation));
+  }
+  const neighbors = new Map<string, string[]>();
+  for (const [a, envelopeA] of envelopes) {
+    neighbors.set(a, [...envelopes].filter(([b, envelopeB]) => a !== b
+      && facadeReservationsConflict(envelopeA, envelopeB, CANYON_LOOP_LENGTH_M)).map(([b]) => b));
+  }
+  const chosen: (Candidate | undefined)[] = new Array(signs.count);
+  const unions = new Map<string, FacadeReservation>();
+  const pairOverlaps = new WeakMap<Candidate, WeakMap<Candidate, boolean>>();
+  const boardsOverlap = (a: Candidate, b: Candidate): boolean => {
+    let row = pairOverlaps.get(a);
+    if (row === undefined) { row = new WeakMap(); pairOverlaps.set(a, row); }
+    const cached = row.get(b);
+    if (cached !== undefined) return cached;
+    const overlap = signMountPositiveOverlap(a.box, b.box);
+    row.set(b, overlap);
+    return overlap;
+  };
+  interface Domain {
+    readonly candidates: readonly Candidate[];
+    readonly causes: ReadonlySet<number>;
+  }
+  let searchNodes = 0, constraintChecks = 0, lastEmptyIndex = -1;
+  let stopped = false;
+  const assignedMembers = (key: string): number[] => members.get(key)!.filter(row => chosen[row] !== undefined);
+  const search = (remaining: readonly Domain[], assigned: number): ReadonlySet<number> | undefined => {
+    if (assigned === signs.count) return undefined;
+    if (searchNodes >= 20000 || constraintChecks >= 25000000) { stopped = true; return new Set(); }
+    let index = -1;
+    for (let row = 0; row < signs.count; row += 1) {
+      if (chosen[row] !== undefined) continue;
+      if (index < 0 || remaining[row]!.candidates.length < remaining[index]!.candidates.length
+        || remaining[row]!.candidates.length === remaining[index]!.candidates.length && signs.sh[row]! > signs.sh[index]!) index = row;
+    }
+    const key = groupKey(index), previous = unions.get(key);
+    const causes = new Set(remaining[index]!.causes);
+    for (const candidate of remaining[index]!.candidates) {
+      searchNodes += 1;
+      if (searchNodes > 20000 || constraintChecks >= 25000000) { stopped = true; return causes; }
+      const overlappingRows = assignedMembers(key).filter(row => {
+        constraintChecks += 1;
+        return boardsOverlap(candidate, chosen[row]!);
+      });
+      if (overlappingRows.length > 0) {
+        for (const row of overlappingRows) causes.add(row);
+        continue;
+      }
+      const aggregate = merge(previous, candidate.reservation);
+      const blockers = neighbors.get(key)!.filter(other => {
+        const placed = unions.get(other);
+        constraintChecks += 1;
+        return placed !== undefined && facadeReservationsConflict(aggregate, placed, CANYON_LOOP_LENGTH_M);
+      });
+      if (blockers.length > 0) {
+        for (const other of blockers) for (const row of assignedMembers(other)) causes.add(row);
+        for (const row of assignedMembers(key)) causes.add(row);
+        continue;
+      }
+      chosen[index] = candidate;
+      unions.set(key, aggregate);
+      const next = [...remaining];
+      let failure: ReadonlySet<number> | undefined;
+      for (const other of [key, ...neighbors.get(key)!]) {
+        const otherUnion = unions.get(other);
+        for (const row of members.get(other)!) {
+          if (chosen[row] !== undefined) continue;
+          const options = remaining[row]!.candidates.filter(option => {
+            constraintChecks += 1;
+            return other === key ? !boardsOverlap(candidate, option)
+              : !facadeReservationsConflict(aggregate, merge(otherUnion, option.reservation), CANYON_LOOP_LENGTH_M);
+          });
+          if (options.length === remaining[row]!.candidates.length) continue;
+          const removedBy = new Set(remaining[row]!.causes);
+          for (const assignedRow of [...assignedMembers(key), ...assignedMembers(other)]) removedBy.add(assignedRow);
+          next[row] = { candidates: options, causes: removedBy };
+          if (options.length === 0) { lastEmptyIndex = row; failure = removedBy; break; }
+        }
+        if (failure !== undefined) break;
+      }
+      if (failure === undefined) failure = search(next, assigned + 1);
+      if (failure === undefined) return undefined;
+      chosen[index] = undefined;
+      if (previous === undefined) unions.delete(key); else unions.set(key, previous);
+      if (stopped || !failure.has(index)) return failure;
+      for (const row of failure) if (row !== index) causes.add(row);
+    }
+    return causes;
+  };
+  const failed = search(domains.map(candidates => ({ candidates, causes: new Set<number>() })), 0);
+  if (failed !== undefined) {
+    throw Error(`SKYRIVER_SIGN_MOUNT_SEARCH_EXHAUSTED:${JSON.stringify({ searchNodes, constraintChecks, stopped,
+      lastEmptyIndex, conflictIndices: [...failed], receipts })};ms=${performance.now() - started}`);
+  }
+  const cx = signs.cx.slice(), cy = signs.cy.slice(), cz = signs.cz.slice();
+  const nx = signs.nx.slice(), nz = signs.nz.slice(), owners = [...signs.owner];
+  const mounts: SkyriverSignMount[] = [];
+  for (let index = 0; index < signs.count; index += 1) {
+    const candidate = chosen[index]!;
+    cx[index] = candidate.pose[0]; cy[index] = candidate.pose[1]; cz[index] = candidate.pose[2];
+    nx[index] = candidate.pose[3]; nz[index] = candidate.pose[4];
+    owners[index] = candidate.owner; mounts[index] = candidate.mount;
+  }
+  return { ...signs, cx, cy, cz, nx, nz, owner: owners, mount: mounts };
+}
+
+
+export function deriveNeonSignArtwork(layout: SkyriverCityLayout): SkyriverNeonSignArtwork {
   if (layout.towers.length === 0) fail('SKYRIVER_CITY_LAYOUT_EMPTY');
 
   const random = new DeterministicRandom(layout.seed).fork('skyriver.city.neon');
@@ -8846,7 +9386,7 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     acceptedByLoopSection[section] = (acceptedByLoopSection[section] ?? 0) + 1;
   }
 
-  const signs: SkyriverNeonSigns = {
+  const signs: SkyriverNeonSignArtwork = {
     seed: layout.seed,
     count,
     cx,
@@ -8869,8 +9409,15 @@ export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
     owner: owner.slice(0, count),
     anchorV: anchorV.slice(0, count),
   };
-  signCache.set(layout.seed, signs);
   return signs;
+}
+
+export function deriveNeonSigns(layout: SkyriverCityLayout): SkyriverNeonSigns {
+  const cached = signCache.get(layout.seed);
+  if (cached !== undefined) return cached;
+  const mounted = mountNeonSigns(layout, deriveNeonSignArtwork(layout));
+  signCache.set(layout.seed, mounted);
+  return mounted;
 }
 
 
@@ -12662,6 +13209,8 @@ export class SkyriverCity {
   private readonly trims: SkyriverCityTrims;
   private readonly roofDetailDerivation: SkyriverRoofDetailDerivation;
   private readonly signs: SkyriverNeonSigns;
+  private readonly towerSourceIndices: number[] = [];
+  private readonly trimSourceIndices: number[] = [];
   /** R22: the permanent colour map, its sign quota, and the one A/B switch over both. */
   private readonly districts: SkyriverDistrictModel;
   private readonly signDistricts: SkyriverDistrictSignAssignment;
@@ -12735,21 +13284,14 @@ export class SkyriverCity {
     // R12: all heroes are kept CPU-side in world space; each frame the 12 nearest to the camera are
     // uploaded, so the facade's spill loop stays at 12 however many heroes the lap carries.
     const heroBlades = deriveHeroBlades(layout);
-    const heroWarp: WarpOut = { x: 0, z: 0, heading: 0 };
     const heroColor = new THREE.Color();
     const heroUniforms = {
-      blades: heroBlades.map((b) => {
-        const anchor = b.kind === 'brand' ? (megaAnchorCache.get(layout.seed) ?? []).find((m) => Math.abs(m.v - b.z) < 300) : undefined;
-        if (anchor !== undefined) {
-          warpCanyon(anchor.x, anchor.v, heroWarp);
-          const dx = b.x - anchor.x;
-          const dz = b.z - anchor.v;
-          const sh = Math.sin(heroWarp.heading);
-          const ch = Math.cos(heroWarp.heading);
-          return new THREE.Vector4(heroWarp.x + dx * ch + dz * sh, b.y, heroWarp.z - dx * sh + dz * ch, b.height * 0.5);
-        }
-        warpRigid(b.x, b.z, b.owner.anchorV, heroWarp);
-        return new THREE.Vector4(heroWarp.x, b.y, heroWarp.z, b.height * 0.5);
+      blades: Array.from({ length: this.signs.heroCount }, (_, index) => {
+        const owner = this.signs.owner[index]!;
+        if (owner === null) fail('SKYRIVER_HERO_SIGN_OWNER');
+        const world = placeNeonSign(owner, this.signs.cx[index]!, this.signs.cy[index]!, this.signs.cz[index]!,
+          this.signs.nx[index]!, this.signs.nz[index]!);
+        return new THREE.Vector4(world.x, world.y, world.z, this.signs.sh[index]! * .5);
       }),
       colors: heroBlades.map((b) => heroColor.setHex(b.color, THREE.SRGBColorSpace).clone()),
       count: heroBlades.length,
@@ -12759,7 +13301,7 @@ export class SkyriverCity {
     // R22: every hero takes its district's primary hue at its own final luminance, so the blade and
     // the spill it throws down the facade keep exactly the brightness they had before.
     for (let i = 0; i < this.heroWorldColors.length; i += 1) {
-      const district = skyriverDistrictAt(this.districts, heroBlades[i]!.z);
+      const district = skyriverDistrictAt(this.districts, this.signs.anchorV[i]!);
       const old = this.heroWorldColors[i]!;
       const tinted = skyriverRecolorPreservingY(
         [old.r, old.g, old.b],
@@ -13615,6 +14157,26 @@ export class SkyriverCity {
     this.impostorMesh.geometry.setAttribute('aCard', new THREE.InstancedBufferAttribute(cards, 4));
   }
 
+  /** Raw source records for the uploaded sign audit. */
+  signMountEvidence(): {
+    readonly signs: SkyriverNeonSigns;
+    readonly faces: readonly SkyriverFacadeFace[];
+    readonly towers: readonly number[];
+    readonly trims: readonly number[];
+    readonly towerOwners: readonly SkyriverTrimOwner[];
+    readonly trimOwners: readonly SkyriverTrimOwner[];
+  } {
+    const masses = deriveCityMasses(this.layout);
+    return { signs: this.signs, faces: deriveFacadeFaces(this.layout),
+      towers: this.towerSourceIndices.slice(), trims: this.trimSourceIndices.slice(),
+      towerOwners: this.towerSourceIndices.map(index => {
+        const mass = masses[index]!;
+        return ownerOf({ ...mass, materialOwner: mass.materialOwner ?? mass.building ?? buildingSeedOf(mass.x, mass.z) }, mass.anchorV ?? mass.z);
+      }),
+      trimOwners: this.trimSourceIndices.map(index => this.trims.owner[index]!),
+    };
+  }
+
   // --- internals ----------------------------------------------------------------------------------
 
   private writeTowers(): void {
@@ -13635,6 +14197,7 @@ export class SkyriverCity {
     const materials = new Float32Array(slots);
     const emissionAllowed = new Float32Array(slots);
     this.drawnMassesByDistrict.fill(0);
+    this.towerSourceIndices.length = 0;
     this.paneCellCapacity = 0;
     const cellArea = SKYRIVER_CITY.windowCellWidthM * SKYRIVER_CITY.windowCellHeightM;
     let i = 0;
@@ -13668,6 +14231,7 @@ export class SkyriverCity {
       scale.set(mass.width, mass.height, mass.depth);
       matrix.compose(position, quaternion, scale);
       this.towerMesh.setMatrixAt(i, matrix);
+      this.towerSourceIndices[i] = m;
 
       tint.setHex(mass.tint, THREE.SRGBColorSpace);
       tints[i * 3] = tint.r;
@@ -13728,6 +14292,7 @@ export class SkyriverCity {
     const axes = new Float32Array(slots * 3);
     this.drawnTrimsByKind.fill(0);
     this.drawnTrimsByDistrict.fill(0);
+    this.trimSourceIndices.length = 0;
 
     // T7-3: clear space around the hero signs (see skyriverTrimBlocksHero).
     const heroes = deriveHeroBlades(this.layout);
@@ -13758,6 +14323,7 @@ export class SkyriverCity {
       scale.set(ex, sy[i]!, ez);
       matrix.compose(position, quaternion, scale);
       this.trimMesh.setMatrixAt(drawn, matrix);
+      this.trimSourceIndices[drawn] = i;
       seeds[drawn] = seedValue[i]!;
       const owner = this.trims.owner[i]!;
       materials[drawn] = trimMaterialOwnerSeed(owner);
@@ -13855,31 +14421,12 @@ export class SkyriverCity {
       }
       atlasRects.set(rect, i * 4);
       // T7-3: canyon space -> the winding loop; the facade normal turns with the local heading.
-      // R14: the brand sign sits on a mega-tower at a bend's centre of curvature, where the warp is
-      // near-singular; it is placed rigidly relative to the tower's warped centre (like the floods).
-      const brandAnchor = hero !== undefined && hero.kind === 'brand'
-        ? (megaAnchorCache.get(this.layout.seed) ?? []).find((m) => Math.abs(m.v - hero.z) < 300)
-        : undefined;
-      if (brandAnchor !== undefined) {
-        warpCanyon(brandAnchor.x, brandAnchor.v, warp);
-        const dx = cx[i]! - brandAnchor.x;
-        const dz = cz[i]! - brandAnchor.v;
-        const sinH = Math.sin(warp.heading);
-        const cosH = Math.cos(warp.heading);
-        warp.x += dx * cosH + dz * sinH;
-        warp.z += -dx * sinH + dz * cosH;
-      } else {
-        // R16: a facade sign rides its tower's frame (see placeTrim); hero signs keep their own.
-        const mount = this.signs.owner[i];
-        if (mount) warpBoxPoint(mount, cx[i]!, cz[i]!, warp);
-        else warpRigid(cx[i]!, cz[i]!, cz[i]!, warp);
-      }
-      warpDirection(nx[i]!, nz[i]!, warp.heading, direction);
-      centres[i * 3] = warp.x;
-      centres[i * 3 + 1] = cy[i]!;
-      centres[i * 3 + 2] = warp.z;
-      normals[i * 2] = direction.x;
-      normals[i * 2 + 1] = direction.z;
+      const world = placeNeonSign(this.signs.owner[i]!, cx[i]!, cy[i]!, cz[i]!, nx[i]!, nz[i]!);
+      centres[i * 3] = world.x;
+      centres[i * 3 + 1] = world.y;
+      centres[i * 3 + 2] = world.z;
+      normals[i * 2] = world.nx;
+      normals[i * 2 + 1] = world.nz;
       sizes[i * 2] = sw[i];
       sizes[i * 2 + 1] = sh[i];
       kinds[i] = kind[i];

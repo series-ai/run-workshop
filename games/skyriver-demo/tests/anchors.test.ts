@@ -14,7 +14,11 @@ import {
   deriveHeroRowPlans,
   deriveNeonSigns,
   SKYRIVER_CITY_SIGN_CANDIDATE_BUDGET,
+  deriveSignMountSolids,
+  placeNeonSign,
+  warpBoxPoint,
 } from '../src/render/city';
+import { canonicalPhysicalScene, physicalSignAudit } from './support/r37SignOracle';
 import { intersectSection, sectionUnionArea } from './support/towerProfileGeometry';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { CANYON_LOOP_LENGTH_M } from '../src/render/canyonWarp';
@@ -26,15 +30,22 @@ const DEMO_SEED = 424242;
 
 describe('city trim anchors', () => {
   it('keeps every trim and facade sign on its owner all around the loop', () => {
-    const audit = auditCityAnchors(presentCityLayout(deriveCityLayout(DEMO_SEED)));
+    const layout = presentCityLayout(deriveCityLayout(DEMO_SEED));
+    const audit = auditCityAnchors(layout);
     expect(audit.checked).toBeGreaterThan(5000);
     expect(audit.floating).toBe(0);
     expect(audit.maxDriftM).toBeLessThan(0.05);
     expect(audit.signsChecked).toBeGreaterThan(0);
-    expect(audit.signsOffFace).toBe(0);
     expect(audit.signMaxDriftM).toBeLessThan(0.05);
-    expect(audit.fullFaceFailures).toBe(0);
-    expect(audit.wrongPlaneFailures).toBe(0);
+    const physical = canonicalPhysicalScene(deriveNeonSigns(layout), deriveSignMountSolids(layout), placeNeonSign,
+      (owner, point) => {
+        const out = warpBoxPoint(owner, point.x, point.z, { x: 0, z: 0, heading: 0 });
+        return [out.x, point.y, out.z];
+      });
+    const signs = physicalSignAudit(physical.boards, physical.mounts, physical.solids);
+    expect(signs.overlaps).toEqual([]);
+    expect(signs.roots.filter(root => root.failures.length)).toEqual([]);
+    expect(signs.maxRootDistanceM).toBeLessThanOrEqual(3);
     expect(audit.spacingConflicts).toBe(0);
     expect(audit.heroExclusionConflicts).toBe(0);
     expect(audit.heroCompositionConflicts).toBe(0);
@@ -141,18 +152,20 @@ describe('exposed facade levels and hero rows', () => {
   });
 });
 
-describe('signs under their roofs', () => {
-  it('keeps every facade and hero sign below the roof of the slab it stands on (R17 podium lots)', () => {
+describe('physical sign ledges and source artwork roofs', () => {
+  it('mounts final boards on actual ledges and keeps source hero art below its original roof', () => {
     const layout = presentCityLayout(deriveCityLayout(DEMO_SEED));
     const signs = deriveNeonSigns(layout);
     let above = 0;
-    for (let i = 0; i < signs.count; i += 1) {
-      const owner = signs.owner[i];
-      if (!owner) continue;
-      const buildingId = signs.buildingId[i];
-      const tower = layout.towers.find((t) => `tower:${t.x.toFixed(2)}:${t.z.toFixed(2)}` === buildingId);
-      if (tower !== undefined && signs.cy[i]! + signs.sh[i]! / 2 > tower.height + 1) above += 1;
-    }
+    const physical = canonicalPhysicalScene(signs, deriveSignMountSolids(layout), placeNeonSign,
+      (owner, point) => {
+        const out = warpBoxPoint(owner, point.x, point.z, { x: 0, z: 0, heading: 0 });
+        return [out.x, point.y, out.z];
+      });
+    const mounted = physicalSignAudit(physical.boards, physical.mounts, physical.solids);
+    expect(mounted.overlaps).toEqual([]);
+    expect(mounted.roots.filter(root => root.failures.length)).toEqual([]);
+    expect(mounted.maxRootDistanceM).toBeLessThanOrEqual(3);
     for (const hero of deriveHeroBlades(layout)) {
       if (hero.kind === 'brand') continue;
       const slabs = layout.towers.filter((t) => `tower:${t.x.toFixed(2)}:${t.z.toFixed(2)}` === hero.buildingId);

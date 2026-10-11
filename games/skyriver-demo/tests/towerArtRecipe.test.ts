@@ -23,6 +23,7 @@ import { independentWingSections, wingSectionContractFailures } from './support/
 import { artVolumeBox, readArtVolumeBox, addedVolumeCells, addedVolumeConflicts } from './support/towerAddedVolume';
 import { supportConflictQuery } from './support/retainedStructuralSupport';
 import { physicalDeckRoofAir, physicalTowerStageSupport } from './support/towerDeckGeometry';
+import { canonicalPhysicalScene, physicalSignAudit, uploadedBoards, uploadedSolids } from './support/r37SignOracle';
 
 const SEEDS = [424242, 0, 2147483647, 4294967295, 20240917] as const;
 const owner = (mass: C.SkyriverMass) => mass.materialOwner ?? mass.building ?? C.buildingSeedOf(mass.x, mass.z);
@@ -353,27 +354,32 @@ describe('R36 independent resolved upper-shape art recipe', () => {
     }
   });
 
-  it.each(SEEDS)('backs actual uploaded hero roots with the existing geometry tolerance at seed %i', seed => {
-    const d = data(seed), signs = C.deriveNeonSigns(d.layout), faces = new Map(C.deriveFacadeFaces(d.layout).map(face => [face.id, face]));
+  it.each(SEEDS)('clears actual uploaded boards and supports their finite physical roots at seed %i', seed => {
+    const d = data(seed), signs = C.deriveNeonSigns(d.layout), rawSolids = C.deriveSignMountSolids(d.layout);
+    const canonical = canonicalPhysicalScene(signs, rawSolids, C.placeNeonSign, (owner, point) => {
+      const out = C.warpBoxPoint(owner, point.x, point.z, { x: 0, z: 0, heading: 0 });
+      return [out.x, point.y, out.z];
+    });
     const city = new C.SkyriverCity({ layout: d.layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     try { for (const mode of ['impostor', 'geometry'] as const) {
       city.setFarMode(mode);
-      const tower = city.group.getObjectByName('skyriver.city.towers'), sign = city.group.getObjectByName('skyriver.city.signs');
-      if (!(tower instanceof THREE.InstancedMesh) || !(sign instanceof THREE.Mesh)) throw new Error('R36_ART_UPLOADED_HERO_MESH');
-      const centres = sign.geometry.getAttribute('aCentre'), sizes = sign.geometry.getAttribute('aSize');
-      const hosts: UploadedHeroHost[] = []; let slot = 0;
-      for (const mass of d.masses) if (mode === 'geometry' || (mass.layer ?? 0) < 2) hosts.push({ mass, box: uploadedRoofBox(tower.instanceMatrix.array, slot++ * 16) });
-      expect(tower.count).toBe(slot); expect(signs.heroCount).toBe(42);
-      for (let index = 0; index < signs.heroCount; index++) {
-        const id = signs.faceId[index], face = id == null ? undefined : faces.get(id); if (!face) throw new Error('R36_ART_UPLOADED_HERO_FACE');
-        const projected = heroFacadeCoordinates(face, centres.getX(index), centres.getZ(index));
-        const centre = face.planeAxis === 'x' ? projected.z : projected.x;
-        const half = face.planeAxis === 'z' || signs.nz[index] === 0 ? sizes.getX(index) / 2 : signs.rootHalfWidthM[index]!;
-        const root = { u0: centre - half, u1: centre + half, y0: centres.getY(index) - sizes.getY(index) / 2, y1: centres.getY(index) + sizes.getY(index) / 2 };
-        expect(uploadedHeroRootFailures(root, face, hosts), `${seed}:${mode}:uploaded-hero${index}`).toEqual([]);
-      }
+      const tower = city.group.getObjectByName('skyriver.city.towers'), trim = city.group.getObjectByName('skyriver.city.trim'), sign = city.group.getObjectByName('skyriver.city.signs');
+      if (!(tower instanceof THREE.InstancedMesh) || !(trim instanceof THREE.InstancedMesh) || !(sign instanceof THREE.Mesh)) throw new Error('R37_UPLOADED_PHYSICAL_BATCHES');
+      const draw = city.signMountEvidence();
+      const massIndices = draw.towers, trimIndices = draw.trims;
+      expect(massIndices).toEqual(d.masses.flatMap((mass, index) => mode === 'geometry' || (mass.layer ?? 0) < 2 ? [index] : []));
+      expect(trimIndices).toEqual(rawSolids.filter(solid => solid.host.kind === 'trim').map(solid => solid.host.index));
+      expect(tower.count).toBe(massIndices.length); expect(trim.count).toBe(trimIndices.length); expect(signs.heroCount).toBe(42);
+      const read = (name: string) => Array.from(sign.geometry.getAttribute(name).array, Number).slice(0, signs.count * sign.geometry.getAttribute(name).itemSize);
+      const boards = uploadedBoards(read('aCentre'), read('aNormal'), read('aSize'), signs.count);
+      const solids = [...uploadedSolids(Array.from(tower.instanceMatrix.array).slice(0, tower.count * 16), massIndices, 'mass'),
+        ...uploadedSolids(Array.from(trim.instanceMatrix.array).slice(0, trim.count * 16), trimIndices, 'trim')];
+      const audit = physicalSignAudit(boards, canonical.mounts, solids);
+      expect(audit.overlaps, `${seed}:${mode}:full-0.4m-boards`).toEqual([]);
+      expect(audit.roots.filter(root => root.failures.length), `${seed}:${mode}:finite-physical-roots`).toEqual([]);
+      expect(audit.maxRootDistanceM).toBeLessThanOrEqual(3);
     } } finally { city.dispose(); }
-  });
+  }, 180000);
 
   it('rejects a real large hero cut, a cut beyond existing tolerance and a false uploaded host', () => {
     const d = data(424242), hero = C.deriveHeroBlades(d.layout)[14]; if (!hero) throw new Error('R36_ART_PRECISION_CONTROL_HERO');

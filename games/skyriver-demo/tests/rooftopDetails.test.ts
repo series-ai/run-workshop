@@ -8,12 +8,14 @@ import { assertR36PreservedIdentity } from './support/r36PreservedIdentity';
 vi.mock('../src/render/signAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/signAtlas')>(), createSignAtlas: () => ({ texture: new THREE.Texture(), vertical: Array.from({ length: 32 }, () => [0, 0, 1, 1] as const), horizontal: Array.from({ length: 16 }, () => [0, 0, 1, 1] as const), dispose() {} }) }));
 vi.mock('../src/render/interiorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async importOriginal => ({ ...await importOriginal<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
-import { SkyriverCity, deriveRoofDetails, deriveCityMasses, deriveCityTrims, deriveFacadeFaces, deriveFarTowers, deriveHeroBlades, deriveNeonSigns, skyriverTrimBlocksHero, trimMaterialOwnerSeed, buildingSeedOf, skyriverTrimSourceTermId, SKYRIVER_CITY, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_TRIM_ROOF_PLANT } from '../src/render/city';
+import { SkyriverCity, deriveRoofDetails, deriveCityMasses, deriveCityTrims, deriveFacadeFaces, deriveFarTowers, deriveHeroBlades, deriveNeonSigns, skyriverTrimBlocksHero, trimMaterialOwnerSeed, buildingSeedOf, skyriverTrimSourceTermId, placeNeonSign, warpBoxPoint, warpRigid, SKYRIVER_CITY, SKYRIVER_CITY_SHADER_SOURCE, SKYRIVER_TRIM_ROOF_PLANT } from '../src/render/city';
 import { deriveCityLayout } from '../src/sim/derive';
+import { canyonBendApexes, warpCanyon } from '../src/render/canyonWarp';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { SkyriverDistrictColourSwitch } from '../src/render/districts';
 import { skyriverQualityFor, SkyriverQualityTier } from '../src/render/scene';
 import { massRoofBox, trimRoofBox, roofBoxTolerance, roofBoxesConflict, roofSupportFailures, roofRouteClearance, uploadedRoofBox, type RoofBox } from './support/rooftopDetailsGeometry';
+import { uploadedPhysicalScene, physicalSignAudit, sourceArtworkBoxes } from './support/r37SignOracle';
 
 const SEEDS = baseline.seeds.map(record => record.seed);
 const sha = (value: string | ArrayBufferView) => createHash('sha256').update(typeof value === 'string' ? value : Buffer.from(value.buffer, value.byteOffset, value.byteLength)).digest('hex');
@@ -27,14 +29,6 @@ function mesh(group: THREE.Group, name: string): THREE.Mesh {
   const found = group.getObjectByName(name); if (!(found instanceof THREE.Mesh)) throw new Error(`R35_REAL_MESH_MISSING:${name}`); return found;
 }
 
-function heroBoxes(signs: THREE.Mesh, count: number): readonly RoofBox[] {
-  const centres = signs.geometry.getAttribute('aCentre'), normals = signs.geometry.getAttribute('aNormal'), sizes = signs.geometry.getAttribute('aSize');
-  if (!centres || !normals || !sizes) throw new Error('R35_REAL_HERO_ATTRIBUTES_MISSING');
-  return Array.from({ length: count }, (_, i) => {
-    const nx = normals.getX(i), nz = normals.getY(i), length = Math.hypot(nx, nz);
-    return { x: centres.getX(i), y: centres.getY(i), z: centres.getZ(i), hx: sizes.getX(i) / 2 + 14, hy: sizes.getY(i) / 2 + 18, hz: 14, c: nz / length, s: nx / length };
-  });
-}
 
 interface MeshBaseline { count: number; index: string | null; matrix: string | null; activeMatrix?: string; attributes: Record<string, { itemSize: number; count: number; isInstanced: boolean; sha256: string; activeSha256: string }>; }
 
@@ -96,18 +90,26 @@ describe('R35 independent dark roof details', () => {
         const legacyDrawnCount = legacySourceIds.length;
         expect(packed.oldTrimCount).toBe(derivation.oldTrimCount); expect(packed.legacyDrawnCount).toBe(legacyDrawnCount); expect(packed.totalTrimCount).toBe(trims.count); expect(packed.uploadedTotalCount).toBe(trim.count);
         expect(packed.records.length).toBe(derivation.records.length); expect(packed.acceptedByStratum).toEqual(derivation.acceptedByStratum);
-        const heroes = heroBoxes(mesh(city.group, 'skyriver.city.signs'), prior.sourceCounts.heroSigns), uploaded = [0, 0, 0], excluded = [0, 0, 0], drawnBoxes: RoofBox[] = [];
+        const heroes = sourceArtworkBoxes(heroesDerived, deriveFacadeFaces(layout), canyonBendApexes(900), warpRigid, warpCanyon), uploaded = [0, 0, 0], excluded = [0, 0, 0], drawnBoxes: RoofBox[] = [];
+        const signs = mesh(city.group, 'skyriver.city.signs'), draw = city.signMountEvidence();
+        const physical = uploadedPhysicalScene(draw.signs, draw, { towers: tower, trims: trim, signs }, placeNeonSign, (owner, point) => {
+          const out = warpBoxPoint(owner, point.x, point.z, { x: 0, z: 0, heading: 0 });
+          return [out.x, point.y, out.z];
+        });
+        const physicalAudit = physicalSignAudit(physical.boards, physical.mounts, physical.solids);
+        expect(physicalAudit.overlaps).toEqual([]);
+        expect(physicalAudit.roots.filter(root => root.failures.length)).toEqual([]);
         const towerRows = masses.map((m, i) => ({ mass: m, index: i })).filter(r => mode === 'geometry' || (r.mass.layer ?? 0) < 2);
         const supportRows = new Map(towerRows.map((r, i) => [r.index, i]));
         for (const r of packed.records) {
           const si = ['grime', 'mid', 'pristine'].indexOf(r.stratum);
-          if (r.drawState === 'hero-excluded') { expect(r.drawIndex).toBeNull(); excluded[si]!++; expect(heroes.some(h => roofBoxesConflict(trimRoofBox(trims, r.trimIndex), h))).toBe(true); continue; }
+          if (r.drawState === 'hero-excluded') { expect(r.drawIndex).toBeNull(); excluded[si]!++; expect(heroes.some(h => roofBoxesConflict(trimRoofBox(trims, r.trimIndex), h)), `source-hero-exclusion:${r.trimIndex}`).toBe(true); continue; }
           const slot = r.drawIndex; if (slot === null) throw new Error('R35_DRAW_SLOT_MISSING');
           expect(slot).toBe(legacyDrawnCount + drawnBoxes.length); uploaded[si]!++;
           const box = uploadedRoofBox(trim.instanceMatrix.array, slot * 16), supportSlot = supportRows.get(r.supportMassIndex); if (supportSlot === undefined) throw new Error('R35_SUPPORT_NOT_DRAWN');
           const support = uploadedRoofBox(tower.instanceMatrix.array, supportSlot * 16);
           expect(roofSupportFailures(box, support), `uploaded:${slot}`).toEqual([]);
-          expect(heroes.filter(h => roofBoxesConflict(box, h))).toEqual([]);
+          expect(heroes.filter(hero => roofBoxesConflict(box, hero)), `source-artwork:${r.trimIndex}`).toEqual([]);
           const owner = trims.owner[r.trimIndex]!;
           expect(trim.geometry.getAttribute('aKind').getX(slot)).toBe(2);
           expect(trim.geometry.getAttribute('aMaterial').getX(slot)).toBe(Math.fround(trimMaterialOwnerSeed(owner)));

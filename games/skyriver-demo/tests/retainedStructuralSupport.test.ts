@@ -8,7 +8,9 @@ vi.mock('../src/render/signAtlas', async original => ({ ...await original<typeof
 vi.mock('../src/render/interiorAtlas', async original => ({ ...await original<typeof import('../src/render/interiorAtlas')>(), createInteriorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 vi.mock('../src/render/impostorAtlas', async original => ({ ...await original<typeof import('../src/render/impostorAtlas')>(), createImpostorAtlas: () => ({ texture: new THREE.Texture(), dispose() {} }) }));
 import * as C from '../src/render/city';
+import { uploadedPhysicalScene, physicalSignAudit, sourceArtworkBoxes } from './support/r37SignOracle';
 import { verifiedR36DarkMassIds } from './support/r36DarkMassIds';
+import { canyonBendApexes, warpCanyon } from '../src/render/canyonWarp';
 import { deriveCityLayout } from '../src/sim/derive';
 import { presentCityLayout } from '../src/render/presentationLayout';
 import { SkyriverDistrictColourSwitch, deriveSkyriverDistrictModel, skyriverDistrictIdAt } from '../src/render/districts';
@@ -38,7 +40,8 @@ function build(seed: typeof SEEDS[number]) {
   const old = occurrenceBefore.seeds.find(row => row.seed === seed), physical = physicalBefore.rows.find(row => row.seed === seed);
   if (!old || !physical) throw new Error('R36_SUPPORT_SEED_AUTHORITY');
   const original = readRetainedMassRecords(old.records, old.originalMassCount), matching = matchRetainedMassOccurrences(original, masses), boxes = masses.map(massRoofBox);
-  return { seed, layout, bridges, trims, masses, old, physical, original, matching, boxes, contacts: retainedMassContactQuery(boxes), conflicts: supportConflictQuery(boxes), details: C.deriveRoofDetails(layout), heroes: C.deriveHeroBlades(layout) };
+  const artwork = sourceArtworkBoxes(C.deriveHeroBlades(layout), C.deriveFacadeFaces(layout), canyonBendApexes(900), C.warpRigid, warpCanyon);
+  return { sourceArtworkConflicts: supportConflictQuery(artwork), seed, layout, bridges, trims, masses, old, physical, original, matching, boxes, contacts: retainedMassContactQuery(boxes), conflicts: supportConflictQuery(boxes), details: C.deriveRoofDetails(layout), heroes: C.deriveHeroBlades(layout) };
 }
 function data(seed: typeof SEEDS[number]) { let result = CACHE.get(seed); if (!result) { result = build(seed); CACHE.set(seed, result); } return result; }
 function oldSeedValues(row: typeof physicalBefore.rows[number]): Float32Array {
@@ -47,6 +50,19 @@ function oldSeedValues(row: typeof physicalBefore.rows[number]): Float32Array {
   return Float32Array.from({ length: row.retainedCount }, (_, index) => bytes.readFloatLE(index * 4));
 }
 function output(seed: number, value: unknown): void { const out = process.env.R36_STRUCTURAL_SUPPORT_OUT; if (out) { mkdirSync(out, { recursive: true }); writeFileSync(join(out, `${seed}-structural.json`), JSON.stringify(value, null, 2) + '\n'); } }
+
+function assertUploadedSignClearance(city: C.SkyriverCity): void {
+  const towers = city.group.getObjectByName('skyriver.city.towers'), trims = city.group.getObjectByName('skyriver.city.trim'), signs = city.group.getObjectByName('skyriver.city.signs');
+  if (!(towers instanceof THREE.InstancedMesh) || !(trims instanceof THREE.InstancedMesh) || !(signs instanceof THREE.Mesh)) throw new Error('R37_SUPPORT_PHYSICAL_BATCHES');
+  const draw = city.signMountEvidence();
+  const physical = uploadedPhysicalScene(draw.signs, draw, { towers, trims, signs }, C.placeNeonSign, (owner, point) => {
+    const out = C.warpBoxPoint(owner, point.x, point.z, { x: 0, z: 0, heading: 0 });
+    return [out.x, point.y, out.z];
+  });
+  const audit = physicalSignAudit(physical.boards, physical.mounts, physical.solids);
+  expect(audit.overlaps).toEqual([]);
+  expect(audit.roots.filter(root => root.failures.length)).toEqual([]);
+}
 
 // A real contact path must remain in the complete original owner and anchor frame.
 function rooted(d: ReturnType<typeof build>, start: number, key: string): boolean {
@@ -109,6 +125,7 @@ describe('R36 independent short structural support geometry', () => {
       expect(voidConflict(box), `air:${record.childSourceIndex}`).toEqual([]);
       expect(r27Roofs.filter(roof => supportCrossesRoofPlane(box, roof.box)).map(roof => roof.massIndex), `R27-roof:${record.childSourceIndex}`).toEqual([]);
       expect(prefixConflict(box), `prefix:${record.childSourceIndex}`).toEqual([]);
+      expect(d.sourceArtworkConflicts(box), `source-artwork:${record.childSourceIndex}`).toEqual([]);
       if (record.geometry.kind === 'strict-clear') expect(d.conflicts(box).filter(index => ![record.supportMassIndex, record.childFinalIndex, record.hostMassIndex].includes(index)), `solid:${record.childSourceIndex}`).toEqual([]);
       else {
         contained++;
@@ -141,14 +158,12 @@ describe('R36 independent short structural support geometry', () => {
           expect(emission.getX(slot)).toBe(0);
           const actual = uploadedRoofBox(mesh.instanceMatrix.array, slot * 16), expected = d.boxes[record.supportMassIndex]!, tolerance = Math.max(roofBoxTolerance(actual), roofBoxTolerance(expected));
           for (const key of ['x', 'y', 'z', 'hx', 'hy', 'hz', 'c', 's'] as const) expect(Math.abs(actual[key] - expected[key])).toBeLessThanOrEqual(tolerance);
+          expect(d.sourceArtworkConflicts(actual), `uploaded-source-artwork:${mode}:${record.childSourceIndex}`).toEqual([]);
           expect([sizes.getX(slot), sizes.getY(slot), sizes.getZ(slot)]).toEqual([mass.width, mass.height, mass.depth].map(Math.fround));
           expect(material.getX(slot)).toBe(Math.fround(record.owner)); expect(district.getX(slot)).toBe(skyriverDistrictIdAt(districts, record.anchorV));
         }
         for (const [index, slot] of draw) { const mass = d.masses[index]!; expect(emission.getX(slot)).toBe(verifiedDarkIds.has(index) || mass.baseRecord?.kind === 'equipment' ? 0 : 1); }
-        const signs = city.group.getObjectByName('skyriver.city.signs'); if (!(signs instanceof THREE.Mesh)) throw new Error('R36_SUPPORT_REAL_SIGN_BATCH');
-        const centres = signs.geometry.getAttribute('aCentre'), normals = signs.geometry.getAttribute('aNormal'), signSizes = signs.geometry.getAttribute('aSize');
-        const heroBoxes = Array.from({ length: city.sourceCounts().heroSigns }, (_, i) => { const x = normals.getX(i), z = normals.getY(i), length = Math.hypot(x, z); if (!(length > 0)) throw new Error('R36_SUPPORT_HERO_NORMAL'); return { x: centres.getX(i), y: centres.getY(i), z: centres.getZ(i), hx: signSizes.getX(i) / 2 + 14, hy: signSizes.getY(i) / 2 + 18, hz: 14, c: z / length, s: x / length }; });
-        const heroConflict = supportConflictQuery(heroBoxes); for (const record of d.bridges) expect(heroConflict(d.boxes[record.supportMassIndex]!)).toEqual([]);
+        assertUploadedSignClearance(city);
       }
     } finally { city.dispose(); }
   });
@@ -181,21 +196,20 @@ describe('R36 independent short structural support geometry', () => {
     const heroes = C.deriveHeroBlades(layout), prefix = Array.from({ length: C.deriveRoofDetails(layout).oldTrimCount }, (_, index) => C.skyriverTrimBlocksHero(trims, index, heroes) ? null : trimRoofBox(trims, index));
     expect(supportConflictQuery(prefix)(box)).toEqual([]);
     expect(roofRouteClearance([box]).violations).toBe(0);
+    const artwork = sourceArtworkBoxes(heroes, C.deriveFacadeFaces(layout), canyonBendApexes(900), C.warpRigid, warpCanyon);
+    const sourceArtworkConflicts = supportConflictQuery(artwork);
+    expect(sourceArtworkConflicts(box)).toEqual([]);
+    expect(sourceArtworkConflicts(artwork[0]!)).toContain(0);
     const city = new C.SkyriverCity({ layout, quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     try {
       city.setFarMode('geometry');
       const signs = city.group.getObjectByName('skyriver.city.signs'), towers = city.group.getObjectByName('skyriver.city.towers');
       if (!(signs instanceof THREE.Mesh) || !(towers instanceof THREE.InstancedMesh)) throw new Error('R36_SEED123456_REAL_BATCH');
-      const centres = signs.geometry.getAttribute('aCentre'), normals = signs.geometry.getAttribute('aNormal'), sizes = signs.geometry.getAttribute('aSize');
-      const protectedBoxes = Array.from({ length: city.sourceCounts().heroSigns }, (_, index) => {
-        const x = normals.getX(index), z = normals.getY(index), length = Math.hypot(x, z);
-        return { x: centres.getX(index), y: centres.getY(index), z: centres.getZ(index), hx: sizes.getX(index) / 2 + 14,
-          hy: sizes.getY(index) / 2 + 18, hz: 14, c: -z / length, s: -x / length };
-      });
-      expect(supportConflictQuery(protectedBoxes)(box)).toEqual([]);
+      assertUploadedSignClearance(city);
       expect(towers.geometry.getAttribute('aEmissionAllowed').getX(record.supportMassIndex)).toBe(0);
       const actual = uploadedRoofBox(towers.instanceMatrix.array, record.supportMassIndex * 16), tolerance = Math.max(roofBoxTolerance(actual), roofBoxTolerance(box));
       for (const key of ['x', 'y', 'z', 'hx', 'hy', 'hz', 'c', 's'] as const) expect(Math.abs(actual[key] - box[key])).toBeLessThanOrEqual(tolerance);
+      expect(sourceArtworkConflicts(actual)).toEqual([]);
     } finally { city.dispose(); }
   });
 
