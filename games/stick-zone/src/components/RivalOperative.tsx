@@ -243,6 +243,10 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
           speed={speedRef.current}
           moveAngle={moveAngleRef.current}
           action={operative.action}
+          onMuzzleSample={(muzzle) => {
+            operative.muzzlePos = { x: muzzle.pos.x, y: muzzle.pos.y, z: muzzle.pos.z };
+            operative.muzzleDir = { x: muzzle.dir.x, y: muzzle.dir.y, z: muzzle.dir.z };
+          }}
         />
       </group>
     </>

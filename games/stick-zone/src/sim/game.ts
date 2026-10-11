@@ -474,6 +474,8 @@ export interface OperativeState {
   maxAmmo: number;
   shootCooldownTicks?: number;
   lastStateTimestamp?: number;
+  muzzlePos?: { x: number; y: number; z: number };
+  muzzleDir?: { x: number; y: number; z: number };
   isSliding?: boolean;
   slideTicksRemaining?: number;
   lastFiredAtMs?: number;
@@ -672,6 +674,37 @@ export class SectorDepotSimulation {
   public requestServerSettlement?: (tick: number, cash: number) => Promise<{ receipt: any; outcomePayload: any }>;
   public onRequestLootCrate?: (crateId: string, cashValue: number) => void;
   public keycardSources = new Set<string>();
+
+
+  public getOperativeMuzzle(operative: OperativeState): {
+    origin: { x: number; y: number; z: number };
+    dir: { x: number; y: number; z: number };
+  } {
+    const sinF = Math.sin(operative.facing);
+    const cosF = Math.cos(operative.facing);
+
+    // If real 3D skeletal bone muzzle tip has been sampled by renderer, use it
+    if (operative.muzzlePos) {
+      return {
+        origin: { ...operative.muzzlePos },
+        dir: operative.muzzleDir ? { ...operative.muzzleDir } : { x: sinF, y: 0, z: cosF },
+      };
+    }
+
+    // Mathematically exact geometric fallback: forward in aim direction, right weapon flank (-cosF, sinF)
+    const forward = operative.weapon === "shotgun" ? 0.68 : 0.62;
+    const rightLateral = 0.20;
+    const rightX = -cosF;
+    const rightZ = sinF;
+    return {
+      origin: {
+        x: operative.x + sinF * forward + rightX * rightLateral,
+        y: (operative.y || 0) + 1.16,
+        z: operative.z + cosF * forward + rightZ * rightLateral,
+      },
+      dir: { x: sinF, y: 0, z: cosF },
+    };
+  }
 
   public grantKeycard(sourceId: string): void {
     this.keycardSources.add(sourceId);
@@ -2534,25 +2567,29 @@ export class SectorDepotSimulation {
     const fireCooldown = this.player.weapon === 'shotgun' ? 24 : SIM_CONFIG.RIFLE_COOLDOWN_TICKS;
     this.shootCooldownTicks = fireCooldown;
     this.player.shootCooldownTicks = this.shootCooldownTicks;
-    this.fireWeapon();
-    const forward = 0.72;
-    const lateral = 0.22;
-    const cosF = Math.cos(this.player.facing);
-    const sinF = Math.sin(this.player.facing);
-    const muzzleX = this.player.x + sinF * forward + cosF * lateral;
-    const muzzleY = 0.98;
-    const muzzleZ = this.player.z + cosF * forward - sinF * lateral;
+    const { origin: muzzleOrigin, dir: muzzleDir } = this.getOperativeMuzzle(this.player);
+    this.fireWeapon(muzzleOrigin, muzzleDir);
     this.enqueuePresentationEvent({
       type: 'fire',
       shooterId: this.player.id,
-      origin: { x: muzzleX, y: muzzleY, z: muzzleZ },
-      dir: { x: sinF, y: 0, z: cosF },
+      origin: muzzleOrigin,
+      dir: muzzleDir,
       weapon: (this.player.weapon as any) || 'rifle',
     });
     return true;
   }
 
-  private fireWeapon(): void {
+  private fireWeapon(muzzleOrigin?: { x: number; y: number; z: number }, muzzleDir?: { x: number; y: number; z: number }): void {
+    if (!muzzleOrigin || !muzzleDir) {
+      const m = this.getOperativeMuzzle(this.player);
+      muzzleOrigin = m.origin;
+      muzzleDir = m.dir;
+    }
+    const originX = muzzleOrigin.x;
+    const originY = muzzleOrigin.y;
+    const originZ = muzzleOrigin.z;
+    const bulletDirX = muzzleDir.x;
+    const bulletDirZ = muzzleDir.z;
     const now = Date.now();
     this.player.lastFiredAtMs = now;
     this.player.lastFireTimestamp = now;
@@ -2573,10 +2610,10 @@ export class SectorDepotSimulation {
       for (const m of this.machines) {
         if (!m.isAlive) continue;
         const mY = typeof m.y === 'number' ? m.y : (m.type === 'drone' ? 3.5 : 1.0);
-        const isCovered = this.checkContainerRayObstruction(this.player.x, this.player.z, m.x, m.z, 1.0, mY);
+        const isCovered = this.checkContainerRayObstruction(originX, originZ, m.x, m.z, originY, mY);
         if (isCovered) continue;
 
-        const hitRes = calculateShotgunHit(this.player.x, this.player.z, this.player.facing, m.x, m.z, 1.05);
+        const hitRes = calculateShotgunHit(muzzleOrigin.x, muzzleOrigin.z, this.player.facing, m.x, m.z, 1.05);
         if (hitRes.hit) {
           totalPelletsHit += hitRes.pelletsHit;
           if (hitRes.dist <= 4.0) hasPointBlankHit = true;
@@ -2587,10 +2624,10 @@ export class SectorDepotSimulation {
       // Check rivals with shared calculateShotgunHit contract
       for (const r of this.rivals) {
         if (!r.isAlive || r.isExtracted || (r.isInvulnerable && r.action === 'roll')) continue;
-        const isCovered = this.checkContainerRayObstruction(this.player.x, this.player.z, r.x, r.z);
+        const isCovered = this.checkContainerRayObstruction(originX, originZ, r.x, r.z, originY, 1.0);
         if (isCovered) continue;
 
-        const hitRes = calculateShotgunHit(this.player.x, this.player.z, this.player.facing, r.x, r.z, 1.05);
+        const hitRes = calculateShotgunHit(muzzleOrigin.x, muzzleOrigin.z, this.player.facing, r.x, r.z, 1.05);
         if (hitRes.hit) {
           totalPelletsHit += hitRes.pelletsHit;
           if (hitRes.dist <= 4.0) hasPointBlankHit = true;
@@ -2611,7 +2648,7 @@ export class SectorDepotSimulation {
           { side: "right" as const, x: 5.0, z: -64.0 },
         ];
         for (const d of dummies) {
-          const hitRes = calculateShotgunHit(this.player.x, this.player.z, this.player.facing, d.x, d.z, 1.1);
+          const hitRes = calculateShotgunHit(muzzleOrigin.x, muzzleOrigin.z, this.player.facing, d.x, d.z, 1.1);
           if (hitRes.hit) {
             totalPelletsHit += hitRes.pelletsHit;
             this.dummyHitCount += hitRes.pelletsHit;
@@ -2694,8 +2731,6 @@ export class SectorDepotSimulation {
     }
 
     const range = 35.0; // Strictly matches multiplayer effective range threshold
-    const bulletDirX = Math.sin(this.player.facing);
-    const bulletDirZ = Math.cos(this.player.facing);
 
     let closestHit: { type: 'machine' | 'rival'; id: string; dist: number; ref: any } | null = null;
     let anyInConeObstructed = false;
@@ -2703,8 +2738,8 @@ export class SectorDepotSimulation {
     // Check hit against machines
     for (const m of this.machines) {
       if (!m.isAlive) continue;
-      const dx = m.x - this.player.x;
-      const dz = m.z - this.player.z;
+      const dx = m.x - originX;
+      const dz = m.z - originZ;
       const dist = Math.hypot(dx, dz);
       if (dist > 0.001 && dist <= range) {
         const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
@@ -2724,8 +2759,8 @@ export class SectorDepotSimulation {
     // Check hit against rivals
     for (const r of this.rivals) {
       if (!r.isAlive || r.isExtracted || (r.isInvulnerable && r.action === 'roll')) continue;
-      const dx = r.x - this.player.x;
-      const dz = r.z - this.player.z;
+      const dx = r.x - originX;
+      const dz = r.z - originZ;
       const dist = Math.hypot(dx, dz);
       if (dist > 0.001 && dist <= range) {
         const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
@@ -2748,8 +2783,8 @@ export class SectorDepotSimulation {
         { side: "right" as const, x: 5.0, z: -64.0 },
       ];
       for (const d of dummies) {
-        const dx = d.x - this.player.x;
-        const dz = d.z - this.player.z;
+        const dx = d.x - originX;
+        const dz = d.z - originZ;
         const dist = Math.hypot(dx, dz);
         if (dist > 0.001 && dist <= range) {
           const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
@@ -2767,9 +2802,9 @@ export class SectorDepotSimulation {
       this.enqueuePresentationEvent({
         type: 'impact',
         position: {
-          x: this.player.x + bulletDirX * 12.0,
-          y: 1.0,
-          z: this.player.z + bulletDirZ * 12.0,
+          x: originX + bulletDirX * 12.0,
+          y: originY,
+          z: originZ + bulletDirZ * 12.0,
         },
         surface: 'metal',
       });

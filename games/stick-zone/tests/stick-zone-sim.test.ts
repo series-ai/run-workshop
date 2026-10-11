@@ -1410,4 +1410,49 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(looted).toBe(true);
     expect(hubSim.trainingProgress.crateLooted).toBe(true);
   });
+
+  it("37. Weapon muzzle alignment: bullet hitscan and fire presentation event originate from physical gun tip", () => {
+    const testSim = new SectorDepotSimulation("test_muzzle_raid", "spoke");
+    testSim.admitOperative(0);
+    testSim.player.x = 0;
+    testSim.player.z = 0;
+    testSim.player.facing = Math.PI; // Facing North (-Z)
+
+    // Fallback geometric muzzle calculations
+    const northMuzzle = testSim.getOperativeMuzzle(testSim.player);
+    // When facing North: forward is -Z, right hand is +X (East)
+    expect(northMuzzle.origin.x).toBeGreaterThan(0.1);
+    expect(northMuzzle.origin.z).toBeLessThan(-0.5);
+    expect(northMuzzle.origin.y).toBeCloseTo(1.16, 2);
+
+    // When facing South (facing = 0): forward is +Z, right hand is -X (West)
+    testSim.player.facing = 0;
+    const southMuzzle = testSim.getOperativeMuzzle(testSim.player);
+    expect(southMuzzle.origin.x).toBeLessThan(-0.1);
+    expect(southMuzzle.origin.z).toBeGreaterThan(0.5);
+
+    // Real skeletal bone sampled 3D position override
+    testSim.player.muzzlePos = { x: 0.24, y: 1.18, z: -0.68 };
+    testSim.player.muzzleDir = { x: 0, y: 0, z: -1 };
+    const sampledMuzzle = testSim.getOperativeMuzzle(testSim.player);
+    expect(sampledMuzzle.origin).toEqual({ x: 0.24, y: 1.18, z: -0.68 });
+
+    // Firing weapon emits event at exact sampled muzzle coordinates
+    testSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: true,
+      interact: false,
+      aimAngle: Math.PI,
+    });
+
+    const events = testSim.drainPresentationEvents();
+    const fireEvent = events.find((e) => e.type === "fire");
+    expect(fireEvent).toBeDefined();
+    expect(fireEvent?.origin).toEqual({ x: 0.24, y: 1.18, z: -0.68 });
+  });
 });

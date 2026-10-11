@@ -33,6 +33,7 @@ export interface InklineStickCharacterProps {
   moveAngle?: number;
   action?: string;
   onSampleBones?: (bones: { footR: THREE.Vector3; handR: THREE.Vector3 }) => void;
+  onMuzzleSample?: (muzzle: { pos: THREE.Vector3; dir: THREE.Vector3 }) => void;
 }
 
 /**
@@ -106,10 +107,14 @@ function LoadedCharacter({
   moveAngle,
   action: operativeAction,
   onSampleBones,
+  onMuzzleSample,
 }: InklineStickCharacterProps & { url: string }) {
   const { scene, animations } = useGLTF(url);
   const clonedScene = useMemo(() => skeletonClone(scene), [scene]);
   const groupRef = useRef<THREE.Group>(null);
+  const muzzleTipRef = useRef<THREE.Group>(null);
+  const _scratchMuzzlePos = useMemo(() => new THREE.Vector3(), []);
+  const _scratchMuzzleDir = useMemo(() => new THREE.Vector3(), []);
 
   // Synthesize blended weapon-run clips (run legs + rifle/pistol upper body)
   const effectiveAnimations = useMemo(() => {
@@ -370,6 +375,11 @@ function LoadedCharacter({
         onSampleBones({ footR: footPos, handR: handPos });
       }
     }
+    if (muzzleTipRef.current && isAlive && !isRolling) {
+      muzzleTipRef.current.getWorldPosition(_scratchMuzzlePos);
+      muzzleTipRef.current.getWorldDirection(_scratchMuzzleDir);
+      onMuzzleSample?.({ pos: _scratchMuzzlePos, dir: _scratchMuzzleDir });
+    }
   });
 
   const weaponKey: AssetKey =
@@ -549,29 +559,31 @@ function LoadedCharacter({
                 scale={weapon === "shotgun" ? 1.05 : weapon === "pistol" ? 0.95 : 1.1}
               />
 
-              {/* Barrel Socket Muzzle Flash (0-65ms physically rooted at barrel tip) */}
-              {(isFiring || (typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 65)) && (
-                <group position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
-                  {/* Central high-intensity white core */}
-                  <mesh>
-                    <sphereGeometry args={[0.065, 8, 8]} />
-                    <meshBasicMaterial color="#ffffff" />
-                  </mesh>
-                  {/* Stylized 8-point Manga Ink Star */}
-                  {[0, 45, 90, 135].map((angleDeg, idx) => (
-                    <mesh key={idx} rotation={[0, 0, (angleDeg * Math.PI) / 180]}>
-                      <planeGeometry args={[idx % 2 === 0 ? 0.38 : 0.22, 0.04]} />
-                      <meshBasicMaterial color="#fbbf24" side={THREE.DoubleSide} />
+              {/* Physical Barrel Socket Muzzle Tip Reference & Flash */}
+              <group ref={muzzleTipRef} position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
+                {(isFiring || (typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 65)) && (
+                  <>
+                    {/* Central high-intensity white core */}
+                    <mesh>
+                      <sphereGeometry args={[0.065, 8, 8]} />
+                      <meshBasicMaterial color="#ffffff" />
                     </mesh>
-                  ))}
-                  {/* Forward Conical Gas Flame */}
-                  <mesh position={[0, 0, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
-                    <coneGeometry args={[0.07, 0.22, 6]} />
-                    <meshBasicMaterial color="#f59e0b" transparent opacity={0.85} />
-                  </mesh>
-                  <pointLight intensity={5.0} distance={7} color="#fef08a" />
-                </group>
-              )}
+                    {/* Stylized 8-point Manga Ink Star */}
+                    {[0, 45, 90, 135].map((angleDeg, idx) => (
+                      <mesh key={idx} rotation={[0, 0, (angleDeg * Math.PI) / 180]}>
+                        <planeGeometry args={[idx % 2 === 0 ? 0.38 : 0.22, 0.04]} />
+                        <meshBasicMaterial color="#fbbf24" side={THREE.DoubleSide} />
+                      </mesh>
+                    ))}
+                    {/* Forward Conical Gas Flame */}
+                    <mesh position={[0, 0, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
+                      <coneGeometry args={[0.07, 0.22, 6]} />
+                      <meshBasicMaterial color="#f59e0b" transparent opacity={0.85} />
+                    </mesh>
+                    <pointLight intensity={5.0} distance={7} color="#fef08a" />
+                  </>
+                )}
+              </group>
 
               {/* Laser Aiming Beam Co-axial to Gun Barrel */}
               {isCurrentPlayer && (

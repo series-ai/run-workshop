@@ -420,17 +420,26 @@ const PresentationFXManager: React.FC<{
 
     for (const ev of events) {
       if (ev.type === "fire") {
+        // Resolve exact physical 3D muzzle tip origin from shooter bone hierarchy if sampled
+        const shooter = ev.shooterId === sim.player.id
+          ? sim.player
+          : sim.squadmate.id === ev.shooterId
+          ? sim.squadmate
+          : sim.rivals.find((r) => r.id === ev.shooterId);
+        const muzzlePos = shooter?.muzzlePos ?? ev.origin;
+        const muzzleDir = shooter?.muzzleDir ?? ev.dir;
+
         // Compute 2D screen-projected firing angle (0 = East/+X, PI/2 = North/-Z, PI = West/-X, -PI/2 = South/+Z)
-        const fireAngle = Math.atan2(-ev.dir.z, ev.dir.x);
+        const fireAngle = Math.atan2(-muzzleDir.z, muzzleDir.x);
         const flashPreset = ev.weapon === "shotgun" ? "shotgun-flash" : "rifle-flash";
         const flashScale = ev.weapon === "shotgun" ? 1.7 : 1.35;
-        const originVec = _scratchOrigin.set(ev.origin.x, ev.origin.y, ev.origin.z);
+        const originVec = _scratchOrigin.set(muzzlePos.x, muzzlePos.y, muzzlePos.z);
 
-        // Directional comic muzzle flash with paper core burst
+        // Directional comic muzzle flash rooted exactly at 3D physical gun tip
         effects.trigger(flashPreset, originVec, undefined, flashScale, fireAngle);
         effects.trigger("muzzle-snap", originVec, undefined, 1.25, fireAngle);
 
-        // Directional high-speed brass cartridge ejection (90 deg to right flank)
+        // Directional high-speed brass cartridge ejection (90 deg to right weapon flank)
         effects.trigger(
           "shell-eject",
           originVec,
@@ -461,13 +470,13 @@ const PresentationFXManager: React.FC<{
             );
           }
           const endPt = {
-            x: ev.origin.x + ev.dir.x * 32.0,
-            y: ev.origin.y + ev.dir.y * 32.0,
-            z: ev.origin.z + ev.dir.z * 32.0,
+            x: muzzlePos.x + muzzleDir.x * 32.0,
+            y: muzzlePos.y + muzzleDir.y * 32.0,
+            z: muzzlePos.z + muzzleDir.z * 32.0,
           };
           trails.line(
             tracerSlot,
-            ev.origin,
+            muzzlePos,
             endPt,
             { x: 0, y: 0.06, z: 0 },
             elapsedTime,
@@ -478,13 +487,13 @@ const PresentationFXManager: React.FC<{
           // Intense golden-amber rifle tracer beam with bullet stroke
           effects.trigger("bullet-tracer", originVec, "#fde047", 1.2, fireAngle);
           const endPt = {
-            x: ev.origin.x + ev.dir.x * 36.0,
-            y: ev.origin.y + ev.dir.y * 36.0,
-            z: ev.origin.z + ev.dir.z * 36.0,
+            x: muzzlePos.x + muzzleDir.x * 36.0,
+            y: muzzlePos.y + muzzleDir.y * 36.0,
+            z: muzzlePos.z + muzzleDir.z * 36.0,
           };
           trails.line(
             tracerSlot,
-            ev.origin,
+            muzzlePos,
             endPt,
             { x: 0, y: 0.05, z: 0 },
             elapsedTime,
