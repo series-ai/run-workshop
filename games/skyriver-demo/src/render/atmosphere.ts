@@ -827,11 +827,27 @@ uniform vec3 uNeon;
 uniform float uTime;
 uniform vec3 uDusk;
 uniform vec2 uForward;
+uniform float uSkylineSeed;
+uniform float uSkylineYaw;
+uniform float uSkylineAltitude;
 
 varying vec3 vSkyWorld;
 
 ${SKYRIVER_OUTPUT_PARS_GLSL}
 ${SKYRIVER_HASH_GLSL}
+
+// Integer periods close the skyline at every azimuth.
+float skylineProfile( float azimuth, float cells, float seed ) {
+  float station = fract( azimuth / 6.28318530718 ) * cells;
+  float block = floor( station );
+  float local = fract( station );
+  float identity = skyHash11( mod( block, cells ) + seed );
+  float district = 0.5 + 0.5 * sin( azimuth * 7.0 + seed );
+  float top = 0.024 + identity * identity * 0.075 + district * 0.025;
+  float crown = step( 0.57, identity ) * ( 1.0 - smoothstep( 0.13, 0.28, abs( local - 0.5 ) ) ) * 0.026;
+  float spire = step( 0.86, identity ) * ( 1.0 - smoothstep( 0.015, 0.07, abs( local - 0.5 ) ) ) * 0.027;
+  return top + crown + spire;
+}
 
 void main() {
   vec3 dir = normalize( vSkyWorld );
@@ -858,6 +874,20 @@ void main() {
   float cloud = skyValueNoise( cloudUv * 1.7 + vec2( uTime * 0.004, 0.0 ) ) * 0.66
     + skyValueNoise( cloudUv * 4.1 - vec2( uTime * 0.009, 0.0 ) ) * 0.34;
   color += ( cloud - 0.5 ) * 0.045 * smoothstep( -0.1, 0.5, h );
+
+  // Three distant cities share the haze grade. They emit no light.
+  float azimuth = atan( dir.z, dir.x ) + uSkylineYaw;
+  for ( int layer = 0; layer < 3; layer ++ ) {
+    float depth = float( layer );
+    float profile = skylineProfile( azimuth + depth * 0.39, 173.0 + depth * 108.0, uSkylineSeed + depth * 91.7 );
+    float top = profile * ( 1.0 + depth * 0.23 ) - 0.022 - uSkylineAltitude / ( 42000.0 - depth * 8500.0 );
+    float coverage = 1.0 - smoothstep( top - 0.002, top + 0.002, h );
+    vec3 silhouette = mix( uDepths, uHorizon, 0.77 - depth * 0.10 );
+    silhouette += uDusk * duskBand * ( 0.16 + 0.22 * toward );
+    // Fade below the band into the existing canyon haze.
+    float band = smoothstep( -0.32, -0.06, h );
+    color = mix( color, silhouette, coverage * band * ( 0.56 + depth * 0.09 ) );
+  }
 
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );
 
@@ -1093,6 +1123,8 @@ export class SkyriverAtmosphere {
   private readonly rainCamera = new THREE.Vector3();
   private readonly rainVelocity = new THREE.Vector3();
   private readonly rainScratch = new THREE.Vector3();
+  private skylineYaw = 0;
+  private skylineLastYaw: number | null = null;
   private readonly rainQuaternion = new THREE.Quaternion();
 
   /** Preallocated scratch. The update path must not allocate (plan R7 CPU budget). */
@@ -1170,6 +1202,9 @@ export class SkyriverAtmosphere {
         uNeon: { value: new THREE.Color(COLOR_SKY_NEON) },
         uDusk: { value: new THREE.Color(COLOR_SKY_DUSK) },
         uForward: { value: new THREE.Vector2(0, 1) },
+        uSkylineSeed: { value: layout.seed % 997 },
+        uSkylineYaw: { value: 0 },
+        uSkylineAltitude: { value: 0 },
         uTime: { value: 0 },
       },
       side: THREE.BackSide,
@@ -1309,7 +1344,17 @@ export class SkyriverAtmosphere {
     const fx = this.rainScratch.x;
     const fz = this.rainScratch.z;
     const fl = Math.hypot(fx, fz);
-    if (fl > 1e-4) (this.skyMaterial.uniforms.uForward.value as THREE.Vector2).set(fx / fl, fz / fl);
+    if (fl > 1e-4) {
+      (this.skyMaterial.uniforms.uForward.value as THREE.Vector2).set(fx / fl, fz / fl);
+      const yaw = Math.atan2(fz, fx);
+      if (this.skylineLastYaw !== null) {
+        const delta = yaw - this.skylineLastYaw;
+        this.skylineYaw += Math.atan2(Math.sin(delta), Math.cos(delta));
+      }
+      this.skylineLastYaw = yaw;
+    }
+    this.skyMaterial.uniforms.uSkylineYaw.value = this.skylineYaw * 0.012 + time * 0.00018;
+    this.skyMaterial.uniforms.uSkylineAltitude.value = camera.position.y;
 
     this.beams.setTime(time);
     this.writeSearchlights(time);

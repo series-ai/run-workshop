@@ -46,8 +46,8 @@
   },
   {
     "path": "src/render/atmosphere.ts",
-    "sha256": "ac8c84620e462a69621724a80fd372f4ea96f7e27dbbf0bc5b9e05e28a1303ce",
-    "byteLength": 70414
+    "sha256": "19ba6f9a81a5de9f684429ac67f5f6214b45ace9795a6fc1ffdb9adc8a7968d9",
+    "byteLength": 72626
   },
   {
     "path": "src/render/blueNoiseTile.ts",
