@@ -2,7 +2,7 @@
 // In-page, every rendered frame of an autopilot run:
 //   - hull instances (per mesh slot): blink = on-screen scale change > 50% of max with max > 0.6;
 //     teleport = both scales > 0.6 and the slot moved > 60 px and > 25 m in one frame;
-//   - light streaks: fadeJump = on-screen fade change > 0.35 in one frame; countChange = instance
+//   - light streaks: fadeJump = same-car on-screen fade change > 0.35 in one frame; countChange = instance
 //     count change of a hull mesh;
 //   - cameraInsideBuilding (R17): the camera position, expanded by a 1.5 m near-plane margin, lies
 //     inside any tower-batch box (instance matrices of skyriver.city.towers). Counted per frame.
@@ -17,6 +17,7 @@ const { createRequire } = require('module');
 const req = require;
 const { chromium } = req(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const fs = require('fs');
+const path = require('path');
 const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] || 50)];
 (async () => {
   let browser;
@@ -28,6 +29,7 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
   const page = await context.newPage();
   const logs = []; page.on('console', m => { if (m.type() === 'error' || m.text().includes('gl adapter')) logs.push(m.text()); }); page.on('pageerror', e => logs.push('PAGEERROR '+e.message));
   await page.goto(url);
+  await page.addScriptTag({ content: fs.readFileSync(path.join(__dirname, 'pop-continuity.cjs'), 'utf8') });
   await page.evaluate((e) => { window.__POP_LAYER = e.LAYER || ''; window.__POP_ONLY = e.ONLY || ''; window.__POP_DUMP = e.DUMP || ''; window.__POP_NOCARDS = e.NOCARDS || ''; }, { NOCARDS: process.env.NOCARDS, LAYER: process.env.LAYER, ONLY: process.env.ONLY, DUMP: process.env.DUMP });
   await page.waitForFunction(() => window.__skyriver && window.__skyriver.stats().firstFrameMs !== null, null, { timeout: 20000 });
   if (process.env.TIER_TEST) await page.evaluate(() => { const t = window.__skyriver.tiers; setTimeout(() => t.pin('medium'), 3000); setTimeout(() => t.pin('low'), 7000); setTimeout(() => t.pin('high'), 11000); });
@@ -176,15 +178,36 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
     };
     a.scene.update = function (tick, proj, alpha) { origUpdate.call(this, tick, proj, alpha); if (window.__POP_LAYER === 'traffic') layerRender(); if (!window.__POP_NO_LIGHT) analyze(tick); };
     const events = [];
+    const continuity = window.__skyriverPopContinuity;
+    const identityAudit = { hullSamples: 0, hullSamplesWithCarId: 0, hullSamplesWithoutCarId: 0 };
     let prev = null;
     const end = performance.now() + secs * 1000;
     await new Promise((done) => {
       const frame = () => {
         const tick = a.stats().tick;
-        const cur = hulls.map((h) => ({ count: h.count, arr: h.instanceMatrix.array.slice(0, h.count * 16) }));
-        const FS = streak.geometry.getAttribute('aCarFade').itemSize;
-        const fadeArr = streak.geometry.getAttribute('aCarFade').array.slice(0, streak.geometry.instanceCount * FS);
-        const posArr = streak.geometry.getAttribute('aCarPos').array.slice(0, streak.geometry.instanceCount * 3);
+        const state = a.stats();
+        const snapshot = { tick, alpha: state.alpha, tier: state.tier, cameraWorld: Array.from(cam.matrixWorld.elements), cameraProjection: Array.from(cam.projectionMatrix.elements) };
+        const cur = hulls.map((h) => ({ count: h.count, arr: h.instanceMatrix.array.slice(0, h.count * 16), coverage: h.geometry.getAttribute('aHullCoverage').array.slice(0, h.count) }));
+        const fade = streak.geometry.getAttribute('aCarFade');
+        const position = streak.geometry.getAttribute('aCarPos');
+        const lod = streak.geometry.getAttribute('aCarLod');
+        const streakSamples = [];
+        const carsAtPosition = new Map();
+        for (let i = 0; i < streak.geometry.instanceCount; i += 1) {
+          const carId = lod.array[i * lod.itemSize + 2];
+          const point = Array.from(position.array.slice(i * position.itemSize, i * position.itemSize + 3));
+          streakSamples.push({ carId, fade: fade.array[i * fade.itemSize], position: point });
+          const key = point.join(',');
+          carsAtPosition.set(key, carsAtPosition.has(key) ? null : carId);
+        }
+        const hullSamples = cur.flatMap((batch, mi) => Array.from({ length: batch.count }, (_, slot) => {
+          const matrix = batch.arr.slice(slot * 16, (slot + 1) * 16);
+          // Both arrays contain the same uploaded Float32 centre. Do not guess ambiguous IDs.
+          const carId = carsAtPosition.get([matrix[12], matrix[13], matrix[14]].join(',')) ?? null;
+          identityAudit.hullSamples += 1;
+          identityAudit[carId === null ? 'hullSamplesWithoutCarId' : 'hullSamplesWithCarId'] += 1;
+          return { mesh: hulls[mi].name, slot, carId, matrix, coverage: batch.coverage[slot] };
+        }));
         counts.frames += 1;
         const hit = inside();
         if (hit >= 0) { counts.cameraInsideBuilding += 1; if (events.length < 400) events.push({ tick, type: 'cameraInsideBuilding', box: hit, cam: [cam.position.x, cam.position.y, cam.position.z].map((v) => +v.toFixed(1)) }); }
@@ -192,28 +215,16 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
           for (let mi = 0; mi < hulls.length; mi += 1) {
             const P = prev.m[mi]; const C = cur[mi];
             if (P.count !== C.count) { counts.countChange += 1; events.push({ tick, type: 'countChange', mesh: hulls[mi].name, from: P.count, to: C.count }); }
-            const k = Math.min(P.count, C.count);
-            for (let i = 0; i < k; i += 1) {
-              const o = i * 16;
-              const sa = Math.hypot(P.arr[o], P.arr[o + 1], P.arr[o + 2]); const sb = Math.hypot(C.arr[o], C.arr[o + 1], C.arr[o + 2]);
-              const mx = Math.max(sa, sb); if (mx < 0.6) continue;
-              const pa = proj(P.arr[o + 12], P.arr[o + 13], P.arr[o + 14]); const pb = proj(C.arr[o + 12], C.arr[o + 13], C.arr[o + 14]);
-              if (!pa && !pb) continue;
-              if (Math.abs(sa - sb) > 0.5 * mx) { counts.blink += 1; if (events.length < 400) events.push({ tick, type: 'blink', mesh: hulls[mi].name, i }); continue; }
-              if (sa > 0.6 && sb > 0.6 && pa && pb) {
-                const dpx = Math.hypot(pa[0] - pb[0], pa[1] - pb[1]);
-                const dm = Math.hypot(P.arr[o + 12] - C.arr[o + 12], P.arr[o + 13] - C.arr[o + 13], P.arr[o + 14] - C.arr[o + 14]);
-                if (dpx > 60 && dm > 25) { counts.teleport += 1; if (events.length < 400) events.push({ tick, type: 'teleport', mesh: hulls[mi].name, i, dpx: +dpx.toFixed(0), dm: +dm.toFixed(0) }); }
-              }
-            }
           }
-          const nf = Math.min(prev.f.length, fadeArr.length) / FS;
-          for (let i = 0; i < nf; i += 1) {
-            const dj = Math.abs(fadeArr[i * FS] - prev.f[i * FS]);
-            if (dj > 0.35 && proj(posArr[i * 3], posArr[i * 3 + 1], posArr[i * 3 + 2])) { counts.fadeJump += 1; if (events.length < 400) events.push({ tick, type: 'fadeJump', i }); }
+          for (const event of [
+            ...continuity.compareHullFrames(prev.hulls, hullSamples, point => proj(...point)),
+            ...continuity.compareStreakFrames(prev.streaks, streakSamples, point => proj(...point)),
+          ]) {
+            counts[event.type] += 1;
+            if (events.length < 400) events.push({ tick, ...event, previousFrame: prev.snapshot, currentFrame: snapshot });
           }
         }
-        prev = { m: cur, f: fadeArr };
+        prev = { m: cur, hulls: hullSamples, streaks: streakSamples, snapshot };
         if (performance.now() < end) requestAnimationFrame(frame); else done();
       };
       requestAnimationFrame(frame);
@@ -221,7 +232,7 @@ const [url, out, secs] = [process.argv[2], process.argv[3], +(process.argv[4] ||
     a.scene.update = origUpdate;
     const impostorEvents = lightEvents.filter(e => ['stream','lane','ring','free','same_car_impostor'].includes(e.cls) && e.occluded === false).map(e => ({...e, eventClass: 'impostorPop'}));
     counts.impostorPop = window.__POP_LAYER === 'traffic' ? impostorEvents.length : null;
-    return { counts, impostorAttributionEnabled: window.__POP_LAYER === 'traffic', events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
+    return { counts, identityAudit, hullBayerMinimum: continuity.HULL_BAYER_MINIMUM, impostorAttributionEnabled: window.__POP_LAYER === 'traffic', events, lightEvents, impostorEvents, endTick: a.stats().tick, towers: n, dumps: window.__dumps || [] };
   }, secs);
   result.display = await page.evaluate(() => {
     const a = window.__skyriver; const r = a.scene.renderer; const gl = r.getContext();
