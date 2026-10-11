@@ -1337,4 +1337,77 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(freshSim.player.cash).toBe(0);
     expect(freshSim.raidId).toBe('raid_redeploy_02');
   });
+  it("34. fob opening hub: player spawns facing south (facing: 0) down the illuminated runway", () => {
+    const hubSim = new SectorDepotSimulation("raid_hub_01", "hub");
+    expect(hubSim.zoneMode).toBe("hub");
+    expect(hubSim.player.facing).toBe(0);
+    expect(hubSim.player.x).toBe(0);
+    expect(hubSim.player.z).toBe(-66);
+  });
+
+    it("35. fob ballistic range: shooting and kicking training dummies registers hits, hitmarkers, and updates trainingProgress", () => {
+    const hubSim = new SectorDepotSimulation("raid_hub_02", "hub");
+    hubSim.admitOperative(0);
+    expect(hubSim.dummyHitCount).toBe(0);
+    expect(hubSim.trainingProgress.dummyHit).toBe(false);
+
+    // Aim rifle at left dummy at [-5, 0, -64] from [0, 0, -66]
+    hubSim.player.x = -5.0;
+    hubSim.player.z = -60.0;
+    hubSim.player.facing = Math.PI; // Face north (-Z) towards -64
+    hubSim.player.ammo = 30;
+    const fired = hubSim.fire();
+    expect(fired).toBe(true);
+    expect(hubSim.dummyHitCount).toBeGreaterThan(0);
+    expect(hubSim.trainingProgress.dummyHit).toBe(true);
+    expect(hubSim.player.lastHitmarkerTick).toBe(hubSim.tick);
+
+    // Reset and test melee kick against right dummy at [5, 0, -64]
+    hubSim.player.x = 5.0;
+    hubSim.player.z = -62.5;
+    hubSim.player.facing = Math.PI; // Face north towards -64
+    hubSim.step({
+      dx: 0,
+      dz: 0,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: true,
+      shoot: false,
+      interact: false,
+    });
+    expect(hubSim.player.action).toBe("kick");
+    expect(hubSim.dummyHitCount).toBeGreaterThan(1);
+  });
+
+  it("36. fob onboarding checklist: agility maneuvers and looting the training supply locker update trainingProgress", () => {
+    const hubSim = new SectorDepotSimulation("raid_hub_03", "hub");
+    hubSim.admitOperative(0);
+    expect(hubSim.trainingProgress.agilityUsed).toBe(false);
+    expect(hubSim.trainingProgress.crateLooted).toBe(false);
+
+    // Perform combat roll
+    hubSim.step({
+      dx: 0,
+      dz: 1,
+      sprint: true,
+      slide: false,
+      roll: true,
+      kick: false,
+      shoot: false,
+      interact: false,
+    });
+    expect(hubSim.trainingProgress.agilityUsed).toBe(true);
+
+    // Find and loot training crate
+    const trainingCrate = hubSim.crates.find(c => c.id === "crate_fob_training");
+    expect(trainingCrate).toBeDefined();
+    expect(trainingCrate?.opened).toBe(false);
+
+    hubSim.player.x = trainingCrate!.x;
+    hubSim.player.z = trainingCrate!.z;
+    const looted = hubSim.requestLootCrate(trainingCrate!.id);
+    expect(looted).toBe(true);
+    expect(hubSim.trainingProgress.crateLooted).toBe(true);
+  });
 });

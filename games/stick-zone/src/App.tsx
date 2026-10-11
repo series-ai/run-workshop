@@ -388,6 +388,19 @@ const MainApp: React.FC = () => {
           sound.playHitmarker(!!sim.player.lastHitmarkerCrit);
         }
 
+        // Tarkov Micro: Player damage pain grunt and armor impact audio
+        if (sim.lastPlayerDamageTick === sim.tick) {
+          sound.playHitGrunt();
+          if (sim.player.armor > 0) {
+            sound.playArmorHit();
+          }
+        }
+
+        // Tarkov Micro: Enemy tactical voice bark audio
+        if (sim.recentBark && sim.recentBark.tick === sim.tick) {
+          sound.playScavBark();
+        }
+
         // Critical low health heartbeat
         if (sim.player.isAlive && sim.player.health < 30 && sim.tick % 50 === 0) {
           sound.playHeartbeat();

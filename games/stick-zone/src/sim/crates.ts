@@ -84,6 +84,18 @@ export const DEPOT_CRATE_CONFIGS: DepotCrateConfig[] = [
       { id: "item_defib", name: "Portable Defibrillator", rarity: "epic", icon: "⚡", value: 1000, type: "med" },
     ],
   },
+  {
+    id: "crate_fob_training",
+    x: 4.5,
+    z: -63,
+    cashValue: 600,
+    containerType: "crate",
+    containerTitle: "TRAINING SUPPLY LOCKER // FOB HUB",
+    items: [
+      { id: "item_training_m855", name: "Training AP Ammo (x60)", rarity: "common", icon: "📦", value: 350, type: "ammo" },
+      { id: "item_training_stim", name: "Emergency Field Stim", rarity: "rare", icon: "💉", value: 250, type: "med" },
+    ],
+  },
 ];
 
 export const KNOWN_DEPOT_CRATES: Record<string, number> = Object.fromEntries(

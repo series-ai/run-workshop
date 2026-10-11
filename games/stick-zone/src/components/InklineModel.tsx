@@ -3,6 +3,7 @@ import { useGLTF, useAnimations } from "@react-three/drei";
 import * as THREE from "three";
 import { useAssetUrl } from "../useAssetUrl.js";
 import { addOutlines, disposeInstance } from "../render/celShader.js";
+import { globalCutaway } from "../render/cutaway.js";
 import type { AssetKey } from "../assetLibrary.js";
 
 export interface InklineModelProps {
@@ -71,6 +72,9 @@ function LoadedInklineModel({
     if (addStaticOutlines) {
       addOutlines(clonedScene, '#494c46', 0.65);
     }
+
+    // Apply Inkline foreground cutaway shader discard
+    globalCutaway.apply(clonedScene);
 
     if (onLoaded && groupRef.current) {
       onLoaded(groupRef.current);

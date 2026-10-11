@@ -44,7 +44,33 @@ export type PresentationEvent =
       position: { x: number; y: number; z: number };
       crateId?: string;
       value?: number;
+    }
+  | {
+      type: 'grenade_throw';
+      shooterId: string;
+      origin: { x: number; y: number; z: number };
+      target: { x: number; y: number; z: number };
+    }
+  | {
+      type: 'explosion';
+      position: { x: number; y: number; z: number };
+      radius?: number;
     };
+
+export interface ActiveGrenade {
+  id: string;
+  throwerId: string;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  fuseTicks: number;
+  radius: number;
+  maxDamage: number;
+  detonated: boolean;
+}
 
 export function applyStandardDamage(
   currentHealth: number,
@@ -449,6 +475,10 @@ export interface OperativeState {
   lastHitmarkerCrit?: boolean;
   squad?: string;
   isRolling?: boolean;
+  barkText?: string;
+  barkTick?: number;
+  aimTicks?: number;
+  lastBarkTick?: number;
 }
 
 export interface MachineDefense {
@@ -541,6 +571,19 @@ export class SectorDepotSimulation {
   public raidId: string = "raid_sector7_1042";
   public isRaidExpired = false;
   public zoneMode: 'hub' | 'airlock_corridor' | 'spoke' = 'spoke';
+  public trainingProgress = {
+    dummyHit: false,
+    agilityUsed: false,
+    crateLooted: false,
+  };
+  public dummyHitCount: number = 0;
+  public lastDummyHitTick: number = 0;
+  public lastDummyHitSide: 'left' | 'right' = 'left';
+  public lastPlayerDamageTick: number = 0;
+  public lastPlayerDamageAmount: number = 0;
+  public lastPlayerDamageAngle: number = 0;
+  public recentBark?: { sender: string; text: string; tick: number; isBoss?: boolean };
+  public activeGrenades: ActiveGrenade[] = [];
   public airlockTimerMs: number = 0;
   public aiSpawned = false;
   public frozenSettlementTick?: number;
@@ -1096,7 +1139,7 @@ export class SectorDepotSimulation {
 
     const spawnX = initialZone === 'hub' ? 0 : SIM_CONFIG.SPAWN_SQUAD_A.x;
     const spawnZ = initialZone === 'hub' ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z;
-    const spawnFacing = initialZone === 'hub' ? Math.PI : 0;
+    const spawnFacing = 0;
 
     // Spawn player operative with automatic deployment registration on identity change
     const rawPlayer: OperativeState = {
@@ -1281,6 +1324,7 @@ export class SectorDepotSimulation {
   public requestLootCrate(crateId: string): boolean {
     if (this.isInputLocked()) return false;
     const crate = this.crates.find(c => c.id === crateId);
+    if (this.zoneMode === 'hub') this.trainingProgress.crateLooted = true;
     if (!crate || crate.opened) return false;
     if (this.onRequestLootCrate) {
       this.onRequestLootCrate(crate.id, crate.cashValue);
@@ -1504,9 +1548,17 @@ export class SectorDepotSimulation {
     }
   }
 
-  public applyDamageToPlayer(rawDmg: number): void {
+  public applyDamageToPlayer(rawDmg: number, fromX?: number, fromZ?: number): void {
     // Total invulnerability in FOB hub, airlock corridor, or while ingress shield active
     if (this.zoneMode === 'hub' || this.zoneMode === 'airlock_corridor' || this.player.isInvulnerable || !this.player.isAlive || this.isSocketDisconnected) return;
+
+    this.lastPlayerDamageTick = this.tick;
+    this.lastPlayerDamageAmount = rawDmg;
+    if (fromX !== undefined && fromZ !== undefined) {
+      this.lastPlayerDamageAngle = Math.atan2(fromX - this.player.x, fromZ - this.player.z);
+    } else {
+      this.lastPlayerDamageAngle = (Math.random() - 0.5) * Math.PI;
+    }
 
     const { newHealth, newArmor } = applyStandardDamage(this.player.health, this.player.armor, rawDmg);
     this.player.health = newHealth;
@@ -1545,6 +1597,178 @@ export class SectorDepotSimulation {
     this.onDamageTaken?.();
   }
 
+  /** Step active grenade physics, fuse countdown, and concussive fragmentation blast */
+  public stepGrenades(): void {
+    const dt = SIM_CONFIG.TICK_INTERVAL_MS / 1000;
+    const remaining: ActiveGrenade[] = [];
+
+    for (const g of this.activeGrenades) {
+      g.fuseTicks -= 1;
+      g.x += g.vx * dt;
+      g.z += g.vz * dt;
+      g.y += g.vy * dt;
+      g.vy -= 14.0 * dt; // Gravity
+
+      // Ground bounce
+      if (g.y <= 0.15) {
+        g.y = 0.15;
+        g.vy = -g.vy * 0.35;
+        g.vx *= 0.65;
+        g.vz *= 0.65;
+      }
+
+      // Container obstacle collision bounce
+      if (this.checkContainerCollision(g.x, g.z, 0.2)) {
+        g.vx = -g.vx * 0.5;
+        g.vz = -g.vz * 0.5;
+      }
+
+      if (g.fuseTicks <= 0) {
+        g.detonated = true;
+        this.enqueuePresentationEvent({
+          type: 'explosion',
+          position: { x: g.x, y: 0.5, z: g.z },
+          radius: g.radius,
+        });
+
+        // Concussive shockwave: gunfire sound propagation alerts the sector
+        this.propagateGunfireSound(g.x, g.z, 50.0);
+
+        // Blast radius damage calculation
+        // 1. Damage to player
+        const distToPlayer = Math.hypot(this.player.x - g.x, this.player.z - g.z);
+        if (distToPlayer <= g.radius && this.player.isAlive) {
+          const isCovered = this.checkContainerRayObstruction(g.x, g.z, this.player.x, this.player.z, 0.8, 0.8);
+          if (!isCovered) {
+            const falloff = 1 - (distToPlayer / g.radius);
+            let dmg = Math.round(g.maxDamage * Math.max(0.3, falloff));
+            if (this.player.action === 'roll' || this.player.isInvulnerable) {
+              dmg = Math.round(dmg * 0.25); // Roll dodge reduces fragmentation damage by 75%
+              this.combatLog.push(`[BLAST DEFLECTION] Combat roll evaded direct fragmentation cone! (-${dmg} HP)`);
+            }
+            this.applyDamageToPlayer(dmg, g.x, g.z);
+            this.combatLog.push(`[DETONATION] F-1 fragmentation blast struck Operative (-${dmg} HP)!`);
+          } else {
+            this.combatLog.push(`[BLAST COVER] Container absorbed F-1 fragmentation shockwave.`);
+          }
+        }
+
+        // 2. Damage to rivals
+        for (const rival of this.rivals) {
+          if (!rival.isAlive || rival.isExtracted) continue;
+          const distToRival = Math.hypot(rival.x - g.x, rival.z - g.z);
+          if (distToRival <= g.radius) {
+            const isCovered = this.checkContainerRayObstruction(g.x, g.z, rival.x, rival.z, 0.8, 0.8);
+            if (!isCovered) {
+              const falloff = 1 - (distToRival / g.radius);
+              const dmg = Math.round(g.maxDamage * Math.max(0.3, falloff));
+              const { newHealth, newArmor } = applyStandardDamage(rival.health, rival.armor, dmg);
+              rival.health = newHealth;
+              rival.armor = newArmor;
+              this.handleRivalDamage(rival, dmg);
+              this.combatLog.push(`[DETONATION] Frag blast hit ${rival.name} (-${dmg} HP)`);
+              if (rival.health <= 0) {
+                rival.isAlive = false;
+                this.combatLog.push(`[ELIMINATION] ${rival.name} eliminated by fragmentation grenade.`);
+                if (rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge) {
+                  this.grantKeycard(BOSS_CONFIG.id);
+                }
+              }
+            }
+          }
+        }
+
+        // 3. Damage to machines
+        for (const machine of this.machines) {
+          if (!machine.isAlive) continue;
+          const distToM = Math.hypot(machine.x - g.x, machine.z - g.z);
+          if (distToM <= g.radius) {
+            machine.health = Math.max(0, machine.health - 60);
+            if (machine.health <= 0) {
+              machine.isAlive = false;
+              this.combatLog.push(`[DETONATION] Defense turret ${machine.id} destroyed by explosive blast.`);
+            }
+          }
+        }
+      } else {
+        remaining.push(g);
+      }
+    }
+
+    this.activeGrenades = remaining;
+  }
+
+  /** Gunfire Acoustic Propagation: alerts AI within hearing radius (Tarkov Macro) */
+  public propagateGunfireSound(originX: number, originZ: number, radius = 45.0): void {
+    for (const rival of this.rivals) {
+      if (!rival.isAlive || rival.isExtracted || !rival.isAI) continue;
+      const dx = originX - rival.x;
+      const dz = originZ - rival.z;
+      const dist = Math.hypot(dx, dz);
+      if (dist <= radius) {
+        const wasAlert = ((rival as any).playerAlertTicks || 0) > 0;
+        (rival as any).playerAlertTicks = Math.max((rival as any).playerAlertTicks || 0, 240);
+        (rival as any).lastHeardShotTick = this.tick;
+        if (!wasAlert) {
+          rival.facing = Math.atan2(dx, dz);
+          const alertBarks = ['GUNFIRE!', 'CONTACT!', 'OVER THERE!', 'DID YOU HEAR THAT?!', 'HOSTILE FIRE!'];
+          const bark = alertBarks[Math.floor(Math.random() * alertBarks.length)];
+          rival.barkText = bark;
+          rival.barkTick = this.tick;
+          this.recentBark = { sender: rival.name, text: bark, tick: this.tick, isBoss: rival.id === BOSS_CONFIG.id };
+          this.combatLog.push();
+        }
+      }
+    }
+  }
+
+  /** Boss & Guard Aggro Linking: Pack Tactics coordination when damaged (Tarkov Macro) */
+  public handleRivalDamage(rival: OperativeState, damage: number): void {
+    if (!rival.isAI) return;
+    (rival as any).playerAlertTicks = Math.max((rival as any).playerAlertTicks || 0, 360);
+
+    const isBoss = rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge;
+    const isGuard = rival.id === 'scav_runner_01' || rival.id === 'scav_enforcer_02' || rival.badge === 'SCAV PATROL';
+
+    if (isBoss) {
+      // Pack Tactics: Attacking the Warlord alerts all bodyguards to converge
+      for (const other of this.rivals) {
+        if (!other.isAlive || other.isExtracted || !other.isAI) continue;
+        if (other.id === 'scav_runner_01' || other.id === 'scav_enforcer_02' || other.badge === 'SCAV PATROL') {
+          (other as any).playerAlertTicks = Math.max((other as any).playerAlertTicks || 0, 360);
+          (other as any).convergeOnPlayer = true;
+          if (!other.barkTick || this.tick - other.barkTick > 90) {
+            const guardBarks = ['PROTECT THE WARLORD!', 'DEFEND THE COMMANDER!', 'FLANKING INTRUDER!'];
+            const bark = guardBarks[Math.floor(Math.random() * guardBarks.length)];
+            other.barkText = bark;
+            other.barkTick = this.tick;
+            this.recentBark = { sender: other.name, text: bark, tick: this.tick };
+            this.combatLog.push(`[PACK TACTICS] ${other.name}: "${bark}"`);
+          }
+        }
+      }
+    } else if (isGuard) {
+      // Pack Tactics: Attacking a guard alerts the Boss and fellow guards
+      for (const other of this.rivals) {
+        if (!other.isAlive || other.isExtracted || !other.isAI) continue;
+        if (other.id === BOSS_CONFIG.id || other.badge === BOSS_CONFIG.badge) {
+          (other as any).playerAlertTicks = Math.max((other as any).playerAlertTicks || 0, 360);
+          if (!other.barkTick || this.tick - other.barkTick > 90) {
+            const bossBarks = ['KILL THE INTRUDER!', 'EXTERMINATE THEM!', 'NO ONE SURVIVES!'];
+            const bark = bossBarks[Math.floor(Math.random() * bossBarks.length)];
+            other.barkText = bark;
+            other.barkTick = this.tick;
+            this.recentBark = { sender: other.name, text: bark, tick: this.tick, isBoss: true };
+            this.combatLog.push(`[PACK TACTICS] ${other.name}: "${bark}" (guard under fire)`);
+          }
+        } else if (other.id !== rival.id && (other.id === 'scav_runner_01' || other.id === 'scav_enforcer_02' || other.badge === 'SCAV PATROL')) {
+          (other as any).playerAlertTicks = Math.max((other as any).playerAlertTicks || 0, 300);
+          (other as any).convergeOnPlayer = true;
+        }
+      }
+    }
+  }
+
 
   public enterSpatialAirlock(): void {
     if (this.zoneMode === 'airlock_corridor' || this.zoneMode === 'spoke') return;
@@ -1566,6 +1790,7 @@ export class SectorDepotSimulation {
   }
   public step(input: GameInput): void {
     this.isAds = Boolean(input.ads);
+    this.player.isCrouching = Boolean(input.crouch);
     if (!this.player.isAlive || this.player.isExtracted) {
       if (this.exfilController.getState().kind === "corridor_presentation") {
         this.exfilController.cancel();
@@ -1657,6 +1882,7 @@ export class SectorDepotSimulation {
       // so 12 iframes apply immediately on frame 1
       if (!this.isInputLocked() && input.roll && this.rollCooldownTicks <= 0 && this.player.action !== 'roll' && this.player.action !== 'slide' && this.slideTicksRemaining <= 0) {
         this.player.action = 'roll';
+      if (this.zoneMode === 'hub') this.trainingProgress.agilityUsed = true;
         this.player.actionTicks = SIM_CONFIG.ROLL_TICKS;
         this.rollCooldownTicks = 30;
         this.player.isInvulnerable = true;
@@ -1707,6 +1933,7 @@ export class SectorDepotSimulation {
 
     // 4. Rival operatives step
     this.stepRivals();
+    this.stepGrenades();
     if (!this.player.isAlive || this.player.health <= 0) {
       return;
     }
@@ -1891,6 +2118,7 @@ export class SectorDepotSimulation {
     ) {
       this.slideKeyReleased = false;
       this.player.action = 'slide';
+      if (this.zoneMode === 'hub') this.trainingProgress.agilityUsed = true;
       this.player.actionTicks = SIM_CONFIG.SLIDE_TICKS;
       this.slideTicksRemaining = SIM_CONFIG.SLIDE_TICKS;
       this.walkVx = 0;
@@ -2074,6 +2302,37 @@ export class SectorDepotSimulation {
     const machineHits: KickActionPayload['machineHits'] = [];
     const rivalHits: KickActionPayload['rivalHits'] = [];
 
+    // FOB Training Dummies Kick Interaction
+    let dummyKicked = false;
+    if (this.zoneMode === "hub") {
+      const dummies = [
+        { side: "left" as const, x: -5.0, z: -64.0 },
+        { side: "right" as const, x: 5.0, z: -64.0 },
+      ];
+      for (const d of dummies) {
+        const ddx = d.x - this.player.x;
+        const ddz = d.z - this.player.z;
+        const ddist = Math.hypot(ddx, ddz);
+        if (ddist <= kickRange) {
+          const dot = (ddx * forwardX + ddz * forwardZ) / (ddist || 1);
+          if (dot > 0.2) {
+            dummyKicked = true;
+            this.player.lastHitmarkerTick = this.tick;
+            this.dummyHitCount++;
+            this.lastDummyHitTick = this.tick;
+            this.lastDummyHitSide = d.side;
+            this.trainingProgress.dummyHit = true;
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: d.x, y: 1.4, z: d.z },
+              surface: "metal",
+            });
+            this.combatLog.push(`[TARGET RANGE] Melee kick impacted ${d.side.toUpperCase()} target dummy!`);
+          }
+        }
+      }
+    }
+
     // 1. Kick machines (turrets, drones)
     for (const machine of this.machines) {
       if (!machine.isAlive) continue;
@@ -2125,6 +2384,7 @@ export class SectorDepotSimulation {
         const { newHealth, newArmor } = applyStandardDamage(rival.health, rival.armor, 35);
         rival.health = newHealth;
         rival.armor = newArmor;
+        this.handleRivalDamage(rival, 35);
         const isBossTarget = rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge;
         const isAITarget = Boolean((AI_CONFIGS as any)[rival.id]) || isBossTarget;
         const knockX = isAITarget ? 0 : Math.sin(this.player.facing) * 4.5;
@@ -2198,7 +2458,7 @@ export class SectorDepotSimulation {
       operativeId: this.player.id,
       position: { x: this.player.x, y: 0.95, z: this.player.z },
       facing: this.player.facing,
-      isHit: machineHits.length + rivalHits.length > 0,
+      isHit: machineHits.length + rivalHits.length > 0 || dummyKicked,
       hitTarget: machineHits.length > 0 ? 'machine' : rivalHits.length > 0 ? 'rival' : undefined,
     });
   }
@@ -2220,11 +2480,18 @@ export class SectorDepotSimulation {
     this.shootCooldownTicks = fireCooldown;
     this.player.shootCooldownTicks = this.shootCooldownTicks;
     this.fireWeapon();
+    const forward = 0.72;
+    const lateral = 0.22;
+    const cosF = Math.cos(this.player.facing);
+    const sinF = Math.sin(this.player.facing);
+    const muzzleX = this.player.x + sinF * forward + cosF * lateral;
+    const muzzleY = 0.98;
+    const muzzleZ = this.player.z + cosF * forward - sinF * lateral;
     this.enqueuePresentationEvent({
       type: 'fire',
       shooterId: this.player.id,
-      origin: { x: this.player.x, y: 0.95, z: this.player.z },
-      dir: { x: Math.sin(this.player.facing), y: 0, z: Math.cos(this.player.facing) },
+      origin: { x: muzzleX, y: muzzleY, z: muzzleZ },
+      dir: { x: sinF, y: 0, z: cosF },
       weapon: (this.player.weapon as any) || 'rifle',
     });
     return true;
@@ -2235,6 +2502,8 @@ export class SectorDepotSimulation {
     this.player.lastFiredAtMs = now;
     this.player.lastFireTimestamp = now;
     this.player.lastFireTick = this.tick;
+    // Acoustic sound propagation across 45m radius
+    this.propagateGunfireSound(this.player.x, this.player.z, 45.0);
 
     if (this.player.weapon === 'shotgun') {
       const shotId = `shot_${this.player.id}_${this.tick}_${now}`;
@@ -2280,6 +2549,30 @@ export class SectorDepotSimulation {
         }
       }
 
+      // Check FOB target dummies in hub
+      if (this.zoneMode === "hub") {
+        const dummies = [
+          { side: "left" as const, x: -5.0, z: -64.0 },
+          { side: "right" as const, x: 5.0, z: -64.0 },
+        ];
+        for (const d of dummies) {
+          const hitRes = calculateShotgunHit(this.player.x, this.player.z, this.player.facing, d.x, d.z, 1.1);
+          if (hitRes.hit) {
+            totalPelletsHit += hitRes.pelletsHit;
+            this.dummyHitCount += hitRes.pelletsHit;
+            this.lastDummyHitTick = this.tick;
+            this.lastDummyHitSide = d.side;
+            this.trainingProgress.dummyHit = true;
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: d.x, y: 1.4, z: d.z },
+              surface: "metal",
+            });
+            this.combatLog.push(`[TARGET RANGE] Shotgun pellets impacted ${d.side.toUpperCase()} dummy!`);
+          }
+        }
+      }
+
       if (totalPelletsHit > 0) {
         this.player.lastHitmarkerTick = this.tick;
         this.player.lastHitmarkerCrit = hasPointBlankHit;
@@ -2313,6 +2606,7 @@ export class SectorDepotSimulation {
           const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, h.damage);
           r.health = newHealth;
           r.armor = newArmor;
+          this.handleRivalDamage(r, h.damage);
           this.onHitTarget?.(r.id, h.damage, h.knockX, h.knockZ, 'shotgun', shotId);
           this.combatLog.push(`[TICK ${this.tick}] 12-Gauge blast hit ${r.name} (-${h.damage} HP)`);
           if (r.health <= 0) {
@@ -2384,6 +2678,28 @@ export class SectorDepotSimulation {
       }
     }
 
+    // Check hit against FOB target dummies in hub
+    if (this.zoneMode === "hub") {
+      const dummies = [
+        { side: "left" as const, x: -5.0, z: -64.0 },
+        { side: "right" as const, x: 5.0, z: -64.0 },
+      ];
+      for (const d of dummies) {
+        const dx = d.x - this.player.x;
+        const dz = d.z - this.player.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.001 && dist <= range) {
+          const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
+          const perpDist = Math.abs(dx * bulletDirZ - dz * bulletDirX);
+          if (dot > 0.94 && perpDist <= 1.1) {
+            if (!closestHit || dist < closestHit.dist) {
+              closestHit = { type: "dummy" as any, id: `dummy_${d.side}`, dist, ref: d };
+            }
+          }
+        }
+      }
+    }
+
     if (!closestHit && anyInConeObstructed) {
       this.enqueuePresentationEvent({
         type: 'impact',
@@ -2402,6 +2718,21 @@ export class SectorDepotSimulation {
       const weaponDamage = SIM_CONFIG.RIFLE_DAMAGE;
       this.player.lastHitmarkerTick = this.tick;
       this.player.lastHitmarkerCrit = false;
+
+      if ((closestHit.type as any) === "dummy") {
+        const d = closestHit.ref;
+        this.dummyHitCount++;
+        this.lastDummyHitTick = this.tick;
+        this.lastDummyHitSide = d.side;
+        this.trainingProgress.dummyHit = true;
+        this.enqueuePresentationEvent({
+          type: "impact",
+          position: { x: d.x, y: 1.4, z: d.z },
+          surface: "metal",
+        });
+        this.combatLog.push(`[TARGET RANGE] Direct hit on ${d.side.toUpperCase()} target dummy! // 100 DMG`);
+        return;
+      }
 
       if (closestHit.type === 'machine') {
         const m = closestHit.ref;
@@ -2430,6 +2761,7 @@ export class SectorDepotSimulation {
         const { newHealth, newArmor } = applyStandardDamage(r.health, r.armor, weaponDamage);
         r.health = newHealth;
         r.armor = newArmor;
+        this.handleRivalDamage(r, weaponDamage);
         this.onHitTarget?.(r.id, weaponDamage);
         this.combatLog.push(`[TICK ${this.tick}] Direct hit on ${r.name} (-${weaponDamage} HP)`);
         if (r.health <= 0) {
@@ -2596,7 +2928,9 @@ export class SectorDepotSimulation {
 
       const isBoss = rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge;
       const isAIRoster = Boolean((AI_CONFIGS as any)[rival.id]) || isBoss;
-      if (isAIRoster) {
+      const isAlerted = ((rival as any).playerAlertTicks || 0) > 0 || Boolean((rival as any).convergeOnPlayer);
+
+      if (isAIRoster && !isAlerted) {
         const aiPos = computeAIPosition(rival.id, this.tick);
         const isManuallyPositioned = Math.hypot(rival.x - aiPos.x, rival.z - aiPos.z) > 5.0;
         if (!isManuallyPositioned) {
@@ -2604,40 +2938,13 @@ export class SectorDepotSimulation {
           rival.z = aiPos.z;
           rival.facing = aiPos.facing;
           rival.action = 'walk';
-        }
-
-        const dx = this.player.x - rival.x;
-        const dz = this.player.z - rival.z;
-        const distToPlayer = Math.hypot(dx, dz);
-
-        // Tactical weapon fire cadence: attacks when in range <= 22m and cooldown ready
-        const ingressKind = this.ingressController.getState().kind;
-        const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
-        if (!isIngressPending && distToPlayer <= 22.0 && (rival.shootCooldownTicks || 0) <= 0) {
-          rival.action = 'shoot';
-          rival.actionTicks = 6;
-          rival.shootCooldownTicks = 42; // ~1.4 bursts/sec for balanced tactical combat
-          rival.facing = Math.atan2(dx, dz);
-          rival.lastFiredAtMs = Date.now();
-          rival.lastFireTimestamp = Date.now();
-          rival.lastFireTick = this.tick;
-
-          // Physical cover check: bullets cannot penetrate shipping containers
-          const isCovered = this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0);
-          if (isCovered) {
-            this.combatLog.push(`[COVER] ${rival.name} rifle burst deflected by container cover`);
-          } else if (!this.player.isInvulnerable) {
-            const rawDmg = rival.weapon === 'shotgun' ? 20 : 12;
-            this.applyDamageToPlayer(rawDmg);
-            this.combatLog.push(`[TICK ${this.tick}] Struck by ${rival.name} ${rival.weapon || 'rifle'} burst (-${rawDmg} HP)`);
-          } else {
-            this.combatLog.push(`[TICK ${this.tick}] ${rival.name} burst deflected by combat roll`);
-          }
-        }
-        if (!isManuallyPositioned) {
           continue;
         }
       }
+
+      const ingressKind = this.ingressController.getState().kind;
+      const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
+      const isPlayerInHub = this.zoneMode === 'hub' || this.zoneMode === 'airlock_corridor';
 
       const dx = this.player.x - rival.x;
       const dz = this.player.z - rival.z;
@@ -2645,12 +2952,34 @@ export class SectorDepotSimulation {
 
       const isLowHealth = rival.health < 40;
       const hasLosToPlayer = !this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0);
-      if ((distToPlayer <= 25.0 && hasLosToPlayer) || distToPlayer <= 16.0) {
+
+      // Dynamic Concealment & Shadow/Acoustic Detection (Tarkov Macro):
+      let visualDetectionRange = 28.0;
+      if (this.player.isCrouching) {
+        visualDetectionRange = 15.0; // Crouch low silhouette concealment in shadows
+      } else if (this.player.action === 'sprint') {
+        visualDetectionRange = 36.0; // Sprinting motion profile
+      }
+
+      const auditoryDetectionRange = this.player.isCrouching
+        ? 4.0
+        : (this.player.action === 'sprint' ? 24.0 : 10.0);
+
+      const rivalForwardX = Math.sin(rival.facing);
+      const rivalForwardZ = Math.cos(rival.facing);
+      const safeD = Math.max(0.001, distToPlayer);
+      const dotForward = (dx * rivalForwardX + dz * rivalForwardZ) / safeD;
+      const isInFieldOfView = dotForward > -0.25;
+
+      const isVisuallySpotted = hasLosToPlayer && isInFieldOfView && distToPlayer <= visualDetectionRange;
+      const isAuditorilyDetected = distToPlayer <= auditoryDetectionRange;
+
+      if (isVisuallySpotted || isAuditorilyDetected) {
         (rival as any).playerAlertTicks = 300; // Maintain combat pursuit for 300 ticks (5s) through cover
       } else if ((rival as any).playerAlertTicks > 0) {
         (rival as any).playerAlertTicks -= 1;
       }
-      const isPlayerDetected = ((rival as any).playerAlertTicks || 0) > 0 && distToPlayer <= 35.0;
+      const isPlayerDetected = (((rival as any).playerAlertTicks || 0) > 0 && distToPlayer <= 50.0) || Boolean((rival as any).convergeOnPlayer);
 
       let moveDirX = 0;
       let moveDirZ = 0;
@@ -2692,6 +3021,61 @@ export class SectorDepotSimulation {
       }
 
       const isPlayerCovered = this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0);
+
+      // F-1 Fragmentation Grenade Flush (Tarkov Ordnance):
+      // When player holds container cover, Scavs flush them out with frag grenades
+      if ((rival as any).grenadeCooldownTicks === undefined) {
+        (rival as any).grenadeCooldownTicks = 180; // 3.0s initial engagement delay
+      } else if ((rival as any).grenadeCooldownTicks > 0) {
+        (rival as any).grenadeCooldownTicks -= 1;
+      }
+
+      const isScavOrBoss = rival.id.startsWith('scav_') || rival.badge === 'SCAV PATROL' || rival.badge === 'SECTOR BOSS';
+      if (
+        isScavOrBoss &&
+        !isIngressPending &&
+        !isPlayerInHub &&
+        isPlayerDetected &&
+        isPlayerCovered &&
+        distToPlayer >= 7.0 &&
+        distToPlayer <= 25.0 &&
+        (rival as any).grenadeCooldownTicks <= 0
+      ) {
+        (rival as any).grenadeCooldownTicks = 600; // 10.0s cooldown
+        const fragBarks = ['GRANATA!', 'EAT PINEAPPLE!', 'FRAG OUT!', 'FLUSH HIM OUT!'];
+        const chosenBark = fragBarks[Math.floor(Math.random() * fragBarks.length)];
+        rival.barkText = chosenBark;
+        rival.barkTick = this.tick;
+        this.recentBark = { sender: rival.name, text: chosenBark, tick: this.tick, isBoss: rival.id === BOSS_CONFIG.id };
+        this.combatLog.push(`[TACTICAL ORDNANCE] ${rival.name} hurled an F-1 Frag Grenade over cover: "${chosenBark}"`);
+
+        const throwSpeed = Math.min(14.0, Math.max(8.0, distToPlayer * 0.72));
+        const safeDist = Math.max(0.001, distToPlayer);
+        const toDirX = dx / safeDist;
+        const toDirZ = dz / safeDist;
+        this.activeGrenades.push({
+          id: `frag_${rival.id}_${this.tick}`,
+          throwerId: rival.id,
+          x: rival.x,
+          y: 1.2,
+          z: rival.z,
+          vx: toDirX * throwSpeed,
+          vy: 5.5,
+          vz: toDirZ * throwSpeed,
+          fuseTicks: 90, // 1.5s fuse
+          radius: 7.0,
+          maxDamage: 75,
+          detonated: false,
+        });
+
+        this.enqueuePresentationEvent({
+          type: 'grenade_throw',
+          shooterId: rival.id,
+          origin: { x: rival.x, y: 1.2, z: rival.z },
+          target: { x: this.player.x, y: 0.1, z: this.player.z },
+        });
+      }
+
       const shouldMove = isLowHealth || !isPlayerDetected || distToPlayer > 12.0 || distToPlayer < 4.0 || isPlayerCovered;
       if (shouldMove) {
         if (isPlayerCovered && isPlayerDetected && !isLowHealth) {
@@ -2778,32 +3162,64 @@ export class SectorDepotSimulation {
         if (rival.action !== 'shoot') rival.action = 'idle';
       }
 
-      // Tactical weapon fire cadence: attacks when in range <= 22m and cooldown ready
-      const ingressKind = this.ingressController.getState().kind;
-      const isIngressPending = ingressKind === 'corridor_entered' || ingressKind === 'hydrating' || ingressKind === 'waiting_squad' || ingressKind === 'rejected';
-      const isPlayerInHub = this.zoneMode === 'hub' || this.zoneMode === 'airlock_corridor';
-      if (!isIngressPending && !isPlayerInHub && distToPlayer <= 22.0 && (rival.shootCooldownTicks || 0) <= 0) {
-        rival.action = 'shoot';
-        rival.actionTicks = 6;
-        rival.shootCooldownTicks = 42; // ~1.4 bursts/sec for balanced tactical combat
-        rival.lastFiredAtMs = Date.now();
-        rival.lastFireTimestamp = Date.now();
-        rival.lastFireTick = this.tick;
+      // Tactical weapon fire cadence & pre-attack telegraph:
+      const hasLos = !this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0);
 
-        // Physical cover check: bullets cannot penetrate shipping containers
-        const isCovered = this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0);
-        if (isCovered) {
-          this.combatLog.push(`[COVER] ${rival.name} rifle burst deflected by container cover`);
-          continue;
-        }
+      if (!isIngressPending && !isPlayerInHub && distToPlayer <= 22.0 && hasLos) {
+        if ((rival.shootCooldownTicks || 0) <= 0) {
+          // Pre-attack telegraph for Scavs (Tarkov voice bark + weapon raise counterplay window)
+          const isScav = rival.id.startsWith('scav_') || rival.badge === 'SCAV PATROL' || rival.badge === 'SECTOR BOSS';
+          if (isScav && (rival.aimTicks === undefined || rival.aimTicks <= 0)) {
+            // Initiate pre-attack telegraph (20 ticks = ~333ms at 60Hz)
+            rival.aimTicks = 20;
+            rival.facing = Math.atan2(dx, dz);
 
-        // Deal combat damage to player unless player is invulnerable (roll iframes)
-        if (!this.player.isInvulnerable) {
-          const rawDmg = 12;
-          this.applyDamageToPlayer(rawDmg);
-          this.combatLog.push(`[TICK ${this.tick}] Struck by ${rival.name} rifle burst (-${rawDmg} HP)`);
-        } else {
-          this.combatLog.push(`[TICK ${this.tick}] ${rival.name} burst deflected by combat roll`);
+            let barks = ['VONON!', 'OPACHKI!', 'SUKA!', 'CONTACT!', 'DROP HIM!'];
+            if (rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge) {
+              barks = ['DIE, RAT!', 'OPEN FIRE!', 'CRUSH HIM!', 'NO MERCY!'];
+            } else if (rival.id === 'scav_enforcer_02') {
+              barks = ['ENGAGING HOSTILE!', 'TARGET IN SIGHT!', 'SUPPRESSING!'];
+            }
+            const chosenBark = barks[Math.floor(Math.random() * barks.length)];
+            rival.barkText = chosenBark;
+            rival.barkTick = this.tick;
+            this.recentBark = { sender: rival.name, text: chosenBark, tick: this.tick, isBoss: rival.id === BOSS_CONFIG.id };
+            this.combatLog.push(`[SCAV BARK] ${rival.name}: "${chosenBark}"`);
+            continue;
+          } else if (isScav && (rival.aimTicks || 0) > 0) {
+            rival.aimTicks = (rival.aimTicks || 0) - 1;
+            rival.facing = Math.atan2(dx, dz);
+            if (rival.aimTicks > 0) {
+              continue;
+            }
+            rival.aimTicks = undefined;
+          }
+
+          // Trigger weapon discharge
+          rival.action = 'shoot';
+          rival.actionTicks = 6;
+          rival.shootCooldownTicks = 42; // ~1.4 bursts/sec
+          rival.facing = Math.atan2(dx, dz);
+          rival.lastFiredAtMs = Date.now();
+          rival.lastFireTimestamp = Date.now();
+          rival.lastFireTick = this.tick;
+
+          if (!isScav && (!rival.barkTick || this.tick - rival.barkTick > 120)) {
+            rival.barkText = 'TARGET ACQUIRED!';
+            rival.barkTick = this.tick;
+            this.recentBark = { sender: rival.name, text: 'TARGET ACQUIRED!', tick: this.tick };
+          }
+
+          // Gunfire acoustic propagation from enemy fire alerts nearby AI
+          this.propagateGunfireSound(rival.x, rival.z, 35.0);
+
+          if (!this.player.isInvulnerable) {
+            const rawDmg = rival.weapon === 'shotgun' ? 20 : 12;
+            this.applyDamageToPlayer(rawDmg, rival.x, rival.z);
+            this.combatLog.push(`[TICK ${this.tick}] Struck by ${rival.name} ${rival.weapon || 'rifle'} burst (-${rawDmg} HP)`);
+          } else {
+            this.combatLog.push(`[TICK ${this.tick}] ${rival.name} burst deflected by combat roll`);
+          }
         }
       }
     }

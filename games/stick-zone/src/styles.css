@@ -877,7 +877,7 @@ html, body, #root {
   clip-path: polygon(0 0, calc(100% - var(--cut-button)) 0, 100% var(--cut-button), 100% 100%, var(--cut-button) 100%, 0 calc(100% - var(--cut-button)));
 }
 
-/* Full-Screen Manga Slashed K.I.A. Modal */
+/* Full-Screen Visceral Manga Arcade K.I.A. Modal */
 .exfil-kia-fullscreen {
   width: 100vw;
   height: 100vh;
@@ -886,96 +886,224 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(15, 23, 42, 0.96) 0%, rgba(8, 11, 18, 0.99) 100%);
+  background: radial-gradient(circle at center, rgba(10, 12, 18, 0.94) 0%, rgba(5, 6, 9, 0.98) 100%);
   padding: 24px;
   box-sizing: border-box;
   z-index: 10000;
+  backdrop-filter: blur(8px);
 }
 
-.kia-split-container {
-  display: grid;
-  grid-template-columns: 0.9fr 1.3fr;
-  gap: 28px;
-  max-width: 1040px;
+.kia-manga-arcade-card {
+  position: relative;
+  background: linear-gradient(170deg, #131722 0%, #090b10 100%);
+  border: 4px solid #151716;
+  border-radius: 6px;
+  box-shadow: 0 0 60px rgba(255, 54, 94, 0.35), 8px 8px 0px #FF365E;
+  padding: 36px 42px;
+  max-width: 660px;
   width: 100%;
-  max-height: 92vh;
-  align-items: stretch;
+  overflow: hidden;
+  animation: kia-card-drop 280ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
 }
 
-@media (max-width: 820px) {
-  .kia-split-container {
-    grid-template-columns: 1fr;
-    max-height: 96vh;
-    overflow-y: auto;
-    gap: 16px;
+@keyframes kia-card-drop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
 }
 
-.kia-left-panel {
-  background: #090e17;
-  border: 2px solid var(--danger);
-  box-shadow: 0 0 35px rgba(255, 54, 94, 0.25);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  padding: 24px;
-  animation: panel-enter-left 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.kia-slash-overlay {
+.kia-watermark-text {
   position: absolute;
-  inset: -20%;
-  background: linear-gradient(135deg, transparent 46%, var(--danger) 48%, #ffffff 50%, var(--danger) 52%, transparent 54%);
-  opacity: 0.85;
+  top: 6px;
+  right: 18px;
+  font-size: 140px;
+  font-weight: 950;
+  color: #FF365E;
+  opacity: 0.09;
+  user-select: none;
+  line-height: 1;
   pointer-events: none;
+  font-family: "Impact", -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -3px;
 }
 
-.kia-right-panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  animation: panel-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.kia-title-signal {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 28px;
+.kia-manga-ribbon {
+  display: inline-block;
+  background: #FF365E;
+  color: #ffffff;
   font-weight: 900;
-  letter-spacing: 1px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 4px 14px;
+  transform: skewX(-12deg);
+  box-shadow: 3px 3px 0px #151716;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.kia-manga-ribbon span {
+  display: inline-block;
+  transform: skewX(12deg);
+}
+
+.kia-manga-title-wrap {
+  margin-bottom: 18px;
+}
+
+.kia-manga-title {
+  font-size: 46px;
+  font-weight: 950;
   color: #ffffff;
   text-transform: uppercase;
-  animation: signal-split 220ms steps(1) 1;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px 0;
+  text-shadow: 3px 3px 0px #FF365E, 6px 6px 0px #151716;
+  font-family: "Impact", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.kia-telemetry-grid {
+.kia-manga-subtag {
+  font-size: 11px;
+  font-family: monospace;
+  color: #94A3B8;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.kia-manga-encounter {
+  background: rgba(255, 54, 94, 0.10);
+  border-left: 5px solid #FF365E;
+  border-radius: 2px;
+  padding: 12px 18px;
+  margin: 18px 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kia-encounter-kicker {
+  font-size: 10px;
+  font-family: monospace;
+  color: #fca5a5;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.kia-encounter-killer {
+  font-size: 15px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.kia-arcade-score-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  background: var(--surface-card);
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  padding: 12px 16px;
-  margin: 16px 0;
+  margin-bottom: 26px;
 }
 
-.kia-btn-redeploy {
-  background: var(--action);
-  color: var(--ink);
-  font-weight: 900;
-  font-size: 13px;
+@media (max-width: 600px) {
+  .kia-arcade-score-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kia-score-tile {
+  background: #151922;
+  border: 2px solid #283144;
+  box-shadow: 3px 3px 0px #0b0d12;
+  padding: 12px 14px;
+  border-radius: 4px;
+  text-align: center;
+  transform: skewX(-3deg);
+}
+
+.kia-tile-label {
+  display: block;
+  font-size: 9px;
+  color: #94a3b8;
+  font-weight: 800;
+  text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 14px 28px;
-  border: none;
+  margin-bottom: 4px;
+  transform: skewX(3deg);
+}
+
+.kia-tile-val {
+  display: block;
+  font-size: 18px;
+  font-family: monospace;
+  font-weight: 900;
+  transform: skewX(3deg);
+}
+
+.text-cyan { color: #51E5F0; }
+.text-amber { color: #f59e0b; }
+.text-crimson { color: #FF365E; }
+
+.kia-arcade-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kia-manga-btn-primary {
+  background: #FF365E;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: 1.5px;
+  padding: 16px 28px;
+  border: 3px solid #151716;
+  border-radius: 4px;
   cursor: pointer;
-  box-shadow: 4px 4px 0px var(--danger);
-  transition: all 0.1s ease;
+  box-shadow: 5px 5px 0px #151716;
+  text-transform: uppercase;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
+}
+
+.kia-manga-btn-primary:hover {
+  background: #ff4d73;
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 0px #151716;
+}
+
+.kia-manga-btn-primary:active {
+  transform: translateY(2px);
+  box-shadow: 2px 2px 0px #151716;
+}
+
+.kia-manga-btn-secondary {
+  background: #1e293b;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 12px 20px;
+  border: 2px solid #334155;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.1s ease;
+}
+
+.kia-manga-btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.kia-error-notice {
+  color: #FF365E;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 10px;
+  font-family: monospace;
 }
 
 .kia-btn-redeploy:hover {
@@ -1035,4 +1163,460 @@ html, body, #root {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   letter-spacing: 0.5px;
   white-space: nowrap;
+}
+
+
+/* Full-Screen Visceral Manga Arcade Extracted Modal */
+.exfil-extracted-arcade-card {
+  position: relative;
+  background: linear-gradient(170deg, #101c24 0%, #071015 100%);
+  border: 4px solid #151716;
+  border-radius: 6px;
+  box-shadow: 0 0 60px rgba(114, 241, 168, 0.35), 8px 8px 0px #72F1A8;
+  padding: 36px 42px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: kia-card-drop 280ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+
+.extracted-watermark-text {
+  position: absolute;
+  top: 6px;
+  right: 18px;
+  font-size: 110px;
+  font-weight: 950;
+  color: #72F1A8;
+  opacity: 0.08;
+  user-select: none;
+  line-height: 1;
+  pointer-events: none;
+  font-family: "Impact", -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -3px;
+}
+
+.extracted-manga-ribbon {
+  display: inline-block;
+  background: #72F1A8;
+  color: #0b0f19;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 4px 14px;
+  transform: skewX(-12deg);
+  box-shadow: 3px 3px 0px #151716;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.extracted-manga-ribbon span {
+  display: inline-block;
+  transform: skewX(12deg);
+}
+
+.extracted-manga-title {
+  font-size: 44px;
+  font-weight: 950;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: -0.5px;
+  margin: 0 0 4px 0;
+  text-shadow: 3px 3px 0px #72F1A8, 6px 6px 0px #151716;
+  font-family: "Impact", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.extracted-crypto-stamp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(114, 241, 168, 0.12);
+  border: 1px solid #72F1A8;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #72F1A8;
+  margin: 12px 0 20px;
+  width: fit-content;
+}
+
+.text-emerald { color: #72F1A8; }
+
+.extracted-manga-btn-primary {
+  background: #72F1A8;
+  color: #090e17;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: 1.5px;
+  padding: 16px 28px;
+  border: 3px solid #151716;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0px #151716;
+  text-transform: uppercase;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.1s ease;
+}
+
+.extracted-manga-btn-primary:hover {
+  background: #86f7b5;
+  transform: translateY(-2px);
+  box-shadow: 7px 7px 0px #151716;
+}
+
+.extracted-manga-btn-primary:active {
+  transform: translateY(2px);
+  box-shadow: 2px 2px 0px #151716;
+}
+
+/* In-Game Graphic Comic Ingress and Alert Banners */
+.sector-ingress-banner {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(9, 14, 23, 0.98) 100%);
+  border: 3px solid #151716;
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.4), 6px 6px 0px #38bdf8;
+  padding: 18px 36px;
+  text-align: center;
+  z-index: 25;
+  pointer-events: none;
+  animation: banner-pop 250ms cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+  overflow: hidden;
+}
+
+.warlord-alert-banner {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(24, 10, 15, 0.95) 0%, rgba(14, 6, 9, 0.98) 100%);
+  border: 3px solid #151716;
+  box-shadow: 0 0 40px rgba(255, 54, 94, 0.5), 6px 6px 0px #FF365E;
+  padding: 16px 36px;
+  text-align: center;
+  z-index: 25;
+  pointer-events: none;
+  animation: banner-pulse 1.2s ease-in-out infinite alternate;
+  overflow: hidden;
+}
+
+@keyframes banner-pop {
+  from { opacity: 0; transform: translate(-50%, -18px) scale(0.92); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes banner-pulse {
+  from { box-shadow: 0 0 25px rgba(255, 54, 94, 0.4), 5px 5px 0px #FF365E; }
+  to { box-shadow: 0 0 55px rgba(255, 54, 94, 0.75), 8px 8px 0px #FF365E; }
+}
+
+.banner-watermark-text {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  font-size: 72px;
+  font-weight: 950;
+  color: #ffffff;
+  opacity: 0.06;
+  font-family: "Impact", monospace, sans-serif;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.banner-ribbon {
+  display: inline-block;
+  background: #38bdf8;
+  color: #0b0f19;
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 3px 12px;
+  transform: skewX(-12deg);
+  box-shadow: 2px 2px 0px #151716;
+  margin-bottom: 6px;
+}
+
+.banner-ribbon span {
+  display: inline-block;
+  transform: skewX(12deg);
+}
+
+.banner-ribbon.warlord-ribbon {
+  background: #FF365E;
+  color: #ffffff;
+}
+
+.banner-title {
+  font-size: 28px;
+  font-weight: 950;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: "Impact", -apple-system, BlinkMacSystemFont, sans-serif;
+  text-shadow: 2px 2px 0px #38bdf8, 4px 4px 0px #151716;
+}
+
+.banner-title.warlord-title {
+  text-shadow: 2px 2px 0px #FF365E, 4px 4px 0px #151716;
+}
+
+/* ============================================================
+   FOB PRE-FLIGHT READINESS CHECKLIST CARD
+   ============================================================ */
+.fob-briefing-card {
+  position: absolute;
+  top: 76px;
+  left: 20px;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96) 0%, rgba(2, 6, 23, 0.98) 100%);
+  border: 2px solid #38bdf8;
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 5px 5px 0px #0b0f19, 0 8px 30px rgba(0, 0, 0, 0.6);
+  z-index: 25;
+  pointer-events: auto;
+  overflow: hidden;
+  animation: fob-card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fob-card-in {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.fob-briefing-watermark {
+  position: absolute;
+  right: -8px;
+  bottom: -12px;
+  font-size: 64px;
+  font-weight: 950;
+  color: #38bdf8;
+  opacity: 0.05;
+  font-family: "Impact", monospace, sans-serif;
+  letter-spacing: -2px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.fob-briefing-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1.5px solid rgba(56, 189, 248, 0.25);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.fob-briefing-tag {
+  font-size: 9px;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.fob-briefing-title {
+  font-size: 15px;
+  font-weight: 950;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
+  font-family: "Impact", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.fob-briefing-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fob-task-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 8px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.fob-task-row.completed {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.fob-task-row.deployment-task {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(15, 23, 42, 0.4) 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.task-status-icon {
+  font-size: 14px;
+  font-weight: 900;
+  color: #64748b;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.fob-task-row.completed .task-status-icon {
+  color: #22c55e;
+  font-weight: 950;
+}
+
+.deployment-icon {
+  color: #38bdf8;
+  animation: deployment-arrow 1.2s infinite ease-in-out;
+}
+
+@keyframes deployment-arrow {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+
+.task-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.task-label {
+  font-size: 11px;
+  font-weight: 900;
+  color: #e2e8f0;
+  letter-spacing: 0.3px;
+}
+
+.fob-task-row.completed .task-label {
+  color: #86efac;
+  text-decoration: line-through;
+  text-decoration-color: rgba(34, 197, 94, 0.5);
+}
+
+.task-label.deployment-label {
+  color: #38bdf8;
+}
+
+.task-subtext {
+  font-size: 9px;
+  color: #94a3b8;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.fob-task-row.completed .task-subtext {
+  color: #64748b;
+}
+
+/* Tarkov Micro: Directional Trauma Impact Flash Vignette */
+.damage-flash-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px rgba(239, 68, 68, 0.8), inset 0 0 40px rgba(0, 0, 0, 0.6);
+  z-index: 6;
+  animation: damageFlashPulse 0.2s ease-out forwards;
+}
+
+@keyframes damageFlashPulse {
+  0% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Tarkov Micro: Comms Intercept & Tactical Radio Banner */
+.tactical-radio-banner {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid #facc15;
+  color: #fef08a;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.4), 0 4px 12px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  pointer-events: none;
+  animation: radioBannerSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tactical-radio-banner.boss-bark {
+  border-color: #ff3366;
+  color: #fecdd3;
+  box-shadow: 0 0 20px rgba(255, 51, 102, 0.5), 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.tactical-radio-banner .radio-icon {
+  font-size: 16px;
+}
+
+.tactical-radio-banner .radio-quote {
+  font-style: italic;
+  color: #ffffff;
+}
+
+@keyframes radioBannerSlide {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -12px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+/* Tarkov Micro: Active Frag Grenade Proximity Warning Alarm */
+.grenade-warning-banner {
+  position: absolute;
+  top: 118px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(220, 38, 38, 0.95);
+  border: 2px solid #fecaca;
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 4px 16px rgba(0, 0, 0, 0.7);
+  z-index: 20;
+  pointer-events: none;
+  animation: grenadePulse 0.35s infinite alternate;
+}
+
+@keyframes grenadePulse {
+  0% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  }
+  100% {
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.95);
+  }
 }

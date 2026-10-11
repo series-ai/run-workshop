@@ -468,39 +468,27 @@ function LoadedCharacter({
                 scale={weapon === "shotgun" ? 1.05 : weapon === "pistol" ? 0.95 : 1.1}
               />
 
-              {/* Barrel Socket Muzzle Flash (0-80ms physically rooted at barrel tip) */}
-              {(isFiring || (typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 80)) && (
+              {/* Barrel Socket Muzzle Flash (0-65ms physically rooted at barrel tip) */}
+              {(isFiring || (typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 65)) && (
                 <group position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
-                  <mesh rotation={[0, 0, Math.random() * Math.PI]}>
-                    <ringGeometry args={[0.03, 0.28, 4]} />
-                    <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
+                  {/* Central high-intensity white core */}
+                  <mesh>
+                    <sphereGeometry args={[0.065, 8, 8]} />
+                    <meshBasicMaterial color="#ffffff" />
                   </mesh>
-                  <mesh rotation={[0, 0, (Math.random() + 0.5) * Math.PI]}>
-                    <ringGeometry args={[0.05, 0.38, 4]} />
-                    <meshBasicMaterial color={weapon === "shotgun" ? "#f59e0b" : "#fbbf24"} side={THREE.DoubleSide} />
-                  </mesh>
-                  <pointLight intensity={4.0} distance={6} color="#fef08a" />
-                </group>
-              )}
-
-              {/* Physical Ballistic Tracers Extending Directly from Barrel Tip (Zero Offset) */}
-              {typeof flashElapsed === "number" && flashElapsed >= 0 && flashElapsed <= 240 && (
-                <group position={weapon === "shotgun" ? [0, 0.04, 0.58] : [0, 0.04, 0.52]}>
-                  {weapon === "shotgun" ? (
-                    <group>
-                      {[-0.08, -0.04, 0, 0.04, 0.08].map((spreadX, idx) => (
-                        <mesh key={idx} position={[spreadX, (idx % 2 - 0.5) * 0.03, 2.6]} rotation={[Math.PI / 2, 0, 0]}>
-                          <cylinderGeometry args={[0.022, 0.012, 5.2, 5]} />
-                          <meshBasicMaterial color="#fbbf24" transparent opacity={0.9} />
-                        </mesh>
-                      ))}
-                    </group>
-                  ) : (
-                    <mesh position={[0, 0, 7.5]} rotation={[Math.PI / 2, 0, 0]}>
-                      <cylinderGeometry args={[0.018, 0.018, 15, 5]} />
-                      <meshBasicMaterial color="#fef08a" transparent opacity={0.9} />
+                  {/* Stylized 8-point Manga Ink Star */}
+                  {[0, 45, 90, 135].map((angleDeg, idx) => (
+                    <mesh key={idx} rotation={[0, 0, (angleDeg * Math.PI) / 180]}>
+                      <planeGeometry args={[idx % 2 === 0 ? 0.38 : 0.22, 0.04]} />
+                      <meshBasicMaterial color="#fbbf24" side={THREE.DoubleSide} />
                     </mesh>
-                  )}
+                  ))}
+                  {/* Forward Conical Gas Flame */}
+                  <mesh position={[0, 0, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
+                    <coneGeometry args={[0.07, 0.22, 6]} />
+                    <meshBasicMaterial color="#f59e0b" transparent opacity={0.85} />
+                  </mesh>
+                  <pointLight intensity={5.0} distance={7} color="#fef08a" />
                 </group>
               )}
 

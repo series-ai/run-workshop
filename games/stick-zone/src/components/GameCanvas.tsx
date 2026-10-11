@@ -1,12 +1,14 @@
-import React, { Suspense, useEffect, useMemo, useRef } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SectorDepotSimulation } from "../sim/game.js";
 import { DEPOT_CONTAINERS } from "../sim/game.js";
+import { globalCutaway } from "../render/cutaway.js";
 import { SectorMap } from "./SectorMap.js";
 import { StickOperative } from "./StickOperative.js";
 import { RivalOperative } from "./RivalOperative.js";
 import { MachineEnemy } from "./MachineEnemy.js";
+import { sound } from "../audio.js";
 import { ExfilZone } from "./ExfilZone.js";
 import { InkEffects } from "../render/InkEffects.js";
 import { InkTrails } from "../render/InkTrails.js";
@@ -22,6 +24,41 @@ interface GameCanvasProps {
 }
 
 const cameraObstacles = createCameraObstacles(DEPOT_CONTAINERS);
+
+const DynamicShadowLight: React.FC<{ playerPos: { x: number; y: number; z: number } }> = ({ playerPos }) => {
+  const lightRef = useRef<THREE.DirectionalLight>(null);
+  const targetRef = useRef<THREE.Object3D>(null);
+
+  useFrame(() => {
+    if (lightRef.current && targetRef.current) {
+      targetRef.current.position.set(playerPos.x, 0, playerPos.z);
+      targetRef.current.updateMatrixWorld();
+      lightRef.current.target = targetRef.current;
+      lightRef.current.position.set(playerPos.x + 30, 50, playerPos.z + 20);
+    }
+  });
+
+  return (
+    <>
+      <object3D ref={targetRef} position={[playerPos.x, 0, playerPos.z]} />
+      <directionalLight
+        ref={lightRef}
+        position={[playerPos.x + 30, 50, playerPos.z + 20]}
+        intensity={2.4}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={5}
+        shadow-camera-far={110}
+        shadow-camera-left={-35}
+        shadow-camera-right={35}
+        shadow-camera-top={35}
+        shadow-camera-bottom={-35}
+        shadow-bias={-0.0005}
+      />
+    </>
+  );
+};
 
 const CameraController: React.FC<{
   playerPos: { x: number; y: number; z: number };
@@ -122,26 +159,24 @@ const CameraController: React.FC<{
       lerpFactor
     );
 
-    // Apply obstacle line-of-sight clearance
-    const clearance = cameraOnActorSide(
-      { x: playerPos.x, y: playerPos.y, z: playerPos.z },
-      {
-        x: baseCameraPos.current.x,
-        y: baseCameraPos.current.y,
-        z: baseCameraPos.current.z,
-      },
-      cameraObstacles
-    );
+    // Update Inkline foreground cutaway aperture around operative
+    const playerFocus = new THREE.Vector3(playerPos.x, playerPos.y + 0.95, playerPos.z);
+    globalCutaway.update(camera, playerFocus, 1.85, delta);
 
     if (typeof window !== "undefined" && (window as any).__STICK_ZONE_TEST__) {
       (window as any).__STICK_ZONE_TEST__.lastCameraOcclusion = {
-        adjusted: clearance.adjusted,
-        obstacleIndex: clearance.obstacleIndex,
+        adjusted: false,
+        obstacleIndex: null,
+        cutawayAmount: globalCutaway.amount,
       };
     }
 
-    // Assign plain coordinate objects matching game.ts types
-    sim.cameraPos = { x: clearance.x, y: clearance.y, z: clearance.z };
+    // Assign plain coordinate objects matching game.ts types (no camera zoom-in against walls)
+    sim.cameraPos = {
+      x: baseCameraPos.current.x,
+      y: baseCameraPos.current.y,
+      z: baseCameraPos.current.z,
+    };
     sim.cameraTarget = {
       x: baseCameraTarget.current.x,
       y: baseCameraTarget.current.y,
@@ -150,7 +185,11 @@ const CameraController: React.FC<{
 
     // Apply recoil impulse strictly as transient render offset
     const [recoilX, recoilY] = recoilImpulseRef.current;
-    camera.position.set(clearance.x + recoilX, clearance.y + recoilY, clearance.z);
+    camera.position.set(
+      baseCameraPos.current.x + recoilX,
+      baseCameraPos.current.y + recoilY,
+      baseCameraPos.current.z
+    );
     camera.lookAt(
       baseCameraTarget.current.x,
       baseCameraTarget.current.y,
@@ -194,15 +233,21 @@ const PresentationFXManager: React.FC<{
   const trails = useMemo(() => new InkTrails(), []);
   const shatter = useMemo(() => new ShatterMesh(256), []);
   const recoilAgeRef = useRef(-1);
+  const aimPunchAgeRef = useRef(-1);
+  const aimPunchDirRef = useRef<[number, number]>([0, 0]);
+  const lastDamageTickRef = useRef(0);
 
   useEffect(() => {
     onRegisterHarness?.({ effects, trails, shatter });
+  }, [effects, trails, shatter, onRegisterHarness]);
+
+  useEffect(() => {
     return () => {
       effects.dispose();
       trails.dispose();
       shatter.dispose();
     };
-  }, [effects, trails, shatter, onRegisterHarness]);
+  }, [effects, trails, shatter]);
 
   useFrame((state, delta) => {
     const isPaused =
@@ -216,105 +261,108 @@ const PresentationFXManager: React.FC<{
 
     for (const ev of events) {
       if (ev.type === "fire") {
-        const flashPreset =
-          ev.weapon === "shotgun" ? "shotgun-flash" : "rifle-flash";
+        const fireAngle = Math.atan2(ev.dir.x, ev.dir.z);
+        const flashPreset = ev.weapon === "shotgun" ? "shotgun-flash" : "rifle-flash";
+        const flashScale = ev.weapon === "shotgun" ? 1.7 : 1.35;
+        const originVec = new THREE.Vector3(ev.origin.x, ev.origin.y, ev.origin.z);
+
+        // Directional comic muzzle flash with paper core burst
+        effects.trigger(flashPreset, originVec, undefined, flashScale, fireAngle);
+        effects.trigger("muzzle-snap", originVec, undefined, 1.25, fireAngle);
+
+        // Directional high-speed brass cartridge ejection (90 deg to right flank)
         effects.trigger(
-          flashPreset,
-          new THREE.Vector3(ev.origin.x, ev.origin.y, ev.origin.z),
-          undefined,
-          1.0
+          "shell-eject",
+          originVec,
+          "#f59e0b",
+          1.3,
+          fireAngle + Math.PI / 2
         );
 
-        // Recoil impulse: strictly when event.shooterId === sim.player.id
+        // Ballistic projectile tracer strokes
+        const tracerSlot = ev.shooterId === sim.player.id ? 2 : 3;
         if (ev.shooterId === sim.player.id) {
           recoilAgeRef.current = 0;
-          trails.clear(2);
+          trails.clear(tracerSlot);
+        } else {
+          trails.setAction(tracerSlot, `shot_${ev.shooterId}_${Date.now()}`);
+        }
+
+        if (ev.weapon === "shotgun") {
+          // Diverging buckshot tracer wakes across 30° cone
+          const PELLETS = [-0.22, -0.12, -0.04, 0.04, 0.12, 0.22];
+          for (const pAngleOffset of PELLETS) {
+            effects.trigger(
+              "bullet-tracer",
+              originVec,
+              "#fde047",
+              1.1,
+              fireAngle + pAngleOffset
+            );
+          }
           const endPt = {
-            x: ev.origin.x + ev.dir.x * 35.0,
-            y: ev.origin.y + ev.dir.y * 35.0,
-            z: ev.origin.z + ev.dir.z * 35.0,
+            x: ev.origin.x + ev.dir.x * 32.0,
+            y: ev.origin.y + ev.dir.y * 32.0,
+            z: ev.origin.z + ev.dir.z * 32.0,
           };
           trails.line(
-            2,
+            tracerSlot,
             ev.origin,
             endPt,
-            { x: 0, y: 0.04, z: 0 },
+            { x: 0, y: 0.06, z: 0 },
             elapsedTime,
-            "#eeece5",
-            0.1
+            "#fde047",
+            0.12
           );
         } else {
-          // Dynamic combat pool
-          trails.setAction(3, `shot_${ev.shooterId}_${Date.now()}`);
+          // Intense golden-amber rifle tracer beam with bullet stroke
+          effects.trigger("bullet-tracer", originVec, "#fde047", 1.2, fireAngle);
           const endPt = {
-            x: ev.origin.x + ev.dir.x * 35.0,
-            y: ev.origin.y + ev.dir.y * 35.0,
-            z: ev.origin.z + ev.dir.z * 35.0,
+            x: ev.origin.x + ev.dir.x * 36.0,
+            y: ev.origin.y + ev.dir.y * 36.0,
+            z: ev.origin.z + ev.dir.z * 36.0,
           };
           trails.line(
-            3,
+            tracerSlot,
             ev.origin,
             endPt,
-            { x: 0, y: 0.04, z: 0 },
+            { x: 0, y: 0.05, z: 0 },
             elapsedTime,
-            "#eeece5",
-            0.1
+            "#fde047",
+            0.12
           );
         }
       } else if (ev.type === "impact") {
-        effects.trigger(
-          "bullet-impact",
-          new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z)
-        );
+        const impactVec = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        effects.trigger("bullet-impact", impactVec, undefined, 1.35);
         if (ev.surface === "metal") {
-          effects.trigger(
-            "metal-sparks",
-            new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z),
-            undefined,
-            1.2
-          );
+          effects.trigger("metal-sparks", impactVec, undefined, 1.6);
         } else if (ev.surface === "flesh") {
-          effects.trigger(
-            "critical-hit",
-            new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z),
-            "#ef4444",
-            1.0
-          );
+          effects.trigger("critical-hit", impactVec, "#ef4444", 1.4);
+        } else {
+          effects.trigger("concrete-chips", impactVec, undefined, 1.3);
         }
       } else if (ev.type === "elimination") {
-        shatter.trigger(
-          new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z)
-        );
-        effects.trigger(
-          "explosion",
-          new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z),
-          undefined,
-          1.4
-        );
-        effects.trigger(
-          "critical-hit",
-          new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z),
-          "#ef4444",
-          1.2
-        );
+        const elimVec = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        shatter.trigger(elimVec);
+        effects.trigger("explosion", elimVec, undefined, 1.9);
+        effects.trigger("metal-sparks", elimVec, undefined, 1.6);
+        effects.trigger("critical-hit", elimVec, "#ef4444", 1.4);
       } else if (ev.type === "kick") {
         const kickPos = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
-        // Xiao Xiao sweep arc in kick facing direction
-        effects.trigger(
-          "sword-slash",
-          kickPos,
-          "#eeece5",
-          1.5,
-          ev.facing
-        );
+        // Kinetic Xiao Xiao melee slash sweep
+        effects.trigger("sword-slash", kickPos, "#eeece5", 1.9, ev.facing);
+        // Kinetic air compression shockwave ring
+        effects.trigger("plasma-pulse", kickPos, "#38bdf8", 1.4, ev.facing);
         if (ev.isHit) {
           const hitPos = new THREE.Vector3(
             ev.position.x + Math.sin(ev.facing) * 1.5,
             ev.position.y,
             ev.position.z + Math.cos(ev.facing) * 1.5
           );
-          effects.trigger("heavy-impact", hitPos, undefined, 1.3);
-          effects.trigger("critical-hit", hitPos, "#ef4444", 1.1);
+          effects.trigger("heavy-impact", hitPos, undefined, 1.6);
+          effects.trigger("metal-sparks", hitPos, undefined, 1.3);
+          effects.trigger("critical-hit", hitPos, "#ef4444", 1.3);
         }
       } else if (ev.type === "stim") {
         effects.trigger(
@@ -353,41 +401,97 @@ const PresentationFXManager: React.FC<{
             );
           }
         }
+      } else if (ev.type === "grenade_throw") {
+        sound.playGrenadePin();
+        effects.trigger(
+          "spark-burst",
+          new THREE.Vector3(ev.origin.x, ev.origin.y, ev.origin.z),
+          "#f97316",
+          1.2
+        );
+      } else if (ev.type === "explosion") {
+        sound.playExplosion();
+        const blastPos = new THREE.Vector3(ev.position.x, ev.position.y, ev.position.z);
+        effects.trigger("explosion", blastPos, undefined, 2.2);
+        effects.trigger("plasma-pulse", blastPos, "#f97316", 2.4);
+        effects.trigger("metal-sparks", blastPos, undefined, 1.8);
+        effects.trigger("smoke-ring", blastPos, undefined, 2.0);
+        // Heavy concussion camera impulse
+        aimPunchAgeRef.current = 0;
+        aimPunchDirRef.current = [(Math.random() - 0.5) * 0.35, 0.25];
       }
     }
 
-    // Step camera recoil impulse
+    // Visceral Tarkov Aim Punch: player damage triggers violent kinetic flinch
+    if (sim.lastPlayerDamageTick > lastDamageTickRef.current) {
+      lastDamageTickRef.current = sim.lastPlayerDamageTick;
+      aimPunchAgeRef.current = 0;
+      const dmgAngle = (sim as any).lastPlayerDamageAngle ?? (Math.random() * Math.PI * 2);
+      aimPunchDirRef.current = [
+        -Math.sin(dmgAngle) * 0.16,
+        Math.cos(dmgAngle) * 0.12,
+      ];
+    }
+
+    // Step weapon recoil impulse
+    let recoilX = 0;
+    let recoilY = 0;
     if (recoilAgeRef.current >= 0) {
       recoilAgeRef.current += delta;
       if (recoilAgeRef.current < 0.2) {
-        recoilImpulseRef.current = cameraImpulse(recoilAgeRef.current, 0.35);
+        const impulse = cameraImpulse(recoilAgeRef.current, 0.35);
+        recoilX = impulse[0];
+        recoilY = impulse[1];
       } else {
-        recoilImpulseRef.current = [0, 0];
         recoilAgeRef.current = -1;
       }
     }
 
-    // Continuous swept ink friction ribbons while sliding
+    // Step incoming damage aim punch
+    let punchX = 0;
+    let punchY = 0;
+    if (aimPunchAgeRef.current >= 0) {
+      aimPunchAgeRef.current += delta;
+      if (aimPunchAgeRef.current < 0.18) {
+        const t = aimPunchAgeRef.current / 0.18;
+        const intensity = Math.sin(t * Math.PI) * Math.exp(-t * 3.5);
+        punchX = aimPunchDirRef.current[0] * intensity;
+        punchY = aimPunchDirRef.current[1] * intensity;
+      } else {
+        aimPunchAgeRef.current = -1;
+      }
+    }
+
+    recoilImpulseRef.current = [recoilX + punchX, recoilY + punchY];
+
+    // Locomotion PFX: Continuous swept ink ribbons on slide + footstep dust on sprint
     const isSlidingActive = sim.player.isSliding || sim.player.action === "slide" || ((sim.player.slideTicksRemaining || 0) > 0);
     if (isSlidingActive) {
-      const perpX = Math.cos(sim.player.facing) * 0.24;
-      const perpZ = -Math.sin(sim.player.facing) * 0.24;
+      const perpX = Math.cos(sim.player.facing) * 0.26;
+      const perpZ = -Math.sin(sim.player.facing) * 0.26;
       trails.sample(
         0,
         { x: sim.player.x - perpX, y: 0.05, z: sim.player.z - perpZ },
         { x: sim.player.x + perpX, y: 0.05, z: sim.player.z + perpZ },
         elapsedTime,
         "#151716",
-        0.25
+        0.28
       );
-      if (Math.random() < 0.25) {
+      if (Math.random() < 0.35) {
         effects.trigger(
           "slide-dust",
           new THREE.Vector3(sim.player.x, 0.05, sim.player.z),
           undefined,
-          0.85
+          1.15
         );
       }
+    } else if (sim.player.action === "sprint" && sim.tick % 8 === 0) {
+      effects.trigger(
+        "footstep-dust",
+        new THREE.Vector3(sim.player.x, 0.05, sim.player.z),
+        undefined,
+        0.95
+      );
     }
 
     effects.update(delta, camera);
@@ -411,6 +515,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
     trails: InkTrails;
     shatter: ShatterMesh;
   } | null>(null);
+
+  const handleRegisterHarness = useCallback((h: {
+    effects: InkEffects;
+    trails: InkTrails;
+    shatter: ShatterMesh;
+  }) => {
+    harnessRef.current = h;
+  }, []);
 
   const isCorridor =
     sim.exfilController.getState().kind === "corridor_presentation" ||
@@ -564,19 +676,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
         }}
       >
         <ambientLight intensity={1.4} />
-        <directionalLight
-          position={[30, 50, 20]}
-          intensity={2.4}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-near={5}
-          shadow-camera-far={100}
-          shadow-camera-left={-40}
-          shadow-camera-right={40}
-          shadow-camera-top={40}
-          shadow-camera-bottom={-40}
-        />
+        <DynamicShadowLight playerPos={sim.player} />
         <CameraController
           playerPos={sim.player}
           isCorridorActive={isCorridor}
@@ -587,14 +687,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
         <PresentationFXManager
           sim={sim}
           recoilImpulseRef={recoilImpulseRef}
-          onRegisterHarness={(h) => {
-            harnessRef.current = h;
-          }}
+          onRegisterHarness={handleRegisterHarness}
         />
 
         <Suspense fallback={null}>
           {/* Depot & FOB Outpost Environment */}
-          <SectorMap crates={sim.crates} />
+          <SectorMap crates={sim.crates} lastDummyHitTick={sim.lastDummyHitTick} lastDummyHitSide={sim.lastDummyHitSide} />
 
           {/* Extraction LZ Smoke & Countdown Ring */}
           <ExfilZone exfilState={sim.exfilController.getState()} />
@@ -617,6 +715,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ sim }) => {
           {/* Automated Machine Defenses */}
           {sim.machines.map((machine) => (
             <MachineEnemy key={machine.id} machine={machine} />
+          ))}
+
+          {/* Active F-1 Fragmentation Grenades */}
+          {sim.activeGrenades.map((g) => (
+            <group key={g.id} position={[g.x, g.y, g.z]}>
+              <mesh castShadow>
+                <cylinderGeometry args={[0.07, 0.07, 0.16, 10]} />
+                <meshStandardMaterial color="#365314" roughness={0.7} metalness={0.4} />
+              </mesh>
+              {/* Glowing tactical fuse beacon */}
+              <mesh position={[0, 0.1, 0]}>
+                <sphereGeometry args={[0.035, 8, 8]} />
+                <meshBasicMaterial color="#ef4444" />
+              </mesh>
+              {/* Dynamic contact shadow projection */}
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -g.y + 0.02, 0]}>
+                <circleGeometry args={[0.16, 16]} />
+                <meshBasicMaterial color="#000000" transparent opacity={0.65} />
+              </mesh>
+            </group>
           ))}
         </Suspense>
       </Canvas>

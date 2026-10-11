@@ -457,6 +457,18 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeModalKind === "kia" || activeModalKind === "extracted") {
+        if (e.code === "Space" || e.code === "Enter") {
+          e.preventDefault();
+          handleRedeploy();
+          return;
+        }
+        if (e.code === "Escape" && onReturnToHideout) {
+          e.preventDefault();
+          onReturnToHideout();
+          return;
+        }
+      }
       if (e.key !== "Tab") return;
       const currentFocusables = getFocusables();
       if (currentFocusables.length === 0) {
@@ -506,7 +518,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
 
   return (
     <div className="exfil-overlay-backdrop">
-      {/* 1. OPERATIVE ELIMINATED (K.I.A.) - 40/60 Full-Screen Manga Split Layout */}
+      {/* 1. OPERATIVE ELIMINATED (K.I.A.) - Visceral Manga Arcade Game Over */}
       {activeModalKind === "kia" && (
         <div
           ref={modalRef}
@@ -516,118 +528,76 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
           aria-modal="true"
           aria-labelledby="kia-dialog-title"
         >
-          <div className="kia-split-container">
-            {/* Left Pane: Frozen Combat Frame with Crimson Ink Slash */}
-            <div className="kia-left-panel clip-cut-panel">
-              <div className="kia-slash-overlay" />
-              <div style={{ position: "relative", zIndex: 2, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 68, height: 68, borderRadius: "50%", background: "rgba(255, 54, 94, 0.18)", border: "2px solid #FF365E", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF365E", boxShadow: "0 0 24px rgba(255, 54, 94, 0.5)" }}>
-                  <AlertTriangle style={{ width: 34, height: 34 }} />
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: "2px", color: "#FF365E", fontFamily: "monospace", textTransform: "uppercase" }}>
-                  OPERATIVE NEUTRALIZED
-                </div>
-                <div style={{ fontSize: 11, color: "#94A3B8", fontFamily: "monospace" }}>
-                  BIOMETRIC SIGNAL: TERMINATED<br />
-                  LOCATION: SECTOR 7 DEPOT (LZ-CHARLIE)
-                </div>
-                <div style={{ marginTop: 16, padding: "6px 14px", background: "rgba(15, 23, 42, 0.8)", border: "1px solid #334155", borderRadius: 4, fontSize: 10, color: "#cbd5e1", fontFamily: "monospace" }}>
-                  LOCAL RE-CLONE READY • SAFE FOB RE-ENTRY
-                </div>
+          <div className="kia-manga-arcade-card">
+            {/* Giant Graphic Impact Watermark */}
+            <div className="kia-watermark-text" aria-hidden="true">K.I.A.</div>
+
+            {/* Diagonal Comic Warning Ribbon */}
+            <div className="kia-manga-ribbon">
+              <span>SECTOR 7 CASUALTY REPORT // COMBAT LOSS</span>
+            </div>
+
+            {/* Massive Distressed Arcade Title */}
+            <div className="kia-manga-title-wrap">
+              <h1 id="kia-dialog-title" className="kia-manga-title">
+                OPERATIVE DOWN
+              </h1>
+              <div className="kia-manga-subtag">
+                CRITICAL VITAL FLATLINE // DEFEATED IN COMBAT
               </div>
             </div>
 
-            {/* Right Pane: Brutalist Typography, EKG Flatline, Telemetry & CTAs */}
-            <div className="kia-right-panel clip-cut-panel">
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, fontFamily: "monospace", fontWeight: 800, color: "#94A3B8", letterSpacing: "1px" }}>
-                    CONTRACT #{sim.raidId.slice(-8).toUpperCase()} // SECTOR 7
-                  </span>
-                  <span style={{ fontSize: 10, fontFamily: "monospace", fontWeight: 800, color: "#FF365E", background: "rgba(255, 54, 94, 0.15)", padding: "2px 8px", borderRadius: 3, border: "1px solid rgba(255, 54, 94, 0.4)" }}>
-                    K.I.A. VERIFIED
-                  </span>
-                </div>
+            {/* Fatal Encounter Comic Box */}
+            <div className="kia-manga-encounter">
+              <span className="kia-encounter-kicker">TERMINATED BY</span>
+              <span className="kia-encounter-killer">{killerName}</span>
+            </div>
 
-                <h1 id="kia-dialog-title" className="kia-title-signal">
-                  SIGNAL LOST <span style={{ color: "#FF365E" }}>// FLATLINE</span>
-                </h1>
-
-                {/* Animated SVG EKG Flatline Waveform */}
-                <svg viewBox="0 0 400 30" width="100%" height="28" style={{ margin: "8px 0" }}>
-                  <path
-                    d="M 0 15 L 120 15 L 135 4 L 150 26 L 165 2 L 180 22 L 195 15 L 400 15"
-                    fill="none"
-                    stroke="#FF365E"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    style={{
-                      strokeDasharray: 400,
-                      strokeDashoffset: 0,
-                    }}
-                  />
-                </svg>
-
-                <p style={{ fontSize: 12, color: "#cbd5e1", lineHeight: 1.5, margin: "6px 0 12px" }}>
-                  Eliminated by: <strong style={{ color: "#ffffff" }}>{killerName}</strong><br />
-                  Fatal trauma: <span style={{ color: "#fca5a5" }}>Thorax / Point-Blank Kinetic Impact</span>
-                </p>
-
-                {/* Telemetry Breakdown Grid */}
-                <div className="kia-telemetry-grid">
-                  <div>
-                    <span style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, display: "block" }}>Damage Taken</span>
-                    <strong style={{ fontSize: 15, color: "#FF365E", fontFamily: "monospace" }}>100+ HP</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, display: "block" }}>Raid Time</span>
-                    <strong style={{ fontSize: 15, color: "#51E5F0", fontFamily: "monospace" }}>{survivalFormatted}</strong>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", fontWeight: 800, display: "block" }}>Contract Status</span>
-                    <strong style={{ fontSize: 13, color: "#f59e0b", fontFamily: "monospace" }}>FORFEITED</strong>
-                  </div>
-                </div>
-
-                {/* Economic Loss Breakdown */}
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255, 54, 94, 0.08)", border: "1px solid rgba(255, 54, 94, 0.25)", borderRadius: 4, marginBottom: 18, fontSize: 12 }}>
-                  <div>
-                    <span style={{ color: "#94a3b8", display: "block", fontSize: 10 }}>Scavenged Cash Lost:</span>
-                    <strong style={{ color: "#FF365E", fontSize: 14, fontFamily: "monospace" }}>${sim.player.cash.toLocaleString()}</strong>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span style={{ color: "#94a3b8", display: "block", fontSize: 10 }}>Cargo Lost in Field:</span>
-                    <strong style={{ color: "#FF365E", fontSize: 14, fontFamily: "monospace" }}>{lostCargoCount} Items (${lostCargoEstVal.toLocaleString()})</strong>
-                  </div>
-                </div>
+            {/* Arcade Score Tally Grid */}
+            <div className="kia-arcade-score-grid">
+              <div className="kia-score-tile">
+                <span className="kia-tile-label">TIME SURVIVED</span>
+                <span className="kia-tile-val text-cyan">{survivalFormatted}</span>
               </div>
+              <div className="kia-score-tile">
+                <span className="kia-tile-label">HOSTILES ELIMINATED</span>
+                <span className="kia-tile-val text-amber">
+                  {sim.combatLog.filter((l) => l.includes("Eliminated") || l.includes("downed") || l.includes("Terminated")).length} KILLS
+                </span>
+              </div>
+              <div className="kia-score-tile">
+                <span className="kia-tile-label">CARGO FORFEITED</span>
+                <span className="kia-tile-val text-crimson">
+                  -₡{sim.player.cash.toLocaleString()}
+                </span>
+              </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* High-Impact Tactical Arcade Action Buttons */}
+            <div className="kia-arcade-actions">
+              <button
+                onClick={handleRedeploy}
+                disabled={isRestarting}
+                autoFocus
+                className="redeploy-operative-btn kia-manga-btn-primary"
+              >
+                {isRestarting ? "RE-CLONING OPERATIVE..." : "⚡ REDEPLOY OPERATIVE [SPACE]"}
+              </button>
+              {onReturnToHideout && (
                 <button
-                  onClick={handleRedeploy}
-                  disabled={isRestarting}
-                  autoFocus
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRedeploy(); } }}
-                  className="redeploy-operative-btn kia-btn-redeploy clip-cut-btn"
+                  onClick={onReturnToHideout}
+                  className="kia-manga-btn-secondary"
                 >
-                  {isRestarting ? "Re-Cloning Operative..." : "RE-CLONE & REDEPLOY →"}
+                  🛡️ RETURN TO HIDEOUT [ESC]
                 </button>
-                {onReturnToHideout && (
-                  <button
-                    onClick={onReturnToHideout}
-                    className="kia-btn-ghost clip-cut-btn"
-                  >
-                    RETURN TO HIDEOUT & STASH
-                  </button>
-                )}
-                {restartError && (
-                  <div style={{ color: "#FF365E", fontSize: 12, textAlign: "center", marginTop: 4 }}>
-                    {restartError}
-                  </div>
-                )}
-              </div>
+              )}
             </div>
+
+            {restartError && (
+              <div className="kia-error-notice">
+                {restartError}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -702,7 +672,7 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
         </div>
       )}
 
-      {/* 4. Extracted Receipt Debrief - Sleek Contractor Terminal */}
+      {/* 4. Extracted Receipt Debrief - Visceral Manga Arcade Card */}
       {activeModalKind === "extracted" && (() => {
         const rawReceipt = (state as any).receipt || (sim as any).lastSettlementReceipt || null;
         const isContentVerified = isReceiptContentVerified(rawReceipt);
@@ -722,164 +692,116 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
           <div
             ref={modalRef}
             tabIndex={-1}
-            className="exfil-receipt-modal clip-cut-panel"
+            className="exfil-kia-fullscreen"
             role="dialog"
             aria-modal="true"
             aria-labelledby="receipt-dialog-title"
-            style={{
-              background: "rgba(18, 24, 36, 0.96)",
-              border: "2px solid #334155",
-              boxShadow: "0 24px 60px rgba(0, 0, 0, 0.7)",
-              color: "#f8fafc",
-            }}
           >
-            {/* Contractor Header */}
-            <div className="receipt-header" style={{ borderBottom: "1px solid #334155" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: isCryptographicallyVerified ? "rgba(114, 241, 168, 0.15)" : "rgba(255, 194, 71, 0.15)", border: `1px solid ${isCryptographicallyVerified ? "#72F1A8" : "#FFC247"}`, display: "flex", alignItems: "center", justifyContent: "center", color: isCryptographicallyVerified ? "#72F1A8" : "#FFC247" }}>
-                  <CheckCircle style={{ width: 26, height: 26 }} />
-                </div>
-                <div>
-                  <h1 id="receipt-dialog-title" style={{ fontSize: 20, fontWeight: 900, letterSpacing: "1px", color: "#FFFFFF", textTransform: "uppercase" }}>
-                    EXTRACTION COMPLETE // SAFE RETURN
-                  </h1>
-                  <span style={{ fontSize: 12, color: "#94a3b8" }}>
-                    Sector 7 Safehouse • Contractor Settlement Terminal
-                  </span>
+            <div className="exfil-extracted-arcade-card">
+              {/* Giant Graphic Impact Watermark */}
+              <div className="extracted-watermark-text" aria-hidden="true">SURVIVED</div>
+
+              {/* Angled Comic Ribbon */}
+              <div className="extracted-manga-ribbon">
+                <span>CONTRACT COMPLETE // LZ-CHARLIE SECURED</span>
+              </div>
+
+              {/* Massive Distressed Arcade Title */}
+              <div className="kia-manga-title-wrap">
+                <h1 id="receipt-dialog-title" className="extracted-manga-title">
+                  EXTRACTION SUCCESS
+                </h1>
+                <div className="kia-manga-subtag">
+                  AUTHORITATIVE CONTRACT SETTLEMENT // LEDGER CUSTODY COMMITTED
                 </div>
               </div>
 
               {/* Cryptographic Laser Stamp Badge */}
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 14px",
-                background: isCryptographicallyVerified ? "rgba(114, 241, 168, 0.12)" : "rgba(255, 194, 71, 0.12)",
-                border: `1px solid ${isCryptographicallyVerified ? "#72F1A8" : "#FFC247"}`,
-                borderRadius: 4,
-                fontSize: 11,
-                fontWeight: 900,
-                color: isCryptographicallyVerified ? "#72F1A8" : "#FFC247",
-                animation: "seal-stamp 220ms ease-out both",
-              }}>
+              <div className="extracted-crypto-stamp">
                 {isCryptographicallyVerified ? <ShieldCheck style={{ width: 18, height: 18 }} /> : <ShieldAlert style={{ width: 18, height: 18 }} />}
                 <span>{isCryptographicallyVerified ? "✓ CRYPTOGRAPHIC RECEIPT VERIFIED" : "SETTLEMENT AUDIT PENDING"}</span>
               </div>
-            </div>
 
-            {/* Payout Summary Strip */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", background: "rgba(11, 15, 25, 0.8)", border: "1px solid #334155", borderRadius: 4 }}>
-              <div>
-                <span style={{ fontSize: 10, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800 }}>Total Banked Payout</span>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "#72F1A8", fontFamily: "monospace" }}>
-                  ${sim.player.cash.toLocaleString()}
+              {/* Arcade Score Tally Grid */}
+              <div className="kia-arcade-score-grid">
+                <div className="kia-score-tile">
+                  <span className="kia-tile-label">TOTAL BANKED PAYOUT</span>
+                  <span className="kia-tile-val text-emerald">+${sim.player.cash.toLocaleString()}</span>
+                </div>
+                <div className="kia-score-tile">
+                  <span className="kia-tile-label">CARGO SECURED</span>
+                  <span className="kia-tile-val text-cyan">{securedItems.length} ITEMS</span>
+                </div>
+                <div className="kia-score-tile">
+                  <span className="kia-tile-label">HOSTILES ELIMINATED</span>
+                  <span className="kia-tile-val text-amber">
+                    {sim.combatLog.filter((l) => l.includes("Eliminated") || l.includes("downed") || l.includes("Terminated")).length} KILLS
+                  </span>
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <span style={{ fontSize: 10, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800 }}>Cargo Secured</span>
-                <div style={{ fontSize: 16, fontWeight: 800, color: "#51E5F0", fontFamily: "monospace" }}>
-                  {securedItems.length} SALVAGED COMPONENTS
-                </div>
-              </div>
-            </div>
 
-            {/* Itemized Secured Cargo Grid */}
-            {securedItems.length > 0 && (
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", letterSpacing: "1px", marginBottom: 8 }}>
-                  SECURED CARGO MANIFEST
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>
-                  {securedItems.map((item: any, idx: number) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: "8px 10px",
-                        background: "rgba(15, 23, 42, 0.7)",
-                        border: "1px solid #334155",
-                        borderLeft: `3px solid ${item.rarity === "epic" ? "#BC98FF" : item.rarity === "rare" ? "#51E5F0" : "#72F1A8"}`,
-                        borderRadius: 3,
-                        fontSize: 11,
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#ffffff" }}>
-                        <span>{item.icon || "💎"} {item.name || "Component"}</span>
+              {/* Itemized Secured Cargo Grid */}
+              {securedItems.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "#94a3b8", letterSpacing: "1px", marginBottom: 6 }}>
+                    SECURED CARGO MANIFEST
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 6 }}>
+                    {securedItems.map((item: any, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: "6px 8px",
+                          background: "rgba(15, 23, 42, 0.75)",
+                          border: "1.5px solid #1e293b",
+                          borderLeft: `3px solid ${item.rarity === "epic" ? "#BC98FF" : item.rarity === "rare" ? "#51E5F0" : "#72F1A8"}`,
+                          borderRadius: 3,
+                          fontSize: 10,
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#ffffff" }}>
+                          <span>{item.icon || "💎"} {item.name || "Component"}</span>
+                        </div>
+                        <span style={{ fontSize: 10, color: "#72F1A8", fontWeight: 800, fontFamily: "monospace" }}>
+                          +${(item.value || 500).toLocaleString()}
+                        </span>
                       </div>
-                      <span style={{ fontSize: 10, color: "#72F1A8", fontWeight: 800, fontFamily: "monospace" }}>
-                        +${(item.value || 500).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Ledger Reference Cards */}
-            <div className="receipt-grid">
-              <div className="receipt-card" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
-                <span style={{ color: "#94a3b8", textTransform: "uppercase", fontSize: 9, fontWeight: 800 }}>Receipt Identifier</span>
-                <span style={{ fontWeight: 800, color: "#e2e8f0", fontSize: 12, wordBreak: "break-all" }}>{receipt.receiptId}</span>
-              </div>
-              <div className="receipt-card" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
-                <span style={{ color: "#94a3b8", textTransform: "uppercase", fontSize: 9, fontWeight: 800 }}>Raid Contract Reference</span>
-                <span style={{ fontWeight: 800, color: "#e2e8f0", fontSize: 12, wordBreak: "break-all" }}>{receipt.raidId}</span>
-              </div>
-            </div>
-
-            <div className="receipt-card" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
-              <span style={{ color: "#94a3b8", textTransform: "uppercase", fontSize: 9, fontWeight: 800, display: "flex", alignItems: "center", gap: 4 }}>
-                <Database style={{ width: 14, height: 14 }} /> Authoritative Outcome Digest (SHA-256)
-              </span>
-              <span style={{ color: "#51E5F0", fontSize: 11, wordBreak: "break-all", fontFamily: "monospace" }}>{receipt.outcomeDigest}</span>
-            </div>
-
-            {/* Committed Asset Transfers */}
-            <div className="receipt-transfers">
-              <span style={{ fontSize: 10, textTransform: "uppercase", color: "#94a3b8", fontWeight: 800, letterSpacing: "0.5px" }}>
-                Committed Asset Transfers (Canonical BigInt Grammar)
-              </span>
-              {(receipt.transfers || []).map((t: any, idx: number) => (
-                <div key={idx} className="receipt-transfer-row" style={{ background: "rgba(11, 15, 25, 0.7)", borderColor: "#334155" }}>
-                  <span style={{ color: "#e2e8f0", fontWeight: 700 }}>{t.itemId}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ padding: "2px 8px", background: "#1e293b", borderRadius: 4, color: "#94a3b8", fontWeight: 700 }}>
-                      {t.quantity}
-                    </span>
-                    <ArrowRight style={{ width: 14, height: 14, color: "#cbd5e1" }} />
-                    <span style={{ color: "#72F1A8", fontWeight: 800 }}>{t.toProfileId}</span>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
 
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
-              <button
-                onClick={handleRedeploy}
-                disabled={isRestarting}
-                autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleRedeploy(); } }}
-                className="deploy-next-raid-btn kia-btn-redeploy clip-cut-btn"
-                style={{ flex: 1.2 }}
-              >
-                {isRestarting ? "Redeploying..." : "DEPLOY NEXT RAID →"}
-              </button>
-              {onReturnToHideout && (
+              {/* Ledger Proof Details */}
+              <div style={{ padding: "8px 12px", background: "rgba(11, 15, 25, 0.8)", border: "1px solid #1e293b", borderRadius: 4, marginBottom: 20, fontSize: 10, color: "#94a3b8", fontFamily: "monospace" }}>
+                <div>RECEIPT: <strong style={{ color: "#e2e8f0" }}>{receipt.receiptId}</strong></div>
+                <div style={{ marginTop: 2, wordBreak: "break-all" }}>DIGEST: <span style={{ color: "#51E5F0" }}>{receipt.outcomeDigest}</span></div>
+              </div>
+
+              {/* High-Impact Tactical Arcade Action Buttons */}
+              <div className="kia-arcade-actions">
                 <button
-                  onClick={onReturnToHideout}
-                  className="return-to-hideout-btn kia-btn-ghost clip-cut-btn"
-                  style={{ flex: 1 }}
+                  onClick={handleRedeploy}
+                  disabled={isRestarting}
+                  autoFocus
+                  className="deploy-next-raid-btn extracted-manga-btn-primary"
                 >
-                  VIEW STASH & HIDEOUT
+                  {isRestarting ? "REDEPLOYING TO FOB..." : "⚡ DEPLOY NEXT RAID [SPACE]"}
                 </button>
+                {onReturnToHideout && (
+                  <button
+                    onClick={onReturnToHideout}
+                    className="return-to-hideout-btn kia-manga-btn-secondary"
+                  >
+                    🛡️ VIEW STASH & HIDEOUT [ESC]
+                  </button>
+                )}
+              </div>
+              {restartError && (
+                <div className="kia-error-notice">
+                  {restartError}
+                </div>
               )}
             </div>
-            {restartError && (
-              <div style={{ padding: "8px 12px", background: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", borderRadius: 4, color: "#f87171", fontSize: 12 }}>
-                {restartError}
-              </div>
-            )}
           </div>
         );
       })()}

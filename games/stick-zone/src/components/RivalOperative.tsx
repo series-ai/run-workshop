@@ -12,6 +12,9 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
   const rootGroupRef = useRef<THREE.Group>(null);
   const labelRef = useRef<THREE.Group>(null);
   const [labelTexture, setLabelTexture] = useState<THREE.CanvasTexture | null>(null);
+  const barkRef = useRef<THREE.Group>(null);
+  const [barkTexture, setBarkTexture] = useState<THREE.CanvasTexture | null>(null);
+  const [barkVisible, setBarkVisible] = useState(false);
 
   const lastPosRef = useRef({ x: operative.x, z: operative.z });
   const isMovingLocallyRef = useRef(false);
@@ -52,6 +55,65 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
       tex.dispose();
     };
   }, [isBoss]);
+
+  useEffect(() => {
+    if (!operative.barkText) {
+      setBarkTexture(null);
+      setBarkVisible(false);
+      return;
+    }
+    setBarkVisible(true);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 72;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, 256, 72);
+
+    const isBossEnemy = operative.badge === "SECTOR BOSS";
+    ctx.fillStyle = isBossEnemy ? "#FF3366" : "#FACC15";
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 4;
+
+    const bx = 6, by = 6, bw = 244, bh = 46, br = 8;
+    ctx.beginPath();
+    ctx.moveTo(bx + br, by);
+    ctx.lineTo(bx + bw - br, by);
+    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + br);
+    ctx.lineTo(bx + bw, by + bh - br);
+    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - br, by + bh);
+    ctx.lineTo(138, by + bh);
+    ctx.lineTo(128, by + bh + 14);
+    ctx.lineTo(118, by + bh);
+    ctx.lineTo(bx + br, by + bh);
+    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - br);
+    ctx.lineTo(bx, by + br);
+    ctx.quadraticCurveTo(bx, by, bx + br, by);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = "900 18px monospace";
+    ctx.fillStyle = isBossEnemy ? "#FFFFFF" : "#000000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(operative.barkText, 128, by + bh / 2);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    setBarkTexture(tex);
+
+    const timer = setTimeout(() => {
+      setBarkVisible(false);
+    }, 1800);
+
+    return () => {
+      clearTimeout(timer);
+      tex.dispose();
+    };
+  }, [operative.barkText, operative.barkTick]);
 
   useFrame((state, delta) => {
     if (typeof window !== "undefined" && Boolean((window as any).__STICK_ZONE_TEST__?.isPaused)) return;
@@ -96,6 +158,15 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
       );
       labelRef.current.quaternion.copy(state.camera.quaternion);
     }
+
+    if (barkRef.current) {
+      barkRef.current.position.set(
+        rootGroupRef.current.position.x,
+        rootGroupRef.current.position.y + 2.2,
+        rootGroupRef.current.position.z
+      );
+      barkRef.current.quaternion.copy(state.camera.quaternion);
+    }
   });
 
   if (!operative.isAlive) return null;
@@ -111,6 +182,15 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
           <mesh>
             <planeGeometry args={[1.0, 0.18]} />
             <meshBasicMaterial map={labelTexture} transparent depthWrite={false} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      )}
+
+      {barkVisible && barkTexture && (
+        <group ref={barkRef}>
+          <mesh>
+            <planeGeometry args={[1.5, 0.42]} />
+            <meshBasicMaterial map={barkTexture} transparent depthWrite={false} side={THREE.DoubleSide} />
           </mesh>
         </group>
       )}

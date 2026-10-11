@@ -571,21 +571,38 @@ export const EFFECTS: EffectPreset[] = [
     "id": "rifle-flash",
     "label": "Rifle Flash",
     "category": "Weapons",
-    "description": "A narrow muzzle burst for rapid fire.",
+    "description": "A fierce comic muzzle burst with paper core and forward velocity sparks.",
     "shape": "spark",
-    "count": 3,
-    "duration": 0.1,
-    "size": 0.18,
-    "speed": 1.8,
-    "spread": 0.1,
-    "gravity": 0,
+    "count": 14,
+    "duration": 0.12,
+    "size": 0.28,
+    "speed": 3.8,
+    "spread": 0.12,
+    "gravity": 0.5,
     "accent": true,
     "layers": [
       {
         "shape": "star",
         "count": 1,
-        "size": 0.12,
-        "speed": 0.1
+        "size": 0.26,
+        "speed": 0.05,
+        "colorRole": "paper"
+      },
+      {
+        "shape": "spark",
+        "count": 8,
+        "size": 0.18,
+        "speed": 4.8,
+        "spread": 0.28,
+        "accent": true
+      },
+      {
+        "shape": "dust",
+        "count": 3,
+        "size": 0.24,
+        "speed": 1.0,
+        "spread": 0.2,
+        "duration": 0.24
       }
     ]
   },
@@ -593,12 +610,12 @@ export const EFFECTS: EffectPreset[] = [
     "id": "shotgun-flash",
     "label": "Shotgun Flash",
     "category": "Weapons",
-    "description": "A wide short muzzle burst.",
+    "description": "A massive concussive 12-gauge muzzle blast with dual-layer flash and 30-degree spark fan.",
     "shape": "star",
     "count": 1,
-    "duration": 0.12,
-    "size": 0.25,
-    "speed": 0.8,
+    "duration": 0.14,
+    "size": 0.52,
+    "speed": 0.1,
     "spread": 0.14,
     "gravity": 0,
     "accent": true,
@@ -606,14 +623,32 @@ export const EFFECTS: EffectPreset[] = [
       {
         "shape": "star",
         "count": 1,
+        "size": 0.36,
         "colorRole": "paper"
       },
       {
         "shape": "spark",
-        "count": 4,
-        "size": 0.14,
+        "count": 22,
+        "size": 0.24,
+        "speed": 5.2,
+        "spread": 0.38,
+        "accent": true
+      },
+      {
+        "shape": "ring",
+        "count": 1,
+        "size": 0.58,
         "speed": 2.4,
-        "spread": 0.22
+        "duration": 0.16,
+        "accent": true
+      },
+      {
+        "shape": "dust",
+        "count": 6,
+        "size": 0.42,
+        "speed": 1.5,
+        "spread": 0.32,
+        "duration": 0.34
       }
     ]
   },
@@ -636,29 +671,46 @@ export const EFFECTS: EffectPreset[] = [
     "id": "bullet-impact",
     "label": "Bullet Impact",
     "category": "Weapons",
-    "description": "Short chips and rays mark a hard surface.",
+    "description": "Crisp comic impact chips, high-speed spark needles, and surface dust plume.",
     "shape": "chip",
-    "count": 5,
-    "duration": 0.3,
-    "size": 0.07,
-    "speed": 1.9,
-    "spread": 0.5,
-    "gravity": 4,
+    "count": 12,
+    "duration": 0.32,
+    "size": 0.13,
+    "speed": 3.4,
+    "spread": 0.55,
+    "gravity": 4.5,
     "accent": false,
-    "layers": []
+    "layers": [
+      {
+        "shape": "spark",
+        "count": 10,
+        "size": 0.14,
+        "speed": 4.2,
+        "spread": 0.65,
+        "accent": true
+      },
+      {
+        "shape": "dust",
+        "count": 4,
+        "size": 0.28,
+        "speed": 1.1,
+        "spread": 0.5,
+        "duration": 0.36
+      }
+    ]
   },
   {
     "id": "shell-eject",
     "label": "Shell Eject",
     "category": "Weapons",
-    "description": "One small falling cartridge mark.",
+    "description": "Gleaming brass cartridge ejected with realistic spin and ballistic gravity arc.",
     "shape": "chip",
     "count": 1,
-    "duration": 0.48,
-    "size": 0.06,
-    "speed": 1.3,
-    "spread": 0.3,
-    "gravity": 5,
+    "duration": 0.55,
+    "size": 0.14,
+    "speed": 2.8,
+    "spread": 0.22,
+    "gravity": 8.5,
     "accent": true,
     "layers": []
   },
@@ -896,17 +948,34 @@ export const EFFECTS: EffectPreset[] = [
     "id": "slide-dust",
     "label": "Slide Dust",
     "category": "Movement",
-    "description": "A low trail follows a slide.",
+    "description": "Heavy kinetic friction dust with contact sparks and asphalt chips.",
     "shape": "dust",
-    "count": 5,
-    "duration": 0.44,
-    "size": 0.15,
-    "speed": 0.9,
-    "spread": 0.2,
+    "count": 12,
+    "duration": 0.48,
+    "size": 0.36,
+    "speed": 1.2,
+    "spread": 0.3,
     "gravity": 0,
     "accent": false,
     "floor": true,
-    "layers": []
+    "layers": [
+      {
+        "shape": "spark",
+        "count": 8,
+        "size": 0.12,
+        "speed": 2.4,
+        "spread": 0.35,
+        "accent": true
+      },
+      {
+        "shape": "chip",
+        "count": 4,
+        "size": 0.09,
+        "speed": 1.6,
+        "spread": 0.4,
+        "gravity": 4.5
+      }
+    ]
   },
   {
     "id": "wall-scrape",
@@ -1100,16 +1169,32 @@ export const EFFECTS: EffectPreset[] = [
     "id": "metal-sparks",
     "label": "Metal Sparks",
     "category": "Destruction",
-    "description": "Fine warm sparks fall from damaged metal.",
+    "description": "High-velocity ricochet sparks and shredded metal flecks.",
     "shape": "spark",
-    "count": 12,
+    "count": 24,
     "duration": 0.45,
-    "size": 0.1,
-    "speed": 2.8,
-    "spread": 0.8,
-    "gravity": 4,
+    "size": 0.15,
+    "speed": 4.8,
+    "spread": 0.85,
+    "gravity": 5.5,
     "accent": true,
-    "layers": []
+    "layers": [
+      {
+        "shape": "chip",
+        "count": 6,
+        "size": 0.11,
+        "speed": 2.8,
+        "spread": 0.7,
+        "gravity": 6.5
+      },
+      {
+        "shape": "star",
+        "count": 1,
+        "size": 0.24,
+        "speed": 0.05,
+        "colorRole": "paper"
+      }
+    ]
   },
   {
     "id": "concrete-chips",

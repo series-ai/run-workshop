@@ -1131,4 +1131,295 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.frozenSettlementCash).toBeUndefined();
     expect(sim.frozenSettlementTick).toBeUndefined();
   });
+
+  it('28. Gunfire acoustic propagation: gunshot alerts unaware AI within 45m and ignores distant AI', () => {
+    sim.rivals = [];
+    sim.machines = []; // Isolate AI combat from stationary turret fire
+    sim.player.x = 0;
+    sim.player.z = 0;
+    sim.player.facing = 0;
+    sim.player.ammo = 30;
+
+    // AI 1 within 45m (distance = 25m)
+    sim.rivals.push({
+      id: 'scav_close',
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      name: 'Scav Close',
+      x: 0,
+      y: 0,
+      z: 25,
+      facing: Math.PI,
+      health: 100,
+      armor: 0,
+      cash: 0,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+    });
+
+    // AI 2 outside 45m (distance = 60m)
+    sim.rivals.push({
+      id: 'scav_far',
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      name: 'Scav Far',
+      x: 0,
+      y: 0,
+      z: 60,
+      facing: Math.PI,
+      health: 100,
+      armor: 0,
+      cash: 0,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+    });
+
+    expect((sim.rivals[0] as any).playerAlertTicks).toBeUndefined();
+    expect((sim.rivals[1] as any).playerAlertTicks).toBeUndefined();
+
+    // Player fires rifle west (-X), missing both scavs located to the south (+Z)
+    sim.player.facing = -Math.PI / 2;
+    sim.fire();
+
+    // Close AI is alerted and turned towards sound
+    expect((sim.rivals[0] as any).playerAlertTicks).toBe(240);
+    expect(sim.rivals[0].barkText).toBeDefined();
+    expect(sim.rivals[0].barkTick).toBe(sim.tick);
+
+    // Far AI is outside hearing distance and remains unaware
+    expect((sim.rivals[1] as any).playerAlertTicks).toBeUndefined();
+  });
+
+  it('29. Boss bodyguard aggro linking: damaging Warlord commands guards to converge; damaging guard alerts Warlord', () => {
+    sim.rivals = [];
+    sim.spawnScavSquad();
+
+    const boss = sim.rivals.find(r => r.id === 'scav_boss_warlord')!;
+    const runner = sim.rivals.find(r => r.id === 'scav_runner_01')!;
+    const enforcer = sim.rivals.find(r => r.id === 'scav_enforcer_02')!;
+
+    expect((runner as any).convergeOnPlayer).toBeFalsy();
+    expect((enforcer as any).convergeOnPlayer).toBeFalsy();
+
+    // Attack Boss
+    sim.handleRivalDamage(boss, 30);
+
+    // Both bodyguards immediately receive alert and converge directive
+    expect((runner as any).playerAlertTicks).toBe(360);
+    expect((runner as any).convergeOnPlayer).toBe(true);
+    expect(runner.barkText).toBeDefined();
+
+    expect((enforcer as any).playerAlertTicks).toBe(360);
+    expect((enforcer as any).convergeOnPlayer).toBe(true);
+    expect(enforcer.barkText).toBeDefined();
+
+    // Attack a guard -> alerts the Boss
+    boss.barkText = undefined;
+    sim.handleRivalDamage(runner, 20);
+    expect((boss as any).playerAlertTicks).toBe(360);
+    expect(boss.barkText).toBeDefined();
+    expect(sim.recentBark?.isBoss).toBe(true);
+  });
+
+  it('30. Scav pre-attack telegraph: target acquisition emits vocal bark and wind-up delay before discharge', () => {
+    sim.rivals = [];
+    sim.player.x = 0;
+    sim.player.z = 0;
+    sim.player.health = 100;
+    sim.player.armor = 100;
+
+    // Spawn Scav Runner in line of sight at 10m
+    sim.rivals.push({
+      id: 'scav_runner_01',
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      badge: 'SCAV PATROL',
+      name: 'Scav Runner',
+      x: 0,
+      y: 0,
+      z: 10,
+      facing: Math.PI,
+      health: 80,
+      armor: 0,
+      cash: 500,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+      shootCooldownTicks: 0,
+    });
+
+    const scav = sim.rivals[0];
+
+    // Step 1: Scav acquires target, initiates telegraph wind-up (20 ticks) and emits voice bark
+    sim.step(makeInput({ dx: 0, dz: 0 }));
+    expect(scav.aimTicks).toBe(20);
+    expect(scav.barkText).toBeDefined();
+    expect(sim.player.health).toBe(100); // Has NOT fired yet! Telegraph provides reaction window
+
+    // Step 20 ticks until discharge
+    for (let i = 0; i < 20; i++) {
+      sim.step(makeInput({ dx: 0, dz: 0 }));
+    }
+
+    // Now weapon discharges and deals damage
+    expect(scav.action).toBe('shoot');
+    expect(sim.player.armor).toBe(78); // 12 damage absorbed by armor
+  });
+
+  it('31. Aim punch telemetry: player damage records tick, amount, and directional angle', () => {
+    sim.player.x = 10;
+    sim.player.z = 10;
+    sim.lastPlayerDamageTick = 0;
+
+    // Attacker fires from (10, 20) -> relative dz = +10, dx = 0, angle = 0
+    sim.applyDamageToPlayer(15, 10, 20);
+
+    expect(sim.lastPlayerDamageTick).toBe(sim.tick);
+    expect(sim.lastPlayerDamageAmount).toBe(15);
+    expect(sim.lastPlayerDamageAngle).toBeCloseTo(0, 2);
+  });
+
+  it('32. AI Frag Grenade flush: when player holds container cover, Scav AI tosses F-1 grenade with fuse and blast falloff', () => {
+    sim.rivals = [];
+    sim.machines = [];
+    sim.activeGrenades = [];
+    sim.player.x = 0;
+    sim.player.z = 15;
+    sim.player.health = 100;
+    sim.player.armor = 100;
+
+    // Place Scav at (0, 0)
+    sim.rivals.push({
+      id: 'scav_grenadier',
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      badge: 'SCAV PATROL',
+      name: 'Scav Grenadier',
+      x: 0,
+      y: 0,
+      z: 0,
+      facing: 0,
+      health: 80,
+      armor: 0,
+      cash: 500,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+    });
+
+    const scav = sim.rivals[0];
+    (scav as any).playerAlertTicks = 240; // In combat
+    (scav as any).grenadeCooldownTicks = 0; // Ready to throw
+
+    const origRay = sim.checkContainerRayObstruction.bind(sim);
+    sim.checkContainerRayObstruction = (x1, z1, x2, z2) => {
+      // Direct horizontal ray between scav (z <= 1) and player (z >= 14) is blocked by cover
+      if ((z1 <= 1 && z2 >= 14) || (z2 <= 1 && z1 >= 14)) return true;
+      return false; // Air arc and grenade landing position has clear detonation cone
+    };
+
+    // Step simulation: Scav detects player in cover and lobs F-1 grenade over cover
+    sim.step(makeInput({ dx: 0, dz: 0 }));
+
+    expect(sim.activeGrenades.length).toBe(1);
+    const grenade = sim.activeGrenades[0];
+    expect(grenade.throwerId).toBe('scav_grenadier');
+    expect(grenade.fuseTicks).toBe(89); // 90 minus 1 on step
+    expect(grenade.vy).toBeGreaterThan(0); // Arcing upward
+    expect(scav.barkText).toBeDefined();
+
+    // Fast-forward fuse countdown (remaining 89 ticks) to trigger detonation
+    for (let i = 0; i < 89; i++) {
+      sim.step(makeInput({ dx: 0, dz: 0 }));
+    }
+
+    // Grenade detonated and removed from active list
+    expect(sim.activeGrenades.length).toBe(0);
+    // Player sustained fragmentation blast damage
+    expect(sim.player.armor).toBeLessThan(100);
+    expect(sim.combatLog.some(msg => msg.includes('F-1 fragmentation blast'))).toBe(true);
+
+    sim.checkContainerRayObstruction = origRay;
+  });
+
+  it('33. Dynamic concealment & shadow detection: crouching reduces visual spotting range to 15m and acoustic footprint to 4m', () => {
+    sim.rivals = [];
+    sim.machines = [];
+    sim.player.x = 0;
+    sim.player.z = 20;
+
+    // Scav facing North towards player (facing = 0, player at z = 20, distance = 20m)
+    sim.rivals.push({
+      id: 'scav_sentry',
+      isPlayer: false,
+      isRival: true,
+      isAI: true,
+      badge: 'SCAV PATROL',
+      name: 'Scav Sentry',
+      x: 0,
+      y: 0,
+      z: 0,
+      facing: 0,
+      health: 80,
+      armor: 0,
+      cash: 0,
+      action: 'idle',
+      actionTicks: 0,
+      isInvulnerable: false,
+      isAlive: true,
+      isExtracted: false,
+      ammo: 30,
+      maxAmmo: 30,
+    });
+
+    const scav = sim.rivals[0];
+
+    // Scenario A: Player crouches at 20m (within standing visual range of 28m, but outside crouch visual range of 15m)
+    sim.step(makeInput({ dx: 0, dz: 0, crouch: true }));
+    expect(sim.player.isCrouching).toBe(true);
+    // Scav does NOT spot crouching player at 20m!
+    expect((scav as any).playerAlertTicks || 0).toBe(0);
+
+    // Scenario B: Player stands up at 20m (within standing visual range of 28m)
+    sim.step(makeInput({ dx: 0, dz: 0, crouch: false }));
+    expect(sim.player.isCrouching).toBe(false);
+    // Scav immediately spots standing player at 20m!
+    expect((scav as any).playerAlertTicks).toBe(300);
+
+    // Scenario C: Acoustic stealth. Reset alert and put Scav facing away (facing = PI, looking South).
+    (scav as any).playerAlertTicks = 0;
+    scav.facing = Math.PI;
+    sim.player.x = 0;
+    sim.player.z = 6; // Distance = 6m behind scav
+
+    // Crouching sneaking at 6m: acoustic detection range is 4m, so Scav remains unaware!
+    sim.step(makeInput({ dx: 0, dz: 0, crouch: true }));
+    expect((scav as any).playerAlertTicks || 0).toBe(0);
+
+    // Walking at 6m: standing footstep acoustic range is 10m, so Scav hears the player and alerts!
+    sim.step(makeInput({ dx: 0, dz: 0, crouch: false }));
+    expect((scav as any).playerAlertTicks).toBe(300);
+  });
 });

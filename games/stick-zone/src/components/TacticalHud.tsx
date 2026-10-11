@@ -35,11 +35,18 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
     }>
   >([]);
 
+  const [showIngressBanner, setShowIngressBanner] = React.useState(false);
+  const hasShownIngressRef = React.useRef(false);
+  const lastCombatLogCountRef = React.useRef(sim.combatLog.length);
+
   const lastSlideRef = React.useRef(false);
   const lastKickRef = React.useRef(false);
   const lastHitmarkerRef = React.useRef(0);
   const lastCashRef = React.useRef(player.cash);
   const lastBleedRef = React.useRef(player.isBleeding);
+  const lastDummyHitRef = React.useRef(0);
+  const lastRollRef = React.useRef(false);
+  const lastReloadRef = React.useRef(false);
 
   React.useEffect(() => {
     if (isTestMode) return;
@@ -56,6 +63,42 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       sub?: string;
       kind: "crit" | "amber" | "green" | "default";
     }> = [];
+
+    const isRollingNow = player.action === "roll";
+    const isReloadingNow = player.action === "reload";
+
+    // Kinetic Roll Callout
+    if (isRollingNow && !lastRollRef.current) {
+      newEntries.push({
+        id: `roll_${now}`,
+        text: "EVADE!",
+        sub: "IFRAME COMBAT ROLL",
+        kind: "default",
+      });
+    }
+    lastRollRef.current = isRollingNow;
+
+    // Tactical Reload Callout
+    if (isReloadingNow && !lastReloadRef.current) {
+      newEntries.push({
+        id: `reload_${now}`,
+        text: "KLIK-KLAK!",
+        sub: "TACTICAL RELOAD",
+        kind: "default",
+      });
+    }
+    lastReloadRef.current = isReloadingNow;
+
+    // Target Dummy Hit Callout
+    if (sim.lastDummyHitTick && sim.lastDummyHitTick !== lastDummyHitRef.current) {
+      lastDummyHitRef.current = sim.lastDummyHitTick;
+      newEntries.push({
+        id: `dummy_${now}`,
+        text: "THWACK!",
+        sub: "TARGET IMPACT // 100 DMG",
+        kind: "amber",
+      });
+    }
 
     // Kinetic Slide Callout
     if (isSlidingNow && !lastSlideRef.current) {
@@ -120,6 +163,22 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
     }
     lastBleedRef.current = player.isBleeding;
 
+    // Elimination / Kill Confirmed Callout
+    if (sim.combatLog.length > lastCombatLogCountRef.current) {
+      const newLogs = sim.combatLog.slice(lastCombatLogCountRef.current);
+      lastCombatLogCountRef.current = sim.combatLog.length;
+      for (const log of newLogs) {
+        if (log.includes("Eliminated") || log.includes("Terminated") || log.includes("downed")) {
+          newEntries.push({
+            id: `kill_${now}_${Math.random()}`,
+            text: "TARGET DOWN!",
+            sub: "KILL CONFIRMED // +250 XP",
+            kind: "crit",
+          });
+        }
+      }
+    }
+
     if (newEntries.length > 0) {
       setCallouts((prev) => [...prev.slice(-2), ...newEntries]);
       const timer = setTimeout(() => {
@@ -139,7 +198,30 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
     player.cash,
     player.isBleeding,
     player.weapon,
+    player.action,
+    sim.lastDummyHitTick,
   ]);
+
+  // Sector Gateway Ingress Banner (Triggered when entering combat zone)
+  React.useEffect(() => {
+    if (isTestMode) return;
+    if ((sim.zoneMode === "spoke" || player.z > -52) && !hasShownIngressRef.current) {
+      hasShownIngressRef.current = true;
+      setShowIngressBanner(true);
+      const timer = setTimeout(() => setShowIngressBanner(false), 2400);
+      return () => clearTimeout(timer);
+    } else if (sim.zoneMode === "hub" && player.z < -62) {
+      hasShownIngressRef.current = false;
+    }
+  }, [isTestMode, sim.zoneMode, player.z]);
+
+  // Warlord Priority Boss Threat Proximity Detection
+  const isWarlordNear = React.useMemo(() => {
+    if (isTestMode || sim.zoneMode === "hub") return false;
+    return sim.rivals.some(
+      (r) => r.isAlive && (r.id === "scav_boss_warlord" || r.badge === "WARLORD" || /boss|warlord/i.test(r.name)) && Math.hypot(r.x - player.x, r.z - player.z) < 26
+    );
+  }, [isTestMode, sim.zoneMode, sim.rivals, player.x, player.z]);
 
   // Anime Action Speed Lines Canvas Overlay (active on slide or sprint)
   const speedLinesCanvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -278,36 +360,90 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
         </div>
       )}
 
+      {/* Sector Gateway Ingress Graphic Banner */}
+      {!isTestMode && showIngressBanner && (
+        <div className="sector-ingress-banner">
+          <div className="banner-watermark-text" aria-hidden="true">COMBAT ZONE</div>
+          <div className="banner-ribbon"><span>SECTOR 7 DEPOT // AIRLOCK CLEARED</span></div>
+          <div className="banner-title">WEAPONS HOT</div>
+        </div>
+      )}
+
+      {/* Sector Warlord Priority Threat Warning Banner */}
+      {!isTestMode && isWarlordNear && (
+        <div className="warlord-alert-banner">
+          <div className="banner-watermark-text" aria-hidden="true">HOSTILE</div>
+          <div className="banner-ribbon warlord-ribbon"><span>// PRIORITY TARGET DETECTED //</span></div>
+          <div className="banner-title warlord-title">SECTOR WARLORD ENGAGED</div>
+        </div>
+      )}
+
       {/* Critical Health Vignette */}
       {isCriticalHealth && <div className="critical-health-vignette" />}
 
-      {/* FOB Hub Staging Guidance Banner */}
+      {/* Tarkov Micro: Directional Trauma Impact Flash Vignette */}
+      {sim.lastPlayerDamageTick > 0 && (sim.tick - sim.lastPlayerDamageTick < 12) && (
+        <div className="damage-flash-vignette" />
+      )}
+
+      {/* Tarkov Micro: Tactical Radio Intercept Banner */}
+      {sim.recentBark && (sim.tick - sim.recentBark.tick < 90) && (
+        <div className={`tactical-radio-banner ${sim.recentBark.isBoss ? "boss-bark" : ""}`}>
+          <span className="radio-icon">📻</span>
+          <span className="radio-label">COMMS INTERCEPT // {sim.recentBark.sender}:</span>
+          <span className="radio-quote">"{sim.recentBark.text}"</span>
+        </div>
+      )}
+
+      {/* Tarkov Micro: Active Frag Grenade Proximity Alarm */}
+      {sim.activeGrenades.some((g) => Math.hypot(g.x - player.x, g.z - player.z) <= 8.5) && (
+        <div className="grenade-warning-banner">
+          <span className="warning-icon">💣</span>
+          <span className="warning-text">INCOMING FRAG GRENADE! ROLL [SPACE] TO EVADE!</span>
+        </div>
+      )}
+
+      {/* Dynamic FOB Pre-Flight Readiness Card */}
       {sim.zoneMode === "hub" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "64px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "4px",
-            background: "rgba(15, 23, 42, 0.88)",
-            border: "1px solid #38bdf8",
-            borderRadius: "8px",
-            padding: "8px 18px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-            pointerEvents: "none",
-            maxWidth: "90vw",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: "12px", fontWeight: 900, color: "#38bdf8", letterSpacing: "1px" }}>
-            ⚡ FORWARD OPERATING BASE // STAGING HUB
+        <div className="fob-briefing-card tactical-ink-card hud-interactive">
+          <div className="fob-briefing-watermark" aria-hidden="true">TRAINING</div>
+          <div className="fob-briefing-header">
+            <span className="fob-briefing-tag">// FORWARD OPERATING BASE</span>
+            <span className="fob-briefing-title">PRE-FLIGHT READINESS</span>
           </div>
-          <div style={{ fontSize: "10px", color: "#cbd5e1", fontWeight: 700 }}>
-            SAFE ZONE • PRACTICE SHOOTING & EVASION ON TEST DUMMIES • STEP ONTO AIRLOCK PAD (z: -52) TO START RAID
+
+          <div className="fob-briefing-checklist">
+            <div className={`fob-task-row ${sim.trainingProgress?.dummyHit ? "completed" : "pending"}`}>
+              <span className="task-status-icon">{sim.trainingProgress?.dummyHit ? "✓" : "○"}</span>
+              <div className="task-text-group">
+                <span className="task-label">TEST WEAPONS ON TARGET DUMMIES</span>
+                <span className="task-subtext">[LEFT CLICK / J] FIRE • [R] RELOAD • [E] KICK</span>
+              </div>
+            </div>
+
+            <div className={`fob-task-row ${sim.trainingProgress?.agilityUsed ? "completed" : "pending"}`}>
+              <span className="task-status-icon">{sim.trainingProgress?.agilityUsed ? "✓" : "○"}</span>
+              <div className="task-text-group">
+                <span className="task-label">PRACTICE AGILITY MANEUVERS</span>
+                <span className="task-subtext">[C] COMBAT SLIDE • [SPACE] EVASION ROLL</span>
+              </div>
+            </div>
+
+            <div className={`fob-task-row ${sim.trainingProgress?.crateLooted ? "completed" : "pending"}`}>
+              <span className="task-status-icon">{sim.trainingProgress?.crateLooted ? "✓" : "○"}</span>
+              <div className="task-text-group">
+                <span className="task-label">SEARCH TRAINING SUPPLY LOCKER</span>
+                <span className="task-subtext">APPROACH EAST CRATE • PRESS [E / F] TO LOOT</span>
+              </div>
+            </div>
+
+            <div className="fob-task-row deployment-task">
+              <span className="task-status-icon deployment-icon">➔</span>
+              <div className="task-text-group">
+                <span className="task-label deployment-label">ENTER AIRLOCK GATEWAY (z: -52)</span>
+                <span className="task-subtext">STEP ONTO PAD TO INITIATE SECTOR 7 EXTRACTION</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

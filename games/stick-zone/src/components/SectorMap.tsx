@@ -1,17 +1,139 @@
-import React, { useEffect, useState } from "react";
+// Animated FOB Target Dummy with Spring Recoil Physics
+const FOBTargetDummy: React.FC<{
+  position: [number, number, number];
+  color: string;
+  side: "left" | "right";
+  lastHitTick?: number;
+  hitSide?: "left" | "right";
+}> = ({ position, color, side, lastHitTick, hitSide }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const [wobbleAmp, setWobbleAmp] = useState(0);
+  const lastProcessedTickRef = useRef(0);
+
+  useEffect(() => {
+    if (lastHitTick && lastHitTick > lastProcessedTickRef.current && hitSide === side) {
+      lastProcessedTickRef.current = lastHitTick;
+      setWobbleAmp(1.0);
+    }
+  }, [lastHitTick, hitSide, side]);
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    if (wobbleAmp > 0.005) {
+      const decay = Math.exp(-delta * 8.5);
+      const nextAmp = wobbleAmp * decay;
+      setWobbleAmp(nextAmp);
+      groupRef.current.rotation.x = -Math.sin(Date.now() * 0.025) * nextAmp * 0.4;
+      groupRef.current.rotation.z = Math.cos(Date.now() * 0.03) * nextAmp * 0.15;
+    } else {
+      groupRef.current.rotation.x = 0;
+      groupRef.current.rotation.z = 0;
+    }
+  });
+
+  return (
+    <group position={position}>
+      {/* Heavy Steel Base Mount */}
+      <mesh position={[0, 0.1, 0]} receiveShadow>
+        <cylinderGeometry args={[0.55, 0.65, 0.2, 16]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.7} metalness={0.4} />
+      </mesh>
+      {/* Base Anchor Bolts */}
+      {[-0.35, 0.35].map((bx) =>
+        [-0.35, 0.35].map((bz) => (
+          <mesh key={"bolt_" + bx + "_" + bz} position={[bx, 0.21, bz]}>
+            <cylinderGeometry args={[0.04, 0.04, 0.04, 6]} />
+            <meshStandardMaterial color="#f59e0b" roughness={0.3} metalness={0.8} />
+          </mesh>
+        ))
+      )}
+
+      {/* Dynamic Wobbling Upper Rig */}
+      <group ref={groupRef} position={[0, 0.2, 0]}>
+        {/* Spring Shock Absorber */}
+        <mesh position={[0, 0.2, 0]}>
+          <cylinderGeometry args={[0.16, 0.16, 0.32, 12]} />
+          <meshStandardMaterial color="#f59e0b" roughness={0.3} metalness={0.7} />
+        </mesh>
+
+        {/* Heavy Steel Support Pole */}
+        <mesh position={[0, 0.8, 0]} castShadow>
+          <cylinderGeometry args={[0.07, 0.07, 1.1, 8]} />
+          <meshStandardMaterial color="#334155" roughness={0.4} metalness={0.6} />
+        </mesh>
+
+        {/* Silhouette Torso Plate */}
+        <mesh position={[0, 1.35, 0]} castShadow>
+          <boxGeometry args={[0.62, 0.82, 0.09]} />
+          <meshStandardMaterial color={color} roughness={0.5} />
+        </mesh>
+
+        {/* Concentric Bullseye Scoring Rings */}
+        <mesh position={[0, 1.4, 0.052]}>
+          <circleGeometry args={[0.24, 24]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
+        <mesh position={[0, 1.4, 0.054]}>
+          <circleGeometry args={[0.18, 24]} />
+          <meshBasicMaterial color="#0f172a" />
+        </mesh>
+        <mesh position={[0, 1.4, 0.056]}>
+          <circleGeometry args={[0.12, 24]} />
+          <meshBasicMaterial color="#ef4444" />
+        </mesh>
+        <mesh position={[0, 1.4, 0.058]}>
+          <circleGeometry args={[0.05, 16]} />
+          <meshBasicMaterial color="#facc15" />
+        </mesh>
+
+        {/* Silhouette Head Plate */}
+        <mesh position={[0, 1.88, 0]} castShadow>
+          <boxGeometry args={[0.32, 0.3, 0.08]} />
+          <meshStandardMaterial color={color} roughness={0.5} />
+        </mesh>
+        {/* Head Lethal Hit Ring */}
+        <mesh position={[0, 1.88, 0.052]}>
+          <circleGeometry args={[0.09, 16]} />
+          <meshBasicMaterial color="#ef4444" />
+        </mesh>
+        <mesh position={[0, 1.88, 0.054]}>
+          <circleGeometry args={[0.04, 16]} />
+          <meshBasicMaterial color="#facc15" />
+        </mesh>
+      </group>
+    </group>
+  );
+};
+
+import React, { useEffect, useState, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { LootCrate } from "../sim/game.js";
 import { MAP_CONTAINERS } from "../sim/game.js";
 import { InklineModel } from "./InklineModel.js";
+import { globalCutaway } from "../render/cutaway.js";
 
 interface SectorMapProps {
   crates: LootCrate[];
   onEnterAirlock?: () => void;
+  lastDummyHitTick?: number;
+  lastDummyHitSide?: "left" | "right";
 }
 
-export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
+export const SectorMap: React.FC<SectorMapProps> = ({ crates, lastDummyHitTick, lastDummyHitSide }) => {
+  const mapRootRef = React.useRef<THREE.Group>(null);
   const [gateLabelTex, setGateLabelTex] = useState<THREE.CanvasTexture | null>(null);
   const [fobLabelTex, setFobLabelTex] = useState<THREE.CanvasTexture | null>(null);
+  const [controlsDecalTex, setControlsDecalTex] = useState<THREE.CanvasTexture | null>(null);
+  const [firingDecalTex, setFiringDecalTex] = useState<THREE.CanvasTexture | null>(null);
+  const [lockerDecalTex, setLockerDecalTex] = useState<THREE.CanvasTexture | null>(null);
+  const [airlockDecalTex, setAirlockDecalTex] = useState<THREE.CanvasTexture | null>(null);
+
+  useEffect(() => {
+    if (mapRootRef.current) {
+      globalCutaway.apply(mapRootRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     const makeTex = (title: string, sub: string, accent: string) => {
@@ -46,12 +168,78 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
       return tex;
     };
 
+    const makeDecalTex = (
+      width: number,
+      height: number,
+      mainText: string,
+      subText: string,
+      accentColor: string,
+      bgColor = "rgba(15, 23, 42, 0.94)"
+    ) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Card Background
+      ctx.fillStyle = bgColor;
+      ctx.roundRect(4, 4, width - 8, height - 8, 8);
+      ctx.fill();
+
+      // Bold Comic Border
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 5;
+      ctx.roundRect(4, 4, width - 8, height - 8, 8);
+      ctx.stroke();
+
+      // Diagonal Hazard Slash Corners
+      ctx.fillStyle = accentColor;
+      ctx.beginPath();
+      ctx.moveTo(6, 32);
+      ctx.lineTo(32, 6);
+      ctx.lineTo(44, 6);
+      ctx.lineTo(6, 44);
+      ctx.closePath();
+      ctx.fill();
+
+      // Main Text
+      ctx.font = "900 " + Math.floor(height * 0.36) + "px monospace";
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(mainText, width / 2, height * 0.38);
+
+      // Sub Text
+      ctx.font = "bold " + Math.floor(height * 0.22) + "px monospace";
+      ctx.fillStyle = accentColor;
+      ctx.fillText(subText, width / 2, height * 0.74);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    };
+
     setGateLabelTex(makeTex("SECTOR 7 COMBAT AIRLOCK", "COMBAT ZONE // WEAPONS HOT", "#d45538"));
     setFobLabelTex(makeTex("FORWARD OPERATING BASE", "SECTOR 7 STAGING OUTPOST", "#151716"));
+    setControlsDecalTex(
+      makeDecalTex(1024, 192, "[WASD] MOVE  •  [SHIFT] SPRINT  •  [C] SLIDE  •  [SPACE] ROLL", "FOB AGILITY TRAINING GROUND // FREE MOVEMENT", "#38bdf8")
+    );
+    setFiringDecalTex(
+      makeDecalTex(1024, 192, "➔ FIRING RANGE // [LEFT CLICK / J] FIRE • [R] RELOAD", "BALLISTIC CALIBRATION LANE // 5M - 10M TARGETS", "#f59e0b")
+    );
+    setLockerDecalTex(
+      makeDecalTex(1024, 192, "➔ TRAINING SUPPLY LOCKER // [E / F] LOOT CACHES", "QUICK-LOOT PRACTICE // TAKE STARTER AMMO & STIMS", "#10b981")
+    );
+    setAirlockDecalTex(
+      makeDecalTex(1024, 192, "▲▲▲ SECTOR 7 COMBAT GATEWAY // STEP THROUGH TO RAID ▲▲▲", "EXTRACTION ZONE DEPLOYMENT // HOSTILES PRESENT // WEAPONS HOT", "#ef4444")
+    );
   }, []);
 
   return (
-    <group>
+    <group ref={mapRootRef}>
       {/* =========================================================================
           1. MAIN DEPOT FLOOR & PERIMETER WALLS (Spoke Area z: -50 to +80)
          ========================================================================= */}
@@ -141,7 +329,7 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
       {/* Central Tactical Guidance Runway (Elevated cleanly atop FOB foundation slab) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.165, -61]} receiveShadow>
         <planeGeometry args={[3.2, 16]} />
-        <meshBasicMaterial color="#1e293b" transparent opacity={0.65} />
+        <meshStandardMaterial color="#1e293b" transparent opacity={0.65} roughness={0.8} />
       </mesh>
 
       {/* Luminous Chevron Directional Ingress Stripes */}
@@ -162,46 +350,64 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
         </group>
       ))}
 
-      {/* FOB Ballistic Training Range & Target Dummies (Safe Weapon Practice Area) */}
-      <group position={[-5.0, 0, -64]}>
-        <mesh position={[0, 0.1, 0]} receiveShadow>
-          <cylinderGeometry args={[0.5, 0.6, 0.2, 16]} />
-          <meshStandardMaterial color="#151716" roughness={0.8} />
+            {/* FOB Ballistic Training Range & Target Dummies (Safe Weapon Practice Area) */}
+      <FOBTargetDummy
+        position={[-5.0, 0, -64]}
+        color="#d97706"
+        side="left"
+        lastHitTick={lastDummyHitTick}
+        hitSide={lastDummyHitSide}
+      />
+      <FOBTargetDummy
+        position={[5.0, 0, -64]}
+        color="#0284c7"
+        side="right"
+        lastHitTick={lastDummyHitTick}
+        hitSide={lastDummyHitSide}
+      />
+
+      {/* FOB Floor Graphic Manga Decals & Stencils */}
+      {controlsDecalTex && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.168, -67.5]} receiveShadow>
+          <planeGeometry args={[5.2, 1.1]} />
+          <meshBasicMaterial map={controlsDecalTex} transparent opacity={0.92} />
         </mesh>
-        <mesh position={[0, 0.9, 0]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 1.4, 8]} />
-          <meshStandardMaterial color="#64748b" roughness={0.5} />
+      )}
+
+      {firingDecalTex && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.6, 0.168, -60.5]} receiveShadow>
+          <planeGeometry args={[4.2, 0.95]} />
+          <meshBasicMaterial map={firingDecalTex} transparent opacity={0.92} />
         </mesh>
-        <mesh position={[0, 1.4, 0]} castShadow>
-          <boxGeometry args={[0.55, 0.75, 0.08]} />
-          <meshStandardMaterial color="#d97706" roughness={0.6} />
+      )}
+
+      {lockerDecalTex && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3.6, 0.168, -60.5]} receiveShadow>
+          <planeGeometry args={[4.2, 0.95]} />
+          <meshBasicMaterial map={lockerDecalTex} transparent opacity={0.92} />
         </mesh>
-        <mesh position={[0, 1.45, 0.05]}>
-          <circleGeometry args={[0.16, 16]} />
-          <meshBasicMaterial color="#ef4444" />
+      )}
+
+      {airlockDecalTex && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.168, -54.8]} receiveShadow>
+          <planeGeometry args={[5.4, 1.0]} />
+          <meshBasicMaterial map={airlockDecalTex} transparent opacity={0.95} />
+        </mesh>
+      )}
+
+      {/* Firing Range Distance Lines (5M and 10M from Dummies at z: -64) */}
+      <group position={[-5.0, 0.166, -59]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[2.8, 0.15]} />
+          <meshBasicMaterial color="#f59e0b" />
         </mesh>
       </group>
-
-      <group position={[5.0, 0, -64]}>
-        <mesh position={[0, 0.1, 0]} receiveShadow>
-          <cylinderGeometry args={[0.5, 0.6, 0.2, 16]} />
-          <meshStandardMaterial color="#151716" roughness={0.8} />
-        </mesh>
-        <mesh position={[0, 0.9, 0]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 1.4, 8]} />
-          <meshStandardMaterial color="#64748b" roughness={0.5} />
-        </mesh>
-        <mesh position={[0, 1.4, 0]} castShadow>
-          <boxGeometry args={[0.55, 0.75, 0.08]} />
-          <meshStandardMaterial color="#0284c7" roughness={0.6} />
-        </mesh>
-        <mesh position={[0, 1.45, 0.05]}>
-          <circleGeometry args={[0.16, 16]} />
-          <meshBasicMaterial color="#ef4444" />
+      <group position={[-5.0, 0.166, -54]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[2.8, 0.15]} />
+          <meshBasicMaterial color="#f59e0b" />
         </mesh>
       </group>
-
-
 
       {/* FOB Staging Terminal Consoles & Power Relays */}
       <InklineModel assetKey="terminalConsole" position={[-3.8, 0, -67]} scale={1.4} rotation={[0, Math.PI / 2, 0]} />
@@ -234,6 +440,8 @@ export const SectorMap: React.FC<SectorMapProps> = ({ crates }) => {
           </mesh>
         </group>
       </group>
+
+
 
       {/* =========================================================================
           4. INSTANCED RAID SPOKE: SECTOR 7 DEPOT CONTAINERS & COVER
