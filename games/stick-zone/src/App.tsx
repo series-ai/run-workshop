@@ -89,6 +89,7 @@ const MainApp: React.FC = () => {
   const prevActionRef = useRef<string>("idle");
   const prevProximityRef = useRef<boolean>(false);
   const prevCashRef = useRef<number>(0);
+  const prevWeaponRef = useRef<string | undefined>(sim.player.weapon);
   const pendingNextRaidId = useRef<string | null>(null);
   const isRestartingRef = useRef<boolean>(false);
 
@@ -399,6 +400,12 @@ const MainApp: React.FC = () => {
         // Tarkov Micro: Enemy tactical voice bark audio
         if (sim.recentBark && sim.recentBark.tick === sim.tick) {
           sound.playScavBark();
+        }
+
+        // Weapon switch tactical sling & bolt slap audio
+        if (sim.player.weapon !== prevWeaponRef.current) {
+          sound.playWeaponSwitch();
+          prevWeaponRef.current = sim.player.weapon;
         }
 
         // Critical low health heartbeat

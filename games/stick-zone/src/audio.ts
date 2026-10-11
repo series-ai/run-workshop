@@ -659,6 +659,46 @@ class SoundSystem {
     osc.start(t);
     osc.stop(t + 0.05);
   }
+
+  /** Tactical weapon switch: sling rustle + heavy chamber bolt slap */
+  public playWeaponSwitch(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+
+    // 1. Tactical sling fabric rustle (bandpass filtered noise)
+    const bufSize = Math.floor(ctx.sampleRate * 0.12);
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.03));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, t);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(t);
+
+    // 2. Heavy steel bolt chamber slap (metallic click at t + 40ms)
+    const boltOsc = ctx.createOscillator();
+    const boltGain = ctx.createGain();
+    boltOsc.type = 'sine';
+    boltOsc.frequency.setValueAtTime(880, t + 0.04);
+    boltOsc.frequency.exponentialRampToValueAtTime(220, t + 0.11);
+    boltGain.gain.setValueAtTime(0.4, t + 0.04);
+    boltGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+    boltOsc.connect(boltGain);
+    boltGain.connect(ctx.destination);
+    boltOsc.start(t + 0.04);
+    boltOsc.stop(t + 0.11);
+  }
 }
 
 export const sound = new SoundSystem();

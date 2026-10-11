@@ -11,6 +11,7 @@ interface ExfilZoneProps {
 
 export const ExfilZone: React.FC<ExfilZoneProps> = ({ exfilState }) => {
   const ringsRef = useRef<THREE.Group>(null);
+  const smokeGroupRef = useRef<THREE.Group>(null);
   const zone = SIM_CONFIG.EXFIL_ZONE;
 
   const currentTicks = exfilState.kind === "holding_zone" ? exfilState.currentTicks : 0;
@@ -20,6 +21,9 @@ export const ExfilZone: React.FC<ExfilZoneProps> = ({ exfilState }) => {
     if (typeof window !== "undefined" && Boolean((window as any).__STICK_ZONE_TEST__?.isPaused)) return;
     if (ringsRef.current) {
       ringsRef.current.rotation.z += delta * 0.4;
+    }
+    if (smokeGroupRef.current) {
+      smokeGroupRef.current.rotation.y += delta * 0.5;
     }
   });
 
@@ -32,9 +36,23 @@ export const ExfilZone: React.FC<ExfilZoneProps> = ({ exfilState }) => {
         scale={3.6}
       />
 
-      {/* Flanking Warp Beacons */}
+      {/* Flanking Warp Beacons & Tarkov Green Flare Exfil Smoke */}
       <InklineModel assetKey="warpBeacon" position={[-zone.radius + 0.8, 0, 0]} scale={1.8} />
       <InklineModel assetKey="warpBeacon" position={[zone.radius - 0.8, 0, 0]} scale={1.8} />
+
+      <pointLight position={[-zone.radius + 0.8, 1.2, 0]} color="#22c55e" intensity={currentTicks > 0 ? 4.5 : 1.2} distance={10} />
+      <pointLight position={[zone.radius - 0.8, 1.2, 0]} color="#22c55e" intensity={currentTicks > 0 ? 4.5 : 1.2} distance={10} />
+
+      <group ref={smokeGroupRef}>
+        <mesh position={[-zone.radius + 0.8, 1.6, 0]}>
+          <cylinderGeometry args={[0.25, 0.5, 3.2, 16]} />
+          <meshBasicMaterial color="#22c55e" transparent opacity={currentTicks > 0 ? 0.4 : 0.12} />
+        </mesh>
+        <mesh position={[zone.radius - 0.8, 1.6, 0]}>
+          <cylinderGeometry args={[0.25, 0.5, 3.2, 16]} />
+          <meshBasicMaterial color="#22c55e" transparent opacity={currentTicks > 0 ? 0.4 : 0.12} />
+        </mesh>
+      </group>
 
       {/* INKLINE Graphic Perimeter Ring (#151716 Pitch Black Ink) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>

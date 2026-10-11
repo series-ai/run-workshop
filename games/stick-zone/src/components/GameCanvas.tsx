@@ -379,6 +379,12 @@ const PresentationFXManager: React.FC<{
           1.4
         );
         effects.trigger(
+          "metal-sparks",
+          new THREE.Vector3(ev.position.x, 0.4, ev.position.z),
+          "#f59e0b",
+          1.2
+        );
+        effects.trigger(
           "crate-break",
           new THREE.Vector3(ev.position.x, 0.4, ev.position.z),
           undefined,
@@ -404,7 +410,7 @@ const PresentationFXManager: React.FC<{
       } else if (ev.type === "grenade_throw") {
         sound.playGrenadePin();
         effects.trigger(
-          "spark-burst",
+          "metal-sparks",
           new THREE.Vector3(ev.origin.x, ev.origin.y, ev.origin.z),
           "#f97316",
           1.2
@@ -415,7 +421,7 @@ const PresentationFXManager: React.FC<{
         effects.trigger("explosion", blastPos, undefined, 2.2);
         effects.trigger("plasma-pulse", blastPos, "#f97316", 2.4);
         effects.trigger("metal-sparks", blastPos, undefined, 1.8);
-        effects.trigger("smoke-ring", blastPos, undefined, 2.0);
+        effects.trigger("smoke-puff", blastPos, undefined, 2.0);
         // Heavy concussion camera impulse
         aimPunchAgeRef.current = 0;
         aimPunchDirRef.current = [(Math.random() - 0.5) * 0.35, 0.25];

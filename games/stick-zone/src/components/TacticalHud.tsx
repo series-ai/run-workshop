@@ -168,7 +168,15 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
       const newLogs = sim.combatLog.slice(lastCombatLogCountRef.current);
       lastCombatLogCountRef.current = sim.combatLog.length;
       for (const log of newLogs) {
-        if (log.includes("Eliminated") || log.includes("Terminated") || log.includes("downed")) {
+        const lower = log.toLowerCase();
+        if (log.includes("[BOSS SLAIN]") || lower.includes("boss slain") || lower.includes("warlord eliminated")) {
+          newEntries.push({
+            id: `boss_kill_${now}_${Math.random()}`,
+            text: "WARLORD PURGED!",
+            sub: "HIGH VALUE TARGET DOWN // +1000 XP",
+            kind: "crit",
+          });
+        } else if (lower.includes("eliminated") || lower.includes("terminated") || lower.includes("downed")) {
           newEntries.push({
             id: `kill_${now}_${Math.random()}`,
             text: "TARGET DOWN!",
