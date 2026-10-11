@@ -31,7 +31,7 @@ export const PerformanceOverlay: React.FC = () => {
         style={{
           position: 'absolute',
           bottom: 12,
-          left: 12,
+          left: 210,
           zIndex: 900,
           background: 'rgba(15, 23, 42, 0.75)',
           border: '1px solid rgba(56, 189, 248, 0.3)',

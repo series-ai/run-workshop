@@ -2335,3 +2335,703 @@ html, body, #root {
   font-family: var(--hud-mono);
   letter-spacing: 0.04em;
 }
+
+/* =========================================================================
+   SURVIV.IO TOP-DOWN HIGH-FIDELITY TACTICAL HUD
+   ========================================================================= */
+
+.surviv-hud-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "JetBrains Mono", sans-serif;
+  user-select: none;
+  color: #f8fafc;
+}
+
+/* --- Top-Left Navigation --- */
+.surviv-top-left {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.surviv-btn-pill {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.15s ease;
+}
+
+.surviv-btn-pill:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.surviv-zone-badge {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  font-weight: 800;
+  font-size: 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* --- Top-Right Alive & Clock --- */
+.surviv-top-right {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.surviv-alive-card {
+  background: rgba(16, 185, 129, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 4px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 54px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.alive-count {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.alive-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #ecfdf5;
+  letter-spacing: 0.06em;
+}
+
+.surviv-clock-badge {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 800;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* --- Bottom-Left: Moving Mini Map --- */
+.surviv-minimap-root {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 176px;
+  height: 176px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  pointer-events: auto;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 25;
+}
+
+.surviv-minimap-compass-n {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 900;
+  color: #ef4444;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.surviv-minimap-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.surviv-minimap-grid-scroll {
+  position: absolute;
+  inset: -20px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  pointer-events: none;
+}
+
+.surviv-minimap-box {
+  position: absolute;
+  background: rgba(71, 85, 105, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.surviv-minimap-crate-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 1px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 5px #f59e0b;
+  pointer-events: none;
+}
+
+.surviv-minimap-enemy-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 5px #ef4444;
+  pointer-events: none;
+}
+
+.surviv-minimap-enemy-dot.boss {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+.surviv-minimap-exfil-pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 8px;
+  font-weight: 800;
+  font-family: monospace;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.surviv-minimap-exfil-pin .exfil-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  border: 1px solid #ffffff;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.surviv-minimap-edge-pointer {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 7.5px;
+  font-weight: 800;
+  font-family: monospace;
+  pointer-events: none;
+  z-index: 12;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.edge-arrow {
+  font-size: 8px;
+}
+
+.surviv-minimap-player-center {
+  position: absolute;
+  top: 88px;
+  left: 88px;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.surviv-player-aim-line {
+  position: absolute;
+  width: 2px;
+  height: 24px;
+  background: linear-gradient(to bottom, #4ade80, transparent);
+  top: 50%;
+  left: 50%;
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.surviv-player-dot {
+  width: 8px;
+  height: 8px;
+  background: #4ade80;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #4ade80;
+}
+
+.surviv-minimap-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: rgba(10, 15, 25, 0.85);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 8.5px;
+  font-family: monospace;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 16;
+}
+
+.surviv-minimap-zoom-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 9px;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 700;
+}
+
+/* --- Mid-Bottom: Health, Armor & Ammo --- */
+.surviv-mid-bottom {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+  z-index: 25;
+}
+
+.surviv-action-channel {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 12px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  margin-bottom: 2px;
+}
+
+.channel-spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #38bdf8;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: surviv-spin 0.8s linear infinite;
+}
+
+.surviv-bleed-alert {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid #ef4444;
+  border-radius: 12px;
+  padding: 3px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #f87171;
+  letter-spacing: 0.05em;
+  animation: surviv-pulse 1.2s ease-in-out infinite;
+  margin-bottom: 2px;
+}
+
+.surviv-ammo-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.surviv-clip-ammo {
+  font-size: 26px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  font-family: monospace;
+}
+
+.surviv-reserve-ammo {
+  font-size: 14px;
+  font-weight: 800;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.surviv-armor-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.surviv-armor-fill {
+  height: 100%;
+  background: #38bdf8;
+  border-radius: 3px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+}
+
+.surviv-health-track {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.surviv-health-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #f43f5e;
+  border-radius: 9px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+}
+
+.surviv-health-fill.critical {
+  background: #ef4444;
+  animation: surviv-pulse 0.8s infinite;
+}
+
+.surviv-health-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+/* --- Bottom-Right: Weapon Choices & Quick Swap --- */
+.surviv-bottom-right {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 25;
+}
+
+.surviv-weapon-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.surviv-weapon-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 140px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.surviv-weapon-slot:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.surviv-weapon-slot.active {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #ffffff;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.25), inset 0 0 8px rgba(255, 255, 255, 0.15);
+}
+
+.slot-key {
+  width: 18px;
+  height: 18px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: monospace;
+  color: #cbd5e1;
+}
+
+.slot-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.slot-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #f8fafc;
+}
+
+.slot-ammo {
+  font-size: 9px;
+  font-family: monospace;
+  color: #94a3b8;
+}
+
+.surviv-gear-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.surviv-gear-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.surviv-gear-btn {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.surviv-gear-btn.active {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: #4ade80;
+  color: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
+}
+
+/* --- Right Rail: Consumables & Loot --- */
+.surviv-right-rail {
+  position: absolute;
+  right: 16px;
+  top: 76px;
+  bottom: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+  z-index: 24;
+}
+
+.surviv-quick-loot-card {
+  background: rgba(15, 23, 42, 0.92);
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  margin-bottom: 4px;
+}
+
+.loot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.loot-card-cash {
+  color: #f59e0b;
+  font-family: monospace;
+}
+
+.surviv-loot-action-btn {
+  width: 100%;
+  background: #d97706;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease;
+}
+
+.surviv-loot-action-btn:hover {
+  background: #b45309;
+}
+
+.surviv-rail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 48px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 3px 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.rail-item.stim-item {
+  cursor: pointer;
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.rail-item.stim-item:hover {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.15);
+}
+
+.rail-icon {
+  font-size: 13px;
+}
+
+.rail-count {
+  font-size: 12px;
+  font-weight: 800;
+  font-family: monospace;
+  color: #f8fafc;
+}
+
+.ammo-chip {
+  width: 48px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 3px 4px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.rifle-chip {
+  background: #eab308;
+  color: #1e293b;
+}
+
+.shotgun-chip {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.surviv-rail-cash {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #f59e0b;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.surviv-rail-keycard {
+  background: rgba(192, 132, 252, 0.2);
+  border: 1.5px solid #c084fc;
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #c084fc;
+  letter-spacing: 0.05em;
+}
+
+@keyframes surviv-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes surviv-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}

@@ -1,1017 +1,586 @@
-import React from "react";
-import {
-  Shield,
-  Heart,
-  Crosshair,
-  Compass,
-} from "lucide-react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { type SectorDepotSimulation, DEPOT_CONTAINERS } from "../sim/game.js";
 import { SIM_CONFIG } from "../sim/config.js";
 import { sound } from "../audio.js";
+import { useStashStore } from "../progression/stashStore.js";
 
 interface TacticalHudProps {
   sim: SectorDepotSimulation;
   onOpenHideout?: () => void;
+  onTriggerKick?: () => void;
 }
 
-export const TacticalHud: React.FC<TacticalHudProps> = React.memo(({ sim, onOpenHideout }) => {
-  const { player, proximityAlert, exfilController, tick } = sim;
-  const isSlidingActive =
-    player.action === "slide" ||
-    !!player.isSliding ||
-    ((player.slideTicksRemaining || 0) > 0);
+/* =========================================================================
+   CLEAN VECTOR SILHOUETTE ICONS (Zero external dependencies)
+   ========================================================================= */
 
-  const isTestMode =
-    typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("testMode") === "1";
+const ShotgunIcon: React.FC<{ active?: boolean }> = ({ active }) => (
+  <svg viewBox="0 0 48 16" width="36" height="12" fill={active ? "#ffffff" : "#94a3b8"}>
+    {/* Pump shotgun silhouette */}
+    <path d="M2 11 L10 11 L14 8 L38 8 L38 6 L46 6 L46 9 L40 9 L40 10 L28 10 L26 12 L16 12 L12 14 L2 14 Z" />
+    <rect x="22" y="11" width="8" height="2" rx="0.5" fill={active ? "#f8fafc" : "#64748b"} />
+  </svg>
+);
 
-  // Floating Kinetic Comic Action Callouts system
-  const [callouts, setCallouts] = React.useState<
-    Array<{
-      id: string;
-      text: string;
-      sub?: string;
-      kind: "crit" | "amber" | "green" | "default";
-    }>
-  >([]);
+const RifleIcon: React.FC<{ active?: boolean }> = ({ active }) => (
+  <svg viewBox="0 0 48 18" width="36" height="14" fill={active ? "#ffffff" : "#94a3b8"}>
+    {/* Carbine rifle silhouette with magazine */}
+    <path d="M2 12 L8 12 L12 9 L22 9 L22 14 L26 14 L26 9 L44 9 L44 7 L46 7 L46 10 L44 10 L42 10 L40 11 L28 11 L24 16 L20 16 L18 11 L10 11 L6 14 L2 14 Z" />
+    <rect x="14" y="5" width="6" height="3" rx="0.5" fill={active ? "#38bdf8" : "#475569"} />
+  </svg>
+);
 
-  const [showIngressBanner, setShowIngressBanner] = React.useState(false);
-  const [isFobMinimized, setIsFobMinimized] = React.useState(true);
-  // Throttled tactical HUD refresh (10 Hz / 100ms) to eliminate 60 FPS React DOM reconciliations
-  const [, setHudTick] = React.useState(0);
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setHudTick((t) => t + 1);
-    }, 100);
-    return () => clearInterval(timer);
-  }, []);
+const FistIcon: React.FC<{ active?: boolean }> = ({ active }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill={active ? "#ffffff" : "#94a3b8"}>
+    {/* Clenched strike fist / martial arts kick */}
+    <path d="M6 5 C6 3.9 6.9 3 8 3 L14 3 C15.1 3 16 3.9 16 5 L16 7 L18 7 C19.1 7 20 7.9 20 9 L20 14 C20 17.3 17.3 20 14 20 L10 20 C6.7 20 4 17.3 4 14 L4 9 C4 7.9 4.9 7 6 7 L6 5 Z M8 5 L8 7 L14 7 L14 5 Z" />
+  </svg>
+);
 
-  const hasShownIngressRef = React.useRef(false);
-  const lastCombatLogCountRef = React.useRef(sim.combatLog.length);
+const GrenadeIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="#10b981">
+    {/* Fragmentation grenade */}
+    <path d="M12 2 C10.9 2 10 2.9 10 4 L14 4 C14 2.9 13.1 2 12 2 Z M10 5 L14 5 L15 7 L9 7 Z M7 9 C6.4 9 6 9.4 6 10 L6 17 C6 19.8 8.2 22 11 22 L13 22 C15.8 22 18 19.8 18 17 L18 10 C18 9.4 17.6 9 17 9 Z" />
+  </svg>
+);
 
-  const lastSlideRef = React.useRef(false);
-  const lastKickRef = React.useRef(false);
-  const lastHitmarkerRef = React.useRef(0);
-  const lastCashRef = React.useRef(player.cash);
-  const lastBleedRef = React.useRef(player.isBleeding);
-  const lastDummyHitRef = React.useRef(0);
-  const lastRollRef = React.useRef(false);
-  const lastReloadRef = React.useRef(false);
+const HelmetIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="#cbd5e1">
+    <path d="M12 3 C6.5 3 2 7.5 2 13 C2 15 3 16 5 16 L6 16 L6 18 C6 19.1 6.9 20 8 20 L10 20 L10 16 L14 16 L14 20 L16 20 C17.1 20 18 19.1 18 18 L18 16 L19 16 C21 16 22 15 22 13 C22 7.5 17.5 3 12 3 Z" />
+  </svg>
+);
 
-  React.useEffect(() => {
-    if (isTestMode) return;
-    const isSlidingNow =
-      player.action === "slide" ||
-      !!player.isSliding ||
-      ((player.slideTicksRemaining || 0) > 0);
-    const isKickingNow = player.action === "kick";
-    const now = Date.now();
+const VestIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="#38bdf8">
+    <path d="M6 3 L10 3 L11 7 L13 7 L14 3 L18 3 L20 9 L18 11 L18 20 L6 20 L6 11 L4 9 Z M9 10 L15 10 L15 13 L9 13 Z M9 15 L15 15 L15 18 L9 18 Z" />
+  </svg>
+);
 
-    const newEntries: Array<{
-      id: string;
-      text: string;
-      sub?: string;
-      kind: "crit" | "amber" | "green" | "default";
-    }> = [];
+const BackpackIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b">
+    <path d="M8 3 C8 1.9 8.9 1 10 1 L14 1 C15.1 1 16 1.9 16 3 L19 3 C20.1 3 21 3.9 21 5 L21 19 C21 20.7 19.7 22 18 22 L6 22 C4.3 22 3 20.7 3 19 L3 5 C3 3.9 3.9 3 5 3 Z M7 8 L17 8 L17 14 L7 14 Z M7 16 L17 16 L17 20 L7 20 Z" />
+  </svg>
+);
 
-    const isRollingNow = player.action === "roll";
-    const isReloadingNow = player.action === "reload";
+/* =========================================================================
+   SURVIV.IO STYLE MOVING MINIMAP
+   ========================================================================= */
 
-    // Kinetic Roll Callout
-    if (isRollingNow && !lastRollRef.current) {
-      newEntries.push({
-        id: `roll_${now}`,
-        text: "EVADE!",
-        sub: "IFRAME COMBAT ROLL",
-        kind: "default",
-      });
-    }
-    lastRollRef.current = isRollingNow;
+const SurvivMinimap: React.FC<{ sim: SectorDepotSimulation }> = React.memo(({ sim }) => {
+  const { player } = sim;
+  const [zoomLevel, setZoomLevel] = useState<1 | 2>(1); // 1 = 42m radius, 2 = 75m radius
+  const radarRadius = zoomLevel === 1 ? 42 : 75;
+  const boxSize = 176;
+  const center = boxSize / 2; // 88px
+  const pxPerMeter = center / radarRadius;
 
-    // Tactical Reload Callout
-    if (isReloadingNow && !lastReloadRef.current) {
-      newEntries.push({
-        id: `reload_${now}`,
-        text: "KLIK-KLAK!",
-        sub: "TACTICAL RELOAD",
-        kind: "default",
-      });
-    }
-    lastReloadRef.current = isReloadingNow;
+  // Heading angle in degrees for screen rotation: 0 rad (+Z / South) = 180 deg
+  const headingDeg = (player.facing * 180) / Math.PI;
 
-    // Target Dummy Hit Callout (Rendered directly over target in 3D world space)
-    if (sim.lastDummyHitTick && sim.lastDummyHitTick !== lastDummyHitRef.current) {
-      lastDummyHitRef.current = sim.lastDummyHitTick;
-    }
+  // Background grid translation (modulo 12m cell)
+  const gridCellPx = 12 * pxPerMeter;
+  const gridOffsetX = (-player.x * pxPerMeter) % gridCellPx;
+  const gridOffsetY = (-player.z * pxPerMeter) % gridCellPx;
 
-    // Kinetic Slide Callout
-    if (isSlidingNow && !lastSlideRef.current) {
-      newEntries.push({
-        id: `slide_${now}`,
-        text: "SLIDE!",
-        sub: "KINETIC EVASION",
-        kind: "amber",
-      });
-    }
-    lastSlideRef.current = isSlidingNow;
-
-    // Kinetic Kick Callout
-    if (isKickingNow && !lastKickRef.current) {
-      newEntries.push({
-        id: `kick_${now}`,
-        text: "ROUNDHOUSE KICK!",
-        sub: "35 DMG // KNOCKBACK",
-        kind: "crit",
-      });
-    }
-    lastKickRef.current = isKickingNow;
-
-    // Dynamic Hitmarker Callout (Rendered directly over target in 3D world space)
-    if (
-      player.lastHitmarkerTick &&
-      player.lastHitmarkerTick !== lastHitmarkerRef.current
-    ) {
-      lastHitmarkerRef.current = player.lastHitmarkerTick;
-    }
-
-    // Scavenged Cash Callout
-    if (player.cash > lastCashRef.current) {
-      const delta = player.cash - lastCashRef.current;
-      newEntries.push({
-        id: `loot_${now}`,
-        text: `+$${delta.toLocaleString()}`,
-        sub: "SUPPLY SECURED",
-        kind: "amber",
-      });
-    }
-    lastCashRef.current = player.cash;
-
-    // Bleeding Alert Callout
-    if (player.isBleeding && !lastBleedRef.current) {
-      newEntries.push({
-        id: `bleed_${now}`,
-        text: "BLEEDING!",
-        sub: "PRESS [H] TO STIM",
-        kind: "crit",
-      });
-    }
-    lastBleedRef.current = player.isBleeding;
-
-    // Elimination / Kill Confirmed Callout
-    if (sim.combatLog.length > lastCombatLogCountRef.current) {
-      const newLogs = sim.combatLog.slice(lastCombatLogCountRef.current);
-      lastCombatLogCountRef.current = sim.combatLog.length;
-      for (const log of newLogs) {
-        const lower = log.toLowerCase();
-        if (log.includes("[BOSS SLAIN]") || lower.includes("boss slain") || lower.includes("warlord eliminated")) {
-          newEntries.push({
-            id: `boss_kill_${now}_${Math.random()}`,
-            text: "WARLORD PURGED!",
-            sub: "HIGH VALUE TARGET DOWN // +1000 XP",
-            kind: "crit",
-          });
-        } else if (lower.includes("eliminated") || lower.includes("terminated") || lower.includes("downed")) {
-          newEntries.push({
-            id: `kill_${now}_${Math.random()}`,
-            text: "TARGET DOWN!",
-            sub: "KILL CONFIRMED // +250 XP",
-            kind: "crit",
-          });
-        }
-      }
-    }
-
-    if (newEntries.length > 0) {
-      setCallouts((prev) => [...prev.slice(-2), ...newEntries]);
-      const timer = setTimeout(() => {
-        setCallouts((prev) =>
-          prev.filter((c) => !newEntries.some((n) => n.id === c.id))
-        );
-      }, 700);
-  return () => clearTimeout(timer);
-    }
-  }, [
-    isTestMode,
-    player.action,
-    player.isSliding,
-    player.slideTicksRemaining,
-    player.lastHitmarkerTick,
-    player.lastHitmarkerCrit,
-    player.cash,
-    player.isBleeding,
-    player.weapon,
-    player.action,
-    sim.lastDummyHitTick,
-  ]);
-
-  // Sector Gateway Ingress Banner (Triggered when entering combat zone)
-  React.useEffect(() => {
-    if (isTestMode) return;
-    if ((sim.zoneMode === "spoke" || player.z > -52) && !hasShownIngressRef.current) {
-      hasShownIngressRef.current = true;
-      setShowIngressBanner(true);
-      const timer = setTimeout(() => setShowIngressBanner(false), 2400);
-      return () => clearTimeout(timer);
-    } else if (sim.zoneMode === "hub" && player.z < -62) {
-      hasShownIngressRef.current = false;
-    }
-  }, [isTestMode, sim.zoneMode, player.z]);
-
-  // Warlord Priority Boss Threat Proximity Detection
-  const isWarlordNear = React.useMemo(() => {
-    if (isTestMode || sim.zoneMode === "hub") return false;
-    return sim.rivals.some(
-      (r) => r.isAlive && (r.id === "scav_boss_warlord" || r.badge === "WARLORD" || /boss|warlord/i.test(r.name)) && Math.hypot(r.x - player.x, r.z - player.z) < 26
-    );
-  }, [isTestMode, sim.zoneMode, sim.rivals, player.x, player.z]);
-
-  // Anime Action Speed Lines Canvas Overlay (active on slide or sprint)
-  const speedLinesCanvasRef = React.useRef<HTMLCanvasElement>(null);
-
-  React.useEffect(() => {
-    if (isTestMode) return;
-    const canvas = speedLinesCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-
-    const renderSpeedLines = () => {
-      if (!canvas) return;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
-      }
-
-      ctx.clearRect(0, 0, w, h);
-
-      const isSprinting = player.action === "sprint";
-      const isSliding =
-        player.action === "slide" ||
-        !!player.isSliding ||
-        ((player.slideTicksRemaining || 0) > 0);
-
-      if (isSliding || isSprinting) {
-        const cx = w / 2;
-        const cy = h / 2;
-        const lineCount = isSliding ? 34 : 18;
-        const innerRadius = isSliding
-          ? Math.min(w, h) * 0.22
-          : Math.min(w, h) * 0.32;
-        const maxDist = Math.hypot(w / 2, h / 2);
-
-        for (let i = 0; i < lineCount; i++) {
-          const angle =
-            (Math.PI * 2 * i) / lineCount + (Math.random() - 0.5) * 0.12;
-          const outerDist = maxDist * (0.8 + Math.random() * 0.3);
-          const startDist = innerRadius * (1.0 + Math.random() * 0.4);
-
-          const x1 = cx + Math.cos(angle) * outerDist;
-          const y1 = cy + Math.sin(angle) * outerDist;
-          const x2 = cx + Math.cos(angle) * startDist;
-          const y2 = cy + Math.sin(angle) * startDist;
-
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.strokeStyle = Math.random() < 0.25 ? "#eeece5" : "#151716";
-          ctx.lineWidth = isSliding
-            ? 2.5 + Math.random() * 3.5
-            : 1.5 + Math.random() * 2.0;
-          ctx.lineCap = "round";
-          ctx.globalAlpha = 0.55 + Math.random() * 0.4;
-          ctx.stroke();
-        }
-      }
-
-      animId = requestAnimationFrame(renderSpeedLines);
-    };
-
-    animId = requestAnimationFrame(renderSpeedLines);
-    return () => cancelAnimationFrame(animId);
-  }, [isTestMode, player.action, player.isSliding, player.slideTicksRemaining]);
-
-  // Match time formatted
-  const remainingTicks = Math.max(0, SIM_CONFIG.RAID_DEADLINE_TICK - tick);
-  const totalSeconds = Math.floor(remainingTicks / SIM_CONFIG.TICKS_PER_SECOND);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const timeFormatted = `${minutes}:${String(seconds).padStart(2, "0")}`;
-
-  const exfilState = exfilController.getState();
-  const isHoldingLZ = exfilState.kind === "holding_zone";
-  const holdTicks = isHoldingLZ ? exfilState.currentTicks : 0;
-  const recentInterruption =
-    sim.lastInterruptionTick > 0 && tick - sim.lastInterruptionTick < 120;
-  const showResetBanner = !isHoldingLZ
-    ? sim.lastInterruptionTick > 0 && tick - sim.lastInterruptionTick < 300
-    : recentInterruption;
-
-  const nearbyCrate = sim.crates.find(
-    (c) => !c.opened && Math.hypot(player.x - c.x, player.z - c.z) <= 4.0
-  );
-
-  const isCriticalHealth = player.isAlive && player.health < 30;
-
-  const headingDeg = Math.round(
-    (((Math.atan2(Math.sin(player.facing), -Math.cos(player.facing)) * 180) /
-      Math.PI +
-      360) %
-      360 +
-      360) %
-      360
-  );
-  const CARDINALS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
-  const currentCardinal = CARDINALS[Math.round(headingDeg / 45) % 8];
-
+  // Extraction sites in spoke / hub
   const isHub = sim.zoneMode === "hub";
-  const mapMinX = isHub ? -20 : -65;
-  const mapMaxX = isHub ? 20 : 65;
-  const mapMinZ = isHub ? -80 : -55;
-  const mapMaxZ = isHub ? -45 : 65;
-
-  const toMapPct = (x: number, z: number) => {
-    const px = Math.max(6, Math.min(94, ((x - mapMinX) / (mapMaxX - mapMinX)) * 100));
-    const py = Math.max(6, Math.min(94, ((z - mapMinZ) / (mapMaxZ - mapMinZ)) * 100));
-    return { left: `${px}%`, top: `${py}%` };
-  };
+  const exfilSites = isHub
+    ? [{ id: "airlock", name: "AIRLOCK", x: 0, z: -52, color: "#38bdf8" }]
+    : [
+        { id: "lz1", name: "LZ-1", x: 45, z: 45, color: "#10b981" },
+        { id: "bnk", name: "BNK", x: -45, z: -45, color: "#c084fc" },
+        { id: "fob", name: "FOB", x: 0, z: -48, color: "#38bdf8" },
+      ];
 
   return (
-    <div className="tactical-hud hud-layer">
-      {/* Anime Kinetic Speed Lines Canvas Overlay */}
-      {!isTestMode && (isSlidingActive || player.action === "sprint" || sim.zoneMode === "airlock_corridor") && (
-        <canvas
-          ref={speedLinesCanvasRef}
-          className="anime-speed-lines-canvas"
-        />
-      )}
+    <div className="surviv-minimap-root">
+      {/* North Compass Indicator */}
+      <div className="surviv-minimap-compass-n">N</div>
 
-      {/* Floating Kinetic Comic Action Callouts */}
-      {!isTestMode && callouts.length > 0 && (
-        <div className="comic-callouts-container">
-          {callouts.map((c) => (
+      {/* Viewport Canvas Clip */}
+      <div className="surviv-minimap-viewport">
+        {/* Smooth Scrolling Terrain Grid */}
+        <div
+          className="surviv-minimap-grid-scroll"
+          style={{
+            backgroundSize: `${gridCellPx}px ${gridCellPx}px`,
+            backgroundPosition: `${gridOffsetX}px ${gridOffsetY}px`,
+          }}
+        />
+
+        {/* Cargo Containers relative to player */}
+        {DEPOT_CONTAINERS.map((box, idx) => {
+          const x1 = center + (box.minX - player.x) * pxPerMeter;
+          const y1 = center + (box.minZ - player.z) * pxPerMeter;
+          const w = (box.maxX - box.minX) * pxPerMeter;
+          const h = (box.maxZ - box.minZ) * pxPerMeter;
+
+          // Cull out of bounds
+          if (x1 + w < -10 || x1 > boxSize + 10 || y1 + h < -10 || y1 > boxSize + 10) return null;
+
+          return (
+            <div
+              key={idx}
+              className="surviv-minimap-box"
+              style={{
+                left: `${x1}px`,
+                top: `${y1}px`,
+                width: `${w}px`,
+                height: `${h}px`,
+              }}
+            />
+          );
+        })}
+
+        {/* Supply Crates */}
+        {sim.crates.map((c) => {
+          if (c.opened) return null;
+          const cx = center + (c.x - player.x) * pxPerMeter;
+          const cy = center + (c.z - player.z) * pxPerMeter;
+          if (cx < 4 || cx > boxSize - 4 || cy < 4 || cy > boxSize - 4) return null;
+
+          return (
             <div
               key={c.id}
-              className={`comic-callout-card ${
-                c.kind === "crit"
-                  ? "comic-callout-crit"
-                  : c.kind === "amber"
-                  ? "comic-callout-amber"
-                  : c.kind === "green"
-                  ? "comic-callout-green"
-                  : ""
-              }`}
-            >
-              <span className="main-text">{c.text}</span>
-              {c.sub && <span className="sub-text">{c.sub}</span>}
-            </div>
-          ))}
-        </div>
-      )}
+              className="surviv-minimap-crate-dot"
+              style={{ left: `${cx}px`, top: `${cy}px` }}
+              title="Supply Cache"
+            />
+          );
+        })}
 
-      {/* Sector Gateway Ingress Graphic Banner */}
-      {!isTestMode && showIngressBanner && (
-        <div className="sector-ingress-banner">
-          <div className="banner-watermark-text" aria-hidden="true">COMBAT ZONE</div>
-          <div className="banner-ribbon"><span>SECTOR 7 DEPOT // AIRLOCK CLEARED</span></div>
-          <div className="banner-title">WEAPONS HOT</div>
-        </div>
-      )}
+        {/* Enemy Scav Contacts */}
+        {sim.rivals.map((r) => {
+          if (!r.isAlive || r.isExtracted) return null;
+          const rx = center + (r.x - player.x) * pxPerMeter;
+          const ry = center + (r.z - player.z) * pxPerMeter;
+          const isBoss = r.id === "scav_boss_warlord" || /boss|warlord/i.test(r.name);
 
-      {/* Sector Warlord Priority Threat Warning Banner */}
-      {!isTestMode && isWarlordNear && (
-        <div className="warlord-alert-banner">
-          <div className="banner-watermark-text" aria-hidden="true">HOSTILE</div>
-          <div className="banner-ribbon warlord-ribbon"><span>// PRIORITY TARGET DETECTED //</span></div>
-          <div className="banner-title warlord-title">SECTOR WARLORD ENGAGED</div>
-        </div>
-      )}
+          if (rx < 4 || rx > boxSize - 4 || ry < 4 || ry > boxSize - 4) return null;
 
-      {/* Critical Health Vignette */}
-      {isCriticalHealth && <div className="critical-health-vignette" />}
+          return (
+            <div
+              key={r.id}
+              className={`surviv-minimap-enemy-dot ${isBoss ? "boss" : ""}`}
+              style={{ left: `${rx}px`, top: `${ry}px` }}
+              title={r.name}
+            />
+          );
+        })}
 
-      {/* Directional Screen-Edge Trauma Vignette */}
-      {sim.lastDamageDirectionDeg !== null && sim.lastPlayerDamageTick > 0 && (sim.tick - sim.lastPlayerDamageTick < 36) && (
-        <div
-          className="damage-directional-vignette"
-          style={{
-            opacity: Math.max(0, 1 - (sim.tick - sim.lastPlayerDamageTick) / 36),
-            background: `radial-gradient(ellipse at ${Math.round(50 + 50 * Math.sin((sim.lastDamageDirectionDeg * Math.PI) / 180))}%${" "}
-              ${Math.round(50 - 50 * Math.cos((sim.lastDamageDirectionDeg * Math.PI) / 180))}%, rgba(239, 68, 68, 0.75) 0%, rgba(220, 38, 38, 0.25) 30%, transparent 65%)`,
-          }}
-        />
-      )}
+        {/* Extraction Points: In-View or Clamped to Edge */}
+        {exfilSites.map((site) => {
+          const dx = site.x - player.x;
+          const dz = site.z - player.z;
+          const dist = Math.hypot(dx, dz);
+          const rawX = center + dx * pxPerMeter;
+          const rawY = center + dz * pxPerMeter;
 
-      {/* High-Visibility Directional Damage Arc Indicators */}
-      {sim.damageIndicators.length > 0 && (
-        <div className="directional-damage-container" aria-hidden="true">
-          {sim.damageIndicators.map((indicator) => {
-            const ageTicks = sim.tick - indicator.tick;
-            if (ageTicks < 0 || ageTicks >= 80) return null;
-            const opacity = Math.max(0, 1 - ageTicks / 75);
-            const scale = 1 + (ageTicks / 75) * 0.12;
+          const isInside = rawX >= 14 && rawX <= boxSize - 14 && rawY >= 14 && rawY <= boxSize - 14;
 
+          if (isInside) {
             return (
               <div
-                key={indicator.id}
-                className="directional-damage-indicator"
-                style={{
-                  transform: `translate(-50%, -50%) rotate(${indicator.angleDeg}deg)`,
-                  opacity,
-                }}
+                key={site.id}
+                className="surviv-minimap-exfil-pin"
+                style={{ left: `${rawX}px`, top: `${rawY}px`, color: site.color }}
               >
-                <svg
-                  className="damage-indicator-arc"
-                  viewBox="0 0 160 60"
-                  width="160"
-                  height="60"
-                  style={{ transform: `scale(${scale})` }}
-                >
-                  <defs>
-                    <linearGradient id={`dmg-grad-${indicator.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#ef4444" stopOpacity="0" />
-                      <stop offset="25%" stopColor="#ef4444" stopOpacity="0.85" />
-                      <stop offset="50%" stopColor="#ff2222" stopOpacity="1" />
-                      <stop offset="75%" stopColor="#ef4444" stopOpacity="0.85" />
-                      <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  {/* Curved danger arc */}
-                  <path
-                    d="M 12 48 Q 80 8 148 48"
-                    fill="none"
-                    stroke={`url(#dmg-grad-${indicator.id})`}
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                  />
-                  {/* Directional chevron arrowhead pointing towards threat */}
-                  <polygon
-                    points="80,10 68,26 80,21 92,26"
-                    fill="#ff2222"
-                  />
-                </svg>
+                <div className="exfil-dot" style={{ background: site.color }} />
+                <span>{site.name}</span>
               </div>
             );
-          })}
-        </div>
-      )}
+          }
 
-      {/* Tarkov Micro: Directional Trauma Impact Flash Vignette */}
-      {sim.lastPlayerDamageTick > 0 && (sim.tick - sim.lastPlayerDamageTick < 12) && (
-        <div className="damage-flash-vignette" />
-      )}
+          // Edge clamping with distance tag
+          const angle = Math.atan2(dz, dx);
+          const clampRadius = center - 14;
+          const edgeX = center + Math.cos(angle) * clampRadius;
+          const edgeY = center + Math.sin(angle) * clampRadius;
 
-      {/* Tarkov Micro: Tactical Radio Intercept Banner */}
-      {sim.recentBark && (sim.tick - sim.recentBark.tick < 90) && (
-        <div className={`tactical-radio-banner ${sim.recentBark.isBoss ? "boss-bark" : ""}`}>
-          <span className="radio-icon">📻</span>
-          <span className="radio-label">COMMS INTERCEPT // {sim.recentBark.sender}:</span>
-          <span className="radio-quote">"{sim.recentBark.text}"</span>
-        </div>
-      )}
+          return (
+            <div
+              key={site.id}
+              className="surviv-minimap-edge-pointer"
+              style={{ left: `${edgeX}px`, top: `${edgeY}px`, color: site.color }}
+              title={`${site.name} (${Math.round(dist)}m)`}
+            >
+              <div className="edge-arrow" style={{ transform: `rotate(${(angle * 180) / Math.PI}deg)` }}>
+                ▶
+              </div>
+              <span className="edge-label">{site.name} {Math.round(dist)}m</span>
+            </div>
+          );
+        })}
 
-      {/* Tarkov Micro: Active Frag Grenade Proximity Alarm */}
-      {sim.activeGrenades.some((g) => Math.hypot(g.x - player.x, g.z - player.z) <= 8.5) && (
-        <div className="grenade-warning-banner">
-          <span className="warning-icon">💣</span>
-          <span className="warning-text">INCOMING FRAG GRENADE! ROLL [SPACE] TO EVADE!</span>
-        </div>
-      )}
-
-      
-
-            {/* Contextual Airlock Proximity Prompt */}
-      {sim.zoneMode === "hub" && Math.hypot(player.x, player.z - (-52)) < 7.5 && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "108px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(12, 16, 22, 0.88)",
-            border: "1px solid rgba(74, 222, 128, 0.35)",
-            borderRadius: "4px",
-            padding: "8px 20px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            pointerEvents: "none",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ fontSize: "12px", fontWeight: 800, color: "#f8fafc", letterSpacing: "0.08em", fontFamily: "var(--hud-mono)" }}>
-            [E] ENTER COMBAT AIRLOCK // DEPLOY INTO SECTOR 7
-          </div>
-          <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px", fontFamily: "var(--hud-mono)" }}>
-            Step onto airlock threshold or interact to commence extraction run
-          </div>
-        </div>
-      )}
-
-      {/* Full-Screen Kinetic Manga Ingress Splash */}
-      {sim.zoneMode === "airlock_corridor" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "40%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "10px",
-            pointerEvents: "none",
-            zIndex: 100,
-          }}
-        >
+        {/* Central Player Marker */}
+        <div className="surviv-minimap-player-center">
+          {/* Aiming / View Direction Ray */}
           <div
-            style={{
-              fontSize: "22px",
-              fontWeight: 900,
-              color: "#f8fafc",
-              background: "rgba(15, 23, 42, 0.94)",
-              border: "3px solid #38bdf8",
-              padding: "14px 28px",
-              borderRadius: "12px",
-              boxShadow: "0 0 32px rgba(56, 189, 248, 0.8)",
-              letterSpacing: "2px",
-              textTransform: "uppercase",
-              textAlign: "center",
-            }}
-          >
-            ⚡ INGRESS AUTHORIZED // DEPLOYING INTO SECTOR 7 ⚡
-          </div>
-          <div style={{ fontSize: "12px", color: "#38bdf8", fontWeight: 800, fontFamily: "monospace" }}>
-            WEAPONS HOT • EXTRACTION CLOCK COMMENCING
-          </div>
-        </div>
-      )}
-
-
-
-      {/* ============================================================
-          AUTHENTIC DIEGETIC MILITARY GAME HUD (Sol 6.1 High Architecture)
-          ============================================================ */}
-      <span className="tactical-badge hud-panel" style={{ display: "none" }} />
-
-      {/* Top Left: Callsign & Arsenal Station */}
-      <div className="hud-station hud-callsign">
-        <div className="hud-shell">
-          <div className="hud-shell__body">
-            <div className="hud-label">// OPERATIONAL SECTOR</div>
-            <div className="hud-callsign-name">
-              {sim.zoneMode === "hub" ? "FOB STAGING // SECTOR 7" : "SECTOR 7 // DEPOT RAID"}
-            </div>
-            <div className="hud-callsign-sub">
-              {sim.zoneMode === "hub" ? "OUTPOST SECURE • PRE-RAID" : "HOSTILE INGRESS • WEAPONS HOT"}
-            </div>
-
-            {sim.squadmate && sim.squadmate.isAlive && (
-              <div className="hud-squadmate-tag">
-                <span>◇ VIPER-2:</span>
-                <span style={{ color: sim.squadmate.health > 40 ? "var(--hud-phosphor)" : "var(--hud-danger)" }}>
-                  {sim.squadmate.health} HP
-                </span>
-              </div>
-            )}
-
-            {sim.zoneMode === "hub" && (
-              <div style={{ marginTop: "6px", borderTop: "1px solid var(--hud-line)", paddingTop: "6px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span className="hud-label">PRE-FLIGHT READINESS</span>
-                  <button
-                    onClick={() => setIsFobMinimized(!isFobMinimized)}
-                    className="hud-switch"
-                    style={{ minHeight: "20px", padding: "1px 6px", fontSize: "8.5px" }}
-                    title="Toggle Pre-Flight Task List"
-                  >
-                    {[sim.trainingProgress?.dummyHit, sim.trainingProgress?.agilityUsed, sim.trainingProgress?.crateLooted].filter(Boolean).length}/3 {isFobMinimized ? "▼" : "▲"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "6px" }}>
-              {onOpenHideout && (
-                <button
-                  onClick={onOpenHideout}
-                  className="hud-switch"
-                  title="Open Tactical Stash & Armory [TAB]"
-                >
-                  [TAB] ARSENAL
-                </button>
-              )}
-              {proximityAlert.distance < 45 ? (
-                <span className="hud-proximity-alert">
-                  ⚠️ HOSTILE {Math.round(proximityAlert.distance)}M
-                </span>
-              ) : (
-                <span className="hud-proximity-clear">
-                  RADAR CLEAR
-                </span>
-              )}
-            </div>
-          </div>
+            className="surviv-player-aim-line"
+            style={{ transform: `rotate(${headingDeg}deg)` }}
+          />
+          {/* Player core dot */}
+          <div className="surviv-player-dot" />
         </div>
       </div>
 
-      {/* Top Right: Telemetry & Tactical Radar Station */}
-      <div className="hud-station hud-telemetry">
-        <div className="hud-shell">
-          <div className="hud-shell__body">
-            {sim.zoneMode === "hub" ? (
-              <>
-                <div className="hud-telemetry-row">
-                  <span className="hud-label">BASE CAMP</span>
-                  <span className="hud-exfil-timer" style={{ color: "var(--hud-phosphor)", fontSize: "14px" }}>
-                    SECURE
-                  </span>
-                </div>
-                <div className="hud-telemetry-status">
-                  <span className="hud-status-indicator" style={{ background: "var(--hud-phosphor)" }} />
-                  <span>AIRLOCK READY (z: -52)</span>
-                </div>
-                <div style={{ fontSize: "8.5px", color: "var(--hud-muted)", marginBottom: "6px" }}>
-                  OBJ: STEP ONTO AIRLOCK PAD TO INGRESS
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="hud-telemetry-row">
-                  <span className="hud-label">RAID CLOCK</span>
-                  <span
-                    className="hud-exfil-timer"
-                    style={{ color: totalSeconds < 180 ? "var(--hud-danger)" : "var(--hud-warning)" }}
-                  >
-                    {timeFormatted}
-                  </span>
-                </div>
-                <div className="hud-telemetry-status">
-                  <span
-                    className="hud-status-indicator"
-                    style={{
-                      background: isHoldingLZ
-                        ? "var(--hud-warning)"
-                        : exfilState.kind === "extracted"
-                        ? "#10b981"
-                        : "var(--hud-phosphor)",
-                    }}
-                  />
-                  <span>
-                    {isHoldingLZ
-                      ? `EXTRACTING: ${((SIM_CONFIG.EXFIL_HOLD_TICKS - holdTicks) / 60).toFixed(1)}s`
-                      : exfilState.kind === "extracted"
-                      ? "EXTRACTION COMPLETE"
-                      : "EXFIL SITES OPEN"}
-                  </span>
-                </div>
-                {/* Tactical Extraction Points List */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "2px", fontSize: "8.5px", marginBottom: "6px", fontFamily: "var(--hud-mono)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", color: isHoldingLZ ? "var(--hud-warning)" : "var(--hud-phosphor)" }}>
-                    <span>LZ-01 [45, 45]:</span>
-                    <span>{isHoldingLZ ? "HOLDING..." : "ACTIVE"}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", color: player.hasKeycard ? "#c084fc" : "var(--hud-muted)" }}>
-                    <span>BUNKER [-45, -45]:</span>
-                    <span>{player.hasKeycard ? "UNLOCKED" : "KEYCARD REQ"}</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Real Functional Tactical Minimap */}
-            <div className="hud-minimap-container">
-              <div className="hud-minimap-grid" />
-              <div className="hud-minimap-runway" />
-
-              {/* Extraction / Gateway Points */}
-              {isHub ? (
-                <>
-                  <div className="hud-minimap-zone airlock" style={toMapPct(0, -52)}>
-                    <div className="zone-dot" />
-                    <span>GATE</span>
-                  </div>
-                  <div className="hud-minimap-zone" style={{ ...toMapPct(-5, -64), color: "#f59e0b" }}>
-                    <div className="zone-dot" style={{ borderRadius: "50%" }} />
-                    <span>DUMMY</span>
-                  </div>
-                  <div className="hud-minimap-zone" style={{ ...toMapPct(5, -64), color: "#f59e0b" }}>
-                    <div className="zone-dot" style={{ borderRadius: "50%" }} />
-                    <span>DUMMY</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="hud-minimap-zone lz" style={toMapPct(45, 45)}>
-                    <div className="zone-dot" />
-                    <span>LZ-1</span>
-                  </div>
-                  <div className="hud-minimap-zone bunker" style={toMapPct(-45, -45)}>
-                    <div className="zone-dot" />
-                    <span>BNK</span>
-                  </div>
-                  <div className="hud-minimap-zone airlock" style={toMapPct(0, -48)}>
-                    <div className="zone-dot" />
-                    <span>FOB</span>
-                  </div>
-                </>
-              )}
-
-              {/* Loot Crates */}
-              {sim.crates.map((c) => {
-                if (c.opened) return null;
-                const pos = toMapPct(c.x, c.z);
-                return (
-                  <div
-                    key={c.id}
-                    className="hud-minimap-crate"
-                    style={pos}
-                    title="Supply Crate"
-                  />
-                );
-              })}
-
-              {/* Enemy Contacts */}
-              {sim.rivals.map((r) => {
-                if (!r.isAlive || r.isExtracted) return null;
-                const pos = toMapPct(r.x, r.z);
-                const isBoss = r.id === "scav_boss_warlord" || /boss|warlord/i.test(r.name);
-                return (
-                  <div
-                    key={r.id}
-                    className={`hud-minimap-enemy ${isBoss ? "boss" : ""}`}
-                    style={pos}
-                    title={r.name}
-                  />
-                );
-              })}
-
-              {/* Player Icon with Heading Arrow */}
-              <div
-                className="hud-minimap-player"
-                style={{
-                  ...toMapPct(player.x, player.z),
-                  transform: `translate(-50%, -50%) rotate(${headingDeg}deg)`,
-                }}
-              >
-                <span className="player-arrow">▲</span>
-              </div>
-            </div>
-
-            <div className="hud-minimap-footer">
-              [{Math.round(player.x)}, {Math.round(player.z)}] • {currentCardinal} {String(headingDeg).padStart(3, "0")}°
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Center Dynamic Tactical Banners */}
-      <div className="hud-center-alerts">
-        {isHoldingLZ && !recentInterruption && (
-          <div className="hud-alert-banner banner-holding">
-            HOLDING EXTRACTION LZ: {(holdTicks / 60).toFixed(1)}s / 3.0s
-          </div>
-        )}
-
-        {showResetBanner && (
-          <div className="hud-alert-banner banner-reset">
-            DAMAGE INTERRUPTION — LZ HOLD RESET!
-          </div>
-        )}
-
-        {player.isBleeding && (
-          <div
-            onClick={() => {
-              if (sim.useStim()) sound.playHealInject();
-            }}
-            className="hud-alert-banner banner-bleed"
-            title="Inject Combat Stim [H]"
-          >
-            ⚠️ ARTERIAL BLEED! PRESS [H] TO STIM
-          </div>
-        )}
-
-        {player.hasKeycard && !sim.isPlayerInExfilZone() && !nearbyCrate && (
-          <div className="hud-alert-banner banner-keycard">
-            💳 VIOLET KEYCARD ACTIVE — EMERGENCY BUNKER (-45, -45)
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Left: Military Combat Vitals Station */}
-      <div className="hud-station hud-vitals">
-        <div className="hud-shell">
-          <div className="hud-shell__body">
-            {(player as any).ingressShieldTicks > 0 && (
-              <div className="hud-shield-banner">
-                ⚡ INGRESS SHIELD ACTIVE
-              </div>
-            )}
-
-            <div className="hud-vitals-header">
-              <span className="hud-label">OPERATIVE HEALTH</span>
-              <span className={`hud-vitals-val ${player.health < 30 ? "hud-danger" : "hud-phosphor"}`}>
-                {Math.round(player.health)} / 100
-              </span>
-            </div>
-
-            {/* 5-Pip Discrete Military Health Cells */}
-            <div className="hud-cells hud-cells--health">
-              {[0, 1, 2, 3, 4].map((pipIdx) => {
-                const pipMin = pipIdx * 20;
-                const fillPct = Math.min(100, Math.max(0, ((player.health - pipMin) / 20) * 100));
-                return (
-                  <div key={pipIdx} className="hud-cell">
-                    <div
-                      className={`hud-cell__fill ${player.health < 30 ? "fill-danger" : "fill-health"}`}
-                      style={{ width: `${fillPct}%` }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="hud-vitals-header" style={{ marginTop: "6px" }}>
-              <span className="hud-label">ARMOR // AP</span>
-              <span className="hud-vitals-val" style={{ color: "#38bdf8" }}>
-                {Math.round(player.armor)} / 100
-              </span>
-            </div>
-
-            {/* 10-Pip Segmented Armor / AP Cells */}
-            <div className="hud-cells hud-cells--resource">
-              {Array.from({ length: 10 }).map((_, pipIdx) => {
-                const pipMin = pipIdx * 10;
-                const fillPct = Math.min(100, Math.max(0, ((player.armor - pipMin) / 10) * 100));
-                return (
-                  <div key={pipIdx} className="hud-cell hud-cell--sm">
-                    <div className="hud-cell__fill fill-ap" style={{ width: `${fillPct}%` }} />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Affliction Alert */}
-            {player.isBleeding && (
-              <div className="hud-affliction">
-                <span>⚠️ ARTERIAL BLEED</span>
-                <span style={{ fontSize: "8.5px", color: "var(--hud-ink)" }}>PRESS [H]</span>
-              </div>
-            )}
-
-
-          </div>
-        </div>
-      </div>
-
-
-
-      {/* Bottom Right: Tactical Ballistics Station */}
-      <div className="hud-station hud-ballistics">
-        <div className="hud-shell">
-          <div className="hud-shell__body">
-            <div className="hud-weapon-header">
-              <div>
-                <div className="hud-weapon-name">
-                  {player.weapon === "shotgun" ? "M590 BREACHER" : "M4A1 CQBR"}
-                </div>
-                <div className="hud-weapon-caliber">
-                  {player.weapon === "shotgun" ? "12-GAUGE 00 BUCK • PUMP" : "5.56x45MM NATO • AUTO"}
-                </div>
-              </div>
-              <div className="hud-ammo-display">
-                <span className="hud-ammo">{player.ammo}</span>
-                <span className="hud-ammo__reserve">
-                  / {player.weapon === "shotgun" ? player.reserveShotgunAmmo ?? 24 : player.reserveRifleAmmo ?? 90}
-                </span>
-              </div>
-            </div>
-
-            {/* Tactical Magazine Bullet Pip Stack */}
-            <div className="hud-mag-bar">
-              {Array.from({ length: player.weapon === "shotgun" ? 8 : 30 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`hud-mag-pip ${i < player.ammo ? "loaded" : "spent"}`}
-                />
-              ))}
-            </div>
-
-            {/* Mil-Spec Action Switches */}
-            <div className="hud-controls-row">
-              <button
-                onClick={() => sim.switchWeapon()}
-                className="hud-switch"
-                title="Swap Weapon [1/2 or Q]"
-              >
-                [1/2] SWAP
-              </button>
-              <button
-                onClick={() => {
-                  if (sim.reload()) sound.playReload();
-                }}
-                className="hud-switch"
-                title="Reload Weapon [R]"
-              >
-                [R] RELOAD
-              </button>
-              <button
-                onClick={() => {
-                  const isOn = sim.toggleFlashlight();
-                  sound.playFlashlightClick(isOn);
-                }}
-                className={`hud-switch ${(player.isFlashlightOn ?? true) ? "illum-active" : ""}`}
-                title="Toggle Tactical Light [L]"
-              >
-                [L] {(player.isFlashlightOn ?? true) ? "ILLUM ON" : "ILLUM OFF"}
-              </button>
-              <button
-                onClick={() => {
-                  if (sim.useStim()) sound.playHealInject();
-                }}
-                className="hud-switch hud-stim-btn"
-                title="Inject Combat Stim [H]"
-              >
-                💉 {player.stimsRemaining || 0} [H]
-              </button>
-            </div>
-
-            {/* Scavenged Loot Telemetry */}
-            <div className="hud-loot-row">
-              <span className="hud-label">SCAVENGED LOOT:</span>
-              <span className="hud-loot-val">${player.cash.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick-Loot Modal Overlay (docked top-right on desktop) */}
-      {nearbyCrate && (
-        <div
-          className="quick-loot-modal hud-interactive tactical-ink-card"
-          style={{
-            position: "absolute",
-            top: "90px",
-            right: "24px",
-            padding: "14px 18px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-            zIndex: 20,
-            pointerEvents: "auto",
-            minWidth: "280px",
-            maxWidth: "340px",
-            boxShadow: "5px 5px 0px #151716",
-          }}
+      {/* Minimap Footer Controls */}
+      <div className="surviv-minimap-footer">
+        <button
+          onClick={() => setZoomLevel((z) => (z === 1 ? 2 : 1))}
+          className="surviv-minimap-zoom-btn"
+          title="Toggle Minimap Zoom [1x / 2x]"
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontWeight: 900, fontSize: "14px", color: "#151716", fontFamily: "monospace", fontStyle: "italic" }}>
-              📦 {nearbyCrate.containerTitle || "SUPPLY CACHE"}
-            </span>
-            <span style={{ fontSize: "12px", color: "#d45538", fontFamily: "monospace", fontWeight: 900 }}>
-              ${nearbyCrate.cashValue.toLocaleString()}
-            </span>
-          </div>
-
-          {nearbyCrate.items && (
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              {nearbyCrate.items.map((it) => (
-                <div
-                  key={it.id}
-                  className={`tarkov-item-card rarity-${it.rarity}`}
-                  style={{ background: "#eeece5", border: "1.5px solid #151716", color: "#151716", fontWeight: 800 }}
-                >
-                  <span>{it.icon}</span>
-                  <span>{it.name}</span>
-                  <span style={{ color: "#d45538", fontWeight: 900 }}>${it.value.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <button
-            onClick={() => {
-              sim.requestLootCrate(nearbyCrate.id);
-              sound.playLootChime();
-            }}
-            className="tactical-ink-btn"
-            style={{
-              padding: "10px 16px",
-              fontSize: "12px",
-              letterSpacing: "1px",
-              width: "100%",
-              background: "#d45538",
-              color: "#ffffff",
-              border: "2px solid #151716",
-            }}
-          >
-            QUICK LOOT ALL [E / F]
-          </button>
-        </div>
-      )}
+          🔍 {zoomLevel}x
+        </button>
+        <span className="surviv-minimap-coords">
+          {Math.round(player.x)}, {Math.round(player.z)}
+        </span>
+      </div>
     </div>
   );
 });
+
+/* =========================================================================
+   MAIN TACTICAL HUD
+   ========================================================================= */
+
+export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
+  ({ sim, onOpenHideout, onTriggerKick }) => {
+    const { player, tick, exfilController } = sim;
+    const loadout = useStashStore((s) => s.loadout);
+
+    // Throttled refresh (10Hz) to prevent React render spikes
+    const [, setTickCounter] = useState(0);
+    useEffect(() => {
+      const timer = setInterval(() => setTickCounter((t) => t + 1), 100);
+      return () => clearInterval(timer);
+    }, []);
+
+    const exfilState = exfilController.getState();
+    const isHoldingLZ = exfilState.kind === "holding_zone";
+    const holdTicks = isHoldingLZ && "currentTicks" in exfilState ? (exfilState as any).currentTicks : 0;
+    const remainingHoldSeconds = isHoldingLZ
+      ? Math.max(0, (SIM_CONFIG.EXFIL_HOLD_TICKS - holdTicks) / 60).toFixed(1)
+      : "0.0";
+
+    const remainingTicks = Math.max(0, SIM_CONFIG.RAID_DEADLINE_TICK - tick);
+    const totalSeconds = Math.floor(remainingTicks / SIM_CONFIG.TICKS_PER_SECOND);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    const timeFormatted = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+    const nearbyCrate = sim.crates.find(
+      (c) => !c.opened && Math.hypot(player.x - c.x, player.z - c.z) <= 4.0
+    );
+
+    // Active AI + Player count for surviv.io top-right alive badge
+    const aliveScavs = sim.rivals.filter((r) => r.isAlive && !r.isExtracted).length;
+    const aliveTotal = aliveScavs + (player.isAlive ? 1 : 0);
+
+    const isPrimaryActive = player.weapon === "shotgun";
+    const isSecondaryActive = player.weapon === "rifle";
+
+    const currentAmmo = player.ammo;
+    const currentReserve =
+      player.weapon === "shotgun"
+        ? player.reserveShotgunAmmo ?? 24
+        : player.reserveRifleAmmo ?? 90;
+
+    return (
+      <div className="surviv-hud-root">
+        {/* Top-Left: Clean Utility Bar (Arsenal & Leave) */}
+        <div className="surviv-top-left">
+          {onOpenHideout && (
+            <button
+              onClick={onOpenHideout}
+              className="surviv-btn-pill"
+              title="Open Stash, Armory & Trader [TAB]"
+            >
+              ARSENAL [TAB]
+            </button>
+          )}
+          {sim.zoneMode === "spoke" && (
+            <span className="surviv-zone-badge">SECTOR 7 DEPOT</span>
+          )}
+        </div>
+
+        {/* Top-Right: Clean Alive Count & Raid Clock (Surviv.io Style) */}
+        <div className="surviv-top-right">
+          <div className="surviv-alive-card">
+            <span className="alive-count">{aliveTotal}</span>
+            <span className="alive-label">ALIVE</span>
+          </div>
+          <div className="surviv-clock-badge">
+            <span className="clock-icon">⏱</span>
+            <span>{timeFormatted}</span>
+          </div>
+        </div>
+
+        {/* Directional Screen Damage Arcs (Flashing only upon taking damage) */}
+        {sim.damageIndicators.length > 0 && (
+          <div className="directional-damage-container" aria-hidden="true">
+            {sim.damageIndicators.map((indicator) => {
+              const ageTicks = sim.tick - indicator.tick;
+              if (ageTicks < 0 || ageTicks >= 80) return null;
+              const opacity = Math.max(0, 1 - ageTicks / 75);
+              return (
+                <div
+                  key={indicator.id}
+                  className="directional-damage-indicator"
+                  style={{
+                    transform: `translate(-50%, -50%) rotate(${indicator.angleDeg}deg)`,
+                    opacity,
+                  }}
+                >
+                  <svg viewBox="0 0 160 60" width="160" height="60">
+                    <path
+                      d="M 12 48 Q 80 8 148 48"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                    />
+                    <polygon points="80,10 68,26 80,21 92,26" fill="#ef4444" />
+                  </svg>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Directional Damage Flash Vignette */}
+        {sim.lastPlayerDamageTick > 0 && sim.tick - sim.lastPlayerDamageTick < 12 && (
+          <div className="damage-flash-vignette" />
+        )}
+
+        {/* Bottom-Left: Moving Mini Map */}
+        <SurvivMinimap sim={sim} />
+
+        {/* Mid-Bottom: Health, Armor & Ammo Counter */}
+        <div className="surviv-mid-bottom">
+          {/* Active Action / Stim / Extraction Countdown Channel */}
+          {isHoldingLZ && (
+            <div className="surviv-action-channel">
+              <span className="channel-spinner" />
+              <span>EXTRACTING LZ-1: {remainingHoldSeconds}s</span>
+            </div>
+          )}
+
+          {/* Arterial Bleeding Warning */}
+          {player.isBleeding && (
+            <div className="surviv-bleed-alert">
+              <span>🩸 ARTERIAL BLEEDING — PRESS [H] TO STIM</span>
+            </div>
+          )}
+
+          {/* Ammo Counter Pill directly above health bar */}
+          <div className="surviv-ammo-row">
+            <span className="surviv-clip-ammo">{currentAmmo}</span>
+            <span className="surviv-reserve-ammo">/ {currentReserve}</span>
+          </div>
+
+          {/* Armor Bar */}
+          <div className="surviv-armor-track">
+            <div
+              className="surviv-armor-fill"
+              style={{ width: `${Math.max(0, Math.min(100, player.armor))}%` }}
+            />
+          </div>
+
+          {/* Health Bar (Vibrant surviv.io rounded coral pill) */}
+          <div className="surviv-health-track">
+            <div
+              className={`surviv-health-fill ${player.health < 30 ? "critical" : ""}`}
+              style={{ width: `${Math.max(0, Math.min(100, player.health))}%` }}
+            />
+            <span className="surviv-health-text">
+              {Math.round(player.health)} / 100
+            </span>
+          </div>
+        </div>
+
+        {/* Bottom-Right: Weapon Choices & Quick Swap */}
+        <div className="surviv-bottom-right">
+          {/* Weapon Slots Stack */}
+          <div className="surviv-weapon-slots">
+            {/* Slot 1: Shotgun */}
+            <div
+              onClick={() => {
+                sim.setWeapon("shotgun");
+                sound.playReload();
+              }}
+              className={`surviv-weapon-slot ${isPrimaryActive ? "active" : ""}`}
+              title="Equip M590 Breacher Shotgun [1]"
+            >
+              <div className="slot-key">1</div>
+              <ShotgunIcon active={isPrimaryActive} />
+              <div className="slot-info">
+                <span className="slot-name">M590</span>
+                <span className="slot-ammo">
+                  {player.shotgunAmmo || 0} / {player.reserveShotgunAmmo || 0}
+                </span>
+              </div>
+            </div>
+
+            {/* Slot 2: Assault Rifle */}
+            <div
+              onClick={() => {
+                sim.setWeapon("rifle");
+                sound.playReload();
+              }}
+              className={`surviv-weapon-slot ${isSecondaryActive ? "active" : ""}`}
+              title="Equip M4A1 Tactical Rifle [2]"
+            >
+              <div className="slot-key">2</div>
+              <RifleIcon active={isSecondaryActive} />
+              <div className="slot-info">
+                <span className="slot-name">M4A1</span>
+                <span className="slot-ammo">
+                  {player.rifleAmmo || 0} / {player.reserveRifleAmmo || 0}
+                </span>
+              </div>
+            </div>
+
+            {/* Slot 3: Melee / Kick */}
+            <div
+              onClick={() => onTriggerKick?.()}
+              className="surviv-weapon-slot melee-slot"
+              title="Roundhouse Kick / Strike [3 / V]"
+            >
+              <div className="slot-key">3</div>
+              <FistIcon />
+              <div className="slot-info">
+                <span className="slot-name">KICK</span>
+                <span className="slot-ammo" style={{ color: "#f59e0b" }}>35 DMG</span>
+              </div>
+            </div>
+
+            {/* Slot 4: Frag Grenade */}
+            <div
+              className="surviv-weapon-slot grenade-slot"
+              title="Frag Grenade [4 / G]"
+            >
+              <div className="slot-key">4</div>
+              <GrenadeIcon />
+              <div className="slot-info">
+                <span className="slot-name">FRAG</span>
+                <span className="slot-ammo" style={{ color: "#10b981" }}>x2</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Gear Tiers & Tactical Accessories */}
+          <div className="surviv-gear-row">
+            <div className="surviv-gear-item" title="Ballistic Helmet Lvl 2">
+              <HelmetIcon />
+              <span>Lvl. 2</span>
+            </div>
+            <div className="surviv-gear-item" title={`Tactical Vest Lvl ${loadout?.armorTier === "light" ? 1 : loadout?.armorTier === "heavy" ? 3 : 2}`}>
+              <VestIcon />
+              <span>Lvl. {loadout?.armorTier === "light" ? 1 : loadout?.armorTier === "heavy" ? 3 : 2}</span>
+            </div>
+            <div className="surviv-gear-item" title="Assault Rucksack Lvl 2">
+              <BackpackIcon />
+              <span>Lvl. 2</span>
+            </div>
+            <button
+              onClick={() => {
+                const isLaserOn = sim.toggleLaser();
+                sound.playFlashlightClick(isLaserOn);
+              }}
+              className={`surviv-gear-btn ${player.hasLaser ? "active" : ""}`}
+              title="Toggle Tactical Laser [T]"
+            >
+              LASER [T]
+            </button>
+            <button
+              onClick={() => {
+                const isLightOn = sim.toggleFlashlight();
+                sound.playFlashlightClick(isLightOn);
+              }}
+              className={`surviv-gear-btn ${(player.isFlashlightOn ?? true) ? "active" : ""}`}
+              title="Toggle Tactical Flashlight [L]"
+            >
+              LIGHT [L]
+            </button>
+          </div>
+        </div>
+
+        {/* Right Rail: Consumables, Ammunition & Loot */}
+        <div className="surviv-right-rail">
+          {/* Quick Loot Overlay (Docks into top of right rail) */}
+          {nearbyCrate && (
+            <div className="surviv-quick-loot-card">
+              <div className="loot-card-header">
+                <span>📦 {nearbyCrate.containerTitle || "SUPPLY CACHE"}</span>
+                <span className="loot-card-cash">+$${nearbyCrate.cashValue.toLocaleString()}</span>
+              </div>
+              <button
+                onClick={() => {
+                  sim.requestLootCrate(nearbyCrate.id);
+                  sound.playLootChime();
+                }}
+                className="surviv-loot-action-btn"
+              >
+                QUICK LOOT ALL [E / F]
+              </button>
+            </div>
+          )}
+
+          {/* Consumables Inventory */}
+          <div className="surviv-rail-section">
+            <div className="rail-item" title="Bandages">
+              <span className="rail-icon">🩹</span>
+              <span className="rail-count">3</span>
+            </div>
+            <div className="rail-item" title="First Aid Medkit">
+              <span className="rail-icon">🧰</span>
+              <span className="rail-count">1</span>
+            </div>
+            <div
+              onClick={() => {
+                if (sim.useStim()) sound.playHealInject();
+              }}
+              className="rail-item stim-item"
+              title="Combat Stim Injector [H] (Click to Inject)"
+            >
+              <span className="rail-icon">💉</span>
+              <span className="rail-count">{player.stimsRemaining || 0}</span>
+            </div>
+            <div className="rail-item" title="Tourniquet / Splint">
+              <span className="rail-icon">💊</span>
+              <span className="rail-count">1</span>
+            </div>
+          </div>
+
+          {/* Ammunition Blocks */}
+          <div className="surviv-rail-section ammo-section">
+            <div className="ammo-chip rifle-chip" title="5.56x45mm NATO Ammo Stock">
+              <span className="ammo-num">
+                {(player.reserveRifleAmmo || 0) + (player.rifleAmmo || 0)}
+              </span>
+            </div>
+            <div className="ammo-chip shotgun-chip" title="12-Gauge Buckshot Stock">
+              <span className="ammo-num">
+                {(player.reserveShotgunAmmo || 0) + (player.shotgunAmmo || 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* Scavenged Cash Secured */}
+          <div className="surviv-rail-cash" title="Secured Raid Cash">
+            <span>$${player.cash.toLocaleString()}</span>
+          </div>
+
+          {/* Keycard Badge if secured */}
+          {player.hasKeycard && (
+            <div className="surviv-rail-keycard" title="Violet Lab Access Keycard Secured!">
+              <span>💳 LAB KEY</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+);

@@ -92,6 +92,7 @@ const MainApp: React.FC = () => {
   const queuedStim = useRef(false);
   const queuedReload = useRef(false);
   const queuedInteract = useRef(false);
+  const queuedKick = useRef(false);
   const touchInputRef = useRef<{ dx: number; dz: number; sprint?: boolean; slide?: boolean; crouch?: boolean; roll?: boolean; jump?: boolean; kick?: boolean; shoot?: boolean; interact?: boolean; aimAngle?: number }>({ dx: 0, dz: 0 });
   const prevActionRef = useRef<string>("idle");
   const prevProximityRef = useRef<boolean>(false);
@@ -167,6 +168,8 @@ const MainApp: React.FC = () => {
         queuedSelectWeapon.current = "rifle";
       } else if (e.code === "Digit2") {
         queuedSelectWeapon.current = "shotgun";
+      } else if (e.code === "Digit3") {
+        queuedKick.current = true;
       } else if (e.code === "KeyQ") {
         queuedSwitchWeapon.current = true;
       } else if (e.code === "KeyH") {
@@ -368,7 +371,7 @@ const MainApp: React.FC = () => {
           crouch: (keys.has("KeyC") && !isSprinting) || (!!touchInputRef.current.crouch && !touchInputRef.current.slide),
           roll: (keys.has("Space") && isSprinting) || !!touchInputRef.current.roll || !!pad?.roll,
           jump: (keys.has("Space") && !isSprinting) || !!touchInputRef.current.jump,
-          kick: keys.has("KeyV") || !!touchInputRef.current.kick || !!pad?.kick,
+          kick: keys.has("KeyV") || queuedKick.current || !!touchInputRef.current.kick || !!pad?.kick,
           shoot: keys.has("KeyJ") || keys.has("KeyK") || keys.has("Enter") || isMouseDown.current || !!touchInputRef.current.shoot || !!pad?.shoot,
           interact: interact || !!pad?.interact,
           selectWeapon,
@@ -550,7 +553,7 @@ const MainApp: React.FC = () => {
   return (
     <div className="game-viewport">
       <GameCanvas sim={sim} />
-      <TacticalHud sim={sim} onOpenHideout={() => setShowHideout(true)} />
+      <TacticalHud sim={sim} onOpenHideout={() => setShowHideout(true)} onTriggerKick={() => { queuedKick.current = true; }} />
       <PerformanceOverlay />
 
       {/* Landscape Orientation Advisory for Mobile/Tablet */}
