@@ -8,6 +8,7 @@ import { assertR36UnchangedPackedTower } from './support/r36UnchangedPackedTower
 import { verifiedR36DarkMassIds } from './support/r36DarkMassIds';
 import { readRetainedBridgeRecords } from './support/retainedStructuralSupport';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
+import { withoutR43EdgeLighting } from './support/r43EdgeLighting';
 // External texture stubs permit the real factory. They do not provide the oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
   const original = await importOriginal<typeof import('../src/render/signAtlas')>();
@@ -94,7 +95,7 @@ describe('R31 independent roof emission policy', () => {
   });
 
   it('retains the roof shader rules with the approved R38 lighting', () => {
-    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR32RoofPolicy(source, key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
+    for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) expect(createHash('sha256').update(withoutR32RoofPolicy(withoutR43EdgeLighting(source, key), key)).digest('hex'), key).toBe(baseline.shaderHashes[key as keyof typeof baseline.shaderHashes]);
     const source = SKYRIVER_CITY_SHADER_SOURCE;
     expect(source.towerVertex).toContain('vEmissionAllowed = aEmissionAllowed;');
     expect(source.towerFragment).toContain('flat varying float vEmissionAllowed;');

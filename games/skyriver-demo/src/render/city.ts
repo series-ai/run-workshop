@@ -9759,7 +9759,7 @@ void main() {
   // T6R-2: graded on world altitude, not per box — walls now run down into the void, and setback
   // tiers and crowns must share one lit-floor profile with the slab they belong to.
   vUp = clamp( world.y / 2600.0, 0.0, 1.0 );
-  // Axis-aligned extents only, so normalising after the scale is enough — no inverse transpose.
+  // Unit-box axial normals stay correct after scale and yaw. Normalize the result.
   vNormalW = normalize( mat3( modelMatrix ) * ( mat3( instanceMatrix ) * n ) );
   vec3 tangentObject = ax > 0.5 ? vec3( 0.0, 0.0, 1.0 ) : vec3( 1.0, 0.0, 0.0 );
   vTangentW = normalize( mat3( modelMatrix ) * ( mat3( instanceMatrix ) * tangentObject ) );
@@ -9897,6 +9897,29 @@ float windowSdf( vec2 cellLocal, float ribbon ) {
   return length( max( d, 0.0 ) ) + min( max( d.x, d.y ), 0.0 ) - radius;
 }
 
+// R43: local edges use the rotated box frame. Noise breaks the added sky light.
+float facadeEdgeCatch( float grain ) {
+  vec2 edgeDistance = max( vFaceHalf - abs( vSurf ), vec2( 0.0 ) );
+  vec2 edgePixels = edgeDistance / max( fwidth( vSurf ), vec2( 1e-4 ) );
+  float sideEdge = 1.0 - smoothstep( 1.2, 2.8, edgePixels.x );
+  float topEdge = 1.0 - smoothstep( 1.2, 2.8, min( edgePixels.x, edgePixels.y ) );
+  vec3 viewDir = normalize( cameraPosition - vWorldPos );
+  float grazing = pow( 1.0 - clamp( dot( vNormalW, viewDir ), 0.0, 1.0 ), 2.0 );
+  float faceCatch = vIsSide * sideEdge * ( 0.85 + 0.15 * grazing )
+    + ( 1.0 - vIsSide ) * topEdge * max( vNormalW.y, 0.0 );
+  float brokenCatch = smoothstep( 0.38, 0.56, grain );
+  float distanceGain = smoothstep( 200.0, 500.0, vFogDepth )
+    * mix( 0.06, 0.08, smoothstep( 500.0, 3000.0, vFogDepth ) );
+  return faceCatch * brokenCatch * distanceGain;
+}
+
+vec3 familyEdgeLight( vec3 base, vec3 chroma, float catchWeight ) {
+  float baseY = dot( base, vec3( 0.2126, 0.7152, 0.0722 ) );
+  float chromaY = max( dot( chroma, vec3( 0.2126, 0.7152, 0.0722 ) ), 1e-4 );
+  // This term adds at most eight percent of the material light. It has no emission.
+  return min( vec3( 0.04 ), baseY * chroma / chromaY * catchWeight );
+}
+
 void main() {
   // R15 far-city layers: near-black massing with a sparse, coarse window grid, dimmer and hazier per
   // layer; no interiors, signs or wet sheen. Same fog as the city, so depth still grades with haze.
@@ -9930,6 +9953,8 @@ void main() {
     structureMaterialProfile( farQ, vFaceId, farFamily, farB, farW, farF, farEdge, farChroma );
     vec3 farBase1 = farBase0 * farChroma;
     vec3 farBase = normalizeFamilyMaterial( farBase0, farBase1, farB, farW, farF, farFamily );
+    float farGrain = skyValueNoise( vSurf * 0.07 + vec2( vSeed * 137.0, vFaceId * 19.0 ) );
+    farBase += familyEdgeLight( farBase, farChroma, facadeEdgeCatch( farGrain ) );
     vec3 farUnit = mix(windowPaletteMean(vWindowPalette), windowPaletteUnit(vWindowPalette, farTemp), farResolve);
     vec3 farColor = farBase + recolourWindow(
       skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION ), farUnit, uDistrictColour);
@@ -10082,6 +10107,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   structureMaterialProfile( q, vFaceId, matFamily, matB, matW, matF, matEdge, matChroma );
   vec3 matC1 = ( concrete * matChroma + wetSheen * matChroma * ( 1.0 + 0.05 * matW ) + wetArris * matChroma * matEdge ) * contactAo;
   vec3 color = normalizeFamilyMaterial( matC0, matC1, matB, matW, matF, matFamily );
+  color += familyEdgeLight( color, matChroma, facadeEdgeCatch( grain ) );
 
   // Hero blade light: coloured spill on the concrete around each giant sign, and the windows behind
   // and beside it go dark so the sign owns its patch of wall.
