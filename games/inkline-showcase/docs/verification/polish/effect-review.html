@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>INKLINE effect scale review</title><link rel="icon" href="data:,"><style>*{box-sizing:border-box}body{margin:0;background:#eeece5;color:#151716;font:16px system-ui}main{max-width:1100px;margin:auto;padding:24px}h1{margin:0 0 8px;font-size:30px}p{color:#666b63}canvas{width:100%;max-width:768px;display:block}select,button{font:inherit;padding:8px;margin:0 8px 14px 0}output{font:14px monospace}</style><main><h1>Effect scale / 1.80 m figure</h1><p>Fixed camera. Default effect size. Grid spacing: 0.50 m.</p><select></select><button>Replay</button><output></output><canvas></canvas></main><script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+const {EFFECTS,InkEffects}=await import(new URLSearchParams(location.search).get('baseline')==='true'?'/.cache/polish-baseline/effects.ts':'/src/runtime/effects.ts');
+const gltf=await new GLTFLoader().loadAsync('/assets/characters/stick-standard.glb');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#eeece5');scene.add(gltf.scene);
+const mixer=new THREE.AnimationMixer(gltf.scene);mixer.clipAction(gltf.animations.find(c=>c.name==='idle')).play();mixer.setTime(.2);gltf.scene.updateMatrixWorld(true);
+const grid=new THREE.GridHelper(8,16,0xc9c9bf,0xd9d9d0);scene.add(grid);
+const renderer=new THREE.WebGLRenderer({canvas:document.querySelector('canvas'),antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);renderer.setSize(768,576,false);
+const camera=new THREE.OrthographicCamera(-2.8,2.8,2.1,-2.1,.01,50);camera.position.set(0,2.8,10);camera.lookAt(0,1,0);
+const effects=new InkEffects();scene.add(effects.group);let id=EFFECTS[0].id,t=0,duration=0,playing=false,previous=performance.now();
+const selector=document.querySelector('select');for(const e of EFFECTS){const o=document.createElement('option');o.value=e.id;o.textContent=e.id;selector.append(o)}
+function anchor(e){if(e.floor||['footstep-dust','slide-dust','grind-sparks','dash-ring','hard-stop'].includes(e.id))return new THREE.Vector3(.3,.025,.3);if(e.id==='zipline-streak')return new THREE.Vector3(.3,1.9,.3);if(e.id==='stun-stars')return new THREE.Vector3(0,1.94,0);if(e.category==='Status')return new THREE.Vector3(0,1,.3);return new THREE.Vector3(.45,1.08,.3)}
+function start(next){id=next;selector.value=id;effects.clear();const e=EFFECTS.find(e=>e.id===id);duration=effects.trigger(id,anchor(e));t=0;playing=true;document.querySelector('output').textContent=id+' / default scale';}
+function render(){renderer.render(scene,camera)}
+function capture(next,time){start(next);playing=false;for(let elapsed=0;elapsed<time;elapsed+=1/120)effects.update(Math.min(1/120,time-elapsed),camera);t=time;render();return renderer.domElement.toDataURL('image/png')}
+selector.onchange=()=>start(selector.value);document.querySelector('button').onclick=()=>start(id);
+window.effectReview={effects:EFFECTS,capture,start,pause(){playing=false},get state(){return{id,t,duration,particles:effects.activeCount,calls:renderer.info.render.calls}}};
+function animate(now){const dt=Math.max(0,Math.min(.05,(now-previous)/1000));previous=now;if(playing){t+=dt;effects.update(dt,camera);if(t>duration+.7)start(id)}render();requestAnimationFrame(animate)}start(id);requestAnimationFrame(animate);
+</script></html>

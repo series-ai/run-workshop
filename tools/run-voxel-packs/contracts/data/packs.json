@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "packs": {
+    "fantasy":    { "dir": "run-voxel-fantasy",         "worldTheme": "fantasy",         "label": "Fantasy",         "clipRange": [32, 39] },
+    "space":      { "dir": "run-voxel-space",           "worldTheme": "space-scifi",     "label": "Space",           "clipRange": [40, 47] },
+    "monster":    { "dir": "run-voxel-monster",         "worldTheme": "monster",         "label": "Monster",         "clipRange": [48, 55] },
+    "apocalypse": { "dir": "run-voxel-post-apocalypse", "worldTheme": "post-apocalypse", "label": "Post-Apocalypse", "clipRange": [56, 63] }
+  },
+  "leaves": {
+    "world":      { "bucket": "3D", "theme": "@worldTheme", "license": "LicenseRef-RUN-Repository-Supplemental-1.0" },
+    "characters": { "bucket": "3D", "theme": "characters",  "license": "LicenseRef-RUN-Repository-Supplemental-1.0" },
+    "icons":      { "bucket": "icons", "license": "LicenseRef-RUN-Repository-Supplemental-1.0" },
+    "ui":         { "bucket": "ui",    "license": "LicenseRef-RUN-Repository-Supplemental-1.0" }
+  }
+}

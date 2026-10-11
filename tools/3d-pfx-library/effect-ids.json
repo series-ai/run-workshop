@@ -1,0 +1,1073 @@
+{
+ "catalog": [
+  "fireball",
+  "explosion",
+  "smoke-puff",
+  "muzzle-flash",
+  "hit-spark",
+  "healing-aura",
+  "slash-trail",
+  "loot-beam",
+  "force-field",
+  "footstep-dust",
+  "shield-break",
+  "poison-cloud",
+  "ui-reward-burst",
+  "charge-telegraph",
+  "spawn-marker",
+  "dissolve",
+  "portal-idle-loop",
+  "projectile-trail",
+  "underwater-bubbles",
+  "snow-gust",
+  "low-health-screen-particles",
+  "coin-pickup-sparkle",
+  "critical-hit-burst",
+  "enemy-death-poof",
+  "level-up-flare",
+  "embers-burst",
+  "spark-loop",
+  "electric-trail",
+  "wind-impact",
+  "acid-idle",
+  "portal-charge",
+  "reflect-release",
+  "reward-telegraph",
+  "hologram-aura",
+  "blast-beam",
+  "glyph-ring",
+  "water-cone",
+  "sand-spray",
+  "curse-column",
+  "spawn-screen",
+  "jump-pickup",
+  "target-break",
+  "exhaust-hit",
+  "debris-miss",
+  "plasma-ambient",
+  "snow-spawn",
+  "poison-death",
+  "ghost-critical",
+  "barrier-low-health",
+  "flame-charge",
+  "meteor-ring",
+  "shockwave-spawn",
+  "dust-loop",
+  "debris-release",
+  "spark-cone",
+  "shard-break",
+  "glyph-trail",
+  "beam-telegraph",
+  "laser-spray",
+  "plasma-hit",
+  "electric-critical",
+  "ice-impact",
+  "frost-aura",
+  "water-column",
+  "snow-idle",
+  "wind-beam",
+  "petal-ambient",
+  "sand-burst",
+  "mud-charge",
+  "slime-ring",
+  "acid-spawn",
+  "healing-loop",
+  "holy-release",
+  "curse-cone",
+  "shadow-break",
+  "blood-death",
+  "ghost-trail",
+  "portal-telegraph",
+  "warp-spray",
+  "teleport-hit",
+  "despawn-impact",
+  "shield-aura",
+  "barrier-column",
+  "dash-idle",
+  "jump-beam",
+  "footstep-ambient",
+  "pickup-burst",
+  "reward-charge",
+  "combo-ring",
+  "ui-pickup",
+  "target-spawn",
+  "warning-loop",
+  "marker-release",
+  "scan-cone",
+  "hologram-break",
+  "thruster-trail",
+  "exhaust-telegraph",
+  "flame-burst",
+  "meteor-burst",
+  "blast-burst",
+  "shockwave-burst",
+  "dust-burst",
+  "debris-burst",
+  "spark-burst",
+  "shard-burst",
+  "rune-burst",
+  "glyph-burst",
+  "beam-burst",
+  "laser-burst",
+  "plasma-burst",
+  "electric-burst",
+  "ice-burst",
+  "frost-burst",
+  "water-burst",
+  "bubble-burst",
+  "rain-burst",
+  "snow-burst",
+  "wind-burst",
+  "leaf-burst",
+  "petal-burst",
+  "mud-burst",
+  "slime-burst",
+  "poison-burst",
+  "acid-burst",
+  "healing-burst",
+  "holy-burst",
+  "curse-burst",
+  "shadow-burst",
+  "blood-burst",
+  "ghost-burst",
+  "portal-burst",
+  "warp-burst",
+  "teleport-burst",
+  "spawn-burst",
+  "despawn-burst",
+  "shield-burst",
+  "barrier-burst",
+  "reflect-burst",
+  "parry-burst",
+  "dash-burst",
+  "jump-burst",
+  "landing-burst",
+  "footstep-burst",
+  "reward-burst",
+  "combo-burst",
+  "ui-burst",
+  "target-burst",
+  "warning-burst",
+  "marker-burst",
+  "scan-burst",
+  "hologram-burst",
+  "engine-burst",
+  "thruster-burst",
+  "exhaust-burst",
+  "embers-loop",
+  "flame-loop",
+  "debris-loop",
+  "shard-loop",
+  "rune-loop",
+  "glyph-loop",
+  "beam-loop",
+  "laser-loop",
+  "plasma-loop",
+  "electric-loop",
+  "ice-loop",
+  "frost-loop",
+  "water-loop",
+  "bubble-loop",
+  "rain-loop",
+  "snow-loop",
+  "wind-loop",
+  "leaf-loop",
+  "petal-loop",
+  "sand-loop",
+  "mud-loop",
+  "slime-loop",
+  "poison-loop",
+  "acid-loop",
+  "holy-loop",
+  "curse-loop",
+  "shadow-loop",
+  "blood-loop",
+  "ghost-loop",
+  "portal-loop",
+  "warp-loop",
+  "teleport-loop",
+  "spawn-loop",
+  "despawn-loop",
+  "shield-loop",
+  "barrier-loop",
+  "reflect-loop",
+  "parry-loop",
+  "dash-loop",
+  "jump-loop",
+  "landing-loop",
+  "footstep-loop",
+  "pickup-loop",
+  "reward-loop",
+  "combo-loop",
+  "ui-loop",
+  "target-loop",
+  "marker-loop",
+  "scan-loop",
+  "hologram-loop",
+  "engine-loop",
+  "thruster-loop",
+  "exhaust-loop",
+  "embers-trail",
+  "flame-trail",
+  "meteor-trail",
+  "blast-trail",
+  "shockwave-trail",
+  "dust-trail",
+  "debris-trail",
+  "spark-trail",
+  "shard-trail",
+  "rune-trail",
+  "beam-trail",
+  "laser-trail",
+  "plasma-trail",
+  "ice-trail",
+  "frost-trail",
+  "water-trail",
+  "bubble-trail",
+  "rain-trail",
+  "snow-trail",
+  "wind-trail",
+  "leaf-trail",
+  "petal-trail",
+  "sand-trail",
+  "mud-trail",
+  "slime-trail",
+  "poison-trail",
+  "acid-trail",
+  "healing-trail",
+  "holy-trail",
+  "curse-trail",
+  "shadow-trail",
+  "blood-trail",
+  "portal-trail",
+  "warp-trail",
+  "teleport-trail",
+  "spawn-trail",
+  "despawn-trail",
+  "shield-trail",
+  "barrier-trail",
+  "reflect-trail",
+  "parry-trail",
+  "dash-trail",
+  "jump-trail",
+  "landing-trail",
+  "footstep-trail",
+  "target-trail",
+  "warning-trail",
+  "marker-trail",
+  "scan-trail",
+  "hologram-trail",
+  "engine-trail",
+  "exhaust-trail",
+  "embers-impact",
+  "flame-impact",
+  "meteor-impact",
+  "blast-impact",
+  "shockwave-impact",
+  "dust-impact",
+  "debris-impact",
+  "spark-impact",
+  "shard-impact",
+  "rune-impact",
+  "glyph-impact",
+  "beam-impact",
+  "laser-impact",
+  "plasma-impact",
+  "electric-impact",
+  "frost-impact",
+  "water-impact",
+  "snow-impact",
+  "leaf-impact",
+  "petal-impact",
+  "sand-impact",
+  "mud-impact",
+  "slime-impact",
+  "poison-impact",
+  "acid-impact",
+  "holy-impact",
+  "curse-impact",
+  "shadow-impact",
+  "blood-impact",
+  "ghost-impact",
+  "portal-impact",
+  "warp-impact",
+  "teleport-impact",
+  "shield-impact",
+  "barrier-impact",
+  "reflect-impact",
+  "parry-impact",
+  "dash-impact",
+  "jump-impact",
+  "landing-impact",
+  "footstep-impact",
+  "target-impact",
+  "warning-impact",
+  "marker-impact",
+  "scan-impact",
+  "hologram-impact",
+  "engine-impact",
+  "thruster-impact",
+  "exhaust-impact",
+  "embers-idle",
+  "flame-idle",
+  "dust-idle",
+  "debris-idle",
+  "spark-idle",
+  "shard-idle",
+  "rune-idle",
+  "glyph-idle",
+  "beam-idle",
+  "laser-idle",
+  "plasma-idle",
+  "electric-idle",
+  "ice-idle",
+  "frost-idle",
+  "water-idle",
+  "bubble-idle",
+  "rain-idle",
+  "wind-idle",
+  "leaf-idle",
+  "petal-idle",
+  "sand-idle",
+  "mud-idle",
+  "slime-idle",
+  "poison-idle",
+  "healing-idle",
+  "holy-idle",
+  "curse-idle",
+  "shadow-idle",
+  "blood-idle",
+  "ghost-idle",
+  "portal-idle",
+  "warp-idle",
+  "teleport-idle",
+  "spawn-idle",
+  "despawn-idle",
+  "shield-idle",
+  "barrier-idle",
+  "reflect-idle",
+  "parry-idle",
+  "jump-idle",
+  "landing-idle",
+  "footstep-idle",
+  "pickup-idle",
+  "reward-idle",
+  "combo-idle",
+  "ui-idle",
+  "target-idle",
+  "warning-idle",
+  "marker-idle",
+  "scan-idle",
+  "hologram-idle",
+  "engine-idle",
+  "thruster-idle",
+  "exhaust-idle",
+  "embers-charge",
+  "meteor-charge",
+  "blast-charge",
+  "shockwave-charge",
+  "dust-charge",
+  "debris-charge",
+  "spark-charge",
+  "shard-charge",
+  "rune-charge",
+  "glyph-charge",
+  "beam-charge",
+  "laser-charge",
+  "plasma-charge",
+  "electric-charge",
+  "ice-charge",
+  "frost-charge",
+  "water-charge",
+  "snow-charge",
+  "wind-charge",
+  "sand-charge",
+  "slime-charge",
+  "poison-charge",
+  "acid-charge",
+  "healing-charge",
+  "holy-charge",
+  "curse-charge",
+  "shadow-charge",
+  "blood-charge",
+  "ghost-charge",
+  "warp-charge",
+  "teleport-charge",
+  "spawn-charge",
+  "despawn-charge",
+  "shield-charge",
+  "barrier-charge",
+  "reflect-charge",
+  "parry-charge",
+  "dash-charge",
+  "jump-charge",
+  "landing-charge",
+  "combo-charge",
+  "target-charge",
+  "warning-charge",
+  "marker-charge",
+  "scan-charge",
+  "hologram-charge",
+  "engine-charge",
+  "thruster-charge",
+  "exhaust-charge",
+  "embers-release",
+  "flame-release",
+  "meteor-release",
+  "blast-release",
+  "shockwave-release",
+  "dust-release",
+  "spark-release",
+  "shard-release",
+  "rune-release",
+  "glyph-release",
+  "beam-release",
+  "laser-release",
+  "plasma-release",
+  "electric-release",
+  "ice-release",
+  "frost-release",
+  "water-release",
+  "bubble-release",
+  "rain-release",
+  "snow-release",
+  "wind-release",
+  "leaf-release",
+  "petal-release",
+  "sand-release",
+  "mud-release",
+  "slime-release",
+  "poison-release",
+  "acid-release",
+  "healing-release",
+  "curse-release",
+  "shadow-release",
+  "blood-release",
+  "ghost-release",
+  "portal-release",
+  "warp-release",
+  "teleport-release",
+  "spawn-release",
+  "despawn-release",
+  "shield-release",
+  "barrier-release",
+  "parry-release",
+  "dash-release",
+  "jump-release",
+  "landing-release",
+  "footstep-release",
+  "target-release",
+  "warning-release",
+  "scan-release",
+  "hologram-release",
+  "engine-release",
+  "thruster-release",
+  "exhaust-release",
+  "embers-telegraph",
+  "flame-telegraph",
+  "meteor-telegraph",
+  "blast-telegraph",
+  "shockwave-telegraph",
+  "dust-telegraph",
+  "debris-telegraph",
+  "spark-telegraph",
+  "shard-telegraph",
+  "rune-telegraph",
+  "glyph-telegraph",
+  "laser-telegraph",
+  "plasma-telegraph",
+  "electric-telegraph",
+  "ice-telegraph",
+  "frost-telegraph",
+  "water-telegraph",
+  "bubble-telegraph",
+  "rain-telegraph",
+  "snow-telegraph",
+  "wind-telegraph",
+  "leaf-telegraph",
+  "petal-telegraph",
+  "sand-telegraph",
+  "mud-telegraph",
+  "slime-telegraph",
+  "poison-telegraph",
+  "acid-telegraph",
+  "healing-telegraph",
+  "holy-telegraph",
+  "curse-telegraph",
+  "shadow-telegraph",
+  "blood-telegraph",
+  "ghost-telegraph",
+  "warp-telegraph",
+  "teleport-telegraph",
+  "spawn-telegraph"
+ ],
+ "inspect": [
+  "burger-shop-character-footsteps",
+  "burger-shop-character-upgrade",
+  "burger-shop-confetti-01",
+  "burger-shop-confetti-02",
+  "burger-shop-eating",
+  "burger-shop-flies",
+  "burger-shop-poof-01",
+  "burger-shop-poof-02",
+  "burger-shop-smoke",
+  "burger-shop-sunshine",
+  "burger-shop-table-first-purchase",
+  "burger-shop-table-upgrade",
+  "burger-shop-unlock-area",
+  "duelyst-bladestorm",
+  "duelyst-blood-explosion",
+  "duelyst-bloodground",
+  "duelyst-water-splash",
+  "duelyst-buff",
+  "duelyst-collision",
+  "duelyst-explosion-blue",
+  "duelyst-explosion-purple-smoke",
+  "duelyst-heal",
+  "duelyst-impact",
+  "duelyst-impact-2",
+  "duelyst-lightning-hit",
+  "duelyst-smoke",
+  "duelyst-swirl",
+  "duelyst-teleport-recall",
+  "duelyst-teleport-recall-blue",
+  "duelyst-teleport-recall-white",
+  "duelyst-projectile-trail",
+  "duelyst-rays",
+  "duelyst-ring-flash",
+  "duelyst-ring-glow",
+  "duelyst-ripple",
+  "duelyst-snow",
+  "duelyst-rain",
+  "duelyst-bubble",
+  "duelyst-petals",
+  "duelyst-cloud",
+  "pirate-status-buff",
+  "pirate-status-debuff",
+  "pirate-status-attack",
+  "pirate-status-heal",
+  "pirate-shield",
+  "pirate-sparkle",
+  "pirate-rain",
+  "pirate-snow",
+  "pirate-ash",
+  "pirate-clouds",
+  "pirate-disappear",
+  "pirate-ship-wake",
+  "pirate-confetti",
+  "pirate-results-smoke",
+  "pirate-godrays",
+  "rvx-fantasy-chimney-smoke",
+  "rvx-fantasy-hearth-fire",
+  "rvx-fantasy-torch-flame",
+  "rvx-fantasy-lantern-glow",
+  "rvx-fantasy-cauldron-brew",
+  "rvx-fantasy-fairy-motes",
+  "rvx-fantasy-bee-swarm",
+  "rvx-fantasy-treasure-glint",
+  "rvx-fantasy-arcane-orbit",
+  "rvx-fantasy-portal-swirl",
+  "rvx-fantasy-leaf-fall",
+  "rvx-fantasy-waterfall-mist",
+  "rvx-fantasy-arcane-bolt",
+  "rvx-fantasy-dragon-breath",
+  "rvx-fantasy-frost-nova",
+  "rvx-fantasy-holy-smite",
+  "rvx-fantasy-bell-toll",
+  "rvx-fantasy-metal-clang",
+  "rvx-fantasy-slash-arc",
+  "rvx-fantasy-bow-release",
+  "rvx-fantasy-dust-slam",
+  "rvx-fantasy-loot-burst",
+  "rvx-fantasy-bone-poof",
+  "rvx-fantasy-slime-splat",
+  "rvx-fantasy-potion-fizz",
+  "rvx-fantasy-forge-flare",
+  "rvx-space-shield-dome",
+  "rvx-space-teleport-beam",
+  "rvx-space-tractor-beam",
+  "rvx-space-spore-drift",
+  "rvx-space-launch-steam",
+  "rvx-space-engine-exhaust",
+  "rvx-space-hover-thrust",
+  "rvx-space-laser-bolt",
+  "rvx-space-ray-bolt",
+  "rvx-space-shield-hit",
+  "rvx-space-data-burst",
+  "rvx-space-cannon-blast",
+  "rvx-space-ray-zap",
+  "rvx-space-acid-spray",
+  "rvx-space-goo-shot",
+  "rvx-space-holo-scan",
+  "rvx-space-gravity-slam",
+  "rvx-space-plasma-blast",
+  "rvx-space-plasma-slash",
+  "rvx-space-stun-arc",
+  "rvx-space-weld-sparks",
+  "rvx-space-warp-jump",
+  "rvx-monster-candle-flame",
+  "rvx-monster-torch-flame",
+  "rvx-monster-ghost-wisps",
+  "rvx-monster-grave-mist",
+  "rvx-monster-ghost-wake",
+  "rvx-monster-sewer-fume",
+  "rvx-monster-witch-brew",
+  "rvx-monster-bat-swarm",
+  "rvx-monster-ghost-smoke",
+  "rvx-monster-witch-smoke",
+  "rvx-monster-blood-moon-aura",
+  "rvx-monster-spore-glow",
+  "rvx-monster-ghost-lantern",
+  "rvx-monster-broom-trail",
+  "rvx-monster-curse-cloud",
+  "rvx-monster-soul-burst",
+  "rvx-monster-web-burst",
+  "rvx-monster-stone-crumble",
+  "rvx-monster-venom-spit",
+  "rvx-monster-rot-poof",
+  "rvx-monster-screech",
+  "rvx-monster-howl",
+  "rvx-monster-bat-burst",
+  "rvx-monster-blood-splat",
+  "rvx-monster-claw-slash",
+  "rvx-monster-silver-slash",
+  "rvx-monster-reaper-slash",
+  "rvx-monster-holy-burst",
+  "rvx-monster-dirt-toss",
+  "rvx-monster-blunderbuss-blast",
+  "rvx-monster-bolt-twang",
+  "rvx-apocalypse-barrel-fire",
+  "rvx-apocalypse-wick-flame",
+  "rvx-apocalypse-exhaust-smoke",
+  "rvx-apocalypse-chimney-smoke",
+  "rvx-apocalypse-toxic-vent",
+  "rvx-apocalypse-lamp-flicker",
+  "rvx-apocalypse-toxic-bubbles",
+  "rvx-apocalypse-toxic-pool",
+  "rvx-apocalypse-searchlight",
+  "rvx-apocalypse-flashlight-beam",
+  "rvx-apocalypse-engine-smoke",
+  "rvx-apocalypse-dust-kick",
+  "rvx-apocalypse-metal-clang",
+  "rvx-apocalypse-metal-snap",
+  "rvx-apocalypse-saw-sparks",
+  "rvx-apocalypse-gore-burst",
+  "rvx-apocalypse-crate-dust",
+  "rvx-apocalypse-explosion",
+  "rvx-apocalypse-ground-slam",
+  "rvx-apocalypse-vomit-spray",
+  "rvx-apocalypse-shotgun-blast",
+  "rvx-apocalypse-pistol-shot",
+  "rvx-apocalypse-fuel-splash"
+ ],
+ "rvx": [
+  {
+   "id": "rvx-fantasy-chimney-smoke",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-hearth-fire",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-torch-flame",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-lantern-glow",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-cauldron-brew",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-fairy-motes",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-bee-swarm",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-treasure-glint",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-arcane-orbit",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-portal-swirl",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-leaf-fall",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-waterfall-mist",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-arcane-bolt",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-dragon-breath",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-frost-nova",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-holy-smite",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-bell-toll",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-metal-clang",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-slash-arc",
+   "looping": true
+  },
+  {
+   "id": "rvx-fantasy-bow-release",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-dust-slam",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-loot-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-bone-poof",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-slime-splat",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-potion-fizz",
+   "looping": false
+  },
+  {
+   "id": "rvx-fantasy-forge-flare",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-shield-dome",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-teleport-beam",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-tractor-beam",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-spore-drift",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-launch-steam",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-engine-exhaust",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-hover-thrust",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-laser-bolt",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-ray-bolt",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-shield-hit",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-data-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-cannon-blast",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-ray-zap",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-acid-spray",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-goo-shot",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-holo-scan",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-gravity-slam",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-plasma-blast",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-plasma-slash",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-stun-arc",
+   "looping": false
+  },
+  {
+   "id": "rvx-space-weld-sparks",
+   "looping": true
+  },
+  {
+   "id": "rvx-space-warp-jump",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-candle-flame",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-torch-flame",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-ghost-wisps",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-grave-mist",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-ghost-wake",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-sewer-fume",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-witch-brew",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-bat-swarm",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-ghost-smoke",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-witch-smoke",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-blood-moon-aura",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-spore-glow",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-ghost-lantern",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-broom-trail",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-curse-cloud",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-soul-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-web-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-stone-crumble",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-venom-spit",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-rot-poof",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-screech",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-howl",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-bat-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-blood-splat",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-claw-slash",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-silver-slash",
+   "looping": true
+  },
+  {
+   "id": "rvx-monster-reaper-slash",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-holy-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-dirt-toss",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-blunderbuss-blast",
+   "looping": false
+  },
+  {
+   "id": "rvx-monster-bolt-twang",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-barrel-fire",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-wick-flame",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-exhaust-smoke",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-chimney-smoke",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-toxic-vent",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-lamp-flicker",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-toxic-bubbles",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-toxic-pool",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-searchlight",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-flashlight-beam",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-engine-smoke",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-dust-kick",
+   "looping": true
+  },
+  {
+   "id": "rvx-apocalypse-metal-clang",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-metal-snap",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-saw-sparks",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-gore-burst",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-crate-dust",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-explosion",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-ground-slam",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-vomit-spray",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-shotgun-blast",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-pistol-shot",
+   "looping": false
+  },
+  {
+   "id": "rvx-apocalypse-fuel-splash",
+   "looping": false
+  }
+ ]
+}

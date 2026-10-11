@@ -69,3 +69,12 @@ project — see the matching `assets/*.provenance.json` records
   (`dc921b650c8a1d7c449b2a3553949d3e7c8266e9`)
 - Provenance: `assets/pirate-nation/provenance.json`. Keep the copyright
   notice with redistributed copies.
+
+## RUN voxel pack effects
+
+- Files: `assets/run-voxel/*.png` (the cube-face tile and the faceted
+  shapes and glyphs drawn by `scripts/make-rvx-textures.py`) and
+  `src/inspect-packs/rvx/*.ts` (recipes). No third-party material: Copyright
+  (c) 2026 Series Entertainment, Inc., under the RUN License (RUN Repository
+  Supplemental License v1.0, `../../LICENSE.md`). The recipes also reuse the
+  Pirate Nation VFX stamps listed above (MIT).

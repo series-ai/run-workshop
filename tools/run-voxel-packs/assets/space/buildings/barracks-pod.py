@@ -1,0 +1,5 @@
+"""Barracks Pod model."""
+from _repair_buildings import make_building
+
+def build():
+    return make_building("barracks-pod")

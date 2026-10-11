@@ -6,6 +6,7 @@ import { burgerShopRecipeIdFromInspectId } from './ids'
 import { DuelystSheetEffect } from './DuelystSheetEffect'
 import { getPirateRecipe, isPirateId } from './pirateRecipes'
 import { PIRATE_TEXTURE_URLS } from './pirateTextures'
+import { getRvxRecipe, isRvxId, RVX_TEXTURE_URLS } from './rvxRecipes'
 import { DUELYST_SHEET_URLS, type DuelystSheetId } from './textures'
 
 function loopingInspectRecipe(recipe: BurgerShopRecipe): BurgerShopRecipe {
@@ -34,6 +35,15 @@ function PirateInspect({ id }: { id: string }) {
   )
 }
 
+function RvxInspect({ id }: { id: string }) {
+  const recipe = useMemo(() => loopingInspectRecipe(getRvxRecipe(id)), [id])
+  return (
+    <group scale={4.2} position={[0, -1.05, 0]}>
+      <BurgerShopEffect recipe={recipe} textureUrls={RVX_TEXTURE_URLS} />
+    </group>
+  )
+}
+
 function DuelystInspect({ id }: { id: DuelystSheetId }) {
   const recipe = useMemo(() => getDuelystSpriteRecipe(id), [id])
   const ground = recipe.emitters.every((emitter) => emitter.anchor === 'ground')
@@ -49,5 +59,6 @@ export function InspectPackEffect({ id }: { id: string }) {
   if (burgerRecipeId) return <BurgerInspect recipeId={burgerRecipeId} />
   if (id in DUELYST_SHEET_URLS) return <DuelystInspect id={id as DuelystSheetId} />
   if (isPirateId(id)) return <PirateInspect id={id} />
+  if (isRvxId(id)) return <RvxInspect id={id} />
   throw new Error(`Unknown inspect pack effect: ${id}`)
 }

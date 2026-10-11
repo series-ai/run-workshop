@@ -15,6 +15,17 @@ grade** — they are visually authored presets, not production-signed-off
 (no real-device capture sign-off). Use the profiling tools below to validate
 and tune before shipping any effect in a game.
 
+## Pack effects (inspect packs)
+
+Themed effects that are not part of the locked 500-effect catalog live in
+`src/inspect-packs/`: Burger Shop, Duelyst, Pirate Nation, and the RUN voxel
+packs (`rvxRecipes.ts`, ids `rvx-<pack>-<effect>`). They use the emitter
+system in `src/burger-shop/`; `geometry: 'cube'` draws voxel debris. The RUN
+voxel effects follow [docs/rvx-pfx-style.md](docs/rvx-pfx-style.md): toon
+shapes from `scripts/make-rvx-textures.py`, pack theme colours, nominal
+size 1, and the archetypes in `src/inspect-packs/rvx/kit.ts`.
+`src/PfxById.tsx` plays any catalog or inspect-pack effect by id.
+
 ## Develop
 
 ```bash
@@ -136,5 +147,7 @@ affect the build (`vite build` transpiles regardless) or the runtime.
 
 ## Third-party assets
 
-Bundled sprite/flipbook assets are CC0 1.0; the particle renderer is modeled on
-wawa-vfx (MIT). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Bundled third-party sprite/flipbook assets are CC0 1.0, and the Pirate Nation
+VFX stamps are MIT; the particle renderer is modeled on wawa-vfx (MIT). The RUN
+voxel textures in `assets/run-voxel/` are Series-owned, under the RUN License.
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

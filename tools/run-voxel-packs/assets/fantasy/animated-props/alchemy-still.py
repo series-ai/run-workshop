@@ -1,0 +1,5 @@
+"""Build the alchemy still in the fantasy pack."""
+from _recovery import build_animated
+
+def build():
+    return build_animated("alchemy-still")

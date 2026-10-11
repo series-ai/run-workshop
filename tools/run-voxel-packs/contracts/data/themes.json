@@ -1,0 +1,256 @@
+{
+ "version": 1,
+ "about": "World-asset colour themes, one per pack, taken from the Pirate Nation palettes (docs/art-direction.md, 'Theme palettes'). Each theme recolours ramps of the shared palette: same 32 names, 8 shades (0 = darkest). A ramp is built in OKLab from `mid` (shade 4) and optional `dark` (shade 0) and `light` (shade 7). Ramps a theme does not list keep the shared colours. Avatar parts, skins and held items always use the shared palette.",
+ "packs": {
+  "fantasy": {
+   "source": "PN base pirate",
+   "ramps": {
+    "wood": {
+     "dark": "#2e2114",
+     "mid": "#794e2c",
+     "light": "#d8bc98"
+    },
+    "darkwood": {
+     "dark": "#2a150b",
+     "mid": "#7a3a1c",
+     "light": "#c0703e"
+    },
+    "red": {
+     "dark": "#5a1806",
+     "mid": "#b13a14",
+     "light": "#f08a5a"
+    },
+    "orange": {
+     "dark": "#6b2604",
+     "mid": "#e35f0a",
+     "light": "#fbbd7a"
+    },
+    "stone": {
+     "dark": "#3a3b40",
+     "mid": "#8c8680",
+     "light": "#e0dad2"
+    },
+    "sand": {
+     "dark": "#7a5a3c",
+     "mid": "#ccae8f",
+     "light": "#f5e8d2"
+    },
+    "bone": {
+     "dark": "#9a8a70",
+     "mid": "#e2d4b6",
+     "light": "#fbf6ea"
+    },
+    "gold": {
+     "dark": "#6b4413",
+     "mid": "#d08c38",
+     "light": "#f8dc86"
+    },
+    "sky": {
+     "dark": "#1b4a60",
+     "mid": "#58a7bb",
+     "light": "#cdeef4"
+    },
+    "blue": {
+     "dark": "#132a5c",
+     "mid": "#2d5fb0",
+     "light": "#8fb8ef"
+    },
+    "leaf": {
+     "dark": "#0d3804",
+     "mid": "#2f8f18",
+     "light": "#8fe872"
+    },
+    "forest": {
+     "dark": "#082403",
+     "mid": "#1a6408",
+     "light": "#5fb03c"
+    },
+    "moss": {
+     "dark": "#232c08",
+     "mid": "#495b12",
+     "light": "#9aad4c"
+    },
+    "magenta": {
+     "dark": "#3e1024",
+     "mid": "#9d345b",
+     "light": "#e684a8"
+    }
+   }
+  },
+  "space": {
+   "source": "PN mecha",
+   "ramps": {
+    "steel": {
+     "dark": "#26262c",
+     "mid": "#69727a",
+     "light": "#c8d0d5"
+    },
+    "iron": {
+     "dark": "#17171b",
+     "mid": "#45454d",
+     "light": "#838d92"
+    },
+    "gray": {
+     "dark": "#222428",
+     "mid": "#7e8a8e",
+     "light": "#d7dde0"
+    },
+    "rust": {
+     "dark": "#4a2610",
+     "mid": "#945531",
+     "light": "#dca477"
+    },
+    "orange": {
+     "dark": "#5a1e00",
+     "mid": "#a93d00",
+     "light": "#f59a52"
+    },
+    "cyan": {
+     "dark": "#0e4750",
+     "mid": "#1fb5c4",
+     "light": "#a8f3f3"
+    },
+    "teal": {
+     "dark": "#113c37",
+     "mid": "#2c9a8e",
+     "light": "#8fe0d2"
+    },
+    "bone": {
+     "dark": "#8a8479",
+     "mid": "#dcd6c8",
+     "light": "#fbf8f0"
+    },
+    "gold": {
+     "dark": "#5c3d0c",
+     "mid": "#b8862a",
+     "light": "#f1d27e"
+    }
+   }
+  },
+  "monster": {
+   "source": "PN haunted + zombie",
+   "ramps": {
+    "stone": {
+     "dark": "#2a2a31",
+     "mid": "#5d5c5c",
+     "light": "#b4ae9f"
+    },
+    "gray": {
+     "dark": "#1f1f24",
+     "mid": "#737373",
+     "light": "#c6c3ba"
+    },
+    "purple": {
+     "dark": "#271a33",
+     "mid": "#5a3e6c",
+     "light": "#a585bc"
+    },
+    "magenta": {
+     "dark": "#3a1233",
+     "mid": "#9a347f",
+     "light": "#eb8bd8"
+    },
+    "toxic": {
+     "dark": "#1d5a05",
+     "mid": "#58c418",
+     "light": "#c2f58a"
+    },
+    "moss": {
+     "dark": "#23270f",
+     "mid": "#444a21",
+     "light": "#8e9a4d"
+    },
+    "wood": {
+     "dark": "#2b2116",
+     "mid": "#5e4b2d",
+     "light": "#a8916a"
+    },
+    "darkwood": {
+     "dark": "#17120c",
+     "mid": "#2f251b",
+     "light": "#5e4b2d"
+    },
+    "bone": {
+     "dark": "#6e695e",
+     "mid": "#a8a297",
+     "light": "#ece8dc"
+    },
+    "orange": {
+     "dark": "#7a2104",
+     "mid": "#ff520e",
+     "light": "#ffbb86"
+    },
+    "forest": {
+     "dark": "#001c00",
+     "mid": "#0f4a12",
+     "light": "#3f8a3a"
+    },
+    "teal": {
+     "dark": "#16372d",
+     "mid": "#2b6f58",
+     "light": "#7fc9a8"
+    }
+   }
+  },
+  "apocalypse": {
+   "source": "PN pirate woods + mecha steel + zombie greens",
+   "ramps": {
+    "wood": {
+     "dark": "#33251a",
+     "mid": "#816959",
+     "light": "#d4c1a6"
+    },
+    "darkwood": {
+     "dark": "#1e160f",
+     "mid": "#4a3526",
+     "light": "#8a6b52"
+    },
+    "rust": {
+     "dark": "#3d1d0c",
+     "mid": "#894d17",
+     "light": "#dc9656"
+    },
+    "steel": {
+     "dark": "#2b2e31",
+     "mid": "#6a7278",
+     "light": "#c0c7cb"
+    },
+    "khaki": {
+     "dark": "#34431a",
+     "mid": "#6f8a3c",
+     "light": "#c4d68c"
+    },
+    "sand": {
+     "dark": "#6b5335",
+     "mid": "#c2a06c",
+     "light": "#f0dfb8"
+    },
+    "teal": {
+     "dark": "#15463a",
+     "mid": "#2f9a7a",
+     "light": "#9ff0cc"
+    },
+    "gold": {
+     "dark": "#7a5412",
+     "mid": "#e9ad45",
+     "light": "#f9e3a3"
+    },
+    "red": {
+     "dark": "#5a1510",
+     "mid": "#b8321f",
+     "light": "#f08a70"
+    },
+    "moss": {
+     "dark": "#1f2710",
+     "mid": "#3e4a26",
+     "light": "#8f9d62"
+    },
+    "toxic": {
+     "dark": "#2f5a06",
+     "mid": "#7ac21c",
+     "light": "#d0f58e"
+    }
+   }
+  }
+ }
+}

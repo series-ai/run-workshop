@@ -1,0 +1,17 @@
+{
+  "about": "How far (voxels) each avatar slot's faces sit outside the voxel grid planes they were built on. Parts that cover one another (tops over bottoms at the waist, a face on the head, headwear over hair) then never share a plane, so they cannot z-fight: an outer slot has the larger value. Pirate Nation parts lie on the grid (0) or 0.1 voxel off it, so no value here is near those. blender/rig.py grows each RUN part by its layer; the validator checks it (avatar.layers).",
+  "layers": {
+    "species": 0,
+    "bottoms": 0.02,
+    "shoes": 0.04,
+    "tops": 0.06,
+    "back": 0.08,
+    "face": 0.12,
+    "ears": 0.14,
+    "eyebrow": 0.16,
+    "facialhair": 0.18,
+    "eyewear": 0.2,
+    "hair": 0.22,
+    "headwear": 0.24
+  }
+}

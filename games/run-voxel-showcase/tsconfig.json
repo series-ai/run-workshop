@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2023"
+    ],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": [
+      "node"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@rvx/contracts/*": [
+        "../../tools/run-voxel-packs/contracts/*"
+      ],
+      "@rvx-pfx": [
+        "./src/pfx/rvx-pfx.d.ts"
+      ]
+    },
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [
+    "src",
+    "e2e",
+    "scripts",
+    "vite.config.ts"
+  ]
+}
