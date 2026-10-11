@@ -477,10 +477,10 @@ export const INSPECT_DARK_VARIATIONS = [
   "I strain to see and find only black. A heavy shuffle, a wet breath, the drip of water—my boy is somewhere in it, but I cannot see him.",
 ] as const;
 
-/** Dark vision, but the floor fire is burning and I can feel its heat. */
+/** Dark vision, but the floor fire is burning: heat and sound, never sight. */
 export const INSPECT_DARK_WITH_FIRE_VARIATIONS = [
   "The blackness answers me. I hear something large shift its weight close by, and the floor fire crackles somewhere past my face—that heat and his breathing are all I have.",
-  "Only black against my open eyes, lit by the low flicker of the burning oil on the stones. My boy is a sound in it, nothing more.",
+  "Only black. Heat from the spilled oil washes across my cheek, and somewhere in it my boy is only a sound.",
 ] as const;
 
 export const INSPECT_FLOOR_VARIATIONS = [

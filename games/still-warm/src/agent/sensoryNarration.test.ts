@@ -4,6 +4,7 @@ import {
   formatInspectNarration,
   defaultSensoryPicker,
   INSPECT_DARK_VARIATIONS,
+  INSPECT_DARK_WITH_FIRE_VARIATIONS,
   INSPECT_FLOOR_VARIATIONS,
 } from "./sensoryNarration";
 import type { VisionInput } from "../game/vision";
@@ -284,6 +285,24 @@ describe("visibility discipline", () => {
     const lampOnly = formatInspectNarration({ ...base, lamp: "wound" });
     expect(lampOnly).toMatch(/examination lamp/i);
     expect(lampOnly).not.toMatch(/lantern light|candlelight/i);
+  });
+
+  it("describes a fire by heat and sound only, never by sight, in the dark", () => {
+    const warmDark: VisionInput = {
+      posture: "prone",
+      stage: "pinned",
+      lamp: "away",
+      candleLit: false,
+      lanternLit: false,
+      fire: 20,
+    };
+    const SIGHT_OF_LIGHT =
+      /\blit by\b|flicker\w*\s+(?:of|on)|glow|shines?|light(?:s|ed)? up|illuminat/i;
+    for (let i = 0; i < INSPECT_DARK_WITH_FIRE_VARIATIONS.length; i++) {
+      const text = formatInspectNarration(warmDark);
+      expect(text).not.toMatch(SIGHT_OF_LIGHT);
+      expect(text).toMatch(/hear|crackle|heat|black/i);
+    }
   });
 
   it("never describes a fire that is not burning", () => {

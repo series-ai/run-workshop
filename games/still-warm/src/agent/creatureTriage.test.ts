@@ -394,3 +394,15 @@ describe("creatureTriage", () => {
     expect(result.text).toBe("You did, father.");
   });
 });
+
+describe("fetch narration stays inside hearing", () => {
+  it("never claims where an item was taken from", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync("src/agent/creatureTriage.ts", "utf8");
+    // Items start in different places and move between them, so the reply
+    // must not name a container.
+    expect(source.includes("from the tray")).toBe(false);
+    expect(source.includes("from the cabinet")).toBe(false);
+    expect(source.includes("I hear him gather the")).toBe(true);
+  });
+});

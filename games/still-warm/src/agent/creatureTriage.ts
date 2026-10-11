@@ -142,7 +142,7 @@ export function createCreatureTriage<TTools extends AgentToolSet>(
         currentStage: snap.stage,
         creatureEmotion: snap.emotion,
         vocalText: succeeded
-          ? `I hear him gather the ${item} from the tray, his steps careful on the stone.`
+          ? `I hear him gather the ${item}, his steps careful on the stone.`
           : `He hesitates over the ${item}, his clumsy hands trembling out of reach.`,
       });
       return commitReply(narration);
