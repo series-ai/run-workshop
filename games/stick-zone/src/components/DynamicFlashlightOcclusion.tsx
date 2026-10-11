@@ -5,11 +5,12 @@ import {
   computeVisibilityPolygon,
   type LightOcclusionOptions,
 } from "../render/lightOcclusion.js";
-import { ALL_OCCLUDING_OBSTACLES } from "../sim/game.js";
+import { ALL_OCCLUDING_OBSTACLES, type OperativeState } from "../sim/game.js";
 
 export interface DynamicFlashlightOcclusionProps {
-  origin: { x: number; y: number; z: number };
-  facing: number;
+  operative?: OperativeState;
+  origin?: { x: number; y: number; z: number };
+  facing?: number;
   isActive?: boolean;
   colorHex?: string;
   maxRange?: number;
@@ -22,6 +23,7 @@ const MAX_RAYS = 160;
 const MAX_VERTICES = MAX_RAYS + 1;
 
 export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProps> = ({
+  operative,
   origin,
   facing,
   isActive = true,
@@ -78,7 +80,8 @@ export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProp
   }, [meshGeom, edgeGeom]);
 
   useFrame(() => {
-    if (!isActive) {
+    const curActive = operative ? (operative.isFlashlightOn ?? true) : isActive;
+    if (!curActive) {
       if (meshRef.current) meshRef.current.visible = false;
       if (edgesRef.current) edgesRef.current.visible = false;
       if (spotLightRef.current) spotLightRef.current.visible = false;
@@ -89,21 +92,26 @@ export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProp
     if (edgesRef.current) edgesRef.current.visible = true;
     if (spotLightRef.current) spotLightRef.current.visible = showSpotLight;
 
+    const curX = operative ? operative.x : (origin?.x ?? 0);
+    const curY = operative ? (operative.y || 0) : (origin?.y ?? 0);
+    const curZ = operative ? operative.z : (origin?.z ?? 0);
+    const curFacing = operative ? operative.facing : (facing ?? 0);
+
     const last = lastStateRef.current;
-    const dx = origin.x - last.x;
-    const dz = origin.z - last.z;
-    const df = Math.abs(facing - last.facing);
+    const dx = curX - last.x;
+    const dz = curZ - last.z;
+    const df = Math.abs(curFacing - last.facing);
     if (dx * dx + dz * dz < 0.0001 && df < 0.002) {
       return;
     }
-    last.x = origin.x;
-    last.z = origin.z;
-    last.facing = facing;
+    last.x = curX;
+    last.z = curZ;
+    last.facing = curFacing;
 
     const poly = computeVisibilityPolygon(
-      origin.x,
-      origin.z,
-      facing,
+      curX,
+      curZ,
+      curFacing,
       ALL_OCCLUDING_OBSTACLES,
       {
         maxRange,
@@ -138,9 +146,9 @@ export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProp
 
     // Update 3D spotlight
     if (spotLightRef.current && targetRef.current && showSpotLight) {
-      spotLightRef.current.position.set(origin.x, (origin.y || 0) + 1.25, origin.z);
-      const targetX = origin.x + Math.sin(facing) * 14.0;
-      const targetZ = origin.z + Math.cos(facing) * 14.0;
+      spotLightRef.current.position.set(curX, curY + 1.25, curZ);
+      const targetX = curX + Math.sin(curFacing) * 14.0;
+      const targetZ = curZ + Math.cos(curFacing) * 14.0;
       targetRef.current.position.set(targetX, 0.4, targetZ);
       targetRef.current.updateMatrixWorld();
       spotLightRef.current.target = targetRef.current;

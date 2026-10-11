@@ -7,6 +7,7 @@ import {
   computeCameraKineticHeight,
   computeTraumaImpulse,
 } from '../src/render/cameraKinetics.js';
+import { SectorDepotSimulation, computeGroundAimAngle } from '../src/sim/game.js';
 
 describe('cameraKinetics', () => {
   describe('cameraImpulse', () => {
@@ -151,6 +152,67 @@ describe('cameraKinetics', () => {
       const impulse = computeTraumaImpulse(90, 25, 0.05, 0.35);
       expect(impulse.x).toBeLessThan(0);
       expect(Math.abs(impulse.y)).toBeGreaterThan(0);
+    });
+  });
+  describe("computeGroundAimAngle & Camera Tracking", () => {
+    it("computes accurate directional angles for Cardinal screen directions", () => {
+      const width = 1920;
+      const height = 1080;
+      const camParam = {
+        cameraPos: { x: 0, y: 16, z: 6.46 },
+        targetPos: { x: 0, y: 1, z: 0 },
+        playerPos: { x: 0, y: 0, z: 0 },
+      };
+
+      // Cursor right (East): x > width / 2, y = height / 2 -> positive X (+pi/2)
+      const eastAngle = computeGroundAimAngle(width * 0.85, height / 2, width, height, 46, camParam);
+      expect(eastAngle).toBeCloseTo(Math.PI / 2, 1);
+
+      // Cursor left (West): x < width / 2, y = height / 2 -> negative X (-pi/2)
+      const westAngle = computeGroundAimAngle(width * 0.15, height / 2, width, height, 46, camParam);
+      expect(westAngle).toBeCloseTo(-Math.PI / 2, 1);
+
+      // Cursor bottom (South): x = width / 2, y > height / 2 -> positive Z (near 0)
+      const southAngle = computeGroundAimAngle(width / 2, height * 0.95, width, height, 46, camParam);
+      expect(Math.abs(southAngle)).toBeLessThan(0.4);
+
+      // Cursor top (North): x = width / 2, y < height / 2 -> negative Z (near +/- pi)
+      const northAngle = computeGroundAimAngle(width / 2, height * 0.05, width, height, 46, camParam);
+      expect(Math.abs(Math.abs(northAngle) - Math.PI)).toBeLessThan(0.4);
+    });
+
+    it("simulation initializes cameraPos, cameraTarget, and cameraFov on construction", () => {
+      const sim = new SectorDepotSimulation("test_raid", "spoke");
+      expect(sim.cameraPos).toBeDefined();
+      expect(sim.cameraTarget).toBeDefined();
+      expect(sim.cameraFov).toBe(46.0);
+      expect(sim.cameraPos?.y).toBe(16.0);
+      expect(sim.cameraTarget?.y).toBe(1.0);
+    });
+
+    it("tracks aim angle consistently as camera shifts with look-ahead", () => {
+      const width = 1920;
+      const height = 1080;
+
+      // Base camera vantage
+      const baseCam = {
+        cameraPos: { x: 0, y: 16, z: 6.46 },
+        targetPos: { x: 0, y: 1, z: 0 },
+        playerPos: { x: 0, y: 0, z: 0 },
+      };
+      const angle1 = computeGroundAimAngle(width * 0.75, height * 0.5, width, height, 46, baseCam);
+
+      // Camera shifted forward by look-ahead
+      const shiftedCam = {
+        cameraPos: { x: 2, y: 16, z: 6.46 },
+        targetPos: { x: 2, y: 1, z: 0 },
+        playerPos: { x: 0, y: 0, z: 0 },
+      };
+      const angle2 = computeGroundAimAngle(width * 0.75, height * 0.5, width, height, 46, shiftedCam);
+
+      // Both should resolve to positive X (East / rightward aim)
+      expect(angle1).toBeGreaterThan(0);
+      expect(angle2).toBeGreaterThan(0);
     });
   });
 });

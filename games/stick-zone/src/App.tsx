@@ -307,10 +307,18 @@ const MainApp: React.FC = () => {
         } else if (arrowDx !== 0 || arrowDz !== 0) {
           // Explicit keyboard aim with arrow keys always takes priority over mouse
           aimAngle = Math.atan2(arrowDx, arrowDz);
-        } else if (hasMouseMovedRef.current && (isMouseDown.current || Date.now() - lastMouseMoveTimeRef.current < 2500)) {
-          aimAngle = computeGroundAimAngle(mousePos.current.clientX, mousePos.current.clientY, window.innerWidth || 1920, window.innerHeight || 1080, 48, camParam);
+        } else if (hasMouseMovedRef.current) {
+          // Continuous mouse aiming aligned with camera view and cursor
+          aimAngle = computeGroundAimAngle(
+            mousePos.current.clientX,
+            mousePos.current.clientY,
+            window.innerWidth || 1920,
+            window.innerHeight || 1080,
+            sim.cameraFov || 46,
+            camParam
+          );
         } else if (dx !== 0 || dz !== 0) {
-          // Keyboard movement direction when mouse is stationary
+          // Keyboard movement direction when mouse has not moved yet
           aimAngle = Math.atan2(dx, dz);
         } else {
           aimAngle = undefined;

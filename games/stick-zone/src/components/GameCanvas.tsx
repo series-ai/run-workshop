@@ -266,6 +266,7 @@ const CameraController: React.FC<{
         persCamera.fov = newFov;
         persCamera.updateProjectionMatrix();
       }
+      sim.cameraFov = persCamera.fov;
     }
   });
 

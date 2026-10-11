@@ -14,10 +14,12 @@ import {
   INK_CONTOUR_COLOR,
 } from "../render/celShader.js";
 import type { AssetKey } from "../assetLibrary.js";
+import type { OperativeState } from "../sim/game.js";
 
 const GUNMETAL_BODY_COLOR = "#292e36";
 
 export interface InklineStickCharacterProps {
+  operative?: OperativeState;
   isCurrentPlayer?: boolean;
   assetKey?: AssetKey;
   weapon?: "rifle" | "shotgun" | "pistol";
@@ -92,6 +94,7 @@ function createBlendedWeaponRunClip(
 }
 
 function LoadedCharacter({
+  operative,
   url,
   assetKey = "playerStickman",
   weapon = "rifle",
@@ -110,6 +113,8 @@ function LoadedCharacter({
   onSampleBones,
   onMuzzleSample,
 }: InklineStickCharacterProps & { url: string }) {
+  const lastCharPosRef = useRef({ x: operative?.x ?? 0, z: operative?.z ?? 0 });
+  const liveSpeedRef = useRef(0);
   const { scene, animations } = useGLTF(url);
   const clonedScene = useMemo(() => skeletonClone(scene), [scene]);
   const groupRef = useRef<THREE.Group>(null);
@@ -145,79 +150,105 @@ function LoadedCharacter({
 
   const currentActionNameRef = useRef<string>("");
 
-  // Transition animations smoothly using crossFadeTo without jerky resets
-  useEffect(() => {
-    if (!actions) return;
-
-    let targetClip = "rifle-idle";
-    if (!isAlive) {
-      targetClip = actions["death"] ? "death" : "idle";
-    } else if (isRolling && actions["roll"]) {
-      targetClip = "roll";
-    } else if (isFiring) {
-      if (weapon === "shotgun" && actions["shotgun-fire"]) {
-        targetClip = "shotgun-fire";
-      } else if (weapon === "pistol" && actions["pistol-fire"]) {
-        targetClip = "pistol-fire";
-      } else if (actions["rifle-fire"]) {
-        targetClip = "rifle-fire";
-      }
-    } else if (isMoving) {
-      if (hasWeapon && weapon === "shotgun" && actions["run-shotgun"]) {
-        targetClip = "run-shotgun";
-      } else if (hasWeapon && weapon === "pistol" && actions["run-pistol"]) {
-        targetClip = "run-pistol";
-      } else if (hasWeapon && actions["run-rifle"]) {
-        targetClip = "run-rifle";
-      } else if (actions["run"]) {
-        targetClip = "run";
-      }
-    } else if (hasWeapon && weapon === "pistol" && actions["pistol-idle"]) {
-      targetClip = "pistol-idle";
-    } else if (hasWeapon && actions["rifle-idle"]) {
-      targetClip = "rifle-idle";
-    } else if (actions["idle"]) {
-      targetClip = "idle";
-    }
-
-    if (currentActionNameRef.current === targetClip) return;
-
-    const prevAction = actions[currentActionNameRef.current];
-    const nextAction = actions[targetClip];
-
-    if (nextAction) {
-      if (targetClip === "death") {
-        nextAction.reset().play();
-        nextAction.clampWhenFinished = true;
-        nextAction.loop = THREE.LoopOnce;
-      } else if (prevAction && prevAction !== nextAction) {
-        nextAction.enabled = true;
-        nextAction.play();
-        prevAction.crossFadeTo(nextAction, 0.16, false);
-      } else {
-        nextAction.reset().fadeIn(0.16).play();
-      }
-      currentActionNameRef.current = targetClip;
-    }
-  }, [actions, isMoving, isFiring, isAlive, isRolling, weapon, hasWeapon]);
-
-  // Separate upper and lower body animation & aim rotation
+  // Separate upper and lower body animation, continuous aim rotation, and dynamic clip cross-fading
   useFrame((_, delta) => {
-    let targetBaseRotation = facing;
+    // 1. Resolve live parameters from operative instance if passed
+    const liveFacing = operative ? operative.facing : (facing ?? 0);
+    const liveIsAlive = operative ? operative.isAlive : isAlive;
+    const liveIsRolling = operative ? operative.isRolling : isRolling;
+    const liveWeapon = operative ? (operative.weapon || "rifle") : (weapon || "rifle");
+
+    const curX = operative ? operative.x : 0;
+    const curZ = operative ? operative.z : 0;
+    const distMoved = Math.hypot(curX - lastCharPosRef.current.x, curZ - lastCharPosRef.current.z);
+    const measuredSpeed = distMoved / Math.max(0.001, delta);
+    liveSpeedRef.current = THREE.MathUtils.lerp(liveSpeedRef.current, measuredSpeed, 0.25);
+    const liveIsMoving = operative
+      ? (operative.action === "walk" || operative.action === "sprint" || distMoved > 0.012)
+      : isMoving;
+    const liveMoveAngle = distMoved > 0.012
+      ? Math.atan2(curX - lastCharPosRef.current.x, curZ - lastCharPosRef.current.z)
+      : moveAngle;
+    lastCharPosRef.current = { x: curX, z: curZ };
+
+    const distinctFireTime = operative
+      ? Math.max((operative as any).lastFiredAtMs || 0, (operative as any).lastFireTimestamp || 0)
+      : 0;
+    const liveFlashElapsed = distinctFireTime > 0
+      ? Date.now() - distinctFireTime
+      : (flashElapsed ?? 999999);
+    const liveIsFiring = liveFlashElapsed >= 0 && liveFlashElapsed <= 70;
+
+    // 2. Cross-fade animation clips dynamically in useFrame without virtual DOM reconciliations
+    if (actions) {
+      let targetClip = "rifle-idle";
+      if (!liveIsAlive) {
+        targetClip = actions["death"] ? "death" : "idle";
+      } else if (liveIsRolling && actions["roll"]) {
+        targetClip = "roll";
+      } else if (liveIsFiring) {
+        if (liveWeapon === "shotgun" && actions["shotgun-fire"]) {
+          targetClip = "shotgun-fire";
+        } else if (liveWeapon === "pistol" && actions["pistol-fire"]) {
+          targetClip = "pistol-fire";
+        } else if (actions["rifle-fire"]) {
+          targetClip = "rifle-fire";
+        }
+      } else if (liveIsMoving) {
+        if (hasWeapon && liveWeapon === "shotgun" && actions["run-shotgun"]) {
+          targetClip = "run-shotgun";
+        } else if (hasWeapon && liveWeapon === "pistol" && actions["run-pistol"]) {
+          targetClip = "run-pistol";
+        } else if (hasWeapon && actions["run-rifle"]) {
+          targetClip = "run-rifle";
+        } else if (actions["run"]) {
+          targetClip = "run";
+        }
+      } else if (hasWeapon && liveWeapon === "pistol" && actions["pistol-idle"]) {
+        targetClip = "pistol-idle";
+      } else if (hasWeapon && actions["rifle-idle"]) {
+        targetClip = "rifle-idle";
+      } else if (actions["idle"]) {
+        targetClip = "idle";
+      }
+
+      if (currentActionNameRef.current !== targetClip) {
+        const prevAction = actions[currentActionNameRef.current];
+        const nextAction = actions[targetClip];
+
+        if (nextAction) {
+          if (targetClip === "death") {
+            nextAction.reset().play();
+            nextAction.clampWhenFinished = true;
+            nextAction.loop = THREE.LoopOnce;
+          } else if (prevAction && prevAction !== nextAction) {
+            nextAction.enabled = true;
+            nextAction.play();
+            prevAction.crossFadeTo(nextAction, 0.16, false);
+          } else {
+            nextAction.reset().fadeIn(0.16).play();
+          }
+          currentActionNameRef.current = targetClip;
+        }
+      }
+    }
+
+    // 3. Separate upper and lower body animation & aim rotation
+    let targetBaseRotation = liveFacing;
     let targetTorsoTwist = 0;
     let isBackpedaling = false;
 
-    if (isMoving && moveAngle !== undefined) {
-      let angleDiff = facing - moveAngle;
+    if (liveIsMoving && liveMoveAngle !== undefined) {
+      let angleDiff = liveFacing - liveMoveAngle;
       angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
 
       if (Math.abs(angleDiff) <= 1.95) {
         // Forward / flanking run: legs face move direction, torso twists to aim
-        targetBaseRotation = moveAngle;
+        targetBaseRotation = liveMoveAngle;
         targetTorsoTwist = angleDiff;
       } else {
         // Retreating / backpedaling: legs face aim target, run animation plays in reverse
-        targetBaseRotation = facing;
+        targetBaseRotation = liveFacing;
         targetTorsoTwist = 0;
         isBackpedaling = true;
       }
@@ -235,10 +266,10 @@ function LoadedCharacter({
       chestBone.rotation.y = THREE.MathUtils.lerp(chestBone.rotation.y, halfTwist, Math.min(1, delta * 15));
     }
 
-    if (actions && currentActionNameRef.current && isMoving) {
+    if (actions && currentActionNameRef.current && liveIsMoving) {
       const activeAction = actions[currentActionNameRef.current];
       if (activeAction) {
-        const curSpeed = (speed !== undefined && speed > 0.05) ? speed : 4.8;
+        const curSpeed = liveSpeedRef.current > 0.05 ? liveSpeedRef.current : 4.8;
         const baseScale = THREE.MathUtils.clamp(curSpeed / 4.8, 0.75, 1.55);
         const targetScale = isBackpedaling ? -baseScale : baseScale;
         activeAction.timeScale = THREE.MathUtils.lerp(activeAction.timeScale, targetScale, 0.2);
@@ -376,7 +407,9 @@ function LoadedCharacter({
         onSampleBones({ footR: footPos, handR: handPos });
       }
     }
-    if (muzzleTipRef.current && isAlive && !isRolling) {
+    const liveAliveCheck = operative ? operative.isAlive : isAlive;
+    const liveRollingCheck = operative ? operative.isRolling : isRolling;
+    if (muzzleTipRef.current && liveAliveCheck && !liveRollingCheck) {
       muzzleTipRef.current.getWorldPosition(_scratchMuzzlePos);
       muzzleTipRef.current.getWorldDirection(_scratchMuzzleDir);
       onMuzzleSample?.({ pos: _scratchMuzzlePos, dir: _scratchMuzzleDir });

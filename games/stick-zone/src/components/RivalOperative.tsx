@@ -206,6 +206,7 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
       {/* Scav & Boss Dynamic Tactical Searchlight with Container Occlusion */}
       {operative.isAlive && (
         <DynamicFlashlightOcclusion
+          operative={operative}
           origin={{ x: operative.x, y: operative.y || 0, z: operative.z }}
           facing={operative.facing}
           isActive={true}
@@ -226,6 +227,7 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
 
         {/* Rigged Animated Inkline 3D Stick Striker or Scav */}
         <InklineStickCharacter
+          operative={operative}
           assetKey={
             operative.badge === 'SECTOR BOSS'
               ? 'scavBoss'

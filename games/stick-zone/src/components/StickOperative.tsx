@@ -239,6 +239,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
       {/* Tactical Dynamic Flashlight Beam with Container Occlusion */}
       {operative.isAlive && (
         <DynamicFlashlightOcclusion
+          operative={operative}
           origin={{ x: operative.x, y: operative.y || 0, z: operative.z }}
           facing={operative.facing}
           isActive={operative.isFlashlightOn ?? true}
@@ -266,6 +267,7 @@ export const StickOperative: React.FC<StickOperativeProps> = ({
 
         {/* Rigged Animated Inkline 3D Stick Character */}
         <InklineStickCharacter
+          operative={operative}
           assetKey={characterAssetKey}
           isCurrentPlayer={isCurrentPlayer}
           weapon={operative.weapon || 'rifle'}

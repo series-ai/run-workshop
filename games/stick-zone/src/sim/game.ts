@@ -705,6 +705,7 @@ export class SectorDepotSimulation {
   public slideKeyReleased = true;
   public cameraPos?: { x: number; y: number; z: number };
   public cameraTarget?: { x: number; y: number; z: number };
+  public cameraFov: number = 46.0;
   public isAds: boolean = false;
   public onPlayerDeath?: () => void;
   public onDamageTaken?: () => void;
@@ -1239,6 +1240,17 @@ export class SectorDepotSimulation {
     this.zoneMode = initialZone;
     this.exfilController = createExfilController();
     this.ingressController = new StagedIngressController();
+    this.cameraPos = {
+      x: initialZone === "hub" ? 0 : SIM_CONFIG.SPAWN_SQUAD_A.x,
+      y: initialZone === "hub" ? 20.0 : 16.0,
+      z: (initialZone === "hub" ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z) + (initialZone === "hub" ? 10.0 : 6.46),
+    };
+    this.cameraTarget = {
+      x: initialZone === "hub" ? 0 : SIM_CONFIG.SPAWN_SQUAD_A.x,
+      y: 1.0,
+      z: (initialZone === "hub" ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z) + (initialZone === "hub" ? -1.0 : 0),
+    };
+    this.cameraFov = 46.0;
 
 
 
