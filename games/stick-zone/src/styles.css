@@ -549,28 +549,8 @@ html, body, #root {
   100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
 }
 
-@keyframes hitmarkerAnim {
-  0% { transform: scale(1.5) rotate(45deg); opacity: 1; filter: drop-shadow(0 0 6px #ef4444); }
-  60% { transform: scale(1.2) rotate(45deg); opacity: 0.95; filter: drop-shadow(0 0 4px #ef4444); }
-  100% { transform: scale(1.0) rotate(45deg); opacity: 0; }
-}
-
 .bleed-alert-pulse {
   animation: bleedPulse 1.2s infinite;
-}
-
-.hitmarker-indicator {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 44px;
-  height: 44px;
-  margin-top: -22px;
-  margin-left: -22px;
-  pointer-events: none;
-  z-index: 9999;
-  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.9));
-  animation: hitmarkerAnim 0.25s ease-out forwards;
 }
 
 .critical-health-vignette {

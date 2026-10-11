@@ -304,9 +304,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
   const nearbyCrate = sim.crates.find(
     (c) => !c.opened && Math.hypot(player.x - c.x, player.z - c.z) <= 4.0
   );
-  const showHitmarker =
-    !!player.lastHitmarkerTick && tick - player.lastHitmarkerTick < 15;
-  const isHitmarkerCrit = !!player.lastHitmarkerCrit;
+
   const isCriticalHealth = player.isAlive && player.health < 30;
 
   const headingDeg = Math.round(
@@ -543,49 +541,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = ({ sim, onOpenHideout }) 
         </div>
       )}
 
-      {/* Centered Hitmarker Indicator */}
-      {showHitmarker && (
-        <div key={player.lastHitmarkerTick} className="hitmarker-indicator">
-          <svg width="44" height="44" viewBox="0 0 24 24">
-            <line
-              x1="2"
-              y1="2"
-              x2="8"
-              y2="8"
-              stroke={isHitmarkerCrit ? "#ff2212" : "#151716"}
-              strokeWidth="3.6"
-              strokeLinecap="round"
-            />
-            <line
-              x1="22"
-              y1="2"
-              x2="16"
-              y2="8"
-              stroke={isHitmarkerCrit ? "#ff2212" : "#151716"}
-              strokeWidth="3.6"
-              strokeLinecap="round"
-            />
-            <line
-              x1="2"
-              y1="22"
-              x2="8"
-              y2="16"
-              stroke={isHitmarkerCrit ? "#ff2212" : "#151716"}
-              strokeWidth="3.6"
-              strokeLinecap="round"
-            />
-            <line
-              x1="22"
-              y1="22"
-              x2="16"
-              y2="16"
-              stroke={isHitmarkerCrit ? "#ff2212" : "#151716"}
-              strokeWidth="3.6"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-      )}
+
 
       {/* ============================================================
           AUTHENTIC DIEGETIC MILITARY GAME HUD (Sol 6.1 High Architecture)
