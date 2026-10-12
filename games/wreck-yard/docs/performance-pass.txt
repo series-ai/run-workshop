@@ -51,8 +51,11 @@ last step. The final response-only SDK repair is PR #5367. It reduces
 resting-step medians by 17.4%, 14.5%, and 2.3% in three paired native runs.
 It adds no measured native memory. Collapse timing is mixed. The change
 preserves exact state and public contacts in 390 frames plus two 360-frame
-kinematic-contact traces. All 119 focused native tests pass. CI and review
-remain required before publication. The game still uses published rc.40.
+kinematic-contact traces. All 119 focused native tests and 237 extended tests pass. All 57 CI
+checks pass. Review found no blockers. The exact rc.41 package also passes
+346 game tests, the build, seven live checks, and the complete desktop
+and mobile attraction route. GitHub requires one human approval before
+merge. Publication is pending that gate. The game still uses published rc.40.
 
 After the 256-frame rollback history fills, a stationary 52-second check
 keeps 257 live checkpoints, 186 textures, 240 geometries, and 70 programs.

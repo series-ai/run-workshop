@@ -6804,6 +6804,39 @@
       "Native profiles corroborate reduced manifold and response work. They do not establish a complete game frame percentile."
     ],
     "pr": "https://github.com/series-ai/venus/pull/5367",
-    "releaseStatus": "CI and review pending; game remains on rc.40"
+    "releaseStatus": "CI and review pending; game remains on rc.40",
+    "integrationVerification": {
+      "pr": "https://github.com/series-ai/venus/pull/5367",
+      "head": "484562e3c4469b492f981cff2357cead84f13d3c",
+      "packageVersion": "6.0.0-rc.41",
+      "packageShasum": "c2db07feb8f37cee28f18370fdf3b05361af39a8",
+      "packageBytes": 5585099,
+      "unpackedBytes": 24908881,
+      "gameTests": {
+        "passed": 346,
+        "failed": 0
+      },
+      "build": "pass",
+      "liveChecks": {
+        "passed": 7,
+        "failed": 0
+      },
+      "attractionRoute": "pass",
+      "browserErrors": [],
+      "productionIndexBytesReportedKiB": 7272.21,
+      "productionIndexGzipReportedKiB": 2045.6,
+      "profileArtifactPresentInProduction": false,
+      "profileArtifactEncodedLengthChecked": 7799184,
+      "ciPassed": 57,
+      "mergeRequirement": "One human approval. Tier 2, risk high. PO label alone does not satisfy this gate.",
+      "publication": "Pending merge approval. Original game stays on published rc.40.",
+      "initialLiveStartupFailure": "The isolated server had no development login settings. The test stopped at RUN sign-in. The rerun used the existing local settings in process memory and passed.",
+      "rawLogs": [
+        "/private/tmp/wreck-sdk-validation-tests.log",
+        "/private/tmp/wreck-sdk-validation-build.log",
+        "/private/tmp/wreck-sdk-validation-live-auth.log",
+        "/private/tmp/wreck-sdk-validation-attractions.log"
+      ]
+    }
   }
 }
