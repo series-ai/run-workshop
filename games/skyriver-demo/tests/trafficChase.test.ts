@@ -1,7 +1,7 @@
 import { InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera, ShaderMaterial, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
-import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
-import { HOP_COHORT_BOUNDS, newFlowSample, renderTrafficModel, sampleStreamFlow } from '../src/render/trafficStreams';
+import { carTrafficPlan, createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
+import { HOP_COHORT_BOUNDS, newFlowSample, renderTrafficModel, sampleStreamFlow, STREAMS, streamCentreAnalytic } from '../src/render/trafficStreams';
 
 describe('R15 chase traffic in the R21 model', () => {
   it('keeps hop cohorts equal to the actual tier sizes', () => {
@@ -21,6 +21,124 @@ describe('R15 chase traffic in the R21 model', () => {
         expect(flow.bakedRowA).toBe(flow.bakedRowB);
       }
     }
+  });
+
+  it.each([0, 424242, 2147483647, 4294967295].flatMap(seed =>
+    [560, 2240].map(height => ({ seed, height }))))
+    ('binds the initial nearest stream pair for seed $seed at height $height', ({ seed, height }) => {
+      const traffic = createSkyriverTraffic({ seed, quality: TRAFFIC_QUALITY_TIERS.high });
+      const nearest = (anchorHeight: number) => STREAMS.map((_, index) => {
+        const center = { x: 0, y: 0 }; streamCentreAnalytic(index, 0, center);
+        return { index, score: Math.abs(center.y - anchorHeight) + 0.3 * Math.abs(center.x) };
+      }).sort((a, b) => a.score - b.score || a.index - b.index).slice(0, 2).map(row => row.index);
+      const initialPair = nearest(height), changedPair = nearest(height === 560 ? 2240 : 560);
+      expect(changedPair).not.toEqual(initialPair);
+      const camera = new PerspectiveCamera(115, 1280 / 720, 1, 14000);
+      camera.position.set(0, height, 1800); camera.lookAt(0, height, 0); camera.updateMatrixWorld(true);
+      const update = (time: number) => {
+        const angle = 2 / (camera.projectionMatrix.elements[5]! * 720);
+        traffic.setPixelAngle(angle, angle);
+        traffic.setCameraFrame(camera.matrixWorldInverse.elements, camera.near, camera.projectionMatrix.elements);
+        traffic.update(time, camera.position);
+      };
+      try {
+        traffic.setAnchor(0, height, 0, 0, 160, 0, 0); update(12);
+        const initial = new Map<number, { stream: number; origin: number; matrix: readonly number[]; speed: number }>();
+        const chosen = new Set<number>();
+        for (let id = 4; id < 114; id++) {
+          const plan: import('../src/render/traffic').CarPlan = { role: 'free', stream: 255 };
+          carTrafficPlan(seed, id, plan);
+          if (plan.role !== 'chase-stream') continue;
+          const evidence = traffic.carEvidence(id);
+          if (!evidence?.prospectiveHullMatrix) throw Error('R15_CHASE_SOURCE_MATRIX_REQUIRED');
+          expect(evidence.sourceStream).toBe(initialPair[plan.stream]);
+          chosen.add(evidence.sourceStream);
+          initial.set(id, { stream: evidence.sourceStream, origin: evidence.sourceOriginM,
+            matrix: evidence.prospectiveHullMatrix, speed: evidence.sourceSignedSpeedMps });
+        }
+        expect(chosen).toEqual(new Set(initialPair));
+        traffic.setAnchor(0, height === 560 ? 2240 : 560, 0, 0, 160, 0, 0);
+        for (const time of [12, 12.5, 20]) {
+          update(time);
+          for (const [id, before] of initial) {
+            const current = traffic.carEvidence(id);
+            if (!current?.prospectiveHullMatrix) throw Error('R15_FIXED_COHORT_MATRIX_REQUIRED');
+            expect(current.sourceStream).toBe(before.stream);
+            expect(current.sourceOriginM).toBe(before.origin);
+            expect(current.sourceSignedSpeedMps).toBe(before.speed);
+            if (time === 12) expect(current.prospectiveHullMatrix).toEqual(before.matrix);
+          }
+        }
+        update(-5);
+        for (const [id, before] of initial) expect(traffic.carEvidence(id)?.sourceStream).toBe(before.stream);
+      } finally { traffic.dispose(); }
+    });
+
+  it.each([0, 1])('keeps rank %i on its native route through 90 fixed steps after a strata change', rank => {
+    const traffic = createSkyriverTraffic({ seed: 424242, quality: TRAFFIC_QUALITY_TIERS.high });
+    const camera = new PerspectiveCamera(62, 1280 / 720, 1, 14000);
+    const plan: import('../src/render/traffic').CarPlan = { role: 'free', stream: 255 };
+    const id = Array.from({ length: 110 }, (_, index) => index + 4).find(candidate => {
+      carTrafficPlan(424242, candidate, plan); return plan.role === 'chase-stream' && plan.stream === rank;
+    });
+    if (id === undefined) throw Error('R15_SEEDED_RANK_CAR_REQUIRED');
+    const update = (time: number) => {
+      camera.updateMatrixWorld(true);
+      const angle = 2 / (camera.projectionMatrix.elements[5]! * 720);
+      traffic.setPixelAngle(angle / 1.25, angle);
+      traffic.setCameraFrame(camera.matrixWorldInverse.elements, camera.near, camera.projectionMatrix.elements);
+      traffic.update(time, camera.position);
+    };
+    try {
+      camera.position.set(0, 560, 1800); camera.lookAt(0, 560, 0);
+      traffic.setAnchor(0, 560, 0, 0, 160, 0, 0); update(12);
+      const initial = traffic.carEvidence(id);
+      if (!initial?.prospectiveHullMatrix) throw Error('R15_INITIAL_NATIVE_SOURCE_REQUIRED');
+      let previous = new Vector3(...initial.position);
+      const streak = traffic.objects.find(object => object.name === 'skyriver.traffic.streaks');
+      if (!(streak instanceof Mesh) || !(streak.geometry instanceof InstancedBufferGeometry)) throw Error('R15_NATIVE_STREAK_REQUIRED');
+      let maxStepM = 0;
+      for (let frame = 0; frame < 90; frame++) {
+        if (frame === 30) traffic.setAnchor(0, 2240, 0, 0, 160, 0, 0);
+        camera.position.copy(previous).add(new Vector3(0, 0, 200)); camera.lookAt(previous);
+        update(12 + frame / 60);
+        const current = traffic.carEvidence(id);
+        if (!current || current.hullSlot < 0 || current.streakSlot < 0) throw Error('R15_RESOLVED_NATIVE_CARRIER_REQUIRED');
+        const hull = traffic.objects.find(object => object.name === current.hullMeshName);
+        if (!(hull instanceof InstancedMesh)) throw Error('R15_RESOLVED_NATIVE_HULL_REQUIRED');
+        const matrix = new Matrix4().fromArray(hull.instanceMatrix.array, current.hullSlot * 16);
+        const position = new Vector3().setFromMatrixPosition(matrix);
+        const step = position.distanceTo(previous); maxStepM = Math.max(maxStepM, step);
+        expect(step).toBeLessThanOrEqual(12);
+        expect(current.sourceStream).toBe(initial.sourceStream);
+        expect(current.sourceOriginM).toBe(initial.sourceOriginM);
+        expect(current.sourceSignedSpeedMps).toBe(initial.sourceSignedSpeedMps);
+        expect(current.physicalScale).toBe(initial.physicalScale);
+        hull.geometry.computeBoundingBox(); const box = hull.geometry.boundingBox;
+        if (!box) throw Error('R15_NATIVE_HULL_BOUNDS_REQUIRED');
+        const points: Vector3[] = [];
+        for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+          const world = new Vector3(x, y, z).applyMatrix4(matrix);
+          expect(world.clone().applyMatrix4(camera.matrixWorldInverse).z).toBeLessThan(-camera.near);
+          const projected = world.project(camera);
+          expect(Math.abs(projected.x)).toBeLessThan(1); expect(Math.abs(projected.y)).toBeLessThan(1);
+          points.push(projected);
+        }
+        const cssExtent = Math.max((Math.max(...points.map(p => p.x)) - Math.min(...points.map(p => p.x))) * 640,
+          (Math.max(...points.map(p => p.y)) - Math.min(...points.map(p => p.y))) * 360);
+        expect(cssExtent).toBeGreaterThanOrEqual(0.5);
+        expect(hull.geometry.getAttribute('aFade').getX(current.hullSlot)).toBe(1);
+        const lod = streak.geometry.getAttribute('aCarLod'), lamp = streak.geometry.getAttribute('aCarFade');
+        const lampPosition = streak.geometry.getAttribute('aCarPos');
+        expect(lod.getZ(current.streakSlot)).toBe(id);
+        expect(lamp.getX(current.streakSlot)).toBe(1);
+        expect(lamp.getY(current.streakSlot)).toBe(Math.fround(initial.physicalScale));
+        expect(new Vector3(lampPosition.getX(current.streakSlot), lampPosition.getY(current.streakSlot),
+          lampPosition.getZ(current.streakSlot)).distanceTo(position)).toBeLessThan(1e-4);
+        previous = position;
+      }
+      expect(maxStepM).toBeGreaterThan(0);
+    } finally { traffic.dispose(); }
   });
 
   it('keeps active transforms and attributes finite before and after the anchor is set', () => {

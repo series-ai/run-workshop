@@ -211,8 +211,8 @@
   },
   {
     "path": "src/render/traffic.ts",
-    "sha256": "ec4c5400b7fb65393104f5c963b48be171575240cf47b2923b5e6b6edd318a5b",
-    "byteLength": 141380
+    "sha256": "31fb0412e4a1a0c2609cb46e2ac17213f4805c6e1f9f9fe57ef69d054d179e8b",
+    "byteLength": 139756
   },
   {
     "path": "src/render/trafficAppearance.ts",

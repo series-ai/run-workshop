@@ -1675,7 +1675,7 @@ export type CarRole = 'escort' | 'chase-stream' | 'chase-free' | 'stream' | 'fre
 
 export interface CarPlan {
   role: CarRole;
-  /** Stream index, a chase rank for 'chase-stream', or 255 for a free car. */
+  /** Stream index, initial cohort rank for 'chase-stream', or 255 for a free car. */
   stream: number;
 }
 
@@ -1925,7 +1925,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
     // One definition of a car's role and stream, shared with trafficHopCensus.
     carTrafficPlan(options.seed, car, carPlan);
     if (carPlan.role === 'chase-stream') {
-      // Chase band: members of the streams nearest the shuttle (rank 0 or 1, re-picked each frame).
+      // Chase band: rank 0/1 selects the cohort streams bound at the first valid anchor.
       carStream[car] = carPlan.stream;
       carRow[car] = h(0x43);
       carHomeX[car] = (h(0x21) * 2 - 1);
@@ -2321,49 +2321,33 @@ if (vTrafficGlass > 0.5) {
 
   // ---- R11 stream geometry: centre (x across, y) of stream k at canyon arc length v.
   const streamScratch = new Float64Array(3);
-  const streamRank = [0, 1, 2, 3, 4, 5, 6, 7].slice(0, STREAMS.length);
-  const streamRankDist = new Float64Array(STREAMS.length);
-
-  // ---- R15 sticky near-shuttle stream assignment (glitch fix). R11 re-ranked the streams every
-  // frame, so when the order flipped every close car in that rank teleported 150-360 m at once
-  // (measured: 27 cars at one tick). Ranks now hold their stream until another is nearer by a clear
-  // margin and the current one has been held >= 2 s; on a switch each car hands over at its own
-  // hashed moment, fading out on the old stream and in on the new (no car ever jumps visibly).
-  const RANK_SWITCH_MARGIN_M = 160;
-  const RANK_MIN_HOLD_S = 2;
-  const HANDOFF_FADE_S = 0.35;
-  const HANDOFF_SPREAD_S = 1.2;
-  const rankCurrent = new Int16Array([-1, -1]);
-  const rankPrevious = new Int16Array([-1, -1]);
-  const rankSwitchT = new Float64Array([-1e9, -1e9]);
-  function updateRankAssignment(t: number): void {
-    for (let r = 0; r < 2; r += 1) {
-      // A clock that ran backwards (restore/replay) drops any handoff in flight.
-      if (t < rankSwitchT[r]!) { rankSwitchT[r] = -1e9; rankPrevious[r] = -1; }
-      const other = rankCurrent[1 - r]!;
-      let best = -1;
-      for (let k = 0; k < streamRank.length; k += 1) {
-        const candidate = streamRank[k]!;
-        if (r === 1 && candidate === rankCurrent[0]) continue;
-        if (r === 0 && candidate === other && other !== -1 && k > 0) continue;
-        best = candidate;
-        break;
-      }
-      const cur = rankCurrent[r]!;
-      if (cur === -1) { rankCurrent[r] = best; continue; }
-      if (best === cur || best === -1) continue;
-      const better = streamRankDist[cur]! - streamRankDist[best]! > RANK_SWITCH_MARGIN_M;
-      const held = t - rankSwitchT[r]! >= RANK_MIN_HOLD_S;
-      const curTaken = r === 1 && cur === rankCurrent[0];
-      // Never start a switch while the previous handoff is still running: cars not yet handed over
-      // would jump straight from the old-old stream to the new one.
-      const settled = t - rankSwitchT[r]! >= HANDOFF_SPREAD_S + 2 * HANDOFF_FADE_S;
-      if (settled && ((better && held) || curTaken)) {
-        rankPrevious[r] = cur;
-        rankCurrent[r] = best;
-        rankSwitchT[r] = t;
+  // Dynamic near-shuttle reranking is removed. The first valid anchor binds the cohort.
+  // Later altitude changes do not move its cars to other streams.
+  const initialChaseStreams = new Int16Array([-1, -1]);
+  function bindInitialChaseStreams(): void {
+    if (!anchorValid || initialChaseStreams[0] !== -1) return;
+    let first = -1;
+    let second = -1;
+    let firstDistance = Infinity;
+    let secondDistance = Infinity;
+    // Strict comparisons preserve the old stable stream-index order for equal scores.
+    for (let k = 0; k < STREAMS.length; k++) {
+      streamCentre(k, anchor[6]!, streamScratch);
+      const distance = Math.abs(streamScratch[1]! - anchor[1]!)
+        + Math.abs(streamScratch[0]! - anchor[7]!) * 0.3;
+      if (distance < firstDistance) {
+        second = first;
+        secondDistance = firstDistance;
+        first = k;
+        firstDistance = distance;
+      } else if (distance < secondDistance) {
+        second = k;
+        secondDistance = distance;
       }
     }
+    if (first < 0 || second < 0) fail('SKYRIVER_TRAFFIC_STREAM_BINDING_INVALID');
+    initialChaseStreams[0] = first;
+    initialChaseStreams[1] = second;
   }
 
   // R44 Close-Range Fade Mini: coherent per-permanentID admission and continuous source motion.
@@ -2720,16 +2704,7 @@ if (vTrafficGlass > 0.5) {
     const camY = camera.y;
     const camZ = camera.z;
     streaksUsed = 0;
-    // Chase cars join the streams nearest the shuttle: rank the stream shelves by height at its v.
-    if (anchorValid) {
-      for (let k = 0; k < STREAMS.length; k += 1) {
-        streamCentre(k, anchor[6]!, streamScratch);
-        streamRankDist[k] = Math.abs(streamScratch[1]! - anchor[1]!) + Math.abs(streamScratch[0]! - anchor[7]!) * 0.3;
-        streamRank[k] = k;
-      }
-      streamRank.sort((a, b) => streamRankDist[a]! - streamRankDist[b]!);
-      updateRankAssignment(t);
-    }
+    bindInitialChaseStreams();
     if (lastSourceTimeS > -1e8 && t < lastSourceTimeS) {
       const dt = lastSourceTimeS - t;
       if (!isNaN(escort3OriginV)) {
@@ -2851,8 +2826,7 @@ if (vTrafficGlass > 0.5) {
               const chaseIdx = car - ESCORT_COUNT;
               if (chaseStreamChosen[chaseIdx] === -1) {
                 const r = carStream[car]!;
-                const cur = rankCurrent[r]!;
-                chaseStreamChosen[chaseIdx] = cur >= 0 ? cur : (streamRank[r] ?? 0);
+                chaseStreamChosen[chaseIdx] = initialChaseStreams[r]!;
               }
               k = chaseStreamChosen[chaseIdx]!;
               carFlowInput.path = k;
