@@ -21,13 +21,25 @@ const gpu = mesh('skyriver.traffic.impostors');
 const cpuMaterial = cpu.material as ShaderMaterial;
 const gpuMaterial = gpu.material as ShaderMaterial;
 function body(source: string, name: string): string {
-  const match = source.match(new RegExp('(?:float|vec2)\\s+' + name + '\\s*\\([^)]*\\)\\s*\\{([^}]+)\\}'));
+  const match = source.match(new RegExp('(?:float|vec2|mat2)\\s+' + name + '\\s*\\([^)]*\\)\\s*\\{([^}]+)\\}'));
   if (!match) throw new Error('R28B_ACTUAL_GLSL_FUNCTION_MISSING:' + name);
   return match[1]!;
 }
 const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
-// Component-wise GLSL arithmetic is scalar arithmetic for one vector component.
-const floorBody = body(gpuMaterial.vertexShader, 'trafficLampFloor').replace(/\bfloat\b/g, 'let');
+// Evaluate the actual scalar principal-value branch of the material spectral floor.
+const spectralBody = body(gpuMaterial.vertexShader, 'trafficSpectralFloor');
+const widthExpression = spectralBody.match(/float\s+width\s*=\s*([^;]+);/);
+const overlapExpression = spectralBody.match(/float\s+oh\s*=\s*([^;]+);/);
+const floorExpression = spectralBody.match(/float\s+fh\s*=\s*([^;]+);/);
+if (!widthExpression || !overlapExpression || !floorExpression) throw new Error('R44_ACTUAL_SPECTRAL_FLOOR_MISSING');
+function materialBlendShare(source: string): number {
+  const call = source.match(/trafficSpectralFloor\(source,\s*floorSize,\s*([\d.]+)\)/);
+  if (!call) throw new Error('R44_ACTUAL_SPECTRAL_FLOOR_CALL_MISSING');
+  return Number(call[1]);
+}
+const actualBlendShare = materialBlendShare(gpuMaterial.vertexShader);
+const floorBody = 'const high = physical; const blendShare = ' + actualBlendShare + '; const width = ' + widthExpression[1]
+  + '; const oh = ' + overlapExpression[1] + '; return ' + floorExpression[1] + ';';
 const floor = new Function('physical', 'floorSize', 'max', 'abs', floorBody) as
   (physical: number, floorSize: number, max: typeof Math.max, abs: typeof Math.abs) => number;
 const actualFloor = (physical: number, minimum: number): number => floor(physical, minimum, Math.max, Math.abs);
@@ -35,15 +47,18 @@ const smoothstep = (lo: number, hi: number, value: number): number => {
   const t = clamp((value - lo) / (hi - lo), 0, 1);
   return t * t * (3 - 2 * t);
 };
-function gainFunction(source: string): (x: number, y: number, minimum: number) => number {
+function gainFunction(source: string): (xx: number, yy: number, minimum: number, xy?: number) => number {
   const match = source.match(/float\s+extent\s*=\s*([^;]+);\s*lampGain\s*=\s*([^;]+);/);
   if (!match) throw new Error('R28B_ACTUAL_GAIN_EXPRESSION_MISSING');
-  const extent = match[1]!.replace(/physicalHalfSize\.x/g, 'x').replace(/physicalHalfSize\.y/g, 'y');
-  const run = new Function('x', 'y', 'floorSize', 'max', 'mix', 'smoothstep',
-    'const extent = ' + extent + '; return ' + match[2]!) as
-    (x: number, y: number, minimum: number, maxFn: typeof Math.max,
+  const radius = source.match(/float\s+sourceRadius\s*=\s*([^;]+);/);
+  if (!radius) throw new Error('R44_ACTUAL_PRINCIPAL_RADIUS_MISSING');
+  const run = new Function('source', 'floorSize', 'length', 'vec2', 'mix', 'smoothstep',
+    'const sourceRadius = ' + radius[1] + '; const extent = ' + match[1] + '; return ' + match[2]!) as
+    (source: number[][], minimum: number, lengthFn: (v: number[]) => number,
+      vectorFn: (a: number, b: number) => number[],
       mixFn: (a: number, b: number, t: number) => number, stepFn: typeof smoothstep) => number;
-  return (x, y, minimum) => run(x, y, minimum, Math.max, (a, b, t) => a + (b - a) * t, smoothstep);
+  return (xx, yy, minimum, xy = 0) => run([[xx, xy], [xy, yy]], minimum,
+    v => Math.hypot(...v), (a, b) => [a, b], (a, b, t) => a + (b - a) * t, smoothstep);
 }
 const gpuGain = gainFunction(gpuMaterial.vertexShader);
 const cpuGain = gainFunction(cpuMaterial.vertexShader);
@@ -60,7 +75,7 @@ const componentIntegral = new Function('uv', 'halfPixel', 'trafficLampPrimitive'
 const integral = (u: number, halfPixel: number): number =>
   componentIntegral(u, halfPixel, x => primitive(x, clamp), Math.max);
 const pairBody = body(gpuMaterial.fragmentShader, 'trafficLampPair');
-const pairWeightMatch = pairBody.match(/return\s+([\d.]+)\s*\*\s*\(trafficFilteredLamp\(uv\s*-\s*vec2\(offset,\s*0\.0\)\)\s*\+\s*trafficFilteredLamp\(uv\s*\+\s*vec2\(offset,\s*0\.0\)\)\)/);
+const pairWeightMatch = pairBody.match(/return\s+([\d.]+)\s*\*\s*\(trafficFilteredLamp\(uv\s*-\s*offset\)\s*\+\s*trafficFilteredLamp\(uv\s*\+\s*offset\)\)/);
 if (!pairWeightMatch) throw new Error('R28B_ACTUAL_PAIR_EXPRESSION_DIFFERS');
 const pairWeight = Number(pairWeightMatch[1]);
 function kernel(u: number): number {
@@ -87,6 +102,8 @@ function totalPairEnergy(hx: number, hy: number, halfSeparation: number, phaseX:
 
 describe('R28b actual material floor', () => {
   it('keeps the minimum, the physical size, and the five-percent excess bound', () => {
+    expect(actualBlendShare).toBe(0.2);
+    expect(materialBlendShare(cpuMaterial.vertexShader)).toBe(actualBlendShare);
     for (const minimum of [0.00065, 0.65, 1.3, 17]) {
       for (let i = 0; i <= 1200; i++) {
         const physical = minimum * i / 400;
@@ -172,7 +189,7 @@ describe('R28b actual pixel-box algebra', () => {
     for (const name of ['trafficLampPrimitive', 'trafficBoxLamp', 'trafficFilteredLamp', 'trafficLampPair']) {
       expect(body(cpuMaterial.fragmentShader, name)).toBe(body(gpuMaterial.fragmentShader, name));
     }
-    expect(body(cpuMaterial.vertexShader, 'trafficLampFloor')).toBe(body(gpuMaterial.vertexShader, 'trafficLampFloor'));
+    expect(body(cpuMaterial.vertexShader, 'trafficSpectralFloor')).toBe(body(gpuMaterial.vertexShader, 'trafficSpectralFloor'));
     const filter = body(gpuMaterial.fragmentShader, 'trafficFilteredLamp');
     expect(filter).toContain('trafficBoxLamp(uv, halfPixel)');
     expect(filter).toContain('trafficBoxLamp(uv * 2.5, halfPixel * 2.5)');
@@ -180,6 +197,20 @@ describe('R28b actual pixel-box algebra', () => {
 });
 
 describe('R28b actual shared floor gain', () => {
+  it('uses the actual principal-radius expression for rotated matrices', () => {
+    for (const angle of [0, 0.13, Math.PI / 4, Math.PI / 2, 2.3]) {
+      for (const high of [0.4, 0.8, 0.9, 1, 1.1, 1.2, 4]) {
+        const low = high * 0.2;
+        const c = Math.cos(angle), s = Math.sin(angle);
+        const xx = high * c * c + low * s * s;
+        const xy = (high - low) * c * s;
+        const yy = high * s * s + low * c * c;
+        const expected = 0.8 + 0.2 * smoothstep(0.8, 1.2, high);
+        expect(gpuGain(xx, yy, 1, xy)).toBeCloseTo(expected, 13);
+        expect(cpuGain(xx, yy, 1, xy)).toBeCloseTo(expected, 13);
+      }
+    }
+  });
   it('shares the gain, keeps the 0.8 minimum, and restores resolved gain one', () => {
     for (const minimum of [0.00065, 0.65, 2, 41]) {
       for (const x of [0, 0.1, 0.8, 0.9, 1, 1.1, 1.2, 4]) {
@@ -285,7 +316,7 @@ describe('R28b actual traffic batches', () => {
     expect(cpu.geometry.getIndex()!.count).toBe(18);
     expect(Array.from(cpu.geometry.getAttribute('aLamp').array)).toEqual([0, 0, 0, 0, 1, 1, 1, 1, 4, 4, 4, 4]);
     expect(gpuMaterial.vertexShader).toContain('float lampSide = 0.0;');
-    expect(gpuMaterial.vertexShader).toContain('vPairOffset = pairHalfSpan / halfSize.x;');
+    expect(gpuMaterial.vertexShader).toContain('vPairOffset = inverse(lampFootprint) * pairOffset;');
     expect(gpuMaterial.fragmentShader).not.toContain('trailBody');
   });
 

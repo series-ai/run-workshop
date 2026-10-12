@@ -74,7 +74,7 @@ import { TRAFFIC_APPEARANCE_PROFILES, TRAFFIC_LAMP_HEAD_FACING_BAND, TRAFFIC_LAM
   TRAFFIC_TRAIL_FAR_FADE_BAND_M } from '../src/render/trafficAppearance';
 import { projectTrafficLampKernel } from '../src/render/trafficAppearanceModel';
 import {
-  continuityProfile, continuityRow, continuityInput, continuityViolations, appearanceMetrics, shippedHullResponse, continuityRawSteps,
+  continuityProfile, continuityRow, continuityInput, continuityViolations, appearanceMetrics, lampSupportCss, shippedHullResponse, continuityRawSteps,
 } from './support/flyerContinuityMatrix';
 import {
   FLYER_MATRIX_DPRS, FLYER_MATRIX_FACINGS, FLYER_MATRIX_TIERS,
@@ -110,15 +110,14 @@ describe('flyer continuity: full pure distance matrix', () => {
     const row = rows[at]!;
     expect(continuityViolations(rows)).toEqual([]);
     const wrongSize = { ...row, head: { ...row.head,
-      floorHalfSizeCssPx: [row.head.floorHalfSizeCssPx[0] * 1.5, row.head.floorHalfSizeCssPx[1]] as const } };
+      footprintView: [row.head.footprintView[0] * 1.5, row.head.footprintView[1], row.head.footprintView[2]] as const } };
     const sizeRows = rows.map((value, i) => i === at ? wrongSize : value);
     expect(continuityViolations(sizeRows).some(v => v.channel === 'head projected width')).toBe(true);
     const light = row.output.streak.head.renderedContinuousEnergyRgb;
     const badOutput = { ...row.output, streak: { ...row.output.streak, head: { ...row.output.streak.head,
       renderedContinuousEnergyRgb: { r: light.r * 0.5, g: light.g * 0.5, b: light.b * 0.5 } } } };
     const wrongLight = { ...row, output: badOutput, metrics: appearanceMetrics(badOutput,
-      2 * (row.head.floorHalfSizeCssPx[0] + row.head.pairHalfSpanCssPx), 2 * row.head.floorHalfSizeCssPx[1],
-      2 * (row.tail.floorHalfSizeCssPx[0] + row.tail.pairHalfSpanCssPx), 2 * row.tail.floorHalfSizeCssPx[1]) };
+      ...lampSupportCss(row.head, row.input.camera), ...lampSupportCss(row.tail, row.input.camera)) };
     expect(continuityViolations(rows.map((value, i) => i === at ? wrongLight : value))
       .some(v => v.channel === 'head pipeline energy')).toBe(true);
     const wrongAssignment = { ...row, output: { ...row.output,

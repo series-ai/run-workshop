@@ -2,7 +2,7 @@ import { InstancedMesh } from 'three';
 import { createSkyriverTraffic } from '../../src/render/traffic';
 import {
   evaluateSameCarTrafficAppearance, evaluateIndependentImpostorAppearance, projectTrafficLampKernel,
-  type SameCarTrafficAppearance, type SameCarTrafficAppearanceInput,
+  type SameCarTrafficAppearance, type SameCarTrafficAppearanceInput, type TrafficLampKernelProjection,
 } from '../../src/render/trafficAppearanceModel';
 import { TRAFFIC_APPEARANCE_PROFILES, TRAFFIC_QUALITY_SETTINGS } from '../../src/render/trafficAppearance';
 import { SKYRIVER_EMISSIVE_GAIN } from '../../src/render/atmosphere';
@@ -17,6 +17,14 @@ export interface ContinuityMetrics {
   readonly sizeIntensity: number;
   readonly energyY: number;
   readonly peakY: number;
+}
+/** Measure the active matrix support and physical pair vector before buffer padding. */
+export function lampSupportCss(projection: TrafficLampKernelProjection, camera: SameCarTrafficAppearanceInput['camera']): readonly [number, number] {
+  const [xx, xy, yy] = projection.footprintView;
+  const [u, v] = projection.pairOffsetUv;
+  const divisor = Math.max(-projection.centerView[2], 1) * camera.pixelAngleCss;
+  return [2 * (Math.abs(xx) + Math.abs(xy) + Math.abs(xx * u + xy * v)) / divisor,
+    2 * (Math.abs(xy) + Math.abs(yy) + Math.abs(xy * u + yy * v)) / divisor];
 }
 export function appearanceMetrics(output: SameCarTrafficAppearance, headWidth: number, headHeight: number,
   tailWidth: number, tailHeight: number): ContinuityMetrics {
@@ -93,9 +101,7 @@ export function continuityRow(input: SameCarTrafficAppearanceInput) {
     direction: input.direction, bankRadians: input.bankRadians, typeIndex: input.typeIndex,
     physicalScale: input.sizeScale, side, camera: input.camera });
   const head = kernel('head'), tail = kernel('tail');
-  const metrics = appearanceMetrics(output,
-    2 * (head.floorHalfSizeCssPx[0] + head.pairHalfSpanCssPx), 2 * head.floorHalfSizeCssPx[1],
-    2 * (tail.floorHalfSizeCssPx[0] + tail.pairHalfSpanCssPx), 2 * tail.floorHalfSizeCssPx[1]);
+  const metrics = appearanceMetrics(output, ...lampSupportCss(head, input.camera), ...lampSupportCss(tail, input.camera));
   const gpu = (side: 'head' | 'tail') => evaluateIndependentImpostorAppearance({ instanceIndex: 100,
     fromAlpha: input.impostorPresence, targetCount: Object.values(TRAFFIC_QUALITY_SETTINGS)
       .find(quality => quality.carCount === input.cpuTier.targetCount)?.impostors ?? 0,
@@ -104,8 +110,8 @@ export function continuityRow(input: SameCarTrafficAppearanceInput) {
     physicalScale: input.sizeScale, side, camera: input.camera,
     emissiveGain: input.emissiveGain, fogFactor: input.fogFactor });
   return { distanceM: input.distanceM, input, output, head, tail, metrics,
-    referenceHead: independentLampProjection(input.typeIndex, true, input.sizeScale, input.camera),
-    referenceTail: independentLampProjection(input.typeIndex, false, input.sizeScale, input.camera),
+    referenceHead: independentLampProjection(input.typeIndex, true, input.sizeScale, input.camera, input),
+    referenceTail: independentLampProjection(input.typeIndex, false, input.sizeScale, input.camera, input),
     independentGpu: { head: gpu('head'), tail: gpu('tail') } };
 }
 export type ContinuityRow = ReturnType<typeof continuityRow>;
@@ -158,17 +164,18 @@ function referenceVisibility(input: SameCarTrafficAppearanceInput): number {
     1, input.projectedExtentCssPx ?? 0).fade;
 }
 export function referenceLampEnergy(input: SameCarTrafficAppearanceInput, head: boolean, independentGpu = false): number {
-  const p = independentLampProjection(input.typeIndex, head, input.sizeScale, input.camera);
+  const p = independentLampProjection(input.typeIndex, head, input.sizeScale, input.camera,
+    independentGpu ? { ...input, bankRadians: 0, clampPitch: false } : input);
   const band = head ? TRAFFIC_LAMP_HEAD_FACING_BAND : TRAFFIC_LAMP_TAIL_FACING_BAND;
   const facing = independentSmoothstep(band[0], band[1], head ? p.facing : -p.facing);
   const pickup = independentSmoothstep(TRAFFIC_CPU_LAMP_PICKUP_BAND_M[0], TRAFFIC_CPU_LAMP_PICKUP_BAND_M[1], p.lampDistance);
-  const extent = Math.max(p.sourceHalfX, p.sourceHalfY) / (TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5);
+  const extent = p.sourceRadius / (TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5);
   const floorGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
     * independentSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
   const color = head ? TRAFFIC_STREAK_HEAD_WHITE_RGB.map((v, i) => v
     + (TRAFFIC_STREAK_HEAD_WARM_RGB[i]! - v) * (independentGpu ? 0 : input.warmth)) : TRAFFIC_STREAK_TAIL_RGB;
   const y = color[0]! * 0.2126 + color[1]! * 0.7152 + color[2]! * 0.0722;
-  const kernelArea = p.floorHalfX * p.floorHalfY * (16 / 15) ** 2;
+  const kernelArea = p.floorArea * (16 / 15) ** 2;
   const radiance = y + (y * (1 - TRAFFIC_LAMP_KERNEL_CORE_WHITE_MIX) + TRAFFIC_LAMP_KERNEL_CORE_WHITE_MIX)
     * TRAFFIC_LAMP_KERNEL_CORE_SHARE / TRAFFIC_LAMP_KERNEL_CORE_SCALE ** 2;
   const gpuSeedBrightness = TRAFFIC_GPU_SEED_BRIGHTNESS_BASE + TRAFFIC_GPU_SEED_BRIGHTNESS_SPAN
@@ -213,15 +220,17 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
       const reference = head ? row.referenceHead : row.referenceTail;
       const channel = head ? 'head' : 'tail';
       const relative = (value: number, expected: number) => Math.abs(value - expected) / Math.max(expected, 1e-6);
-      check(row.distanceM, channel + ' projected width', relative(source.floorHalfSizeCssPx[0], reference.floorHalfX), 1e-6);
-      check(row.distanceM, channel + ' projected height', relative(source.floorHalfSizeCssPx[1], reference.floorHalfY), 1e-6);
+      const support = lampSupportCss(source, row.input.camera);
+      check(row.distanceM, channel + ' projected width', relative(support[0], 2 * reference.supportHalfX), 1e-6);
+      check(row.distanceM, channel + ' projected height', relative(support[1], 2 * reference.supportHalfY), 1e-6);
       check(row.distanceM, channel + ' pair span', relative(source.pairHalfSpanCssPx, reference.pairSpan), 1e-5);
       const actualEnergy = continuityLuminance((head ? row.output.streak.head : row.output.streak.tail).renderedContinuousEnergyRgb);
       const expectedEnergy = referenceLampEnergy(row.input, head);
       check(row.distanceM, channel + ' pipeline energy', relative(actualEnergy, expectedEnergy), 1e-5);
       const gpu = head ? row.independentGpu.head : row.independentGpu.tail;
-      check(row.distanceM, 'independent GPU projected width', relative(gpu.projection.floorHalfSizeCssPx[0], reference.floorHalfX), 1e-6);
-      check(row.distanceM, 'independent GPU projected height', relative(gpu.projection.floorHalfSizeCssPx[1], reference.floorHalfY), 1e-6);
+      const gpuSupport = lampSupportCss(gpu.projection, row.input.camera);
+      check(row.distanceM, 'independent GPU projected width', relative(gpuSupport[0], 2 * reference.supportHalfX), 1e-6);
+      check(row.distanceM, 'independent GPU projected height', relative(gpuSupport[1], 2 * reference.supportHalfY), 1e-6);
       check(row.distanceM, 'independent GPU pair span', relative(gpu.projection.pairHalfSpanCssPx, reference.pairSpan), 1e-5);
       check(row.distanceM, 'independent GPU tier alpha', Math.abs(gpu.tierAlpha - row.input.impostorPresence), 1e-12);
       const expectedGpu = referenceLampEnergy(row.input, head, true);
@@ -246,7 +255,7 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     check(row.distanceM, 'trail distance response', Math.abs(row.output.streak.trail.distanceFade - lengthFade), 1e-12);
     const baseTrail = !row.input.trailTransition.enabled ? 0 : trailMode === 'all' ? 1 : trailMode === 'streams' ? (row.input.trailClass === 1 ? 1 : 0)
       : 1 - independentSmoothstep(TRAFFIC_TRAIL_NEAR_FADE_BAND_M[0] ** 2, TRAFFIC_TRAIL_NEAR_FADE_BAND_M[1] ** 2, row.distanceM ** 2);
-    const extent = Math.max(row.referenceTail.sourceHalfX, row.referenceTail.sourceHalfY) / (TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5);
+    const extent = row.referenceTail.sourceRadius / (TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5);
     const floorGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
       * independentSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
     const trailPickup = independentSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], row.referenceTail.lampDistance);
@@ -313,8 +322,7 @@ export function continuityMetrics(input: SameCarTrafficAppearanceInput): Continu
     direction: input.direction, bankRadians: input.bankRadians, typeIndex: input.typeIndex,
     physicalScale: input.sizeScale, side, camera: input.camera });
   const head = kernel('head'), tail = kernel('tail');
-  return appearanceMetrics(output, 2 * (head.floorHalfSizeCssPx[0] + head.pairHalfSpanCssPx),
-    2 * head.floorHalfSizeCssPx[1], 2 * (tail.floorHalfSizeCssPx[0] + tail.pairHalfSpanCssPx), 2 * tail.floorHalfSizeCssPx[1]);
+  return appearanceMetrics(output, ...lampSupportCss(head, input.camera), ...lampSupportCss(tail, input.camera));
 }
 function inputAtDistance(input: SameCarTrafficAppearanceInput, distanceM: number): SameCarTrafficAppearanceInput {
   const facing = Math.atan2(input.camera.position[0], input.camera.position[2]) * 180 / Math.PI;

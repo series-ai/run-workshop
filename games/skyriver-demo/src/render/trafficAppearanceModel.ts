@@ -1,3 +1,4 @@
+import { trafficFootprintCovariance, trafficPsdRoot, trafficSpectralFloor, trafficInverseFootprint, trafficApplyFootprint, type TrafficSymmetric2 } from './trafficProjection';
 /**
  * @file trafficAppearanceModel.ts
  * Pure appearance math shared by diagnostics and traffic source. This file needs no WebGL or Three.js.
@@ -33,7 +34,6 @@ import {
   TRAFFIC_LAMP_KERNEL_CORE_SCALE,
   TRAFFIC_LAMP_KERNEL_CORE_SHARE,
   TRAFFIC_LAMP_KERNEL_CORE_WHITE_MIX,
-  TRAFFIC_LAMP_KERNEL_CENTER_EPSILON,
   TRAFFIC_LAMP_KERNEL_LIMIT,
   TRAFFIC_LAMP_KERNEL_MIN_PIXEL_SIZE,
   TRAFFIC_LAMP_PHYSICAL_RADIUS_CEILING_SCALE,
@@ -131,7 +131,12 @@ export interface TrafficLampKernelProjection {
   readonly centerNdc: TrafficVec2;
   readonly centerBufferPx: TrafficVec2;
   readonly centerCssPx: TrafficVec2;
+  /** Legacy summary. Active projection uses the full matrix below. */
   readonly axis: TrafficVec2;
+  readonly sourceFootprintView: TrafficSymmetric2;
+  readonly footprintView: TrafficSymmetric2;
+  readonly inverseFootprintView: TrafficSymmetric2;
+  readonly pairOffsetUv: TrafficVec2;
   readonly sourceHalfSizeView: TrafficVec2;
   readonly sourceHalfSizeBufferPx: TrafficVec2;
   readonly sourceHalfSizeCssPx: TrafficVec2;
@@ -499,12 +504,6 @@ function projectedFrustumContains(
   });
 }
 
-function floorLampSize(physical: number, floorSize: number): number {
-  const width = floorSize * TRAFFIC_LAMP_FLOOR_BLEND_SHARE;
-  const overlap = Math.max(width - Math.abs(physical - floorSize), 0);
-  return Math.max(physical, floorSize) + overlap * overlap / (4 * width);
-}
-
 function viewAxis(input: TrafficLampKernelInput): {
   readonly position: TrafficVec3;
   readonly right: TrafficVec3;
@@ -572,18 +571,23 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
     frame.upView[0] + frame.groupView[0] * frame.upView[2] / depth,
     frame.upView[1] + frame.groupView[1] * frame.upView[2] / depth,
   ];
-  const rightLength = Math.hypot(rightP[0], rightP[1]);
-  const axis: TrafficVec2 = rightLength > TRAFFIC_LAMP_KERNEL_CENTER_EPSILON
-    ? [rightP[0] / rightLength, rightP[1] / rightLength]
-    : [1, 0];
-  const perpendicular: TrafficVec2 = [-axis[1], axis[0]];
-  const sourceX = frame.shape.width * input.physicalScale * rightLength * 0.5;
-  const sourceY = frame.shape.height * input.physicalScale
-    * Math.abs(upP[0] * perpendicular[0] + upP[1] * perpendicular[1]) * 0.5;
+  const basisRight: TrafficVec2 = [rightP[0] * frame.shape.width * input.physicalScale * 0.5,
+    rightP[1] * frame.shape.width * input.physicalScale * 0.5];
+  const basisUp: TrafficVec2 = [upP[0] * frame.shape.height * input.physicalScale * 0.5,
+    upP[1] * frame.shape.height * input.physicalScale * 0.5];
+  const sourceFootprintView = trafficPsdRoot(trafficFootprintCovariance(basisRight, basisUp));
   const floorSize = TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5 * depth * input.camera.pixelAngleCss;
-  const floorX = floorLampSize(sourceX, floorSize);
-  const floorY = floorLampSize(sourceY, floorSize);
-  const pairHalfSpan = frame.shape.x * input.physicalScale * rightLength;
+  const footprintView = trafficSpectralFloor(sourceFootprintView, floorSize, TRAFFIC_LAMP_FLOOR_BLEND_SHARE);
+  const inverseFootprintView = trafficInverseFootprint(footprintView);
+  const sourceX = sourceFootprintView[0];
+  const sourceY = sourceFootprintView[2];
+  const floorX = footprintView[0];
+  const floorY = footprintView[2];
+  const axis: TrafficVec2 = [1, 0];
+  const pairVector: TrafficVec2 = [rightP[0] * frame.shape.x * input.physicalScale,
+    rightP[1] * frame.shape.x * input.physicalScale];
+  const pairOffsetUv = trafficApplyFootprint(inverseFootprintView, pairVector);
+  const pairHalfSpan = Math.hypot(...pairVector);
   const halfBufferX = floorX / (depth * input.camera.pixelAngleBuffer);
   const halfBufferY = floorY / (depth * input.camera.pixelAngleBuffer);
   const halfCssX = floorX / (depth * input.camera.pixelAngleCss);
@@ -591,30 +595,20 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
   const pairBuffer = pairHalfSpan / (depth * input.camera.pixelAngleBuffer);
   const pairCss = pairHalfSpan / (depth * input.camera.pixelAngleCss);
   const pixelFilterView = depth * input.camera.pixelAngleBuffer * 0.5;
-  const filterX = floorX + pairHalfSpan + pixelFilterView;
-  const filterY = floorY + pixelFilterView;
-  const filterBuffer: TrafficVec2 = [
-    filterX / (depth * input.camera.pixelAngleBuffer),
-    filterY / (depth * input.camera.pixelAngleBuffer),
-  ];
-  const filterCss: TrafficVec2 = [
-    filterX / (depth * input.camera.pixelAngleCss),
-    filterY / (depth * input.camera.pixelAngleCss),
-  ];
-  const dUdx = axis[0] / halfBufferX;
-  const dUdy = axis[1] / halfBufferX;
-  const dVdx = perpendicular[0] / halfBufferY;
-  const dVdy = perpendicular[1] / halfBufferY;
+  const filterX = Math.abs(footprintView[0]) + Math.abs(footprintView[1]) + Math.abs(pairVector[0]) + pixelFilterView;
+  const filterY = Math.abs(footprintView[1]) + Math.abs(footprintView[2]) + Math.abs(pairVector[1]) + pixelFilterView;
+  const filterBuffer: TrafficVec2 = [filterX / (depth * input.camera.pixelAngleBuffer), filterY / (depth * input.camera.pixelAngleBuffer)];
+  const filterCss: TrafficVec2 = [filterX / (depth * input.camera.pixelAngleCss), filterY / (depth * input.camera.pixelAngleCss)];
   const halfPixelUvBuffer: TrafficVec2 = [
-    0.5 * Math.hypot(dUdx, dUdy),
-    0.5 * Math.hypot(dVdx, dVdy),
+    0.5 * depth * input.camera.pixelAngleBuffer * Math.hypot(inverseFootprintView[0], inverseFootprintView[1]),
+    0.5 * depth * input.camera.pixelAngleBuffer * Math.hypot(inverseFootprintView[1], inverseFootprintView[2]),
   ];
   const scaleDpr = input.camera.pixelAngleCss / input.camera.pixelAngleBuffer;
   const halfPixelUvCss: TrafficVec2 = [halfPixelUvBuffer[0] * scaleDpr, halfPixelUvBuffer[1] * scaleDpr];
-  const extent = Math.max(sourceX, sourceY) / floorSize;
-  const lampGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN
-    + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
-      * trafficAppearanceSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
+  const sourceRadius = (sourceX + sourceY) * 0.5 + Math.hypot((sourceX - sourceY) * 0.5, sourceFootprintView[1]);
+  const extent = sourceRadius / floorSize;
+  const lampGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
+    * trafficAppearanceSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
   const centerClip = matrixPoint(input.camera.projectionMatrix, view);
   const reciprocalW = centerClip[3] !== 0 ? 1 / centerClip[3] : 0;
   const centerNdc: TrafficVec2 = [centerClip[0] * reciprocalW, centerClip[1] * reciprocalW];
@@ -645,6 +639,7 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
     centerBufferPx,
     centerCssPx,
     axis,
+    sourceFootprintView, footprintView, inverseFootprintView, pairOffsetUv,
     sourceHalfSizeView: [sourceX, sourceY],
     sourceHalfSizeBufferPx: [sourceX / (depth * input.camera.pixelAngleBuffer), sourceY / (depth * input.camera.pixelAngleBuffer)],
     sourceHalfSizeCssPx: [sourceX / (depth * input.camera.pixelAngleCss), sourceY / (depth * input.camera.pixelAngleCss)],
@@ -698,10 +693,11 @@ function filteredLamp(uv: TrafficVec2, halfPixel: TrafficVec2): TrafficLampKerne
 export function sampleTrafficLampKernel(
   uv: TrafficVec2,
   halfPixel: TrafficVec2,
-  pairOffset: number,
+  pairOffset: number | TrafficVec2,
 ): TrafficLampKernelSample {
-  const left = filteredLamp([uv[0] - pairOffset, uv[1]], halfPixel);
-  const right = filteredLamp([uv[0] + pairOffset, uv[1]], halfPixel);
+  const offset: TrafficVec2 = typeof pairOffset === 'number' ? [pairOffset, 0] : pairOffset;
+  const left = filteredLamp([uv[0] - offset[0], uv[1] - offset[1]], halfPixel);
+  const right = filteredLamp([uv[0] + offset[0], uv[1] + offset[1]], halfPixel);
   return { body: 0.5 * (left.body + right.body), core: 0.5 * (left.core + right.core) };
 }
 
@@ -709,8 +705,11 @@ export function sampleTrafficLampKernel(
 export function integrateTrafficLampKernel(projection: TrafficLampKernelProjection): TrafficLampEnergy {
   const hx = projection.floorHalfSizeCssPx[0];
   const hy = projection.floorHalfSizeCssPx[1];
-  const base = hx * hy * (16 / 15) ** 2;
-  const core = TRAFFIC_LAMP_KERNEL_CORE_SHARE * hx * hy
+  const determinant = projection.footprintView[0] * projection.footprintView[2] - projection.footprintView[1] ** 2;
+  const diagonalArea = projection.footprintView[0] * projection.footprintView[2];
+  const patchArea = hx * hy * determinant / diagonalArea;
+  const base = patchArea * (16 / 15) ** 2;
+  const core = TRAFFIC_LAMP_KERNEL_CORE_SHARE * patchArea
     * (16 / (15 * TRAFFIC_LAMP_KERNEL_CORE_SCALE)) ** 2;
   return { bodyKernelCssPx2: base, coreKernelCssPx2: core };
 }
@@ -755,11 +754,11 @@ function lampPeakEstimate(
 ): Omit<TrafficLampRadiance, 'renderedSourceRgbLinear' | 'renderedFoggedRgbLinear'
   | 'renderedContinuousEnergyRgb' | 'renderedPeakEstimateRgb' | 'rendered'
   | 'clippedByFrustum' | 'clippedByShaderCutoff'> {
-  const offset = projection.pairOffset;
+  const offset = projection.pairOffsetUv;
   const samples = [
     sampleTrafficLampKernel([0, 0], projection.halfPixelUvBuffer, offset),
-    sampleTrafficLampKernel([-offset, 0], projection.halfPixelUvBuffer, offset),
-    sampleTrafficLampKernel([offset, 0], projection.halfPixelUvBuffer, offset),
+    sampleTrafficLampKernel([-offset[0], -offset[1]], projection.halfPixelUvBuffer, offset),
+    sampleTrafficLampKernel(offset, projection.halfPixelUvBuffer, offset),
   ];
   let peak: TrafficRgb = rgb(0, 0, 0);
   let peakValue = -Infinity;

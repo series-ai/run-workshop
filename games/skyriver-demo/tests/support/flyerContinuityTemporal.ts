@@ -6,7 +6,7 @@ import {
   evaluateCpuTierFade, evaluateSameCarTrafficAppearance, evaluateTrailModeFade,
 } from '../../src/render/trafficAppearanceModel';
 import { IMPOSTOR_TIER_FADE_S } from '../../src/render/lightHandover';
-import { continuityInput, appearanceMetrics, independentSmoothstep, shippedHullResponse } from './flyerContinuityMatrix';
+import { continuityInput, appearanceMetrics, lampSupportCss, independentSmoothstep, shippedHullResponse } from './flyerContinuityMatrix';
 import { projectTrafficLampKernel } from '../../src/render/trafficAppearanceModel';
 import type { TrafficTrailMode } from '../../src/render/trafficTypes';
 
@@ -92,8 +92,8 @@ export function appearanceRetargetFailures(): TemporalFailure[] {
         const kernel = (side: 'head' | 'tail') => projectTrafficLampKernel({ position: common.position, direction: common.direction,
           bankRadians: common.bankRadians, typeIndex: common.typeIndex, physicalScale: common.sizeScale, side, camera: common.camera });
         const h = kernel('head'), tail = kernel('tail');
-        const metrics = (output: typeof before) => appearanceMetrics(output, 2 * (h.floorHalfSizeCssPx[0] + h.pairHalfSpanCssPx),
-          2 * h.floorHalfSizeCssPx[1], 2 * (tail.floorHalfSizeCssPx[0] + tail.pairHalfSpanCssPx), 2 * tail.floorHalfSizeCssPx[1]);
+        const metrics = (output: typeof before) => appearanceMetrics(output,
+          ...lampSupportCss(h, common.camera), ...lampSupportCss(tail, common.camera));
         const expected = shippedHullResponse(distance, common.sourceFade, alpha, common.projectedExtentCssPx);
         for (const output of [before, after]) {
           const scaleError = Math.abs(output.hull.scale - common.sizeScale * expected.scale);

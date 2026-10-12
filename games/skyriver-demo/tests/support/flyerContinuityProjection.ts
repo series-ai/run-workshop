@@ -1,4 +1,5 @@
 import type { TrafficCameraProjection, TrafficRgb } from '../../src/render/trafficAppearanceModel';
+import { Vector3 } from 'three';
 
 export const FLYER_MATRIX_DPRS = [1, 1.25, 1.5] as const;
 export const FLYER_MATRIX_FACINGS = [0, 180, 45, 90] as const;
@@ -48,11 +49,21 @@ import {
 } from '../../src/render/trafficAppearance';
 
 /** Measure the projected source by finite differences. This does not call the model kernel. */
-export function independentLampProjection(typeIndex: number, head: boolean, scale: number, camera: TrafficCameraProjection) {
+export function independentLampProjection(typeIndex: number, head: boolean, scale: number, camera: TrafficCameraProjection,
+  physical: { readonly position: readonly [number, number, number]; readonly direction: readonly [number, number, number];
+    readonly bankRadians: number; readonly clampPitch?: boolean } = { position: [0, 0, 0], direction: [0, 0, 1], bankRadians: 0 }) {
   const profile = TRAFFIC_APPEARANCE_PROFILES[typeIndex];
   if (!profile) throw new Error('R33_PROFILE_MISSING');
   const p = head ? profile.front : profile.rear;
-  const center = [0, p.yM * scale, p.zM * scale] as const;
+  const forward = new Vector3(...physical.direction);
+  if (physical.clampPitch !== false) forward.y = Math.max(-0.35, Math.min(0.35, forward.y));
+  forward.normalize();
+  const right = new Vector3().crossVectors(new Vector3(0, 1, 0), forward).normalize();
+  const up = new Vector3().crossVectors(forward, right);
+  right.applyAxisAngle(forward, physical.bankRadians);
+  up.applyAxisAngle(forward, physical.bankRadians);
+  const centerWorld = new Vector3(...physical.position).addScaledVector(forward, p.zM * scale).addScaledVector(up, p.yM * scale);
+  const center = [centerWorld.x, centerWorld.y, centerWorld.z] as const;
   const project = (point: readonly number[]) => {
     const m = camera.viewMatrix, q = camera.projectionMatrix;
     const view = [0, 1, 2, 3].map(r => m[r]! * point[0]! + m[r + 4]! * point[1]!
@@ -63,25 +74,46 @@ export function independentLampProjection(typeIndex: number, head: boolean, scal
       y: clip[1]! / clip[3]! * camera.cssHeightPx * 0.5, depth: -view[2]! };
   };
   const epsilon = 1e-3;
-  const x0 = project([center[0] - epsilon, center[1], center[2]]);
-  const x1 = project([center[0] + epsilon, center[1], center[2]]);
-  const y0 = project([center[0], center[1] - epsilon, center[2]]);
-  const y1 = project([center[0], center[1] + epsilon, center[2]]);
+  const along = (axis: Vector3, amount: number) => project([center[0] + axis.x * amount,
+    center[1] + axis.y * amount, center[2] + axis.z * amount]);
+  const x0 = along(right, -epsilon), x1 = along(right, epsilon);
+  const y0 = along(up, -epsilon), y1 = along(up, epsilon);
   const dx = [(x1.x - x0.x) / (2 * epsilon), (x1.y - x0.y) / (2 * epsilon)];
   const dy = [(y1.x - y0.x) / (2 * epsilon), (y1.y - y0.y) / (2 * epsilon)];
   const xLength = Math.hypot(dx[0]!, dx[1]!);
-  const axis = xLength > 1e-8 ? [dx[0]! / xLength, dx[1]! / xLength] : [1, 0];
-  const sourceHalfX = xLength * (p.kind === 'pair' ? p.widthM : p.widthM / 2) * scale * 0.5;
-  const sourceHalfY = Math.abs(dy[0]! * -axis[1]! + dy[1]! * axis[0]!) * p.heightM * scale * 0.5;
+  const width = (p.kind === 'pair' ? p.widthM : p.widthM / 2) * scale * 0.5;
+  const height = p.heightM * scale * 0.5;
+  const a = (dx[0]! * width) ** 2 + (dy[0]! * height) ** 2;
+  const b = dx[0]! * dx[1]! * width ** 2 + dy[0]! * dy[1]! * height ** 2;
+  const c = (dx[1]! * width) ** 2 + (dy[1]! * height) ** 2;
+  const radius = Math.hypot((a - c) / 2, b);
+  const high = Math.sqrt(Math.max((a + c) / 2 + radius, 0));
+  const low = Math.sqrt(Math.max((a + c) / 2 - radius, 0));
+  const angle = Math.atan2(2 * b, a - c) / 2;
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  const sourceHalfX = high * cos ** 2 + low * sin ** 2;
+  const sourceHalfY = high * sin ** 2 + low * cos ** 2;
   const floorSize = TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5;
   const smoothFloor = (physical: number) => {
-    const width = floorSize * TRAFFIC_LAMP_FLOOR_BLEND_SHARE;
-    const overlap = Math.max(width - Math.abs(physical - floorSize), 0);
-    return Math.max(physical, floorSize) + overlap * overlap / (4 * width);
+    const start = floorSize * (1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE);
+    const end = floorSize * (1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE);
+    if (physical <= start) return floorSize;
+    if (physical >= end) return physical;
+    return floorSize + (physical - start) ** 2 / (2 * (end - start));
   };
+  const flooredHigh = smoothFloor(high), flooredLow = smoothFloor(low);
   const pairSpan = xLength * (p.kind === 'pair' ? p.centreXM : p.widthM / 4) * scale;
+  const pairScale = (p.kind === 'pair' ? p.centreXM : p.widthM / 4) * scale;
+  const floorHalfX = flooredHigh * cos ** 2 + flooredLow * sin ** 2;
+  const floorHalfY = flooredHigh * sin ** 2 + flooredLow * cos ** 2;
+  const floorOffDiagonal = (flooredHigh - flooredLow) * cos * sin;
   const delta = camera.position.map((v, i) => v - center[i]!);
   const lampDistance = Math.hypot(...delta);
-  return { sourceHalfX, sourceHalfY, floorHalfX: smoothFloor(sourceHalfX), floorHalfY: smoothFloor(sourceHalfY),
-    pairSpan, depth: project(center).depth, lampDistance, facing: delta[2]! / lampDistance };
+  return { sourceHalfX, sourceHalfY, sourceRadius: high,
+    floorHalfX, floorHalfY,
+    supportHalfX: Math.abs(floorHalfX) + Math.abs(floorOffDiagonal) + Math.abs(dx[0]! * pairScale),
+    supportHalfY: Math.abs(floorHalfY) + Math.abs(floorOffDiagonal) + Math.abs(dx[1]! * pairScale),
+    floorArea: flooredHigh * flooredLow,
+    pairSpan, depth: project(center).depth, lampDistance,
+    facing: (delta[0]! * forward.x + delta[1]! * forward.y + delta[2]! * forward.z) / lampDistance };
 }

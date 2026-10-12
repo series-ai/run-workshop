@@ -1,3 +1,4 @@
+import { TRAFFIC_PROJECTION_GLSL } from './trafficProjection';
 import type { TrafficQuality, TrafficTrailMode } from './trafficTypes';
 
 /** Lamp dimensions in hull-local metres. Forward is +Z. This module needs no GL. */
@@ -302,14 +303,10 @@ bool trafficLampInView(vec3 pos, float type, float scale, float cssPixelScale, f
     || trafficLampOutsidePlane(row3 + row2, point, radius)
     || trafficLampOutsidePlane(row3 - row2, point, radius));
 }
-float trafficLampFloor(float physical, float floorSize) {
-  float width = floorSize * ${glslNumber(TRAFFIC_LAMP_FLOOR_BLEND_SHARE)};
-  float overlap = max(width - abs(physical - floorSize), 0.0);
-  return max(physical, floorSize) + overlap * overlap / (4.0 * width);
-}
+${TRAFFIC_PROJECTION_GLSL}
 void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float scale,
   bool front, float lampSide, float cssPixelScale, out vec3 lamp, out vec4 centre,
-  out vec2 axis, out vec2 halfSize, out float pairHalfSpan, out float lampGain) {
+  out mat2 footprint, out vec2 halfSize, out vec2 pairOffset, out float lampGain) {
   vec3 right0 = normalize(vec3(forward.z, 0.0, -forward.x));
   vec3 up0 = cross(forward, right0);
   vec3 rightW = right0 * cos(bank) + up0 * sin(bank);
@@ -325,20 +322,18 @@ void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float sca
   float depth = max(-groupV.z, 1.0);
   vec2 rightP = rightV.xy + groupV.xy * rightV.z / depth;
   vec2 upP = upV.xy + groupV.xy * upV.z / depth;
-  float rightLength = length(rightP);
-  axis = rightLength > ${TRAFFIC_LAMP_KERNEL_CENTER_EPSILON.toExponential(0)} ? rightP / rightLength : vec2(1.0, 0.0);
   float cssPixelM = depth * cssPixelScale;
-  // Keep the lamp coverage floor stable when the drawing buffer uses a different DPR.
   float floorSize = ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * cssPixelM;
-  vec2 physicalHalfSize = vec2(shape.y * scale * rightLength * 0.5,
-    shape.z * scale * abs(dot(upP, vec2(-axis.y, axis.x))) * 0.5);
-  halfSize = vec2(trafficLampFloor(physicalHalfSize.x, floorSize),
-    trafficLampFloor(physicalHalfSize.y, floorSize));
-  // Bound the extra light from the pixel floor. Resolved patches keep full gain.
-  float extent = max(physicalHalfSize.x, physicalHalfSize.y) / floorSize;
+  mat2 basis = mat2(rightP * shape.y * scale * 0.5, upP * shape.z * scale * 0.5);
+  mat2 source = trafficPsdRoot(basis * transpose(basis));
+  footprint = trafficSpectralFloor(source, floorSize, ${glslNumber(TRAFFIC_LAMP_FLOOR_BLEND_SHARE)});
+  halfSize = vec2(footprint[0][0], footprint[1][1]);
+  pairOffset = rightP * shape.x * scale;
+  float sourceRadius = 0.5 * (source[0][0] + source[1][1])
+    + length(vec2(0.5 * (source[0][0] - source[1][1]), source[0][1]));
+  float extent = sourceRadius / floorSize;
   lampGain = mix(${glslNumber(TRAFFIC_LAMP_FLOOR_MIN_GAIN)}, 1.0,
     smoothstep(${glslNumber(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE)},
       ${glslNumber(1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE)}, extent));
-  pairHalfSpan = shape.x * scale * rightLength;
 }
 `;

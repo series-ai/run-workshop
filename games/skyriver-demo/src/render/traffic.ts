@@ -1175,7 +1175,7 @@ uniform float uTrailEndWidth;
 varying vec2 vCapsule;       // x along in radius units, y across -1..1
 varying float vLengthR;      // capsule body length in radius units
 varying float vLamp;
-varying float vPairOffset;
+varying vec2 vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -1203,13 +1203,13 @@ void main() {
   }
   vec3 lamp;
   vec4 v0;
-  vec2 lampAxis;
+  mat2 lampFootprint;
   vec2 lampHalfSize;
-  float pairHalfSpan;
+  vec2 pairOffset;
   float lampGain;
   trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head, lampSide,
-    uCssPixelAngle, lamp, v0, lampAxis, lampHalfSize, pairHalfSpan, lampGain);
-  vPairOffset = pairHalfSpan / lampHalfSize.x;
+    uCssPixelAngle, lamp, v0, lampFootprint, lampHalfSize, pairOffset, lampGain);
+  vPairOffset = inverse(lampFootprint) * pairOffset;
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
       * trafficTrailFarFade(length(cameraPosition - aCarPos))
@@ -1249,10 +1249,12 @@ void main() {
     vCapsule = vec2(mix(-1.0, vLengthR + 1.0, end), aCorner.y);
   } else {
     vec2 corner = vec2(aCorner.x * 2.0 - 1.0, aCorner.y);
-    vec2 filterSize = lampHalfSize + vec2(pairHalfSpan, 0.0) + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
-    vec2 uv = corner * filterSize / lampHalfSize;
+    vec2 filterSize = abs(lampFootprint[0]) + abs(lampFootprint[1])
+      + abs(pairOffset) + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+    vec2 local = corner * filterSize;
+    vec2 uv = inverse(lampFootprint) * local;
     v = v0;
-    v.xy += lampAxis * uv.x * lampHalfSize.x + vec2(-lampAxis.y, lampAxis.x) * uv.y * lampHalfSize.y;
+    v.xy += local;
     vLengthR = 0.0;
     vCapsule = uv;
   }
@@ -1301,10 +1303,10 @@ vec2 trafficFilteredLamp(vec2 uv) {
   vec2 halfPixel = 0.5 * sqrt(dx * dx + dy * dy);
   return vec2(trafficBoxLamp(uv, halfPixel), trafficBoxLamp(uv * ${TRAFFIC_LAMP_KERNEL_CORE_SCALE.toFixed(1)}, halfPixel * ${TRAFFIC_LAMP_KERNEL_CORE_SCALE.toFixed(1)}));
 }
-vec2 trafficLampPair(vec2 uv, float offset) {
+vec2 trafficLampPair(vec2 uv, vec2 offset) {
   // Mean contribution keeps overlapping sub-pixel lamps from doubling the peak.
-  return 0.5 * (trafficFilteredLamp(uv - vec2(offset, 0.0))
-    + trafficFilteredLamp(uv + vec2(offset, 0.0)));
+  return 0.5 * (trafficFilteredLamp(uv - offset)
+    + trafficFilteredLamp(uv + offset));
 }
 `;
 
@@ -1316,7 +1318,7 @@ uniform float uTrailAlpha;
 varying vec2 vCapsule;
 varying float vLengthR;
 varying float vLamp;
-varying float vPairOffset;
+varying vec2 vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -1401,7 +1403,7 @@ uniform float uFadeK;        // tier crossfade progress 0..1
 uniform float uTargetCount;  // target instance count for current transition
 
 varying vec2 vCoreUv;
-varying float vPairOffset;
+varying vec2 vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
@@ -1580,22 +1582,21 @@ void main() {
   float end = aCorner.x;
   vec3 lamp;
   vec4 v0;
-  vec2 lampAxis;
+  mat2 lampFootprint;
   vec2 halfSize;
-  float pairHalfSpan;
+  vec2 pairOffset;
   float lampGain;
   trafficLampKernel(pos, dir, 0.0, type, scale, head, lampSide,
-    uCssPixelAngle, lamp, v0, lampAxis, halfSize, pairHalfSpan, lampGain);
+    uCssPixelAngle, lamp, v0, lampFootprint, halfSize, pairOffset, lampGain);
   vec3 toLamp = cameraPosition - lamp;
   float facing = dot(dir, toLamp / max(length(toLamp), 1.0));
-  vec2 lampUp = vec2(-lampAxis.y, lampAxis.x);
-  vec2 filterSize = halfSize + vec2(pairHalfSpan, 0.0)
+  vec2 filterSize = abs(lampFootprint[0]) + abs(lampFootprint[1]) + abs(pairOffset)
     + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
   vec2 local = vec2(end * 2.0 - 1.0, aCorner.y) * filterSize;
   vec4 vv = v0;
-  vv.xy += lampAxis * local.x + lampUp * local.y;
-  vCoreUv = local / max(halfSize, vec2(1e-6));
-  vPairOffset = pairHalfSpan / halfSize.x;
+  vv.xy += local;
+  vCoreUv = inverse(lampFootprint) * local;
+  vPairOffset = inverse(lampFootprint) * pairOffset;
 
   vWarm = head ? 1.0 : 0.0;
   float toAlpha = float( gl_InstanceID ) < uTargetCount ? 1.0 : 0.0;
@@ -1624,7 +1625,7 @@ uniform float uIntensity;
 uniform float uFogPenetration;
 
 varying vec2 vCoreUv;
-varying float vPairOffset;
+varying vec2 vPairOffset;
 varying float vWarm;
 varying float vIntensity;
 
