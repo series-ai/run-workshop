@@ -8,6 +8,7 @@ import { voxelStats } from '../sim/physics';
 import type { YardBody } from '../sim/state';
 import type { YardRender } from './presentation';
 import { getToonGradientMap } from './style/toonMaterial';
+import { CRATE_APPEARANCE } from './crateAppearance';
 
 const CRATE_VOXELS = 12;
 const MAX_INSTANCED_CRATES = 512;
@@ -41,29 +42,31 @@ function crateFaceTexture(): THREE.CanvasTexture {
   const context = canvas.getContext('2d');
   if (!context) throw new Error('WRECK_YARD_CRATE_TEXTURE_CONTEXT');
 
-  context.fillStyle = '#d8b77f';
+  context.fillStyle = CRATE_APPEARANCE.wood;
   context.fillRect(0, 0, 512, 512);
-  context.globalAlpha = 0.18;
-  context.fillStyle = '#fff0ca';
+  context.fillStyle = CRATE_APPEARANCE.seam;
+  for (let y = 102; y < 512; y += 102) context.fillRect(0, y, 512, 3);
+  context.globalAlpha = 0.12;
+  context.fillStyle = CRATE_APPEARANCE.grain;
   for (let y = 10; y < 512; y += 24) context.fillRect(0, y, 512, 2);
   context.globalAlpha = 1;
 
-  context.strokeStyle = '#63452d';
+  context.strokeStyle = CRATE_APPEARANCE.frame;
   context.lineWidth = 12;
   context.strokeRect(13, 13, 486, 486);
-  context.strokeStyle = '#9b734b';
+  context.strokeStyle = CRATE_APPEARANCE.seam;
   context.lineWidth = 3;
   context.strokeRect(28, 28, 456, 456);
 
-  context.fillStyle = '#bd603a';
+  context.fillStyle = CRATE_APPEARANCE.label;
   context.fillRect(46, 55, 420, 100);
-  context.fillStyle = '#fff0d2';
+  context.fillStyle = CRATE_APPEARANCE.fragile;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.font = 'bold 58px Arial, sans-serif';
   context.fillText('FRAGILE', 256, 107, 396);
 
-  context.strokeStyle = '#61442d';
+  context.strokeStyle = CRATE_APPEARANCE.ink;
   context.lineWidth = 10;
   context.beginPath();
   context.moveTo(256, 182);
@@ -74,14 +77,14 @@ function crateFaceTexture(): THREE.CanvasTexture {
   context.lineTo(287, 213);
   context.stroke();
 
-  context.fillStyle = '#3b3328';
+  context.fillStyle = CRATE_APPEARANCE.ink;
   context.font = 'bold 34px Arial, sans-serif';
   context.fillText('THIS SIDE UP', 256, 288, 420);
   context.font = 'bold 25px Arial, sans-serif';
   context.fillText('PLEASE HANDLE', 256, 358, 420);
   context.fillText('RESPONSIBLY', 256, 395, 420);
 
-  context.fillStyle = '#63452d';
+  context.fillStyle = CRATE_APPEARANCE.ink;
   for (let index = 0; index < 15; index += 1) {
     const width = index % 3 === 0 ? 5 : 2;
     context.fillRect(106 + index * 20, 440, width, 32);
@@ -126,7 +129,7 @@ function crateTint(body: YardBody): THREE.Color {
     hash = Math.imul(hash ^ body.id.charCodeAt(index), 16777619);
   }
   const variation = (hash >>> 0) % 5;
-  const base = body.storageBay === 'returns' ? 0xd7c295 : 0xe4c38c;
+  const base = 0xf2efeb;
   const shade = 1 - variation * 0.018;
   return new THREE.Color(base).multiplyScalar(shade);
 }
@@ -139,7 +142,7 @@ export function ShippingCrates({ bodies, renderRef }: {
   const frameGeometry = useMemo(crateFrameGeometry, []);
   const texture = useMemo(crateFaceTexture, []);
   const bodyMaterial = useMemo(() => new THREE.MeshToonMaterial({ color: '#ffffff', map: texture, gradientMap: getToonGradientMap() }), [texture]);
-  const frameMaterial = useMemo(() => new THREE.MeshToonMaterial({ color: '#49382b', gradientMap: getToonGradientMap() }), []);
+  const frameMaterial = useMemo(() => new THREE.MeshToonMaterial({ color: CRATE_APPEARANCE.frame, gradientMap: getToonGradientMap() }), []);
   const ids = useMemo(() => instancedShippingCrateIds(bodies), [bodies]);
   const crates = useMemo(() => bodies.filter((body) => ids.has(body.id)), [bodies, ids]);
   const batches = useMemo(() => [

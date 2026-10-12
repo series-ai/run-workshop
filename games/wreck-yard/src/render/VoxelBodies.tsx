@@ -20,6 +20,7 @@ import { COLD_AGE, heatAge, heatedBodies, heatGlow, heatOfBody, type BodyHeatLoo
 import { RETURNS_PAIR } from '../sim/returns';
 import { portalEndClipPlane } from './portalScene';
 import type { VoxelPortalCopy } from './VoxelVolumeRenderer';
+import { CRATE_APPEARANCE } from './crateAppearance';
 
 /** Heat lights: a fixed pool, so a new scorch never changes the light count (and recompiles shaders). */
 const HEAT_LIGHTS = 3;
@@ -41,6 +42,9 @@ for (const [name, code] of Object.entries(PROP_COLOR) as [PropColor, number][]) 
   const emissive = name === 'spark' || name === 'glow' ? 60 : 0;
   materialParams.set([190, name === 'ink' ? 20 : 70, emissive, 40], offset);
 }
+const cratePalette = palette.slice();
+const crateWood = new THREE.Color(CRATE_APPEARANCE.wood).convertLinearToSRGB();
+cratePalette.set([Math.round(crateWood.r * 255), Math.round(crateWood.g * 255), Math.round(crateWood.b * 255), 255], 2 * 4);
 // Scorch voxels (SCORCH_MATERIAL) take their color and glow from the heat age in the shader.
 function VoxelBody({ body, renderRef, worldOcclusion }: {
   body: YardBody;
@@ -113,7 +117,7 @@ function VoxelBody({ body, renderRef, worldOcclusion }: {
       <VoxelVolumeRenderer
         dims={body.dims}
         voxels={body.voxels}
-        palette={palette}
+        palette={body.storageBay ? cratePalette : palette}
         materialParams={materialParams}
         voxelSize={VOXEL_SIZE}
         heatRef={heatRef}
