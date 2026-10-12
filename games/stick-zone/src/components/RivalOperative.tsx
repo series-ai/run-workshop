@@ -219,6 +219,19 @@ export const RivalOperative: React.FC<RivalOperativeProps> = ({ operative }) => 
       )}
 
       <group ref={rootGroupRef} position={[operative.x, operative.y || 0, operative.z]}>
+        {/* Enemy Aim Telegraph Laser Sight (Pre-attack visual warning) */}
+        {operative.aimTicks !== undefined && operative.aimTicks > 0 && (
+          <group position={[0, 1.15, 0]} rotation={[0, operative.facing, 0]}>
+            <mesh position={[0, 0, 7.5]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.045, 0.045, 15, 6]} />
+              <meshBasicMaterial color="#ef4444" transparent opacity={0.65} depthWrite={false} />
+            </mesh>
+            <mesh position={[0, 0, 7.5]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.015, 0.015, 15, 4]} />
+              <meshBasicMaterial color="#ffffff" transparent opacity={0.85} depthWrite={false} />
+            </mesh>
+          </group>
+        )}
         {/* Ground Tactical Halo */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
           <ringGeometry args={[0.55, 0.68, 32]} />

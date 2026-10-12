@@ -1894,6 +1894,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     turret.y = 0;
     turret.z = -10;
     turret.cooldownTicks = 0;
+    (turret as any).lockOnTicks = 1;
     turret.isAlive = true;
 
     // Remove the drone so only the turret engages
@@ -1930,13 +1931,13 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const proj = testSim.activeProjectiles[0];
     expect(proj.shooterId).toBe(turret.id);
     expect(proj.shooterIsPlayer).toBe(false);
-    expect(proj.speed).toBe(44.0);
+    expect(proj.speed).toBe(24.0);
     expect(proj.damage).toBe(14);
     // At frame 0: Projectile just left muzzle, player is NOT damaged instantly!
     expect(testSim.player.health).toBe(100);
 
     // 4. Step simulation until projectile travels to player (~13 ticks: 9m / (44m/s * 0.01667s) ≈ 12.3 ticks)
-    for (let t = 0; t < 15; t++) {
+    for (let t = 0; t < 26; t++) {
       testSim.step({
         dx: 0,
         dz: 0,
@@ -1987,7 +1988,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const pellets = testSim.activeProjectiles.filter(p => p.shooterId === enforcer.id);
     expect(pellets.length).toBe(6);
     expect(pellets[0].isPellet).toBe(true);
-    expect(pellets[0].speed).toBe(38.0);
+    expect(pellets[0].speed).toBe(28.0);
     expect(pellets[0].damage).toBe(4);
   });
 });

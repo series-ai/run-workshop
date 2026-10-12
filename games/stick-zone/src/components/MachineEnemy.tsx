@@ -129,13 +129,32 @@ export const MachineEnemy: React.FC<MachineEnemyProps> = React.memo(({ machine }
 
         {/* Tactical Red Targeting Laser telegraph */}
         {typeof (machine as any).targetDistance === "number" && (machine as any).targetDistance > 0 && (
-          <mesh
-            position={[0, machine.type === "turret" ? 1.1 : 0.8, 1.2 + ((machine as any).targetDistance || 10) / 2]}
-            rotation={[Math.PI / 2, 0, 0]}
-          >
-            <cylinderGeometry args={[0.012, 0.012, (machine as any).targetDistance || 10, 4]} />
-            <meshBasicMaterial color="#ef4444" transparent opacity={0.45} depthWrite={false} />
-          </mesh>
+          <group>
+            {/* Outer crimson energy beam */}
+            <mesh
+              position={[0, machine.type === "turret" ? 1.1 : 0.8, 1.2 + ((machine as any).targetDistance || 10) / 2]}
+              rotation={[Math.PI / 2, 0, 0]}
+            >
+              <cylinderGeometry args={[0.06, 0.06, (machine as any).targetDistance || 10, 8]} />
+              <meshBasicMaterial color="#ef4444" transparent opacity={0.65} depthWrite={false} />
+            </mesh>
+            {/* Inner white-hot laser core */}
+            <mesh
+              position={[0, machine.type === "turret" ? 1.1 : 0.8, 1.2 + ((machine as any).targetDistance || 10) / 2]}
+              rotation={[Math.PI / 2, 0, 0]}
+            >
+              <cylinderGeometry args={[0.02, 0.02, (machine as any).targetDistance || 10, 6]} />
+              <meshBasicMaterial color="#ffffff" transparent opacity={0.9} depthWrite={false} />
+            </mesh>
+            {/* Ground Targeting Reticle at Target Position */}
+            <mesh
+              position={[0, 0.04, 1.2 + ((machine as any).targetDistance || 10)]}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <ringGeometry args={[0.3, 0.45, 16]} />
+              <meshBasicMaterial color="#ef4444" transparent opacity={0.85} side={THREE.DoubleSide} />
+            </mesh>
+          </group>
         )}
       </group>
 

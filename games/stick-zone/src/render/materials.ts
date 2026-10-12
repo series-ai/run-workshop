@@ -23,6 +23,7 @@ export const SharedMaterials = {
   pureWhite: new THREE.MeshBasicMaterial({ color: "#ffffff" }),
   targetYellow: new THREE.MeshBasicMaterial({ color: "#facc15" }),
   darkNavy: new THREE.MeshBasicMaterial({ color: "#0f172a" }),
+  projectileOutlineBackside: new THREE.MeshBasicMaterial({ color: "#05070a", side: THREE.BackSide }),
   slateJoint: new THREE.MeshBasicMaterial({ color: "#475569" }),
 
   // Standard PBR Materials
@@ -44,13 +45,13 @@ export const SharedGeometries = {
   unitBox: new THREE.BoxGeometry(1, 1, 1),
   unitPlane: new THREE.PlaneGeometry(1, 1),
   unitCircle16: new THREE.CircleGeometry(1, 16),
-  projectileCore: new THREE.SphereGeometry(0.08, 8, 8),
-  projectileOutline: new THREE.SphereGeometry(0.11, 8, 8),
+  projectileCore: new THREE.SphereGeometry(0.16, 12, 12),
+  projectileOutline: new THREE.SphereGeometry(0.22, 12, 12),
   projectileTail: (() => {
-    const geo = new THREE.CylinderGeometry(0.015, 0.075, 1.0, 6);
+    const geo = new THREE.CylinderGeometry(0.035, 0.14, 1.0, 8);
     geo.rotateX(Math.PI / 2);
     geo.translate(0, 0, -0.5);
     return geo;
   })(),
-  projectileShadow: new THREE.CircleGeometry(0.18, 12),
+  projectileShadow: new THREE.CircleGeometry(0.26, 16),
 };

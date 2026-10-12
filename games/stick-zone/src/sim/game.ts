@@ -340,6 +340,19 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   { minX: 50.0, maxX: 54.0, minZ: -34.0, maxZ: -30.0 },
   { minX: 50.0, maxX: 54.0, minZ: 36.0, maxZ: 40.0 },
 
+  // Central Logistics Highway Concrete Barriers (Tactical Chicane Cover)
+  { minX: -4.3, maxX: -1.3, minZ: -9.2, maxZ: -6.8 }, // [-2.8, 0, -8]
+  { minX: 1.3, maxX: 4.3, minZ: 14.8, maxZ: 17.2 },   // [2.8, 0, 16]
+  { minX: -4.3, maxX: -1.3, minZ: 38.8, maxZ: 41.2 }, // [-2.8, 0, 40]
+
+  // Western & Eastern Yard Concrete Barriers & Cover
+  { minX: -26.5, maxX: -23.5, minZ: -19.5, maxZ: -16.5 }, // [-25, 0, -18]
+  { minX: -33.5, maxX: -30.5, minZ: 22.8, maxZ: 25.2 },   // [-32, 0, 24]
+  { minX: 20.5, maxX: 23.5, minZ: -9.5, maxZ: -6.5 },     // [22, 0, -8]
+  { minX: 40.5, maxX: 43.5, minZ: 26.5, maxZ: 29.5 },     // [42, 0, 28]
+  { minX: -41.5, maxX: -38.5, minZ: -42.5, maxZ: -39.5 }, // Bunker revetment [-40, 0, -41]
+  { minX: 38.5, maxX: 41.5, minZ: 39.5, maxZ: 42.5 },     // LZ revetment [40, 0, 41]
+
   // Placed Loot Containers in Sector 7 Depot
   // crate_01: Military Dumpster (-8, -6)
   { minX: -9.2, maxX: -6.8, minZ: -6.8, maxZ: -5.3 },
@@ -1329,7 +1342,7 @@ export class SectorDepotSimulation {
       shotgunAmmo: 8,
       reserveRifleAmmo: 90,
       reserveShotgunAmmo: 24,
-      stimsRemaining: 2,
+      stimsRemaining: 3,
       isBleeding: false,
       isUsingStim: false,
       stimChannelTicks: 0,
@@ -1796,7 +1809,7 @@ export class SectorDepotSimulation {
     this.interruptStimTreatment();
 
     // Chance of heavy bleed on unarmored or heavy hit
-    if (rawDmg >= 12 && this.player.armor < 20 && !this.player.isBleeding) {
+    if (rawDmg >= 24 && this.player.armor <= 0 && !this.player.isBleeding) {
       this.player.isBleeding = true;
       this.combatLog.push(`[TRAUMA ALERT] Heavy bleeding sustained! Inject IFAK stim [H] to bandage.`);
     }
@@ -2222,7 +2235,14 @@ export class SectorDepotSimulation {
     // Fatal Bleeding tick damage (2 HP every 60 ticks = 1.0s at 60 Hz)
     if (this.player.isBleeding && this.tick % 60 === 0 && this.player.isAlive && !this.player.isExtracted) {
       this.player.health = Math.max(0, this.player.health - 2);
-      this.combatLog.push(`[BLEEDING] -2 HP from arterial wound. HP: ${this.player.health}/100. Inject STIM [H] to coagulate.`);
+      this.enqueuePresentationEvent({
+        type: "impact",
+        position: { x: this.player.x, y: 1.2, z: this.player.z },
+        surface: "flesh",
+        damage: 2,
+        label: "-2 HP (BLEED)",
+      });
+      this.combatLog.push(`[BLEEDING] -2 HP from arterial wound. HP: ${this.player.health}/100. Press [H] for IFAK STIM.`);
       if (this.player.health <= 0) {
         this.player.isAlive = false;
         this.player.action = 'idle';
@@ -3258,7 +3278,7 @@ export class SectorDepotSimulation {
         // Enemy / Rival projectile checking Player
         if (this.player.isAlive && !this.player.isExtracted) {
           const seg = distanceToSegmentSquared(p.x, p.z, nextX, nextZ, this.player.x, this.player.z);
-          if (seg.distSq <= (0.8 + p.radius) * (0.8 + p.radius)) {
+          if (seg.distSq <= (0.45 + p.radius) * (0.45 + p.radius)) {
             hitEntity = true;
             if (this.player.isInvulnerable && this.player.action === "roll") {
               this.enqueuePresentationEvent({
@@ -3712,17 +3732,19 @@ export class SectorDepotSimulation {
       if (!isIngressPending && !isPlayerInHub && distToPlayer <= 22.0 && hasLos) {
         if ((rival.shootCooldownTicks || 0) <= 0) {
           // Pre-attack telegraph for Scavs (Tarkov voice bark + weapon raise counterplay window)
-          const isScav = rival.id.startsWith('scav_') || rival.badge === 'SCAV PATROL' || rival.badge === 'SECTOR BOSS';
+          const isScav = rival.id.startsWith("scav_") || rival.badge === "SCAV PATROL" || rival.badge === "SECTOR BOSS";
           if (isScav && (rival.aimTicks === undefined || rival.aimTicks <= 0)) {
             // Initiate pre-attack telegraph (20 ticks = ~333ms at 60Hz)
             rival.aimTicks = 20;
             rival.facing = Math.atan2(dx, dz);
 
-            let barks = ['VONON!', 'OPACHKI!', 'SUKA!', 'CONTACT!', 'DROP HIM!'];
+            let barks = ["VONON!", "OPACHKI!", "SUKA!", "CONTACT!", "DROP HIM!"];
             if (rival.id === BOSS_CONFIG.id || rival.badge === BOSS_CONFIG.badge) {
-              barks = ['DIE, RAT!', 'OPEN FIRE!', 'CRUSH HIM!', 'NO MERCY!'];
-            } else if (rival.id === 'scav_enforcer_02') {
-              barks = ['ENGAGING HOSTILE!', 'TARGET IN SIGHT!', 'SUPPRESSING!'];
+              barks = ["DIE, RAT!", "OPEN FIRE!", "CRUSH HIM!", "NO MERCY!"];
+            } else if (rival.id === "scav_enforcer_02") {
+              barks = ["ENGAGING HOSTILE!", "TARGET IN SIGHT!", "SUPPRESSING!"];
+            } else if (rival.id === "op_rogue_ai" || rival.badge === "ROGUE AI OPERATOR") {
+              barks = ["HOSTILE SPOTTED!", "LOCKING TARGET!", "PURGING RAT!"];
             }
             const chosenBark = barks[Math.floor(Math.random() * barks.length)];
             rival.barkText = chosenBark;
@@ -3778,7 +3800,7 @@ export class SectorDepotSimulation {
 
           if (rival.weapon === "shotgun") {
             const PELLETS_OFFSETS = [-0.174, -0.104, -0.035, 0.035, 0.104, 0.174]; // ~20° fan
-            const pelletSpeed = 38.0;
+            const pelletSpeed = 28.0;
             const pelletDmg = 4; // 6 pellets * 4 = 24 dmg point-blank
             for (let i = 0; i < PELLETS_OFFSETS.length; i++) {
               const pAngle = PELLETS_OFFSETS[i];
@@ -3808,7 +3830,7 @@ export class SectorDepotSimulation {
             }
           } else {
             const rawDmg = 12;
-            const speed = 52.0;
+            const speed = 48.0;
             this.spawnProjectile({
               id: "proj_" + rival.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
               shooterId: rival.id,
@@ -3904,8 +3926,22 @@ export class SectorDepotSimulation {
         (machine as any).targetX = closestTarget.x;
         (machine as any).targetZ = closestTarget.z;
 
+        if ((machine as any).lockOnTicks === undefined || (machine as any).lockOnTicks <= 0) {
+          if (machine.cooldownTicks <= 0) {
+            (machine as any).lockOnTicks = 36; // 600ms targeting telegraph
+          }
+        }
+
+        if ((machine as any).lockOnTicks > 0) {
+          (machine as any).lockOnTicks -= 1;
+          if ((machine as any).lockOnTicks > 0) {
+            continue; // Wait until lock-on laser telegraph finishes!
+          }
+        }
+
         if (machine.cooldownTicks <= 0) {
-          machine.cooldownTicks = machine.type === 'turret' ? 45 : 30;
+          machine.cooldownTicks = machine.type === 'turret' ? 48 : 36;
+          (machine as any).lockOnTicks = 24;
           machine.lastFiredAtMs = Date.now();
           machine.lastFiredTick = this.tick;
 
@@ -3939,7 +3975,7 @@ export class SectorDepotSimulation {
 
           // Spawn visible ballistic projectile traveling towards target with crimson tracer
           const rawDmg = this.serverMachineDamageAuthority ? 0 : (machine.type === 'turret' ? 14 : 10);
-          const projSpeed = 44.0;
+          const projSpeed = 24.0;
           this.spawnProjectile({
             id: `proj_${machine.id}_${this.tick}_${Math.random().toString(36).slice(2, 6)}`,
             shooterId: machine.id,

@@ -308,7 +308,7 @@ const _colTail = new THREE.Color();
 const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
   const { coreInstanced, outlineInstanced, tailInstanced, shadowInstanced } = useMemo(() => {
     const core = new THREE.InstancedMesh(SharedGeometries.projectileCore, SharedMaterials.goldBullet.clone(), PROJECTILE_POOL_SIZE);
-    const outline = new THREE.InstancedMesh(SharedGeometries.projectileOutline, SharedMaterials.darkNavy.clone(), PROJECTILE_POOL_SIZE);
+    const outline = new THREE.InstancedMesh(SharedGeometries.projectileOutline, (SharedMaterials as any).projectileOutlineBackside?.clone() || SharedMaterials.darkNavy.clone(), PROJECTILE_POOL_SIZE);
     const tail = new THREE.InstancedMesh(SharedGeometries.projectileTail, SharedMaterials.amberWarning.clone(), PROJECTILE_POOL_SIZE);
     const shadow = new THREE.InstancedMesh(SharedGeometries.projectileShadow, SharedMaterials.shadowDark.clone(), PROJECTILE_POOL_SIZE);
 
@@ -350,7 +350,7 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
       const dirY = p.vy / speed;
       const dirZ = p.vz / speed;
 
-      const baseScale = p.isPellet ? 0.54 : 0.825;
+      const baseScale = p.isPellet ? 0.85 : 1.15;
 
       // Core & Outline matrix
       _dummy.position.set(p.x, p.y, p.z);
@@ -361,8 +361,8 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
       outlineInstanced.setMatrixAt(i, _dummy.matrix);
 
       // Tail matrix
-      const tailLen = p.isPellet ? 0.375 : 0.6375;
-      _dummy.scale.set(baseScale * 0.75, baseScale * 0.75, tailLen);
+      const tailLen = p.isPellet ? 0.95 : (p.shooterIsPlayer ? 1.4 : 2.2);
+      _dummy.scale.set(baseScale * 0.8, baseScale * 0.8, tailLen);
       _dummy.updateMatrix();
       tailInstanced.setMatrixAt(i, _dummy.matrix);
 
@@ -378,8 +378,8 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
         _colCore.set(p.isPellet ? "#fef08a" : "#fde047");
         _colTail.set(p.isPellet ? "#facc15" : "#f59e0b");
       } else {
-        _colCore.set("#ef4444");
-        _colTail.set("#dc2626");
+        _colCore.set("#ff1a1a");
+        _colTail.set("#ff6600");
       }
       coreInstanced.setColorAt(i, _colCore);
       tailInstanced.setColorAt(i, _colTail);
