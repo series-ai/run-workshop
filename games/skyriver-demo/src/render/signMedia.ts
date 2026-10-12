@@ -5,6 +5,11 @@
  */
 
 import * as THREE from 'three';
+import {
+  installSignAtlasBitmap,
+  SIGN_ATLAS_HEIGHT,
+  SIGN_ATLAS_WIDTH,
+} from './signAtlas';
 
 export const MEDIA_ATLAS_WIDTH = 2048;
 export const MEDIA_ATLAS_HEIGHT = 2048;
@@ -77,6 +82,17 @@ export interface SignMediaAtlas {
   readonly height: number;
   dispose(): void;
 }
+
+export type SignMediaCanvas = HTMLCanvasElement | OffscreenCanvas;
+export type SignMediaContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+
+export interface SignMediaWorkerRequest {
+  readonly type: 'render';
+}
+
+export type SignMediaWorkerResponse =
+  | { readonly status: 'success'; readonly bitmap: ImageBitmap; readonly signBitmap: ImageBitmap }
+  | { readonly status: 'error'; readonly error: string };
 
 /** Definitions for the ten categories of advertisements. */
 export const AD_DEFINITIONS: readonly MediaAdDefinition[] = Object.freeze([
@@ -210,7 +226,7 @@ function rectFor(x: number, y: number, w: number, h: number): MediaFrameRect {
 }
 
 /** Draws an invented logo mark into context. */
-function drawInventedMark(ctx: CanvasRenderingContext2D, variant: number, cx: number, cy: number, r: number): void {
+function drawInventedMark(ctx: SignMediaContext, variant: number, cx: number, cy: number, r: number): void {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.lineWidth = 3;
@@ -354,7 +370,7 @@ function drawInventedMark(ctx: CanvasRenderingContext2D, variant: number, cx: nu
 
 /** Draws a category-specific product silhouette into context. */
 function drawProductSilhouette(
-  ctx: CanvasRenderingContext2D,
+  ctx: SignMediaContext,
   variant: number,
   cx: number,
   cy: number,
@@ -509,7 +525,7 @@ function drawProductSilhouette(
 
 /** Draws dense fake line and barcode micro-copy. */
 function drawDenseFakeLines(
-  ctx: CanvasRenderingContext2D,
+  ctx: SignMediaContext,
   lines: readonly string[],
   x: number,
   y: number,
@@ -570,7 +586,7 @@ const CATEGORY_PALETTES: Readonly<Record<MediaCategory, CategoryPalette>> = Obje
  * Cut 3: Retail Dispenser CTA / QR Matrix.
  */
 function drawHorizontalAdFrame(
-  ctx: CanvasRenderingContext2D,
+  ctx: SignMediaContext,
   ad: MediaAdDefinition,
   x: number,
   y: number,
@@ -872,12 +888,9 @@ function drawHorizontalAdFrame(
   ctx.restore();
 }
 
-/**
- * Draws one vertical advertisement frame into canvas.
- * Dimensions: 128 x 512.
- */
+/** Draw one 256 by 256 light frame. */
 function drawHologramFrame(
-  ctx: CanvasRenderingContext2D,
+  ctx: SignMediaContext,
   ad: MediaAdDefinition,
   x: number,
   y: number,
@@ -971,14 +984,16 @@ export function deriveSignMediaLayout(): SignMediaLayout {
   return { horizontalAds, hologramAds, allAds: [...horizontalAds, ...hologramAds], width: MEDIA_ATLAS_WIDTH, height: MEDIA_ATLAS_HEIGHT };
 }
 
-// Cache the immutable canvas. Each material owns its texture and its disposal.
+// Cache one immutable canvas. Each material owns its texture.
 let bootCanvas: HTMLCanvasElement | null = null;
-function signMediaCanvas(): HTMLCanvasElement {
-  if (bootCanvas !== null) return bootCanvas;
-  const canvas = document.createElement('canvas');
+let preparePromise: Promise<void> | null = null;
+
+/** Paint the same ad frames in the browser or worker. */
+export function paintSignMediaAtlas(canvas: SignMediaCanvas): void {
   canvas.width = MEDIA_ATLAS_WIDTH;
   canvas.height = MEDIA_ATLAS_HEIGHT;
-  const ctx = canvas.getContext('2d');
+  const ctx = 'transferToImageBitmap' in canvas
+    ? canvas.getContext('2d') : canvas.getContext('2d');
   if (ctx === null) throw new Error('SKYRIVER_SIGN_MEDIA_ATLAS_NO_2D_CONTEXT');
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -990,13 +1005,101 @@ function signMediaCanvas(): HTMLCanvasElement {
   for (let i = 0; i < 8; i += 1) {
     drawHologramFrame(ctx, AD_DEFINITIONS[i % AD_DEFINITIONS.length]!, i * 256, 1792, 256, 256, i);
   }
+}
+
+function signMediaCanvas(): HTMLCanvasElement {
+  if (bootCanvas !== null) return bootCanvas;
+  const canvas = document.createElement('canvas');
+  paintSignMediaAtlas(canvas);
   bootCanvas = canvas;
   return canvas;
 }
 
-/** Prepare the canvas while the city cache request is in progress. */
-export function prepareSignMediaAtlas(): void {
-  signMediaCanvas();
+/** Prepare the atlas while the city cache loads. */
+export function prepareSignMediaAtlas(): Promise<void> {
+  if (bootCanvas !== null) return Promise.resolve();
+  if (preparePromise !== null) return preparePromise;
+  if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined'
+    || typeof ImageBitmap === 'undefined') {
+    signMediaCanvas();
+    return Promise.resolve();
+  }
+  preparePromise = new Promise<void>((resolve, reject) => {
+    let worker: Worker | null = null;
+    const cleanup = (): void => {
+      if (worker === null) return;
+      worker.onmessage = null;
+      worker.onerror = null;
+      worker.onmessageerror = null;
+      worker.terminate();
+      worker = null;
+    };
+    const fail = (): void => {
+      cleanup();
+      reject(new Error('SKYRIVER_SIGN_MEDIA_WORKER_FAILED'));
+    };
+    try {
+      worker = new Worker(new URL('./signMediaWorker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = (event: MessageEvent<unknown>): void => {
+        let bitmap: ImageBitmap | null = null;
+        let signBitmap: ImageBitmap | null = null;
+        try {
+          const data = event.data;
+          if (data === null || typeof data !== 'object') {
+            throw new Error('SKYRIVER_SIGN_MEDIA_WORKER_MESSAGE');
+          }
+          if ('bitmap' in data && data.bitmap instanceof ImageBitmap) {
+            bitmap = data.bitmap;
+          }
+          if ('signBitmap' in data && data.signBitmap instanceof ImageBitmap) {
+            signBitmap = data.signBitmap;
+          }
+          if (
+            !('status' in data)
+            || data.status !== 'success'
+            || bitmap === null
+            || signBitmap === null
+            || bitmap.width !== MEDIA_ATLAS_WIDTH
+            || bitmap.height !== MEDIA_ATLAS_HEIGHT
+            || signBitmap.width !== SIGN_ATLAS_WIDTH
+            || signBitmap.height !== SIGN_ATLAS_HEIGHT
+          ) {
+            throw new Error('SKYRIVER_SIGN_MEDIA_WORKER_IMAGE');
+          }
+          installSignAtlasBitmap(signBitmap);
+          if (bootCanvas === null) {
+            const canvas = document.createElement('canvas');
+            canvas.width = MEDIA_ATLAS_WIDTH;
+            canvas.height = MEDIA_ATLAS_HEIGHT;
+            const ctx = canvas.getContext('2d');
+            if (ctx === null) throw new Error('SKYRIVER_SIGN_MEDIA_ATLAS_NO_2D_CONTEXT');
+            ctx.drawImage(bitmap, 0, 0);
+            bootCanvas = canvas;
+          }
+          resolve();
+        } catch (error: unknown) {
+          reject(error);
+        } finally {
+          try {
+            bitmap?.close();
+          } finally {
+            try {
+              signBitmap?.close();
+            } finally {
+              cleanup();
+            }
+          }
+        }
+      };
+      worker.onerror = fail;
+      worker.onmessageerror = fail;
+      const request: SignMediaWorkerRequest = { type: 'render' };
+      worker.postMessage(request);
+    } catch {
+      fail();
+    }
+  }).catch(() => { signMediaCanvas(); });
+  return preparePromise;
 }
 
 /** Create one material-owned texture from the cached procedural frames. */

@@ -1295,11 +1295,13 @@ if (typeof document !== 'undefined') {
     let prepEnd = performance.now();
     try {
       const cityPreparation = prepareBrowserCitySnapshot();
-      prepareSignMediaAtlas();
+      const mediaPreparation = prepareSignMediaAtlas();
       prepResult = await cityPreparation;
+      await mediaPreparation;
       prepEnd = performance.now();
     } catch (prepError) {
       console.warn('[skyriver] prepareBrowserCitySnapshot fallback', prepError);
+      await prepareSignMediaAtlas();
     }
 
     // Raising the skyline is synchronous and long, so its label is painted first for the same reason.

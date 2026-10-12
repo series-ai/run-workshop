@@ -41,8 +41,8 @@
   },
   {
     "path": "src/main.ts",
-    "sha256": "d240189d9346e867e1fecc843cd5bc9e8acd5a32da9476a1ff92d35c070123ca",
-    "byteLength": 52855
+    "sha256": "cb144b9ba56f5cbc40f7fd15bca3a7819d847677c8ee608e73694bbd2cc22af1",
+    "byteLength": 52947
   },
   {
     "path": "src/render/atmosphere.ts",
@@ -66,8 +66,8 @@
   },
   {
     "path": "src/render/city.ts",
-    "sha256": "7246f8669fc291e72f37c824e6cf248d623be2ea880e5656c257b3d4c397ef7b",
-    "byteLength": 648472
+    "sha256": "7b8efda0e07b137a5b3fcd49a3769e5abbf7aa7ea94b2f90e7a9c05ed8177464",
+    "byteLength": 656238
   },
   {
     "path": "src/render/citySnapshotCodec.ts",
@@ -156,13 +156,13 @@
   },
   {
     "path": "src/render/signArt.ts",
-    "sha256": "3fcfdf4d752226deba78dc744097f724b1f2c2e5fc2aca2654e4dcc88fc4c00a",
-    "byteLength": 7298
+    "sha256": "331350754d34bcf8464eb993118d51413c13a5b29d061f17433044f1268d0bf1",
+    "byteLength": 7340
   },
   {
     "path": "src/render/signAtlas.ts",
-    "sha256": "70c57e5721aaab512e93de4f6d1637b3d4a9b0ee49eab1a663def674a5aff9ef",
-    "byteLength": 8363
+    "sha256": "c2b0a24fa03e62d2c54a8dde888b3759a03916f99ea02aafde9fa74fe32d246a",
+    "byteLength": 10391
   },
   {
     "path": "src/render/signDesign.ts",
@@ -171,8 +171,13 @@
   },
   {
     "path": "src/render/signMedia.ts",
-    "sha256": "81f5b66e02c9bdadc05630c31b3e8c760dba5374715a662ca3f4808c3ad9aaa0",
-    "byteLength": 32111
+    "sha256": "1543b3969ef590748c842387b5fffb8e21c80d11a6a79babb6a37ec51dd3cdf3",
+    "byteLength": 35711
+  },
+  {
+    "path": "src/render/signMediaWorker.ts",
+    "sha256": "6cde0d4a66f777fd02438d5fc9678fe7407c6d84952ee16e9f57f9dd4392a9df",
+    "byteLength": 1472
   },
   {
     "path": "src/render/signShaders.ts",

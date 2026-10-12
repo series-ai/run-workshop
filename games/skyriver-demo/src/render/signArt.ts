@@ -1,13 +1,15 @@
 import type { SignSpecies } from './signDesign';
 
-function polygon(ctx: CanvasRenderingContext2D, points: readonly (readonly [number, number])[], fill = true): void {
+export type SignArtContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+
+function polygon(ctx: SignArtContext, points: readonly (readonly [number, number])[], fill = true): void {
   ctx.beginPath();
   points.forEach(([x, y], i) => { if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
   ctx.closePath();
   if (fill) ctx.fill(); else ctx.stroke();
 }
 
-function icon(ctx: CanvasRenderingContext2D, variant: number, tube: boolean): void {
+function icon(ctx: SignArtContext, variant: number, tube: boolean): void {
   ctx.lineWidth = tube ? 4 : 6;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   if (tube) {
@@ -51,7 +53,7 @@ function icon(ctx: CanvasRenderingContext2D, variant: number, tube: boolean): vo
   }
 }
 
-function emblem(ctx: CanvasRenderingContext2D, variant: number): void {
+function emblem(ctx: SignArtContext, variant: number): void {
   ctx.lineWidth = 6;
   if (variant % 3 === 0) { ctx.beginPath(); ctx.arc(50, 50, 40, 0, Math.PI * 2); ctx.stroke(); }
   else if (variant % 3 === 1) polygon(ctx, [[50, 6], [88, 28], [88, 72], [50, 94], [12, 72], [12, 28]], false);
@@ -65,7 +67,7 @@ function emblem(ctx: CanvasRenderingContext2D, variant: number): void {
   ctx.stroke();
 }
 
-function figure(ctx: CanvasRenderingContext2D, variant: number): void {
+function figure(ctx: SignArtContext, variant: number): void {
   ctx.fillStyle = 'rgb(205,255,205)';
   if (variant % 3 === 0) {
     ctx.beginPath(); ctx.ellipse(50, 31, 18, 22, -.12, 0, Math.PI * 2); ctx.fill();
@@ -84,7 +86,7 @@ function figure(ctx: CanvasRenderingContext2D, variant: number): void {
   }
 }
 
-export function drawSignArt(ctx: CanvasRenderingContext2D, species: Exclude<SignSpecies, 'glyph'>,
+export function drawSignArt(ctx: SignArtContext, species: Exclude<SignSpecies, 'glyph'>,
   x: number, y: number, width: number, height: number, variant: number): void {
   // Species cells are six slots apart. Use the slot group for distinct art.
   if (species === 'figure') variant = Math.floor(variant / 6) + (height > width ? 1 : 0);

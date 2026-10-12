@@ -1,4 +1,4 @@
-import { Matrix4, Vector3, type InstancedMesh, type Mesh } from 'three';
+import { DataTexture, FloatType, Matrix4, NearestFilter, RGBAFormat, ShaderMaterial, Vector3, type InstancedMesh, type Mesh } from 'three';
 
 export type Point2 = readonly [number, number];
 export type Point3 = readonly [number, number, number];
@@ -425,16 +425,65 @@ export function uploadedPhysicalScene<Owner>(signs: CanonicalSigns<Owner>,
   batches: { readonly towers: InstancedMesh; readonly trims: InstancedMesh; readonly signs: Mesh },
   place: (owner: Owner, cx: number, cy: number, cz: number, nx: number, nz: number) => CanonicalSignPoint & { readonly nx: number; readonly nz: number },
   worldPoint: (owner: Owner, point: CanonicalSignPoint) => Point3) {
+  const uploadedCount = 'instanceCount' in batches.signs.geometry ? batches.signs.geometry.instanceCount : NaN;
   if (batches.towers.count !== draw.towers.length || batches.trims.count !== draw.trims.length
-    || !('instanceCount' in batches.signs.geometry)
-    || batches.signs.geometry.instanceCount !== signs.count) throw new Error('R37_REAL_UPLOAD_COUNTS');
-  const attribute = (name: string) => {
+    || typeof uploadedCount !== 'number' || !Number.isInteger(uploadedCount)
+    || uploadedCount < signs.count) throw new Error('R37_REAL_UPLOAD_COUNTS');
+  const mediaCount = uploadedCount - signs.count;
+  if (mediaCount !== 0 && (mediaCount < 6 || mediaCount > 12)) throw new Error('R47_RARE_MEDIA_COUNT');
+  const attribute = (name: string, itemSize: number) => {
     const attr = batches.signs.geometry.getAttribute(name);
-    return Array.from(attr.array, Number).slice(0, signs.count * attr.itemSize);
+    if (!attr || attr.itemSize !== itemSize || attr.array.length !== uploadedCount * itemSize
+      || attr.count !== uploadedCount) throw new Error('R37_UPLOADED_BOARD_ARRAY_LENGTH:' + name);
+    return Array.from(attr.array, Number);
   };
-  const boards = uploadedBoards(attribute('aCentre'), attribute('aNormal'), attribute('aSize'), signs.count);
+  const allBoards = uploadedBoards(attribute('aCentre', 3), attribute('aNormal', 2), attribute('aSize', 2), uploadedCount);
+  const kinds = attribute('aKind', 1), atlasRects = attribute('aAtlas', 4);
+  for (const [name, itemSize] of [['aColor', 3], ['aSeed', 1], ['aDistrictTint', 4]] as const) attribute(name, itemSize);
+  for (const [name, attr] of Object.entries(batches.signs.geometry.attributes)) {
+    if ('isInstancedBufferAttribute' in attr
+      && (attr.array.length !== uploadedCount * attr.itemSize || attr.count !== uploadedCount)) {
+      throw new Error('R37_UPLOADED_BOARD_ARRAY_LENGTH:' + name);
+    }
+  }
   const solids = [...uploadedSolids(Array.from(batches.towers.instanceMatrix.array).slice(0, draw.towers.length * 16), draw.towers, 'mass'),
     ...uploadedSolids(Array.from(batches.trims.instanceMatrix.array).slice(0, draw.trims.length * 16), draw.trims, 'trim')];
+  if (mediaCount > 0) {
+    const material = batches.signs.material;
+    if (!(material instanceof ShaderMaterial)) throw new Error('R47_REAL_MEDIA_MATERIAL');
+    const design: unknown = material.uniforms.uSignDesign?.value;
+    if (!(design instanceof DataTexture) || design.type !== FloatType || design.format !== RGBAFormat
+      || design.minFilter !== NearestFilter || design.magFilter !== NearestFilter
+      || design.image.width !== uploadedCount * 2 || design.image.height !== 1
+      || material.uniforms.uSignDesignWidth?.value !== uploadedCount * 2) throw new Error('R47_REAL_MEDIA_DESIGN');
+    const data: unknown = design.image.data;
+    if (!(data instanceof Float32Array) || data.length !== uploadedCount * 8
+      || !data.every(Number.isFinite)) throw new Error('R47_REAL_MEDIA_DESIGN');
+    for (let index = 0; index < signs.count; index += 1) {
+      if (data[index * 8 + 2]! >= 19.5) throw new Error('R47_ORIGINAL_SIGN_RECLASSIFIED:' + index);
+    }
+    for (let index = signs.count; index < uploadedCount; index += 1) {
+      const board = allBoards[index]!, offset = index * 8;
+      boardBasis(board);
+      if (board.size[0] !== 90 || board.size[1] !== 120 || kinds[index] !== 1
+        || data[offset] !== 0 || data[offset + 1] !== 0
+        || data[offset + 2] !== 20 + index - signs.count
+        || data[offset + 3]! < 10 || data[offset + 3]! >= 11) {
+        throw new Error('R47_REAL_HOLOGRAM_PLANE:' + index);
+      }
+      const rect = Array.from(data.slice(offset + 4, offset + 8));
+      if (!rect.every((value, axis) => value >= 0 && value <= 1 && value === atlasRects[index * 4 + axis])
+        || !(rect[0]! < rect[2]! && rect[1]! < rect[3]!)) throw new Error('R47_REAL_HOLOGRAM_ATLAS:' + index);
+      // The full vertical sweep adds 3.5 m at each end of the plane.
+      const sweep: Board = { ...board, size: [board.size[0], board.size[1] + 7] };
+      for (const solid of solids) {
+        if (overlapVolume(sweep, solid) > 0) {
+          throw new Error('R47_HOLOGRAM_DRIFT_SWEEP_OVERLAP:' + index + ':' + hostKey(solid.host));
+        }
+      }
+    }
+  }
+  const boards = allBoards.slice(0, signs.count);
   const canonical = canonicalPhysicalScene(signs, solids.map(solid => ({ ...solid, y0: solid.low, y1: solid.high })), place, worldPoint);
   return { boards, solids, mounts: canonical.mounts };
 }

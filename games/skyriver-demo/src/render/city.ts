@@ -14820,20 +14820,29 @@ export class SkyriverCity {
     geometry.index = quad.index;
     geometry.setAttribute('position', quad.getAttribute('position'));
     geometry.setAttribute('uv', quad.getAttribute('uv'));
-    geometry.instanceCount = count;
 
-    const centres = new Float32Array(count * 3);
-    const normals = new Float32Array(count * 2);
-    const sizes = new Float32Array(count * 2);
-    const kinds = new Float32Array(count);
-    const atlasRects = new Float32Array(count * 4);
-    const designData = new Float32Array(Math.max(count, 1) * 8);
+    // R47 media layer: add eight rare giant hologram instances across the loop on hero masses.
+    const hologramCount = 8;
+    const totalCount = count + hologramCount;
+    geometry.instanceCount = totalCount;
+
+    const centres = new Float32Array(totalCount * 3);
+    const normals = new Float32Array(totalCount * 2);
+    const sizes = new Float32Array(totalCount * 2);
+    const kinds = new Float32Array(totalCount);
+    const atlasRects = new Float32Array(totalCount * 4);
+    const designData = new Float32Array(Math.max(totalCount, 1) * 8);
+    const districtTint = new Float32Array(totalCount * 4);
+    const colorArray = new Float32Array(totalCount * 3);
+    const seedArray = new Float32Array(totalCount);
+
     // Hero blades keep stable atlas slots; ordinary signs use the remaining cells.
     const heroes = deriveHeroBlades(this.layout);
     const { vertical, horizontal } = this.atlas;
     const verticalPool = vertical.length - HERO_VERTICAL_CELLS - 1;
     const horizontalPool = horizontal.length - HERO_HORIZONTAL_CELLS;
     const heroBuildings = new Set(this.signs.buildingId.slice(0, this.signs.heroCount));
+    const mediaAtlas = applySignDesignMaterial.getMediaAtlas();
 
     for (let i = 0; i < count; i += 1) {
       const hero = heroes[i];
@@ -14846,15 +14855,44 @@ export class SkyriverCity {
       const rect = isHero
         ? hero.kind === 'panel' ? horizontal[hero.cell % HERO_HORIZONTAL_CELLS]! : vertical[hero.cell % HERO_VERTICAL_CELLS]!
         : atlasVertical ? vertical[design.cell]! : horizontal[design.cell]!;
-      designData[i * 8] = isHero ? 0 : SIGN_SPECIES.indexOf(design.species);
-      designData[i * 8 + 1] = isHero ? hero.kind === 'panel' ? 6 : 0 : SIGN_SHAPES.indexOf(design.shape);
-      designData.set(rect, i * 8 + 4);
+
+      // Media motion class and phase derivation:
+      // deriveMediaMotion produces approximately forty percent static signs and sixty percent across six animated motion classes.
+      const seedVal = seedValue[i]!;
+      const motion = applySignDesignMaterial.deriveMediaMotion(seedVal);
+      const motionClass = isVertical && motion.motionClass === 3 ? 1 : motion.motionClass;
+
+      // Ads majority of screens/holograms:
+      // Main hero panels and ordinary panels with motion class 4 or high seed become ad screens.
+      const isHeroPanel = isHero && hero.kind === 'panel';
+      const isScreen = (isHeroPanel && hero.cell % 4 !== 3)
+        || (!isHero && !isVertical && (motion.motionClass === 4 || (seedVal > 0.40 && mediaAtlas.horizontalAds.length > 0)));
+
+      if (isScreen) {
+        const adIdx = Math.floor(seedVal * 997 + (isHero ? hero.cell * 3 : 0)) % mediaAtlas.horizontalAds.length;
+        const ad = mediaAtlas.horizontalAds[adIdx]!;
+        const f0 = ad.frames[0]!;
+        const adRect: readonly [number, number, number, number] = [f0.u0, f0.v0, f0.u1, f0.v1];
+        designData[i * 8] = isHero ? 0 : SIGN_SPECIES.indexOf(design.species);
+        designData[i * 8 + 1] = 6; // Rectangular shape 6
+        designData[i * 8 + 2] = 10.0 + motionClass; // mediaType = 1 (Screen)
+        designData[i * 8 + 3] = ad.frameCount * 10.0 + motion.phase;
+        designData.set(adRect, i * 8 + 4);
+      } else {
+        designData[i * 8] = isHero ? 0 : SIGN_SPECIES.indexOf(design.species);
+        designData[i * 8 + 1] = isHero ? hero.kind === 'panel' ? 6 : 0 : SIGN_SHAPES.indexOf(design.shape);
+        designData[i * 8 + 2] = isHero && motionClass === 4 ? 0 : motionClass;
+        designData[i * 8 + 3] = motion.phase;
+        designData.set(rect, i * 8 + 4);
+      }
+
       const sourceRect = isHero ? rect : kind[i] === SKYRIVER_SIGN_BANNER
         ? vertical[HERO_VERTICAL_CELLS + 1 + Math.floor(seedValue[i]! * verticalPool) % verticalPool]!
         : kind[i] === SKYRIVER_SIGN_STRIP
           ? horizontal[HERO_HORIZONTAL_CELLS + Math.floor(seedValue[i]! * horizontalPool) % horizontalPool]!
           : [0, 0, -1, -1];
       atlasRects.set(sourceRect, i * 4);
+
       // T7-3: canyon space -> the winding loop; the facade normal turns with the local heading.
       const world = placeNeonSign(this.signs.owner[i]!, cx[i]!, cy[i]!, cz[i]!, nx[i]!, nz[i]!);
       centres[i * 3] = world.x;
@@ -14865,26 +14903,157 @@ export class SkyriverCity {
       sizes[i * 2] = sw[i];
       sizes[i * 2 + 1] = sh[i];
       kinds[i] = kind[i];
+
+      districtTint[i * 4] = this.signDistricts.unitHue[i * 3]!;
+      districtTint[i * 4 + 1] = this.signDistricts.unitHue[i * 3 + 1]!;
+      districtTint[i * 4 + 2] = this.signDistricts.unitHue[i * 3 + 2]!;
+      districtTint[i * 4 + 3] = this.signDistricts.saturation[i]!;
+
+      colorArray[i * 3] = color[i * 3]!;
+      colorArray[i * 3 + 1] = color[i * 3 + 1]!;
+      colorArray[i * 3 + 2] = color[i * 3 + 2]!;
+      seedArray[i] = seedVal;
+    }
+
+    // Holograms: 6-12 across loop on HERO masses ONLY.
+    // Avoid duplicate hero building hosts across the 12.8km loop.
+    const heroBuildingIndices: number[] = [];
+    const seenBuildings = new Set<string>();
+    for (let i = 0; i < this.signs.heroCount; i += 1) {
+      const bId = this.signs.buildingId[i];
+      if (bId && !seenBuildings.has(bId)) {
+        seenBuildings.add(bId);
+        heroBuildingIndices.push(i);
+      }
+    }
+    heroBuildingIndices.sort((a, b) => this.signs.anchorV[a]! - this.signs.anchorV[b]!);
+    const hostPool = heroBuildingIndices.length > 0 ? heroBuildingIndices : [0];
+
+    const lightOrigins = Array.from({ length: hologramCount }, (_, k) => {
+      const i = hostPool[Math.floor((k * hostPool.length) / hologramCount)]!;
+      return placeNeonSign(
+        this.signs.owner[i]!,
+        this.signs.cx[i]! + this.signs.nx[i]! * 40,
+        this.signs.cy[i]! + this.signs.sh[i]! * 0.5 + 75,
+        this.signs.cz[i]! + this.signs.nz[i]! * 40,
+        this.signs.nx[i]!, this.signs.nz[i]!,
+      );
+    });
+
+    // Use the uploaded solids to keep the full light plane and drift clear.
+    type LightSolid = { x: number; y: number; z: number; hx: number; hy: number; hz: number; ax: number; az: number; bx: number; bz: number };
+    const lightSolids: LightSolid[] = [];
+    for (const mesh of [this.towerMesh, this.trimMesh]) {
+      const m = mesh.instanceMatrix.array;
+      for (let i = 0; i < mesh.count; i += 1) {
+        const j = i * 16;
+        const x = m[j + 12]!;
+        const y = m[j + 13]!;
+        const z = m[j + 14]!;
+        const hy = Math.abs(m[j + 5]!) * 0.5;
+        const reach = (Math.abs(m[j]!) + Math.abs(m[j + 2]!) + Math.abs(m[j + 8]!) + Math.abs(m[j + 10]!)) * 0.5 + 160;
+        if (!lightOrigins.some(o => Math.abs(y - o.y - 120) < hy + 185
+          && (x - o.x) ** 2 + (z - o.z) ** 2 < reach * reach)) continue;
+        const sx = Math.sqrt(m[j]! ** 2 + m[j + 2]! ** 2);
+        const sz = Math.sqrt(m[j + 8]! ** 2 + m[j + 10]! ** 2);
+        lightSolids.push({
+          x: m[j + 12]!, y: m[j + 13]!, z: m[j + 14]!,
+          hx: sx * 0.5, hy: Math.abs(m[j + 5]!) * 0.5, hz: sz * 0.5,
+          ax: m[j]! / sx, az: m[j + 2]! / sx,
+          bx: m[j + 8]! / sz, bz: m[j + 10]! / sz,
+        });
+      }
+    }
+    const lightOffsets: { lift: number; side: number; forward: number; cost: number }[] = [];
+    for (const lift of [0, 30, 60, 90, 120, 180, 240]) {
+      for (const side of [0, -20, 20, -40, 40, -60, 60]) {
+        for (const forward of [0, 20, 40]) {
+          lightOffsets.push({ lift, side, forward, cost: lift + 2 * Math.abs(side) + 2 * forward });
+        }
+      }
+    }
+    lightOffsets.sort((a, b) => a.cost - b.cost);
+    const placeClearLight = (world: ReturnType<typeof placeNeonSign>): ReturnType<typeof placeNeonSign> => {
+      const tx = world.nz;
+      const tz = -world.nx;
+      const nearby = lightSolids.filter(s => Math.abs(s.y - world.y - 120) < s.hy + 185
+        && (s.x - world.x) ** 2 + (s.z - world.z) ** 2 < (s.hx + s.hz + 160) ** 2);
+      const overlaps = (x: number, y: number, z: number, s: LightSolid): boolean => {
+        if (Math.abs(y - s.y) >= 64.5 + s.hy) return false;
+        const dx = x - s.x;
+        const dz = z - s.z;
+        for (const [ax, az] of [[tx, tz], [world.nx, world.nz], [s.ax, s.az], [s.bx, s.bz]]) {
+          const lightRadius = 46 * Math.abs(tx * ax! + tz * az!)
+            + 1 * Math.abs(world.nx * ax! + world.nz * az!);
+          const solidRadius = s.hx * Math.abs(s.ax * ax! + s.az * az!)
+            + s.hz * Math.abs(s.bx * ax! + s.bz * az!);
+          if (Math.abs(dx * ax! + dz * az!) >= lightRadius + solidRadius) return false;
+        }
+        return true;
+      };
+      for (const offset of lightOffsets) {
+        const x = world.x + tx * offset.side + world.nx * offset.forward;
+        const y = world.y + offset.lift;
+        const z = world.z + tz * offset.side + world.nz * offset.forward;
+        if (!nearby.some(s => overlaps(x, y, z, s))) return { ...world, x, y, z };
+      }
+      throw new Error('No clear hero hologram placement');
+    };
+
+    for (let k = 0; k < hologramCount; k += 1) {
+      const instIdx = count + k;
+      const heroIdx = hostPool[Math.floor((k * hostPool.length) / hologramCount)]!;
+      const holoWorld = placeClearLight(lightOrigins[k]!);
+
+      centres[instIdx * 3] = holoWorld.x;
+      centres[instIdx * 3 + 1] = holoWorld.y;
+      centres[instIdx * 3 + 2] = holoWorld.z;
+      normals[instIdx * 2] = holoWorld.nx;
+      normals[instIdx * 2 + 1] = holoWorld.nz;
+      sizes[instIdx * 2] = 90.0;
+      sizes[instIdx * 2 + 1] = 120.0;
+      kinds[instIdx] = 1.0;
+
+      const holoSeed = (k * 0.1234 + 0.5678) % 1.0;
+      seedArray[instIdx] = holoSeed;
+
+      colorArray[instIdx * 3] = 0.45;
+      colorArray[instIdx * 3 + 1] = 0.85;
+      colorArray[instIdx * 3 + 2] = 1.0;
+
+      districtTint[instIdx * 4] = this.signDistricts.unitHue[heroIdx * 3] ?? 1.0;
+      districtTint[instIdx * 4 + 1] = this.signDistricts.unitHue[heroIdx * 3 + 1] ?? 1.0;
+      districtTint[instIdx * 4 + 2] = this.signDistricts.unitHue[heroIdx * 3 + 2] ?? 1.0;
+      districtTint[instIdx * 4 + 3] = 0.9;
+
+      const holoAd = mediaAtlas.hologramAds[k % mediaAtlas.hologramAds.length]!;
+      const holoFrame = holoAd.frames[0]!;
+      const holoRect: readonly [number, number, number, number] = [
+        holoFrame.u0,
+        holoFrame.v0,
+        holoFrame.u1,
+        holoFrame.v1,
+      ];
+      atlasRects.set(holoRect, instIdx * 4);
+
+      designData[instIdx * 8 + 0] = 0;
+      designData[instIdx * 8 + 1] = 0;
+      // Encode instance index k into mediaType parameter: 20.0 + k
+      designData[instIdx * 8 + 2] = 20.0 + k; // mediaType = 2 (Hologram), index = k
+      designData[instIdx * 8 + 3] = 10.0 + holoSeed; // frameCount = 1, phase = holoSeed
+      designData.set(holoRect, instIdx * 8 + 4);
     }
 
     geometry.setAttribute('aCentre', new THREE.InstancedBufferAttribute(centres, 3));
     geometry.setAttribute('aNormal', new THREE.InstancedBufferAttribute(normals, 2));
     geometry.setAttribute('aSize', new THREE.InstancedBufferAttribute(sizes, 2));
-    geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(color.slice(0, count * 3), 3));
+    geometry.setAttribute('aColor', new THREE.InstancedBufferAttribute(colorArray, 3));
     geometry.setAttribute('aKind', new THREE.InstancedBufferAttribute(kinds, 1));
-    geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seedValue.slice(0, count), 1));
+    geometry.setAttribute('aSeed', new THREE.InstancedBufferAttribute(seedArray, 1));
     geometry.setAttribute('aAtlas', new THREE.InstancedBufferAttribute(atlasRects, 4));
-    // R22: unit-luminance target hue and its saturation per sign. `aColor` still carries the colour
-    // the existing random.weighted draw produced, so the shader can hold its final luminance.
-    const districtTint = new Float32Array(count * 4);
-    for (let i = 0; i < count; i += 1) {
-      districtTint[i * 4] = this.signDistricts.unitHue[i * 3]!;
-      districtTint[i * 4 + 1] = this.signDistricts.unitHue[i * 3 + 1]!;
-      districtTint[i * 4 + 2] = this.signDistricts.unitHue[i * 3 + 2]!;
-      districtTint[i * 4 + 3] = this.signDistricts.saturation[i]!;
-    }
     geometry.setAttribute('aDistrictTint', new THREE.InstancedBufferAttribute(districtTint, 4));
-    applySignDesignMaterial(this.signMaterial, designData);
+
+    applySignDesignMaterial(this.signMaterial, designData, mediaAtlas);
     this.signWorldCentres = centres.slice(0, count * 3);
     this.signDrawnNormal = normals.slice(0, count * 2);
 

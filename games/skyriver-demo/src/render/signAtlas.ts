@@ -82,12 +82,20 @@ const HORIZONTAL: readonly string[] = Object.freeze([
 /** UV rectangle in the atlas: u0, v0, u1, v1 (v up, matching CanvasTexture's default flipY). */
 export type AtlasRect = readonly [number, number, number, number];
 
+export interface SignAtlasLayout {
+  readonly vertical: readonly AtlasRect[];
+  readonly horizontal: readonly AtlasRect[];
+}
+
 export interface SignAtlas {
   readonly texture: THREE.Texture;
   readonly vertical: readonly AtlasRect[];
   readonly horizontal: readonly AtlasRect[];
   dispose(): void;
 }
+
+export type SignAtlasCanvas = HTMLCanvasElement | OffscreenCanvas;
+export type SignAtlasContext = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 const CJK_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif';
 const LATIN_FONT = '"Helvetica Neue", "Arial Narrow", Arial, "Noto Sans", sans-serif';
@@ -97,7 +105,7 @@ function rectFor(x: number, y: number, w: number, h: number): AtlasRect {
 }
 
 /** Neon tube look: a soft wide glow pass, then the crisp core on top. */
-function neonText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
+function neonText(ctx: SignAtlasContext, text: string, x: number, y: number): void {
   ctx.shadowColor = 'rgba(255,255,255,0.9)';
   ctx.shadowBlur = 14;
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
@@ -107,7 +115,7 @@ function neonText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
   ctx.fillText(text, x, y);
 }
 
-function frame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+function frame(ctx: SignAtlasContext, x: number, y: number, w: number, h: number): void {
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 5;
   ctx.shadowColor = 'rgba(255,255,255,0.8)';
@@ -116,15 +124,35 @@ function frame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
   ctx.shadowBlur = 0;
 }
 
-/**
- * Draws the atlas. Needs a DOM canvas, so it runs in the browser only (the city constructor calls
- * it; nothing at module scope touches the DOM, so node tests can still import this file).
- */
-export function createSignAtlas(): SignAtlas {
-  const canvas = document.createElement('canvas');
+/** Compute vertical and horizontal cell rectangles without canvas operations. */
+export function deriveSignAtlasLayout(): SignAtlasLayout {
+  const vertical: AtlasRect[] = [];
+  for (let i = 0; i < VERTICAL_CELL.count; i += 1) {
+    const x = (i % VERTICAL_CELL.perRow) * VERTICAL_CELL.w;
+    const y = Math.floor(i / VERTICAL_CELL.perRow) * VERTICAL_CELL.h;
+    vertical.push(rectFor(x, y, VERTICAL_CELL.w, VERTICAL_CELL.h));
+  }
+
+  const horizontal: AtlasRect[] = [];
+  const baseY = VERTICAL_CELL.h * 2;
+  for (let row = 0; row < HORIZONTAL_CELL.rows; row += 1) {
+    for (let column = 0; column < HORIZONTAL_CELL.columns; column += 1) {
+      const x = column * HORIZONTAL_CELL.w;
+      const y = baseY + row * HORIZONTAL_CELL.h;
+      horizontal.push(rectFor(x, y, HORIZONTAL_CELL.w, HORIZONTAL_CELL.h));
+    }
+  }
+
+  return { vertical, horizontal };
+}
+
+/** Paint sign species and lettering into a canvas. */
+export function paintSignAtlas(canvas: HTMLCanvasElement | OffscreenCanvas): SignAtlasLayout {
   canvas.width = SIGN_ATLAS_WIDTH;
   canvas.height = SIGN_ATLAS_HEIGHT;
-  const ctx = canvas.getContext('2d');
+  const ctx = 'transferToImageBitmap' in canvas
+    ? canvas.getContext('2d')
+    : canvas.getContext('2d');
   if (ctx === null) throw new Error('SKYRIVER_SIGN_ATLAS_NO_2D_CONTEXT');
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -222,7 +250,31 @@ export function createSignAtlas(): SignAtlas {
     }
   }
 
-  const texture = new THREE.CanvasTexture(canvas);
+  return { vertical, horizontal };
+}
+
+// Cache one immutable canvas and layout.
+let bootAtlas: (SignAtlasLayout & { readonly canvas: HTMLCanvasElement }) | null = null;
+
+/** Install a pre-rendered atlas bitmap into the cache. */
+export function installSignAtlasBitmap(bitmap: ImageBitmap): void {
+  if (bootAtlas !== null) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIGN_ATLAS_WIDTH;
+  canvas.height = SIGN_ATLAS_HEIGHT;
+  const ctx = canvas.getContext('2d');
+  if (ctx === null) throw new Error('SKYRIVER_SIGN_ATLAS_NO_2D_CONTEXT');
+  ctx.drawImage(bitmap, 0, 0);
+  bootAtlas = { canvas, ...deriveSignAtlasLayout() };
+}
+
+/** Create one sign atlas with a new canvas texture over the cached canvas. */
+export function createSignAtlas(): SignAtlas {
+  if (bootAtlas === null) {
+    const canvas = document.createElement('canvas');
+    bootAtlas = { canvas, ...paintSignAtlas(canvas) };
+  }
+  const texture = new THREE.CanvasTexture(bootAtlas.canvas);
   texture.name = 'skyriver.signAtlas';
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -232,8 +284,8 @@ export function createSignAtlas(): SignAtlas {
 
   return {
     texture,
-    vertical,
-    horizontal,
+    vertical: bootAtlas.vertical,
+    horizontal: bootAtlas.horizontal,
     dispose(): void {
       texture.dispose();
     },
