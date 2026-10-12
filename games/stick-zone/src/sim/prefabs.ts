@@ -95,6 +95,11 @@ export const PREFAB_CATALOG: Record<string, PrefabDefinition> = {
     collision: { halfWidth: 0.55, halfDepth: 0.55, height: 1.2 },
     defaultScale: 1.2,
   },
+  cableSpool: {
+    assetKey: "cableSpool",
+    collision: { halfWidth: 0.55, halfDepth: 0.55, height: 1.2 },
+    defaultScale: 1.7,
+  },
   dumpster: {
     assetKey: "dumpster",
     collision: { halfWidth: 1.0, halfDepth: 0.65, height: 1.3 },
@@ -104,6 +109,21 @@ export const PREFAB_CATALOG: Record<string, PrefabDefinition> = {
     assetKey: "barrel",
     collision: { halfWidth: 0.38, halfDepth: 0.38, height: 1.0 },
     defaultScale: 1.2,
+  },
+  barrelToxic: {
+    assetKey: "barrel",
+    collision: { halfWidth: 0.4, halfDepth: 0.4, height: 1.0 },
+    defaultScale: 1.4,
+  },
+  barrelStack: {
+    assetKey: "barrelStack",
+    collision: { halfWidth: 0.9, halfDepth: 0.9, height: 1.6 },
+    defaultScale: 1.6,
+  },
+  crateStack: {
+    assetKey: "crateStack",
+    collision: { halfWidth: 1.0, halfDepth: 1.0, height: 1.5 },
+    defaultScale: 1.5,
   },
   warpBeacon: {
     assetKey: "warpBeacon",
@@ -120,7 +140,6 @@ export const PREFAB_CATALOG: Record<string, PrefabDefinition> = {
   },
   palletMetal: {
     assetKey: "palletMetal",
-    // Ground pallets allow stepping onto them without blocking walk navigation
     collision: undefined,
     defaultScale: 1.4,
   },
@@ -131,9 +150,13 @@ export const PREFAB_CATALOG: Record<string, PrefabDefinition> = {
   },
   serviceBayArch: {
     assetKey: "serviceBayArch",
-    // Overhead arches are clear overhead structures
     collision: undefined,
     defaultScale: 1.9,
+  },
+  serviceBayCanopy: {
+    assetKey: "serviceBayCanopy",
+    collision: undefined,
+    defaultScale: 2.0,
   },
   ventFan: {
     assetKey: "ventFan",
@@ -144,6 +167,11 @@ export const PREFAB_CATALOG: Record<string, PrefabDefinition> = {
     assetKey: "securityCameraPole",
     collision: { halfWidth: 0.25, halfDepth: 0.25, height: 3.5 },
     defaultScale: 1.6,
+  },
+  streetLamp: {
+    assetKey: "streetLamp",
+    collision: { halfWidth: 0.25, halfDepth: 0.25, height: 4.5 },
+    defaultScale: 1.8,
   },
   treeOak: {
     collision: { halfWidth: 0.35, halfDepth: 0.35, height: 3.5 },
@@ -178,11 +206,146 @@ export const PREFAB_CATALOG: Record<string, PrefabDefinition> = {
     collision: { halfWidth: 3.0, halfDepth: 1.25, height: 2.6 },
     defaultScale: 1.0,
   },
+  // Heavy Industrial Architecture
+  warehouse: {
+    assetKey: "warehouse",
+    collision: { halfWidth: 3.4, halfDepth: 3.4, height: 5.0 },
+    defaultScale: 1.75,
+  },
+  warehouseBay: {
+    assetKey: "warehouseBay",
+    collision: { halfWidth: 3.4, halfDepth: 3.4, height: 4.5 },
+    defaultScale: 1.75,
+  },
+  tankVertical: {
+    assetKey: "tankVertical",
+    collision: { halfWidth: 1.8, halfDepth: 1.8, height: 4.5 },
+    defaultScale: 2.2,
+  },
+  tankHorizontal: {
+    assetKey: "tankHorizontal",
+    collision: { halfWidth: 2.5, halfDepth: 1.5, height: 3.0 },
+    defaultScale: 2.0,
+  },
+  tankSpherical: {
+    assetKey: "tankSpherical",
+    collision: { halfWidth: 1.8, halfDepth: 1.8, height: 4.0 },
+    defaultScale: 2.2,
+  },
+  watertankIndustrial: {
+    assetKey: "watertankIndustrial",
+    collision: { halfWidth: 1.6, halfDepth: 1.6, height: 4.5 },
+    defaultScale: 1.8,
+  },
+  pipeManifold: {
+    assetKey: "pipeManifold",
+    collision: { halfWidth: 1.4, halfDepth: 0.9, height: 1.8 },
+    defaultScale: 2.0,
+  },
+  pipeStraight: {
+    assetKey: "pipeStraight",
+    collision: { halfWidth: 1.2, halfDepth: 0.4, height: 0.8 },
+    defaultScale: 1.5,
+  },
+  valveWheel: {
+    assetKey: "valveWheel",
+    collision: { halfWidth: 0.3, halfDepth: 0.3, height: 1.2 },
+    defaultScale: 1.6,
+  },
+  catwalkBridge: {
+    assetKey: "catwalkBridge",
+    collision: { halfWidth: 1.4, halfDepth: 1.4, height: 4.0 },
+    defaultScale: 2.0,
+  },
+  stairFlight: {
+    assetKey: "stairFlight",
+    collision: { halfWidth: 1.2, halfDepth: 1.8, height: 2.5 },
+    defaultScale: 1.6,
+  },
+  loadingPlatform: {
+    assetKey: "loadingPlatform",
+    collision: { halfWidth: 3.2, halfDepth: 2.6, height: 1.2 },
+    defaultScale: 2.0,
+  },
+  loadingPlatformRamp: {
+    assetKey: "loadingPlatformRamp",
+    collision: { halfWidth: 2.0, halfDepth: 2.0, height: 0.8 },
+    defaultScale: 2.0,
+  },
+  loadingDockLadder: {
+    assetKey: "loadingDockLadder",
+    collision: { halfWidth: 0.35, halfDepth: 0.25, height: 2.5 },
+    defaultScale: 1.8,
+  },
+  machineHydraulicPress: {
+    assetKey: "serviceBayWorkbench",
+    collision: { halfWidth: 1.2, halfDepth: 1.0, height: 2.2 },
+    defaultScale: 1.8,
+  },
+  debrisScrapPile: {
+    assetKey: "crateStack",
+    collision: { halfWidth: 1.4, halfDepth: 1.2, height: 1.0 },
+    defaultScale: 1.8,
+  },
+  scrapIBeam: {
+    assetKey: "barrierConcrete",
+    collision: { halfWidth: 1.4, halfDepth: 0.6, height: 0.8 },
+    defaultScale: 1.7,
+  },
+  planterConcrete: {
+    assetKey: "barrierConcrete",
+    collision: { halfWidth: 0.8, halfDepth: 0.8, height: 0.8 },
+    defaultScale: 1.5,
+  },
+  smokestackTall: {
+    assetKey: "smokestackTall",
+    collision: { halfWidth: 1.8, halfDepth: 1.8, height: 12.0 },
+    defaultScale: 2.2,
+  },
+  smokestackTwin: {
+    assetKey: "smokestack",
+    collision: { halfWidth: 1.8, halfDepth: 1.2, height: 10.0 },
+    defaultScale: 2.0,
+  },
+  conveyor: {
+    assetKey: "conveyor",
+    collision: { halfWidth: 1.8, halfDepth: 0.7, height: 1.2 },
+    defaultScale: 2.2,
+  },
+  conveyorIncline: {
+    assetKey: "conveyorIncline",
+    collision: { halfWidth: 1.8, halfDepth: 0.7, height: 1.6 },
+    defaultScale: 2.2,
+  },
+  fenceWireMesh: {
+    assetKey: "fenceWireMesh",
+    collision: { halfWidth: 2.2, halfDepth: 0.15, height: 2.2 },
+    defaultScale: 2.2,
+  },
+  fenceBarbed: {
+    assetKey: "fencePanel",
+    collision: { halfWidth: 2.2, halfDepth: 0.2, height: 2.2 },
+    defaultScale: 1.8,
+  },
+  fenceGate: {
+    assetKey: "fenceGate",
+    collision: { halfWidth: 1.8, halfDepth: 0.15, height: 2.2 },
+    defaultScale: 2.2,
+  },
+  busStopShelter: {
+    assetKey: "warehouseBay",
+    collision: { halfWidth: 1.8, halfDepth: 0.9, height: 2.2 },
+    defaultScale: 1.5,
+  },
+  canalPipeCulvert: {
+    collision: { halfWidth: 0.5, halfDepth: 0.8, height: 1.2 },
+    defaultScale: 1.0,
+  },
 };
 
 /**
- * Computes an axis-aligned 2D bounding box (ObstacleBox) for any placed prefab instance,
- * accounting for 3D position, rotation around Y, local offsets, and scale.
+ * Computes an axis-aligned bounding box (ObstacleBox) for a given PrefabInstance,
+ * respecting position, rotation around Y, and local collision box dimensions.
  */
 export function computePrefabObstacleBox(inst: PrefabInstance): ObstacleBox | null {
   if (inst.solid === false) return null;
@@ -190,9 +353,18 @@ export function computePrefabObstacleBox(inst: PrefabInstance): ObstacleBox | nu
   if (!def || !def.collision) return null;
 
   const col = def.collision;
-  const scale = inst.scale ?? def.defaultScale ?? 1.0;
-  const sx = typeof scale === "number" ? scale : scale[0];
-  const sz = typeof scale === "number" ? scale : scale[2];
+  let sx = 1;
+  let sz = 1;
+  if (Array.isArray(inst.scale)) {
+    sx = inst.scale[0];
+    sz = inst.scale[2];
+  } else if (typeof inst.scale === "number") {
+    sx = inst.scale;
+    sz = inst.scale;
+  } else if (def.defaultScale) {
+    sx = def.defaultScale;
+    sz = def.defaultScale;
+  }
 
   const hw = col.halfWidth * sx;
   const hd = col.halfDepth * sz;
@@ -221,8 +393,6 @@ export function computePrefabObstacleBox(inst: PrefabInstance): ObstacleBox | nu
 
 /**
  * Authoritative Forward Operating Base (FOB Hub) placed prefab instances.
- * Both the 3D renderer in SectorMap.tsx and the physics simulation in game.ts
- * consume these instances directly so collision geometry is always 100% synchronized.
  */
 export const FOB_PREFABS: PrefabInstance[] = [
   // West Armory Workshop (z in [-72, -67])
@@ -377,17 +547,18 @@ export const FOB_PREFAB_OBSTACLES: ObstacleBox[] = FOB_PREFABS
 
 /**
  * Authoritative Sector 7 Spoke tactical level design prefabs:
- * - River Bridges with heavy guardrails & tactical choke points
+ * - Industrial Runoff Sluice Canal Crossings & Culverts
  * - Logistics Command Warehouse (exterior walls, interior room partitions, armory vault)
  * - Pumping Station Bunker (blast walls, baffle entrance, turbine bay)
  * - Container Yard Maze (tight alleys, dead ends, blind corners)
- * - Procedural Trees (oak, pine) with bullet-stopping solid trunks and foliage bushes
+ * - Procedural Industrial Park Trees & Foliage Beds
+ * - Spoke Industrial Architecture (Refinery tanks, docks, transformers, smokestacks)
  */
 export const SPOKE_PREFABS: PrefabInstance[] = [
   // =========================================================================
-  // 1. RIVER BRIDGES & TACTICAL CHOKE POINTS (z in [16.5, 21.5])
+  // 1. INDUSTRIAL CANAL BRIDGES & SLUICE DISCHARGE CULVERTS (z in [16.5, 21.5])
   // =========================================================================
-  // Central Highway Bridge (x in [-4.5, 4.5], z = 19)
+  // Central Freight Highway Bridge (x in [-4.5, 4.5], z = 19)
   { id: "bridge_center_deck", prefabKey: "bridgeDeck", position: [0, 0.05, 19], scale: [9.0, 1, 6.0] },
   { id: "bridge_center_rail_w", prefabKey: "bridgeRail", position: [-4.6, 0, 19], rotation: [0, Math.PI / 2, 0] },
   { id: "bridge_center_rail_e", prefabKey: "bridgeRail", position: [4.6, 0, 19], rotation: [0, Math.PI / 2, 0] },
@@ -396,15 +567,22 @@ export const SPOKE_PREFABS: PrefabInstance[] = [
   { id: "bridge_center_bollard_sw", prefabKey: "bollardHeavy", position: [-4.2, 0, 22.0], scale: 1.4 },
   { id: "bridge_center_bollard_se", prefabKey: "bollardHeavy", position: [4.2, 0, 22.0], scale: 1.4 },
 
-  // West Industrial Catwalk Bridge (x in [-44, -38], z = 19)
+  // West Heavy Catwalk & Truss Span (x in [-44, -38], z = 19)
   { id: "bridge_west_deck", prefabKey: "bridgeDeck", position: [-41, 0.05, 19], scale: [6.0, 1, 6.0] },
   { id: "bridge_west_rail_w", prefabKey: "bridgeRail", position: [-44.2, 0, 19], rotation: [0, Math.PI / 2, 0] },
   { id: "bridge_west_rail_e", prefabKey: "bridgeRail", position: [-37.8, 0, 19], rotation: [0, Math.PI / 2, 0] },
 
-  // East Tactical Rail Bridge (x in [36, 42], z = 19)
+  // East Rail & Utility Pipe Span (x in [36, 42], z = 19)
   { id: "bridge_east_deck", prefabKey: "bridgeDeck", position: [39, 0.05, 19], scale: [6.0, 1, 6.0] },
   { id: "bridge_east_rail_w", prefabKey: "bridgeRail", position: [35.8, 0, 19], rotation: [0, Math.PI / 2, 0] },
   { id: "bridge_east_rail_e", prefabKey: "bridgeRail", position: [42.2, 0, 19], rotation: [0, Math.PI / 2, 0] },
+
+  // Industrial Stormwater / Effluent Discharge Pipes
+  { id: "pipe_culvert_n1", prefabKey: "canalPipeCulvert", position: [-30, 0.25, 16.5] },
+  { id: "pipe_culvert_n2", prefabKey: "canalPipeCulvert", position: [15, 0.25, 16.5] },
+  { id: "pipe_culvert_n3", prefabKey: "canalPipeCulvert", position: [50, 0.25, 16.5] },
+  { id: "pipe_culvert_s1", prefabKey: "canalPipeCulvert", position: [-20, 0.25, 21.5] },
+  { id: "pipe_culvert_s2", prefabKey: "canalPipeCulvert", position: [25, 0.25, 21.5] },
 
   // =========================================================================
   // 2. LOGISTICS COMMAND WAREHOUSE (x in [16, 25], z in [-13, 0])
@@ -482,9 +660,9 @@ export const SPOKE_PREFABS: PrefabInstance[] = [
   { id: "maze_dumpster_1", prefabKey: "dumpster", position: [-8.5, 0, -18] },
 
   // =========================================================================
-  // 5. PROCEDURAL TREES & FOLIAGE BUSHES (Surviv.io Foliage)
+  // 5. INDUSTRIAL PARK TREES & FOLIAGE BEDS
   // =========================================================================
-  // Riverbank Trees (North Bank, z in [13, 14.5])
+  // North Embankment Buffer Trees (z in [13, 14.5])
   { id: "tree_nb_1", prefabKey: "treeOak", position: [-28, 0, 13] },
   { id: "tree_nb_2", prefabKey: "treePine", position: [-20, 0, 14] },
   { id: "tree_nb_3", prefabKey: "treeOak", position: [-11, 0, 13.5] },
@@ -492,13 +670,13 @@ export const SPOKE_PREFABS: PrefabInstance[] = [
   { id: "tree_nb_5", prefabKey: "treePine", position: [22, 0, 14] },
   { id: "tree_nb_6", prefabKey: "treeOak", position: [30, 0, 13] },
 
-  // Riverbank Trees (South Bank, z in [23.5, 25])
+  // South Embankment Buffer Trees (z in [23.5, 25])
   { id: "tree_sb_1", prefabKey: "treePine", position: [-25, 0, 24] },
   { id: "tree_sb_2", prefabKey: "treeOak", position: [-14, 0, 24.5] },
   { id: "tree_sb_3", prefabKey: "treeOak", position: [14, 0, 24.5] },
   { id: "tree_sb_4", prefabKey: "treePine", position: [25, 0, 24] },
 
-  // Riverbank Bushes (Tactical Concealment)
+  // Embankment Tactical Scrub Bushes (Soft Cover)
   { id: "bush_rb_1", prefabKey: "foliageBush", position: [-22, 0, 17.5] },
   { id: "bush_rb_2", prefabKey: "foliageBush", position: [-16, 0, 20.5] },
   { id: "bush_rb_3", prefabKey: "foliageBush", position: [18, 0, 18.0] },
@@ -506,7 +684,7 @@ export const SPOKE_PREFABS: PrefabInstance[] = [
   { id: "bush_rb_5", prefabKey: "foliageBush", position: [-8, 0, 14.5] },
   { id: "bush_rb_6", prefabKey: "foliageBush", position: [8, 0, 14.5] },
 
-  // North-East Woods Cluster (x in [20, 28], z in [-32, -24])
+  // Northeast Park Copse (x in [20, 28], z in [-32, -24])
   { id: "tree_ne_1", prefabKey: "treeOak", position: [20, 0, -24] },
   { id: "tree_ne_2", prefabKey: "treePine", position: [26, 0, -26] },
   { id: "tree_ne_3", prefabKey: "treeOak", position: [22, 0, -30] },
@@ -514,12 +692,75 @@ export const SPOKE_PREFABS: PrefabInstance[] = [
   { id: "bush_ne_1", prefabKey: "foliageBush", position: [24, 0, -25] },
   { id: "bush_ne_2", prefabKey: "foliageBush", position: [21, 0, -28] },
 
-  // South-West Nature Pocket (x in [-52, -46], z in [12, 22])
+  // Southwest Boundary Trees (x in [-52, -46], z in [12, 22])
   { id: "tree_sw_1", prefabKey: "treePine", position: [-50, 0, 12] },
   { id: "tree_sw_2", prefabKey: "treeOak", position: [-46, 0, 16] },
   { id: "tree_sw_3", prefabKey: "treePine", position: [-52, 0, 22] },
   { id: "bush_sw_1", prefabKey: "foliageBush", position: [-48, 0, 14] },
   { id: "bush_sw_2", prefabKey: "foliageBush", position: [-47, 0, 20] },
+
+  // =========================================================================
+  // 6. ZONE 2: NORTHWEST CHEMICAL & FUEL REFINERY (x in [-60, -20], z in [-45, -5])
+  // =========================================================================
+  { id: "refinery_warehouse", prefabKey: "warehouse", position: [-28, 0, -26], scale: [1.75, 1.8, 1.75] },
+  { id: "refinery_tank_vert", prefabKey: "tankVertical", position: [-46, 0, -20], scale: 2.2 },
+  { id: "refinery_tank_horiz", prefabKey: "tankHorizontal", position: [-46, 0, -35], scale: 2.0 },
+  { id: "refinery_tank_sphere", prefabKey: "tankSpherical", position: [-35, 0, -38], scale: 2.2 },
+  { id: "refinery_watertank", prefabKey: "watertankIndustrial", position: [-22, 0, -40], scale: 1.8 },
+  { id: "refinery_pipe_manifold", prefabKey: "pipeManifold", position: [-40, 0, -28], scale: 2.0 },
+  { id: "refinery_catwalk", prefabKey: "catwalkBridge", position: [-28, 4.0, -14], scale: [2.0, 1.8, 2.5] },
+  { id: "refinery_stairs", prefabKey: "stairFlight", position: [-22, 0, -14], rotation: [0, Math.PI / 2, 0], scale: 1.6 },
+  { id: "refinery_barrel_toxic1", prefabKey: "barrelToxic", position: [-42, 0, -16], scale: 1.4 },
+  { id: "refinery_barrel_toxic2", prefabKey: "barrelToxic", position: [-40.5, 0, -17], scale: 1.4 },
+  { id: "refinery_barrel_stack", prefabKey: "barrelStack", position: [-33, 0, -10.5], scale: 1.6 },
+  { id: "refinery_crate_wood", prefabKey: "crateHeavyWooden", position: [-36, 0, -18], scale: 1.4 },
+
+  // =========================================================================
+  // 7. ZONE 3: SOUTHWEST FREIGHT DOCKS & MAINTENANCE (x in [-55, -15], z in [5, 45])
+  // =========================================================================
+  { id: "dock_warehouse_bay", prefabKey: "warehouseBay", position: [-28, 0, 24], scale: [1.75, 1.8, 1.75] },
+  { id: "dock_loading_plat", prefabKey: "loadingPlatform", position: [-38, 0, 28], scale: [2.0, 1.8, 2.0] },
+  { id: "dock_loading_ramp", prefabKey: "loadingPlatformRamp", position: [-38, 0, 32.5], rotation: [0, Math.PI, 0], scale: [2.0, 1.8, 2.0] },
+  { id: "dock_ladder", prefabKey: "loadingDockLadder", position: [-33.8, 0, 28], rotation: [0, -Math.PI / 2, 0], scale: 1.8 },
+  { id: "dock_press", prefabKey: "machineHydraulicPress", position: [-33, 0, -2], scale: 1.8 },
+  { id: "dock_spool", prefabKey: "cableSpoolMetal", position: [-34, 0, 4], scale: 1.7 },
+  { id: "dock_dumpster1", prefabKey: "dumpster", position: [-42, 0, 10], rotation: [0, Math.PI / 2, 0], scale: 1.3 },
+  { id: "dock_dumpster2", prefabKey: "dumpster", position: [-48, 0, 30], rotation: [0, Math.PI / 2, 0], scale: 1.3 },
+  { id: "dock_scrap", prefabKey: "debrisScrapPile", position: [-20, 0, 34], scale: 1.8 },
+  { id: "dock_ibeam", prefabKey: "scrapIBeam", position: [-22, 0, 36], scale: 1.7 },
+  { id: "dock_planter1", prefabKey: "planterConcrete", position: [-18, 0, 16], scale: 1.5 },
+  { id: "dock_planter2", prefabKey: "planterConcrete", position: [-18, 0, 24], scale: 1.5 },
+  { id: "dock_bollard1", prefabKey: "bollardHeavy", position: [-16, 0, 18], scale: 1.6 },
+  { id: "dock_bollard2", prefabKey: "bollardHeavy", position: [-16, 0, 22], scale: 1.6 },
+
+  // =========================================================================
+  // 8. ZONE 4: NORTHEAST POWER SUBSTATION & HEAVY INDUSTRY (x in [20, 65], z in [-45, 10])
+  // =========================================================================
+  { id: "substation_xfmr", prefabKey: "machineTransformer", position: [38, 0, -18], scale: 2.0 },
+  { id: "substation_gen", prefabKey: "generatorLarge", position: [46, 0, -18], scale: 2.0 },
+  { id: "substation_cab", prefabKey: "electricalCabinet", position: [42, 0, -10], scale: 1.8 },
+  { id: "substation_spool_m", prefabKey: "cableSpoolMetal", position: [34, 0, -10], scale: 1.7 },
+  { id: "substation_spool_w", prefabKey: "cableSpool", position: [30, 0, -14], scale: 1.7 },
+  { id: "substation_stack_tall", prefabKey: "smokestackTall", position: [56, 0, -32], scale: [2.2, 2.5, 2.2] },
+  { id: "substation_stack_twin", prefabKey: "smokestackTwin", position: [56, 0, -16], scale: [2.0, 2.2, 2.0] },
+  { id: "substation_conveyor", prefabKey: "conveyor", position: [32, 0, -5], rotation: [0, Math.PI / 2, 0], scale: [2.2, 1.8, 2.0] },
+  { id: "substation_conveyor_inc", prefabKey: "conveyorIncline", position: [32, 0, 0], rotation: [0, Math.PI / 2, 0], scale: [2.2, 1.8, 2.0] },
+  { id: "substation_fence_n", prefabKey: "fenceWireMesh", position: [48, 0, -10], rotation: [0, Math.PI / 2, 0], scale: [2.2, 1.8, 2.0] },
+  { id: "substation_fence_s", prefabKey: "fenceWireMesh", position: [48, 0, 10], rotation: [0, Math.PI / 2, 0], scale: [2.2, 1.8, 2.0] },
+  { id: "substation_gate", prefabKey: "fenceGate", position: [28, 0, -6], scale: 2.2 },
+
+  // =========================================================================
+  // 9. ZONE 5: SOUTHEAST EXTRACTION REDOUBT & MILITARY LZ-01 (x in [20, 60], z in [20, 60])
+  // =========================================================================
+  { id: "lz_bus_shelter", prefabKey: "busStopShelter", position: [30, 0, 26], rotation: [0, Math.PI / 2, 0], scale: 1.5 },
+  { id: "lz_cam_pole", prefabKey: "securityCameraPole", position: [28, 0, 32], scale: 1.8 },
+  { id: "lz_barrier_1", prefabKey: "barrierConcrete", position: [34, 0, 36], scale: 1.35 },
+  { id: "lz_barrier_2", prefabKey: "barrierConcrete", position: [34, 0, 48], scale: 1.35 },
+  { id: "lz_barrier_3", prefabKey: "barrierConcrete", position: [50, 0, 36], scale: 1.35 },
+  { id: "lz_barrier_4", prefabKey: "barrierConcrete", position: [50, 0, 48], scale: 1.35 },
+  { id: "lz_fence_w", prefabKey: "fenceBarbed", position: [28, 0, 42], rotation: [0, Math.PI / 2, 0], scale: 1.8 },
+  { id: "lz_fence_e", prefabKey: "fenceBarbed", position: [54, 0, 42], rotation: [0, Math.PI / 2, 0], scale: 1.8 },
+  { id: "lz_water_barrier", prefabKey: "barrierWater", position: [38, 0, 28], scale: 1.4 },
 ];
 
 /**

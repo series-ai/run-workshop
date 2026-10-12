@@ -320,116 +320,13 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   // Automatic Prefab Collision Boxes for all FOB placed props
   ...FOB_PREFAB_OBSTACLES,
 
-  // Authoritative Spoke Level Design Prefab Obstacles (Walls, Bridges, Trees, Maze)
+  // Authoritative Spoke Level Design Prefab Obstacles (Industrial structures, Walls, Bridges, Trees, Maze)
   ...SPOKE_PREFAB_OBSTACLES,
 
   // Emergency Bunker Exfil Bulkhead & Blast Doors at (-45, -45)
   { minX: -49.0, maxX: -41.0, minZ: -48.5, maxZ: -46.5 },
   // Emergency Bunker Keycard Terminal Console
   { minX: -45.6, maxX: -44.4, minZ: -45.4, maxZ: -44.2 },
-
-  // ---------------------------------------------------------------------------
-  // ZONE 1: CENTRAL CONTESTED LOGISTICS DEPOT & CARGO PORT
-  // ---------------------------------------------------------------------------
-  // Overhead Gantry Crane Supports
-  { minX: -15.5, maxX: -12.5, minZ: -6.5, maxZ: -3.5 },
-  // Staging Cargo Platform (at x: 12, z: 5)
-  { minX: 9.0, maxX: 15.0, minZ: 2.0, maxZ: 8.0 },
-  // Open and Short Cargo Containers (flanking |x| >= 9.5)
-  { minX: -15.5, maxX: -9.5, minZ: 0.5, maxZ: 3.5 },
-  { minX: 9.5, maxX: 15.5, minZ: -12.5, maxZ: -9.5 },
-  // Pallet Stacks & Heavy Caches (flanking |x| >= 5.5)
-  { minX: -8.5, maxX: -5.5, minZ: -9.5, maxZ: -6.5 },
-  { minX: 5.5, maxX: 8.5, minZ: -9.5, maxZ: -6.5 },
-  { minX: -8.5, maxX: -5.5, minZ: 6.8, maxZ: 9.2 },
-  { minX: 5.5, maxX: 8.5, minZ: 6.8, maxZ: 9.2 },
-  // Central Logistics Highway Chicane Barriers
-  { minX: -4.3, maxX: -1.3, minZ: -33.2, maxZ: -30.8 }, // [-2.8, 0, -32]
-  { minX: 1.3, maxX: 4.3, minZ: -19.2, maxZ: -16.8 },   // [2.8, 0, -18]
-  { minX: -4.3, maxX: -1.3, minZ: -5.2, maxZ: -2.8 },   // [-2.8, 0, -4]
-  { minX: 1.3, maxX: 4.3, minZ: 12.8, maxZ: 15.2 },     // [2.8, 0, 14]
-  { minX: -4.3, maxX: -1.3, minZ: 28.8, maxZ: 31.2 },   // [-2.8, 0, 30]
-  { minX: 1.3, maxX: 4.3, minZ: 44.8, maxZ: 47.2 },     // [2.8, 0, 46]
-
-  // ---------------------------------------------------------------------------
-  // ZONE 2: NORTHWEST CHEMICAL & FUEL REFINERY
-  // ---------------------------------------------------------------------------
-  // West Warehouse Beta
-  { minX: -34.0, maxX: -22.0, minZ: -32.0, maxZ: -20.0 }, // [-28, 0, -26]
-  // Vertical Fuel Tank
-  { minX: -50.0, maxX: -42.0, minZ: -24.0, maxZ: -16.0 }, // [-46, 0, -20]
-  // Horizontal Pressure Tank
-  { minX: -50.0, maxX: -42.0, minZ: -39.0, maxZ: -31.0 }, // [-46, 0, -35]
-  // Spherical Gas Silo
-  { minX: -39.0, maxX: -31.0, minZ: -42.0, maxZ: -34.0 }, // [-35, 0, -38]
-  // Industrial Water Silo
-  { minX: -25.0, maxX: -19.0, minZ: -43.0, maxZ: -37.0 }, // [-22, 0, -40]
-  // Catwalk Bridge & Stair Footings
-  { minX: -31.0, maxX: -25.0, minZ: -16.0, maxZ: -12.0 }, // [-28, 0, -14]
-  // Toxic Barrel Stack
-  { minX: -44.0, maxX: -39.0, minZ: -19.0, maxZ: -15.0 },
-  { minX: -35.0, maxX: -31.0, minZ: -12.0, maxZ: -9.0 },
-  { minX: -37.5, maxX: -34.5, minZ: -19.5, maxZ: -16.5 },
-
-  // ---------------------------------------------------------------------------
-  // ZONE 3: SOUTHWEST FREIGHT TERMINAL & HEAVY TRUCK DOCKS
-  // ---------------------------------------------------------------------------
-  // West Warehouse Alpha
-  { minX: -34.0, maxX: -22.0, minZ: 4.0, maxZ: 16.0 },    // [-28, 0, 10]
-  // Warehouse Bay Annex
-  { minX: -34.0, maxX: -22.0, minZ: 18.0, maxZ: 30.0 },   // [-28, 0, 24]
-  // Raised Loading Platform
-  { minX: -42.0, maxX: -34.0, minZ: 24.0, maxZ: 32.0 },   // [-38, 0, 28]
-  // Service Bay Canopy & Workbench
-  { minX: -33.0, maxX: -27.0, minZ: -5.0, maxZ: 1.0 },    // [-30, 0, -2]
-  // Hydraulic Press & Cable Spool
-  { minX: -35.0, maxX: -31.0, minZ: -3.5, maxZ: -0.5 },
-  // CQB Dumpsters & Scrap Piles
-  { minX: -44.0, maxX: -40.0, minZ: 8.5, maxZ: 11.5 },
-  { minX: -50.0, maxX: -46.0, minZ: 28.5, maxZ: 31.5 },
-  { minX: -22.0, maxX: -18.0, minZ: 32.0, maxZ: 36.0 },
-  // Concrete Planters
-  { minX: -19.5, maxX: -16.5, minZ: 14.5, maxZ: 17.5 },
-  { minX: -19.5, maxX: -16.5, minZ: 22.5, maxZ: 25.5 },
-  // Emergency Bunker Perimeter Barrier
-  { minX: -41.5, maxX: -38.5, minZ: -42.5, maxZ: -39.5 },
-
-  // ---------------------------------------------------------------------------
-  // ZONE 4: NORTHEAST POWER SUBSTATION & HEAVY INDUSTRY
-  // ---------------------------------------------------------------------------
-  // Machine Transformer Substation
-  { minX: 35.0, maxX: 41.0, minZ: -21.0, maxZ: -15.0 },   // [38, 0, -18]
-  // Large Diesel Generator
-  { minX: 43.0, maxX: 49.0, minZ: -21.0, maxZ: -15.0 },   // [46, 0, -18]
-  // Electrical Panel Wall
-  { minX: 40.0, maxX: 44.0, minZ: -11.5, maxZ: -8.5 },    // [42, 0, -10]
-  // Industrial Smokestacks
-  { minX: 53.5, maxX: 58.5, minZ: -34.5, maxZ: -29.5 },   // [56, 0, -32]
-  { minX: 53.5, maxX: 58.5, minZ: -18.5, maxZ: -13.5 },   // [56, 0, -16]
-  // Heavy Conveyor Feed System
-  { minX: 30.0, maxX: 34.0, minZ: -7.5, maxZ: 2.5 },      // [32, 0, -5..0]
-  // Security Perimeter Fencing & Gate
-  { minX: 47.0, maxX: 49.0, minZ: -12.0, maxZ: 12.0 },
-  { minX: 26.5, maxX: 29.5, minZ: -7.5, maxZ: -4.5 },
-
-  // ---------------------------------------------------------------------------
-  // ZONE 5: SOUTHEAST EXTRACTION REDOUBT & MILITARY LZ-01
-  // ---------------------------------------------------------------------------
-  // Military Checkpoint Bus Shelter
-  { minX: 28.5, maxX: 31.5, minZ: 23.5, maxZ: 28.5 },     // [30, 0, 26]
-  // Fortified LZ-01 Double Barrier Revetments
-  { minX: 32.5, maxX: 35.5, minZ: 34.5, maxZ: 37.5 },     // [34, 0, 36]
-  { minX: 32.5, maxX: 35.5, minZ: 46.5, maxZ: 49.5 },     // [34, 0, 48]
-  { minX: 48.5, maxX: 51.5, minZ: 34.5, maxZ: 37.5 },     // [50, 0, 36]
-  { minX: 48.5, maxX: 51.5, minZ: 46.5, maxZ: 49.5 },     // [50, 0, 48]
-  // Water Crash Barriers
-  { minX: 36.5, maxX: 39.5, minZ: 26.5, maxZ: 29.5 },     // [38, 0, 28]
-  { minX: 44.5, maxX: 47.5, minZ: 26.5, maxZ: 29.5 },     // [46, 0, 28]
-  // Barbed Wire Fencing
-  { minX: 27.0, maxX: 29.0, minZ: 38.0, maxZ: 46.0 },
-  { minX: 53.0, maxX: 55.0, minZ: 38.0, maxZ: 46.0 },
-  // LZ Fuel Drums & Military Supplies
-  { minX: 36.5, maxX: 45.5, minZ: 50.5, maxZ: 53.5 },
 
   // ---------------------------------------------------------------------------
   // PLACED LOOT CONTAINERS IN SECTOR 7 DEPOT

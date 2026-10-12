@@ -101,7 +101,7 @@ const FOBTargetDummy: React.FC<{
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { SharedMaterials } from "../render/materials.js";
+import { SharedMaterials, SharedGeometries } from "../render/materials.js";
 import type { LootCrate } from "../sim/game.js";
 import { MAP_CONTAINERS } from "../sim/game.js";
 import { InklineModel } from "./InklineModel.js";
@@ -118,13 +118,12 @@ interface SectorMapProps {
 
 /**
  * Reusable PrefabModel component that renders any PrefabInstance in 3D.
- * Connects directly to the authoritative PREFAB_CATALOG so visual props
- * and physical collision geometry always stay in 100% sync.
+ * Uses shared geometries, materials, and instancing to maximize draw-call efficiency.
  */
 const PrefabModel: React.FC<{
   instance: PrefabInstance;
   bulletTrapTex?: THREE.CanvasTexture | null;
-}> = ({ instance, bulletTrapTex }) => {
+}> = React.memo(({ instance, bulletTrapTex }) => {
   const def = PREFAB_CATALOG[instance.prefabKey];
 
   if (def?.assetKey) {
@@ -158,38 +157,16 @@ const PrefabModel: React.FC<{
   if (instance.prefabKey === "treeOak") {
     return (
       <group position={instance.position} rotation={instance.rotation}>
-        {/* Solid Oak Bark Trunk (Hard Bullet & Movement Cover) */}
-        <mesh position={[0, 1.6, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.35, 0.42, 3.2, 10]} />
-          <meshStandardMaterial color="#382414" roughness={0.88} metalness={0.08} />
-        </mesh>
+        {/* Solid Oak Trunk (Hard Bullet & Movement Cover) */}
+        <mesh position={[0, 1.6, 0]} geometry={SharedGeometries.treeOakTrunk} material={SharedMaterials.oakBark} castShadow receiveShadow />
         {/* Root Flaring */}
-        <mesh position={[0, 0.2, 0]} receiveShadow>
-          <cylinderGeometry args={[0.42, 0.65, 0.4, 8]} />
-          <meshStandardMaterial color="#2d1c10" roughness={0.92} />
-        </mesh>
-        {/* Stylized Multi-Tiered Foliage Canopy (Soft Visual Cover) */}
+        <mesh position={[0, 0.2, 0]} geometry={SharedGeometries.treeOakFlare} material={SharedMaterials.oakBark} receiveShadow />
+        {/* Multi-Tiered Foliage Canopy (Soft Cover - No expensive sub-shadow passes) */}
         <group position={[0, 3.6, 0]}>
-          {/* Main Central Crown */}
-          <mesh castShadow receiveShadow>
-            <dodecahedronGeometry args={[1.85, 1]} />
-            <meshStandardMaterial color="#15803d" roughness={0.7} metalness={0.05} />
-          </mesh>
-          {/* Upper Tier Accent */}
-          <mesh position={[0.2, 0.85, -0.2]} castShadow receiveShadow>
-            <dodecahedronGeometry args={[1.2, 1]} />
-            <meshStandardMaterial color="#16a34a" roughness={0.7} metalness={0.05} />
-          </mesh>
-          {/* Flanking Side Lobe West */}
-          <mesh position={[-0.65, -0.25, 0.35]} castShadow receiveShadow>
-            <dodecahedronGeometry args={[1.35, 1]} />
-            <meshStandardMaterial color="#14532d" roughness={0.7} metalness={0.05} />
-          </mesh>
-          {/* Flanking Side Lobe East */}
-          <mesh position={[0.7, -0.2, -0.3]} castShadow receiveShadow>
-            <dodecahedronGeometry args={[1.25, 1]} />
-            <meshStandardMaterial color="#15803d" roughness={0.7} metalness={0.05} />
-          </mesh>
+          <mesh geometry={SharedGeometries.dodecMain} material={SharedMaterials.oakCanopy} receiveShadow />
+          <mesh position={[0.2, 0.85, -0.2]} geometry={SharedGeometries.dodecUpper} material={SharedMaterials.oakCanopyUpper} receiveShadow />
+          <mesh position={[-0.65, -0.25, 0.35]} geometry={SharedGeometries.dodecSideWest} material={SharedMaterials.oakCanopyDark} receiveShadow />
+          <mesh position={[0.7, -0.2, -0.3]} geometry={SharedGeometries.dodecSideEast} material={SharedMaterials.oakCanopy} receiveShadow />
         </group>
       </group>
     );
@@ -199,23 +176,11 @@ const PrefabModel: React.FC<{
     return (
       <group position={instance.position} rotation={instance.rotation}>
         {/* Slender Pine Trunk */}
-        <mesh position={[0, 2.1, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.22, 0.3, 4.2, 8]} />
-          <meshStandardMaterial color="#231709" roughness={0.9} />
-        </mesh>
-        {/* 3-Tiered Conical Pine Fronds */}
-        <mesh position={[0, 2.3, 0]} castShadow receiveShadow>
-          <coneGeometry args={[1.7, 2.1, 7]} />
-          <meshStandardMaterial color="#065f46" roughness={0.7} />
-        </mesh>
-        <mesh position={[0, 3.4, 0]} castShadow receiveShadow>
-          <coneGeometry args={[1.3, 1.8, 7]} />
-          <meshStandardMaterial color="#047857" roughness={0.7} />
-        </mesh>
-        <mesh position={[0, 4.3, 0]} castShadow receiveShadow>
-          <coneGeometry args={[0.85, 1.5, 7]} />
-          <meshStandardMaterial color="#059669" roughness={0.7} />
-        </mesh>
+        <mesh position={[0, 2.1, 0]} geometry={SharedGeometries.treePineTrunk} material={SharedMaterials.pineBark} castShadow receiveShadow />
+        {/* Conical Pine Fronds */}
+        <mesh position={[0, 2.3, 0]} geometry={SharedGeometries.coneBottom} material={SharedMaterials.pineNeedles} receiveShadow />
+        <mesh position={[0, 3.4, 0]} geometry={SharedGeometries.coneMid} material={SharedMaterials.pineNeedlesMid} receiveShadow />
+        <mesh position={[0, 4.3, 0]} geometry={SharedGeometries.coneTop} material={SharedMaterials.pineNeedlesTop} receiveShadow />
       </group>
     );
   }
@@ -224,19 +189,16 @@ const PrefabModel: React.FC<{
     return (
       <group position={instance.position} rotation={instance.rotation}>
         {/* Low Dense Foliage Cluster (Soft Cover / Crouched Concealment) */}
-        <mesh position={[0, 0.55, 0]} receiveShadow>
-          <dodecahedronGeometry args={[0.75, 1]} />
-          <meshStandardMaterial color="#16a34a" roughness={0.75} />
-        </mesh>
-        <mesh position={[0.4, 0.45, 0.2]} receiveShadow>
-          <dodecahedronGeometry args={[0.55, 1]} />
-          <meshStandardMaterial color="#22c55e" roughness={0.75} />
-        </mesh>
-        <mesh position={[-0.35, 0.45, -0.3]} receiveShadow>
-          <dodecahedronGeometry args={[0.5, 1]} />
-          <meshStandardMaterial color="#15803d" roughness={0.75} />
-        </mesh>
+        <mesh position={[0, 0.55, 0]} geometry={SharedGeometries.bushDodec1} material={SharedMaterials.bushLeaves} receiveShadow />
+        <mesh position={[0.4, 0.45, 0.2]} geometry={SharedGeometries.bushDodec2} material={SharedMaterials.bushLeavesLight} receiveShadow />
+        <mesh position={[-0.35, 0.45, -0.3]} geometry={SharedGeometries.bushDodec3} material={SharedMaterials.bushLeavesDark} receiveShadow />
       </group>
+    );
+  }
+
+  if (instance.prefabKey === "canalPipeCulvert") {
+    return (
+      <mesh position={instance.position} rotation={instance.rotation || [0, 0, 0]} geometry={SharedGeometries.culvertPipeGeo} material={SharedMaterials.culvertPipe} castShadow receiveShadow />
     );
   }
 
@@ -245,25 +207,21 @@ const PrefabModel: React.FC<{
     return (
       <group position={instance.position} rotation={instance.rotation}>
         {/* Heavy Concrete Footing */}
-        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+        <mesh position={[0, 0.25, 0]} material={SharedMaterials.wallFooting} castShadow receiveShadow>
           <boxGeometry args={[width, 0.5, 0.5]} />
-          <meshStandardMaterial color="#334155" roughness={0.8} metalness={0.2} />
         </mesh>
         {/* Corrugated Reinforced Metal Wall Panel */}
-        <mesh position={[0, 1.8, 0]} castShadow receiveShadow>
+        <mesh position={[0, 1.8, 0]} material={SharedMaterials.corrugatedWall} castShadow receiveShadow>
           <boxGeometry args={[width, 2.6, 0.4]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.65} metalness={0.4} />
         </mesh>
         {/* Top Steel Coping Lintel */}
-        <mesh position={[0, 3.15, 0]} castShadow>
+        <mesh position={[0, 3.15, 0]} material={SharedMaterials.steelCoping}>
           <boxGeometry args={[width + 0.1, 0.1, 0.5]} />
-          <meshStandardMaterial color="#475569" roughness={0.5} metalness={0.6} />
         </mesh>
         {/* Vertical Flange Ribs */}
         {[-width / 2 + 0.15, width / 2 - 0.15].map((fx, i) => (
-          <mesh key={i} position={[fx, 1.8, 0]} castShadow>
+          <mesh key={i} position={[fx, 1.8, 0]} material={SharedMaterials.steelFlange}>
             <boxGeometry args={[0.15, 2.6, 0.46]} />
-            <meshStandardMaterial color="#0f172a" roughness={0.5} metalness={0.7} />
           </mesh>
         ))}
       </group>
@@ -274,24 +232,20 @@ const PrefabModel: React.FC<{
     return (
       <group position={instance.position} rotation={instance.rotation}>
         {/* Reinforced Curb Barrier */}
-        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+        <mesh position={[0, 0.2, 0]} material={SharedMaterials.bridgeCurb} castShadow receiveShadow>
           <boxGeometry args={[7.0, 0.4, 0.35]} />
-          <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.3} />
         </mesh>
         {/* Tubular Guardrails */}
-        <mesh position={[0, 0.65, 0]} castShadow>
+        <mesh position={[0, 0.65, 0]} material={SharedMaterials.bridgeRailSteel}>
           <boxGeometry args={[7.0, 0.08, 0.08]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.3} />
         </mesh>
-        <mesh position={[0, 1.1, 0]} castShadow>
+        <mesh position={[0, 1.1, 0]} material={SharedMaterials.steelFlange}>
           <boxGeometry args={[7.0, 0.1, 0.1]} />
-          <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.3} />
         </mesh>
         {/* Vertical Uprights */}
         {[-3.2, -1.6, 0, 1.6, 3.2].map((ux, i) => (
-          <mesh key={i} position={[ux, 0.65, 0]} castShadow>
+          <mesh key={i} position={[ux, 0.65, 0]} material={SharedMaterials.corrugatedWall}>
             <boxGeometry args={[0.12, 0.9, 0.12]} />
-            <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.4} />
           </mesh>
         ))}
       </group>
@@ -303,23 +257,19 @@ const PrefabModel: React.FC<{
     return (
       <group position={instance.position} rotation={instance.rotation}>
         {/* Heavy Steel Roadbed Deck */}
-        <mesh position={[0, 0.04, 0]} receiveShadow>
+        <mesh position={[0, 0.04, 0]} material={SharedMaterials.bridgeDeck} receiveShadow>
           <boxGeometry args={[scaleX, 0.1, scaleZ]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.8} metalness={0.3} />
         </mesh>
         {/* Concrete Safety Curb Borders */}
-        <mesh position={[-scaleX / 2 + 0.2, 0.12, 0]}>
+        <mesh position={[-scaleX / 2 + 0.2, 0.12, 0]} material={SharedMaterials.bridgeCurb}>
           <boxGeometry args={[0.35, 0.12, scaleZ]} />
-          <meshStandardMaterial color="#475569" roughness={0.7} />
         </mesh>
-        <mesh position={[scaleX / 2 - 0.2, 0.12, 0]}>
+        <mesh position={[scaleX / 2 - 0.2, 0.12, 0]} material={SharedMaterials.bridgeCurb}>
           <boxGeometry args={[0.35, 0.12, scaleZ]} />
-          <meshStandardMaterial color="#475569" roughness={0.7} />
         </mesh>
         {/* Tactical Center Line */}
-        <mesh position={[0, 0.095, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.095, 0]} rotation={[-Math.PI / 2, 0, 0]} material={SharedMaterials.hazardYellow}>
           <planeGeometry args={[0.2, scaleZ * 0.9]} />
-          <meshBasicMaterial color="#eab308" />
         </mesh>
       </group>
     );
@@ -334,7 +284,7 @@ const PrefabModel: React.FC<{
         </mesh>
         {[-0.75, 0.75].map((lx) =>
           [-0.25, 0.25].map((lz) => (
-            <mesh key={`leg_${lx}_${lz}`} position={[lx, 0.42, lz]} castShadow>
+            <mesh key={`leg_${lx}_${lz}`} position={[lx, 0.42, lz]}>
               <cylinderGeometry args={[0.04, 0.04, 0.84, 8]} />
               <meshStandardMaterial color="#0f172a" metalness={0.7} />
             </mesh>
@@ -345,107 +295,69 @@ const PrefabModel: React.FC<{
   }
 
   return null;
-};
-
+});
 
 /**
- * 3D River Canal separating North and South Sector 7 districts.
- * Spans z in [16.5, 21.5] with water drag mechanics, concrete retaining walls,
- * edge foam, and bridge cutaways for the 3 tactical bridge choke points.
+ * Sector 7 Industrial Runoff Sluice / Drainage Canal separating North and South districts.
+ * Spans z in [16.5, 21.5] with water drag mechanics, precast concrete retaining walls,
+ * hazard yellow safety borders, and 3 authentic industrial bridges.
  */
-const RiverCanal: React.FC = () => {
-  const waterRef = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (waterRef.current) {
-      const t = clock.getElapsedTime();
-      waterRef.current.position.y = 0.03 + Math.sin(t * 1.5) * 0.012;
-    }
-  });
-
+const IndustrialCanal: React.FC = React.memo(() => {
   return (
     <group>
-      {/* 1. Recessed Canal Bed / Deep Trench */}
-      <mesh position={[0, -0.15, 19]} receiveShadow>
-        <boxGeometry args={[150, 0.3, 5.0]} />
-        <meshStandardMaterial color="#042f2e" roughness={0.9} />
+      {/* 1. Recessed Concrete Flume Trench Bed */}
+      <mesh position={[0, -0.22, 19]} material={SharedMaterials.drainageFlumeBed} receiveShadow>
+        <boxGeometry args={[150, 0.4, 5.0]} />
       </mesh>
 
-      {/* 2. Murky Industrial Water Surface */}
-      <mesh
-        ref={waterRef}
-        position={[0, 0.03, 19]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
-      >
-        <planeGeometry args={[150, 5.0]} />
-        <meshStandardMaterial
-          color="#0f766e"
-          roughness={0.2}
-          metalness={0.3}
-          transparent
-          opacity={0.88}
-        />
+      {/* 2. Murky Industrial Wastewater Effluent Surface */}
+      <mesh position={[0, 0.02, 19]} rotation={[-Math.PI / 2, 0, 0]} material={SharedMaterials.industrialEffluent} receiveShadow>
+        <planeGeometry args={[150, 4.8]} />
       </mesh>
 
-      {/* 3. Water Edge Foam Ribbons (North & South Embankments) */}
-      <mesh position={[0, 0.045, 16.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[150, 0.35]} />
-        <meshBasicMaterial color="#5eead4" transparent opacity={0.35} />
-      </mesh>
-      <mesh position={[0, 0.045, 21.3]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[150, 0.35]} />
-        <meshBasicMaterial color="#5eead4" transparent opacity={0.35} />
+      {/* 3. Fluorescent Chemical Bio-Sheen Ribbon */}
+      <mesh position={[0, 0.032, 19]} rotation={[-Math.PI / 2, 0, 0]} material={SharedMaterials.effluentGreen}>
+        <planeGeometry args={[150, 1.2]} />
       </mesh>
 
-      {/* 4. North Concrete Retaining Wall Embankment (z = 16.5) */}
-      <mesh position={[-59.5, 0.15, 16.5]} castShadow receiveShadow>
-        <boxGeometry args={[31, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      {/* 4. North Concrete Retaining Wall Embankment (z = 16.5) with bridge cutouts */}
+      <mesh position={[-59.5, 0.18, 16.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[31, 0.4, 0.45]} />
       </mesh>
-      <mesh position={[-21.25, 0.15, 16.5]} castShadow receiveShadow>
-        <boxGeometry args={[33.5, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      <mesh position={[-21.25, 0.18, 16.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[33.5, 0.4, 0.45]} />
       </mesh>
-      <mesh position={[20.25, 0.15, 16.5]} castShadow receiveShadow>
-        <boxGeometry args={[31.5, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      <mesh position={[20.25, 0.18, 16.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[31.5, 0.4, 0.45]} />
       </mesh>
-      <mesh position={[58.5, 0.15, 16.5]} castShadow receiveShadow>
-        <boxGeometry args={[33, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      <mesh position={[58.5, 0.18, 16.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[33, 0.4, 0.45]} />
       </mesh>
 
-      {/* 5. South Concrete Retaining Wall Embankment (z = 21.5) */}
-      <mesh position={[-59.5, 0.15, 21.5]} castShadow receiveShadow>
-        <boxGeometry args={[31, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      {/* 5. South Concrete Retaining Wall Embankment (z = 21.5) with bridge cutouts */}
+      <mesh position={[-59.5, 0.18, 21.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[31, 0.4, 0.45]} />
       </mesh>
-      <mesh position={[-21.25, 0.15, 21.5]} castShadow receiveShadow>
-        <boxGeometry args={[33.5, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      <mesh position={[-21.25, 0.18, 21.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[33.5, 0.4, 0.45]} />
       </mesh>
-      <mesh position={[20.25, 0.15, 21.5]} castShadow receiveShadow>
-        <boxGeometry args={[31.5, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      <mesh position={[20.25, 0.18, 21.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[31.5, 0.4, 0.45]} />
       </mesh>
-      <mesh position={[58.5, 0.15, 21.5]} castShadow receiveShadow>
-        <boxGeometry args={[33, 0.35, 0.4]} />
-        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      <mesh position={[58.5, 0.18, 21.5]} material={SharedMaterials.culvertWall} castShadow receiveShadow>
+        <boxGeometry args={[33, 0.4, 0.45]} />
       </mesh>
 
-      {/* 6. Concrete Embankment Stencil Linework */}
-      <mesh position={[0, 0.33, 16.5]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[150, 0.1]} />
-        <meshBasicMaterial color="#151716" />
+      {/* 6. Continuous Safety Hazard Boundary Stripes */}
+      <mesh position={[0, 0.38, 16.5]} rotation={[-Math.PI / 2, 0, 0]} material={SharedMaterials.hazardYellow}>
+        <planeGeometry args={[150, 0.16]} />
       </mesh>
-      <mesh position={[0, 0.33, 21.5]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[150, 0.1]} />
-        <meshBasicMaterial color="#151716" />
+      <mesh position={[0, 0.38, 21.5]} rotation={[-Math.PI / 2, 0, 0]} material={SharedMaterials.hazardYellow}>
+        <planeGeometry args={[150, 0.16]} />
       </mesh>
     </group>
   );
-};
+});
 
 export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDummyHitTick, lastDummyHitSide }) => {
   const mapRootRef = React.useRef<THREE.Group>(null);
@@ -734,10 +646,9 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       {/* =========================================================================
           1. MAIN DEPOT FLOOR & PERIMETER WALLS (Spoke Area z: -50 to +80)
          ========================================================================= */}
-      {/* Heavy Industrial Ground Floor (Tactical Military Concrete Tarmac) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+      {/* Heavy Industrial Ground Floor (Tactical Industrial Dark Asphalt) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} material={SharedMaterials.asphaltGround} receiveShadow>
         <planeGeometry args={[240, 240]} />
-        <meshStandardMaterial color="#dde0e4" roughness={0.90} metalness={0.05} />
       </mesh>
 
       {/* Concrete Slab Grid Joint Seams (Merged Geometry - 1 draw call) */}
@@ -746,6 +657,50 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       {/* Central Tactical Logistics Runway (Concrete Slabs) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 17]} material={SharedMaterials.runwayConcrete} receiveShadow>
         <planeGeometry args={[22, 126]} />
+      </mesh>
+
+      {/* Central Highway Roadway (Dark Paved Transit Lane) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 17]} material={SharedMaterials.asphaltGround} receiveShadow>
+        <planeGeometry args={[7.2, 124]} />
+      </mesh>
+      {/* Central Roadway Painted Yellow Dashed Line */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.022, 17]} material={SharedMaterials.hazardYellow}>
+        <planeGeometry args={[0.22, 122]} />
+      </mesh>
+      {/* Central Roadway Painted Lane Boundary Lines */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.2, 0.022, 17]} material={SharedMaterials.slateJoint}>
+        <planeGeometry args={[0.12, 122]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3.2, 0.022, 17]} material={SharedMaterials.slateJoint}>
+        <planeGeometry args={[0.12, 122]} />
+      </mesh>
+
+      {/* North Arterial Transit Road (z = -13, connecting Refinery to Warehouse) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[5, 0.012, -13]} material={SharedMaterials.asphaltGround} receiveShadow>
+        <planeGeometry args={[100, 6.0]} />
+      </mesh>
+
+      {/* South Arterial Transit Road (z = 32, connecting Docks to Bunker) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[5, 0.012, 32]} material={SharedMaterials.asphaltGround} receiveShadow>
+        <planeGeometry args={[100, 6.0]} />
+      </mesh>
+
+      {/* Industrial Soil & Mulch Bedding under Tree Groves */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[1.5, 0.018, 13.8]} receiveShadow>
+        <planeGeometry args={[68, 2.8]} />
+        <meshStandardMaterial color="#1c1815" roughness={0.96} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[1.0, 0.018, 24.2]} receiveShadow>
+        <planeGeometry args={[58, 2.8]} />
+        <meshStandardMaterial color="#1c1815" roughness={0.96} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[24, 0.018, -28]} receiveShadow>
+        <planeGeometry args={[11, 11]} />
+        <meshStandardMaterial color="#1c1815" roughness={0.96} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-49, 0.018, 17]} receiveShadow>
+        <planeGeometry args={[9, 13]} />
+        <meshStandardMaterial color="#1c1815" roughness={0.96} />
       </mesh>
 
       {/* Flanking Guide Strips & Runway Vehicle Markers (Merged Geometry - 1 draw call) */}
@@ -1077,30 +1032,54 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       {/* =========================================================================
           AUTHORITATIVE SECTOR 7 SPOKE PREFABS (Trees, Rooms, Bridges, Maze)
          ========================================================================= */}
-      <RiverCanal />
+      <IndustrialCanal />
 
-      {/* Logistics Command Warehouse Floor Slab & Room Ground Linework */}
+      {/* Logistics Command Warehouse Floor Slab */}
       <group position={[20.5, 0, -6.5]}>
-        <mesh position={[0, 0.02, 0]} receiveShadow>
-          <boxGeometry args={[9.2, 0.04, 13.2]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.8} metalness={0.2} />
+        <mesh position={[0, 0.02, 0]} material={SharedMaterials.concretePad} receiveShadow>
+          <boxGeometry args={[11.5, 0.04, 15.5]} />
         </mesh>
-        {/* Room Division Grid Decal */}
-        <mesh position={[0, 0.045, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[8.8, 12.8]} />
-          <meshBasicMaterial color="#0f172a" />
+        <mesh position={[0, 0.045, 0]} rotation={[-Math.PI / 2, 0, 0]} material={SharedMaterials.darkNavy}>
+          <planeGeometry args={[11.0, 15.0]} />
         </mesh>
       </group>
 
       {/* Pumping Station Bunker Floor Slab */}
       <group position={[-24, 0, 46]}>
-        <mesh position={[0, 0.02, 0]} receiveShadow>
-          <boxGeometry args={[12.2, 0.04, 12.2]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.8} metalness={0.3} />
+        <mesh position={[0, 0.02, 0]} material={SharedMaterials.concretePad} receiveShadow>
+          <boxGeometry args={[14.0, 0.04, 14.0]} />
         </mesh>
       </group>
 
-      {/* Authoritative Prefab 3D Instances */}
+      {/* Northwest Chemical Refinery Containment Pad */}
+      <group position={[-35, 0, -30]}>
+        <mesh position={[0, 0.018, 0]} material={SharedMaterials.concretePad} receiveShadow>
+          <boxGeometry args={[30.0, 0.035, 24.0]} />
+        </mesh>
+      </group>
+
+      {/* Southwest Freight Docks Apron */}
+      <group position={[-33, 0, 25]}>
+        <mesh position={[0, 0.018, 0]} material={SharedMaterials.concretePad} receiveShadow>
+          <boxGeometry args={[30.0, 0.035, 26.0]} />
+        </mesh>
+      </group>
+
+      {/* Northeast Power Substation Switchyard Slab */}
+      <group position={[43, 0, -10]}>
+        <mesh position={[0, 0.018, 0]} material={SharedMaterials.concretePad} receiveShadow>
+          <boxGeometry args={[34.0, 0.035, 24.0]} />
+        </mesh>
+      </group>
+
+      {/* Southeast Military LZ-01 Redoubt Helipad Staging Slab */}
+      <group position={[41, 0, 39]}>
+        <mesh position={[0, 0.018, 0]} material={SharedMaterials.concretePad} receiveShadow>
+          <boxGeometry args={[30.0, 0.035, 30.0]} />
+        </mesh>
+      </group>
+
+      {/* Authoritative Prefab 3D Instances (100% synchronized with collision simulation) */}
       {SPOKE_PREFABS.map((inst) => (
         <PrefabModel key={inst.id} instance={inst} />
       ))}
@@ -1110,167 +1089,6 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         <InklineContainer key={c.id} position={c.position} rotation={c.rotation} index={idx} />
       ))}
 
-      
-      {/* =========================================================================
-          4B. SURVIV.IO SCALE TACTICAL LEVEL DESIGN & MULTI-ZONE INDUSTRIAL COMPLEX
-         ========================================================================= */}
-
-      {/* -------------------------------------------------------------------------
-          ZONE 1: CENTRAL CONTESTED LOGISTICS DEPOT & CARGO PORT (x: -16..16, z: -15..25)
-          ------------------------------------------------------------------------- */}
-      {/* Overhead Gantry Crane spanning central logistics avenue */}
-      <InklineModel assetKey="gantryCrane" position={[-14, 0, -5]} scale={[2.0, 2.0, 2.0]} />
-
-      {/* Central Staging Cargo Platform with tactical cover crates */}
-      <InklineModel assetKey="platformStaging" position={[12, 0, 5]} scale={[1.8, 1.4, 1.8]} />
-      <InklineModel assetKey="cargoContainerOpen" position={[-12.5, 0, 2]} rotation={[0, Math.PI / 2, 0]} scale={1.2} />
-      <InklineModel assetKey="cargoContainerShort" position={[12.5, 0, -11]} rotation={[0, Math.PI / 2, 0]} scale={1.2} />
-
-      {/* Pallet Stacks and Heavy Cargo Caches */}
-      <InklineModel assetKey="stackedPalletsTall" position={[-7, 0, -8]} scale={1.5} />
-      <InklineModel assetKey="palletMetal" position={[7, 0, -8]} scale={1.6} />
-      <InklineModel assetKey="crateHeavyWooden" position={[-7, 0, 8]} scale={1.4} />
-      <InklineModel assetKey="crateMilitary" position={[7, 0, 8]} scale={1.4} />
-
-      {/* Central Logistics Highway Chicanes (Providing leap-frogging cover down main avenue) */}
-      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, -32]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="barrierWater" position={[-0.5, 0, -32]} scale={1.3} />
-
-      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, -18]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="barrel" position={[5.2, 0, -18]} scale={1.2} />
-
-      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, -4]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="trafficCone" position={[-0.8, 0, -4]} scale={1.4} />
-
-      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, 14]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="barrierWater" position={[5.0, 0, 14]} scale={1.3} />
-
-      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, 30]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="barrel" position={[-5.2, 0, 30]} scale={1.2} />
-
-      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, 46]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="trafficCone" position={[4.8, 0, 46]} scale={1.4} />
-
-      {/* -------------------------------------------------------------------------
-          ZONE 2: NORTHWEST CHEMICAL & FUEL REFINERY (x: -65..-20, z: -45..-5)
-          ------------------------------------------------------------------------- */}
-      {/* West Warehouse Beta */}
-      <InklineModel assetKey="warehouse" position={[-28, 0, -26]} scale={[1.75, 1.8, 1.75]} />
-      <InklineModel assetKey="ventFan" position={[-28, 9.8, -26]} scale={2.0} />
-      <InklineModel assetKey="electricalCabinet" position={[-22.2, 0, -23]} rotation={[0, -Math.PI / 2, 0]} scale={1.5} />
-      <InklineModel assetKey="ladder" position={[-22.2, 0, -26]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
-
-      {/* Refinery Heavy Storage Tanks */}
-      <InklineModel assetKey="tankVertical" position={[-46, 0, -20]} scale={[2.2, 2.2, 2.2]} />
-      <InklineModel assetKey="tankHorizontal" position={[-46, 0, -35]} scale={[2.0, 2.0, 2.0]} />
-      <InklineModel assetKey="tankSpherical" position={[-35, 0, -38]} scale={[2.2, 2.2, 2.2]} />
-      <InklineModel assetKey="watertankIndustrial" position={[-22, 0, -40]} scale={1.8} />
-
-      {/* Pipe Network & Manifolds */}
-      <InklineModel assetKey="pipeManifold" position={[-40, 0, -28]} scale={2.0} />
-      <InklineModel assetKey="pipeStraight" position={[-40, 3.5, -28]} rotation={[Math.PI / 2, 0, 0]} scale={[1.5, 1.5, 3.5]} />
-      <InklineModel assetKey="valveWheel" position={[-36, 1.2, -28]} scale={1.6} />
-
-      {/* Elevated Catwalk & Stairs connecting refinery to warehouse */}
-      <InklineModel assetKey="catwalkBridge" position={[-28, 4.0, -14]} rotation={[0, 0, 0]} scale={[2.0, 1.8, 2.5]} />
-      <InklineModel assetKey="stairFlight" position={[-22, 0, -14]} rotation={[0, Math.PI / 2, 0]} scale={1.6} />
-
-      {/* Toxic Barrels & Heavy Cover */}
-      <InklineModel assetKey="barrelToxic" position={[-42, 0, -16]} scale={1.4} />
-      <InklineModel assetKey="barrelToxic" position={[-40.5, 0, -17]} scale={1.4} />
-      <InklineModel assetKey="barrelStack" position={[-33, 0, -10.5]} scale={1.6} />
-      <InklineModel assetKey="crateHeavyWooden" position={[-36, 0, -18]} scale={1.4} />
-
-      {/* -------------------------------------------------------------------------
-          ZONE 3: SOUTHWEST FREIGHT TERMINAL & HEAVY TRUCK DOCKS (x: -65..-20, z: 10..65)
-          ------------------------------------------------------------------------- */}
-      {/* West Warehouse Alpha & Annex Loading Bay */}
-      <InklineModel assetKey="warehouse" position={[-28, 0, 10]} scale={[1.75, 1.8, 1.75]} />
-      <InklineModel assetKey="warehouseBay" position={[-28, 0, 24]} scale={[1.75, 1.8, 1.75]} />
-      <InklineModel assetKey="ventFan" position={[-28, 9.8, 10]} scale={2.0} />
-
-      {/* Covered Service Bay & Heavy Maintenance Yard */}
-      <InklineModel assetKey="serviceBayCanopy" position={[-30, 0, -2]} scale={2.0} />
-      <InklineModel assetKey="serviceBayArch" position={[-30, 0, -2]} scale={2.0} />
-      <InklineModel assetKey="serviceBayWorkbench" position={[-27, 0, -2]} rotation={[0, -Math.PI / 2, 0]} scale={1.6} />
-      <InklineModel assetKey="machineHydraulicPress" position={[-33, 0, -2]} scale={1.8} />
-      <InklineModel assetKey="cableSpoolMetal" position={[-34, 0, 4]} scale={1.7} />
-
-      {/* Raised Loading Platform & Truck Dock */}
-      <InklineModel assetKey="loadingPlatform" position={[-38, 0, 28]} scale={[2.0, 1.8, 2.0]} />
-      <InklineModel assetKey="loadingPlatformRamp" position={[-38, 0, 32.5]} rotation={[0, Math.PI, 0]} scale={[2.0, 1.8, 2.0]} />
-      <InklineModel assetKey="loadingDockLadder" position={[-33.8, 0, 28]} rotation={[0, -Math.PI / 2, 0]} scale={1.8} />
-
-      {/* CQB Alleys: Dumpsters, Scrap Piles & Planters */}
-      <InklineModel assetKey="dumpster" position={[-42, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={1.3} />
-      <InklineModel assetKey="dumpster" position={[-48, 0, 30]} rotation={[0, Math.PI / 2, 0]} scale={1.3} />
-      <InklineModel assetKey="debrisScrapPile" position={[-20, 0, 34]} scale={1.8} />
-      <InklineModel assetKey="scrapIBeam" position={[-22, 0, 36]} scale={1.7} />
-      <InklineModel assetKey="planterConcrete" position={[-18, 0, 16]} scale={1.5} />
-      <InklineModel assetKey="planterConcrete" position={[-18, 0, 24]} scale={1.5} />
-      <InklineModel assetKey="bollardHeavy" position={[-16, 0, 18]} scale={1.6} />
-      <InklineModel assetKey="bollardHeavy" position={[-16, 0, 22]} scale={1.6} />
-
-      {/* Fortified Emergency Bunker Compound Perimeter */}
-      <InklineModel assetKey="barrierConcrete" position={[-40, 0, -41]} rotation={[0, Math.PI / 4, 0]} scale={1.35} />
-      <InklineModel assetKey="barrel" position={[-42, 0, -38]} scale={1.2} />
-
-      {/* -------------------------------------------------------------------------
-          ZONE 4: NORTHEAST POWER SUBSTATION & HEAVY INDUSTRY (x: 20..65, z: -45..10)
-          ------------------------------------------------------------------------- */}
-      {/* High-Voltage Transformer Substation */}
-      <InklineModel assetKey="machineTransformer" position={[38, 0, -18]} scale={2.0} />
-      <InklineModel assetKey="generatorLarge" position={[46, 0, -18]} scale={2.0} />
-      <InklineModel assetKey="electricalPanelWall" position={[42, 0, -10]} scale={1.8} />
-      <InklineModel assetKey="cableSpoolMetal" position={[34, 0, -10]} scale={1.7} />
-      <InklineModel assetKey="cableSpool" position={[30, 0, -14]} scale={1.7} />
-
-      {/* Towering Smokestacks */}
-      <InklineModel assetKey="smokestackTall" position={[56, 0, -32]} scale={[2.2, 2.5, 2.2]} />
-      <InklineModel assetKey="smokestackTwin" position={[56, 0, -16]} scale={[2.0, 2.2, 2.0]} />
-
-      {/* Heavy Conveyor Feed System */}
-      <InklineModel assetKey="conveyor" position={[32, 0, -5]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
-      <InklineModel assetKey="conveyorIncline" position={[32, 0, 0]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
-
-      {/* Substation Perimeter Security Fencing & Access Gate */}
-      <InklineModel assetKey="fenceWireMesh" position={[48, 0, -10]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
-      <InklineModel assetKey="fenceWireMesh" position={[48, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
-      <InklineModel assetKey="fenceGate" position={[28, 0, -6]} scale={2.2} />
-
-      {/* -------------------------------------------------------------------------
-          ZONE 5: SOUTHEAST EXTRACTION REDOUBT & MILITARY LZ-01 (x: 20..65, z: 18..65)
-          ------------------------------------------------------------------------- */}
-      {/* Military LZ Checkpoint Shelter */}
-      <InklineModel assetKey="busStopShelter" position={[30, 0, 26]} rotation={[0, Math.PI / 2, 0]} scale={1.5} />
-      <InklineModel assetKey="securityCameraPole" position={[28, 0, 32]} scale={1.8} />
-      <InklineModel assetKey="streetLampDouble" position={[42, 0, 26]} scale={1.8} />
-
-      {/* Fortified LZ-01 Double Barrier Revetments */}
-      <InklineModel assetKey="barrierConcrete" position={[34, 0, 36]} rotation={[0, 0, 0]} scale={1.35} />
-      <InklineModel assetKey="barrierConcrete" position={[34, 0, 48]} rotation={[0, 0, 0]} scale={1.35} />
-      <InklineModel assetKey="barrierConcrete" position={[50, 0, 36]} rotation={[0, 0, 0]} scale={1.35} />
-      <InklineModel assetKey="barrierConcrete" position={[50, 0, 48]} rotation={[0, 0, 0]} scale={1.35} />
-
-      {/* Barbed Wire Enclosure */}
-      <InklineModel assetKey="fenceBarbed" position={[28, 0, 42]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
-      <InklineModel assetKey="fenceBarbed" position={[54, 0, 42]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
-
-      {/* Water Barriers & Traffic Cones lining the LZ entrance */}
-      <InklineModel assetKey="barrierWater" position={[38, 0, 28]} scale={1.4} />
-      <InklineModel assetKey="barrierWater" position={[46, 0, 28]} scale={1.4} />
-      <InklineModel assetKey="trafficCone" position={[36, 0, 28]} scale={1.5} />
-      <InklineModel assetKey="trafficCone" position={[48, 0, 28]} scale={1.5} />
-
-      {/* Fuel Drums & Military Supplies */}
-      <InklineModel assetKey="barrel" position={[46, 0, 42]} scale={1.2} />
-      <InklineModel assetKey="barrel" position={[42, 0, 48]} scale={1.2} />
-      <InklineModel assetKey="crateMilitary" position={[38, 0, 52]} scale={1.5} />
-      <InklineModel assetKey="crateHeavyWooden" position={[44, 0, 52]} scale={1.5} />
-
-      {/* -------------------------------------------------------------------------
-          TACTICAL LIGHTING, CORNER TOWERS & DRAINAGE INFRASTRUCTURE
-          ------------------------------------------------------------------------- */}
       {/* High-Mast Street Lamps at Key Intersections */}
       <InklineModel assetKey="streetLamp" position={[-12, 0, -20]} scale={1.8} />
       <InklineModel assetKey="streetLamp" position={[-12, 0, 10]} scale={1.8} />
@@ -1278,13 +1096,6 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       <InklineModel assetKey="streetLamp" position={[15, 0, 20]} scale={1.8} />
       <InklineModel assetKey="streetLamp" position={[-12, 0, 40]} scale={1.8} />
       <InklineModel assetKey="streetLamp" position={[15, 0, 40]} scale={1.8} />
-      <InklineModel assetKey="securityCameraPole" position={[-4, 0, -50]} scale={1.8} />
-
-      {/* Drainage Trench Grates along Highway Gutters */}
-      <InklineModel assetKey="grateDrain" position={[-4, 0.05, -15]} scale={1.8} />
-      <InklineModel assetKey="grateDrain" position={[4, 0.05, -15]} scale={1.8} />
-      <InklineModel assetKey="grateDrain" position={[-4, 0.05, 20]} scale={1.8} />
-      <InklineModel assetKey="grateDrain" position={[4, 0.05, 20]} scale={1.8} />
 
       {/* Perimeter Floodlight Towers */}
       <InklineModel assetKey="floodlightTower" position={[-86, 0, 86]} scale={2.0} castShadow={false} />
@@ -1292,9 +1103,7 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       <InklineModel assetKey="floodlightTower" position={[-86, 0, -86]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="floodlightTower" position={[86, 0, -86]} scale={2.0} castShadow={false} />
 
-      {/* =========================================================================
-          5. MODULAR DISTRICT STRUCTURES (Strictly outside playable bounds |x| > 82 or |z| > 82)
-          ========================================================================= */}
+      {/* Modular District Structures outside playable bounds |x| > 82 */}
       <InklineModel assetKey="floodlightTower" position={[95, 0, 0]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="cargoContainer" position={[95, 0, 20]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="floodlightTower" position={[-95, 0, 0]} scale={2.0} castShadow={false} />
