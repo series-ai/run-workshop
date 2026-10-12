@@ -1,3 +1,4 @@
+import { PerfFrame } from '../perf/render';
 import type { AttractionRequest } from '../sim/attractions';
 import { ShippingCrates } from './ShippingCrates';
 import { StorageAttraction } from './StorageAttraction';
@@ -76,6 +77,7 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
   const worldOcclusion = useWorldOcclusion();
   return (
     <>
+      <PerfFrame renderRef={renderRef} />
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} gate={gate} touchInput={touchInput} attractionInput={attractionInput} />
       {onAudioFrame ? <AudioFrame controller={controller} renderRef={renderRef} onFrame={onAudioFrame} /> : null}
       <YardShell renderRef={renderRef} />

@@ -566,6 +566,10 @@ export function VoxelVolumeRenderer({
     setViewClip(shaderMaterial);
 
     const portalMaterial = shaderMaterial.clone() as THREE.RawShaderMaterial;
+    // The two views share textures. Each view keeps its own scalar and clip uniforms.
+    for (const [name, uniform] of Object.entries(shaderMaterial.uniforms)) {
+      if (uniform.value instanceof THREE.Texture) portalMaterial.uniforms[name]!.value = uniform.value;
+    }
     portalMaterial.onBeforeRender = (renderer) => updateOutputColorSpace(portalMaterial, renderer);
     setViewClip(portalMaterial);
     const geometry = new THREE.BoxGeometry(1, 1, 1);

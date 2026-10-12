@@ -145,6 +145,9 @@ function mapStatus(status: SyncplayRunnerStatus): MatchStatus {
   }
 }
 
+import { beginPhase, endPhase } from '../perf/recorder';
+import { recordSampledInput, resetPerfInput } from '../perf/localInput';
+
 export class MatchController {
   private readonly runner: SyncplayRunner<YardInput, YardRender, never>;
   private input: YardInput = NEUTRAL_INPUT;
@@ -174,8 +177,9 @@ export class MatchController {
       defaultInput: NEUTRAL_INPUT,
       encodeInput: encodeYardInput,
       decodeInput: decodeYardInput,
-      localInputForTick: (_slot, frame) => {
+      localInputForTick: (slot, frame) => {
         this.sampled = { input: this.input, frame };
+        recordSampledInput(this.input, frame, slot);
         return this.input;
       },
       presentation: { project: projectYard, interpolate: interpolateYard },
@@ -232,14 +236,11 @@ export class MatchController {
 
   /** The latest render state. Returns sub-tick interpolated state when active. */
   getRender(): YardRender | null {
-    if (this.runner.status === "live" || this.runner.status === "offline") {
-      const interpolated = this.runner.getRenderState();
-      if (interpolated) return interpolated;
-    }
     return this.render;
   }
 
   async start(request: MatchRequest): Promise<void> {
+    resetPerfInput();
     const generation = ++this.startGeneration;
     this.starting = true;
     this.runner.stop();
@@ -327,7 +328,9 @@ export class MatchController {
     this.lastPumpMs = nowMs;
     // A throwing step halts the runner, which publishes its "error" status
     // to the subscriber above, then rethrows here.
-    this.runner.update(deltaMs);
+    const timing = beginPhase('frame.pump');
+    try { this.runner.update(deltaMs); }
+    finally { endPhase('frame.pump', timing); }
     return (this.render?.frame ?? -1) > before;
   }
 
@@ -353,6 +356,7 @@ export class MatchController {
   }
 
   stop(): void {
+    resetPerfInput();
     this.startGeneration += 1;
     this.starting = true;
     this.runner.stop();

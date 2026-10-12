@@ -1,3 +1,4 @@
+import { beginPhase, endPhase, perfCount } from '../perf/recorder';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
@@ -141,9 +142,39 @@ export function ShippingCrates({ bodies, renderRef }: {
   const frameMaterial = useMemo(() => new THREE.MeshToonMaterial({ color: '#49382b', gradientMap: getToonGradientMap() }), []);
   const ids = useMemo(() => instancedShippingCrateIds(bodies), [bodies]);
   const crates = useMemo(() => bodies.filter((body) => ids.has(body.id)), [bodies, ids]);
+  const batches = useMemo(() => [
+    crates.filter((body) => body.storageBay !== 'returns'),
+    crates.filter((body) => body.storageBay === 'returns'),
+  ], [crates]);
+  useEffect(() => () => {
+    bodyGeometry.dispose();
+    frameGeometry.dispose();
+    bodyMaterial.dispose();
+    frameMaterial.dispose();
+    texture.dispose();
+  }, [bodyGeometry, frameGeometry, bodyMaterial, frameMaterial, texture]);
+
+  return (
+    <group name="ShippingCrates">
+      {batches.map((batch, index) => <CrateBatch key={index} crates={batch} renderRef={renderRef}
+        bodyGeometry={bodyGeometry} frameGeometry={frameGeometry} bodyMaterial={bodyMaterial} frameMaterial={frameMaterial} />)}
+    </group>
+  );
+}
+
+function CrateBatch({ crates, renderRef, bodyGeometry, frameGeometry, bodyMaterial, frameMaterial }: {
+  crates: readonly YardBody[];
+  renderRef: MutableRefObject<YardRender | null>;
+  bodyGeometry: THREE.BufferGeometry;
+  frameGeometry: THREE.BufferGeometry;
+  bodyMaterial: THREE.Material;
+  frameMaterial: THREE.Material;
+}) {
   const bodyMesh = useRef<THREE.InstancedMesh>(null);
   const frameMesh = useRef<THREE.InstancedMesh>(null);
   const transform = useMemo(() => new THREE.Object3D(), []);
+  const previousPoses = useMemo(() => new Float64Array(MAX_INSTANCED_CRATES * 8).fill(NaN), [crates]);
+  const previousMatrices = useMemo(() => new Float32Array(MAX_INSTANCED_CRATES * 16).fill(NaN), [crates]);
 
   useLayoutEffect(() => {
     if (!bodyMesh.current || !frameMesh.current) return;
@@ -162,12 +193,26 @@ export function ShippingCrates({ bodies, renderRef }: {
     const frameInstances = frameMesh.current;
     if (!bodyInstances || !frameInstances) return;
 
+    const timing = beginPhase('crates.upload');
     bodyInstances.count = crates.length;
     frameInstances.count = crates.length;
+    let writes = 0;
+    let firstChanged = crates.length;
+    let lastChanged = -1;
     for (let index = 0; index < crates.length; index += 1) {
       const pose = render?.poses.get(crates[index]!.id);
       const straddlingPortal = render?.portalStraddlers?.some((entry) => entry.bodyId === crates[index]!.id) ?? false;
-      if (!pose || straddlingPortal) {
+      const hidden = !pose || straddlingPortal;
+      const poseOffset = index * 8;
+      if (previousPoses[poseOffset + 7] === Number(hidden) && (hidden || (
+        pose!.position.every((value, axis) => value === previousPoses[poseOffset + axis])
+        && pose!.rotation.every((value, axis) => value === previousPoses[poseOffset + 3 + axis])))) continue;
+      previousPoses[poseOffset + 7] = Number(hidden);
+      if (pose) {
+        previousPoses.set(pose.position, poseOffset);
+        previousPoses.set(pose.rotation, poseOffset + 3);
+      }
+      if (hidden) {
         transform.position.set(0, -1000, 0);
         transform.quaternion.identity();
         transform.scale.setScalar(0);
@@ -177,30 +222,45 @@ export function ShippingCrates({ bodies, renderRef }: {
         transform.scale.setScalar(1);
       }
       transform.updateMatrix();
+      const offset = index * 16;
+      const elements = transform.matrix.elements;
+      let changed = false;
+      for (let component = 0; component < 16; component += 1) {
+        if (previousMatrices[offset + component] !== Math.fround(elements[component]!)) { changed = true; break; }
+      }
+      if (!changed) continue;
+      previousMatrices.set(elements, offset);
       bodyInstances.setMatrixAt(index, transform.matrix);
       frameInstances.setMatrixAt(index, transform.matrix);
+      firstChanged = Math.min(firstChanged, index);
+      lastChanged = index;
+      writes += 2;
     }
-    bodyInstances.instanceMatrix.needsUpdate = true;
-    frameInstances.instanceMatrix.needsUpdate = true;
+    if (lastChanged >= 0) {
+      for (const mesh of [bodyInstances, frameInstances]) {
+        mesh.computeBoundingSphere();
+        const pending = mesh.instanceMatrix.updateRanges[0];
+        const start = Math.min(firstChanged * 16, pending?.start ?? Infinity);
+        const end = Math.max((lastChanged + 1) * 16, pending ? pending.start + pending.count : -1);
+        // Keep changes from frames where this batch was outside the view.
+        mesh.instanceMatrix.clearUpdateRanges();
+        mesh.instanceMatrix.addUpdateRange(start, end - start);
+        mesh.instanceMatrix.needsUpdate = true;
+      }
+    }
+    perfCount('crates.instanceWrites', writes);
+    endPhase('crates.upload', timing);
   });
 
-  useEffect(() => () => {
-    bodyGeometry.dispose();
-    frameGeometry.dispose();
-    bodyMaterial.dispose();
-    frameMaterial.dispose();
-    texture.dispose();
-  }, [bodyGeometry, frameGeometry, bodyMaterial, frameMaterial, texture]);
-
   return (
-    <group name="ShippingCrates">
+    <>
       <instancedMesh
         ref={bodyMesh}
         args={[bodyGeometry, bodyMaterial, MAX_INSTANCED_CRATES]}
         count={crates.length}
         castShadow
         receiveShadow
-        frustumCulled={false}
+        frustumCulled
         raycast={noRaycast}
       />
       <instancedMesh
@@ -209,9 +269,9 @@ export function ShippingCrates({ bodies, renderRef }: {
         count={crates.length}
         castShadow
         receiveShadow
-        frustumCulled={false}
+        frustumCulled
         raycast={noRaycast}
       />
-    </group>
+    </>
   );
 }

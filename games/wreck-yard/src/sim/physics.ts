@@ -45,6 +45,7 @@ import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 import { WATER_BOUNDS } from './water';
+import { perfActive, perfCount } from '../perf/recorder';
 
 void setVoxelCell;
 await initPhysics3D();
@@ -104,6 +105,26 @@ export interface YardPhysicsWorldState {
 export interface OpenYardPhysicsWorld {
   readonly world: PhysicsWorld3D;
   readonly bodyIds: Map<string, PhysicsBodyId3D>;
+}
+
+interface BodyTopology {
+  readonly names: readonly string[];
+  readonly ids: YardPhysicsWorldState['bodyIds'];
+  readonly nativeNames: ReadonlyMap<PhysicsBodyId3D, string>;
+}
+const bodyTopologies = new WeakMap<OpenYardPhysicsWorld, BodyTopology>();
+
+function bodyTopology(open: OpenYardPhysicsWorld): BodyTopology {
+  const cached = bodyTopologies.get(open);
+  if (cached) return cached;
+  const names = [...open.bodyIds.keys()].sort();
+  const topology = {
+    names,
+    ids: names.map((name) => [name, open.bodyIds.get(name)!.toString()] as const),
+    nativeNames: new Map([...open.bodyIds].map(([name, id]) => [id, name])),
+  };
+  bodyTopologies.set(open, topology);
+  return topology;
 }
 
 /**
@@ -359,6 +380,7 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYard
 
 /** After a restore: the body names must match the restored world. */
 export function setBodyNames(open: OpenYardPhysicsWorld, bodyIds: YardPhysicsWorldState['bodyIds']): void {
+  bodyTopologies.delete(open);
   open.bodyIds.clear();
   for (const [name, id] of bodyIds) open.bodyIds.set(name, BigInt(id) as PhysicsBodyId3D);
 }
@@ -369,7 +391,17 @@ export function readWorldState(
   fluidInteractions?: readonly PhysicsFluidInteraction3D[],
 ): YardPhysicsWorldState {
   const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status, MOTION_BATCH.teleports);
-  const names = [...open.bodyIds.keys()].sort();
+  const topology = bodyTopology(open);
+  const { names } = topology;
+  if (perfActive()) {
+    let active = 0, sleeping = 0;
+    for (let row = 0; row < count; row += 1) {
+      if ((MOTION_BATCH.status[row]! & 0b11) !== 1) continue;
+      if (MOTION_BATCH.status[row]! & 0x10) sleeping += 1; else active += 1;
+    }
+    perfCount('sim.activeBodies', active);
+    perfCount('sim.sleepingBodies', sleeping);
+  }
   const bodies = names.map((name) => batchBodyView(name, batchRow(open.bodyIds.get(name)!, count)));
   const interactions: YardFluidInteraction[] = [];
   if (fluidInteractions) {
@@ -388,12 +420,12 @@ export function readWorldState(
   return {
     frame: Number(open.world.info().frame),
     portalStraddlers: (open.world.latest().portalStraddlers ?? []).map((entry) => {
-      const bodyId = names.find((name) => open.bodyIds.get(name) === entry.bodyId);
+      const bodyId = topology.nativeNames.get(entry.bodyId);
       if (!bodyId) throw new Error('WRECK_YARD_PORTAL_BODY_MISSING');
       return { bodyId, pairId: entry.pairId, end: entry.end };
     }),
     bodies,
-    bodyIds: names.map((name) => [name, open.bodyIds.get(name)!.toString()] as const),
+    bodyIds: topology.ids,
     fluidInteractions: interactions.length > 0 ? interactions : undefined,
   };
 }
@@ -428,6 +460,7 @@ export function bodyNameOf(key: string | undefined): string {
 
 export function addPhysicsBodies(open: OpenYardPhysicsWorld, bodies: readonly YardPhysicsBodyInput3D[]): void {
   const created = open.world.edit((edit) => bodies.map((entry) => ({ id: entry.id, body: edit.createBody({ ...entry.body, key: entry.id }) }))).created;
+  bodyTopologies.delete(open);
   for (const entry of created) open.bodyIds.set(entry.id, entry.body.id);
 }
 
@@ -435,10 +468,17 @@ export function addPhysicsBodies(open: OpenYardPhysicsWorld, bodies: readonly Ya
 export function wakeShippingStack(open: OpenYardPhysicsWorld, id: string): void {
   const bay = id.startsWith('shipping-storage-') ? 'storage' : id.startsWith('shipping-returns-') ? 'returns' : null;
   if (!bay) return;
+  perfCount('wake.requests', 1);
   const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status, MOTION_BATCH.teleports);
+  perfCount('wake.motionRows', count);
+  let actualWakes = 0;
   for (const [name, nativeId] of open.bodyIds) {
-    if (name.startsWith(`shipping-${bay}-`) && (MOTION_BATCH.status[batchRow(nativeId, count)]! & 0x10)) open.world.wakeBody(open.world.resolveBody(nativeId));
+    if (name.startsWith(`shipping-${bay}-`) && (MOTION_BATCH.status[batchRow(nativeId, count)]! & 0x10)) {
+      actualWakes += 1;
+      open.world.wakeBody(open.world.resolveBody(nativeId));
+    }
   }
+  perfCount('wake.actualBodies', actualWakes);
 }
 
 export function removePhysicsBodies(open: OpenYardPhysicsWorld, ids: readonly string[]): void {
@@ -447,6 +487,7 @@ export function removePhysicsBodies(open: OpenYardPhysicsWorld, ids: readonly st
     if (first) wakeShippingStack(open, first);
   }
   open.world.edit((edit) => { for (const id of ids) edit.removeBody(physicsBodyHandle(open, id)); });
+  bodyTopologies.delete(open);
   for (const id of ids) open.bodyIds.delete(id);
 }
 

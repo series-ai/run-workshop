@@ -1,0 +1,130 @@
+Wreck Yard performance telemetry
+=================================
+
+This recorder is local and opt-in. It does not send data to a server. The
+recorder is inactive until a caller starts it.
+
+The game installs the console API at `window.__WRECK_YARD_PERF__`.
+It stays inactive during normal play.
+Start a short capture with:
+
+    window.__WRECK_YARD_PERF__.start({ capacity: 32768, maxDurationMs: 30000 })
+
+The default capacity is 32768 records. The maximum capacity is 65536 records.
+The default duration is 30000 ms. The maximum duration is 60000 ms. The
+recorder stops when the duration ends, when the caller stops it, or when the
+page exports the report. The capture writes records to fixed-size numeric
+typed arrays. It overwrites old records when the ring is full. The report gives
+the total record count and the number of overwritten records.
+
+Stop and export a capture with:
+
+    const report = window.__WRECK_YARD_PERF__.stop()
+
+The report uses milliseconds for time and bytes for memory. It contains raw
+records, p50/p95/p99 quantiles, minimum, maximum, and mean values. The recorder
+computes summaries after it stops. The report has these record groups:
+
+* CPU phase durations for frame pumping, simulation, checkpoints, encoding,
+  rendering, occlusion, crates, portals, and post-processing.
+* Numeric samples for simulation, checkpoints, encoding, occlusion, crates,
+  portals, wake work, WebGL resources, and owned buffer estimates.
+* Input timestamps for local `event`, `sample`, `apply`, and `renderSubmission`
+  stages. Each input needs one local sequence number. `perfInputEvent(simFrame)`
+  creates and records an event sequence. Keep that number beside the same
+  temporary local input. Use it for later stages. Do not put it in deterministic
+  simulation input or network state.
+* Optional JavaScript heap values at capture start and stop. The report says
+  `unavailable` when the browser does not expose heap values.
+* WebAssembly bytes when the caller reports `memory.wasmBytes`. The report says
+  `unavailable` when no value is reported. The production SDK may not expose
+  this value.
+* Optional GPU query durations from WebGL2 and
+  `EXT_disjoint_timer_query_webgl2`.
+
+Input latency values require all four stages in this order:
+
+    event -> sample -> apply -> renderSubmission
+
+The report keeps the first timestamp for each stage and each sequence. It marks
+an incomplete or out-of-order timeline and gives it no latency values. The
+`renderSubmission` value measures work up to renderer submission. It does not
+measure display or presentation latency.
+
+The GPU helper uses asynchronous WebGL2 timer queries. It reads a query result
+only after `QUERY_RESULT_AVAILABLE` is true. It never calls `gl.finish()`.
+It uses a fixed query pool of 16 queries by default. The pool limit is 64. It
+does not create a query for every sample. It allows one active query at a time.
+End each scope before the next scope. Call `poll(frameId)` after all active GPU
+scopes end. A `valid`, `disjoint`, or `unavailable` status is recorded for each
+GPU result. The report also gives a lost query count. Stop, dispose, and WebGL
+context loss delete query objects.
+
+When capture is inactive, phase and count calls return before they read the
+clock or allocate a record. Starting a capture allocates its bounded rings and
+one duration timer. Export stops capture before it allocates report objects or
+sorts values.
+
+Run the browser captures
+------------------------
+
+Start Vite on port 4481. Run these commands from games/wreck-yard:
+
+    npm run dev -- --host 127.0.0.1 --port 4481 --strictPort
+    node scripts/profile-performance.mjs my-capture
+    node scripts/verify-performance-input.mjs
+    node scripts/verify-performance-occlusion.mjs
+    node scripts/verify-performance-memory.mjs
+    node scripts/verify-performance-memory.mjs --restart
+
+Set AUDIT_URL to use another local server. Results go to
+test-results/performance. The scripts close Chrome when they finish.
+The mobile layout uses Android browser settings on the host GPU. It does
+not measure a phone.
+
+Use the separate development page for native function names and memory:
+
+    PERF_PATH=/scripts/performance-profile.html node scripts/profile-performance.mjs native-capture --cpu-profile
+
+The production entry does not import the profile WASM artifact. The
+production bundle can contain the names of profile API fields without
+containing the profile binary. Verify the actual base64 artifact, not
+only those field names.
+
+Read the report
+---------------
+
+CPU scopes are inclusive. Do not add a parent scope to its child scopes.
+sim.nativeStep includes SDK world.step and world.latest. It includes SDK
+portal preparation and output work as well as the native solver.
+portal.plan includes planning and portal scene submissions.
+post.ao measures the separate ambient-occlusion pass. Ink runs inside
+post.composite with bloom, cavity, and the color grade.
+
+GPU samples time separate scene submissions and post passes. Stencil
+surface draws outside those scopes are not counted. Do not sum p95 values
+from separate passes and call the result a frame p95. Disjoint and pending
+queries are unavailable samples. They are not zero-duration samples.
+
+webgl.ownedBufferBytes counts unique geometry, index, and instance array
+backing buffers. It excludes texture and render-target memory.
+webgl.postTargetBytesEstimate estimates the declared HDR, depth/stencil,
+MSAA, bloom, and AO target formats and sizes. It excludes driver padding,
+shadow maps, scene textures, and the browser backbuffer. It is not total
+GPU memory. WebGL does not expose exact device allocation totals.
+
+The memory-soak script waits for the 256-frame rollback history to fill.
+It samples after explicit garbage collection outside timed captures.
+It checks steady resource and checkpoint counts plus the native heap
+plateau. A short heap increase during startup does not establish a leak.
+WASM heap bytes are retained high-water capacity; the engine need not
+return them to the operating system.
+The restart mode checks four real matches. It fills the rollback history
+in each match. The first restart can release starting-view GPU resources
+and grow native high-water capacity. The next three matches must keep
+the same checkpoint, GPU resource, and native heap counts.
+
+Input submission uses a successor snapshot so the applied tick is on
+both sides of interpolation. Continuous input sequences are queued.
+Paused events remain incomplete. This is a conservative submission bound.
+It is not display latency.

@@ -5,6 +5,8 @@ import { readWorldState, setBodyNames, type OpenYardPhysicsWorld } from './physi
 import { createInitialYard } from './presets';
 import type { YardState } from './state';
 import { stepYard } from './step';
+import { recordAppliedInputs } from '../perf/localInput';
+import { beginPhase, endPhase, perfActive, perfCount } from '../perf/recorder';
 
 /**
  * The physics part of a save. A save made by this sim holds a native
@@ -31,6 +33,8 @@ export class YardSim {
   #revision = 0n;
   #released = new WeakSet<YardSave>();
   #disposed = false;
+  #liveCheckpoints = 0;
+  #peakCheckpoints = 0;
 
   private constructor(physics: OpenYardPhysicsWorld, state: YardState) {
     this.physics = physics;
@@ -59,8 +63,16 @@ export class YardSim {
 
   step(inputs: readonly YardInput[]): YardState {
     this.#assertLive();
+    const phaseStart = beginPhase('sim.total');
     this.#state = stepYard(this.physics, this.#state, inputs);
+    recordAppliedInputs(inputs, this.#state.frame);
     this.#revision += 1n;
+    if (perfActive()) {
+      perfCount('sim.steps', 1);
+      perfCount('sim.bodyCount', this.#state.world.bodies.length);
+      this.#recordCheckpointCounts();
+    }
+    endPhase('sim.total', phaseStart);
     return this.#state;
   }
 
@@ -74,12 +86,19 @@ export class YardSim {
 
   save(): YardSave {
     this.#assertLive();
-    return { state: this.#state, physics: { kind: 'checkpoint', checkpoint: this.physics.world.captureCheckpoint() } };
+    const phaseStart = beginPhase('checkpoint.capture');
+    const checkpoint = this.physics.world.captureCheckpoint();
+    endPhase('checkpoint.capture', phaseStart);
+    this.#liveCheckpoints += 1;
+    this.#peakCheckpoints = Math.max(this.#peakCheckpoints, this.#liveCheckpoints);
+    this.#recordCheckpointCounts();
+    return { state: this.#state, physics: { kind: 'checkpoint', checkpoint } };
   }
 
   restore(save: YardSave): void {
     this.#assertLive();
     this.#assertHeld(save);
+    const phaseStart = beginPhase('checkpoint.restore');
     const { physics } = save;
     switch (physics.kind) {
       case 'checkpoint':
@@ -96,42 +115,60 @@ export class YardSim {
     setBodyNames(this.physics, save.state.world.bodyIds);
     this.#state = save.state;
     this.#revision += 1n;
+    endPhase('checkpoint.restore', phaseStart);
   }
 
   release(save: YardSave): void {
     this.#assertHeld(save);
     this.#released.add(save);
-    if (save.physics.kind === 'checkpoint' && !this.#disposed) this.physics.world.releaseCheckpoint(save.physics.checkpoint);
+    if (save.physics.kind === 'checkpoint' && !this.#disposed) {
+      const phaseStart = beginPhase('checkpoint.release');
+      this.physics.world.releaseCheckpoint(save.physics.checkpoint);
+      this.#liveCheckpoints = Math.max(0, this.#liveCheckpoints - 1);
+      this.#recordCheckpointCounts();
+      endPhase('checkpoint.release', phaseStart);
+    }
   }
 
   encode(save: YardSave): Uint8Array {
     this.#assertLive();
     this.#assertHeld(save);
+    const phaseStart = beginPhase('lateJoin.encode');
     const checkpoint = save.physics.kind === 'checkpoint'
       ? this.physics.world.serializeCheckpoint(save.physics.checkpoint)
       : save.physics.bytes;
-    return encodeState({ state: save.state, checkpoint });
+    const bytes = encodeState({ state: save.state, checkpoint });
+    if (perfActive()) perfCount('lateJoin.bytes', bytes.byteLength);
+    endPhase('lateJoin.encode', phaseStart);
+    return bytes;
   }
 
   /** Hash game fields and the SDK checkpoint digest without compressing a late-join packet each tick. */
   checksumBytes(save: YardSave): Uint8Array {
     this.#assertLive();
     this.#assertHeld(save);
+    const phaseStart = beginPhase('checksum.encode');
     const checkpoint = save.physics.kind === 'checkpoint'
       ? save.physics.checkpoint : this.physics.world.importCheckpoint(save.physics.bytes);
+    let bytes!: Uint8Array;
     try {
-      const bytes = new Uint8Array(8);
-      new DataView(bytes.buffer).setBigUint64(0, this.physics.world.digestCheckpoint(checkpoint));
-      return encodeChecksumState({ state: save.state, checkpoint: bytes });
+      const digestBytes = new Uint8Array(8);
+      new DataView(digestBytes.buffer).setBigUint64(0, this.physics.world.digestCheckpoint(checkpoint));
+      bytes = encodeChecksumState({ state: save.state, checkpoint: digestBytes });
     } finally {
       if (save.physics.kind === 'bytes') this.physics.world.releaseCheckpoint(checkpoint);
     }
+    if (perfActive()) perfCount('checksum.bytes', bytes.byteLength);
+    endPhase('checksum.encode', phaseStart);
+    return bytes;
   }
 
   dispose(): void {
     if (this.#disposed) return;
     this.#disposed = true;
     this.physics.world.dispose();
+    this.#liveCheckpoints = 0;
+    this.#recordCheckpointCounts();
   }
 
   #assertLive(): void {
@@ -140,5 +177,11 @@ export class YardSim {
 
   #assertHeld(save: YardSave): void {
     if (this.#released.has(save)) throw new Error(`WRECK_YARD_SAVE_RELEASED: frame ${save.state.frame}`);
+  }
+
+  #recordCheckpointCounts(): void {
+    if (!perfActive()) return;
+    perfCount('checkpoint.live', this.#liveCheckpoints);
+    perfCount('checkpoint.peak', this.#peakCheckpoints);
   }
 }

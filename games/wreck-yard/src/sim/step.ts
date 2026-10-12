@@ -92,6 +92,7 @@ import {
   type ToolFeedback,
   type ToolResult,
 } from './state';
+import { beginPhase, endPhase } from '../perf/recorder';
 
 interface Hit {
   readonly bodyId: string;
@@ -933,6 +934,7 @@ function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
  * steps it in place and returns the next state.
  */
 export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs: readonly YardInput[]): YardState {
+  let phaseStart = beginPhase('sim.gameBefore');
   const worldFrame = Number(physics.world.info().frame);
   if (worldFrame !== state.world.frame) {
     throw new Error(`WRECK_YARD_WORLD_FRAME_MISMATCH: world ${worldFrame}, state ${state.world.frame}`);
@@ -969,8 +971,12 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   const driver = w.players.find((player) => player.ridingVehicle);
   const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.attractions = startElevatorStep(w.physics, w.attractions, w.players);
+  endPhase('sim.gameBefore', phaseStart);
+  phaseStart = beginPhase('sim.nativeStep');
   w.physics.world.step();
   const latest = w.physics.world.latest();
+  endPhase('sim.nativeStep', phaseStart);
+  phaseStart = beginPhase('sim.gameAfter');
   w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
   stepContraptions(w, state.world);
 
@@ -998,7 +1004,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   applyFractures(w, state.frame);
   coolBodies(w);
 
-  return {
+  const nextState: YardState = {
     frame: state.frame + 1,
     buggyWheels: buggy?.wheels ?? [],
     buggyVehicle: buggy?.vehicle,
@@ -1010,4 +1016,6 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     attractions: w.attractions,
     nextSerial: w.nextSerial,
   };
+  endPhase('sim.gameAfter', phaseStart);
+  return nextState;
 }

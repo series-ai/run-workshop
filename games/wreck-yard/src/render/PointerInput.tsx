@@ -1,3 +1,4 @@
+import { recordInputEvent } from '../perf/localInput';
 import { elevatorPanelWithinReach, restackWithinReach, type AttractionRequest, type AttractionCommand } from '../sim/attractions';
 import { queueAttraction } from '../ui/AttractionControls';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -186,6 +187,7 @@ export function PointerInput({
     }
 
     const onPointerDown = (event: MouseEvent) => {
+      recordInputEvent();
       const current = gateRef.current;
       if (tool !== 'orbit' && current.state.view === 'free-cursor' && engageCall(current.state) !== 'none') {
         // "Click to look" after orbit: this click captures; it must not also fire the tool.
@@ -202,11 +204,13 @@ export function PointerInput({
     };
 
     const onPointerUp = (event: MouseEvent) => {
+      recordInputEvent();
       isDragging = false;
       buttons.current = pressButton(buttons.current, event.button, false);
     };
 
     const onMouseMove = (event: MouseEvent) => {
+      recordInputEvent();
       if (tool === 'orbit') return;
       if (document.pointerLockElement === dom) {
         if (event.movementX !== 0 || event.movementY !== 0) lastLookMs.current = performance.now();
@@ -230,6 +234,7 @@ export function PointerInput({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      recordInputEvent();
       if (event.code === 'Escape' && !event.repeat && gateRef.current.state.look === 'drag') {
         gateRef.current.pause();
         return;
@@ -263,6 +268,7 @@ export function PointerInput({
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
+      recordInputEvent();
       keys.current.delete(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
         keyUse.current = false;

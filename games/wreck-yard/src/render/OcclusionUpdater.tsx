@@ -1,3 +1,4 @@
+import { beginPhase, endPhase, perfCount } from '../perf/recorder';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
@@ -107,6 +108,18 @@ export class PoseCache {
   }
 }
 
+const staticOcclusionBounds = SHELL_BOXES.map(shellBoxBounds);
+
+export function occlusionBodiesWithinVolume(bodies: readonly YardBody[], poses: ReadonlyMap<string, RenderPose>, spec: WorldOcclusionSpec): readonly YardBody[] {
+  return bodies.filter((body) => {
+    const pose = poses.get(body.id);
+    if (!pose) return false;
+    // Match the conservative sphere used by fillWorldOcclusionVolume.
+    const radius = 0.5 * VOXEL_SIZE * Math.sqrt(body.dims.x ** 2 + body.dims.y ** 2 + body.dims.z ** 2);
+    return pose.position.every((value, axis) => value + radius >= spec.min[axis]! && value - radius <= spec.max[axis]!);
+  });
+}
+
 export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: MutableRefObject<YardRender | null>; worldOcclusion: WorldOcclusionRuntime }) {
   const lastUpdate = useRef(-Infinity);
   const poseCache = useRef(new PoseCache());
@@ -119,10 +132,12 @@ export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: Mut
     // Rebuild the shared volume at most five times per second.
     if (now - lastUpdate.current < 0.2) return;
 
-    // Compare positions and voxel references before rebuilding the volume.
-    if (!poseCache.current.hasChanges(render.bodies, render.poses)) return;
+    // Distant moving crates cannot change this local volume.
+    const relevant = occlusionBodiesWithinVolume(render.bodies, render.poses, worldOcclusion.spec);
+    if (!poseCache.current.hasChanges(relevant, render.poses)) return;
 
-    const bodies: WorldOcclusionBody[] = render.bodies.map((body) => {
+    const timing = beginPhase('occlusion.build');
+    const bodies: WorldOcclusionBody[] = relevant.map((body) => {
       const pose = render.poses.get(body.id)!;
       return {
         dims: body.dims,
@@ -132,10 +147,12 @@ export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: Mut
       };
     });
 
-    fillWorldOcclusionVolume(worldOcclusion.data, worldOcclusion.spec, bodies, SHELL_BOXES.map(shellBoxBounds), VOXEL_SIZE);
+    fillWorldOcclusionVolume(worldOcclusion.data, worldOcclusion.spec, bodies, staticOcclusionBounds, VOXEL_SIZE);
     worldOcclusion.texture.needsUpdate = true;
     lastUpdate.current = now;
-    poseCache.current.update(render.bodies, render.poses);
+    poseCache.current.update(relevant, render.poses);
+    perfCount('occlusion.rebuilds', 1);
+    endPhase('occlusion.build', timing);
   });
 
   return null;

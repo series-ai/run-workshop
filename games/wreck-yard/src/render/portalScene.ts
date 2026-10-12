@@ -1,3 +1,5 @@
+import { beginPhase, endPhase, perfCount } from '../perf/recorder';
+import { beginGpu, endGpu } from '../perf/render';
 import {
   createThreePortalStencilHooks3D,
   portalExitClipPlane3D,
@@ -62,32 +64,40 @@ export function createReturnsPortalSurfaces(): ReturnsPortalSurfaces {
   };
 }
 
+const registeredClipMaterials = new WeakSet<THREE.Material>();
+const clipMaterialRefs = new Set<WeakRef<THREE.Material>>();
+
 export function markPortalViewClipMaterial(
   material: THREE.Material,
   uniforms: PortalViewClipUniforms,
 ): void {
   material.userData[PORTAL_VIEW_CLIP_UNIFORMS] = uniforms;
+  if (!registeredClipMaterials.has(material)) {
+    registeredClipMaterials.add(material);
+    const reference = new WeakRef(material);
+    clipMaterialRefs.add(reference);
+  }
 }
 
 export function setPortalViewClipOnScene(scene: THREE.Scene, plane: PortalPlane4 | null): void {
-  scene.traverse((object) => {
-    const materialValue = (object as THREE.Mesh).material;
-    if (!materialValue) return;
-    const materials = Array.isArray(materialValue) ? materialValue : [materialValue];
-    for (const material of materials) {
-      const uniforms = material.userData[PORTAL_VIEW_CLIP_UNIFORMS] as PortalViewClipUniforms | undefined;
-      if (!uniforms) continue;
-      const enabled = plane ? 1 : 0;
-      const vector = uniforms.plane.value as THREE.Vector4;
-      let changed = uniforms.enabled.value !== enabled;
-      uniforms.enabled.value = enabled;
-      if (plane) {
-        changed ||= vector.x !== plane[0] || vector.y !== plane[1] || vector.z !== plane[2] || vector.w !== plane[3];
-        vector.set(plane[0], plane[1], plane[2], plane[3]);
-      }
-      if (changed && material instanceof THREE.ShaderMaterial) material.uniformsNeedUpdate = true;
+  // Marked materials can move between scenes without a new registration.
+  // Weak references do not retain resources from an abandoned React render.
+  // A disposed material can be used again during React effect setup.
+  void scene;
+  for (const reference of clipMaterialRefs) {
+    const material = reference.deref();
+    if (!material) { clipMaterialRefs.delete(reference); continue; }
+    const uniforms = material.userData[PORTAL_VIEW_CLIP_UNIFORMS] as PortalViewClipUniforms;
+    const enabled = plane ? 1 : 0;
+    const vector = uniforms.plane.value;
+    let changed = uniforms.enabled.value !== enabled;
+    uniforms.enabled.value = enabled;
+    if (plane) {
+      changed ||= vector.x !== plane[0] || vector.y !== plane[1] || vector.z !== plane[2] || vector.w !== plane[3];
+      vector.set(plane[0], plane[1], plane[2], plane[3]);
     }
-  });
+    if (changed && material instanceof THREE.ShaderMaterial) material.uniformsNeedUpdate = true;
+  }
 }
 
 function setPortalViewObjects(scene: THREE.Scene, inPortalView: boolean): () => void {
@@ -153,7 +163,7 @@ export function createReturnsPortalHooks({
     const hidden: THREE.Mesh[] = [];
     scene.traverseVisible((object) => {
       // These bounds are current for rigid leaf meshes. Keep deforming and instanced meshes.
-      if (!(object instanceof THREE.Mesh) || object instanceof THREE.InstancedMesh
+      if (!(object instanceof THREE.Mesh) || (object instanceof THREE.InstancedMesh && object.boundingSphere === null)
         || object instanceof THREE.SkinnedMesh || object.children.length !== 0) return;
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       // Water and effects can move vertices outside their geometry bounds.
@@ -194,13 +204,20 @@ export function createReturnsPortalHooks({
         if (draw.view) {
           renderer.shadowMap.autoUpdate = false;
           renderer.shadowMap.needsUpdate = false;
+          const cullTiming = beginPhase('portal.cull');
           restoreCulling = cullPortalMeshes(draw);
+          endPhase('portal.cull', cullTiming);
+          perfCount('portal.views', 1);
         }
         camera.layers.mask = eyeCamera.layers.mask;
         renderer.localClippingEnabled = true;
         renderer.clippingPlanes = viewPlane ? [asThreePlane(viewPlane)] : [];
         setPortalViewClipOnScene(scene, viewPlane);
-        base.drawScene(draw);
+        const phase = draw.view ? 'portal.render' : 'render.main';
+        const timing = beginPhase(phase);
+        const gpu = beginGpu(renderer, phase);
+        try { base.drawScene(draw); }
+        finally { endGpu(renderer, gpu); endPhase(phase, timing); }
       } finally {
         setPortalViewClipOnScene(scene, null);
         renderer.shadowMap.autoUpdate = shadowAutoUpdate;
@@ -245,7 +262,9 @@ export function renderReturnsPortalViews({
   const previousClippingPlanes = renderer.clippingPlanes;
   const previousLocalClippingEnabled = renderer.localClippingEnabled;
   try {
-    return renderPortalViews3D(options);
+    const timing = beginPhase('portal.plan');
+    try { return renderPortalViews3D(options); }
+    finally { endPhase('portal.plan', timing); }
   } finally {
     setPortalViewClipOnScene(scene, null);
     renderer.setRenderTarget(previousTarget);

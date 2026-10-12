@@ -392,7 +392,7 @@ try {
   assert.equal(start.status, 'live', `solo match status is ${start.status}`);
   assert.equal(start.storageCount, 400, `storage body count is ${start.storageCount}`);
   assert.equal(start.returnsCount, 36, `returns body count is ${start.returnsCount}`);
-  assert.deepEqual(start.instanceCounts, [436, 436], `crate draw counts are ${start.instanceCounts}`);
+  assert.deepEqual(start.instanceCounts, [400, 400, 36, 36], `crate draw counts are ${start.instanceCounts}`);
   results.start = start;
 
   await capture(desktop, 'desktop-storage', [-9.5, 11.6, -5], [-10.5, 4.5, -20.7]);
