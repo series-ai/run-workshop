@@ -1303,8 +1303,8 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     for (let i = 0; i < 9; i++) {
       simTest.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false });
     }
-    // Player sustained 12 damage absorbed by armor
-    expect(simTest.player.armor).toBe(88);
+    // Player sustained 24 damage absorbed by armor
+    expect(simTest.player.armor).toBe(76);
 
     // When player executes combat roll, roll iframes deflect subsequent fire
     rogue.shootCooldownTicks = 0;
@@ -1314,8 +1314,8 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     for (let i = 0; i < 9; i++) {
       simTest.step({ dx: 0, dz: 0, sprint: false, slide: false, roll: true, kick: false, shoot: false, interact: false });
     }
-    // Armor remains 88 because roll deflected bullet!
-    expect(simTest.player.armor).toBe(88);
+    // Armor remains 76 because roll deflected bullet!
+    expect(simTest.player.armor).toBe(76);
   });
 
   it('32. static gate: zero raw fetch calls in src/ and tests/', () => {
@@ -1931,8 +1931,8 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const proj = testSim.activeProjectiles[0];
     expect(proj.shooterId).toBe(turret.id);
     expect(proj.shooterIsPlayer).toBe(false);
-    expect(proj.speed).toBe(24.0);
-    expect(proj.damage).toBe(14);
+    expect(proj.speed).toBe(54.0);
+    expect(proj.damage).toBe(24);
     // At frame 0: Projectile just left muzzle, player is NOT damaged instantly!
     expect(testSim.player.health).toBe(100);
 
@@ -1952,7 +1952,7 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     }
 
     // Player takes damage when the projectile physically contacts the player
-    expect(testSim.player.health).toBe(86); // 100 - 14 = 86
+    expect(testSim.player.health).toBe(76); // 100 - 24 = 76
   });
   it("Scav Enforcer fires authentic 6-pellet buckshot spread fan instead of instant single hit", () => {
     const testSim = new SectorDepotSimulation("test_pellet_seed");
@@ -1989,6 +1989,6 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(pellets.length).toBe(6);
     expect(pellets[0].isPellet).toBe(true);
     expect(pellets[0].speed).toBe(28.0);
-    expect(pellets[0].damage).toBe(4);
+    expect(pellets[0].damage).toBe(16);
   });
 });

@@ -299,7 +299,7 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   // FOB Side Enclosure Walls
   { minX: -8.5, maxX: -7.5, minZ: -73.0, maxZ: -52.0 },
   { minX: 7.5, maxX: 8.5, minZ: -73.0, maxZ: -52.0 },
-  // FOB Concrete Security Barriers (wings flanking perimeter, central walkway |x| < 4.8 completely open)
+  // FOB Concrete Security Barriers
   { minX: -7.5, maxX: -4.8, minZ: -64.2, maxZ: -62.8 },
   { minX: 4.8, maxX: 7.5, minZ: -64.2, maxZ: -62.8 },
   // FOB Power Cores & Consoles
@@ -317,56 +317,127 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   // Emergency Bunker Keycard Terminal Console
   { minX: -45.6, maxX: -44.4, minZ: -45.4, maxZ: -44.2 },
 
-  // Heavy Industrial Architecture Obstacles (West Compound)
-  // West Warehouse Alpha
-  { minX: -32.0, maxX: -20.0, minZ: 2.0, maxZ: 14.0 },
+  // ---------------------------------------------------------------------------
+  // ZONE 1: CENTRAL CONTESTED LOGISTICS DEPOT & CARGO PORT
+  // ---------------------------------------------------------------------------
+  // Overhead Gantry Crane Supports
+  { minX: -15.5, maxX: -12.5, minZ: -6.5, maxZ: -3.5 },
+  // Staging Cargo Platform (at x: 12, z: 5)
+  { minX: 9.0, maxX: 15.0, minZ: 2.0, maxZ: 8.0 },
+  // Open and Short Cargo Containers (flanking |x| >= 9.5)
+  { minX: -15.5, maxX: -9.5, minZ: 0.5, maxZ: 3.5 },
+  { minX: 9.5, maxX: 15.5, minZ: -12.5, maxZ: -9.5 },
+  // Pallet Stacks & Heavy Caches (flanking |x| >= 5.5)
+  { minX: -8.5, maxX: -5.5, minZ: -9.5, maxZ: -6.5 },
+  { minX: 5.5, maxX: 8.5, minZ: -9.5, maxZ: -6.5 },
+  { minX: -8.5, maxX: -5.5, minZ: 6.8, maxZ: 9.2 },
+  { minX: 5.5, maxX: 8.5, minZ: 6.8, maxZ: 9.2 },
+  // Central Logistics Highway Chicane Barriers
+  { minX: -4.3, maxX: -1.3, minZ: -33.2, maxZ: -30.8 }, // [-2.8, 0, -32]
+  { minX: 1.3, maxX: 4.3, minZ: -19.2, maxZ: -16.8 },   // [2.8, 0, -18]
+  { minX: -4.3, maxX: -1.3, minZ: -5.2, maxZ: -2.8 },   // [-2.8, 0, -4]
+  { minX: 1.3, maxX: 4.3, minZ: 12.8, maxZ: 15.2 },     // [2.8, 0, 14]
+  { minX: -4.3, maxX: -1.3, minZ: 28.8, maxZ: 31.2 },   // [-2.8, 0, 30]
+  { minX: 1.3, maxX: 4.3, minZ: 44.8, maxZ: 47.2 },     // [2.8, 0, 46]
+
+  // ---------------------------------------------------------------------------
+  // ZONE 2: NORTHWEST CHEMICAL & FUEL REFINERY
+  // ---------------------------------------------------------------------------
   // West Warehouse Beta
-  { minX: -32.0, maxX: -20.0, minZ: -31.0, maxZ: -19.0 },
-  // West Loading Platform
-  { minX: -40.0, maxX: -32.0, minZ: 21.0, maxZ: 29.0 },
-  // Gantry Crane Supports
-  { minX: -16.5, maxX: -13.5, minZ: -9.5, maxZ: -6.5 },
+  { minX: -34.0, maxX: -22.0, minZ: -32.0, maxZ: -20.0 }, // [-28, 0, -26]
+  // Vertical Fuel Tank
+  { minX: -50.0, maxX: -42.0, minZ: -24.0, maxZ: -16.0 }, // [-46, 0, -20]
+  // Horizontal Pressure Tank
+  { minX: -50.0, maxX: -42.0, minZ: -39.0, maxZ: -31.0 }, // [-46, 0, -35]
+  // Spherical Gas Silo
+  { minX: -39.0, maxX: -31.0, minZ: -42.0, maxZ: -34.0 }, // [-35, 0, -38]
+  // Industrial Water Silo
+  { minX: -25.0, maxX: -19.0, minZ: -43.0, maxZ: -37.0 }, // [-22, 0, -40]
+  // Catwalk Bridge & Stair Footings
+  { minX: -31.0, maxX: -25.0, minZ: -16.0, maxZ: -12.0 }, // [-28, 0, -14]
+  // Toxic Barrel Stack
+  { minX: -44.0, maxX: -39.0, minZ: -19.0, maxZ: -15.0 },
+  { minX: -35.0, maxX: -31.0, minZ: -12.0, maxZ: -9.0 },
+  { minX: -37.5, maxX: -34.5, minZ: -19.5, maxZ: -16.5 },
 
-  // Heavy Industrial Architecture Obstacles (East Compound)
-  // East Vertical Fuel Tanks
-  { minX: 31.0, maxX: 47.0, minZ: -21.0, maxZ: -15.0 },
-  // East Backup Generator
-  { minX: 39.0, maxX: 45.0, minZ: -8.0, maxZ: -2.0 },
-  // East Horizontal Tank
-  { minX: 35.0, maxX: 41.0, minZ: 2.0, maxZ: 8.0 },
-  // East Chemical Silo
-  { minX: 25.0, maxX: 31.0, minZ: 19.0, maxZ: 25.0 },
-  // East Smokestacks
-  { minX: 50.0, maxX: 54.0, minZ: -34.0, maxZ: -30.0 },
-  { minX: 50.0, maxX: 54.0, minZ: 36.0, maxZ: 40.0 },
+  // ---------------------------------------------------------------------------
+  // ZONE 3: SOUTHWEST FREIGHT TERMINAL & HEAVY TRUCK DOCKS
+  // ---------------------------------------------------------------------------
+  // West Warehouse Alpha
+  { minX: -34.0, maxX: -22.0, minZ: 4.0, maxZ: 16.0 },    // [-28, 0, 10]
+  // Warehouse Bay Annex
+  { minX: -34.0, maxX: -22.0, minZ: 18.0, maxZ: 30.0 },   // [-28, 0, 24]
+  // Raised Loading Platform
+  { minX: -42.0, maxX: -34.0, minZ: 24.0, maxZ: 32.0 },   // [-38, 0, 28]
+  // Service Bay Canopy & Workbench
+  { minX: -33.0, maxX: -27.0, minZ: -5.0, maxZ: 1.0 },    // [-30, 0, -2]
+  // Hydraulic Press & Cable Spool
+  { minX: -35.0, maxX: -31.0, minZ: -3.5, maxZ: -0.5 },
+  // CQB Dumpsters & Scrap Piles
+  { minX: -44.0, maxX: -40.0, minZ: 8.5, maxZ: 11.5 },
+  { minX: -50.0, maxX: -46.0, minZ: 28.5, maxZ: 31.5 },
+  { minX: -22.0, maxX: -18.0, minZ: 32.0, maxZ: 36.0 },
+  // Concrete Planters
+  { minX: -19.5, maxX: -16.5, minZ: 14.5, maxZ: 17.5 },
+  { minX: -19.5, maxX: -16.5, minZ: 22.5, maxZ: 25.5 },
+  // Emergency Bunker Perimeter Barrier
+  { minX: -41.5, maxX: -38.5, minZ: -42.5, maxZ: -39.5 },
 
-  // Central Logistics Highway Concrete Barriers (Tactical Chicane Cover)
-  { minX: -4.3, maxX: -1.3, minZ: -9.2, maxZ: -6.8 }, // [-2.8, 0, -8]
-  { minX: 1.3, maxX: 4.3, minZ: 14.8, maxZ: 17.2 },   // [2.8, 0, 16]
-  { minX: -4.3, maxX: -1.3, minZ: 38.8, maxZ: 41.2 }, // [-2.8, 0, 40]
+  // ---------------------------------------------------------------------------
+  // ZONE 4: NORTHEAST POWER SUBSTATION & HEAVY INDUSTRY
+  // ---------------------------------------------------------------------------
+  // Machine Transformer Substation
+  { minX: 35.0, maxX: 41.0, minZ: -21.0, maxZ: -15.0 },   // [38, 0, -18]
+  // Large Diesel Generator
+  { minX: 43.0, maxX: 49.0, minZ: -21.0, maxZ: -15.0 },   // [46, 0, -18]
+  // Electrical Panel Wall
+  { minX: 40.0, maxX: 44.0, minZ: -11.5, maxZ: -8.5 },    // [42, 0, -10]
+  // Industrial Smokestacks
+  { minX: 53.5, maxX: 58.5, minZ: -34.5, maxZ: -29.5 },   // [56, 0, -32]
+  { minX: 53.5, maxX: 58.5, minZ: -18.5, maxZ: -13.5 },   // [56, 0, -16]
+  // Heavy Conveyor Feed System
+  { minX: 30.0, maxX: 34.0, minZ: -7.5, maxZ: 2.5 },      // [32, 0, -5..0]
+  // Security Perimeter Fencing & Gate
+  { minX: 47.0, maxX: 49.0, minZ: -12.0, maxZ: 12.0 },
+  { minX: 26.5, maxX: 29.5, minZ: -7.5, maxZ: -4.5 },
 
-  // Western & Eastern Yard Concrete Barriers & Cover
-  { minX: -26.5, maxX: -23.5, minZ: -19.5, maxZ: -16.5 }, // [-25, 0, -18]
-  { minX: -33.5, maxX: -30.5, minZ: 22.8, maxZ: 25.2 },   // [-32, 0, 24]
-  { minX: 20.5, maxX: 23.5, minZ: -9.5, maxZ: -6.5 },     // [22, 0, -8]
-  { minX: 40.5, maxX: 43.5, minZ: 26.5, maxZ: 29.5 },     // [42, 0, 28]
-  { minX: -41.5, maxX: -38.5, minZ: -42.5, maxZ: -39.5 }, // Bunker revetment [-40, 0, -41]
-  { minX: 38.5, maxX: 41.5, minZ: 39.5, maxZ: 42.5 },     // LZ revetment [40, 0, 41]
+  // ---------------------------------------------------------------------------
+  // ZONE 5: SOUTHEAST EXTRACTION REDOUBT & MILITARY LZ-01
+  // ---------------------------------------------------------------------------
+  // Military Checkpoint Bus Shelter
+  { minX: 28.5, maxX: 31.5, minZ: 23.5, maxZ: 28.5 },     // [30, 0, 26]
+  // Fortified LZ-01 Double Barrier Revetments
+  { minX: 32.5, maxX: 35.5, minZ: 34.5, maxZ: 37.5 },     // [34, 0, 36]
+  { minX: 32.5, maxX: 35.5, minZ: 46.5, maxZ: 49.5 },     // [34, 0, 48]
+  { minX: 48.5, maxX: 51.5, minZ: 34.5, maxZ: 37.5 },     // [50, 0, 36]
+  { minX: 48.5, maxX: 51.5, minZ: 46.5, maxZ: 49.5 },     // [50, 0, 48]
+  // Water Crash Barriers
+  { minX: 36.5, maxX: 39.5, minZ: 26.5, maxZ: 29.5 },     // [38, 0, 28]
+  { minX: 44.5, maxX: 47.5, minZ: 26.5, maxZ: 29.5 },     // [46, 0, 28]
+  // Barbed Wire Fencing
+  { minX: 27.0, maxX: 29.0, minZ: 38.0, maxZ: 46.0 },
+  { minX: 53.0, maxX: 55.0, minZ: 38.0, maxZ: 46.0 },
+  // LZ Fuel Drums & Military Supplies
+  { minX: 36.5, maxX: 45.5, minZ: 50.5, maxZ: 53.5 },
 
-  // Placed Loot Containers in Sector 7 Depot
+  // ---------------------------------------------------------------------------
+  // PLACED LOOT CONTAINERS IN SECTOR 7 DEPOT
+  // ---------------------------------------------------------------------------
   // crate_01: Military Dumpster (-8, -6)
   { minX: -9.2, maxX: -6.8, minZ: -6.8, maxZ: -5.3 },
   // crate_02: Chemical & Contraband Barrel (20, -15)
   { minX: 19.4, maxX: 20.6, minZ: -15.6, maxZ: -14.4 },
-  // crate_03: Tech Storage Console (-16, 14)
-  { minX: -16.8, maxX: -15.2, minZ: 13.4, maxZ: 14.6 },
-  // crate_04: Supply Footlocker (30, 22)
-  { minX: 29.3, maxX: 30.7, minZ: 21.3, maxZ: 22.7 },
-  // crate_05: Fallen Operative Corpse (-35, -25)
-  { minX: -35.8, maxX: -34.2, minZ: -25.8, maxZ: -24.2 },
-
-  // Exfil Zone Warp Beacons (45, 45)
-  { minX: 39.0, maxX: 40.6, minZ: 44.2, maxZ: 45.8 },
+  // crate_03: Logistics Terminal Console (32, 12)
+  { minX: 31.3, maxX: 32.7, minZ: 11.3, maxZ: 12.7 },
+  // crate_04: Heavy Ordnance Wooden Crate (-25, 20)
+  { minX: -25.8, maxX: -24.2, minZ: 19.2, maxZ: 20.8 },
+  // crate_05: Emergency Stim Locker (-10, -22)
+  { minX: -10.8, maxX: -9.2, minZ: -22.8, maxZ: -21.2 },
+  // crate_06: Electronic Intel Safe (15, -28)
+  { minX: 14.2, maxX: 15.8, minZ: -28.8, maxZ: -27.2 },
+  // crate_07: High-Tier Contraband Cache (-30, -35)
+  { minX: -30.8, maxX: -29.2, minZ: -35.8, maxZ: -34.2 },
+  // crate_08: Extraction Stash Footlocker (50, 45)
   { minX: 49.4, maxX: 51.0, minZ: 44.2, maxZ: 45.8 },
 ];
 
@@ -605,6 +676,40 @@ export interface KickActionPayload {
   machineHits: Array<{ id: string; x: number; z: number; y?: number; damage: number; originX?: number; originZ?: number }>;
   rivalHits: Array<{ id: string; x: number; z: number; damage: number; knockX: number; knockZ: number; predictedHealth?: number; predictedArmor?: number }>;
 }
+
+export interface WeaponSpec {
+  id: "rifle" | "shotgun";
+  speed: number;
+  damage: number;
+  radius: number;
+  maxRange: number;
+  pelletCount: number;
+  pelletOffsets: number[];
+  knockback: number;
+}
+
+export const WEAPON_SPECS: Record<"rifle" | "shotgun", WeaponSpec> = {
+  rifle: {
+    id: "rifle",
+    speed: 54.0,
+    damage: SIM_CONFIG.RIFLE_DAMAGE, // 24
+    radius: 0.21,
+    maxRange: 24.0,
+    pelletCount: 1,
+    pelletOffsets: [0],
+    knockback: 0.6,
+  },
+  shotgun: {
+    id: "shotgun",
+    speed: 28.0,
+    damage: SIM_CONFIG.SHOTGUN_DAMAGE, // 16
+    radius: 0.165,
+    maxRange: 14.0,
+    pelletCount: 6,
+    pelletOffsets: [-0.174, -0.104, -0.035, 0.035, 0.104, 0.174],
+    knockback: 2.4,
+  },
+};
 
 export interface ActiveProjectile {
   id: string;
@@ -2846,31 +2951,10 @@ export class SectorDepotSimulation {
     return true;
   }
 
-  private fireWeapon(muzzleOrigin?: { x: number; y: number; z: number }, muzzleDir?: { x: number; y: number; z: number }): void {
-    if (!muzzleOrigin || !muzzleDir) {
-      const m = this.getOperativeMuzzle(this.player);
-      muzzleOrigin = m.origin;
-      muzzleDir = m.dir;
-    }
-    const originX = muzzleOrigin.x;
-    const originY = muzzleOrigin.y;
-    const originZ = muzzleOrigin.z;
-    const bulletDirX = muzzleDir.x;
-    const bulletDirZ = muzzleDir.z;
-    const now = Date.now();
-    this.player.lastFiredAtMs = now;
-    this.player.lastFireTimestamp = now;
-    this.player.lastFireTick = this.tick;
-    // Acoustic sound propagation across 45m radius
-    this.propagateGunfireSound(this.player.x, this.player.z, 45.0);
+  private fireShotgunBlast(shooterId: string, shooterIsPlayer: boolean, originX: number, originY: number, originZ: number, dirX: number, dirZ: number): void {
+    const spec = WEAPON_SPECS.shotgun;
 
-    if (this.player.weapon === "shotgun") {
-      const PELLETS_OFFSETS = [-0.174, -0.105, -0.035, 0.035, 0.105, 0.174];
-      const speed = 44.0;
-      const damage = SIM_CONFIG.SHOTGUN_DAMAGE;
-
-      // Check if point-blank target exists before spawning projectiles
-      // This prevents single pellets from pushing the target away before subsequent pellets connect
+    if (shooterIsPlayer) {
       let pointBlankRival: any = null;
       for (const r of this.rivals) {
         if (!r.isAlive || r.isExtracted) continue;
@@ -2878,7 +2962,7 @@ export class SectorDepotSimulation {
         const dz = r.z - originZ;
         const dist = Math.hypot(dx, dz);
         if (dist > 0.001 && dist <= 3.5) {
-          const dot = (dx * bulletDirX + dz * bulletDirZ) / dist;
+          const dot = (dx * dirX + dz * dirZ) / dist;
           if (dot > 0.75) {
             pointBlankRival = r;
             break;
@@ -2888,7 +2972,7 @@ export class SectorDepotSimulation {
 
       if (pointBlankRival) {
         const r = pointBlankRival;
-        const totalDamage = damage * 6; // All 6 pellets connect at point-blank
+        const totalDamage = spec.damage * spec.pelletCount;
         this.player.lastHitmarkerTick = this.tick;
         this.player.lastHitmarkerCrit = true;
 
@@ -2914,11 +2998,10 @@ export class SectorDepotSimulation {
         r.armor = newArmor;
         this.handleRivalDamage(r, totalDamage);
 
-        // Combined heavy shotgun knockback
         const knockForce = 3.2;
-        r.x = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, r.x + bulletDirX * knockForce));
-        r.z = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, r.z + bulletDirZ * knockForce));
-        this.onHitTarget?.(r.id, totalDamage, bulletDirX * knockForce, bulletDirZ * knockForce, "shotgun");
+        r.x = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, r.x + dirX * knockForce));
+        r.z = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, r.z + dirZ * knockForce));
+        this.onHitTarget?.(r.id, totalDamage, dirX * knockForce, dirZ * knockForce, "shotgun");
 
         if (r.health <= 0) {
           const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
@@ -2935,38 +3018,95 @@ export class SectorDepotSimulation {
         }
         return;
       }
+    } else {
+      if (this.player.isAlive && !this.player.isExtracted) {
+        const dx = this.player.x - originX;
+        const dz = this.player.z - originZ;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.001 && dist <= 3.5) {
+          const dot = (dx * dirX + dz * dirZ) / dist;
+          if (dot > 0.75) {
+            const totalDamage = spec.damage * spec.pelletCount;
+            if (this.player.isInvulnerable && this.player.action === "roll") {
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: this.player.x, y: 1.2, z: this.player.z },
+                surface: "metal",
+              });
+              return;
+            }
 
-      // Spawn 6 distinct buckshot pellets across 20° fan into active ballistics
-      for (let i = 0; i < PELLETS_OFFSETS.length; i++) {
-        const pAngle = PELLETS_OFFSETS[i];
-        const cosA = Math.cos(pAngle);
-        const sinA = Math.sin(pAngle);
-        const dirX = bulletDirX * cosA - bulletDirZ * sinA;
-        const dirZ = bulletDirX * sinA + bulletDirZ * cosA;
-
-        this.spawnProjectile({
-          id: "pellet_" + this.player.id + "_" + this.tick + "_" + i + "_" + Math.random().toString(36).slice(2, 6),
-          shooterId: this.player.id,
-          shooterIsPlayer: true,
-          x: originX,
-          y: originY,
-          z: originZ,
-          vx: dirX * speed,
-          vy: 0,
-          vz: dirZ * speed,
-          speed,
-          damage,
-          radius: 0.165,
-          maxRange: 14.0,
-          distanceTraveled: 0,
-          weapon: "shotgun",
-          isPellet: true,
-        });
+            this.applyDamageToPlayer(totalDamage, originX, originZ);
+            const knockForce = 2.0;
+            this.walkVx += dirX * knockForce;
+            this.walkVz += dirZ * knockForce;
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: this.player.x, y: 1.5, z: this.player.z },
+              surface: "flesh",
+              damage: totalDamage,
+              label: "-" + totalDamage,
+              isCrit: true,
+            });
+            return;
+          }
+        }
       }
+    }
+
+    for (let i = 0; i < spec.pelletOffsets.length; i++) {
+      const pAngle = spec.pelletOffsets[i];
+      const cosA = Math.cos(pAngle);
+      const sinA = Math.sin(pAngle);
+      const pDirX = dirX * cosA - dirZ * sinA;
+      const pDirZ = dirX * sinA + dirZ * cosA;
+
+      this.spawnProjectile({
+        id: `pellet_${shooterId}_${this.tick}_${i}_${Math.random().toString(36).slice(2, 6)}`,
+        shooterId,
+        shooterIsPlayer,
+        x: originX,
+        y: originY,
+        z: originZ,
+        vx: pDirX * spec.speed,
+        vy: 0,
+        vz: pDirZ * spec.speed,
+        speed: spec.speed,
+        damage: spec.damage,
+        radius: spec.radius,
+        maxRange: spec.maxRange,
+        distanceTraveled: 0,
+        weapon: "shotgun",
+        isPellet: true,
+      });
+    }
+  }
+
+  private fireWeapon(muzzleOrigin?: { x: number; y: number; z: number }, muzzleDir?: { x: number; y: number; z: number }): void {
+    if (!muzzleOrigin || !muzzleDir) {
+      const m = this.getOperativeMuzzle(this.player);
+      muzzleOrigin = m.origin;
+      muzzleDir = m.dir;
+    }
+    const originX = muzzleOrigin.x;
+    const originY = muzzleOrigin.y;
+    const originZ = muzzleOrigin.z;
+    const bulletDirX = muzzleDir.x;
+    const bulletDirZ = muzzleDir.z;
+    const now = Date.now();
+    this.player.lastFiredAtMs = now;
+    this.player.lastFireTimestamp = now;
+    this.player.lastFireTick = this.tick;
+    // Acoustic sound propagation across 45m radius
+    this.propagateGunfireSound(this.player.x, this.player.z, 45.0);
+
+    if (this.player.weapon === "shotgun") {
+      this.fireShotgunBlast(this.player.id, true, originX, originY, originZ, bulletDirX, bulletDirZ);
       return;
     }
 
     // Rifle: surviv.io assault rifle ballistics with spread bloom
+    const spec = WEAPON_SPECS.rifle;
     this.player.continuousFireTicks = (this.player.continuousFireTicks || 0) + 1;
     const bloom = Math.min(0.085, 0.015 + this.player.continuousFireTicks * 0.012);
     const angleOffset = (Math.random() - 0.5) * 2 * bloom;
@@ -2974,8 +3114,6 @@ export class SectorDepotSimulation {
     const sinA = Math.sin(angleOffset);
     const dirX = bulletDirX * cosA - bulletDirZ * sinA;
     const dirZ = bulletDirX * sinA + bulletDirZ * cosA;
-    const speed = 54.0;
-    const damage = SIM_CONFIG.RIFLE_DAMAGE;
 
     this.spawnProjectile({
       id: "proj_" + this.player.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
@@ -2984,13 +3122,13 @@ export class SectorDepotSimulation {
       x: originX,
       y: originY,
       z: originZ,
-      vx: dirX * speed,
+      vx: dirX * spec.speed,
       vy: 0,
-      vz: dirZ * speed,
-      speed,
-      damage,
-      radius: 0.21,
-      maxRange: 22.0,
+      vz: dirZ * spec.speed,
+      speed: spec.speed,
+      damage: spec.damage,
+      radius: spec.radius,
+      maxRange: spec.maxRange,
       distanceTraveled: 0,
       weapon: "rifle",
     });
@@ -3125,6 +3263,39 @@ export class SectorDepotSimulation {
                 this.combatLog.push("[TICK " + this.tick + "] Enemy destroyed: " + m.id);
               }
             }
+            return true;
+          }
+        }
+      }
+    } else {
+      // Hostile projectile (Rival or Machine) checking Player at point-blank
+      if (this.player.isAlive && !this.player.isExtracted) {
+        const dx = this.player.x - proj.x;
+        const dz = this.player.z - proj.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 0.001 && dist <= 2.5) {
+          const dot = (dx * normVx + dz * normVz) / dist;
+          if (dot > 0.75) {
+            if (this.player.isInvulnerable && this.player.action === "roll") {
+              this.enqueuePresentationEvent({
+                type: "impact",
+                position: { x: this.player.x, y: 1.2, z: this.player.z },
+                surface: "metal",
+              });
+              return true;
+            }
+
+            this.applyDamageToPlayer(proj.damage, proj.x, proj.z);
+            const knockForce = proj.isPellet ? 1.2 : 0.35;
+            this.walkVx += normVx * knockForce;
+            this.walkVz += normVz * knockForce;
+            this.enqueuePresentationEvent({
+              type: "impact",
+              position: { x: this.player.x, y: 1.5, z: this.player.z },
+              surface: "flesh",
+              damage: proj.damage,
+              label: "-" + proj.damage,
+            });
             return true;
           }
         }
@@ -3799,38 +3970,9 @@ export class SectorDepotSimulation {
           const aimDirZ = aimDz / aimDist;
 
           if (rival.weapon === "shotgun") {
-            const PELLETS_OFFSETS = [-0.174, -0.104, -0.035, 0.035, 0.104, 0.174]; // ~20° fan
-            const pelletSpeed = 28.0;
-            const pelletDmg = 4; // 6 pellets * 4 = 24 dmg point-blank
-            for (let i = 0; i < PELLETS_OFFSETS.length; i++) {
-              const pAngle = PELLETS_OFFSETS[i];
-              const cosA = Math.cos(pAngle);
-              const sinA = Math.sin(pAngle);
-              const dirX = aimDirX * cosA - aimDirZ * sinA;
-              const dirZ = aimDirX * sinA + aimDirZ * cosA;
-
-              this.spawnProjectile({
-                id: `pellet_${rival.id}_${this.tick}_${i}_${Math.random().toString(36).slice(2, 6)}`,
-                shooterId: rival.id,
-                shooterIsPlayer: false,
-                x: rMuzzle.origin.x,
-                y: rMuzzle.origin.y,
-                z: rMuzzle.origin.z,
-                vx: dirX * pelletSpeed,
-                vy: 0,
-                vz: dirZ * pelletSpeed,
-                speed: pelletSpeed,
-                damage: pelletDmg,
-                radius: 0.165,
-                maxRange: 14.0,
-                distanceTraveled: 0,
-                weapon: "shotgun",
-                isPellet: true,
-              });
-            }
+            this.fireShotgunBlast(rival.id, false, rMuzzle.origin.x, rMuzzle.origin.y, rMuzzle.origin.z, aimDirX, aimDirZ);
           } else {
-            const rawDmg = 12;
-            const speed = 48.0;
+            const spec = WEAPON_SPECS.rifle;
             this.spawnProjectile({
               id: "proj_" + rival.id + "_" + this.tick + "_" + Math.random().toString(36).slice(2, 6),
               shooterId: rival.id,
@@ -3838,13 +3980,13 @@ export class SectorDepotSimulation {
               x: rMuzzle.origin.x,
               y: rMuzzle.origin.y,
               z: rMuzzle.origin.z,
-              vx: aimDirX * speed,
+              vx: aimDirX * spec.speed,
               vy: 0,
-              vz: aimDirZ * speed,
-              speed,
-              damage: rawDmg,
-              radius: 0.21,
-              maxRange: 22.0,
+              vz: aimDirZ * spec.speed,
+              speed: spec.speed,
+              damage: spec.damage,
+              radius: spec.radius,
+              maxRange: spec.maxRange,
               distanceTraveled: 0,
               weapon: "rifle",
             });
@@ -3973,9 +4115,8 @@ export class SectorDepotSimulation {
             weapon: "rifle",
           });
 
-          // Spawn visible ballistic projectile traveling towards target with crimson tracer
-          const rawDmg = this.serverMachineDamageAuthority ? 0 : (machine.type === 'turret' ? 14 : 10);
-          const projSpeed = 24.0;
+          // Spawn visible ballistic projectile traveling towards target using consistent rifle ballistics
+          const spec = WEAPON_SPECS.rifle;
           this.spawnProjectile({
             id: `proj_${machine.id}_${this.tick}_${Math.random().toString(36).slice(2, 6)}`,
             shooterId: machine.id,
@@ -3983,12 +4124,12 @@ export class SectorDepotSimulation {
             x: muzzleX,
             y: muzzleY,
             z: muzzleZ,
-            vx: aimDirX * projSpeed,
+            vx: aimDirX * spec.speed,
             vy: 0,
-            vz: aimDirZ * projSpeed,
-            speed: projSpeed,
-            damage: rawDmg,
-            radius: 0.21,
+            vz: aimDirZ * spec.speed,
+            speed: spec.speed,
+            damage: this.serverMachineDamageAuthority ? 0 : spec.damage,
+            radius: spec.radius,
             maxRange: detectionRange + 4.0,
             distanceTraveled: 0,
             weapon: "rifle",

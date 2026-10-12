@@ -494,120 +494,181 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
 
       
       {/* =========================================================================
-          4B. TACTICAL LEVEL DESIGN: INTERMEDIATE COVER, BARRELS & INDUSTRIAL CHICANES
+          4B. SURVIV.IO SCALE TACTICAL LEVEL DESIGN & MULTI-ZONE INDUSTRIAL COMPLEX
          ========================================================================= */}
-      {/* Western Freight CQB Alley (x: -35 to -15, z: -35 to 35) */}
-      <InklineModel assetKey="barrierConcrete" position={[-25, 0, -18]} rotation={[0, Math.PI / 4, 0]} scale={1.3} />
-      <InklineModel assetKey="barrel" position={[-23, 0, -16]} scale={1.3} />
-      <InklineModel assetKey="barrel" position={[-22, 0, -17]} scale={1.3} />
-      <InklineModel assetKey="dumpster" position={[-38, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={1.3} />
-      <InklineModel assetKey="barrierConcrete" position={[-32, 0, 24]} scale={1.3} />
-      <InklineModel assetKey="barrel" position={[-30, 0, 25.5]} scale={1.3} />
 
-      {/* Central Logistics Highway Chicanes (Providing leap-frogging cover) */}
-      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, -8]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, 16]} rotation={[0, 0, 0]} scale={1.25} />
-      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, 40]} rotation={[0, 0, 0]} scale={1.25} />
+      {/* -------------------------------------------------------------------------
+          ZONE 1: CENTRAL CONTESTED LOGISTICS DEPOT & CARGO PORT (x: -16..16, z: -15..25)
+          ------------------------------------------------------------------------- */}
+      {/* Overhead Gantry Crane spanning central logistics avenue */}
+      <InklineModel assetKey="gantryCrane" position={[-14, 0, -5]} scale={[2.0, 2.0, 2.0]} />
 
-      {/* Eastern Fuel & Power Yard (x: 18 to 45, z: -25 to 40) */}
-      <InklineModel assetKey="watertankIndustrial" position={[35, 0, 10]} scale={1.7} />
-      <InklineModel assetKey="barrel" position={[31.5, 0, 7]} scale={1.3} />
-      <InklineModel assetKey="barrel" position={[33, 0, 8.5]} scale={1.3} />
-      <InklineModel assetKey="barrierConcrete" position={[22, 0, -8]} rotation={[0, Math.PI / 3, 0]} scale={1.3} />
-      <InklineModel assetKey="barrierConcrete" position={[42, 0, 28]} rotation={[0, -Math.PI / 4, 0]} scale={1.3} />
+      {/* Central Staging Cargo Platform with tactical cover crates */}
+      <InklineModel assetKey="platformStaging" position={[12, 0, 5]} scale={[1.8, 1.4, 1.8]} />
+      <InklineModel assetKey="cargoContainerOpen" position={[-12.5, 0, 2]} rotation={[0, Math.PI / 2, 0]} scale={1.2} />
+      <InklineModel assetKey="cargoContainerShort" position={[12.5, 0, -11]} rotation={[0, Math.PI / 2, 0]} scale={1.2} />
+
+      {/* Pallet Stacks and Heavy Cargo Caches */}
+      <InklineModel assetKey="stackedPalletsTall" position={[-7, 0, -8]} scale={1.5} />
+      <InklineModel assetKey="palletMetal" position={[7, 0, -8]} scale={1.6} />
+      <InklineModel assetKey="crateHeavyWooden" position={[-7, 0, 8]} scale={1.4} />
+      <InklineModel assetKey="crateMilitary" position={[7, 0, 8]} scale={1.4} />
+
+      {/* Central Logistics Highway Chicanes (Providing leap-frogging cover down main avenue) */}
+      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, -32]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="barrierWater" position={[-0.5, 0, -32]} scale={1.3} />
+
+      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, -18]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="barrel" position={[5.2, 0, -18]} scale={1.2} />
+
+      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, -4]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="trafficCone" position={[-0.8, 0, -4]} scale={1.4} />
+
+      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, 14]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="barrierWater" position={[5.0, 0, 14]} scale={1.3} />
+
+      <InklineModel assetKey="barrierConcrete" position={[-2.8, 0, 30]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="barrel" position={[-5.2, 0, 30]} scale={1.2} />
+
+      <InklineModel assetKey="barrierConcrete" position={[2.8, 0, 46]} rotation={[0, 0, 0]} scale={1.25} />
+      <InklineModel assetKey="trafficCone" position={[4.8, 0, 46]} scale={1.4} />
+
+      {/* -------------------------------------------------------------------------
+          ZONE 2: NORTHWEST CHEMICAL & FUEL REFINERY (x: -65..-20, z: -45..-5)
+          ------------------------------------------------------------------------- */}
+      {/* West Warehouse Beta */}
+      <InklineModel assetKey="warehouse" position={[-28, 0, -26]} scale={[1.75, 1.8, 1.75]} />
+      <InklineModel assetKey="ventFan" position={[-28, 9.8, -26]} scale={2.0} />
+      <InklineModel assetKey="electricalCabinet" position={[-22.2, 0, -23]} rotation={[0, -Math.PI / 2, 0]} scale={1.5} />
+      <InklineModel assetKey="ladder" position={[-22.2, 0, -26]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
+
+      {/* Refinery Heavy Storage Tanks */}
+      <InklineModel assetKey="tankVertical" position={[-46, 0, -20]} scale={[2.2, 2.2, 2.2]} />
+      <InklineModel assetKey="tankHorizontal" position={[-46, 0, -35]} scale={[2.0, 2.0, 2.0]} />
+      <InklineModel assetKey="tankSpherical" position={[-35, 0, -38]} scale={[2.2, 2.2, 2.2]} />
+      <InklineModel assetKey="watertankIndustrial" position={[-22, 0, -40]} scale={1.8} />
+
+      {/* Pipe Network & Manifolds */}
+      <InklineModel assetKey="pipeManifold" position={[-40, 0, -28]} scale={2.0} />
+      <InklineModel assetKey="pipeStraight" position={[-40, 3.5, -28]} rotation={[Math.PI / 2, 0, 0]} scale={[1.5, 1.5, 3.5]} />
+      <InklineModel assetKey="valveWheel" position={[-36, 1.2, -28]} scale={1.6} />
+
+      {/* Elevated Catwalk & Stairs connecting refinery to warehouse */}
+      <InklineModel assetKey="catwalkBridge" position={[-28, 4.0, -14]} rotation={[0, 0, 0]} scale={[2.0, 1.8, 2.5]} />
+      <InklineModel assetKey="stairFlight" position={[-22, 0, -14]} rotation={[0, Math.PI / 2, 0]} scale={1.6} />
+
+      {/* Toxic Barrels & Heavy Cover */}
+      <InklineModel assetKey="barrelToxic" position={[-42, 0, -16]} scale={1.4} />
+      <InklineModel assetKey="barrelToxic" position={[-40.5, 0, -17]} scale={1.4} />
+      <InklineModel assetKey="barrelStack" position={[-33, 0, -10.5]} scale={1.6} />
+      <InklineModel assetKey="crateHeavyWooden" position={[-36, 0, -18]} scale={1.4} />
+
+      {/* -------------------------------------------------------------------------
+          ZONE 3: SOUTHWEST FREIGHT TERMINAL & HEAVY TRUCK DOCKS (x: -65..-20, z: 10..65)
+          ------------------------------------------------------------------------- */}
+      {/* West Warehouse Alpha & Annex Loading Bay */}
+      <InklineModel assetKey="warehouse" position={[-28, 0, 10]} scale={[1.75, 1.8, 1.75]} />
+      <InklineModel assetKey="warehouseBay" position={[-28, 0, 24]} scale={[1.75, 1.8, 1.75]} />
+      <InklineModel assetKey="ventFan" position={[-28, 9.8, 10]} scale={2.0} />
+
+      {/* Covered Service Bay & Heavy Maintenance Yard */}
+      <InklineModel assetKey="serviceBayCanopy" position={[-30, 0, -2]} scale={2.0} />
+      <InklineModel assetKey="serviceBayArch" position={[-30, 0, -2]} scale={2.0} />
+      <InklineModel assetKey="serviceBayWorkbench" position={[-27, 0, -2]} rotation={[0, -Math.PI / 2, 0]} scale={1.6} />
+      <InklineModel assetKey="machineHydraulicPress" position={[-33, 0, -2]} scale={1.8} />
+      <InklineModel assetKey="cableSpoolMetal" position={[-34, 0, 4]} scale={1.7} />
+
+      {/* Raised Loading Platform & Truck Dock */}
+      <InklineModel assetKey="loadingPlatform" position={[-38, 0, 28]} scale={[2.0, 1.8, 2.0]} />
+      <InklineModel assetKey="loadingPlatformRamp" position={[-38, 0, 32.5]} rotation={[0, Math.PI, 0]} scale={[2.0, 1.8, 2.0]} />
+      <InklineModel assetKey="loadingDockLadder" position={[-33.8, 0, 28]} rotation={[0, -Math.PI / 2, 0]} scale={1.8} />
+
+      {/* CQB Alleys: Dumpsters, Scrap Piles & Planters */}
+      <InklineModel assetKey="dumpster" position={[-42, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={1.3} />
+      <InklineModel assetKey="dumpster" position={[-48, 0, 30]} rotation={[0, Math.PI / 2, 0]} scale={1.3} />
+      <InklineModel assetKey="debrisScrapPile" position={[-20, 0, 34]} scale={1.8} />
+      <InklineModel assetKey="scrapIBeam" position={[-22, 0, 36]} scale={1.7} />
+      <InklineModel assetKey="planterConcrete" position={[-18, 0, 16]} scale={1.5} />
+      <InklineModel assetKey="planterConcrete" position={[-18, 0, 24]} scale={1.5} />
+      <InklineModel assetKey="bollardHeavy" position={[-16, 0, 18]} scale={1.6} />
+      <InklineModel assetKey="bollardHeavy" position={[-16, 0, 22]} scale={1.6} />
 
       {/* Fortified Emergency Bunker Compound Perimeter */}
       <InklineModel assetKey="barrierConcrete" position={[-40, 0, -41]} rotation={[0, Math.PI / 4, 0]} scale={1.35} />
       <InklineModel assetKey="barrel" position={[-42, 0, -38]} scale={1.2} />
 
-      {/* Extraction LZ-01 Fortified Barrier Revetment */}
-      <InklineModel assetKey="barrierConcrete" position={[40, 0, 41]} rotation={[0, Math.PI / 4, 0]} scale={1.35} />
-      <InklineModel assetKey="barrel" position={[46, 0, 41]} scale={1.2} />
-      <InklineModel assetKey="barrel" position={[41, 0, 46]} scale={1.2} />
+      {/* -------------------------------------------------------------------------
+          ZONE 4: NORTHEAST POWER SUBSTATION & HEAVY INDUSTRY (x: 20..65, z: -45..10)
+          ------------------------------------------------------------------------- */}
+      {/* High-Voltage Transformer Substation */}
+      <InklineModel assetKey="machineTransformer" position={[38, 0, -18]} scale={2.0} />
+      <InklineModel assetKey="generatorLarge" position={[46, 0, -18]} scale={2.0} />
+      <InklineModel assetKey="electricalPanelWall" position={[42, 0, -10]} scale={1.8} />
+      <InklineModel assetKey="cableSpoolMetal" position={[34, 0, -10]} scale={1.7} />
+      <InklineModel assetKey="cableSpool" position={[30, 0, -14]} scale={1.7} />
 
-            {/* =========================================================================
-          4C. HEAVY INDUSTRIAL ARCHITECTURE & INKLINE CITY DISTRICT OVERHAUL
-         ========================================================================= */}
-      {/* --- West Compound: Logistics, Warehouses & Maintenance --- */}
-      {/* West Warehouse Alpha (x: -26, z: 8) */}
-      <InklineModel assetKey="warehouse" position={[-26, 0, 8]} scale={[1.75, 1.8, 1.75]} />
-      <InklineModel assetKey="ventFan" position={[-26, 9.8, 8]} scale={2.0} />
-      <InklineModel assetKey="ladder" position={[-20.2, 0, 8]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
-      <InklineModel assetKey="electricalCabinet" position={[-20.2, 0, 11]} rotation={[0, -Math.PI / 2, 0]} scale={1.5} />
-      <InklineModel assetKey="pipeStraight" position={[-20.4, 4.0, 8]} rotation={[Math.PI / 2, 0, 0]} scale={[1.5, 1.5, 3.0]} />
-
-      {/* West Warehouse Beta (x: -26, z: -25) */}
-      <InklineModel assetKey="warehouse" position={[-26, 0, -25]} scale={[1.75, 1.8, 1.75]} />
-      <InklineModel assetKey="ventFan" position={[-26, 9.8, -25]} scale={2.0} />
-      <InklineModel assetKey="electricalCabinet" position={[-20.2, 0, -22]} rotation={[0, -Math.PI / 2, 0]} scale={1.5} />
-
-      {/* West Service Bay & Heavy Maintenance Yard (between warehouses) */}
-      <InklineModel assetKey="serviceBayCanopy" position={[-30, 0, -8]} scale={2.0} />
-      <InklineModel assetKey="serviceBayArch" position={[-30, 0, -8]} scale={2.0} />
-      <InklineModel assetKey="serviceBayWorkbench" position={[-27, 0, -8]} rotation={[0, -Math.PI / 2, 0]} scale={1.6} />
-      <InklineModel assetKey="cableSpool" position={[-33, 0, -5.5]} scale={1.8} />
-      <InklineModel assetKey="barrelStack" position={[-33, 0, -10.5]} scale={1.6} />
-
-      {/* West Loading Platform & Truck Dock (x: -36, z: 25) */}
-      <InklineModel assetKey="loadingPlatform" position={[-36, 0, 25]} scale={[2.0, 1.8, 2.0]} />
-      <InklineModel assetKey="loadingPlatformRamp" position={[-36, 0, 29.5]} rotation={[0, Math.PI, 0]} scale={[2.0, 1.8, 2.0]} />
-      <InklineModel assetKey="loadingDockLadder" position={[-31.8, 0, 25]} rotation={[0, -Math.PI / 2, 0]} scale={1.8} />
-
-      {/* Overhead Gantry Crane (spanning logistics alley) */}
-      <InklineModel assetKey="gantryCrane" position={[-15, 0, -8]} scale={[2.0, 2.0, 2.0]} />
-
-      {/* Elevated Catwalk & Stair System */}
-      <InklineModel assetKey="stairFlight" position={[-20, 0, 2]} rotation={[0, Math.PI / 2, 0]} scale={1.6} />
-      <InklineModel assetKey="catwalkBridge" position={[-26, 4.0, -8.5]} rotation={[0, 0, 0]} scale={[2.0, 1.8, 2.5]} />
-
-      {/* --- East Compound: Fuel Processing, Chemical Storage & Power Substation --- */}
-      {/* Twin Vertical Fuel Tanks (x: 35 & 43, z: -18) */}
-      <InklineModel assetKey="tankVertical" position={[35, 0, -18]} scale={[2.2, 2.2, 2.2]} />
-      <InklineModel assetKey="tankVertical" position={[43, 0, -18]} scale={[2.2, 2.2, 2.2]} />
-      <InklineModel assetKey="pipeManifold" position={[39, 0, -16]} scale={2.0} />
-      <InklineModel assetKey="pipeVerticalElbow" position={[35, 0, -15.5]} scale={1.8} />
-
-      {/* Horizontal Pressure Tank (x: 38, z: 5) */}
-      <InklineModel assetKey="tankHorizontal" position={[38, 0, 5]} scale={[2.2, 2.2, 2.2]} />
-
-      {/* High-Pressure Spherical Storage Silo (x: 28, z: 22) */}
-      <InklineModel assetKey="tankSpherical" position={[28, 0, 22]} scale={[2.2, 2.2, 2.2]} />
-
-      {/* Diesel Generator & Electrical Transformer Substation (x: 42, z: -5) */}
-      <InklineModel assetKey="generatorLarge" position={[42, 0, -5]} scale={2.0} />
-      <InklineModel assetKey="machineTransformer" position={[42, 0, 2]} scale={1.8} />
-
-      {/* Towering Industrial Smokestacks (x: 52, z: -32 & +38) */}
-      <InklineModel assetKey="smokestackTall" position={[52, 0, -32]} scale={[2.2, 2.5, 2.2]} />
-      <InklineModel assetKey="smokestackTall" position={[52, 0, 38]} scale={[2.2, 2.5, 2.2]} />
+      {/* Towering Smokestacks */}
+      <InklineModel assetKey="smokestackTall" position={[56, 0, -32]} scale={[2.2, 2.5, 2.2]} />
+      <InklineModel assetKey="smokestackTwin" position={[56, 0, -16]} scale={[2.0, 2.2, 2.0]} />
 
       {/* Heavy Conveyor Feed System */}
       <InklineModel assetKey="conveyor" position={[32, 0, -5]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
       <InklineModel assetKey="conveyorIncline" position={[32, 0, 0]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
 
-      {/* --- Tactical Lighting, Scatter & Security Fences --- */}
-      {/* Strategic Perimeter Wire-Mesh & Access Gates */}
-      <InklineModel assetKey="fenceWireMesh" position={[-48, 0, -10]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
-      <InklineModel assetKey="fenceWireMesh" position={[-48, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
+      {/* Substation Perimeter Security Fencing & Access Gate */}
       <InklineModel assetKey="fenceWireMesh" position={[48, 0, -10]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
       <InklineModel assetKey="fenceWireMesh" position={[48, 0, 10]} rotation={[0, Math.PI / 2, 0]} scale={[2.2, 1.8, 2.0]} />
-      <InklineModel assetKey="fenceGate" position={[0, 0, -48]} scale={2.2} />
+      <InklineModel assetKey="fenceGate" position={[28, 0, -6]} scale={2.2} />
 
-      {/* High-Mast Street Lamps illuminating main combat intersections */}
+      {/* -------------------------------------------------------------------------
+          ZONE 5: SOUTHEAST EXTRACTION REDOUBT & MILITARY LZ-01 (x: 20..65, z: 18..65)
+          ------------------------------------------------------------------------- */}
+      {/* Military LZ Checkpoint Shelter */}
+      <InklineModel assetKey="busStopShelter" position={[30, 0, 26]} rotation={[0, Math.PI / 2, 0]} scale={1.5} />
+      <InklineModel assetKey="securityCameraPole" position={[28, 0, 32]} scale={1.8} />
+      <InklineModel assetKey="streetLampDouble" position={[42, 0, 26]} scale={1.8} />
+
+      {/* Fortified LZ-01 Double Barrier Revetments */}
+      <InklineModel assetKey="barrierConcrete" position={[34, 0, 36]} rotation={[0, 0, 0]} scale={1.35} />
+      <InklineModel assetKey="barrierConcrete" position={[34, 0, 48]} rotation={[0, 0, 0]} scale={1.35} />
+      <InklineModel assetKey="barrierConcrete" position={[50, 0, 36]} rotation={[0, 0, 0]} scale={1.35} />
+      <InklineModel assetKey="barrierConcrete" position={[50, 0, 48]} rotation={[0, 0, 0]} scale={1.35} />
+
+      {/* Barbed Wire Enclosure */}
+      <InklineModel assetKey="fenceBarbed" position={[28, 0, 42]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
+      <InklineModel assetKey="fenceBarbed" position={[54, 0, 42]} rotation={[0, Math.PI / 2, 0]} scale={1.8} />
+
+      {/* Water Barriers & Traffic Cones lining the LZ entrance */}
+      <InklineModel assetKey="barrierWater" position={[38, 0, 28]} scale={1.4} />
+      <InklineModel assetKey="barrierWater" position={[46, 0, 28]} scale={1.4} />
+      <InklineModel assetKey="trafficCone" position={[36, 0, 28]} scale={1.5} />
+      <InklineModel assetKey="trafficCone" position={[48, 0, 28]} scale={1.5} />
+
+      {/* Fuel Drums & Military Supplies */}
+      <InklineModel assetKey="barrel" position={[46, 0, 42]} scale={1.2} />
+      <InklineModel assetKey="barrel" position={[42, 0, 48]} scale={1.2} />
+      <InklineModel assetKey="crateMilitary" position={[38, 0, 52]} scale={1.5} />
+      <InklineModel assetKey="crateHeavyWooden" position={[44, 0, 52]} scale={1.5} />
+
+      {/* -------------------------------------------------------------------------
+          TACTICAL LIGHTING, CORNER TOWERS & DRAINAGE INFRASTRUCTURE
+          ------------------------------------------------------------------------- */}
+      {/* High-Mast Street Lamps at Key Intersections */}
       <InklineModel assetKey="streetLamp" position={[-12, 0, -20]} scale={1.8} />
       <InklineModel assetKey="streetLamp" position={[-12, 0, 10]} scale={1.8} />
       <InklineModel assetKey="streetLamp" position={[15, 0, -10]} scale={1.8} />
       <InklineModel assetKey="streetLamp" position={[15, 0, 20]} scale={1.8} />
+      <InklineModel assetKey="streetLamp" position={[-12, 0, 40]} scale={1.8} />
+      <InklineModel assetKey="streetLamp" position={[15, 0, 40]} scale={1.8} />
       <InklineModel assetKey="securityCameraPole" position={[-4, 0, -50]} scale={1.8} />
 
-      {/* Crate Stacks, Cable Spools, and Drainage Grates */}
-      <InklineModel assetKey="crateStack" position={[-20, 0, -14]} scale={1.5} />
-      <InklineModel assetKey="crateStack" position={[25, 0, -10]} scale={1.5} />
-      <InklineModel assetKey="cableSpool" position={[30, 0, 14]} scale={1.7} />
-      <InklineModel assetKey="grateDrain" position={[-6, 0.05, 0]} scale={1.8} />
-      <InklineModel assetKey="grateDrain" position={[6, 0.05, 0]} scale={1.8} />
+      {/* Drainage Trench Grates along Highway Gutters */}
+      <InklineModel assetKey="grateDrain" position={[-4, 0.05, -15]} scale={1.8} />
+      <InklineModel assetKey="grateDrain" position={[4, 0.05, -15]} scale={1.8} />
+      <InklineModel assetKey="grateDrain" position={[-4, 0.05, 20]} scale={1.8} />
+      <InklineModel assetKey="grateDrain" position={[4, 0.05, 20]} scale={1.8} />
 
-      {/* Depot Corner Floodlight Towers (Outside perimeter fence per R7) */}
+      {/* Perimeter Floodlight Towers */}
       <InklineModel assetKey="floodlightTower" position={[-86, 0, 86]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="floodlightTower" position={[86, 0, 86]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="floodlightTower" position={[-86, 0, -86]} scale={2.0} castShadow={false} />
@@ -615,7 +676,7 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
 
       {/* =========================================================================
           5. MODULAR DISTRICT STRUCTURES (Strictly outside playable bounds |x| > 82 or |z| > 82)
-         ========================================================================= */}
+          ========================================================================= */}
       <InklineModel assetKey="floodlightTower" position={[95, 0, 0]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="cargoContainer" position={[95, 0, 20]} scale={2.0} castShadow={false} />
       <InklineModel assetKey="floodlightTower" position={[-95, 0, 0]} scale={2.0} castShadow={false} />

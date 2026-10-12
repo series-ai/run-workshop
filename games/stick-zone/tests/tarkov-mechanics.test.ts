@@ -1291,7 +1291,7 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     for (let i = 0; i < 12; i++) {
       sim.step(makeInput({ dx: 0, dz: 0 }));
     }
-    expect(sim.player.armor).toBe(88); // 12 damage absorbed by armor (100 - 12)
+    expect(sim.player.armor).toBe(76); // 24 damage absorbed by armor (100 - 24)
   });
 
   it('31. Aim punch telemetry: player damage records tick, amount, and directional angle', () => {

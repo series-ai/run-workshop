@@ -31,7 +31,7 @@ export const SIM_CONFIG = {
   KICK_TICKS: 42,               // 0.7s melee kick
 
   // Weapon Stats (grounded in rundot/simulation/entities.json)
-  RIFLE_DAMAGE: entitiesConfig.entities.weapon_rifle.metadata.damage,
+  RIFLE_DAMAGE: 24, // Unified weapon spec (24 damage per rifle round, 600 RPM)
   RIFLE_COOLDOWN_TICKS: 6, // 100ms / 600 RPM full-auto cadence (surviv.io standard)
   SHOTGUN_DAMAGE: entitiesConfig.entities.weapon_shotgun.metadata.damage,
   SHOTGUN_COOLDOWN_TICKS: 32, // ~533ms pump cycle

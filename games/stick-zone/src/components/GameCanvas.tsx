@@ -361,7 +361,7 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
       outlineInstanced.setMatrixAt(i, _dummy.matrix);
 
       // Tail matrix
-      const tailLen = p.isPellet ? 0.95 : (p.shooterIsPlayer ? 1.4 : 2.2);
+      const tailLen = p.isPellet ? 1.0 : 2.0; // Unified projectile caliber tail length
       _dummy.scale.set(baseScale * 0.8, baseScale * 0.8, tailLen);
       _dummy.updateMatrix();
       tailInstanced.setMatrixAt(i, _dummy.matrix);
