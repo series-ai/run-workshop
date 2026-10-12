@@ -34,7 +34,7 @@
 import { DeterministicRandom } from '@series-inc/rundot-syncplay';
 import * as THREE from 'three';
 
-import { decodeCard, encodeCard, quantize, SKYRIVER_STRUCTURE_MATERIAL_GLSL, windowCellProfile, WINDOW_CELL_PROFILE_GLSL } from './structureMaterial.js';
+import { decodeCard, encodeCard, MATERIAL_CHROMA_GLSL, quantize, SKYRIVER_STRUCTURE_MATERIAL_GLSL, windowCellProfile, WINDOW_CELL_PROFILE_GLSL } from './structureMaterial.js';
 import { WINDOW_PALETTE_GLSL, windowPaletteCode, windowPaletteCodeFromQ, windowPaletteHash, windowPaletteMean } from './windowPalette';
 
 import type { SkyriverCityLayout, SkyriverTower } from '../sim/derive';
@@ -9890,6 +9890,7 @@ ${SKYRIVER_HASH_GLSL}
 ${SKYRIVER_STRUCTURED_LIGHT_GLSL}
 ${SKYRIVER_INTERIOR_RESPONSE_GLSL}
 ${SKYRIVER_STRUCTURE_MATERIAL_GLSL}
+${MATERIAL_CHROMA_GLSL}
 ${WINDOW_PALETTE_GLSL}
 ${SKYRIVER_DISTANCE_GRADE_GLSL}
 
@@ -9970,6 +9971,12 @@ void main() {
     vec3 farUnit = mix(windowPaletteMean(vWindowPalette), windowPaletteUnit(vWindowPalette, farTemp), farResolve);
     vec3 farColor = farBase + recolourWindow(
       skyriverDistrictTint( farWindow, vDistrict, DISTRICT_PANE_SATURATION ), farUnit, uDistrictColour);
+    // R43b: only the material chroma changes where local light is weak.
+    float farProtection = materialChromaProtection( farBase, farColor );
+    if ( farProtection < 1.0 ) {
+      float farRetainedY;
+      farColor += rotateMaterialChroma( farBase, farFamily, farProtection, farRetainedY ) - farBase;
+    }
     // R17: far layers grade further toward steel per layer (0.35 / 0.55 / 0.7 on top of distance).
     farColor = skyriverDistanceGrade( farColor, max( vFogDepth, 1.0 ), vLayer < 1.5 ? 0.35 : ( vLayer < 2.5 ? 0.55 : 0.7 ) );
     gl_FragColor = vec4( farColor, 1.0 );
@@ -10119,6 +10126,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   vec3 matC1 = ( concrete * matChroma + wetSheen * matChroma * ( 1.0 + 0.05 * matW ) + wetArris * matChroma * matEdge ) * contactAo;
   vec3 color = normalizeFamilyMaterial( matC0, matC1, matB, matW, matF, matFamily );
   color += familyEdgeLight( color, matChroma, facadeEdgeCatch( grain ) );
+  vec3 materialBase = color;
 
   // Hero blade light: coloured spill on the concrete around each giant sign, and the windows behind
   // and beside it go dark so the sign owns its patch of wall.
@@ -10287,6 +10295,7 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   // T7-5 pristine glass: the curtain wall reflects the cool night sky at grazing angles.
   // R14: a hint only — at 0.02-0.065 linear this sheet covered every high tower in 40-70/255 grey.
   color += vec3( 0.003, 0.006, 0.012 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide * paneStepMask;
+  materialBase += vec3( 0.003, 0.006, 0.012 ) * glassRaw * pristine * ( 0.25 + 0.75 * fresnel ) * vIsSide * paneStepMask;
   // What the grid averages out to once it stops resolving: lit share times mean pane brightness,
   // in the mean pane colour. Distant walls read as a dim glow rather than a field of sparks.
   // R12: the far average keeps the zone and band structure, so distant towers read as shapes.
@@ -10302,6 +10311,13 @@ ${SKYRIVER_OUTPUT_APPLY_GLSL}
   averaged = skyriverDistrictTint( averaged, vDistrict, DISTRICT_PANE_SATURATION );
   averaged = recolourWindow(averaged, windowPaletteMean(vWindowPalette), uDistrictColour);
   color += mix( averaged * ( 1.0 - heroShadow ) * ${SKYRIVER_INTERIOR_AVERAGE_GAIN.toFixed(2)}, resolved * EMISSIVE_GAIN, detail ) * 1.55 * ( 1.0 - 0.65 * pristine ) * paneStepMask * vEmissionAllowed;
+
+  // R43b: retain the complete light sum and rotate only material chroma.
+  float materialProtection = materialChromaProtection( materialBase, color );
+  if ( materialProtection < 1.0 ) {
+    float materialRetainedY;
+    color += rotateMaterialChroma( materialBase, matFamily, materialProtection, materialRetainedY ) - materialBase;
+  }
 
   color = skyriverDistanceGrade( color, viewDepth, 0.0 );
   gl_FragColor = vec4( max( color, vec3( 0.0 ) ), 1.0 );

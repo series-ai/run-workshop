@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import materialBaseline from './fixtures/r29b-material-baseline.json';
 import { withoutR32RoofPolicy } from './support/r32RoofPolicy';
 import { withoutR43EdgeLighting } from './support/r43EdgeLighting';
-import { withoutR43bWindowCells } from './support/r43bTowerSeparation';
+import { withoutR43bWindowCells, withoutR43bMaterialChroma } from './support/r43bTowerSeparation';
 import * as THREE from 'three';
 // These external texture stubs permit real geometry construction. They do not supply an oracle.
 vi.mock('../src/render/signAtlas', async importOriginal => {
@@ -57,7 +57,7 @@ describe('R29 independent building palette and value controls', () => {
     }
     const withoutBaseGain = (source: string) => source.replaceAll('(structureFamilyGain(family) * 0.65)', 'structureFamilyGain(family)');
     for (const [key, source] of Object.entries(SKYRIVER_CITY_SHADER_SOURCE)) {
-      expect(createHash('sha256').update(withoutBaseGain(withoutR32RoofPolicy(withoutR43EdgeLighting(withoutR43bWindowCells(source, key), key), key))).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
+      expect(createHash('sha256').update(withoutBaseGain(withoutR32RoofPolicy(withoutR43EdgeLighting(withoutR43bWindowCells(withoutR43bMaterialChroma(source, key), key), key), key))).digest('hex'), key).toBe(materialBaseline.shaderHashes[key as keyof typeof materialBaseline.shaderHashes]);
     }
     const city = new SkyriverCity({ layout: presentCityLayout(deriveCityLayout(424242)), quality: skyriverQualityFor(SkyriverQualityTier.High), colourSwitch: new SkyriverDistrictColourSwitch(true) });
     try {

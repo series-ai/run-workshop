@@ -144,6 +144,107 @@ const FAMILY_CHROMA: readonly (readonly [number, number, number])[] = Object.fre
 
 const FAMILY_EDGE_BASE = Object.freeze([1.0, 1.10, 0.90, 1.0] as const);
 
+
+/** Hue directions and fixed chroma factors for non-emissive material. */
+export const MATERIAL_CHROMA_FAMILIES = Object.freeze([
+  Object.freeze({ hue: Object.freeze([0.08, 0.12, 1.5] as const), factor: 4.0 }),
+  Object.freeze({ hue: Object.freeze([1.1, 0.8, 0.9] as const), factor: 2.0 }),
+  Object.freeze({ hue: Object.freeze([0.84, 1.08, 0.83] as const), factor: 0.75 }),
+  Object.freeze({ hue: Object.freeze([1.68, 0.94, 0.52] as const), factor: 1.5 }),
+] as const);
+
+/** RGB reconstruction can differ from retained Y by eight Float32 ULPs. */
+export const MATERIAL_CHROMA_NEAR_ZERO_BOUND = 1e-12;
+
+export interface MaterialChromaResult {
+  readonly rgb: readonly [number, number, number];
+  readonly retainedY: number;
+}
+
+const CHROMA_RB_WEIGHT = REC709_LUMINANCE_WEIGHTS[0] + REC709_LUMINANCE_WEIGHTS[2];
+
+function materialChromaDirection(family: number): readonly [number, number] {
+  const hue = MATERIAL_CHROMA_FAMILIES[family]!.hue;
+  const u = hue[0] - hue[2];
+  const v = hue[1] - (REC709_LUMINANCE_WEIGHTS[0] * hue[0]
+    + REC709_LUMINANCE_WEIGHTS[2] * hue[2]) / CHROMA_RB_WEIGHT;
+  const radius = Math.hypot(u, v);
+  return [Math.fround(u / radius), Math.fround(v / radius)];
+}
+
+/** Rotate chroma while the retained Float32 Y stays unchanged. */
+export function rotateMaterialChroma(
+  base: readonly [number, number, number], family: number, protection: number,
+): MaterialChromaResult {
+  const retainedY = Math.fround(linearLuminance(base));
+  if (protection >= 1 || retainedY <= MATERIAL_CHROMA_NEAR_ZERO_BOUND) {
+    return { rgb: base, retainedY };
+  }
+  const u = base[0] - base[2];
+  const v = base[1] - (REC709_LUMINANCE_WEIGHTS[0] * base[0]
+    + REC709_LUMINANCE_WEIGHTS[2] * base[2]) / CHROMA_RB_WEIGHT;
+  const direction = materialChromaDirection(family);
+  const radius = Math.hypot(u, v) * MATERIAL_CHROMA_FAMILIES[family]!.factor;
+  const weight = 1 - clamp01(protection);
+  const rotatedU = u + (direction[0] * radius - u) * weight;
+  const rotatedV = v + (direction[1] * radius - v) * weight;
+  const delta = [
+    REC709_LUMINANCE_WEIGHTS[2] / CHROMA_RB_WEIGHT * rotatedU - REC709_LUMINANCE_WEIGHTS[1] * rotatedV,
+    CHROMA_RB_WEIGHT * rotatedV,
+    -REC709_LUMINANCE_WEIGHTS[0] / CHROMA_RB_WEIGHT * rotatedU - REC709_LUMINANCE_WEIGHTS[1] * rotatedV,
+  ] as const;
+  const ceiling = Math.max(1, ...base);
+  let gamut = 1;
+  for (const channel of delta) {
+    if (channel < 0) gamut = Math.min(gamut, retainedY / -channel);
+    if (channel > 0) gamut = Math.min(gamut, (ceiling - retainedY) / channel);
+  }
+  return {
+    rgb: [
+      Math.fround(retainedY + delta[0] * gamut),
+      Math.fround(retainedY + delta[1] * gamut),
+      Math.fround(retainedY + delta[2] * gamut),
+    ],
+    retainedY,
+  };
+}
+
+/** This chunk leaves the existing material profile and normalization unchanged. */
+export const MATERIAL_CHROMA_GLSL = /* glsl */ `
+vec3 rotateMaterialChroma( vec3 base, float family, float protection, out float retainedY ) {
+  retainedY = dot( base, REC709_LUMA );
+  if ( protection >= 1.0 || retainedY <= ${MATERIAL_CHROMA_NEAR_ZERO_BOUND} ) return base;
+  vec2 uv = vec2( base.r - base.b,
+    base.g - ( 0.2126 * base.r + 0.0722 * base.b ) / ${CHROMA_RB_WEIGHT} );
+  vec2 direction = vec2( 0.0 );
+  float factor = 1.0;
+${MATERIAL_CHROMA_FAMILIES.map((row, i) => `  ${i === 0 ? 'if' : 'else if'} ( family < ${(i + 0.5).toFixed(1)} ) {
+    direction = vec2( ${materialChromaDirection(i).join(', ')} );
+    factor = ${row.factor.toFixed(2)};
+  }`).join('\n')}
+  vec2 rotated = mix( uv, direction * length( uv ) * factor, 1.0 - clamp( protection, 0.0, 1.0 ) );
+  vec3 delta = vec3(
+    ${REC709_LUMINANCE_WEIGHTS[2] / CHROMA_RB_WEIGHT} * rotated.x - 0.7152 * rotated.y,
+    ${CHROMA_RB_WEIGHT} * rotated.y,
+    -${REC709_LUMINANCE_WEIGHTS[0] / CHROMA_RB_WEIGHT} * rotated.x - 0.7152 * rotated.y );
+  float ceiling = max( 1.0, max( base.r, max( base.g, base.b ) ) );
+  float gamut = 1.0;
+  for ( int i = 0; i < 3; i ++ ) {
+    if ( delta[i] < 0.0 ) gamut = min( gamut, retainedY / -delta[i] );
+    if ( delta[i] > 0.0 ) gamut = min( gamut, ( ceiling - retainedY ) / delta[i] );
+  }
+  return vec3( retainedY ) + delta * gamut;
+}
+
+float materialChromaProtection( vec3 base, vec3 total ) {
+  float maximum = max( total.r, max( total.g, total.b ) );
+  vec3 localLight = max( total - base, vec3( 0.0 ) );
+  float lightMaximum = max( localLight.r, max( localLight.g, localLight.b ) );
+  float lightRatio = lightMaximum / max( dot( base, REC709_LUMA ), 1e-6 );
+  return max( smoothstep( 0.02, 0.04, maximum ), smoothstep( 0.1, 0.25, lightRatio ) );
+}
+`;
+
 /** Pure material profile derived deterministically from quantized seed q. */
 export function profile(q: number): StructureMaterialProfile {
   const family = q >>> 14;
