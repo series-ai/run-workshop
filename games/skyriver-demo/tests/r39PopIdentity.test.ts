@@ -81,23 +81,59 @@ function snapshot(traffic: ReturnType<typeof createSkyriverTraffic>): Frame {
     profile: shape.getX(slot), lod: [lod.getX(slot), lod.getY(slot)], slot,
   }));
   const hulls: HullSample[] = [];
-  // Sorted actual IDs provide an independent slot order. Actual centres must agree.
+  const streakById = new Map<number, StreakSample>();
+  for (const row of streaks) {
+    if (streakById.has(row.carId)) throw Error('R39_REAL_CAR_IDS_NOT_UNIQUE');
+    streakById.set(row.carId, row);
+  }
+  // Actual public ID-to-native-slot metadata accounts for hulls with no lamp row.
+  const hullOwners = new Map<string, ReturnType<typeof traffic.carEvidence>>();
+  const capacity = traffic.objects.reduce((sum, object) => sum + (object instanceof InstancedMesh ? object.instanceMatrix.count : 0), 0);
+  for (let carId = 0; carId < capacity; carId += 1) {
+    const evidence = traffic.carEvidence(carId);
+    if (!evidence || evidence.hullMeshName === null || evidence.hullSlot < 0) continue;
+    if (evidence.carId !== carId) throw Error('R39_NATIVE_ID_METADATA_MISMATCH');
+    const key = evidence.hullMeshName + ':' + evidence.hullSlot;
+    if (hullOwners.has(key)) throw Error('R39_NATIVE_SLOT_ID_AMBIGUOUS');
+    hullOwners.set(key, evidence);
+  }
+  const matchedStreakIds = new Set<number>();
   for (const object of traffic.objects) {
     if (!(object instanceof InstancedMesh)) continue;
     const profile = TRAFFIC_APPEARANCE_PROFILES.findIndex(p => object.name === 'skyriver.traffic.' + p.name);
-    const rows = streaks.filter(s => s.profile === profile).sort((a, b) => a.carId - b.carId);
-    if (rows.length !== object.count) throw new Error('R39_REAL_BATCH_COUNT_MISMATCH');
     const hullFade = object.geometry.getAttribute('aFade');
     if (hullFade.itemSize !== 1 || !(hullFade.array instanceof Float32Array)) throw new Error('R33_REAL_HULL_FADE_MISSING');
     for (let slot = 0; slot < object.count; slot += 1) {
+      const owner = hullOwners.get(object.name + ':' + slot);
+      if (!owner || owner.profileIndex !== profile) throw Error('R39_NATIVE_HULL_ID_MISSING');
       const matrix = Array.from(object.instanceMatrix.array.slice(slot * 16, slot * 16 + 16));
-      const row = rows[slot]!;
-      if (row.position.some((v, axis) => Math.abs(v - matrix[12 + axis]!) > 1e-4)) throw new Error('R39_REAL_CAR_CENTRE_MISMATCH');
-      hulls.push({ mesh: object.name, slot, carId: row.carId, matrix, fade: hullFade.getX(slot) });
+      if (owner.position.some((value, axis) => Math.abs(value - matrix[12 + axis]!) > 1e-4)) {
+        throw Error('R39_NATIVE_OWNER_CENTRE_MISMATCH');
+      }
+      const row = streakById.get(owner.carId);
+      if (row) {
+        if (matchedStreakIds.has(row.carId)) throw Error('R39_STREAK_HULL_OWNER_AMBIGUOUS');
+        matchedStreakIds.add(row.carId);
+      }
+      if (hullFade.getX(slot) > 0 && !row) throw Error('R39_POSITIVE_HULL_STREAK_ID_MISMATCH');
+      if (row && (row.profile !== profile || row.position.some((v, axis) => Math.abs(v - matrix[12 + axis]!) > 1e-4))) {
+        throw Error('R39_REAL_CAR_CENTRE_MISMATCH');
+      }
+      // Keep zero-F hulls and their raw relocation events. No raster discard inference.
+      hulls.push({ mesh: object.name, slot, carId: owner.carId, matrix, fade: hullFade.getX(slot) });
     }
   }
+  if (matchedStreakIds.size !== streaks.length) throw Error('R39_STREAK_HULL_OWNER_MISSING');
   if (new Set(streaks.map(s => s.carId)).size !== streaks.length) throw new Error('R39_REAL_CAR_IDS_NOT_UNIQUE');
   return { streaks, hulls };
+}
+/** Select an actual source whose100m fault stays in the detector's fixed view. */
+function relocationFaultCar(frame: Frame, project: (p: Position) => number[] | null): StreakSample | undefined {
+  return frame.streaks.find(row => {
+    const before = project(row.position), after = project([row.position[0] + 100, row.position[1], row.position[2]]);
+    return row.fade > 0.9 && before !== null && after !== null
+      && Math.hypot(after[0]! - before[0]!, after[1]! - before[1]!) > 60;
+  });
 }
 function setup(seed = 424242) {
   const traffic = createSkyriverTraffic({ seed, quality: TRAFFIC_QUALITY_TIERS.high, maxImpostors: 0 });
@@ -197,7 +233,7 @@ describe('R39 independent real-buffer pop identity', () => {
   it.each([0, 1e-6, 0.5, 1])('keeps raw same-ID relocation with aFade %f', fade => {
     const { traffic, cam, project } = setup();
     try {
-      const before = snapshot(traffic), car = before.streaks.find(row => row.fade > 0.9 && project(row.position));
+      const before = snapshot(traffic), car = relocationFaultCar(before, project);
       const hull = before.hulls.find(row => row.carId === car?.carId);
       if (!car || !hull) throw new Error('R39_VISIBLE_REAL_HULL_MISSING');
       const mesh = actualHull(traffic, hull), streak = actualStreak(traffic);
@@ -261,7 +297,7 @@ describe('R39 independent real-buffer pop identity', () => {
   it.each(['previous', 'current', 'both'] as const)('keeps the raw relocation when %s identity is missing', missing => {
     const { traffic, cam, project } = setup();
     try {
-      const before = snapshot(traffic), car = before.streaks.find(row => row.fade > 0.9 && project(row.position)), hull = before.hulls.find(row => row.carId === car?.carId);
+      const before = snapshot(traffic), car = relocationFaultCar(before, project), hull = before.hulls.find(row => row.carId === car?.carId);
       if (!car || !hull) throw new Error('R39_VISIBLE_REAL_HULL_MISSING');
       const mesh = actualHull(traffic, hull), streak = actualStreak(traffic), movedX = car.position[0] + 100;
       mesh.instanceMatrix.array[hull.slot * 16 + 12] = movedX;

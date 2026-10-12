@@ -1,4 +1,4 @@
-import { InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Mesh, ShaderMaterial } from 'three';
+import { InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera, ShaderMaterial, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { HOP_COHORT_BOUNDS, newFlowSample, renderTrafficModel, sampleStreamFlow } from '../src/render/trafficStreams';
@@ -52,84 +52,73 @@ describe('R15 chase traffic in the R21 model', () => {
     }
   });
 
-  it('maintains the same logical car ID and continuous pose through the crossover band', () => {
-    const traffic = createSkyriverTraffic({
-      seed: 424242,
-      quality: TRAFFIC_QUALITY_TIERS.high,
-    });
-    const streakMesh = traffic.objects.find((o) => o.name === 'skyriver.traffic.streaks') as Mesh;
-    expect(streakMesh).toBeDefined();
-    const posAttr = streakMesh.geometry.getAttribute('aCarPos');
-    const dirAttr = streakMesh.geometry.getAttribute('aCarDir');
-    const fadeAttr = streakMesh.geometry.getAttribute('aCarFade');
-    const lodAttr = streakMesh.geometry.getAttribute('aCarLod');
-    expect(posAttr).toBeDefined();
-    expect(dirAttr).toBeDefined();
-    expect(fadeAttr).toBeDefined();
-    expect(lodAttr).toBeDefined();
-
+  it('keeps permanent identity, pose and shared native visibility through the crossover band', () => {
+    const traffic = createSkyriverTraffic({ seed: 424242, quality: TRAFFIC_QUALITY_TIERS.high });
+    const streak = traffic.objects.find(object => object.name === 'skyriver.traffic.streaks');
+    if (!(streak instanceof Mesh) || !(streak.geometry instanceof InstancedBufferGeometry)) throw Error('R15_REAL_STREAK_REQUIRED');
+    const geometry = streak.geometry, positions = geometry.getAttribute('aCarPos');
+    const directions = geometry.getAttribute('aCarDir'), fades = geometry.getAttribute('aCarFade');
+    const lod = geometry.getAttribute('aCarLod'), shapes = geometry.getAttribute('aCarShape');
+    const camera = new PerspectiveCamera(62, 1280 / 720, 1, 14000);
+    camera.position.set(0, 1500, 0); camera.lookAt(0, 1500, -1000); camera.updateMatrixWorld(true);
+    const update = (time: number) => {
+      camera.updateProjectionMatrix(); camera.updateMatrixWorld(true);
+      const angle = 2 / (camera.projectionMatrix.elements[5]! * 720);
+      traffic.setPixelAngle(angle, angle); traffic.setCameraFrame(camera.matrixWorldInverse.elements, camera.near);
+      traffic.update(time, camera.position);
+    };
+    const smooth = (start: number, end: number, value: number) => {
+      const x = Math.max(0, Math.min(1, (value - start) / (end - start))); return x * x * (3 - 2 * x);
+    };
     try {
-      // Warm up and settle full presence at time t = 24.
-      const baseCam = { x: 0, y: 1500, z: 0 };
-      traffic.update(0, baseCam);
-      traffic.update(12, baseCam);
-      traffic.update(24, baseCam);
-
-      // Select a car in the streak batch that has a valid positive direction.
-      const targetSlot = 50;
-      const initialPos = [posAttr.array[targetSlot * 3]!, posAttr.array[targetSlot * 3 + 1]!, posAttr.array[targetSlot * 3 + 2]!];
-      const logicalId = lodAttr.array[targetSlot * 3 + 2]!;
-      expect(Number.isInteger(logicalId)).toBe(true);
-      expect(logicalId).toBeGreaterThanOrEqual(0);
-
-      // Place camera along the Z axis relative to this car at distances across the handover band.
-      const distances = [900, 1080, 1190, 1245, 1300, 1400, 2000];
-      for (const d of distances) {
-        const testCam = { x: initialPos[0]!, y: initialPos[1]!, z: initialPos[2]! + d };
-        traffic.update(24, testCam);
-
-        // Verify the logical car ID is preserved in the exact same slot.
-        const idAtD = lodAttr.array[targetSlot * 3 + 2]!;
-        expect(idAtD).toBe(logicalId);
-
-        // Verify position and direction remain identical at fixed time t = 24.
-        expect(posAttr.array[targetSlot * 3]!).toBeCloseTo(initialPos[0]!, 6);
-        expect(posAttr.array[targetSlot * 3 + 1]!).toBeCloseTo(initialPos[1]!, 6);
-        expect(posAttr.array[targetSlot * 3 + 2]!).toBeCloseTo(initialPos[2]!, 6);
-
-        const nearShare = lodAttr.array[targetSlot * 3]!;
-        const farShare = lodAttr.array[targetSlot * 3 + 1]!;
-        const fade = fadeAttr.array[targetSlot * 4]!;
-        const trailWeight = fadeAttr.array[targetSlot * 4 + 3]!;
-
-        // Total light share is conserved at 1.0 through the band.
-        expect(nearShare + farShare).toBeCloseTo(1.0, 5);
-        expect(nearShare).toBeGreaterThanOrEqual(0);
-        expect(farShare).toBeGreaterThanOrEqual(0);
-
-        // Streak lamp fade uses the total share.
-        expect(fade).toBeCloseTo(1.0, 5);
-
-        if (d >= 1300) {
-          // Zero near share and zero trails beyond 1300 m at full presence.
-          expect(nearShare).toBeCloseTo(0, 5);
-          expect(farShare).toBeCloseTo(1.0, 5);
-          expect(trailWeight).toBeCloseTo(0, 5);
-          if (d > 1300) {
-            expect(nearShare).toBe(0);
-            expect(trailWeight).toBe(0);
+      for (const time of [0, 12, 24]) update(time);
+      expect(geometry.instanceCount).toBeGreaterThan(50);
+      const initialSlot = 50, id = lod.getZ(initialSlot);
+      expect(Number.isInteger(id)).toBe(true); expect(id).toBeGreaterThanOrEqual(0);
+      const initialPosition = new Vector3(positions.getX(initialSlot), positions.getY(initialSlot), positions.getZ(initialSlot));
+      const initialDirection = [directions.getX(initialSlot), directions.getY(initialSlot), directions.getZ(initialSlot), directions.getW(initialSlot)];
+      const initialSize = fades.getY(initialSlot), initialProfile = shapes.getX(initialSlot), initialTrail = fades.getW(initialSlot);
+      const owner = traffic.carEvidence(id); if (!owner) throw Error('R15_NATIVE_ID_EVIDENCE_REQUIRED');
+      const hull = traffic.objects.find(object => object.name === owner.hullMeshName);
+      if (!(hull instanceof InstancedMesh)) throw Error('R15_NATIVE_HULL_REQUIRED');
+      const initialMatrix = Array.from(hull.instanceMatrix.array.slice(owner.hullSlot * 16, owner.hullSlot * 16 + 16));
+      hull.geometry.computeBoundingBox(); const box = hull.geometry.boundingBox;
+      if (!box) throw Error('R15_REAL_BODY_BOUNDS_REQUIRED');
+      const distances = [...new Set([...Array.from({ length: 45 }, (_, i) => 900 + i * 25), 1080, 1190, 1245, 1300, 1400, 2000])].sort((a, b) => a - b);
+      let previous = 1; const slots = new Set<number>();
+      for (const fov of [62, 8]) {
+        camera.fov = fov; previous = 1;
+        for (const distance of distances) {
+          camera.position.copy(initialPosition).add(new Vector3(0, 0, distance)); camera.lookAt(initialPosition); update(24);
+          const current = traffic.carEvidence(id); if (!current) throw Error('R15_PERMANENT_ID_LOST');
+          expect(current.admitted).toBe(true); expect(current.hullMeshName).toBe(hull.name);
+          const native = Array.from(hull.instanceMatrix.array.slice(current.hullSlot * 16, current.hullSlot * 16 + 16));
+          expect(native).toEqual(initialMatrix);
+          const matrix = new Matrix4().fromArray(native), points = [];
+          for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+            points.push(new Vector3(x, y, z).applyMatrix4(matrix).project(camera));
           }
-        } else if (d === 1080) {
-          expect(nearShare).toBeCloseTo(1.0, 5);
-          expect(farShare).toBe(0);
-        } else if (d === 1190) {
-          expect(nearShare).toBeCloseTo(0.5, 4);
-          expect(farShare).toBeCloseTo(0.5, 4);
+          const extent = Math.max((Math.max(...points.map(point => point.x)) - Math.min(...points.map(point => point.x))) * 640,
+            (Math.max(...points.map(point => point.y)) - Math.min(...points.map(point => point.y))) * 360);
+          const far = 1 - smooth(750, 1300, distance), expected = far + (1 - far) * smooth(2, 6, extent);
+          const hullFade = hull.geometry.getAttribute('aFade').getX(current.hullSlot);
+          expect(hullFade).toBeCloseTo(expected, 5); expect(hullFade).toBeLessThanOrEqual(previous + 1e-6); previous = hullFade;
+          const rows = Array.from({ length: geometry.instanceCount }, (_, slot) => slot).filter(slot => lod.getZ(slot) === id);
+          if (expected === 0) { expect(rows).toHaveLength(0); expect(hullFade).toBe(0); continue; }
+          expect(rows).toHaveLength(1); const slot = rows[0]!; slots.add(slot);
+          expect(positions.getX(slot)).toBeCloseTo(initialPosition.x, 6);
+          expect(positions.getY(slot)).toBeCloseTo(initialPosition.y, 6);
+          expect(positions.getZ(slot)).toBeCloseTo(initialPosition.z, 6);
+          expect([directions.getX(slot), directions.getY(slot), directions.getZ(slot), directions.getW(slot)]).toEqual(initialDirection);
+          expect(shapes.getX(slot)).toBe(initialProfile); expect(fades.getY(slot)).toBe(initialSize);
+          expect(lod.getX(slot)).toBe(1); expect(lod.getY(slot)).toBe(0);
+          expect(fades.getX(slot)).toBeCloseTo(expected, 5); expect(fades.getX(slot)).toBeCloseTo(hullFade, 5);
+          expect(fades.getW(slot)).toBe(initialTrail);
+          if (extent >= 6) { expect(hullFade).toBe(1); expect(fades.getX(slot)).toBe(1); }
         }
       }
-    } finally {
-      traffic.dispose();
-    }
+      expect(slots.size).toBeGreaterThan(1);
+    } finally { traffic.dispose(); }
   });
 
   it('guarantees deterministic state restoration and reverse-time evaluation', () => {

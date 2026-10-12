@@ -383,20 +383,59 @@ function cpuAppearanceRecords(traffic: ReturnType<typeof createSkyriverTraffic>)
   const lod = streak.geometry.getAttribute('aCarLod');
   const fade = streak.geometry.getAttribute('aCarFade');
   const shape = streak.geometry.getAttribute('aCarShape');
-  const hullTypes: number[] = [];
+  const positions = streak.geometry.getAttribute('aCarPos');
+  const count = traffic.stats().activeThrusters;
+  const byId = new Map<number, number>();
+  for (let slot = 0; slot < count; slot += 1) {
+    const id = lod.getZ(slot);
+    if (byId.has(id)) throw Error('R28_NATIVE_STREAK_ID_DUPLICATE');
+    byId.set(id, slot);
+  }
+  const owners = new Map<string, ReturnType<typeof traffic.carEvidence>>();
+  const capacity = traffic.objects.reduce((sum, object) => sum + (object instanceof InstancedMesh ? object.instanceMatrix.count : 0), 0);
+  for (let id = 0; id < capacity; id += 1) {
+    const evidence = traffic.carEvidence(id);
+    if (!evidence || evidence.hullMeshName === null || evidence.hullSlot < 0) continue;
+    const key = evidence.hullMeshName + ':' + evidence.hullSlot;
+    if (owners.has(key) || evidence.carId !== id) throw Error('R28_NATIVE_HULL_ID_AMBIGUOUS');
+    owners.set(key, evidence);
+  }
+  const records: number[][] = [];
+  let positiveHulls = 0, zeroHulls = 0;
+  const usedStreakIds = new Set<number>();
   for (const before of GEOMETRY_BEFORE) {
     const hull = meshNamed(traffic, 'skyriver.traffic.' + before.name);
-    if (!(hull instanceof InstancedMesh)) throw new Error('R28_REAL_HULL_MISSING');
-    for (let i = 0; i < hull.count; i += 1) hullTypes.push(before.renderId);
+    if (!(hull instanceof InstancedMesh)) throw Error('R28_REAL_HULL_MISSING');
+    const hullFade = hull.geometry.getAttribute('aFade');
+    for (let slot = 0; slot < hull.count; slot += 1) {
+      const evidence = owners.get(hull.name + ':' + slot);
+      if (!evidence || evidence.profileIndex !== before.renderId) throw Error('R28_NATIVE_HULL_ID_MISSING');
+      const matrix = hull.instanceMatrix.array, offset = slot * 16;
+      for (const axis of [0, 1, 2]) {
+        expect(Math.abs(evidence.position[axis]! - matrix[offset + 12 + axis]!)).toBeLessThan(1e-4);
+      }
+      const physicalScale = Math.fround(evidence.physicalScale);
+      for (const column of [0, 4, 8]) expect(Math.abs(Math.hypot(matrix[offset + column]!,
+        matrix[offset + column + 1]!, matrix[offset + column + 2]!) - physicalScale)).toBeLessThanOrEqual(1e-5);
+      const row = byId.get(evidence.carId);
+      if (hullFade.getX(slot) > 0) { positiveHulls += 1; expect(row).toBeDefined(); } else zeroHulls += 1;
+      if (row !== undefined) {
+        expect(usedStreakIds.has(evidence.carId)).toBe(false);
+        usedStreakIds.add(evidence.carId);
+        expect(shape.getX(row)).toBe(before.renderId);
+        expect(Number.isFinite(shape.getY(row))).toBe(true);
+        expect(fade.getY(row)).toBe(physicalScale);
+        for (const axis of [0, 1, 2]) {
+          const actual = axis === 0 ? positions.getX(row) : axis === 1 ? positions.getY(row) : positions.getZ(row);
+          expect(Math.abs(actual - matrix[offset + 12 + axis]!)).toBeLessThan(1e-4);
+        }
+      }
+      records.push([evidence.carId, before.renderId, physicalScale]);
+    }
   }
-  const count = traffic.stats().activeThrusters;
-  expect(hullTypes).toHaveLength(count);
-  const records: number[][] = [];
-  for (let i = 0; i < count; i += 1) {
-    expect(shape.getX(i)).toBe(hullTypes[i]);
-    expect(Number.isFinite(shape.getY(i))).toBe(true);
-    records.push([lod.getZ(i), shape.getX(i), fade.getY(i)]);
-  }
+  expect(usedStreakIds.size).toBe(count);
+  expect(positiveHulls + zeroHulls).toBe(records.length);
+
   records.sort((a, b) => a[0]! - b[0]!);
   return new Float32Array(records.flat());
 }
@@ -419,11 +458,19 @@ describe('R28 real CPU identities and shared shader inputs', () => {
       traffic.update(25, { x: 0, y: 1500, z: 0 });
       traffic.update(27, { x: 0, y: 1500, z: 0 });
       const smaller = cpuAppearanceRecords(traffic);
-      expect(hash(smaller)).toBe(hash(records.subarray(0, smaller.length)));
+      const baseline = new Map(Array.from({ length: records.length / 3 }, (_, index) =>
+        [records[index * 3]!, Array.from(records.subarray(index * 3, index * 3 + 3))] as const));
+      const expectedSubset = (current: Float32Array) => new Float32Array(Array.from({ length: current.length / 3 }, (_, index) => {
+        const expected = baseline.get(current[index * 3]!);
+        if (!expected) throw Error('R28_NATIVE_ID_OUTSIDE_FROZEN_BASELINE');
+        return expected;
+      }).flat());
+      expect(hash(smaller)).toBe(hash(expectedSubset(smaller)));
       traffic.setQuality(TRAFFIC_QUALITY_TIERS.high);
       traffic.update(28, { x: 0, y: 1500, z: 0 });
       traffic.update(30, { x: 0, y: 1500, z: 0 });
-      expect(hash(cpuAppearanceRecords(traffic))).toBe(beforeHash);
+      const grown = cpuAppearanceRecords(traffic);
+      expect(hash(grown)).toBe(hash(expectedSubset(grown)));
     });
   });
 

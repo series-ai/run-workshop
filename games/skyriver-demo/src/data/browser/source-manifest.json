@@ -41,8 +41,8 @@
   },
   {
     "path": "src/main.ts",
-    "sha256": "cb144b9ba56f5cbc40f7fd15bca3a7819d847677c8ee608e73694bbd2cc22af1",
-    "byteLength": 52947
+    "sha256": "f67db43ccb79b59846346fff5f08db0620fa6807ae9e20564244feb5dcd16fac",
+    "byteLength": 52954
   },
   {
     "path": "src/render/atmosphere.ts",

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { BufferGeometry, InstancedMesh, Mesh, Ray, Vector3 } from 'three';
+import { BufferGeometry, InstancedBufferGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera, Ray, Vector3 } from 'three';
 import { deriveTrafficParams } from '../src/sim/derive';
 import { carTrafficPlan, createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { createSkyriverShuttle, SHUTTLE_NOZZLE_ROOTS_LOCAL, SHUTTLE_WAKE_SAMPLE_COUNT } from '../src/render/shuttle';
@@ -228,36 +228,82 @@ describe('R39 independent physical vehicle output', () => {
     for (const a of [0, 1, 2]) for (const variant of [false, true]) expect(trafficRenderProfile(a, variant, true)).toBe(5);
   });
 
-  it.each([0, 424242, 2147483647, 4294967295])('routes every real CPU car to an existing allowed hull for seed %i', (seed) => {
-    const actual = createSkyriverTraffic({ seed, quality: TRAFFIC_QUALITY_TIERS.high, maxImpostors: 0 });
+  it.each([0, 424242, 2147483647, 4294967295])('routes every admitted CPU car and omits only zero-visibility lamps for seed %i', (seed) => {
     const params = deriveTrafficParams(seed, 2400);
-    try {
-      actual.setAnchor(0, 1500, 0, 0, 160, 0, 0);
-      actual.update(12, { x: 0, y: 1500, z: 0 });
-      const streak = actual.objects.find((o) => o.name === 'skyriver.traffic.streaks') as Mesh;
-      const lod = streak.geometry.getAttribute('aCarLod'),
-        shape = streak.geometry.getAttribute('aCarShape');
-      const seen = new Set<number>();
-      for (let at = 0; at < actual.stats().activeThrusters; at += 1) {
-        const id = lod.getZ(at),
-          type = shape.getX(at);
-        const role: { role: import('../src/render/traffic').CarRole; stream: number } = { role: 'free', stream: 255 };
-        carTrafficPlan(seed, id, role);
-        seen.add(id);
-        expect(TRAFFIC_APPEARANCE_PROFILES[type]).toBeDefined();
-        if (role.role === 'stream' && STREAMS[role.stream]![5]! <= 70) expect(type).toBe(5);
-        else
-          expect(
-            [
-              [0, 3],
-              [1, 2],
-              [2, 4],
-            ][params.archetype[id]!]!,
-          ).toContain(type);
-      }
-      expect(seen.size).toBe(2400);
-    } finally {
-      actual.dispose();
+    for (const mode of ['view-frame', 'sphere-compatibility'] as const) {
+      const actual = createSkyriverTraffic({ seed, quality: TRAFFIC_QUALITY_TIERS.high, maxImpostors: 0 });
+      const camera = new PerspectiveCamera(62, 1280 / 720, 1, 14000);
+      camera.position.set(0, 1500, 0); camera.lookAt(0, 1500, -1000); camera.updateMatrixWorld(true);
+      const cssAngle = mode === 'view-frame' ? 2 / (camera.projectionMatrix.elements[5]! * 720) : 0.0012;
+      try {
+        actual.setAnchor(0, 1500, 0, 0, 160, 0, 0);
+        if (mode === 'view-frame') {
+          actual.setPixelAngle(cssAngle, cssAngle);
+          actual.setCameraFrame(camera.matrixWorldInverse.elements, camera.near);
+        }
+        actual.update(12, camera.position);
+        const streak = actual.objects.find(object => object.name === 'skyriver.traffic.streaks');
+        if (!(streak instanceof Mesh) || !(streak.geometry instanceof InstancedBufferGeometry)) throw Error('R39_NATIVE_STREAK_REQUIRED');
+        const lod = streak.geometry.getAttribute('aCarLod'), shape = streak.geometry.getAttribute('aCarShape');
+        const position = streak.geometry.getAttribute('aCarPos'), lampFade = streak.geometry.getAttribute('aCarFade');
+        const lampSlots = new Map<number, number>();
+        for (let slot = 0; slot < streak.geometry.instanceCount; slot += 1) {
+          const id = lod.getZ(slot); expect(lampSlots.has(id)).toBe(false); lampSlots.set(id, slot);
+        }
+        const hulls = actual.objects.filter((object): object is InstancedMesh => object instanceof InstancedMesh);
+        expect(hulls.reduce((sum, mesh) => sum + mesh.count, 0)).toBe(2400);
+        const ownedSlots = new Set<string>(), expectedLampIds = new Set<number>();
+        const smooth = (start: number, end: number, value: number) => {
+          const x = Math.max(0, Math.min(1, (value - start) / (end - start))); return x * x * (3 - 2 * x);
+        };
+        for (let id = 0; id < 2400; id += 1) {
+          const owner = actual.carEvidence(id); if (!owner) throw Error('R39_NATIVE_ID_EVIDENCE_REQUIRED');
+          expect(owner.carId).toBe(id); expect(owner.admitted).toBe(true); expect(owner.requested).toBe(true);
+          const mesh = hulls.find(hull => hull.name === owner.hullMeshName);
+          if (!mesh) throw Error('R39_ADMITTED_HULL_MISSING');
+          expect(owner.hullSlot).toBeGreaterThanOrEqual(0); expect(owner.hullSlot).toBeLessThan(mesh.count);
+          const key = mesh.name + ':' + owner.hullSlot; expect(ownedSlots.has(key)).toBe(false); ownedSlots.add(key);
+          const type = names.findIndex(name => mesh.name === 'skyriver.traffic.' + name);
+          expect(type).toBeGreaterThanOrEqual(0); expect(owner.profileIndex).toBe(type);
+          const role: { role: import('../src/render/traffic').CarRole; stream: number } = { role: 'free', stream: 255 };
+          carTrafficPlan(seed, id, role);
+          if (role.role === 'stream' && STREAMS[role.stream]![5]! <= 70) expect(type).toBe(5);
+          else expect([[0, 3], [1, 2], [2, 4]][params.archetype[id]!]!).toContain(type);
+          const matrix = new Matrix4().fromArray(mesh.instanceMatrix.array, owner.hullSlot * 16);
+          const center = new Vector3().setFromMatrixPosition(matrix), distance = center.distanceTo(camera.position);
+          mesh.geometry.computeBoundingBox(); const box = mesh.geometry.boundingBox;
+          if (!box) throw Error('R39_NATIVE_BODY_BOUNDS_REQUIRED');
+          const points = [];
+          for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+            points.push(new Vector3(x, y, z).applyMatrix4(matrix));
+          }
+          const depths = points.map(point => point.clone().applyMatrix4(camera.matrixWorldInverse).z);
+          const behind = mode === 'view-frame' && depths.every(z => z > -camera.near);
+          const crossing = mode === 'view-frame' && !behind && depths.some(z => z > -camera.near);
+          const projected = points.map(point => point.clone().project(camera));
+          const scale = Math.hypot(matrix.elements[0]!, matrix.elements[1]!, matrix.elements[2]!);
+          const extent = mode === 'sphere-compatibility' ? box.getSize(new Vector3()).length() * scale / (distance * cssAngle)
+            : behind ? 0 : crossing ? 6 : Math.max(
+              (Math.max(...projected.map(point => point.x)) - Math.min(...projected.map(point => point.x))) * 640,
+              (Math.max(...projected.map(point => point.y)) - Math.min(...projected.map(point => point.y))) * 360);
+          const far = 1 - smooth(750, 1300, distance);
+          const expected = behind ? 0 : far + (1 - far) * smooth(2, 6, extent);
+          const hullFade = mesh.geometry.getAttribute('aFade').getX(owner.hullSlot);
+          expect(hullFade).toBeCloseTo(expected, 5);
+          const slot = lampSlots.get(id);
+          if (expected > 0) { expectedLampIds.add(id); expect(slot).toBeDefined(); }
+          else { expect(hullFade).toBe(0); expect(slot).toBeUndefined(); }
+          if (slot !== undefined) {
+            expect(shape.getX(slot)).toBe(type); expect(lod.getX(slot)).toBe(1); expect(lod.getY(slot)).toBe(0);
+            expect(lampFade.getX(slot)).toBeCloseTo(expected, 5);
+            expect(Math.abs(scale - lampFade.getY(slot))).toBeLessThanOrEqual(1e-5);
+            expect(new Vector3(position.getX(slot), position.getY(slot), position.getZ(slot)).distanceTo(center)).toBeLessThan(1e-4);
+          }
+        }
+        expect(ownedSlots.size).toBe(2400);
+        expect(new Set(lampSlots.keys())).toEqual(expectedLampIds);
+        expect(lampSlots.size + (2400 - expectedLampIds.size)).toBe(2400);
+      } finally { actual.dispose(); }
     }
   });
 

@@ -509,7 +509,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   const onFrame = (frame: SkyriverFrame): void => {
     scene.renderer.getDrawingBufferSize(bufferSize);
     scene.renderer.getSize(cssSize);
-    const inverseFocalLength = 2 / frame.camera.projectionMatrix.elements[5]!;
+    const inverseFocalLength = 2 / Number(frame.camera.projectionMatrix.elements[5]);
     traffic.setPixelAngle(
       inverseFocalLength / Math.max(1, bufferSize.y),
       inverseFocalLength / Math.max(1, cssSize.y),
