@@ -96,6 +96,45 @@ export const DEPOT_CRATE_CONFIGS: DepotCrateConfig[] = [
       { id: "item_training_stim", name: "Emergency Field Stim", rarity: "rare", icon: "💉", value: 250, type: "med" },
     ],
   },
+  {
+    id: "crate_warehouse_vault",
+    x: 22.5,
+    z: -9.5,
+    cashValue: 4200,
+    containerType: "console",
+    containerTitle: "REINFORCED ARMORY VAULT // COMMAND HQ",
+    items: [
+      { id: "item_gold_bullion", name: "Military Gold Bullion Bar", rarity: "legendary", icon: "🪙", value: 2500, type: "valuable" },
+      { id: "item_m61", name: "7.62x51mm M61 AP Ammo Pack", rarity: "rare", icon: "📦", value: 700, type: "ammo" },
+      { id: "item_medkit", name: "Grizzly First Aid Field Kit", rarity: "epic", icon: "🩹", value: 1000, type: "med" },
+    ],
+  },
+  {
+    id: "crate_river_cache",
+    x: -20,
+    z: 19,
+    cashValue: 3500,
+    containerType: "barrel",
+    containerTitle: "WATERPROOF RIVER CACHE // EMBANKMENT",
+    items: [
+      { id: "item_intel_drive", name: "Submerged Black Box SSD", rarity: "legendary", icon: "💾", value: 2100, type: "valuable" },
+      { id: "item_injector", name: "SJ6 Endurance Combat Injector", rarity: "rare", icon: "💉", value: 800, type: "med" },
+      { id: "item_buckshot", name: "Flechette Tactical Shells", rarity: "rare", icon: "📦", value: 600, type: "ammo" },
+    ],
+  },
+  {
+    id: "crate_substation_bunker",
+    x: -24,
+    z: 48,
+    cashValue: 3800,
+    containerType: "crate",
+    containerTitle: "PUMPING STATION ORDNANCE LOCKER",
+    items: [
+      { id: "item_crypto_cold", name: "Hardware Crypto Ledger", rarity: "legendary", icon: "💳", value: 2400, type: "valuable" },
+      { id: "item_ap_slugs", name: "AP-20 Armor-Piercing Slugs", rarity: "rare", icon: "📦", value: 700, type: "ammo" },
+      { id: "item_adrenaline", name: "Zagustin Hemostatic Injector", rarity: "rare", icon: "💉", value: 700, type: "med" },
+    ],
+  },
 ];
 
 export const KNOWN_DEPOT_CRATES: Record<string, number> = Object.fromEntries(

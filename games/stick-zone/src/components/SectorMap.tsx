@@ -105,7 +105,7 @@ import { SharedMaterials } from "../render/materials.js";
 import type { LootCrate } from "../sim/game.js";
 import { MAP_CONTAINERS } from "../sim/game.js";
 import { InklineModel } from "./InklineModel.js";
-import { FOB_PREFABS, PREFAB_CATALOG, type PrefabInstance } from "../sim/prefabs.js";
+import { FOB_PREFABS, SPOKE_PREFABS, PREFAB_CATALOG, type PrefabInstance } from "../sim/prefabs.js";
 import { globalCutaway } from "../render/cutaway.js";
 
 interface SectorMapProps {
@@ -155,6 +155,176 @@ const PrefabModel: React.FC<{
     );
   }
 
+  if (instance.prefabKey === "treeOak") {
+    return (
+      <group position={instance.position} rotation={instance.rotation}>
+        {/* Solid Oak Bark Trunk (Hard Bullet & Movement Cover) */}
+        <mesh position={[0, 1.6, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.35, 0.42, 3.2, 10]} />
+          <meshStandardMaterial color="#382414" roughness={0.88} metalness={0.08} />
+        </mesh>
+        {/* Root Flaring */}
+        <mesh position={[0, 0.2, 0]} receiveShadow>
+          <cylinderGeometry args={[0.42, 0.65, 0.4, 8]} />
+          <meshStandardMaterial color="#2d1c10" roughness={0.92} />
+        </mesh>
+        {/* Stylized Multi-Tiered Foliage Canopy (Soft Visual Cover) */}
+        <group position={[0, 3.6, 0]}>
+          {/* Main Central Crown */}
+          <mesh castShadow receiveShadow>
+            <dodecahedronGeometry args={[1.85, 1]} />
+            <meshStandardMaterial color="#15803d" roughness={0.7} metalness={0.05} />
+          </mesh>
+          {/* Upper Tier Accent */}
+          <mesh position={[0.2, 0.85, -0.2]} castShadow receiveShadow>
+            <dodecahedronGeometry args={[1.2, 1]} />
+            <meshStandardMaterial color="#16a34a" roughness={0.7} metalness={0.05} />
+          </mesh>
+          {/* Flanking Side Lobe West */}
+          <mesh position={[-0.65, -0.25, 0.35]} castShadow receiveShadow>
+            <dodecahedronGeometry args={[1.35, 1]} />
+            <meshStandardMaterial color="#14532d" roughness={0.7} metalness={0.05} />
+          </mesh>
+          {/* Flanking Side Lobe East */}
+          <mesh position={[0.7, -0.2, -0.3]} castShadow receiveShadow>
+            <dodecahedronGeometry args={[1.25, 1]} />
+            <meshStandardMaterial color="#15803d" roughness={0.7} metalness={0.05} />
+          </mesh>
+        </group>
+      </group>
+    );
+  }
+
+  if (instance.prefabKey === "treePine") {
+    return (
+      <group position={instance.position} rotation={instance.rotation}>
+        {/* Slender Pine Trunk */}
+        <mesh position={[0, 2.1, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.22, 0.3, 4.2, 8]} />
+          <meshStandardMaterial color="#231709" roughness={0.9} />
+        </mesh>
+        {/* 3-Tiered Conical Pine Fronds */}
+        <mesh position={[0, 2.3, 0]} castShadow receiveShadow>
+          <coneGeometry args={[1.7, 2.1, 7]} />
+          <meshStandardMaterial color="#065f46" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 3.4, 0]} castShadow receiveShadow>
+          <coneGeometry args={[1.3, 1.8, 7]} />
+          <meshStandardMaterial color="#047857" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 4.3, 0]} castShadow receiveShadow>
+          <coneGeometry args={[0.85, 1.5, 7]} />
+          <meshStandardMaterial color="#059669" roughness={0.7} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (instance.prefabKey === "foliageBush") {
+    return (
+      <group position={instance.position} rotation={instance.rotation}>
+        {/* Low Dense Foliage Cluster (Soft Cover / Crouched Concealment) */}
+        <mesh position={[0, 0.55, 0]} receiveShadow>
+          <dodecahedronGeometry args={[0.75, 1]} />
+          <meshStandardMaterial color="#16a34a" roughness={0.75} />
+        </mesh>
+        <mesh position={[0.4, 0.45, 0.2]} receiveShadow>
+          <dodecahedronGeometry args={[0.55, 1]} />
+          <meshStandardMaterial color="#22c55e" roughness={0.75} />
+        </mesh>
+        <mesh position={[-0.35, 0.45, -0.3]} receiveShadow>
+          <dodecahedronGeometry args={[0.5, 1]} />
+          <meshStandardMaterial color="#15803d" roughness={0.75} />
+        </mesh>
+      </group>
+    );
+  }
+
+  if (instance.prefabKey === "warehouseWall4m" || instance.prefabKey === "warehouseWall2m") {
+    const width = instance.prefabKey === "warehouseWall4m" ? 4.0 : 2.0;
+    return (
+      <group position={instance.position} rotation={instance.rotation}>
+        {/* Heavy Concrete Footing */}
+        <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+          <boxGeometry args={[width, 0.5, 0.5]} />
+          <meshStandardMaterial color="#334155" roughness={0.8} metalness={0.2} />
+        </mesh>
+        {/* Corrugated Reinforced Metal Wall Panel */}
+        <mesh position={[0, 1.8, 0]} castShadow receiveShadow>
+          <boxGeometry args={[width, 2.6, 0.4]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.65} metalness={0.4} />
+        </mesh>
+        {/* Top Steel Coping Lintel */}
+        <mesh position={[0, 3.15, 0]} castShadow>
+          <boxGeometry args={[width + 0.1, 0.1, 0.5]} />
+          <meshStandardMaterial color="#475569" roughness={0.5} metalness={0.6} />
+        </mesh>
+        {/* Vertical Flange Ribs */}
+        {[-width / 2 + 0.15, width / 2 - 0.15].map((fx, i) => (
+          <mesh key={i} position={[fx, 1.8, 0]} castShadow>
+            <boxGeometry args={[0.15, 2.6, 0.46]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.5} metalness={0.7} />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
+
+  if (instance.prefabKey === "bridgeRail") {
+    return (
+      <group position={instance.position} rotation={instance.rotation}>
+        {/* Reinforced Curb Barrier */}
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <boxGeometry args={[7.0, 0.4, 0.35]} />
+          <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.3} />
+        </mesh>
+        {/* Tubular Guardrails */}
+        <mesh position={[0, 0.65, 0]} castShadow>
+          <boxGeometry args={[7.0, 0.08, 0.08]} />
+          <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 1.1, 0]} castShadow>
+          <boxGeometry args={[7.0, 0.1, 0.1]} />
+          <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.3} />
+        </mesh>
+        {/* Vertical Uprights */}
+        {[-3.2, -1.6, 0, 1.6, 3.2].map((ux, i) => (
+          <mesh key={i} position={[ux, 0.65, 0]} castShadow>
+            <boxGeometry args={[0.12, 0.9, 0.12]} />
+            <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.4} />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
+
+  if (instance.prefabKey === "bridgeDeck") {
+    const [scaleX, , scaleZ] = Array.isArray(instance.scale) ? instance.scale : [instance.scale ?? 1, 1, instance.scale ?? 1];
+    return (
+      <group position={instance.position} rotation={instance.rotation}>
+        {/* Heavy Steel Roadbed Deck */}
+        <mesh position={[0, 0.04, 0]} receiveShadow>
+          <boxGeometry args={[scaleX, 0.1, scaleZ]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.8} metalness={0.3} />
+        </mesh>
+        {/* Concrete Safety Curb Borders */}
+        <mesh position={[-scaleX / 2 + 0.2, 0.12, 0]}>
+          <boxGeometry args={[0.35, 0.12, scaleZ]} />
+          <meshStandardMaterial color="#475569" roughness={0.7} />
+        </mesh>
+        <mesh position={[scaleX / 2 - 0.2, 0.12, 0]}>
+          <boxGeometry args={[0.35, 0.12, scaleZ]} />
+          <meshStandardMaterial color="#475569" roughness={0.7} />
+        </mesh>
+        {/* Tactical Center Line */}
+        <mesh position={[0, 0.095, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[0.2, scaleZ * 0.9]} />
+          <meshBasicMaterial color="#eab308" />
+        </mesh>
+      </group>
+    );
+  }
+
   if (instance.prefabKey === "shootingRestBench") {
     return (
       <group position={instance.position}>
@@ -175,6 +345,106 @@ const PrefabModel: React.FC<{
   }
 
   return null;
+};
+
+
+/**
+ * 3D River Canal separating North and South Sector 7 districts.
+ * Spans z in [16.5, 21.5] with water drag mechanics, concrete retaining walls,
+ * edge foam, and bridge cutaways for the 3 tactical bridge choke points.
+ */
+const RiverCanal: React.FC = () => {
+  const waterRef = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (waterRef.current) {
+      const t = clock.getElapsedTime();
+      waterRef.current.position.y = 0.03 + Math.sin(t * 1.5) * 0.012;
+    }
+  });
+
+  return (
+    <group>
+      {/* 1. Recessed Canal Bed / Deep Trench */}
+      <mesh position={[0, -0.15, 19]} receiveShadow>
+        <boxGeometry args={[150, 0.3, 5.0]} />
+        <meshStandardMaterial color="#042f2e" roughness={0.9} />
+      </mesh>
+
+      {/* 2. Murky Industrial Water Surface */}
+      <mesh
+        ref={waterRef}
+        position={[0, 0.03, 19]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+      >
+        <planeGeometry args={[150, 5.0]} />
+        <meshStandardMaterial
+          color="#0f766e"
+          roughness={0.2}
+          metalness={0.3}
+          transparent
+          opacity={0.88}
+        />
+      </mesh>
+
+      {/* 3. Water Edge Foam Ribbons (North & South Embankments) */}
+      <mesh position={[0, 0.045, 16.7]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[150, 0.35]} />
+        <meshBasicMaterial color="#5eead4" transparent opacity={0.35} />
+      </mesh>
+      <mesh position={[0, 0.045, 21.3]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[150, 0.35]} />
+        <meshBasicMaterial color="#5eead4" transparent opacity={0.35} />
+      </mesh>
+
+      {/* 4. North Concrete Retaining Wall Embankment (z = 16.5) */}
+      <mesh position={[-59.5, 0.15, 16.5]} castShadow receiveShadow>
+        <boxGeometry args={[31, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[-21.25, 0.15, 16.5]} castShadow receiveShadow>
+        <boxGeometry args={[33.5, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[20.25, 0.15, 16.5]} castShadow receiveShadow>
+        <boxGeometry args={[31.5, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[58.5, 0.15, 16.5]} castShadow receiveShadow>
+        <boxGeometry args={[33, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+
+      {/* 5. South Concrete Retaining Wall Embankment (z = 21.5) */}
+      <mesh position={[-59.5, 0.15, 21.5]} castShadow receiveShadow>
+        <boxGeometry args={[31, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[-21.25, 0.15, 21.5]} castShadow receiveShadow>
+        <boxGeometry args={[33.5, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[20.25, 0.15, 21.5]} castShadow receiveShadow>
+        <boxGeometry args={[31.5, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+      <mesh position={[58.5, 0.15, 21.5]} castShadow receiveShadow>
+        <boxGeometry args={[33, 0.35, 0.4]} />
+        <meshStandardMaterial color="#475569" roughness={0.7} metalness={0.2} />
+      </mesh>
+
+      {/* 6. Concrete Embankment Stencil Linework */}
+      <mesh position={[0, 0.33, 16.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[150, 0.1]} />
+        <meshBasicMaterial color="#151716" />
+      </mesh>
+      <mesh position={[0, 0.33, 21.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[150, 0.1]} />
+        <meshBasicMaterial color="#151716" />
+      </mesh>
+    </group>
+  );
 };
 
 export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDummyHitTick, lastDummyHitSide }) => {
@@ -801,6 +1071,38 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       {/* =========================================================================
           4. INSTANCED RAID SPOKE: SECTOR 7 DEPOT CONTAINERS & COVER
          ========================================================================= */}
+      
+      {/* =========================================================================
+          AUTHORITATIVE SECTOR 7 SPOKE PREFABS (Trees, Rooms, Bridges, Maze)
+         ========================================================================= */}
+      <RiverCanal />
+
+      {/* Logistics Command Warehouse Floor Slab & Room Ground Linework */}
+      <group position={[20.5, 0, -6.5]}>
+        <mesh position={[0, 0.02, 0]} receiveShadow>
+          <boxGeometry args={[9.2, 0.04, 13.2]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.8} metalness={0.2} />
+        </mesh>
+        {/* Room Division Grid Decal */}
+        <mesh position={[0, 0.045, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[8.8, 12.8]} />
+          <meshBasicMaterial color="#0f172a" />
+        </mesh>
+      </group>
+
+      {/* Pumping Station Bunker Floor Slab */}
+      <group position={[-24, 0, 46]}>
+        <mesh position={[0, 0.02, 0]} receiveShadow>
+          <boxGeometry args={[12.2, 0.04, 12.2]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.8} metalness={0.3} />
+        </mesh>
+      </group>
+
+      {/* Authoritative Prefab 3D Instances */}
+      {SPOKE_PREFABS.map((inst) => (
+        <PrefabModel key={inst.id} instance={inst} />
+      ))}
+
       {/* Real 3D Inkline Cargo Containers derived directly from unified MAP_CONTAINERS definition */}
       {MAP_CONTAINERS.map((c, idx) => (
         <InklineContainer key={c.id} position={c.position} rotation={c.rotation} index={idx} />

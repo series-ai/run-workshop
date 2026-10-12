@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
-import { SectorDepotSimulation, computeGroundAimAngle } from '../src/sim/game.js';
+import { SectorDepotSimulation, isPositionInWater, computeGroundAimAngle } from '../src/sim/game.js';
 import { SIM_CONFIG } from '../src/sim/config.js';
 import {
   verifyReceiptIntegrity,
@@ -1990,5 +1990,82 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(pellets[0].isPellet).toBe(true);
     expect(pellets[0].speed).toBe(28.0);
     expect(pellets[0].damage).toBe(16);
+  });
+
+  it("45. Surviv.io Map Architecture: River, Bridges, Rooms, Trees, and Tactical Choke Points", () => {
+    const testSim = new SectorDepotSimulation("raid_map_test", "spoke");
+    testSim.admitOperative();
+    testSim.machines = [];
+    testSim.rivals = [];
+
+    // 1. River Canal & Bridge Detection
+    expect(isPositionInWater(-20, 19)).toBe(true);  // Wading in canal water
+    expect(isPositionInWater(0, 19)).toBe(false);    // On Central Highway Bridge
+    expect(isPositionInWater(-41, 19)).toBe(false);  // On West Industrial Catwalk Bridge
+    expect(isPositionInWater(39, 19)).toBe(false);   // On East Tactical Rail Bridge
+    expect(isPositionInWater(0, 0)).toBe(false);     // Dry ground
+
+    // 2. Water Drag Speed Penalty (0.70x in water, 1.0x on bridge)
+    testSim.player.x = -15;
+    testSim.player.z = 19;
+    testSim.step({
+      dx: 0,
+      dz: 1,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: false,
+      interact: false,
+    });
+    expect(testSim.player.inWater).toBe(true);
+    // Water speed should be 0.7x normal walk speed
+    const waterSpeed = Math.abs(testSim.player.z - 19);
+
+    testSim.player.x = 0;
+    testSim.player.z = 19;
+    testSim.step({
+      dx: 0,
+      dz: 1,
+      sprint: false,
+      slide: false,
+      roll: false,
+      kick: false,
+      shoot: false,
+      interact: false,
+    });
+    expect(testSim.player.inWater).toBe(false);
+    const bridgeSpeed = Math.abs(testSim.player.z - 19);
+    expect(waterSpeed).toBeLessThan(bridgeSpeed);
+    expect(waterSpeed / bridgeSpeed).toBeCloseTo(0.70, 1);
+
+    // 3. Solid Trees Hard Cover vs Soft Foliage Bushes
+    // Tree trunk at (-28, 13) stops movement and bullets
+    expect(testSim.checkContainerCollision(-28, 13, 0.45)).toBe(true);
+    expect(testSim.checkContainerRayObstruction(-28, 10, -28, 16, 1, 1)).toBe(true);
+    // Foliage bush at (-22, 17.5) has no collision (soft cover)
+    expect(testSim.checkContainerCollision(-22, 17.5, 0.45)).toBe(false);
+
+    // 4. Warehouse Rooms & Doorway Navigation
+    // North wall at (18, -13) blocks entry
+    expect(testSim.checkContainerCollision(18, -13, 0.45)).toBe(true);
+    // Front doorway at (20.5, 0) allows entry
+    expect(testSim.checkContainerCollision(20.5, 0, 0.45)).toBe(false);
+
+    // 5. Tactical High-Tier Loot Crates
+    const vaultCrate = testSim.crates.find(c => c.id === "crate_warehouse_vault");
+    expect(vaultCrate).toBeDefined();
+    expect(vaultCrate!.cashValue).toBe(4200);
+    expect(vaultCrate!.items!.reduce((sum, it) => sum + it.value, 0)).toBe(4200);
+
+    const riverCrate = testSim.crates.find(c => c.id === "crate_river_cache");
+    expect(riverCrate).toBeDefined();
+    expect(riverCrate!.cashValue).toBe(3500);
+    expect(riverCrate!.items!.reduce((sum, it) => sum + it.value, 0)).toBe(3500);
+
+    const bunkerCrate = testSim.crates.find(c => c.id === "crate_substation_bunker");
+    expect(bunkerCrate).toBeDefined();
+    expect(bunkerCrate!.cashValue).toBe(3800);
+    expect(bunkerCrate!.items!.reduce((sum, it) => sum + it.value, 0)).toBe(3800);
   });
 });

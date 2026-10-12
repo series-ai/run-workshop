@@ -125,6 +125,36 @@ const SurvivMinimap: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
         }
         ctx.stroke();
 
+        // 2B. River Canal & Bridge Choke Points (z in [16.5, 21.5])
+        const riverY1 = center + (16.5 - player.z) * pxPerMeter;
+        const riverH = (21.5 - 16.5) * pxPerMeter;
+        if (riverY1 + riverH > -10 && riverY1 < height + 10) {
+          ctx.fillStyle = "rgba(15, 118, 110, 0.65)";
+          ctx.fillRect(0, riverY1, width, riverH);
+          ctx.strokeStyle = "rgba(45, 212, 191, 0.75)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, riverY1);
+          ctx.lineTo(width, riverY1);
+          ctx.moveTo(0, riverY1 + riverH);
+          ctx.lineTo(width, riverY1 + riverH);
+          ctx.stroke();
+
+          const bridges = [
+            { minX: -4.5, maxX: 4.5 },
+            { minX: -44, maxX: -38 },
+            { minX: 36, maxX: 42 },
+          ];
+          for (const b of bridges) {
+            const bx = center + (b.minX - player.x) * pxPerMeter;
+            const bw = (b.maxX - b.minX) * pxPerMeter;
+            ctx.fillStyle = "rgba(71, 85, 105, 0.95)";
+            ctx.fillRect(bx, riverY1 - 1, bw, riverH + 2);
+            ctx.strokeStyle = "rgba(226, 232, 240, 0.85)";
+            ctx.strokeRect(bx, riverY1 - 1, bw, riverH + 2);
+          }
+        }
+
         // 3. Cargo containers relative to player
         for (const box of DEPOT_CONTAINERS) {
           const x1 = center + (box.minX - player.x) * pxPerMeter;

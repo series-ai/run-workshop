@@ -1,6 +1,22 @@
-import { FOB_PREFAB_OBSTACLES } from "./prefabs.js";
+import { FOB_PREFAB_OBSTACLES, SPOKE_PREFAB_OBSTACLES } from "./prefabs.js";
 import { DEPOT_CRATE_CONFIGS } from "./crates.js";
 import { calculateShotgunHit } from './shotgunCollision.js';
+
+/**
+ * Evaluates whether a 2D coordinate is inside the Sector 7 river canal
+ * and outside of any elevated bridges. Used for tactical water drag (0.7x speed).
+ */
+export function isPositionInWater(x: number, z: number): boolean {
+  if (z < 16.5 || z > 21.5) return false;
+  // Central Highway Bridge (|x| <= 4.5)
+  if (Math.abs(x) <= 4.5) return false;
+  // West Industrial Catwalk Bridge (x in [-44.5, -37.5])
+  if (x >= -44.5 && x <= -37.5) return false;
+  // East Tactical Rail Bridge (x in [35.5, 42.5])
+  if (x >= 35.5 && x <= 42.5) return false;
+  return true;
+}
+
 export type PresentationEvent =
   | {
       type: 'fire';
@@ -304,6 +320,9 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   // Automatic Prefab Collision Boxes for all FOB placed props
   ...FOB_PREFAB_OBSTACLES,
 
+  // Authoritative Spoke Level Design Prefab Obstacles (Walls, Bridges, Trees, Maze)
+  ...SPOKE_PREFAB_OBSTACLES,
+
   // Emergency Bunker Exfil Bulkhead & Blast Doors at (-45, -45)
   { minX: -49.0, maxX: -41.0, minZ: -48.5, maxZ: -46.5 },
   // Emergency Bunker Keycard Terminal Console
@@ -431,6 +450,12 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
   { minX: -30.8, maxX: -29.2, minZ: -35.8, maxZ: -34.2 },
   // crate_08: Extraction Stash Footlocker (50, 45)
   { minX: 49.4, maxX: 51.0, minZ: 44.2, maxZ: 45.8 },
+  // crate_warehouse_vault: Reinforced Armory Vault (22.5, -9.5)
+  { minX: 21.8, maxX: 23.2, minZ: -10.2, maxZ: -8.8 },
+  // crate_river_cache: Waterproof River Cache (-20, 19)
+  { minX: -20.6, maxX: -19.4, minZ: 18.4, maxZ: 19.6 },
+  // crate_substation_bunker: Pumping Station Locker (-24, 48)
+  { minX: -24.8, maxX: -23.2, minZ: 47.2, maxZ: 48.8 },
 ];
 
 export const ALL_OCCLUDING_OBSTACLES: ObstacleBox[] = [
@@ -611,6 +636,7 @@ export interface OperativeState {
   barkTick?: number;
   aimTicks?: number;
   lastBarkTick?: number;
+  inWater?: boolean;
 }
 
 export interface MachineDefense {
@@ -2605,6 +2631,12 @@ export class SectorDepotSimulation {
       if (this.player.action === 'roll') speed *= 1.1;
       if (this.player.action === 'shoot') speed *= 0.84;
 
+      const inCanalWater = isPositionInWater(this.player.x, this.player.z);
+      this.player.inWater = inCanalWater;
+      if (inCanalWater) {
+        speed *= 0.70;
+      }
+
       const moveMagnitude = Math.hypot(input.dx, input.dz);
       if (moveMagnitude > 0.01) {
         const normX = input.dx / moveMagnitude;
@@ -3824,7 +3856,10 @@ export class SectorDepotSimulation {
             moveDirZ /= mag;
           }
         }
-        const moveSpeed = isLowHealth ? (SIM_CONFIG.SPEED_WALK * 1.1) : SIM_CONFIG.SPEED_WALK;
+        const inRivalWater = isPositionInWater(rival.x, rival.z);
+        rival.inWater = inRivalWater;
+        let moveSpeed = isLowHealth ? (SIM_CONFIG.SPEED_WALK * 1.1) : SIM_CONFIG.SPEED_WALK;
+        if (inRivalWater) moveSpeed *= 0.70;
         const nextX = Math.max(SIM_CONFIG.MAP_MIN_X, Math.min(SIM_CONFIG.MAP_MAX_X, rival.x + moveDirX * moveSpeed * dt));
         const nextZ = Math.max(SIM_CONFIG.MAP_MIN_Z, Math.min(SIM_CONFIG.MAP_MAX_Z, rival.z + moveDirZ * moveSpeed * dt));
         let movedX = false;
