@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera, Vector3 } from 'three';
+import { InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera, ShaderMaterial, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { carTrafficPlan, createSkyriverTraffic, TRAFFIC_QUALITY_TIERS, type CarPlan } from '../src/render/traffic';
 import { trafficHullVisibility } from '../src/render/lightHandover';
@@ -157,17 +157,80 @@ describe('R44 close visibility from actual traffic buffers', () => {
     }
     receipt('scalar-limits', { samples });
     for (const sample of samples) expect(sample.actual).toBeCloseTo(sample.expected, 12);
-    for (const dpr of [1, 1.25, 1.5]) {
-      let previous = trafficHullVisibility(1200, 1, 0.125);
-      for (let step = 1; step <= 400; step += 1) {
-        const css = 0.125 + step * 0.375 / 400;
-        const actual = trafficHullVisibility(1200, 1, css * dpr / dpr);
-        expect(Number.isFinite(actual)).toBe(true);
-        expect(actual).toBeGreaterThanOrEqual(previous - 1e-12);
-        expect(actual - previous).toBeLessThanOrEqual(0.005);
-        previous = actual;
-      }
+    let previous = trafficHullVisibility(1200, 1, 0.125);
+    for (let step = 1; step <= 400; step += 1) {
+      const css = 0.125 + step * 0.375 / 400;
+      const actual = trafficHullVisibility(1200, 1, css);
+      expect(Number.isFinite(actual)).toBe(true);
+      expect(actual).toBeGreaterThanOrEqual(previous - 1e-12);
+      expect(actual - previous).toBeLessThanOrEqual(0.005);
+      previous = actual;
     }
+  });
+
+  it('keeps real subpixel aFade fixed across DPR and rejects a buffer angle used as CSS angle', () => {
+    const traffic = factory();
+    try {
+      const samples = [];
+      for (const fixture of [
+        { fov: 20, distance: 4000, targetCss: 0.2 },
+        { fov: 62, distance: 8000, targetCss: 0.3125 },
+        { fov: 115, distance: 12000, targetCss: 0.4 },
+      ]) {
+        const { view, initial } = initialise(traffic, 1000, 10, 200, fixture.fov);
+        place(view, initial.position, fixture.distance);
+        view.zoom = 1;
+        view.updateProjectionMatrix();
+        const unzoomed = extent(initial, view);
+        expect(unzoomed.behind || unzoomed.crossing).toBe(false);
+        expect(unzoomed.css).toBeGreaterThan(0);
+        view.zoom = fixture.targetCss / unzoomed.css;
+        view.updateProjectionMatrix();
+        const projected = extent(initial, view);
+        expect(projected.css).toBeCloseTo(fixture.targetCss, 10);
+        expect(projected.css).toBeGreaterThan(0.125);
+        expect(projected.css).toBeLessThan(0.5);
+        const expected = expectedVisibility(fixture.distance, 1, projected.css);
+        let firstFade: number | null = null;
+        for (const dpr of [1, 1.25, 1.5]) {
+          update(traffic, 10, view, dpr);
+          const actual = requiredRow(traffic, 1000);
+          const measured = extent(actual, view);
+          const focal = view.projectionMatrix.elements[5]!;
+          const bufferAngle = 2 / (focal * 720 * dpr), cssAngle = 2 / (focal * 720);
+          for (const name of ['skyriver.traffic.streaks', 'skyriver.traffic.impostors']) {
+            const object = traffic.objects.find(candidate => candidate.name === name);
+            if (!(object instanceof Mesh) || !(object.material instanceof ShaderMaterial)) throw Error('CLOSE_DPR_NATIVE_MATERIAL_REQUIRED');
+            expect(object.material.uniforms.uPixelAngle!.value).toBe(bufferAngle);
+            expect(object.material.uniforms.uCssPixelAngle!.value).toBe(cssAngle);
+          }
+          expect(actual.matrix).toEqual(initial.matrix);
+          expect(actual.position.toArray()).toEqual(initial.position.toArray());
+          assertPhysical(actual, initial);
+          expect(measured.css).toBeCloseTo(projected.css, 10);
+          expect(actual.hullFade).toBeGreaterThan(0);
+          expect(actual.hullFade).toBeLessThan(1);
+          expect(Math.abs(actual.hullFade - expected)).toBeLessThanOrEqual(0.002);
+          expect(Math.abs(actual.lampFade - actual.hullFade)).toBeLessThanOrEqual(0.02);
+          if (firstFade === null) firstFade = actual.hullFade;
+          else expect(actual.hullFade).toBe(firstFade);
+          let wrongFade: number | null = null;
+          if (dpr > 1) {
+            traffic.setPixelAngle(bufferAngle, bufferAngle);
+            traffic.setCameraFrame(view.matrixWorldInverse.elements, view.near);
+            traffic.update(10, view.position);
+            const wrong = requiredRow(traffic, 1000);
+            wrongFade = wrong.hullFade;
+            expect(wrong.matrix).toEqual(actual.matrix);
+            expect(Math.abs(wrong.hullFade - expected)).toBeGreaterThan(0.02);
+            expect(Math.abs(wrong.lampFade - wrong.hullFade)).toBeLessThanOrEqual(0.02);
+          }
+          samples.push({ ...fixture, dpr, zoom: view.zoom, bufferAngle, cssAngle,
+            projectedCss: measured.css, expected, actualFade: actual.hullFade, lampFade: actual.lampFade, wrongFade });
+        }
+      }
+      receipt('real-subpixel-dpr', { samples });
+    } finally { traffic.dispose(); }
   });
 
   it('keeps both CSS boundary values and slopes continuous without a metre gate', () => {
