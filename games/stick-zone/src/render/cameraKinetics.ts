@@ -141,10 +141,10 @@ export interface CameraLookAheadConfig {
 }
 
 export const DEFAULT_LOOK_AHEAD_CONFIG: CameraLookAheadConfig = {
-  aimLeadDistance: 2.2,
-  velocityLeadFactor: 0.32,
-  deadZone: 0.4,
-  maxOffset: 4.8,
+  aimLeadDistance: 1.2,
+  velocityLeadFactor: 0.20,
+  deadZone: 0.45,
+  maxOffset: 2.6,
 };
 
 /**
@@ -216,7 +216,7 @@ export function computeTraumaImpulse(
   if (elapsedSec < 0 || elapsedSec >= durationSec) return { x: 0, y: 0, z: 0 };
   const progress = elapsedSec / durationSec;
   const decay = Math.pow(1 - progress, 2.5);
-  const intensity = Math.min(1.2, (damageAmount / 25) * 0.7);
+  const intensity = Math.min(0.5, (damageAmount / 25) * 0.35);
 
   // Screen space angle: 0 deg = North (-Z), 90 deg = East (+X), 180 deg = South (+Z), 270 deg = West (-X)
   const rad = (damageAngleDeg * Math.PI) / 180;

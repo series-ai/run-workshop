@@ -2928,7 +2928,8 @@ export class SectorDepotSimulation {
     const { origin: muzzleOrigin, dir: muzzleDir } = this.getOperativeMuzzle(this.player);
 
     // Physical shooter recoil impulse (Newton third law pushback)
-    const kickForce = this.player.weapon === "shotgun" ? 1.65 : 0.42;
+    // Toned down physical shooter pushback to preserve steady aim tracking
+    const kickForce = this.player.weapon === "shotgun" ? 0.90 : 0.35;
     this.walkVx -= muzzleDir.x * kickForce;
     this.walkVz -= muzzleDir.z * kickForce;
 

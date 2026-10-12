@@ -258,8 +258,6 @@ const CameraController: React.FC<{
         targetFov = 38.0; // Precision tactical ADS focus zoom
       } else if (isSliding) {
         targetFov = 52.5; // Dynamic anime speed perspective stretch
-      } else if (recoilImpulseRef.current[0] !== 0 || recoilImpulseRef.current[1] !== 0) {
-        targetFov = 44.0; // Recoil zoom snap
       }
       const newFov = THREE.MathUtils.lerp(persCamera.fov, targetFov, lerpFactor);
       if (Math.abs(persCamera.fov - newFov) > 0.02) {
@@ -888,8 +886,8 @@ const PresentationFXManager: React.FC<{
       aimPunchAgeRef.current = 0;
       const dmgAngle = (sim as any).lastPlayerDamageAngle ?? (Math.random() * Math.PI * 2);
       aimPunchDirRef.current = [
-        -Math.sin(dmgAngle) * 0.16,
-        Math.cos(dmgAngle) * 0.12,
+        -Math.sin(dmgAngle) * 0.07,
+        Math.cos(dmgAngle) * 0.05,
       ];
     }
 
@@ -899,7 +897,7 @@ const PresentationFXManager: React.FC<{
     if (recoilAgeRef.current >= 0) {
       recoilAgeRef.current += delta;
       if (recoilAgeRef.current < 0.2) {
-        const impulse = cameraImpulse(recoilAgeRef.current, 0.35);
+        const impulse = cameraImpulse(recoilAgeRef.current, sim.player.weapon === "shotgun" ? 0.14 : 0.08);
         recoilX = impulse[0];
         recoilY = impulse[1];
       } else {
