@@ -6,7 +6,7 @@
  */
 
 import { CustomBlending, DataTexture, FloatType, NearestFilter, OneFactor, OneMinusSrcAlphaFactor, RGBAFormat, type ShaderMaterial } from 'three';
-import { createSignMediaAtlas, deriveMediaMotion, type SignMediaAtlas } from './signMedia';
+import { createSignMediaAtlas, deriveMediaMotion, type SignMediaAtlas, type SignMediaAtlasSize } from './signMedia';
 
 function replace(source: string, before: string, after: string): string {
   if (!source.includes(before)) throw new Error('SIGN_DESIGN_SHADER_CONTRACT');
@@ -416,6 +416,8 @@ export const applySignDesignMaterial: ApplySignDesignMaterialFn = Object.assign(
         if (material.uniforms.uQualityTier) {
           material.uniforms.uQualityTier.value = tier;
         }
+        const resolution: SignMediaAtlasSize = tier === 0 ? 1024 : 2048;
+        atlas.setResolution(resolution);
       }
     };
 

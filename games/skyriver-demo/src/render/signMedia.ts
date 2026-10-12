@@ -14,6 +14,8 @@ import {
 export const MEDIA_ATLAS_WIDTH = 2048;
 export const MEDIA_ATLAS_HEIGHT = 2048;
 
+export type SignMediaAtlasSize = 1024 | 2048;
+
 /** The ten required advertising categories. */
 export const MEDIA_CATEGORIES = [
   'food',
@@ -80,6 +82,7 @@ export interface SignMediaAtlas {
   readonly allAds: readonly MediaAdMetadata[];
   readonly width: number;
   readonly height: number;
+  setResolution(size: SignMediaAtlasSize): void;
   dispose(): void;
 }
 
@@ -88,6 +91,7 @@ export type SignMediaContext = CanvasRenderingContext2D | OffscreenCanvasRenderi
 
 export interface SignMediaWorkerRequest {
   readonly type: 'render';
+  readonly size: SignMediaAtlasSize;
 }
 
 export type SignMediaWorkerResponse =
@@ -984,19 +988,33 @@ export function deriveSignMediaLayout(): SignMediaLayout {
   return { horizontalAds, hologramAds, allAds: [...horizontalAds, ...hologramAds], width: MEDIA_ATLAS_WIDTH, height: MEDIA_ATLAS_HEIGHT };
 }
 
-// Cache one immutable canvas. Each material owns its texture.
-let bootCanvas: HTMLCanvasElement | null = null;
-let preparePromise: Promise<void> | null = null;
+// Each size has one immutable canvas and each material owns its GPU texture.
+interface SignMediaCacheEntry {
+  canvas: HTMLCanvasElement | null;
+  preparation: Promise<void> | null;
+}
+
+const mediaCaches: Record<SignMediaAtlasSize, SignMediaCacheEntry> = {
+  1024: { canvas: null, preparation: null },
+  2048: { canvas: null, preparation: null },
+};
+
+// Store the boot size preference.
+let bootSizePreference: SignMediaAtlasSize = 2048;
 
 /** Paint the same ad frames in the browser or worker. */
-export function paintSignMediaAtlas(canvas: SignMediaCanvas): void {
-  canvas.width = MEDIA_ATLAS_WIDTH;
-  canvas.height = MEDIA_ATLAS_HEIGHT;
+export function paintSignMediaAtlas(canvas: SignMediaCanvas, size: SignMediaAtlasSize = 2048): void {
+  canvas.width = size;
+  canvas.height = size;
   const ctx = 'transferToImageBitmap' in canvas
     ? canvas.getContext('2d') : canvas.getContext('2d');
   if (ctx === null) throw new Error('SKYRIVER_SIGN_MEDIA_ATLAS_NO_2D_CONTEXT');
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (size !== 2048) {
+    const scale = size / 2048;
+    ctx.scale(scale, scale);
+  }
   for (let i = 0; i < AD_DEFINITIONS.length; i += 1) {
     for (let f = 0; f < 4; f += 1) {
       drawHorizontalAdFrame(ctx, AD_DEFINITIONS[i]!, f * 512, i * 128, 512, 128, f);
@@ -1007,24 +1025,28 @@ export function paintSignMediaAtlas(canvas: SignMediaCanvas): void {
   }
 }
 
-function signMediaCanvas(): HTMLCanvasElement {
-  if (bootCanvas !== null) return bootCanvas;
+function signMediaCanvas(size: SignMediaAtlasSize = bootSizePreference): HTMLCanvasElement {
+  const entry = mediaCaches[size];
+  if (entry.canvas !== null) return entry.canvas;
   const canvas = document.createElement('canvas');
-  paintSignMediaAtlas(canvas);
-  bootCanvas = canvas;
+  paintSignMediaAtlas(canvas, size);
+  entry.canvas = canvas;
   return canvas;
 }
 
 /** Prepare the atlas while the city cache loads. */
-export function prepareSignMediaAtlas(): Promise<void> {
-  if (bootCanvas !== null) return Promise.resolve();
-  if (preparePromise !== null) return preparePromise;
+export function prepareSignMediaAtlas(size: SignMediaAtlasSize = 2048): Promise<void> {
+  bootSizePreference = size;
+  const entry = mediaCaches[size];
+  if (entry.canvas !== null) return Promise.resolve();
+  if (entry.preparation !== null) return entry.preparation;
   if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined'
     || typeof ImageBitmap === 'undefined') {
-    signMediaCanvas();
-    return Promise.resolve();
+    signMediaCanvas(size);
+    entry.preparation = Promise.resolve();
+    return entry.preparation;
   }
-  preparePromise = new Promise<void>((resolve, reject) => {
+  entry.preparation = new Promise<void>((resolve, reject) => {
     let worker: Worker | null = null;
     const cleanup = (): void => {
       if (worker === null) return;
@@ -1059,22 +1081,22 @@ export function prepareSignMediaAtlas(): Promise<void> {
             || data.status !== 'success'
             || bitmap === null
             || signBitmap === null
-            || bitmap.width !== MEDIA_ATLAS_WIDTH
-            || bitmap.height !== MEDIA_ATLAS_HEIGHT
+            || bitmap.width !== size
+            || bitmap.height !== size
             || signBitmap.width !== SIGN_ATLAS_WIDTH
             || signBitmap.height !== SIGN_ATLAS_HEIGHT
           ) {
             throw new Error('SKYRIVER_SIGN_MEDIA_WORKER_IMAGE');
           }
           installSignAtlasBitmap(signBitmap);
-          if (bootCanvas === null) {
+          if (entry.canvas === null) {
             const canvas = document.createElement('canvas');
-            canvas.width = MEDIA_ATLAS_WIDTH;
-            canvas.height = MEDIA_ATLAS_HEIGHT;
+            canvas.width = size;
+            canvas.height = size;
             const ctx = canvas.getContext('2d');
             if (ctx === null) throw new Error('SKYRIVER_SIGN_MEDIA_ATLAS_NO_2D_CONTEXT');
             ctx.drawImage(bitmap, 0, 0);
-            bootCanvas = canvas;
+            entry.canvas = canvas;
           }
           resolve();
         } catch (error: unknown) {
@@ -1093,23 +1115,50 @@ export function prepareSignMediaAtlas(): Promise<void> {
       };
       worker.onerror = fail;
       worker.onmessageerror = fail;
-      const request: SignMediaWorkerRequest = { type: 'render' };
+      const request: SignMediaWorkerRequest = { type: 'render', size };
       worker.postMessage(request);
     } catch {
       fail();
     }
-  }).catch(() => { signMediaCanvas(); });
-  return preparePromise;
+  }).catch(() => {
+    signMediaCanvas(size);
+  });
+  return entry.preparation;
 }
 
 /** Create one material-owned texture from the cached procedural frames. */
-export function createSignMediaAtlas(): SignMediaAtlas {
-  const texture = new THREE.CanvasTexture(signMediaCanvas());
+export function createSignMediaAtlas(size: SignMediaAtlasSize = bootSizePreference): SignMediaAtlas {
+  let currentSize: SignMediaAtlasSize = size;
+  const texture = new THREE.CanvasTexture(signMediaCanvas(currentSize));
   texture.name = 'skyriver.signMediaAtlas';
   texture.generateMipmaps = true;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = 8;
   texture.needsUpdate = true;
-  return { ...deriveSignMediaLayout(), texture, dispose(): void { texture.dispose(); } };
+  const layout = deriveSignMediaLayout();
+  return {
+    ...layout,
+    texture,
+    get width(): number {
+      return currentSize;
+    },
+    get height(): number {
+      return currentSize;
+    },
+    setResolution(nextSize: SignMediaAtlasSize): void {
+      if (nextSize === currentSize) {
+        return;
+      }
+      const nextCanvas = signMediaCanvas(nextSize);
+      // Resolution changes require fresh immutable GPU storage.
+      texture.dispose();
+      texture.image = nextCanvas;
+      texture.needsUpdate = true;
+      currentSize = nextSize;
+    },
+    dispose(): void {
+      texture.dispose();
+    },
+  };
 }

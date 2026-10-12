@@ -1,6 +1,7 @@
 /** Paint sign and media atlases outside the main thread. */
 import {
-  MEDIA_ATLAS_HEIGHT, MEDIA_ATLAS_WIDTH, paintSignMediaAtlas,
+  paintSignMediaAtlas,
+  type SignMediaAtlasSize,
   type SignMediaWorkerResponse,
 } from './signMedia';
 import {
@@ -15,12 +16,18 @@ self.onmessage = (event: MessageEvent<unknown>): void => {
     if (data === null || typeof data !== 'object' || !('type' in data) || data.type !== 'render') {
       throw new Error('SKYRIVER_SIGN_MEDIA_INVALID_WORKER_REQUEST');
     }
+    const rawSize = 'size' in data ? data.size : undefined;
+    if (rawSize !== 1024 && rawSize !== 2048) {
+      throw new Error('SKYRIVER_SIGN_MEDIA_INVALID_WORKER_REQUEST');
+    }
+    const size: SignMediaAtlasSize = rawSize;
+
     const signCanvas = new OffscreenCanvas(SIGN_ATLAS_WIDTH, SIGN_ATLAS_HEIGHT);
     paintSignAtlas(signCanvas);
     signBitmap = signCanvas.transferToImageBitmap();
 
-    const mediaCanvas = new OffscreenCanvas(MEDIA_ATLAS_WIDTH, MEDIA_ATLAS_HEIGHT);
-    paintSignMediaAtlas(mediaCanvas);
+    const mediaCanvas = new OffscreenCanvas(size, size);
+    paintSignMediaAtlas(mediaCanvas, size);
     bitmap = mediaCanvas.transferToImageBitmap();
 
     const response: SignMediaWorkerResponse = { status: 'success', bitmap, signBitmap };

@@ -39,7 +39,7 @@ import type {
   SkyriverLightSource,
 } from './render/city';
 import { prepareBrowserCitySnapshot, type SkyriverColdStartDiagnostic } from './render/citySnapshotLoader';
-import { prepareSignMediaAtlas } from './render/signMedia';
+import { prepareSignMediaAtlas, type SignMediaAtlasSize } from './render/signMedia';
 import { type SkyriverDistrict, type SkyriverDistrictModel } from './render/districts';
 import type { SkyriverDistrictHazeEvidence } from './render/atmosphere';
 import { TRAFFIC_QUALITY_TIERS, createSkyriverTraffic } from './render/traffic';
@@ -1291,17 +1291,22 @@ if (typeof document !== 'undefined') {
     boundary.setStage(SKYRIVER_LOADING_STAGE.verifyingSnapshot);
     await boundary.flush();
 
+    const mediaBootSize: SignMediaAtlasSize =
+      new URLSearchParams(window.location.search).get('tier') === 'low'
+        ? 1024
+        : 2048;
+
     let prepResult: Awaited<ReturnType<typeof prepareBrowserCitySnapshot>> | null = null;
     let prepEnd = performance.now();
     try {
       const cityPreparation = prepareBrowserCitySnapshot();
-      const mediaPreparation = prepareSignMediaAtlas();
+      const mediaPreparation = prepareSignMediaAtlas(mediaBootSize);
       prepResult = await cityPreparation;
       await mediaPreparation;
       prepEnd = performance.now();
     } catch (prepError) {
       console.warn('[skyriver] prepareBrowserCitySnapshot fallback', prepError);
-      await prepareSignMediaAtlas();
+      await prepareSignMediaAtlas(mediaBootSize);
     }
 
     // Raising the skyline is synchronous and long, so its label is painted first for the same reason.

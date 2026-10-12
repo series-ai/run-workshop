@@ -41,8 +41,8 @@
   },
   {
     "path": "src/main.ts",
-    "sha256": "f67db43ccb79b59846346fff5f08db0620fa6807ae9e20564244feb5dcd16fac",
-    "byteLength": 52954
+    "sha256": "7681f4b2c84649584535a2140bbb1d65e80a1f56e794a124e12630e263dd4a99",
+    "byteLength": 53155
   },
   {
     "path": "src/render/atmosphere.ts",
@@ -171,18 +171,18 @@
   },
   {
     "path": "src/render/signMedia.ts",
-    "sha256": "1543b3969ef590748c842387b5fffb8e21c80d11a6a79babb6a37ec51dd3cdf3",
-    "byteLength": 35711
+    "sha256": "7074be1d237bdd56a0091aabeb4dac62e212932f93eef213c0afdec45010d7f9",
+    "byteLength": 37063
   },
   {
     "path": "src/render/signMediaWorker.ts",
-    "sha256": "6cde0d4a66f777fd02438d5fc9678fe7407c6d84952ee16e9f57f9dd4392a9df",
-    "byteLength": 1472
+    "sha256": "8fa5e4f89a72888e69381410fac8dd12cba9f5a60dde995d49196e7779372b7b",
+    "byteLength": 1669
   },
   {
     "path": "src/render/signShaders.ts",
-    "sha256": "56b2be0a0c2d1865774acd624bd849ce994b1fbf0c87cd60801a89fedf4ee5aa",
-    "byteLength": 19394
+    "sha256": "b181dc44c8190aafe788244fa6ded42d4b92b4484f252534b2ce963b57119cab",
+    "byteLength": 19533
   },
   {
     "path": "src/render/smog.ts",
