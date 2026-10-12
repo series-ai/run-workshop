@@ -115,10 +115,9 @@ function smooth(a: number, b: number, x: number): number {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 }
-function expectedVisibility(distance: number, presence: number, css: number): number {
+function expectedVisibility(_distance: number, presence: number, css: number): number {
   if (presence <= 0) return 0;
-  const far = Math.max(0, Math.min(1, presence)) * (1 - smooth(750, 1300, distance));
-  return far + (1 - far) * smooth(2, 6, css);
+  return smooth(0.125, 0.5, css);
 }
 function initialise(traffic: Traffic, id: number, time: number, distance: number, fov = 8, dpr = 1) {
   const view = camera(fov);
@@ -153,15 +152,15 @@ describe('R44 close visibility from actual traffic buffers', () => {
   it('has exact unresolved and resolved CSS limits and continuous zoom weights', () => {
     const samples = [];
     for (const distance of [50, 200, 400, 700, 1200, 1500]) for (const presence of [0, 0.143, 0.5, 1]) {
-      for (const css of [0, 2, 4, 6, 8]) samples.push({ distance, presence, css,
+      for (const css of [0, 0.125, 0.25, 0.3125, 0.5, 2, 6, 8]) samples.push({ distance, presence, css,
         actual: trafficHullVisibility(distance, presence, css), expected: expectedVisibility(distance, presence, css) });
     }
     receipt('scalar-limits', { samples });
     for (const sample of samples) expect(sample.actual).toBeCloseTo(sample.expected, 12);
     for (const dpr of [1, 1.25, 1.5]) {
-      let previous = trafficHullVisibility(1200, 1, 2);
+      let previous = trafficHullVisibility(1200, 1, 0.125);
       for (let step = 1; step <= 400; step += 1) {
-        const css = 2 + step / 100;
+        const css = 0.125 + step * 0.375 / 400;
         const actual = trafficHullVisibility(1200, 1, css * dpr / dpr);
         expect(Number.isFinite(actual)).toBe(true);
         expect(actual).toBeGreaterThanOrEqual(previous - 1e-12);
@@ -169,6 +168,68 @@ describe('R44 close visibility from actual traffic buffers', () => {
         previous = actual;
       }
     }
+  });
+
+  it('keeps both CSS boundary values and slopes continuous without a metre gate', () => {
+    const epsilon = 1e-8;
+    for (const distance of [50, 200, 400, 700, 1200, 3000]) {
+      for (const boundary of [0.125, 0.5]) {
+        const before = trafficHullVisibility(distance, 1, boundary - epsilon);
+        const centre = trafficHullVisibility(distance, 1, boundary);
+        const after = trafficHullVisibility(distance, 1, boundary + epsilon);
+        expect(Math.abs(after - before)).toBeLessThan(1e-6);
+        expect(Math.abs((after - centre) / epsilon - (centre - before) / epsilon)).toBeLessThan(5e-6);
+      }
+    }
+    for (const dpr of [1, 1.25, 1.5]) for (const css of [0, 0.125, 0.25, 0.499999]) {
+      expect(css * dpr).toBeLessThan(1);
+    }
+  });
+
+  it.each([1, 1.25, 1.5])('keeps all six real profiles opaque at 1200 m in three views at DPR %s', dpr => {
+    const traffic = factory();
+    try {
+      const view = camera(62);
+      view.position.set(0, 1500, 0);
+      view.lookAt(0, 1500, -1);
+      update(traffic, 12, view, dpr);
+      const streak = traffic.objects.find(object => object.name === 'skyriver.traffic.streaks');
+      if (!(streak instanceof Mesh) || !(streak.geometry instanceof InstancedBufferGeometry)) throw Error('CLOSE_REAL_STREAK_REQUIRED');
+      const ids = streak.geometry.getAttribute('aCarLod'), profiles = streak.geometry.getAttribute('aCarShape');
+      const selectedIds = Array.from({ length: 6 }, (_, profile) => {
+        for (let slot = 0; slot < streak.geometry.instanceCount; slot += 1) {
+          if (ids.getZ(slot) >= 114 && profiles.getX(slot) === profile) return ids.getZ(slot);
+        }
+        throw Error('CLOSE_REAL_PROFILE_REQUIRED:' + profile);
+      });
+      const samples = [];
+      for (const id of selectedIds) {
+        const initial = requiredRow(traffic, id);
+        const forward = new Vector3(initial.matrix[8]!, initial.matrix[9]!, initial.matrix[10]!).normalize();
+        const right = new Vector3(initial.matrix[0]!, initial.matrix[1]!, initial.matrix[2]!).normalize();
+        for (const angle of [0, 45, 90]) {
+          const radians = angle * Math.PI / 180;
+          view.position.copy(initial.position).addScaledVector(forward, 1200 * Math.cos(radians))
+            .addScaledVector(right, 1200 * Math.sin(radians));
+          view.lookAt(initial.position);
+          update(traffic, 12, view, dpr);
+          const actual = requiredRow(traffic, id), projected = extent(actual, view);
+          expect(actual.matrix).toEqual(initial.matrix);
+          expect(projected.behind).toBe(false);
+          expect(projected.css).toBeGreaterThanOrEqual(0.5);
+          expect(actual.hullFade).toBe(1);
+          expect(actual.lampFade).toBe(1);
+          expect(actual.trailWeight).toBe(1);
+          assertPhysical(actual, initial);
+          samples.push({ id, profile: actual.profile, angle, dpr, projectedExtentCss: projected.css,
+            distanceM: actual.position.distanceTo(view.position), hullFade: actual.hullFade,
+            lampFade: actual.lampFade, trailWeight: actual.trailWeight, matrix: actual.matrix,
+            camera: { world: view.matrixWorld.toArray(), projection: view.projectionMatrix.toArray() } });
+        }
+      }
+      expect(samples).toHaveLength(18);
+      receipt(`resolved18-${dpr}`, { selectedIds, samples });
+    } finally { traffic.dispose(); }
   });
 
   it.each([1, 1.25, 1.5].flatMap(dpr => [50, 200, 400, 700].map(distance => ({ dpr, distance }))))
@@ -189,7 +250,7 @@ describe('R44 close visibility from actual traffic buffers', () => {
         for (const sample of samples) {
           expect(sample.actual).not.toBeNull();
           const actual = sample.actual!;
-          expect(sample.projected!.css).toBeGreaterThanOrEqual(6);
+          expect(sample.projected!.css).toBeGreaterThanOrEqual(0.5);
           expect(actual.hullFade).toBeGreaterThanOrEqual(0.99);
           expect(actual.lampFade).toBeGreaterThanOrEqual(0.99);
           expect(Math.abs(actual.hullFade - actual.lampFade)).toBeLessThanOrEqual(0.02);
@@ -242,6 +303,9 @@ describe('R44 close visibility from actual traffic buffers', () => {
       for (const sample of samples) {
         expect(sample.actual).not.toBeNull(); const actual = sample.actual!;
         const expected = expectedVisibility(sample.distance!, 1, sample.projected!.css);
+        expect(sample.projected!.css).toBeGreaterThanOrEqual(0.5);
+        expect(actual.hullFade).toBe(1);
+        expect(actual.lampFade).toBe(1);
         expect(Math.abs(actual.hullFade - expected)).toBeLessThanOrEqual(0.002);
         expect(Math.abs(actual.lampFade - actual.hullFade)).toBeLessThanOrEqual(0.02);
         expect(actual.trailWeight).toBe(1); assertPhysical(actual, initial);

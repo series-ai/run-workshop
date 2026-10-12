@@ -126,8 +126,8 @@
   },
   {
     "path": "src/render/lightHandover.ts",
-    "sha256": "2ed61be550e9f0490909df818d852cc42152550fdeb9aa75a070fab5d0eb7a7a",
-    "byteLength": 9979
+    "sha256": "c15f65b2288520c16e3f1055bb4dc45501f6a3b0ac210bfd8f440dc6e8ec2433",
+    "byteLength": 9915
   },
   {
     "path": "src/render/presentationLayout.ts",

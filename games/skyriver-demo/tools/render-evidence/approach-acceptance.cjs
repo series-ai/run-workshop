@@ -11,8 +11,7 @@ function smoothstep(start, end, value) {
 // These are CPU scalar checks. They do not prove raster visibility.
 function shippedHullResponse(distanceM, sourceTierFade, projectedExtentCssPx = 0) {
   const distanceCoverage = 1 - smoothstep(750, 1300, distanceM);
-  const far = distanceCoverage * sourceTierFade;
-  const hullFade = sourceTierFade <= 0 ? 0 : far + (1 - far) * smoothstep(2, 6, projectedExtentCssPx);
+  const hullFade = sourceTierFade <= 0 ? 0 : smoothstep(0.125, 0.5, projectedExtentCssPx);
   return { hullFade, distanceCoverage,
     lifecyclePresence: sourceTierFade, distanceScale: 1, lifecycleScale: 1 };
 }

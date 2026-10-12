@@ -135,10 +135,9 @@ export function independentSmoothstep(a: number, b: number, value: number): numb
 }
 /** Independent R44 values. Visibility changes coverage. Physical size stays fixed. */
 export function shippedHullResponse(distanceM: number, sourceFade = 1, tierFade = 1, extentCssPx = 0) {
-  const distanceCoverage = 1 - independentSmoothstep(750, 1300, distanceM);
+  const distanceCoverage = independentSmoothstep(0.125, 0.5, extentCssPx);
   const lifecyclePresence = sourceFade * tierFade > 0 ? 1 : 0;
-  const far = distanceCoverage * lifecyclePresence;
-  const fade = lifecyclePresence === 0 ? 0 : far + (1 - far) * independentSmoothstep(2, 6, extentCssPx);
+  const fade = lifecyclePresence === 0 ? 0 : distanceCoverage;
   return { fade, distanceCoverage, lifecyclePresence,
     distanceScale: 1, lifecycleScale: 1, scale: 1 };
 }
@@ -274,7 +273,7 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
       .some(([start, end]) => row.distanceM > start && previous && previous.distanceM < end);
     if (previous && inRawFadeBand && !row.input.thinFar) {
       const step = (a: number, b: number) => Math.abs(b - a) / Math.max(Math.abs(a), 1e-6);
-      const resolved = (previous.input.projectedExtentCssPx ?? 0) >= 6 && (row.input.projectedExtentCssPx ?? 0) >= 6;
+      const resolved = (previous.input.projectedExtentCssPx ?? 0) >= 0.5 && (row.input.projectedExtentCssPx ?? 0) >= 0.5;
       const previousVisibility = referenceVisibility(previous.input), visibility = referenceVisibility(row.input);
       if (resolved || (previousVisibility > 0 && visibility > 0)) {
         const beforeWeight = resolved ? 1 : previousVisibility, afterWeight = resolved ? 1 : visibility;
@@ -298,7 +297,7 @@ export function continuityRawSteps(rows: readonly ContinuityRow[]) {
     return { distanceM: row.distanceM, previousDistanceM: previous.distanceM,
       extentCssPx: row.input.projectedExtentCssPx ?? 0,
       previousExtentCssPx: previous.input.projectedExtentCssPx ?? 0,
-      resolved: (row.input.projectedExtentCssPx ?? 0) >= 6 && (previous.input.projectedExtentCssPx ?? 0) >= 6,
+      resolved: (row.input.projectedExtentCssPx ?? 0) >= 0.5 && (previous.input.projectedExtentCssPx ?? 0) >= 0.5,
       independentlyDeclaredVisibility: referenceVisibility(row.input),
       previousDeclaredVisibility: referenceVisibility(previous.input),
       rawEnergyStep: step(previous.metrics.energyY, row.metrics.energyY),
@@ -330,7 +329,7 @@ export function integratedMetricStep(before: SameCarTrafficAppearanceInput, afte
   const result = { sizeCssPx: 0, sizeIntensity: 0, energyY: 0, peakY: 0 };
   const boundaries = [before.distanceM, after.distanceM];
   // Split at actual projected support edges. Keep the same derivative and limits.
-  for (const edge of [2, 6]) {
+  for (const edge of [0.125, 0.5]) {
     const at = (distance: number) => inputAtDistance(before, distance).projectedExtentCssPx ?? 0;
     if ((at(before.distanceM) - edge) * (at(after.distanceM) - edge) < 0) {
       let low = before.distanceM, high = after.distanceM;

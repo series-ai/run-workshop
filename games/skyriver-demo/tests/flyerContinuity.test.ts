@@ -121,16 +121,16 @@ describe('flyer continuity: full pure distance matrix', () => {
       2 * (row.tail.floorHalfSizeCssPx[0] + row.tail.pairHalfSpanCssPx), 2 * row.tail.floorHalfSizeCssPx[1]) };
     expect(continuityViolations(rows.map((value, i) => i === at ? wrongLight : value))
       .some(v => v.channel === 'head pipeline energy')).toBe(true);
-    const wrongBand = continuityRow({ ...row.input, distanceM: row.distanceM - 100 });
-    const wrongAssignment = { ...row, output: wrongBand.output };
+    const wrongAssignment = { ...row, output: { ...row.output,
+      hull: { ...row.output.hull, fade: 0.5, coverage: 0.5 } } };
     expect(continuityViolations(rows.map((value, i) => i === at ? wrongAssignment : value))
       .some(v => v.channel === 'hull distance fade')).toBe(true);
   });
 
-  it('rejects extra unresolved transport energy and size with the unchanged25percent guard', () => {
+  it('rejects extra resolved energy and size with the unchanged25percent guard', () => {
     const rows = continuityProfile(4, 1.25, 0, 'high');
     const index = rows.findIndex(row => row.distanceM === 1200), row = rows[index]!;
-    expect(row.input.projectedExtentCssPx).toBeLessThan(6);
+    expect(row.input.projectedExtentCssPx).toBeGreaterThanOrEqual(0.5);
     for (const channel of ['energyY', 'sizeIntensity', 'sizeCssPx'] as const) {
       const fault = { ...row, metrics: { ...row.metrics, [channel]: row.metrics[channel] * 1.5 } };
       const failures = continuityViolations(rows.map((actual, i) => i === index ? fault : actual));
@@ -139,7 +139,7 @@ describe('flyer continuity: full pure distance matrix', () => {
       expect(failures.some(failure => failure.channel === gate && failure.limit ===0.25)).toBe(true);
     }
     const near = continuityRow(continuityInput(0, 1.25, 0, 'high', 200));
-    expect(near.input.projectedExtentCssPx).toBeGreaterThanOrEqual(6);
+    expect(near.input.projectedExtentCssPx).toBeGreaterThanOrEqual(0.5);
     const partial = { ...near, output: { ...near.output,
       hull: { ...near.output.hull, fade: 0.5, coverage: 0.5 } } };
     expect(continuityViolations([partial]).some(failure => failure.channel === 'hull distance fade')).toBe(true);
@@ -243,7 +243,8 @@ describe('flyer continuity: captured temporal state', () => {
   });
   it('rejects positive emission at the declared zero-alpha low-tier endpoint', () => {
     const rows = continuityProfile(0, 1.25, 180, 'low', true);
-    const at = rows.findIndex(row => row.distanceM === 4000), row = rows[at]!;
+    const at = rows.findIndex(row => row.distanceM === 4000);
+    const row = continuityRow({ ...rows[at]!.input, admitted: false, sourceFade: 0 });
     expect(row.output.hull.fade).toBe(0);
     const faulty = { ...row, metrics: { ...row.metrics, energyY: 1 } };
     expect(continuityViolations(rows.map((value, i) => i === at ? faulty : value))

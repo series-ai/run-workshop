@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { InstancedBufferGeometry, InstancedMesh, Mesh, PerspectiveCamera, ShaderLib, UniformsUtils, Vector3 } from 'three';
+import { InstancedBufferAttribute, InstancedBufferGeometry, InstancedMesh, Mesh, PerspectiveCamera, ShaderLib, UniformsUtils, Vector3 } from 'three';
 import { createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { TRAFFIC_APPEARANCE_PROFILES } from '../src/render/trafficAppearance';
 import { trafficHullIgnNoise, trafficHullFragmentDiscarded } from '../src/render/trafficAppearanceModel';
@@ -158,6 +158,8 @@ describe('R39 independent real-buffer pop identity', () => {
   it.each([424242, 0, 2147483647])('keeps same-car fade continuous through three tier changes at seed %i', seed => {
     const { traffic, cam, project } = setup(seed);
     let prior: Frame | null = null;
+    let initialIds: number[] = [];
+    const initialOwners = new Map<number | null, string>();
     let packedRemaps = 0, invalidSlotFadeJumps = 0, maxSameIdFadeStep = 0, fadeEvents = 0, packedIdentityFaultEvents = 0;
     const rawHullEvents: unknown[] = [];
     const counts: Record<string, number> = {};
@@ -169,6 +171,15 @@ describe('R39 independent real-buffer pop identity', () => {
         const time = 12 + frame / 60;
         traffic.update(time, cam.position);
         const current = snapshot(traffic);
+        if (frame === 0) {
+          initialIds = current.streaks.map(row => row.carId);
+          for (const row of current.hulls) initialOwners.set(row.carId, row.mesh + ':' + row.slot);
+        }
+        expect(current.streaks).toHaveLength(2400);
+        expect(current.hulls).toHaveLength(2400);
+        expect(current.streaks.every((row, slot) => row.fade === 1 && row.carId === initialIds[slot])).toBe(true);
+        expect(current.hulls.every(row => row.fade === 1
+          && initialOwners.get(row.carId) === row.mesh + ':' + row.slot)).toBe(true);
         if (tier) transitions.push({ frame, time, tier, actualCars: current.streaks.length });
         if (prior) {
           const sameCar = new Map(prior.streaks.map(row => [row.carId, row]));
@@ -193,13 +204,48 @@ describe('R39 independent real-buffer pop identity', () => {
         }
         prior = current;
       }
-      const result = { seed, frames: 541, transitions, packedRemaps, invalidSlotFadeJumps, maxSameIdFadeStep, unchangedFadeLimit: 0.35, actualIdFadeEvents: fadeEvents, packedIdentityFaultEvents, faultControl: 'The actual helper receives the same real values with packed slot IDs in place of stable car IDs.', rawHullCounts: counts, rawHullEvents, gpuReadback: false, pass: fadeEvents === 0 && maxSameIdFadeStep < 0.35 && invalidSlotFadeJumps > 0 };
+      const result = { seed, frames: 541, transitions, packedRemaps, invalidSlotFadeJumps, maxSameIdFadeStep, unchangedFadeLimit: 0.35, actualIdFadeEvents: fadeEvents, packedIdentityFaultEvents, faultControl: 'The actual helper receives the same real values with packed slot IDs in place of stable car IDs.', rawHullCounts: counts, rawHullEvents, gpuReadback: false, pass: fadeEvents === 0 && maxSameIdFadeStep < 0.35 && packedRemaps === 0 && invalidSlotFadeJumps === 0 };
       receipt('seed-' + seed, result);
-      expect(packedRemaps).toBeGreaterThan(1000);
-      expect(invalidSlotFadeJumps).toBeGreaterThan(100);
+      expect(packedRemaps).toBe(0);
+      expect(invalidSlotFadeJumps).toBe(0);
       expect(maxSameIdFadeStep).toBeLessThan(0.35);
       expect(fadeEvents).toBe(0);
       expect(packedIdentityFaultEvents).toBe(invalidSlotFadeJumps);
+    } finally { traffic.dispose(); }
+  });
+
+  it('rejects packed-slot identity after a real-buffer repack fault', () => {
+    const { traffic, project } = setup();
+    try {
+      const initial = snapshot(traffic);
+      const visible = initial.streaks.filter(row => row.fade > 0.9 && project(row.position));
+      const first = visible[0], second = visible[1];
+      if (!first || !second) throw Error('R39_TWO_VISIBLE_REAL_CARS_REQUIRED');
+      const geometry = actualStreak(traffic);
+      geometry.getAttribute('aCarFade').setX(first.slot, 0.1);
+      const before = snapshot(traffic);
+      for (const name of ['aCarPos', 'aCarDir', 'aCarFade', 'aCarShape', 'aCarLod']) {
+        const attribute = geometry.getAttribute(name);
+        if (!(attribute instanceof InstancedBufferAttribute)) throw Error('R39_REAL_REPACK_ATTRIBUTE_MISSING');
+        for (let axis = 0; axis < attribute.itemSize; axis += 1) {
+          const a = first.slot * attribute.itemSize + axis, b = second.slot * attribute.itemSize + axis;
+          const value = attribute.array[a]!;
+          attribute.array[a] = attribute.array[b]!;
+          attribute.array[b] = value;
+        }
+        attribute.needsUpdate = true;
+      }
+      const after = snapshot(traffic);
+      const actualIdEvents = detector.compareStreakFrames(before.streaks, after.streaks, project);
+      expect(actualIdEvents).toHaveLength(0);
+      const wrongBefore = before.streaks.map(row => ({ ...row, carId: row.slot }));
+      const wrongAfter = after.streaks.map(row => ({ ...row, carId: row.slot }));
+      const faults = detector.compareStreakFrames(wrongBefore, wrongAfter, project);
+      expect(faults).toHaveLength(2);
+      expect(faults.every(event => event.type === 'fadeJump')).toBe(true);
+      receipt('packed-identity-repack-fault', { firstCarId: first.carId, secondCarId: second.carId,
+        actualBufferRepack: true, injectedFadeContrast: true, unchangedFadeLimit: 0.35,
+        actualIdEvents, packedSlotEvents: faults, productionRemapClaim: false });
     } finally { traffic.dispose(); }
   });
 

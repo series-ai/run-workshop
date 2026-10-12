@@ -39,19 +39,18 @@ export function hullLodAlpha(distanceM: number): number {
 
 /**
  * Zero presence stays hidden.
- * A conservative body extent of 2 to 6 CSS pixels raises far coverage to full coverage.
+ * Positive presence is opaque at a body extent of 0.5 CSS pixels or more.
+ * Coverage rises smoothly from 0.125 to 0.5 CSS pixels. Distance does not set coverage.
  * This extent is a box bound, not a silhouette measurement.
  */
 export function trafficHullVisibility(
-  distanceM: number,
+  _distanceM: number,
   lifecyclePresence: number,
   projectedExtentCssPx = 0,
 ): number {
   const presence = clamp01(lifecyclePresence);
   if (presence <= 0) return 0;
-  const far = presence * (1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, distanceM));
-  const resolved = smoothstep(2, 6, projectedExtentCssPx);
-  return far + (1 - far) * resolved;
+  return smoothstep(0.125, 0.5, projectedExtentCssPx);
 }
 
 /** Keeps the low-tier far fade at zero presence, then adopts the hull LOD cap by threshold. */

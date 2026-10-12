@@ -201,7 +201,6 @@ describe('capture acceptance: actual constant-size traffic buffers', () => {
     const traffic = createTraffic();
     try {
       traffic.update(10, { x: 0, y: 1500, z: 0 });
-      traffic.setPixelAngle(1, 1);
       const sample = scaleSample(traffic, 100, 10, 1190);
       expect(sample.aFade).toBeGreaterThan(0);
       const scaleInput = { distanceM: 1500, scale: sample.scale,

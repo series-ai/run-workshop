@@ -100,7 +100,7 @@ describe('R15 chase traffic in the R21 model', () => {
           }
           const extent = Math.max((Math.max(...points.map(point => point.x)) - Math.min(...points.map(point => point.x))) * 640,
             (Math.max(...points.map(point => point.y)) - Math.min(...points.map(point => point.y))) * 360);
-          const far = 1 - smooth(750, 1300, distance), expected = far + (1 - far) * smooth(2, 6, extent);
+          const expected = smooth(0.125, 0.5, extent);
           const hullFade = hull.geometry.getAttribute('aFade').getX(current.hullSlot);
           expect(hullFade).toBeCloseTo(expected, 5); expect(hullFade).toBeLessThanOrEqual(previous + 1e-6); previous = hullFade;
           const rows = Array.from({ length: geometry.instanceCount }, (_, slot) => slot).filter(slot => lod.getZ(slot) === id);
@@ -114,7 +114,7 @@ describe('R15 chase traffic in the R21 model', () => {
           expect(lod.getX(slot)).toBe(1); expect(lod.getY(slot)).toBe(0);
           expect(fades.getX(slot)).toBeCloseTo(expected, 5); expect(fades.getX(slot)).toBeCloseTo(hullFade, 5);
           expect(fades.getW(slot)).toBe(initialTrail);
-          if (extent >= 6) { expect(hullFade).toBe(1); expect(fades.getX(slot)).toBe(1); }
+          if (extent >= 0.5) { expect(hullFade).toBe(1); expect(fades.getX(slot)).toBe(1); }
         }
       }
       expect(slots.size).toBeGreaterThan(1);

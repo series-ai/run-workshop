@@ -286,8 +286,7 @@ describe('R39 independent physical vehicle output', () => {
             : behind ? 0 : crossing ? 6 : Math.max(
               (Math.max(...projected.map(point => point.x)) - Math.min(...projected.map(point => point.x))) * 640,
               (Math.max(...projected.map(point => point.y)) - Math.min(...projected.map(point => point.y))) * 360);
-          const far = 1 - smooth(750, 1300, distance);
-          const expected = behind ? 0 : far + (1 - far) * smooth(2, 6, extent);
+          const expected = behind ? 0 : smooth(0.125, 0.5, extent);
           const hullFade = mesh.geometry.getAttribute('aFade').getX(owner.hullSlot);
           expect(hullFade).toBeCloseTo(expected, 5);
           const slot = lampSlots.get(id);

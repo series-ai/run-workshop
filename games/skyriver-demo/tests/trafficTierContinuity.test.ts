@@ -124,7 +124,7 @@ describe('R33 actual rear approach at timed closure speed', () => {
         const camera = car.position.clone().add(new Vector3(0, 0, 200));
         traffic.update(10 + elapsed, camera);
         const current = carRecord(traffic, 1000);
-        let actual: { scale: number; fade: number } | null = null;
+        let actual: { scale: number; fade: number; extent: number } | null = null;
         for (const object of traffic.objects) {
           if (!(object instanceof InstancedMesh)) continue;
           for (let slot = 0; slot < object.count; slot += 1) {
@@ -132,14 +132,19 @@ describe('R33 actual rear approach at timed closure speed', () => {
             if (Math.hypot(matrix[offset + 12]! - current.position.x,
               matrix[offset + 13]! - current.position.y, matrix[offset + 14]! - current.position.z) >= 1e-4) continue;
             if (actual) throw new Error('R33_AMBIGUOUS_REAL_HULL');
+            object.geometry.computeBoundingBox();
+            const box = object.geometry.boundingBox;
+            if (!box) throw Error('R33_REAL_HULL_BOUNDS_MISSING');
             actual = { scale: Math.hypot(matrix[offset]!, matrix[offset + 1]!, matrix[offset + 2]!),
+              extent: box.getSize(new Vector3()).length() * current.sizeScale / (camera.distanceTo(current.position) * 0.0012),
               fade: object.geometry.getAttribute('aFade').getX(slot) };
           }
         }
         if (!actual) throw new Error('R33_REAL_TIER_HULL_MISSING');
         // This admitted resolved source has one shared visibility.
         expect(current.fade).toBe(1);
-        const expected = shippedHullResponse(200);
+        expect(actual.extent).toBeGreaterThanOrEqual(0.5);
+        const expected = shippedHullResponse(200, 1, 1, actual.extent);
         expect(actual.fade).toBeCloseTo(expected.fade, 6);
         expect(actual.scale).toBeCloseTo(current.sizeScale * expected.scale, 5);
         rows.push({ elapsed, carId: current.id, sourceTierFade: current.fade,

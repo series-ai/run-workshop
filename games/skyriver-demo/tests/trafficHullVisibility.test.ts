@@ -8,11 +8,6 @@ import { trafficHullVisibility } from '../src/render/lightHandover';
 import { shippedHullResponse } from './support/flyerContinuityMatrix';
 import { R44_LAMP_PROFILES } from './support/r44LampProfiles';
 
-function smoothstep(a: number, b: number, value: number): number {
-  const p = Math.max(0, Math.min(1, (value - a) / (b - a)));
-  return p * p * (3 - 2 * p);
-}
-
 function record(traffic: SkyriverTraffic, carId: number) {
   const streak = traffic.objects.find(object => object.name === 'skyriver.traffic.streaks');
   if (!(streak instanceof Mesh) || !(streak.geometry instanceof InstancedBufferGeometry)) throw Error('R44_STREAK_MISSING');
@@ -65,9 +60,9 @@ describe('R44 constant hull size and lifecycle coverage: real traffic buffers', 
     for (const distance of [200, 750, 900, 1080, 1190, 1300, 1500]) {
       for (const source of [0, 0.143, 0.5, 1]) {
         for (const tier of [0, 0.143, 0.5, 1]) {
-          const expected = (1 - smoothstep(750, 1300, distance)) * source * tier;
-          expect(trafficHullVisibility(distance, source * tier, 2)).toBeCloseTo(expected, 12);
-          expect(trafficHullVisibility(distance, source * tier, 6)).toBe(source * tier > 0 ? 1 : 0);
+          expect(trafficHullVisibility(distance, source * tier, 0.125)).toBe(0);
+          expect(trafficHullVisibility(distance, source * tier, 0.3125)).toBe(source * tier > 0 ? 0.5 : 0);
+          expect(trafficHullVisibility(distance, source * tier, 0.5)).toBe(source * tier > 0 ? 1 : 0);
         }
       }
     }
