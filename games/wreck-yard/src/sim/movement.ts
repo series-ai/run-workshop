@@ -12,7 +12,7 @@ const HALF_HEIGHT = PLAYER_HEIGHT * 0.5 - PLAYER_RADIUS;
 const CAPSULE = { type: 'capsule', radius: meters(PLAYER_RADIUS), halfHeight: meters(HALF_HEIGHT) } as const;
 
 /** Highest edge the player can climb without the thruster (m). */
-const STEP_HEIGHT = 0.5;
+export const STEP_HEIGHT = 0.5;
 const SKIN_WIDTH = 0.005;
 const STEP_CAPSULE = { type: 'capsule', radius: meters(PLAYER_RADIUS + SKIN_WIDTH), halfHeight: meters(HALF_HEIGHT + SKIN_WIDTH) } as const;
 const SOLID_QUERY = { hitTriggers: false, hitSensors: false, maxPortalDepth: 0 } as const;

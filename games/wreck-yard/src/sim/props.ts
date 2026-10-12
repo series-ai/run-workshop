@@ -1,6 +1,7 @@
 import { makeEmptyVoxelField, stampBox, type VoxelDims } from 'voxel-kit';
 import { BURNT_MATERIAL, FLOOR_Y, VOXEL_SIZE } from './constants';
 import type { Quat, Vec3 } from './math';
+import { RIG, RIG_TORCH_X } from './setPieces';
 
 /**
  * Every prop in the yard is a dynamic voxel body: grab it, punt it, cut it,
@@ -358,18 +359,19 @@ export function yardProps(): PropSpawn[] {
     slab('block-north', 19, 19, -20, -0.3),
     jersey('jersey-east-a', 20.5, 6.0, 0),
     jersey('jersey-east-b', 20.5, 11.9, 0),
-    jersey('jersey-tank', -8, -3.45, QUARTER),
+    jersey('jersey-tank', -11, -3.45, QUARTER),
     ...tireWall('tires-a', 20, 8.2),
     ...tireWall('tires-b', 20, 18.8),
 
-    // Scrap bales beside the center plinths: two on the floor, one on top.
-    bale('bale-0', 60, -5.4, -0.6, 0),
-    bale('bale-1', 61, -4.35, -0.5, 0.1),
-    bale('bale-2', 62, -4.9, -0.55, -0.15, heightOf(bale0) + 0.03),
+    // Scrap bales west of the yard centre, off the walk to the lift front: two on the floor, one on top.
+    bale('bale-0', 60, -10.4, -0.6, 0),
+    bale('bale-1', 61, -9.35, -0.5, 0.1),
+    bale('bale-2', 62, -9.9, -0.55, -0.15, heightOf(bale0) + 0.03),
 
-    // Demolition rig: the work beam lies under the torch head; the target car waits beside the rig.
-    { id: 'rig-work-beam', label: 'Steel Beam', preset: workBeam, position: [-8.4, restAt(workBeam), -17], rotation: yawQuat(QUARTER), buoyancy: 0.05 },
-    ...carStack('rig-target-car', -6, -13.2, true, 1, 49),
+    // Demolition rig: the work beam lies under the torch head; the target car waits south of the rig.
+    { id: 'rig-work-beam', label: 'Steel Beam', preset: workBeam, position: [RIG[0] + RIG_TORCH_X, restAt(workBeam), RIG[2]], rotation: yawQuat(QUARTER), buoyancy: 0.05 },
+    // East of the walk from the yard centre to the lift front.
+    ...carStack('rig-target-car', RIG[0] + 1.5, -12.4, true, 1, 49),
 
     ...SCRAP_SPOTS.map(([x, z], index) => {
       const kind = SCRAP_KINDS[index % SCRAP_KINDS.length]!;

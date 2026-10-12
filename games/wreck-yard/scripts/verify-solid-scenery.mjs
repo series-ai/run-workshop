@@ -10,9 +10,10 @@ const base = process.env.AUDIT_URL ?? 'http://127.0.0.1:4400';
  * Targets: world XZ center, footprint half size before yaw, and a clear route of waypoints.
  */
 const TARGETS = [
-  { name: 'gantry base (rail bogie under the A-frame legs)', center: [-13.5, -1.5], half: [0.7, 2.7], yaw: 0, route: [[-9, -1.0]] },
+  // The routes keep clear of the scrap bales, the jersey barrier, the rig target car, and the scrap piles (sim/props.ts).
+  { name: 'gantry base (rail bogie under the A-frame legs)', center: [-13.5, -1.5], half: [0.7, 2.7], yaw: 0, route: [[-6.5, 2.0], [-6.5, -2.1], [-9.0, -2.1]] },
   // Containers, wrecks, and blocks are dynamic props now (sim/props.ts): the player pushes them.
-  { name: 'demolition rig carriage', center: [-5, -17], half: [1.8, 1.6], yaw: 0, route: [[7.5, 9], [7.5, -12.5], [-2, -12.5], [-2, -17]] },
+  { name: 'demolition rig carriage', center: [-2, -17], half: [1.8, 1.6], yaw: 0, route: [[-9.0, -2.1], [-6.5, -2.1], [-6.5, 4.0], [7.5, 4.0], [7.5, -10.6], [-3.5, -10.6], [-3.5, -14.4]] },
 ];
 const PLAYER_RADIUS = 0.4;
 

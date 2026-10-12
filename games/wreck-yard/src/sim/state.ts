@@ -7,9 +7,18 @@ import type { YardPhysicsWorldState } from './physics';
 export type AnchorFace = '+x' | '-x' | '+y' | '-y' | '+z' | '-z';
 export type BodyMotion = 'dynamic' | 'fixed';
 
+/** The way a light crate's arrow points. */
+export type CrateArrow = 'up' | 'down' | 'left' | 'right';
+/** How a shipping crate's face reads. The renderer uses it. Physics ignores it. */
+export type CrateFace =
+  | { readonly tone: 'light'; readonly arrow: CrateArrow }
+  | { readonly tone: 'dark' };
+
 export interface YardBody {
   readonly renderModel?: 'shipping-crate';
   readonly storageBay?: 'storage' | 'returns';
+  /** Shipping crates only. Missing means a light crate with the arrow up. */
+  readonly crateFace?: CrateFace;
   readonly id: string;
   readonly label: string;
   readonly dims: VoxelDims;

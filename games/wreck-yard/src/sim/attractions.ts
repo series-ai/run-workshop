@@ -33,8 +33,14 @@ export const STORAGE_BOUNDS = {
   min: [STORAGE.center[0] - STORAGE.columns * STORAGE.spacing / 2 - 0.3, FLOOR_Y - 0.05, STORAGE.center[2] - STORAGE.rows * STORAGE.spacing / 2 - 0.3] as Vec3,
   max: [STORAGE.center[0] + STORAGE.columns * STORAGE.spacing / 2 + 0.3, FLOOR_Y + STORAGE.tiers * STORAGE.spacing + 1, STORAGE.center[2] + STORAGE.rows * STORAGE.spacing / 2 + 0.3] as Vec3,
 };
+/** The ground landing sits this far above the yard floor. Equal heights z-fight. */
+const GROUND_LANDING_LIFT = 0.02;
 export const STORAGE_SOLIDS: readonly ShellBox[] = [
-  ...[0, 1, 2, 3].map((floor) => ({ id: `storage-landing-${floor}`, center: [-8.83, ELEVATOR.floors[floor]! - 0.13, ELEVATOR.z] as Vec3Tuple, size: [0.86, 0.26, 3.2] as Vec3Tuple })),
+  ...[0, 1, 2, 3].map((floor) => ({
+    id: `storage-landing-${floor}`,
+    center: [-8.83, ELEVATOR.floors[floor]! - 0.13 + (floor === 0 ? GROUND_LANDING_LIFT : 0), ELEVATOR.z] as Vec3Tuple,
+    size: [0.86, 0.26, 3.2] as Vec3Tuple,
+  })),
   ...[-1, 1].map((side) => ({ id: `storage-guide-${side}`, center: [-5.1, FLOOR_Y + 5.4, ELEVATOR.z + side * 1.8] as Vec3Tuple, size: [0.16, 10.8, 0.16] as Vec3Tuple })),
 ];
 export function elevatorPanelWithinReach(at: Vec3, elevatorY: number): boolean {

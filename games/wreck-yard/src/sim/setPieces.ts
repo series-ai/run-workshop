@@ -45,7 +45,10 @@ export const TANK_RIM = { thickness: 0.4, height: 0.1, centerY: TANK.surfaceY + 
 
 /** Crane group origin: the gantry beams run along X at this height. */
 const CRANE: Vec3Tuple = [0, FLOOR_Y + 8.8, -1.5];
-const RIG: Vec3Tuple = [-5, FLOOR_Y, -17];
+/** Demolition rig origin. It stays east of the storage lift approach. */
+export const RIG: Vec3Tuple = [-2, FLOOR_Y, -17];
+/** Torch head offset along x from the rig origin. The work beam lies under it. */
+export const RIG_TORCH_X = -3.4;
 const HOPPER: Vec3Tuple = [-12, FLOOR_Y + 2.5, 12];
 
 const box = (id: string, center: Vec3Tuple, size: Vec3Tuple, rotation?: readonly [number, number, number]): ShellBox =>
@@ -106,7 +109,7 @@ export const SET_PIECE_COLLIDERS: readonly ShellBox[] = [
   box('rig-boom', at(RIG, [-1.7, 1.5, 0]), [2.2, 0.35, 0.35], [0, 0, 0.6]),
   box('rig-arm', at(RIG, [-2.7, 1.2, 0]), [1.6, 0.28, 0.28], [0, 0, -0.4]),
   box('rig-hydraulic', at(RIG, [-1.5, 1.15, 0.22]), [0.12, 1.4, 0.12], [0, 0, 0.5]),
-  box('rig-torch-head', at(RIG, [-3.4, 0.7, 0]), [0.4, 0.3, 0.3]),
+  box('rig-torch-head', at(RIG, [RIG_TORCH_X, 0.7, 0]), [0.4, 0.3, 0.3]),
 
   // Tank rim, curbs on the stunt ramp.
   ...openTankFrameBoxes(TANK.innerSize[0], TANK.innerSize[2], TANK_RIM.thickness, TANK_RIM.height).map((part, index) =>

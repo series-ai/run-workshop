@@ -7,7 +7,7 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import type { WaterTankSpec } from 'voxel-kit';
 import { FLOOR_Y, getTerrainHeightAt, TANK, TANK_SPEC, TERRAIN_COLS, TERRAIN_ROWS, TERRAIN_SPACING } from '../sim/constants';
 import { SHELL_BOXES } from '../sim/shell';
-import { FLOODLIGHT_MASTS, MAST_LAMP_HEIGHT, mastYaw, openTankFrameBoxes, TANK_RIM, VEHICLE_RAMP } from '../sim/setPieces';
+import { FLOODLIGHT_MASTS, MAST_LAMP_HEIGHT, mastYaw, openTankFrameBoxes, RIG, TANK_RIM, VEHICLE_RAMP } from '../sim/setPieces';
 import { RAMP_PARTS } from './rampParts';
 import { glowTexture } from './style/glowTexture';
 import { SkyDome } from './SkyDome';
@@ -164,38 +164,63 @@ function aquariumFrameGeometry() {
 const AQUARIUM_FRAME_GEOMETRY = aquariumFrameGeometry();
 
 
+/** Sparks per torch. Each one leaves the flame tip, arcs out, and lands on the floor. */
+const SPARK_COUNT = 180;
+/** Spark launches per second. Phases spread the sparks across the cycle. */
+const SPARK_RATE = 1.6;
+/** Torch-local heights. The torch sits 0.7 m above the floor. */
+const SPARK_TIP_Y = -0.45;
+const SPARK_FLOOR_Y = -0.69;
+
 function CuttingRigSparks() {
-  const geom = useMemo(() => {
-    const count = 180;
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
+  const { geom, positionAttr, colorAttr, seeds, baseColors } = useMemo(() => {
+    const positions = new Float32Array(SPARK_COUNT * 3);
+    const baseColors = new Float32Array(SPARK_COUNT * 3);
+    // Per spark: launch angle, landing reach, and phase. The golden ratio spreads them evenly.
+    const seeds = new Float32Array(SPARK_COUNT * 3);
     const cGlow = new THREE.Color(ART_STYLE.palette.glow);
     const cSpark = new THREE.Color(ART_STYLE.palette.spark);
 
-    for (let i = 0; i < count; i++) {
-      const ang = (i / count) * Math.PI * 2;
-      const r = 0.08 + (i % 13) * 0.09;
-      const dy = -0.16 - (i % 16) * 0.12;
-      const sx = Math.cos(ang) * r * 0.75;
-      const sz = Math.sin(ang) * r * 0.75;
-      positions[i * 3] = sx;
-      positions[i * 3 + 1] = dy;
-      positions[i * 3 + 2] = sz;
+    for (let i = 0; i < SPARK_COUNT; i++) {
+      seeds[i * 3] = i * 2.39996;
+      seeds[i * 3 + 1] = 0.25 + 0.7 * ((i * 0.618034) % 1);
+      seeds[i * 3 + 2] = (i * 0.754877) % 1;
+      positions[i * 3 + 1] = SPARK_TIP_Y;
 
       const col = i % 3 === 0 ? cSpark : cGlow;
-      colors[i * 3] = col.r;
-      colors[i * 3 + 1] = col.g;
-      colors[i * 3 + 2] = col.b;
+      baseColors[i * 3] = col.r;
+      baseColors[i * 3 + 1] = col.g;
+      baseColors[i * 3 + 2] = col.b;
     }
 
+    const positionAttr = new THREE.BufferAttribute(positions, 3);
+    const colorAttr = new THREE.BufferAttribute(new Float32Array(baseColors), 3);
     const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    return g;
+    g.setAttribute('position', positionAttr);
+    g.setAttribute('color', colorAttr);
+    return { geom: g, positionAttr, colorAttr, seeds, baseColors };
   }, []);
 
+  useFrame(({ clock }) => {
+    // Read the clock without advancing it. R3F advances it once per frame.
+    const time = clock.elapsedTime;
+    for (let i = 0; i < SPARK_COUNT; i++) {
+      const life = (time * SPARK_RATE + seeds[i * 3 + 2]!) % 1;
+      const angle = seeds[i * 3]!;
+      const reach = seeds[i * 3 + 1]! * life;
+      // Gravity: the spark falls faster as it travels.
+      const height = SPARK_TIP_Y - (SPARK_TIP_Y - SPARK_FLOOR_Y) * life * life;
+      positionAttr.setXYZ(i, Math.cos(angle) * reach, height, Math.sin(angle) * reach);
+      // Sparks cool as they fall.
+      const cool = 1 - 0.7 * life;
+      colorAttr.setXYZ(i, baseColors[i * 3]! * cool, baseColors[i * 3 + 1]! * cool, baseColors[i * 3 + 2]! * cool);
+    }
+    positionAttr.needsUpdate = true;
+    colorAttr.needsUpdate = true;
+  });
+
   return (
-    <points geometry={geom} raycast={noRaycast}>
+    <points geometry={geom} raycast={noRaycast} frustumCulled={false}>
       <pointsMaterial
         size={0.06}
         vertexColors
@@ -591,9 +616,9 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
 
       {/* ========================================================================= */}
       {/* HERO DEMOLITION CUTTING RIG & ACTIVE TORCH INCANDESCENCE (ASTRA FOCAL)    */}
-      {/* Positioned in Mid-Right Midground (65-72% Screen Width)                   */}
+      {/* Origin and collider share RIG in sim/setPieces.ts.                        */}
       {/* ========================================================================= */}
-      <group position={[-5, FLOOR_Y, -17]}>
+      <group position={[...RIG]}>
         {/* Tracked Demolition Excavator Carriage - Astra Round 8 Dirty Mustard (#BA8C2D) */}
         <mesh position={[0, 0.42, 0]} castShadow receiveShadow raycast={noRaycast}>
           <boxGeometry args={[3.2, 0.8, 2.6]} />
