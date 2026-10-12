@@ -39,9 +39,11 @@ export function hullLodAlpha(distanceM: number): number {
 
 /**
  * Zero presence stays hidden.
- * Positive presence is opaque at a body extent of 0.5 CSS pixels or more.
+ * The intended full-coverage floor is 0.5 CSS pixels.
+ * Positive presence is opaque at that floor and above it.
  * Coverage rises smoothly from 0.125 to 0.5 CSS pixels. Distance does not set coverage.
  * This extent is a box bound, not a silhouette measurement.
+ * The near-plane extent sentinel is 6. It is not the coverage floor.
  */
 export function trafficHullVisibility(
   _distanceM: number,
