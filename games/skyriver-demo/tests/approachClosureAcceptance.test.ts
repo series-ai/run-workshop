@@ -13,6 +13,7 @@ interface ScaleSample {
   scale: number;
   baseScale: number;
   sourceTierFade: number;
+  projectedExtentCssPx?: number;
 }
 interface TrailSample {
   facing: number;
@@ -22,7 +23,7 @@ interface TrailSample {
 interface CheckResult { pass: boolean; limit: number; samples: unknown[]; }
 interface Acceptance {
   checkPhysicalScale(samples: ScaleSample[]): CheckResult;
-  checkHullFade(samples: { distanceM: number; sourceTierFade: number; fade: number }[]): CheckResult;
+  checkHullFade(samples: { distanceM: number; sourceTierFade: number; fade: number; projectedExtentCssPx?: number }[]): CheckResult;
   checkTrailIntensity(samples: TrailSample[]): CheckResult;
 }
 const imported: unknown = createRequire(import.meta.url)('../tools/render-evidence/approach-acceptance.cjs');
@@ -64,7 +65,8 @@ function actualCar(traffic: Traffic, carId: number) {
     if (!(totalShare > 0)) throw new Error('APPROACH_SOURCE_TIER_FADE_UNRECOVERABLE');
     return { carId, slot, position: new Vector3(position.getX(slot), position.getY(slot), position.getZ(slot)),
       direction: new Vector3(direction.getX(slot), direction.getY(slot), direction.getZ(slot)),
-      profile: shape.getX(slot), baseScale: fade.getY(slot), sourceTierFade: fade.getX(slot) / totalShare,
+      profile: shape.getX(slot), baseScale: fade.getY(slot),
+      sourceTierFade: traffic.carEvidence(carId)?.admitted ? 1 : 0,
       fade: fade.getX(slot), trailWeight: fade.getW(slot), totalShare };
   }
   throw new Error('APPROACH_REAL_CAR_MISSING:' + carId);
@@ -90,9 +92,17 @@ function scaleSample(traffic: Traffic, carId: number, time: number, distanceM: n
   traffic.update(time, camera);
   const car = actualCar(traffic, carId), hull = actualHull(traffic, car);
   const matrix = hull.mesh.instanceMatrix.array, offset = hull.slot * 16;
+  hull.mesh.geometry.computeBoundingBox();
+  const box = hull.mesh.geometry.boundingBox;
+  if (!box) throw Error('APPROACH_REAL_HULL_BOUNDS_MISSING');
+  const actualDistance = camera.distanceTo(car.position);
+  const material = actualStreak(traffic).material;
+  const cssPixelAngle = material.uniforms.uCssPixelAngle!.value;
+  if (typeof cssPixelAngle !== 'number' || cssPixelAngle <= 0) throw Error('APPROACH_REAL_CSS_PIXEL_ANGLE_MISSING');
+  const projectedExtentCssPx = box.getSize(new Vector3()).length() * car.baseScale / (actualDistance * cssPixelAngle);
   return { carId, distanceM: camera.distanceTo(car.position),
     scale: Math.hypot(matrix[offset]!, matrix[offset + 1]!, matrix[offset + 2]!),
-    baseScale: car.baseScale, sourceTierFade: car.sourceTierFade,
+    baseScale: car.baseScale, sourceTierFade: car.sourceTierFade, projectedExtentCssPx,
     aFade: hull.mesh.geometry.getAttribute('aFade').getX(hull.slot),
     matrix: Array.from(matrix.slice(offset, offset + 16)), camera: camera.toArray(),
     rendererTimeSeconds: time, hull };
@@ -128,7 +138,7 @@ describe('capture acceptance: actual constant-size traffic buffers', () => {
         const carId = ids.getZ(slot);
         const samples = [600, 750, 900, 1080, 1190, 1300].map(distance => scaleSample(traffic, carId, 10, distance));
         for (const sample of samples) {
-          const expected = shippedHullResponse(sample.distanceM, sample.sourceTierFade);
+          const expected = shippedHullResponse(sample.distanceM, sample.sourceTierFade, 1, sample.projectedExtentCssPx);
           expect(sample.scale).toBeCloseTo(sample.baseScale * expected.scale, 5);
           expect(sample.aFade).toBeCloseTo(expected.fade, 5);
         }
@@ -136,31 +146,34 @@ describe('capture acceptance: actual constant-size traffic buffers', () => {
         expect(result.limit).toBe(1e-5);
         expect(result.pass).toBe(true);
         const fadeResult = acceptance.checkHullFade(samples.map(sample => ({ distanceM: sample.distanceM,
-          sourceTierFade: sample.sourceTierFade, fade: sample.aFade })));
+          sourceTierFade: sample.sourceTierFade, projectedExtentCssPx: sample.projectedExtentCssPx, fade: sample.aFade })));
         expect(fadeResult.limit).toBe(1e-5);
         expect(fadeResult.pass).toBe(true);
         save('distance-' + index, { result, fadeResult, samples: samples.map(({ hull: _hull, ...data }) => data) });
       } finally { traffic.dispose(); }
     });
 
-  it('keeps actual size fixed while aFade carries direct lifecycle coverage', () => {
+  it('keeps admitted size and resolved shared coverage fixed', () => {
     const traffic = createTraffic();
     try {
       traffic.update(10, { x: 0, y: 1500, z: 0 });
+      const near = actualCar(traffic, 1000).position.clone().add(new Vector3(0, 0, 200));
+      traffic.update(10, near);
       traffic.setQuality(TRAFFIC_QUALITY_TIERS.low);
-      traffic.update(10, { x: 0, y: 1500, z: 0 });
+      traffic.update(10, near);
       const samples = [0, 0.12, 0.54, 1.08].map(elapsed => {
-        traffic.update(10 + elapsed, { x: 0, y: 1500, z: 0 });
+        traffic.update(10 + elapsed, near);
         return scaleSample(traffic, 1000, 10 + elapsed, 200);
       });
       for (const sample of samples) {
-        expect(sample.aFade).toBeCloseTo(sample.sourceTierFade, 6);
+        expect(sample.sourceTierFade).toBe(1);
+        expect(sample.aFade).toBe(1);
         expect(sample.scale).toBeCloseTo(sample.baseScale, 5);
       }
       const result = acceptance.checkPhysicalScale(samples.map(({ distanceM, scale, baseScale, sourceTierFade }) => ({ distanceM, scale, baseScale, sourceTierFade })));
       expect(result.pass).toBe(true);
       const fadeResult = acceptance.checkHullFade(samples.map(sample => ({ distanceM: sample.distanceM,
-        sourceTierFade: sample.sourceTierFade, fade: sample.aFade })));
+        sourceTierFade: sample.sourceTierFade, projectedExtentCssPx: sample.projectedExtentCssPx, fade: sample.aFade })));
       expect(fadeResult.pass).toBe(true);
       save('lifecycle', { result, fadeResult, samples: samples.map(({ hull: _hull, ...data }) => data) });
     } finally { traffic.dispose(); }
@@ -173,7 +186,7 @@ describe('capture acceptance: actual constant-size traffic buffers', () => {
       const sample = scaleSample(traffic, 100, 10, 200);
       const attribute = sample.hull.mesh.geometry.getAttribute('aFade');
       const original = attribute.getX(sample.hull.slot);
-      const input = { distanceM: sample.distanceM, sourceTierFade: sample.sourceTierFade, fade: original };
+      const input = { distanceM: sample.distanceM, sourceTierFade: sample.sourceTierFade, projectedExtentCssPx: sample.projectedExtentCssPx, fade: original };
       expect(acceptance.checkHullFade([input]).pass).toBe(true);
       attribute.setX(sample.hull.slot, original * 0.5);
       const fault = { ...input, fade: attribute.getX(sample.hull.slot) };
@@ -184,16 +197,17 @@ describe('capture acceptance: actual constant-size traffic buffers', () => {
     } finally { traffic.dispose(); }
   });
 
-  it('rejects lifecycle above one at zero distance coverage in actual buffer samples', () => {
+  it('rejects lifecycle above one at the unresolved zero boundary with actual physical scale', () => {
     const traffic = createTraffic();
     try {
       traffic.update(10, { x: 0, y: 1500, z: 0 });
-      const sample = scaleSample(traffic, 100, 10, 1500);
-      expect(sample.aFade).toBe(0);
-      const scaleInput = { distanceM: sample.distanceM, scale: sample.scale,
+      traffic.setPixelAngle(1, 1);
+      const sample = scaleSample(traffic, 100, 10, 1190);
+      expect(sample.aFade).toBeGreaterThan(0);
+      const scaleInput = { distanceM: 1500, scale: sample.scale,
         baseScale: sample.baseScale, sourceTierFade: sample.sourceTierFade };
-      const fadeInput = { distanceM: sample.distanceM,
-        sourceTierFade: sample.sourceTierFade, fade: sample.aFade };
+      const fadeInput = { distanceM: 1500, sourceTierFade: sample.sourceTierFade,
+        projectedExtentCssPx: 0, fade: 0 };
       expect(acceptance.checkPhysicalScale([scaleInput]).pass).toBe(true);
       expect(acceptance.checkHullFade([fadeInput]).pass).toBe(true);
       const faults = [1.000001, 1.5].map(sourceTierFade => ({ sourceTierFade,
@@ -206,7 +220,7 @@ describe('capture acceptance: actual constant-size traffic buffers', () => {
         expect(fault.fadeResult.pass).toBe(false);
       }
       save('invalid-lifecycle-control', { scaleInput, fadeInput, faults,
-        scope: 'Actual buffer measurements with an invalid lifecycle witness. No raster claim.' });
+        scope: 'Actual physical scale with an independent unresolved 1500 m scalar boundary and invalid lifecycle witnesses. No zero-row or raster claim.' });
     } finally { traffic.dispose(); }
   });
 

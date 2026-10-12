@@ -80,6 +80,7 @@ export function appearanceRetargetFailures(): TemporalFailure[] {
         const k = independentSmoothstep(0, 1, p), weights: [number, number, number] = [0, 0, 0];
         weights[modeIndex(f.trails)] += 1 - k; weights[modeIndex(t.trails)] += k;
         const common = { ...continuityInput(0, 1.25, 45, from, distance, thinFar), carIndex: id,
+          admitted: alpha > 0, admittedTrailMode: f.trails,
           impostorPresence: Number(f.impostors > 0) * (1 - p) + Number(t.impostors > 0) * p,
           hasHullRecord: id < Math.max(f.carCount, t.carCount), hasStreakRecord: id < Math.max(f.carCount, t.carCount) };
         const before = evaluateSameCarTrafficAppearance({ ...common,
@@ -93,7 +94,7 @@ export function appearanceRetargetFailures(): TemporalFailure[] {
         const h = kernel('head'), tail = kernel('tail');
         const metrics = (output: typeof before) => appearanceMetrics(output, 2 * (h.floorHalfSizeCssPx[0] + h.pairHalfSpanCssPx),
           2 * h.floorHalfSizeCssPx[1], 2 * (tail.floorHalfSizeCssPx[0] + tail.pairHalfSpanCssPx), 2 * tail.floorHalfSizeCssPx[1]);
-        const expected = shippedHullResponse(distance, common.sourceFade, alpha);
+        const expected = shippedHullResponse(distance, common.sourceFade, alpha, common.projectedExtentCssPx);
         for (const output of [before, after]) {
           const scaleError = Math.abs(output.hull.scale - common.sizeScale * expected.scale);
           if (scaleError > 1e-6) errors.push({ channel: 'shipped lifecycle scale', error: scaleError, limit: 1e-6 });

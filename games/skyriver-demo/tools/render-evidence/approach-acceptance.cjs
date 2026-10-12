@@ -9,20 +9,23 @@ function smoothstep(start, end, value) {
 }
 
 // These are CPU scalar checks. They do not prove raster visibility.
-function shippedHullResponse(distanceM, sourceTierFade) {
+function shippedHullResponse(distanceM, sourceTierFade, projectedExtentCssPx = 0) {
   const distanceCoverage = 1 - smoothstep(750, 1300, distanceM);
-  return { hullFade: distanceCoverage * sourceTierFade, distanceCoverage,
+  const far = distanceCoverage * sourceTierFade;
+  const hullFade = sourceTierFade <= 0 ? 0 : far + (1 - far) * smoothstep(2, 6, projectedExtentCssPx);
+  return { hullFade, distanceCoverage,
     lifecyclePresence: sourceTierFade, distanceScale: 1, lifecycleScale: 1 };
 }
 
 function checkHullFade(samples) {
   const rows = samples.map(sample => {
-    const response = shippedHullResponse(sample.distanceM, sample.sourceTierFade);
+    const response = shippedHullResponse(sample.distanceM, sample.sourceTierFade, sample.projectedExtentCssPx ?? 0);
     const expectedFade = response.hullFade;
     const absoluteError = Math.abs(sample.fade - expectedFade);
     const valid = [sample.distanceM, sample.sourceTierFade, sample.fade].every(Number.isFinite)
       && sample.distanceM >= 0 && sample.sourceTierFade >= 0 && sample.sourceTierFade <= 1
-      && sample.fade >= 0 && sample.fade <= 1;
+      && sample.fade >= 0 && sample.fade <= 1
+      && Number.isFinite(sample.projectedExtentCssPx ?? 0) && (sample.projectedExtentCssPx ?? 0) >= 0;
     return { ...sample, ...response, expectedFade, absoluteError, pass: valid && absoluteError < SCALE_LIMIT };
   });
   return { pass: rows.length > 0 && rows.every(row => row.pass), limit: SCALE_LIMIT,
@@ -31,7 +34,7 @@ function checkHullFade(samples) {
 
 function checkPhysicalScale(samples) {
   const rows = samples.map(sample => {
-    const response = shippedHullResponse(sample.distanceM, sample.sourceTierFade);
+    const response = shippedHullResponse(sample.distanceM, sample.sourceTierFade, sample.projectedExtentCssPx ?? 0);
     const expectedScale = sample.baseScale * response.distanceScale * response.lifecycleScale;
     const absoluteError = Math.abs(sample.scale - expectedScale);
     const valid = [sample.distanceM, sample.sourceTierFade, sample.baseScale, sample.scale].every(Number.isFinite)

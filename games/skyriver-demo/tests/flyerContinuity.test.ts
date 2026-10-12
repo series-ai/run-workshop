@@ -1,5 +1,6 @@
 /** Pure traffic continuity checks. Runtime wiring is in trafficTierContinuity.test.ts. */
 import { describe, expect, it } from 'vitest';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import {
   IMPOSTOR_LIGHT_HANDOVER_BAND_M, IMPOSTOR_FAR_FALLOFF_BAND_M,
   writeSameCarLightLod, hullLodAlpha, farImpostorBrightness,
@@ -73,7 +74,7 @@ import { TRAFFIC_APPEARANCE_PROFILES, TRAFFIC_LAMP_HEAD_FACING_BAND, TRAFFIC_LAM
   TRAFFIC_TRAIL_FAR_FADE_BAND_M } from '../src/render/trafficAppearance';
 import { projectTrafficLampKernel } from '../src/render/trafficAppearanceModel';
 import {
-  continuityProfile, continuityRow, continuityInput, continuityViolations, appearanceMetrics, shippedHullResponse,
+  continuityProfile, continuityRow, continuityInput, continuityViolations, appearanceMetrics, shippedHullResponse, continuityRawSteps,
 } from './support/flyerContinuityMatrix';
 import {
   FLYER_MATRIX_DPRS, FLYER_MATRIX_FACINGS, FLYER_MATRIX_TIERS,
@@ -86,6 +87,12 @@ describe('flyer continuity: full pure distance matrix', () => {
   it.each(cases)('$name DPR$dpr facing$facing $tier: all 159 distance cells', ({ type, dpr, facing, tier }) => {
     const rows = continuityProfile(type, dpr, facing, tier);
     expect(rows).toHaveLength(FLYER_MATRIX_DISTANCES.length);
+    if (process.env.R44_CLOSE_OUT) {
+      mkdirSync(process.env.R44_CLOSE_OUT, { recursive: true });
+      writeFileSync(`${process.env.R44_CLOSE_OUT}/matrix-raw-${type}-${dpr}-${facing}-${tier}.json`,
+        JSON.stringify({ type, dpr, facing, tier, rawSteps: continuityRawSteps(rows),
+          status: 'Raw unresolved excursions remain diagnostics. This is not a pop-free or raster acceptance claim.' }, null, 2));
+    }
     expect(continuityViolations(rows)).toEqual([]);
   });
 
@@ -117,7 +124,25 @@ describe('flyer continuity: full pure distance matrix', () => {
     const wrongBand = continuityRow({ ...row.input, distanceM: row.distanceM - 100 });
     const wrongAssignment = { ...row, output: wrongBand.output };
     expect(continuityViolations(rows.map((value, i) => i === at ? wrongAssignment : value))
-      .some(v => v.channel === 'near handover assignment')).toBe(true);
+      .some(v => v.channel === 'hull distance fade')).toBe(true);
+  });
+
+  it('rejects extra unresolved transport energy and size with the unchanged25percent guard', () => {
+    const rows = continuityProfile(4, 1.25, 0, 'high');
+    const index = rows.findIndex(row => row.distanceM === 1200), row = rows[index]!;
+    expect(row.input.projectedExtentCssPx).toBeLessThan(6);
+    for (const channel of ['energyY', 'sizeIntensity', 'sizeCssPx'] as const) {
+      const fault = { ...row, metrics: { ...row.metrics, [channel]: row.metrics[channel] * 1.5 } };
+      const failures = continuityViolations(rows.map((actual, i) => i === index ? fault : actual));
+      const gate = channel === 'energyY' ? 'combined energy step in handover' : channel === 'sizeIntensity'
+        ? 'combined size-intensity step in handover' : 'combined size step in handover';
+      expect(failures.some(failure => failure.channel === gate && failure.limit ===0.25)).toBe(true);
+    }
+    const near = continuityRow(continuityInput(0, 1.25, 0, 'high', 200));
+    expect(near.input.projectedExtentCssPx).toBeGreaterThanOrEqual(6);
+    const partial = { ...near, output: { ...near.output,
+      hull: { ...near.output.hull, fade: 0.5, coverage: 0.5 } } };
+    expect(continuityViolations([partial]).some(failure => failure.channel === 'hull distance fade')).toBe(true);
   });
 
   it('keeps physical front and rear source centres fixed across each facing-curve endpoint', () => {
@@ -218,8 +243,8 @@ describe('flyer continuity: captured temporal state', () => {
   });
   it('rejects positive emission at the declared zero-alpha low-tier endpoint', () => {
     const rows = continuityProfile(0, 1.25, 180, 'low', true);
-    const at = rows.findIndex(row => row.distanceM === 1150), row = rows[at]!;
-    expect(row.output.lod.totalAlpha).toBe(0);
+    const at = rows.findIndex(row => row.distanceM === 4000), row = rows[at]!;
+    expect(row.output.hull.fade).toBe(0);
     const faulty = { ...row, metrics: { ...row.metrics, energyY: 1 } };
     expect(continuityViolations(rows.map((value, i) => i === at ? faulty : value))
       .some(failure => failure.channel === 'emission after declared complete fade')).toBe(true);
@@ -230,14 +255,14 @@ import { trafficTrailViewGain } from '../src/render/trafficAppearance';
 import { evaluateSameCarTrafficAppearance } from '../src/render/trafficAppearanceModel';
 
 describe('R33 hull dissolve and R44 constant size contract', () => {
-  it('uses the direct source and tier product without a second color fade', () => {
+  it('uses admitted presence without a second color fade', () => {
     for (const distance of [200, 750, 900, 1190, 1300]) {
       for (const sourceFade of [0, 0.143, 0.5, 1]) {
         for (const tierFade of [0, 0.143, 0.5, 1]) {
           const input = { ...continuityInput(0, 1.5, 45, 'high', distance), carIndex: 1000, sourceFade,
             cpuTier: { fromCount: 2400, targetCount: 500, progress: 1 - tierFade } };
           const actual = evaluateSameCarTrafficAppearance(input);
-          const expected = shippedHullResponse(distance, sourceFade, tierFade);
+          const expected = shippedHullResponse(distance, sourceFade, tierFade, input.projectedExtentCssPx);
           expect(actual.hull.scale).toBe(input.sizeScale);
           expect(actual.hull.fade).toBeCloseTo(expected.fade, 12);
           expect(actual.hull.coverage).toBeCloseTo(expected.fade, 12);
@@ -256,11 +281,12 @@ describe('R33 hull dissolve and R44 constant size contract', () => {
     expect(continuityViolations([remappedPresence]).some(failure => failure.channel === 'hull distance fade')).toBe(true);
   });
 
-  it('uses direct source presence in coverage and keeps physical size fixed', () => {
+  it('uses admitted source presence and keeps physical size fixed', () => {
     for (const distance of [600, 750, 900, 1190, 1300, 1500]) {
       for (const sourceFade of [0, 0.143, 0.5, 1]) {
-        const response = shippedHullResponse(distance, sourceFade);
-        const result = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'high', distance), sourceFade });
+        const input = { ...continuityInput(0, 1, 180, 'high', distance), sourceFade };
+        const response = shippedHullResponse(distance, sourceFade, 1, input.projectedExtentCssPx);
+        const result = evaluateSameCarTrafficAppearance(input);
         expect(result.hull.scale).toBeCloseTo(2 * response.scale, 12);
         expect(result.hull.fade).toBeCloseTo(response.fade, 12);
         expect(result.hull.coverage).toBeCloseTo(response.fade, 12);
@@ -270,31 +296,31 @@ describe('R33 hull dissolve and R44 constant size contract', () => {
         if (sourceFade === 0) expect(result.hull.coverage).toBe(0);
       }
     }
-    const zero = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'low', 1150, true), fogColor: { r: 1, g: 1, b: 1 }, fogFactor: 1 });
+    const zero = evaluateSameCarTrafficAppearance({ ...continuityInput(0, 1, 180, 'low', 1150, true), admitted: false, fogColor: { r: 1, g: 1, b: 1 }, fogFactor: 1 });
     expect(zero.hull.scale).toBeCloseTo(2 * shippedHullResponse(1150).scale, 12);
-    expect(zero.hull.fade).toBeGreaterThan(0);
-    expect(zero.hull.patches.flat().every(patch => Object.values(patch.preFogRgb).every(value => value === 0)
-      && Object.values(patch.projectedPreFogEnergyRgb).every(value => value === 0))).toBe(true);
+    expect(zero.hull.fade).toBe(0);
+    expect(zero.hull.patches.flat().every(patch => Object.values(patch.projectedPreFogEnergyRgb)
+      .every(value => value === 0))).toBe(true);
+    expect(zero.uploaded.aCarFade?.[0]).toBe(0);
   });
 
   it('keeps continuous distance fade and scale at the shipped boundaries', () => {
     for (const edge of [750, 1080, 1300]) {
       for (const field of ['fade', 'distanceScale'] as const) {
         const fn = (distance: number) => evaluateSameCarTrafficAppearance(continuityInput(0, 1, 180, 'high', distance)).hull[field];
-        const expected = (distance: number) => shippedHullResponse(distance)[field];
-        if (edge === 1080) {
-          const h = 1e-3;
-          // This light edge is inside the wider physical dissolve band.
-          expect(Math.abs((fn(edge + h) - fn(edge - h))
-            - (expected(edge + h) - expected(edge - h)))).toBeLessThan(1e-6);
-        } else expect(boundaryError(fn, edge)).toBeLessThan(1e-6);
+        const expected = (distance: number) => shippedHullResponse(distance, 1, 1,
+          continuityInput(0, 1, 180, 'high', distance).projectedExtentCssPx)[field];
+        const epsilon = 1e-3;
+        const actualDelta = fn(edge + epsilon) - fn(edge - epsilon);
+        const declaredDelta = expected(edge + epsilon) - expected(edge - epsilon);
+        expect(Math.abs(actualDelta - declaredDelta)).toBeLessThan(1e-6);
         expect(slopeError(fn, edge)).toBeLessThan(5e-6);
       }
     }
   });
 
   it('rejects physical size collapse and a narrow hull dissolve band', () => {
-    const actual = continuityRow(continuityInput(0, 1, 45, 'high', 900));
+    const actual = continuityRow({ ...continuityInput(0, 1, 45, 'high', 900), projectedExtentCssPx: 0 });
     const collapsedScale = { ...actual, output: { ...actual.output,
       hull: { ...actual.output.hull, scale: actual.input.sizeScale * 0.85 } } };
     expect(continuityViolations([collapsedScale]).some(failure => failure.channel === 'physical hull scale')).toBe(true);

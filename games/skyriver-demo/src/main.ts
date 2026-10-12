@@ -509,11 +509,13 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
   const onFrame = (frame: SkyriverFrame): void => {
     scene.renderer.getDrawingBufferSize(bufferSize);
     scene.renderer.getSize(cssSize);
-    const inverseFocalLength = 2 * Math.tan((frame.camera.fov * Math.PI) / 360);
+    const inverseFocalLength = 2 / frame.camera.projectionMatrix.elements[5]!;
     traffic.setPixelAngle(
       inverseFocalLength / Math.max(1, bufferSize.y),
       inverseFocalLength / Math.max(1, cssSize.y),
     );
+    frame.camera.updateMatrixWorld(true);
+    traffic.setCameraFrame(frame.camera.matrixWorldInverse.elements, frame.camera.near);
     traffic.update({ tick: frame.tick, alpha: frame.alpha }, frame.camera.position);
   };
   scene.addFrameListener(onFrame);
@@ -1140,6 +1142,9 @@ function bootWithBoundary(root: HTMLElement, boundary: SkyriverStartupBoundary):
   // browser probe can park a diagnostic camera at a real wall in the production build.
   (window as unknown as { __skyriverDiag?: unknown }).__skyriverDiag = {
     warpCanyon,
+    carEvidence(permanentID: number) {
+      return app.traffic.carEvidence(permanentID);
+    },
     // R18: the GPU impostor cars' CPU mirror (density and continuity probes).
     deriveImpostorAttributes,
     impostorPosition,

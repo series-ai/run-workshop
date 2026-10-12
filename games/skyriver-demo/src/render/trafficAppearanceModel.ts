@@ -261,6 +261,14 @@ export interface SameCarTrafficAppearanceInput {
   readonly hasStreakRecord?: boolean;
   /** False when the archetype's active instance count excludes this car. */
   readonly hasHullRecord?: boolean;
+  /** Whether this car is admitted under the close-range admission policy. */
+  readonly admitted?: boolean;
+  /** Stable admitted trail mode policy. */
+  readonly admittedTrailMode?: TrafficTrailMode;
+  /** Projected body bounding box extent in CSS pixels. */
+  readonly projectedExtentCssPx?: number;
+  /** True when all 8 bounding box corners are behind the camera near plane. */
+  readonly allBehindNear?: boolean;
 }
 
 export interface SameCarTrafficAppearance {
@@ -272,6 +280,8 @@ export interface SameCarTrafficAppearance {
     readonly totalAlpha: number;
     readonly cpuTierFade: number;
     readonly finalFade: number;
+    /** Compatibility requested fade product (sourceFade * cpuTierFade). */
+    readonly requestedFade?: number;
   };
   readonly hull: {
     readonly hasInstance: boolean;
@@ -1174,20 +1184,13 @@ function integrateProjectedTrail(
 }
 
 function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLightLod, finalFade: number, distanceSq: number): TrafficTrailAppearance {
-  const elapsedS = input.trailTransition.timeS - input.trailTransition.changeTimeS;
-  const progress = evaluateTrailModeProgress(elapsedS);
-  const modeWeight = evaluateTrailModeFade(
-    input.trailTransition.fromMode,
-    input.trailTransition.targetMode,
-    input.trailClass,
-    distanceSq,
-    progress,
-    input.trailTransition.enabled,
-    input.trailTransition.fromModeWeights,
-  );
+  const mode = input.admittedTrailMode ?? input.trailTransition.fromMode;
+  const modeWeight = input.trailTransition.enabled
+    ? trafficTrailModeBaseWeight(mode, input.trailClass, distanceSq)
+    : 0;
   const distanceFade = trafficTrailFarFade(input.distanceM);
-  const nearLodShare = lod.totalAlpha > 0 ? lod.nearAlpha / lod.totalAlpha : 0;
-  const parentAttribute = modeWeight * nearLodShare;
+  const nearLodShare = 1;
+  const parentAttribute = modeWeight;
   const clippedByAttributeCutoff = parentAttribute <= TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF;
   const trailKernel = projectTrafficLampKernel({
     position: input.position,
@@ -1236,7 +1239,7 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const toCamera = toCameraLength > 0 ? scale3(toCameraDelta, 1 / toCameraLength) : [0, 0, 0] as const;
   const trailColorWarm = trafficAppearanceSmoothstep(TRAFFIC_TRAIL_WARM_FACING_BAND[0], TRAFFIC_TRAIL_WARM_FACING_BAND[1], dot3(forward, toCamera));
   const trailColor = mixRgb(rgb(...TRAFFIC_STREAK_TAIL_RGB), rgb(...TRAFFIC_STREAK_TRAIL_WARM_RGB), trailColorWarm);
-  const gain = finalFade * lod.nearAlpha * modeWeight * pickup * trailKernel.lampGain * viewGain;
+  const gain = finalFade * modeWeight * pickup * trailKernel.lampGain * viewGain;
   const fogAttenuation = fogLightFactor(input.fogFactor);
   const sourceRgbLinear = multiplyRgb(trailColor, gain * IMPOSTOR_INTENSITY * input.emissiveGain * TRAFFIC_TRAIL_ALPHA);
   const deltaX = toEndView[0] - trailKernel.centerView[0];
@@ -1337,16 +1340,25 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
     input.cpuTier.progress,
     input.cpuTier.fromAlphaSnapshot,
   );
-  const finalFade = input.sourceFade * cpuTierFade;
+  // Requested fade is preserved as a diagnostic/compatibility fact, not actual CPU visibility.
+  const requestedFade = input.sourceFade * cpuTierFade;
+  const admitted = input.admitted !== undefined ? input.admitted : (requestedFade > 0);
+  const admittedPresence = admitted ? 1 : 0;
+  const projectedExtent = input.projectedExtentCssPx ?? 0;
+  const allBehindNear = input.allBehindNear === true;
+  const visibility = allBehindNear ? 0 : trafficHullVisibility(input.distanceM, admittedPresence, projectedExtent);
+  const finalFade = visibility;
   const legacyFarAlpha = evaluateThinFarAlpha(distanceSq, input.thinFar);
-  const lod = writeSameCarLightLod(input.distanceM, input.impostorPresence, legacyFarAlpha);
-  const hullLod = trafficHullVisibility(input.distanceM, 1);
+  // Actual CPU attributes: near share 1, impostor proxy share 0, total 1.
+  const lod = { nearAlpha: 1, impostorAlpha: 0, totalAlpha: 1 };
+  const hullLod = trafficHullVisibility(input.distanceM, 1, projectedExtent);
   const distanceScale = 1;
   const lifecycleScale = 1;
   const hullScale = input.sizeScale;
-  const hullCoverage = trafficHullVisibility(input.distanceM, finalFade);
+  const hullCoverage = visibility;
   const distanceDim = evaluateTrafficDistanceDim(distanceSq);
-  const tintGain = distanceDim * lod.nearAlpha;
+  // Preserve A's lifecycle-free hull tint to avoid multiplying lifecycle twice; actual zero coverage discards hulls.
+  const tintGain = distanceDim;
   const hasHullRecord = input.hasHullRecord ?? true;
   const hullHead = hullPatchAppearance(input, 'head', hullScale, tintGain, hasHullRecord, hullCoverage);
   const hullTail = hullPatchAppearance(input, 'tail', hullScale, tintGain, hasHullRecord, hullCoverage);
@@ -1359,19 +1371,17 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
     position: input.position, direction: input.direction, bankRadians: input.bankRadians,
     typeIndex: input.typeIndex, physicalScale: input.sizeScale, side: 'tail', camera: input.camera,
   });
-  const headPickupDistanceM = cameraSampleDistance(headProjection.lampWorld, input.camera.position);
-  const tailPickupDistanceM = cameraSampleDistance(tailProjection.lampWorld, input.camera.position);
-  const headPickup = trafficAppearanceSmoothstep(TRAFFIC_CPU_LAMP_PICKUP_BAND_M[0], TRAFFIC_CPU_LAMP_PICKUP_BAND_M[1], headPickupDistanceM);
-  const tailPickup = trafficAppearanceSmoothstep(TRAFFIC_CPU_LAMP_PICKUP_BAND_M[0], TRAFFIC_CPU_LAMP_PICKUP_BAND_M[1], tailPickupDistanceM);
-  const headGain = finalFade * lod.totalAlpha * headPickup * headProjection.facingGain * headProjection.lampGain;
-  const tailGain = finalFade * lod.totalAlpha * tailPickup * tailProjection.facingGain * tailProjection.lampGain;
+  // Actual CPU lamps: primary additive emitter has constant distance source intensity (headPickup/tailPickup = 1).
+  const headPickup = 1;
+  const tailPickup = 1;
+  const headGain = visibility * headPickup * headProjection.facingGain * headProjection.lampGain;
+  const tailGain = visibility * tailPickup * tailProjection.facingGain * tailProjection.lampGain;
   const head = evaluateLampRadiance(headProjection, lightColor('head', input.warmth), headGain,
     IMPOSTOR_INTENSITY * input.emissiveGain, input.fogFactor, hasStreakRecord);
   const tail = evaluateLampRadiance(tailProjection, lightColor('tail', input.warmth), tailGain,
     IMPOSTOR_INTENSITY * input.emissiveGain, input.fogFactor, hasStreakRecord);
-  const trail = cpuTrailAppearance(input, lod, finalFade, distanceSq);
-  const aCarFade: TrafficVec4 = [finalFade * lod.totalAlpha, input.sizeScale, input.warmth,
-    trail.modeWeight * (lod.totalAlpha > 0 ? lod.nearAlpha / lod.totalAlpha : 0)];
+  const trail = cpuTrailAppearance(input, lod, visibility, distanceSq);
+  const aCarFade: TrafficVec4 = [visibility, input.sizeScale, input.warmth, trail.modeWeight];
   return {
     identity: { kind: 'same-car', carIndex: input.carIndex },
     lod: {
@@ -1381,6 +1391,7 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
       totalAlpha: lod.totalAlpha,
       cpuTierFade,
       finalFade,
+      requestedFade,
     },
     hull: {
       hasInstance: hasHullRecord,
@@ -1400,7 +1411,7 @@ export function evaluateSameCarTrafficAppearance(input: SameCarTrafficAppearance
       hasRecord: hasStreakRecord,
       aFade: hasHullRecord ? hullCoverage : null,
       aCarFade: hasStreakRecord ? aCarFade : null,
-      aCarLod: hasStreakRecord ? [lod.nearAlpha, lod.impostorAlpha, input.carIndex] : null,
+      aCarLod: hasStreakRecord ? [1, 0, input.carIndex] : null,
     },
   };
 }

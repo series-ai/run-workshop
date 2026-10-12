@@ -1,8 +1,10 @@
+import { InstancedMesh } from 'three';
+import { createSkyriverTraffic } from '../../src/render/traffic';
 import {
   evaluateSameCarTrafficAppearance, evaluateIndependentImpostorAppearance, projectTrafficLampKernel,
   type SameCarTrafficAppearance, type SameCarTrafficAppearanceInput,
 } from '../../src/render/trafficAppearanceModel';
-import { TRAFFIC_QUALITY_SETTINGS } from '../../src/render/trafficAppearance';
+import { TRAFFIC_APPEARANCE_PROFILES, TRAFFIC_QUALITY_SETTINGS } from '../../src/render/trafficAppearance';
 import { SKYRIVER_EMISSIVE_GAIN } from '../../src/render/atmosphere';
 import {
   continuityCamera, continuityLuminance, FLYER_MATRIX_DISTANCES,
@@ -40,9 +42,40 @@ export function appearanceMetrics(output: SameCarTrafficAppearance, headWidth: n
   return { sizeCssPx: energyY > 0 ? energySize / energyY : 0, sizeIntensity, energyY, peakY };
 }
 
+const actualBodyBounds = (() => {
+  const traffic = createSkyriverTraffic({ seed: 424242, quality: TRAFFIC_QUALITY_SETTINGS.high, maxImpostors: 0 });
+  try {
+    return TRAFFIC_APPEARANCE_PROFILES.map(profile => {
+      const mesh = traffic.objects.find(object => object.name === 'skyriver.traffic.' + profile.name);
+      if (!(mesh instanceof InstancedMesh)) throw Error('R33_REAL_BODY_GEOMETRY_MISSING');
+      mesh.geometry.computeBoundingBox();
+      const box = mesh.geometry.boundingBox;
+      if (!box) throw Error('R33_REAL_BODY_BOUNDS_MISSING');
+      return box.clone();
+    });
+  } finally { traffic.dispose(); }
+})();
+/** Project real geometry bounds with independent homogeneous matrix products. */
+function matrixBodyExtent(type: number, scale: number, camera: SameCarTrafficAppearanceInput['camera']): number {
+  const box = actualBodyBounds[type];
+  if (!box) throw Error('R33_REAL_PROFILE_BOUNDS_MISSING');
+  const points: { x: number; y: number }[] = [];
+  for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+    const m = camera.viewMatrix, q = camera.projectionMatrix;
+    const world = [x * scale, y * scale, z * scale, 1];
+    const view = [0, 1, 2, 3].map(row => world.reduce((sum, v, col) => sum + m[col * 4 + row]! * v, 0));
+    const clip = [0, 1, 2, 3].map(row => view.reduce((sum, v, col) => sum + q[col * 4 + row]! * v, 0));
+    points.push({ x: clip[0]! / clip[3]! * camera.cssWidthPx / 2,
+      y: clip[1]! / clip[3]! * camera.cssHeightPx / 2 });
+  }
+  return Math.max(Math.max(...points.map(point => point.x)) - Math.min(...points.map(point => point.x)),
+    Math.max(...points.map(point => point.y)) - Math.min(...points.map(point => point.y)));
+}
+
 export function continuityInput(typeIndex: number, dpr: number, facingDegrees: number, tier: ContinuityTier,
   distanceM: number, thinFar = false): SameCarTrafficAppearanceInput {
   const quality = TRAFFIC_QUALITY_SETTINGS[tier];
+  const camera = continuityCamera(distanceM, facingDegrees, dpr);
   return { position: [0, 0, 0], carIndex: 100, sourceFade: 1,
     cpuTier: { fromCount: -1, targetCount: quality.carCount, progress: 1 },
     distanceM, thinFar, impostorPresence: quality.impostors > 0 ? 1 : 0,
@@ -50,7 +83,7 @@ export function continuityInput(typeIndex: number, dpr: number, facingDegrees: n
     warmth: 0.5, tint: { r: 0.55, g: 0.6, b: 0.65 }, trailClass: 1,
     trailTransition: { fromMode: quality.trails, targetMode: quality.trails,
       changeTimeS: 0, timeS: 2, enabled: true },
-    camera: continuityCamera(distanceM, facingDegrees, dpr), emissiveGain: SKYRIVER_EMISSIVE_GAIN,
+    camera, projectedExtentCssPx: matrixBodyExtent(typeIndex, 2, camera), emissiveGain: SKYRIVER_EMISSIVE_GAIN,
     fogFactor: 0, fogColor: { r: 0, g: 0, b: 0 } };
 }
 
@@ -101,10 +134,12 @@ export function independentSmoothstep(a: number, b: number, value: number): numb
   return 3 * x * x - 2 * x * x * x;
 }
 /** Independent R44 values. Visibility changes coverage. Physical size stays fixed. */
-export function shippedHullResponse(distanceM: number, sourceFade = 1, tierFade = 1) {
+export function shippedHullResponse(distanceM: number, sourceFade = 1, tierFade = 1, extentCssPx = 0) {
   const distanceCoverage = 1 - independentSmoothstep(750, 1300, distanceM);
-  const lifecyclePresence = sourceFade * tierFade;
-  return { fade: distanceCoverage * lifecyclePresence, distanceCoverage, lifecyclePresence,
+  const lifecyclePresence = sourceFade * tierFade > 0 ? 1 : 0;
+  const far = distanceCoverage * lifecyclePresence;
+  const fade = lifecyclePresence === 0 ? 0 : far + (1 - far) * independentSmoothstep(2, 6, extentCssPx);
+  return { fade, distanceCoverage, lifecyclePresence,
     distanceScale: 1, lifecycleScale: 1, scale: 1 };
 }
 function referenceTierFade(input: SameCarTrafficAppearanceInput): number {
@@ -115,12 +150,13 @@ function referenceTierFade(input: SameCarTrafficAppearanceInput): number {
   const target = input.carIndex < tier.targetCount ? 1 : 0;
   return from * (1 - tier.progress) + target * tier.progress;
 }
-function referenceTarget(input: SameCarTrafficAppearanceInput): number {
-  if (input.impostorPresence === 0) {
-    return input.thinFar ? 1 - independentSmoothstep(TRAFFIC_THIN_FAR_BAND_M[0] ** 2,
-      TRAFFIC_THIN_FAR_BAND_M[1] ** 2, input.distanceM ** 2) : 1;
-  }
-  return 1 - independentSmoothstep(IMPOSTOR_FAR_FALLOFF_BAND_M[0], IMPOSTOR_FAR_FALLOFF_BAND_M[1], input.distanceM);
+function referenceTarget(_input: SameCarTrafficAppearanceInput): number {
+  return 1;
+}
+function referenceVisibility(input: SameCarTrafficAppearanceInput): number {
+  const admitted = input.admitted ?? (input.sourceFade * referenceTierFade(input) > 0);
+  return input.allBehindNear ? 0 : shippedHullResponse(input.distanceM, admitted ? 1 : 0,
+    1, input.projectedExtentCssPx ?? 0).fade;
 }
 export function referenceLampEnergy(input: SameCarTrafficAppearanceInput, head: boolean, independentGpu = false): number {
   const p = independentLampProjection(input.typeIndex, head, input.sizeScale, input.camera);
@@ -140,7 +176,7 @@ export function referenceLampEnergy(input: SameCarTrafficAppearanceInput, head: 
     * (0.314159 * TRAFFIC_GPU_SEED_BRIGHTNESS_MULTIPLIER - Math.floor(0.314159 * TRAFFIC_GPU_SEED_BRIGHTNESS_MULTIPLIER));
   const handover = independentSmoothstep(IMPOSTOR_LIGHT_HANDOVER_BAND_M[0], IMPOSTOR_LIGHT_HANDOVER_BAND_M[1], input.distanceM);
   const far = 1 - independentSmoothstep(IMPOSTOR_FAR_FALLOFF_BAND_M[0], IMPOSTOR_FAR_FALLOFF_BAND_M[1], input.distanceM);
-  const share = independentGpu ? input.impostorPresence * handover * far * gpuSeedBrightness : referenceTarget(input) * input.sourceFade * pickup;
+  const share = independentGpu ? input.impostorPresence * handover * far * gpuSeedBrightness : referenceVisibility(input);
   return kernelArea * radiance * IMPOSTOR_INTENSITY * input.emissiveGain * share
     * facing * floorGain * (1 - input.fogFactor) ** TRAFFIC_FOG_PENETRATION;
 }
@@ -156,10 +192,9 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     const row = rows[i]!, lod = row.output.lod;
     check(row.distanceM, 'same-car sum', Math.abs(lod.nearAlpha + lod.impostorProxyAlpha - lod.totalAlpha), 1e-12);
     check(row.distanceM, 'target brightness', Math.abs(lod.totalAlpha - referenceTarget(row.input)), 1e-12);
-    const expectedHull = 1 - independentSmoothstep(IMPOSTOR_LIGHT_HANDOVER_BAND_M[0], IMPOSTOR_LIGHT_HANDOVER_BAND_M[1], row.distanceM);
-    const expectedNear = row.input.impostorPresence === 0 ? referenceTarget(row.input) : expectedHull;
+    const expectedNear = 1;
     check(row.distanceM, 'near handover assignment', Math.abs(lod.nearAlpha - expectedNear), 1e-12);
-    const expectedResponse = shippedHullResponse(row.distanceM, row.input.sourceFade, referenceTierFade(row.input));
+    const expectedResponse = { ...shippedHullResponse(row.distanceM), fade: referenceVisibility(row.input) };
     check(row.distanceM, 'physical hull scale', Math.abs(row.output.hull.scale - row.input.sizeScale * expectedResponse.scale), 1e-12);
     check(row.distanceM, 'hull distance fade', Math.abs(row.output.hull.fade - expectedResponse.fade), 1e-12);
     check(row.distanceM, 'hull mean coverage estimate', Math.abs(row.output.hull.coverage - expectedResponse.fade), 1e-12);
@@ -206,31 +241,29 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
         check(row.distanceM, channel + ' transport residual', residual, FLYER_RESIDUAL_STEP_LIMIT);
       }
     }
-    const trailMode = row.input.trailTransition.targetMode;
+    const trailMode = row.input.admittedTrailMode ?? row.input.trailTransition.fromMode;
     const trailProgress = independentSmoothstep(TRAFFIC_TRAIL_FAR_FADE_BAND_M[0], TRAFFIC_TRAIL_FAR_FADE_BAND_M[1], row.distanceM);
     const lengthFade = Math.exp(Math.log(TRAFFIC_TRAIL_FAR_FADE_END_LENGTH_SCALE) * trailProgress);
     check(row.distanceM, 'trail distance response', Math.abs(row.output.streak.trail.distanceFade - lengthFade), 1e-12);
-    const baseTrail = trailMode === 'all' ? 1 : trailMode === 'streams' ? (row.input.trailClass === 1 ? 1 : 0)
+    const baseTrail = !row.input.trailTransition.enabled ? 0 : trailMode === 'all' ? 1 : trailMode === 'streams' ? (row.input.trailClass === 1 ? 1 : 0)
       : 1 - independentSmoothstep(TRAFFIC_TRAIL_NEAR_FADE_BAND_M[0] ** 2, TRAFFIC_TRAIL_NEAR_FADE_BAND_M[1] ** 2, row.distanceM ** 2);
     const extent = Math.max(row.referenceTail.sourceHalfX, row.referenceTail.sourceHalfY) / (TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5);
     const floorGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
       * independentSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
     const trailPickup = independentSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], row.referenceTail.lampDistance);
     const viewGain = 1 - independentSmoothstep(0.72, 0.90, -row.referenceTail.facing);
-    const trailGain = row.input.sourceFade * expectedNear * baseTrail * trailPickup * floorGain * viewGain;
+    const trailGain = referenceVisibility(row.input) * baseTrail * trailPickup * floorGain * viewGain;
     check(row.distanceM, 'trail source gain', Math.abs(row.output.streak.trail.sourceGain - trailGain), 1e-9);
-    const parent = referenceTarget(row.input) > 0 ? baseTrail * expectedNear / referenceTarget(row.input) : 0;
+    const parent = baseTrail;
     check(row.distanceM, 'trail clip eligibility', row.output.streak.trail.clippedByAttributeCutoff === (parent <= TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF) ? 0 : 1, 0);
-    const declaredFadeComplete = row.input.impostorPresence === 0 && row.input.thinFar
-      && row.distanceM >= TRAFFIC_THIN_FAR_BAND_M[1];
+    const declaredFadeComplete = referenceVisibility(row.input) === 0;
     if (declaredFadeComplete) check(row.distanceM, 'emission after declared complete fade', row.metrics.energyY, 0);
     if (!declaredFadeComplete) check(row.distanceM, 'unassigned same-car light', lod.totalAlpha > 0 ? 0 : 1, 0);
     const previous = rows[i - 1];
     if (previous) {
       const predicted = integratedMetricStep(previous.input, row.input, probe);
       for (const channel of ['sizeCssPx', 'energyY', 'sizeIntensity'] as const) {
-        if (channel === 'sizeCssPx' && declaredFadeComplete && lod.totalAlpha === 0
-          && row.metrics.energyY === 0) continue;
+        if (channel === 'sizeCssPx' && declaredFadeComplete && row.metrics.energyY === 0) continue;
         const actualStep = row.metrics[channel] - previous.metrics[channel];
         const scale = Math.max(Math.abs(row.metrics[channel]), Math.abs(previous.metrics[channel]), 1e-6);
         check(row.distanceM, 'combined smooth-transport residual ' + channel,
@@ -241,14 +274,38 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
       .some(([start, end]) => row.distanceM > start && previous && previous.distanceM < end);
     if (previous && inRawFadeBand && !row.input.thinFar) {
       const step = (a: number, b: number) => Math.abs(b - a) / Math.max(Math.abs(a), 1e-6);
-      check(row.distanceM, 'combined size step in handover', step(previous.metrics.sizeCssPx, row.metrics.sizeCssPx), FLYER_HANDOVER_STEP_LIMIT);
-      check(row.distanceM, 'combined energy step in handover', step(previous.metrics.energyY, row.metrics.energyY), FLYER_HANDOVER_STEP_LIMIT);
-      check(row.distanceM, 'combined size-intensity step in handover', step(previous.metrics.sizeIntensity, row.metrics.sizeIntensity), FLYER_HANDOVER_STEP_LIMIT);
+      const resolved = (previous.input.projectedExtentCssPx ?? 0) >= 6 && (row.input.projectedExtentCssPx ?? 0) >= 6;
+      const previousVisibility = referenceVisibility(previous.input), visibility = referenceVisibility(row.input);
+      if (resolved || (previousVisibility > 0 && visibility > 0)) {
+        const beforeWeight = resolved ? 1 : previousVisibility, afterWeight = resolved ? 1 : visibility;
+        check(row.distanceM, 'combined size step in handover', step(previous.metrics.sizeCssPx, row.metrics.sizeCssPx), FLYER_HANDOVER_STEP_LIMIT);
+        check(row.distanceM, 'combined energy step in handover', step(previous.metrics.energyY / beforeWeight,
+          row.metrics.energyY / afterWeight), FLYER_HANDOVER_STEP_LIMIT);
+        check(row.distanceM, 'combined size-intensity step in handover', step(previous.metrics.sizeIntensity / beforeWeight,
+          row.metrics.sizeIntensity / afterWeight), FLYER_HANDOVER_STEP_LIMIT);
+      }
     }
   }
   return failures;
 }
 
+
+/** Raw excursions remain diagnostics. They are not removed by declared fade normalization. */
+export function continuityRawSteps(rows: readonly ContinuityRow[]) {
+  return rows.slice(1).map((row, index) => {
+    const previous = rows[index]!;
+    const step = (a: number, b: number) => Math.abs(b - a) / Math.max(Math.abs(a), 1e-6);
+    return { distanceM: row.distanceM, previousDistanceM: previous.distanceM,
+      extentCssPx: row.input.projectedExtentCssPx ?? 0,
+      previousExtentCssPx: previous.input.projectedExtentCssPx ?? 0,
+      resolved: (row.input.projectedExtentCssPx ?? 0) >= 6 && (previous.input.projectedExtentCssPx ?? 0) >= 6,
+      independentlyDeclaredVisibility: referenceVisibility(row.input),
+      previousDeclaredVisibility: referenceVisibility(previous.input),
+      rawEnergyStep: step(previous.metrics.energyY, row.metrics.energyY),
+      rawSizeIntensityStep: step(previous.metrics.sizeIntensity, row.metrics.sizeIntensity),
+      rawSizeStep: step(previous.metrics.sizeCssPx, row.metrics.sizeCssPx) };
+  });
+}
 
 /** Continuous transport probe. It measures continuity, not independent photometry. */
 export function continuityMetrics(input: SameCarTrafficAppearanceInput): ContinuityMetrics {
@@ -263,19 +320,39 @@ export function continuityMetrics(input: SameCarTrafficAppearanceInput): Continu
 function inputAtDistance(input: SameCarTrafficAppearanceInput, distanceM: number): SameCarTrafficAppearanceInput {
   const facing = Math.atan2(input.camera.position[0], input.camera.position[2]) * 180 / Math.PI;
   const dpr = input.camera.bufferHeightPx / input.camera.cssHeightPx;
-  return { ...input, distanceM, camera: continuityCamera(distanceM, facing, dpr) };
+  const camera = continuityCamera(distanceM, facing, dpr);
+  return { ...input, distanceM, camera, projectedExtentCssPx:
+    matrixBodyExtent(input.typeIndex, input.sizeScale, camera) };
 }
 export function integratedMetricStep(before: SameCarTrafficAppearanceInput, after: SameCarTrafficAppearanceInput,
   probe: (input: SameCarTrafficAppearanceInput) => ContinuityMetrics): ContinuityMetrics {
   const steps = 8, epsilonM = 1e-3;
-  const width = (after.distanceM - before.distanceM) / steps;
   const result = { sizeCssPx: 0, sizeIntensity: 0, energyY: 0, peakY: 0 };
-  for (let part = 0; part < steps; part += 1) {
-    const distance = before.distanceM + (part + 0.5) * width;
-    const a = probe(inputAtDistance(before, distance - epsilonM));
-    const b = probe(inputAtDistance(before, distance + epsilonM));
-    for (const key of ['sizeCssPx', 'sizeIntensity', 'energyY', 'peakY'] as const) {
-      result[key] += (b[key] - a[key]) / (2 * epsilonM) * width;
+  const boundaries = [before.distanceM, after.distanceM];
+  // Split at actual projected support edges. Keep the same derivative and limits.
+  for (const edge of [2, 6]) {
+    const at = (distance: number) => inputAtDistance(before, distance).projectedExtentCssPx ?? 0;
+    if ((at(before.distanceM) - edge) * (at(after.distanceM) - edge) < 0) {
+      let low = before.distanceM, high = after.distanceM;
+      const descending = at(low) > at(high);
+      for (let step = 0; step < 40; step += 1) {
+        const middle = (low + high) / 2;
+        if ((at(middle) > edge) === descending) low = middle; else high = middle;
+      }
+      boundaries.push((low + high) / 2);
+    }
+  }
+  boundaries.sort((a, b) => a - b);
+  for (let interval = 1; interval < boundaries.length; interval += 1) {
+    const start = boundaries[interval - 1]!, end = boundaries[interval]!;
+    const width = (end - start) / steps;
+    for (let part = 0; part < steps; part += 1) {
+      const distance = start + (part + 0.5) * width;
+      const a = probe(inputAtDistance(before, distance - epsilonM));
+      const b = probe(inputAtDistance(before, distance + epsilonM));
+      for (const key of ['sizeCssPx', 'sizeIntensity', 'energyY', 'peakY'] as const) {
+        result[key] += (b[key] - a[key]) / (2 * epsilonM) * width;
+      }
     }
   }
   return result;
@@ -307,9 +384,10 @@ export function gpuFacingCutoff(typeIndex: number, dpr: number, head: boolean) {
     sourceNormalizedJump: jumpY / fullSourceY };
 }
 export function cpuTrailCutoff(typeIndex: number, dpr: number) {
-  let lo: number = Math.min(IMPOSTOR_LIGHT_HANDOVER_BAND_M[0], TRAFFIC_TRAIL_FAR_FADE_BAND_M[0]);
-  let hi: number = Math.max(IMPOSTOR_LIGHT_HANDOVER_BAND_M[1], TRAFFIC_TRAIL_FAR_FADE_BAND_M[1]);
-  const evaluate = (distance: number) => evaluateSameCarTrafficAppearance(continuityInput(typeIndex, dpr, 90, 'high', distance));
+  let lo: number = TRAFFIC_TRAIL_NEAR_FADE_BAND_M[0];
+  let hi: number = TRAFFIC_TRAIL_NEAR_FADE_BAND_M[1];
+  const evaluate = (distance: number) => evaluateSameCarTrafficAppearance({
+    ...continuityInput(typeIndex, dpr, 90, 'low', distance), admitted: true, admittedTrailMode: 'near' });
   for (let i = 0; i < 60; i += 1) {
     const mid = (lo + hi) / 2;
     if ((evaluate(mid).uploaded.aCarFade?.[3] ?? 0) > TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF) lo = mid; else hi = mid;

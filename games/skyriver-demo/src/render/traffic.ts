@@ -80,6 +80,7 @@ import {
   trafficCpuTierProgress,
   trafficDistanceDim,
   trafficThinFarAlpha,
+  trafficTrailModeBaseWeight,
   trafficTrailModeProgress,
   trafficTrailModeWeights,
   trafficTrailWeightFromModeWeights,
@@ -171,6 +172,7 @@ import type {
   SkyriverTraffic,
   SkyriverTrafficOptions,
   TrafficBounds,
+  TrafficCarEvidence,
   TrafficPoint,
   TrafficQuality,
   TrafficStats,
@@ -183,6 +185,7 @@ export type {
   SkyriverTraffic,
   SkyriverTrafficOptions,
   TrafficBounds,
+  TrafficCarEvidence,
   TrafficPoint,
   TrafficQuality,
   TrafficStats,
@@ -1262,8 +1265,6 @@ void main() {
   // T7: the red tail trail reads from almost any angle (a long-exposure streak); the white head
   // lamp only toward the front, so crossing rivers read as red ribbons with white oncoming points.
   vIntensity = aCarFade.x * trafficLampFacingGain( facing, head );
-  // R11: up close the body's own lamp bar carries the read; the dot pair fades in with distance.
-  vIntensity *= smoothstep( ${TRAFFIC_CPU_LAMP_PICKUP_BAND_M[0].toFixed(1)}, ${TRAFFIC_CPU_LAMP_PICKUP_BAND_M[1].toFixed(1)}, length( cameraPosition - lamp ) );
   if ( isTrail ) {
     // Seen from the front the trail is the headlamps' warm white, from behind the tails' red
     // (vWarm carries the blend); it never slices through the camera.
@@ -2074,6 +2075,7 @@ if (vTrafficGlass > 0.5) {
   const archetypeLabels: string[] = ['cab', 'interceptor', 'commuter', 'van', 'bus', 'flatbed'];
   const trianglesPerArchetype: number[] = [];
   const geometries: BufferGeometry[] = [];
+  const hullLocalBounds: Float64Array[] = [];
   const meshes: InstancedMesh[] = [];
   const matrixArrays: Float32Array[] = [];
   const colorArrays: Float32Array[] = [];
@@ -2084,6 +2086,10 @@ if (vTrafficGlass > 0.5) {
     const label = archetypeLabels[archetype];
     trianglesPerArchetype.push(buildTriangles(build));
     const geometry = toGeometry(build, label);
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    if (!box) throw new Error('SKYRIVER_TRAFFIC_HULL_BOUNDS_MISSING');
+    hullLocalBounds.push(new Float64Array([box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z]));
     geometries.push(geometry);
 
     const capacity = Math.max(1, archetypeTotals[archetype]);
@@ -2107,7 +2113,7 @@ if (vTrafficGlass > 0.5) {
     colorArrays.push(instanceColor.array as Float32Array);
   }
 
-  const streakCapacity = Math.max(1, options.maxThrusterBudget ?? options.quality.thrusterBudget);
+  const streakCapacity = Math.max(1, maxCarCount, options.maxThrusterBudget ?? options.quality.thrusterBudget);
   const streakGeometry = buildStreakGeometry(streakCapacity);
   const streakMaterial = new ShaderMaterial({
     name: 'skyriver.traffic.streaks',
@@ -2345,19 +2351,95 @@ if (vTrafficGlass > 0.5) {
       }
     }
   }
-  /** Stream for a chase car of rank r at time t, and the handoff fade multiplier (via out). */
-  const handoff = { stream: 0, fade: 1 };
-  function chaseStream(r: number, car: number, t: number): void {
-    const prev = rankPrevious[r]!;
-    const cur = rankCurrent[r]!;
-    handoff.fade = 1;
-    handoff.stream = cur;
-    if (prev < 0) return;
-    const d = t - rankSwitchT[r]! - hash01(car, 0x5b1f) * HANDOFF_SPREAD_S;
-    if (d < 0) { handoff.stream = prev; return; }
-    if (d < HANDOFF_FADE_S) { handoff.stream = prev; handoff.fade = 1 - d / HANDOFF_FADE_S; return; }
-    if (d < 2 * HANDOFF_FADE_S) { handoff.fade = (d - HANDOFF_FADE_S) / HANDOFF_FADE_S; return; }
+
+  // R44 Close-Range Fade Mini: coherent per-permanentID admission and continuous source motion.
+  const admitted = new Uint8Array(maxCarCount);
+  let requestedPrefix = options.quality.carCount;
+  for (let c = 0; c < requestedPrefix; c += 1) {
+    admitted[c] = 1;
   }
+
+  const cameraView = new Float64Array(16);
+  let cameraFrameBound = false;
+  let cameraNearM = 1;
+  let cssPixelAngle = 0.0012;
+  const projectedCorners = new Float64Array(24);
+  let projectionAllBehind = false;
+  let projectionCrossesNear = false;
+  const evidenceExtentCss = new Float64Array(maxCarCount);
+  const evidenceAllBehind = new Uint8Array(maxCarCount);
+  const evidenceCrossesNear = new Uint8Array(maxCarCount);
+  const admittedTrailPolicy: TrafficTrailMode[] = Array.from({ length: maxCarCount }, () => options.quality.trails);
+
+  function setCameraFrame(viewMatrix: ArrayLike<number>, nearM: number): void {
+    if (viewMatrix.length !== 16 || !Number.isFinite(nearM) || nearM <= 0) fail('SKYRIVER_TRAFFIC_CAMERA_FRAME_INVALID');
+    for (let i = 0; i < 16; i += 1) {
+      const value = viewMatrix[i]!;
+      if (!Number.isFinite(value)) fail('SKYRIVER_TRAFFIC_CAMERA_FRAME_INVALID');
+      cameraView[i] = value;
+    }
+    cameraNearM = nearM;
+    cameraFrameBound = true;
+  }
+
+  function projectedHullExtent(archetype: number, matrix: Float32Array, offset: number, scale: number, distanceM: number): number {
+    const box = hullLocalBounds[archetype]!;
+    projectionAllBehind = false;
+    projectionCrossesNear = false;
+    // Production binds the current camera frame. The sphere estimate supports callers without a camera frame.
+    if (!cameraFrameBound) {
+      const diameter = Math.hypot(box[3]! - box[0]!, box[4]! - box[1]!, box[5]! - box[2]!) * scale;
+      return diameter / (Math.max(distanceM, cameraNearM) * cssPixelAngle);
+    }
+    let visibleCorners = 0;
+    for (let c = 0; c < 8; c += 1) {
+      const x = box[(c & 1) === 0 ? 0 : 3]!;
+      const y = box[(c & 2) === 0 ? 1 : 4]!;
+      const z = box[(c & 4) === 0 ? 2 : 5]!;
+      const wx = matrix[offset]! * x + matrix[offset + 4]! * y + matrix[offset + 8]! * z + matrix[offset + 12]!;
+      const wy = matrix[offset + 1]! * x + matrix[offset + 5]! * y + matrix[offset + 9]! * z + matrix[offset + 13]!;
+      const wz = matrix[offset + 2]! * x + matrix[offset + 6]! * y + matrix[offset + 10]! * z + matrix[offset + 14]!;
+      const vx = cameraView[0]! * wx + cameraView[4]! * wy + cameraView[8]! * wz + cameraView[12]!;
+      const vy = cameraView[1]! * wx + cameraView[5]! * wy + cameraView[9]! * wz + cameraView[13]!;
+      const vz = cameraView[2]! * wx + cameraView[6]! * wy + cameraView[10]! * wz + cameraView[14]!;
+      projectedCorners[c * 3] = vx;
+      projectedCorners[c * 3 + 1] = vy;
+      projectedCorners[c * 3 + 2] = -vz;
+      if (-vz >= cameraNearM) visibleCorners += 1;
+    }
+    // A hidden box permits retirement. A near-plane crossing keeps full coverage without division.
+    if (visibleCorners === 0) { projectionAllBehind = true; return 0; }
+    if (visibleCorners !== 8) { projectionCrossesNear = true; return 6; }
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (let c = 0; c < 8; c += 1) {
+      const divisor = projectedCorners[c * 3 + 2]! * cssPixelAngle;
+      const x = projectedCorners[c * 3]! / divisor;
+      const y = projectedCorners[c * 3 + 1]! / divisor;
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    }
+    return Math.max(maxX - minX, maxY - minY);
+  }
+
+  // Preallocated per-permanentID evidence buffers.
+  const evidencePx = new Float64Array(maxCarCount);
+  const evidencePy = new Float64Array(maxCarCount);
+  const evidencePz = new Float64Array(maxCarCount);
+  const evidenceVisibility = new Float32Array(maxCarCount);
+  const evidenceLampFade = new Float32Array(maxCarCount);
+  const evidenceStream = new Int16Array(maxCarCount).fill(-1);
+  const evidenceOriginM = new Float64Array(maxCarCount).fill(0);
+  const carArchetypeSlot = new Int32Array(maxCarCount).fill(-1);
+  const carStreakSlot = new Int32Array(maxCarCount).fill(-1);
+  let currentSourceTimeS = 0;
+
+  // Escort3 and Chase continuous route origins.
+  let escort3OriginV = NaN;
+  let escort3InitialT = 0;
+  const chaseStreamChosen = new Int16Array(CHASE_COUNT).fill(-1);
+  const chaseOriginV = new Float64Array(CHASE_COUNT).fill(NaN);
+  const chaseSignedSpeedMps = new Float64Array(CHASE_COUNT);
+  let lastSourceTimeS = -1e9;
 
   // ---- R15 tier transitions (glitch fix): a quality change no longer drops or adds 1,200 cars in one
   // frame. The larger set stays drawn for TIER_FADE_S while the cars beyond the smaller count fade.
@@ -2419,10 +2501,9 @@ if (vTrafficGlass > 0.5) {
       trailFromModeWeights.set(trailTargetModeWeights);
     }
   }
-  /** cls: 0 escort, 1 stream car, 2 free car. Distance stays live through a retarget. */
-  function trailWeight(cls: number, distanceSq: number): number {
+  function trailWeight(car: number, cls: number, distanceSq: number): number {
     if (!trailsAllowed) return 0;
-    return trafficTrailWeightFromModeWeights(trailModeWeights, cls, distanceSq);
+    return trafficTrailModeBaseWeight(admittedTrailPolicy[car]!, cls, distanceSq);
   }
   function setTrailsAllowed(allowed: boolean): void {
     trailsAllowed = allowed;
@@ -2478,6 +2559,7 @@ if (vTrafficGlass > 0.5) {
     assertQuality(quality, maxCarCount);
     if (quality.thrusterBudget > streakCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
 
+    requestedPrefix = quality.carCount;
     streakBudget = quality.thrusterBudget;
     impostorTier = quality.impostors;
     retargetImpostors();
@@ -2489,24 +2571,6 @@ if (vTrafficGlass > 0.5) {
       trailChanging = true;
       trailPending = true;
     }
-    if (quality.carCount !== tierTo) {
-      // Retarget from the last rendered per-car alpha, not from the prior count prefix.
-      cpuTierFromAlpha.set(cpuTierAlpha);
-      tierFrom = activeCars;
-      tierTo = quality.carCount;
-      tierPending = true;
-      tierBudget = quality.thrusterBudget;
-      streakBudget = Math.min(streakCapacity, Math.max(quality.thrusterBudget, activeCars, tierTo));
-      setActiveCount(Math.max(activeCars, tierTo));
-      return;
-    }
-    if (tierFrom >= 0) {
-      tierBudget = quality.thrusterBudget;
-      streakBudget = Math.min(streakCapacity, Math.max(quality.thrusterBudget, activeCars));
-      return;
-    }
-    streakBudget = quality.thrusterBudget;
-    setActiveCount(quality.carCount);
   }
 
   /**
@@ -2529,23 +2593,46 @@ if (vTrafficGlass > 0.5) {
       streamRank.sort((a, b) => streamRankDist[a]! - streamRankDist[b]!);
       updateRankAssignment(t);
     }
-    applyTierTransition(t);
+    if (lastSourceTimeS > -1e8 && t < lastSourceTimeS) {
+      const dt = lastSourceTimeS - t;
+      if (!isNaN(escort3OriginV)) {
+        escort3InitialT -= dt;
+      }
+      for (let i = 0; i < CHASE_COUNT; i += 1) {
+        if (!isNaN(chaseOriginV[i]!)) {
+          chaseOriginV[i] += chaseSignedSpeedMps[i]! * dt;
+        }
+      }
+    }
+    lastSourceTimeS = t;
+    currentSourceTimeS = t;
+
     applyTrailModeTransition(t);
     applyImpostors(t);
 
+    carArchetypeSlot.fill(-1);
+    carStreakSlot.fill(-1);
+    let totalActiveCars = 0;
+
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       const group = groupCars[archetype];
-      const active = groupActive[archetype];
       const matrices = matrixArrays[archetype];
       const colors = colorArrays[archetype];
+      const hullFades = hullFadeArrays[archetype]!;
+      let slot = 0;
 
-      for (let slot = 0; slot < active; slot += 1) {
-        const car = group[slot];
+      for (let i = 0; i < group.length; i += 1) {
+        const car = group[i]!;
+        const requested = car < requestedPrefix;
+        const wasAdmitted = admitted[car] === 1;
+        if (!requested && !wasAdmitted) continue;
+
         let direction = carDirection[car]!;
         let speed = carSpeed[car]!;
-        let fade = 1;
         let streakSpeed = speed;
         let bank = 0;
+        let sourceStream = -1;
+        let sourceOrigin = 0;
 
         let px: number;
         let py: number;
@@ -2553,20 +2640,13 @@ if (vTrafficGlass > 0.5) {
         let fx: number;
         let fy = 0;
         let fz: number;
-        if (car < ESCORT_COUNT && anchorValid) {
+
+        if (car < ESCORT_COUNT - 1 && anchorValid) {
           const e = car * 4;
           const lateral = ESCORTS[e]!;
           const lift = ESCORTS[e + 1]!;
-          let forward: number;
-          let heading = 1;
-          if (car === ESCORT_COUNT - 1) {
-            forward = 520 - ((t * 330) % 1040);
-            heading = -1;
-            // R15: fade at the wrap ends (it used to pop in 520 m ahead and vanish 520 m behind).
-            fade = smoothstep(0, 140, 520 - Math.abs(forward));
-          } else {
-            forward = ESCORTS[e + 2]! + ESCORTS[e + 3]! * Math.sin(t * (0.13 + car * 0.04) + car * 1.7);
-          }
+          const forward = ESCORTS[e + 2]! + ESCORTS[e + 3]! * Math.sin(t * (0.13 + car * 0.04) + car * 1.7);
+          const heading = 1;
           const ax = anchor[3]!;
           const az = anchor[4]!;
           px = anchor[0]! + ax * forward + az * lateral;
@@ -2575,7 +2655,30 @@ if (vTrafficGlass > 0.5) {
           fx = ax * heading;
           fz = az * heading;
           bank = 0.12 * Math.sin(t * 0.6 + car);
-          streakSpeed = (heading > 0 ? anchor[5]! : 170) * ESCORT_STREAK_SCALE;
+          streakSpeed = anchor[5]! * ESCORT_STREAK_SCALE;
+          sourceStream = -1;
+          sourceOrigin = anchor[6]!;
+        } else if (car === ESCORT_COUNT - 1 && anchorValid) {
+          if (isNaN(escort3OriginV)) {
+            escort3OriginV = anchor[6]! + 520;
+            escort3InitialT = t;
+          }
+          const v = escort3OriginV - 330 * (t - escort3InitialT);
+          const lateral = ESCORTS[12]!;
+          const lift = ESCORTS[13]!;
+          warpCanyon(lateral, v, carWarp);
+          px = carWarp.x;
+          pz = carWarp.z;
+          py = routeAltitude(v) + lift + Math.sin(t * 0.9 + car) * 1.2;
+          const headingSin = Math.sin(carWarp.heading);
+          const headingCos = Math.cos(carWarp.heading);
+          fx = -headingSin;
+          fz = -headingCos;
+          fy = 0;
+          bank = 0.12 * Math.sin(t * 0.6 + car);
+          streakSpeed = 170 * ESCORT_STREAK_SCALE;
+          sourceStream = -1;
+          sourceOrigin = escort3OriginV;
         } else {
           // Organic motion in canyon space: drift across, climb/dive, travel along the loop.
           const driftArg = t * carDriftW[car]! + carDriftP[car]!;
@@ -2591,16 +2694,16 @@ if (vTrafficGlass > 0.5) {
           let inStream = false;
           let jink = 0;
           if (carStream[car]! !== 255 && (anchorValid || !isChase)) {
-            // Stream member on the shared R21 model: the stream sets direction, shelf and corridor;
-            // the car's own flow sets its cruise speed, convoy, passing, branch and course change.
             inStream = true;
             let k = carStream[car]!;
             if (isChase) {
-              chaseStream(carStream[car]!, car, t);
-              k = handoff.stream;
-              fade *= handoff.fade;
-              // A sticky R15 car's stream is a rank the handoff can move, so its flow is sampled for
-              // the stream it is on now. It never forks and never hops: R15 owns its route.
+              const chaseIdx = car - ESCORT_COUNT;
+              if (chaseStreamChosen[chaseIdx] === -1) {
+                const r = carStream[car]!;
+                const cur = rankCurrent[r]!;
+                chaseStreamChosen[chaseIdx] = cur >= 0 ? cur : (streamRank[r] ?? 0);
+              }
+              k = chaseStreamChosen[chaseIdx]!;
               carFlowInput.path = k;
               carFlowInput.index = car;
               carFlowInput.salt = model.carSalt;
@@ -2617,39 +2720,52 @@ if (vTrafficGlass > 0.5) {
             direction = carFlowScratch.direction;
             speed = carFlowScratch.effectiveMps;
             if (isChase) {
-              const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
-              let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
-              if (rel < 0) rel += CHASE_WINDOW_M;
-              rel -= CHASE_WINDOW_M * 0.5;
-              fade *= smoothstep(0, CHASE_FADE_M, CHASE_WINDOW_M * 0.5 - Math.abs(rel));
-              v = anchor[6]! + rel;
+              const chaseIdx = car - ESCORT_COUNT;
+              chaseSignedSpeedMps[chaseIdx] = direction * speed;
+              if (isNaN(chaseOriginV[chaseIdx])) {
+                const absolute0 = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
+                let rel0 = (absolute0 - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
+                if (rel0 < 0) rel0 += CHASE_WINDOW_M;
+                rel0 -= CHASE_WINDOW_M * 0.5;
+                chaseOriginV[chaseIdx] = anchor[6]! + rel0 - absolute0;
+              }
+              v = chaseOriginV[chaseIdx]! + carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
+              sourceOrigin = chaseOriginV[chaseIdx]!;
             } else {
               v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
+              sourceOrigin = carPhase[car]! * CANYON_LOOP_LENGTH_M;
             }
+            sourceStream = k;
             evaluateCanyonPose(model, carFlowScratch, v, t, carPhase[car]!, carAppearance[car]!, carRow[car]!, carPose);
             x = clamp(carPose.x, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = carPose.y;
             jink = JINK_RAD * Math.sin(t * (0.5 + 0.4 * carRow[car]!) + carPhase[car]! * 53.0);
           } else if (isChase) {
-            // Free floater near the shuttle.
-            const absolute = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
-            let rel = (absolute - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
-            if (rel < 0) rel += CHASE_WINDOW_M;
-            rel -= CHASE_WINDOW_M * 0.5;
-            fade = smoothstep(0, CHASE_FADE_M, CHASE_WINDOW_M * 0.5 - Math.abs(rel));
-            v = anchor[6]! + rel;
+            const chaseIdx = car - ESCORT_COUNT;
+            chaseSignedSpeedMps[chaseIdx] = direction * speed;
+            if (isNaN(chaseOriginV[chaseIdx])) {
+              const absolute0 = carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
+              let rel0 = (absolute0 - anchor[6]! + CHASE_WINDOW_M * 0.5) % CHASE_WINDOW_M;
+              if (rel0 < 0) rel0 += CHASE_WINDOW_M;
+              rel0 -= CHASE_WINDOW_M * 0.5;
+              chaseOriginV[chaseIdx] = anchor[6]! + rel0 - absolute0;
+            }
+            v = chaseOriginV[chaseIdx]! + carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
+            sourceOrigin = chaseOriginV[chaseIdx]!;
+            sourceStream = 255;
             x = clamp(routeLateral(v) + carHomeX[car]! + drift * 0.6, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = routeAltitude(v) + carHomeY[car]! + climb * 0.6;
           } else {
             v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
+            sourceOrigin = carPhase[car]! * CANYON_LOOP_LENGTH_M;
+            sourceStream = carStream[car]!;
             x = clamp(carHomeX[car]! + drift, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = carHomeY[car]! + climb;
           }
+
           let headingCos: number;
           let headingSin: number;
           if (inStream) {
-            // R21: a stream car reads the baked warp row, the row the GPU impostors sample, so both
-            // populations share one corridor instead of two near-identical ones.
             sampleWarpRow(model.table, carPose.wrappedM / STREAM_PATH_STEP_M, carWarpRow);
             px = carWarpRow.x + x * carWarpRow.cos;
             pz = carWarpRow.z - x * carWarpRow.sin;
@@ -2663,27 +2779,34 @@ if (vTrafficGlass > 0.5) {
             headingSin = Math.sin(carWarp.heading);
           }
           py = y;
-          // Velocity in canyon space (across, along, up), then turned to world. A stream car's
-          // across and up rates come from its own path: branch and course-change slopes included.
           const along = direction * speed;
           const across = inStream ? (carPose.dxdv + Math.tan(jink)) * along + carPose.xRate : driftRate;
           const up = inStream ? carPose.dydv * along + carPose.yRate : climbRate;
           if (inStream) streakSpeed = speed;
-          // along = (sin h, cos h), across = (cos h, -sin h)
           carDir.x = along * headingSin + across * headingCos;
           carDir.z = along * headingCos - across * headingSin;
           const horizontal = Math.hypot(carDir.x, carDir.z) || 1;
           fx = carDir.x / horizontal;
           fz = carDir.z / horizontal;
           fy = up / Math.max(20, Math.abs(speed));
-          // Bank into the drift (free) or the jink (stream): lateral acceleration over speed.
           bank = inStream
             ? clamp(jink * 3.0 * direction, -0.25, 0.25)
             : clamp((-carDriftA[car]! * carDriftW[car]! * carDriftW[car]! * Math.sin(driftArg)) / Math.max(20, speed) * 40 * direction, -0.45, 0.45);
         }
 
-        // Keep physical geometry constant. Apply lifecycle and distance through coverage.
-        fade *= tierFadeFor(car);
+        const dx = px - camX;
+        const dy = py - camY;
+        const dz = pz - camZ;
+        const distanceSq = dx * dx + dy * dy + dz * dz;
+        const distanceM = Math.sqrt(distanceSq);
+
+        evidencePx[car] = px;
+        evidencePy[car] = py;
+        evidencePz[car] = pz;
+        evidenceStream[car] = sourceStream;
+        evidenceOriginM[car] = sourceOrigin;
+        evidenceVisibility[car] = 0;
+        evidenceLampFade[car] = 0;
 
         // Basis: forward f (with a little pitch), right = f x up, then banked about f.
         const scale = sizeScale[car]!;
@@ -2692,10 +2815,8 @@ if (vTrafficGlass > 0.5) {
         const f0 = fx / fl;
         const f1 = pitchY / fl;
         const f2 = fz / fl;
-        // right0 = normalize(up x f) in the horizontal plane: (fz, 0, -fx)
         const r0x = fz;
         const r0z = -fx;
-        // up0 = f x right0
         const u0x = f1 * r0z;
         const u0y = f2 * r0x - f0 * r0z;
         const u0z = -f1 * r0x;
@@ -2725,24 +2846,33 @@ if (vTrafficGlass > 0.5) {
         matrices[offset + 14] = pz;
         matrices[offset + 15] = 1;
 
-        const dx = px - camX;
-        const dy = py - camY;
-        const dz = pz - camZ;
-        const distanceSq = dx * dx + dy * dy + dz * dz;
-        const distanceM = Math.sqrt(distanceSq);
-        const legacyFarAlpha = trafficThinFarAlpha(distanceSq, carThinFar[car] === 1);
-        writeSameCarLightLod(distanceM, impostorPresence, legacyFarAlpha, sameCarLodScratch);
-        hullFadeArrays[archetype]![slot] = trafficHullVisibility(distanceM, fade);
-        const totalFade = fade * sameCarLodScratch.totalAlpha;
-        // Hull bars and instance colour use the near share without lifecycle multiplier. Coverage owns lifecycle.
-        const distanceDim = trafficDistanceDim(distanceSq);
-        const dim = distanceDim * sameCarLodScratch.nearAlpha;
-        const colorOffset = slot * 3;
-        colors[colorOffset] = tintR[car] * dim;
-        colors[colorOffset + 1] = tintG[car] * dim;
-        colors[colorOffset + 2] = tintB[car] * dim;
+        const projectedExtent = projectedHullExtent(archetype, matrices, offset, scale, distanceM);
+        evidenceExtentCss[car] = projectedExtent;
+        evidenceAllBehind[car] = projectionAllBehind ? 1 : 0;
+        evidenceCrossesNear[car] = projectionCrossesNear ? 1 : 0;
+        const prospectiveVisibility = projectionAllBehind ? 0 : trafficHullVisibility(distanceM, 1, projectedExtent);
+        if (wasAdmitted) {
+          if (!requested && prospectiveVisibility === 0) { admitted[car] = 0; continue; }
+        } else {
+          if (prospectiveVisibility !== 0) continue;
+          admitted[car] = 1;
+          admittedTrailPolicy[car] = trailTo;
+        }
+        const visibility = prospectiveVisibility;
+        evidenceVisibility[car] = visibility;
+        evidenceLampFade[car] = visibility;
+        carArchetypeSlot[car] = slot;
 
-        if (streaksUsed < streakBudget) {
+        hullFades[slot] = visibility;
+        const distanceDim = trafficDistanceDim(distanceSq);
+        const colorOffset = slot * 3;
+        colors[colorOffset] = tintR[car] * distanceDim;
+        colors[colorOffset + 1] = tintG[car] * distanceDim;
+        colors[colorOffset + 2] = tintB[car] * distanceDim;
+
+        const canDrawStreak = visibility > 0 && streaksUsed < streakCapacity;
+        if (canDrawStreak) {
+          carStreakSlot[car] = streaksUsed;
           streakShapeArray[streaksUsed * 2] = archetype;
           streakShapeArray[streaksUsed * 2 + 1] = bank;
           const p = streaksUsed * 3;
@@ -2755,21 +2885,24 @@ if (vTrafficGlass > 0.5) {
           streakDirArray[d + 2] = fz;
           streakDirArray[d + 3] = streakSpeed;
           const f4 = streaksUsed * 4;
-          // Streak lamp fade uses the total share, pairing profiles without size or peak mismatch.
-          streakFadeArray[f4] = totalFade;
-          streakFadeArray[f4 + 1] = sizeScale[car]!;
+          streakFadeArray[f4] = visibility;
+          streakFadeArray[f4 + 1] = scale;
           streakFadeArray[f4 + 2] = carWarm[car]!;
-          // Trails use only the near share, and the vertex shader shortens them across the far band.
-          const baseTrail = trailWeight(car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2, distanceSq);
-          const trailScale = sameCarLodScratch.totalAlpha > 0 ? sameCarLodScratch.nearAlpha / sameCarLodScratch.totalAlpha : 0;
-          streakFadeArray[f4 + 3] = baseTrail * trailScale;
+          const cls = car < ESCORT_COUNT && anchorValid ? 0 : carStream[car]! !== 255 ? 1 : 2;
+          streakFadeArray[f4 + 3] = trailWeight(car, cls, distanceSq);
           const l3 = streaksUsed * 3;
-          streakLodArray[l3] = sameCarLodScratch.nearAlpha;
-          streakLodArray[l3 + 1] = sameCarLodScratch.impostorAlpha;
+          streakLodArray[l3] = 1;
+          streakLodArray[l3 + 1] = 0;
           streakLodArray[l3 + 2] = car;
           streaksUsed += 1;
         }
+
+        slot += 1;
       }
+
+      groupActive[archetype] = slot;
+      meshes[archetype].count = slot;
+      totalActiveCars += slot;
 
       const mesh = meshes[archetype];
       mesh.geometry.getAttribute('aFade').needsUpdate = true;
@@ -2777,15 +2910,21 @@ if (vTrafficGlass > 0.5) {
       if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
     }
 
+    activeCars = totalActiveCars;
     streakGeometry.instanceCount = streaksUsed;
     streakPos.needsUpdate = true;
     streakDir.needsUpdate = true;
     streakFade.needsUpdate = true;
     streakShape.needsUpdate = true;
+    streakLod.needsUpdate = true;
   }
 
   /** Inverse vertical focal lengths per drawing-buffer pixel and CSS pixel. Call on resize. */
   function setPixelAngle(inverseFocalLengthBufferPx: number, inverseFocalLengthCssPx: number): void {
+    if (!Number.isFinite(inverseFocalLengthCssPx) || inverseFocalLengthCssPx <= 0) {
+      fail('SKYRIVER_TRAFFIC_PIXEL_ANGLE_INVALID');
+    }
+    cssPixelAngle = inverseFocalLengthCssPx;
     impostorMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthBufferPx;
     streakMaterial.uniforms.uPixelAngle!.value = inverseFocalLengthBufferPx;
     impostorMaterial.uniforms.uCssPixelAngle!.value = inverseFocalLengthCssPx;
@@ -2809,6 +2948,47 @@ if (vTrafficGlass > 0.5) {
     };
   }
 
+  function carEvidence(permanentID: number): TrafficCarEvidence | null {
+    if (!Number.isInteger(permanentID) || permanentID < 0 || permanentID >= maxCarCount) return null;
+    const req = permanentID < requestedPrefix;
+    const adm = admitted[permanentID] === 1;
+    const archetype = renderArchetype[permanentID]!;
+    const hSlot = carArchetypeSlot[permanentID]!;
+    const sSlot = carStreakSlot[permanentID]!;
+    const meshName = hSlot >= 0 ? meshes[archetype]!.name : null;
+    let pos: readonly [number, number, number];
+    if (hSlot >= 0) {
+      const offset = hSlot * 16;
+      const m = matrixArrays[archetype]!;
+      pos = [m[offset + 12]!, m[offset + 13]!, m[offset + 14]!];
+    } else {
+      pos = [evidencePx[permanentID]!, evidencePy[permanentID]!, evidencePz[permanentID]!];
+    }
+    const id = permanentID;
+    return {
+      carId: permanentID,
+      requested: req,
+      admitted: adm,
+      hullMeshName: meshName,
+      hullSlot: hSlot,
+      streakSlot: sSlot,
+      position: pos,
+      physicalScale: sizeScale[permanentID]!,
+      profileIndex: archetype,
+      visibility: evidenceVisibility[permanentID]!,
+      lampFade: evidenceLampFade[permanentID]!,
+      sourceStream: evidenceStream[permanentID]!,
+      sourceOriginM: evidenceOriginM[permanentID]!,
+      sourceTimeS: currentSourceTimeS,
+      projectedExtentCssPx: evidenceExtentCss[id]!,
+      allBehindNear: evidenceAllBehind[id] === 1,
+      nearCrossing: evidenceCrossesNear[id] === 1,
+      projectionMode: cameraFrameBound ? 'view-frame' : 'sphere-compatibility',
+      trailMode: admittedTrailPolicy[id]!,
+      trailModeWeight: sSlot >= 0 ? streakFadeArray[sSlot * 4 + 3]! : 0,
+    };
+  }
+
   function dispose(): void {
     for (let archetype = 0; archetype < RENDER_ARCHETYPES; archetype += 1) {
       meshes[archetype].dispose();
@@ -2824,5 +3004,17 @@ if (vTrafficGlass > 0.5) {
 
   setQuality(options.quality);
 
-  return { objects, update, setQuality, setTrailsAllowed, setImpostorCount, setPixelAngle, setAnchor, stats, dispose };
+  return {
+    objects,
+    update,
+    setQuality,
+    setTrailsAllowed,
+    setImpostorCount,
+    setPixelAngle,
+    setCameraFrame,
+    setAnchor,
+    stats,
+    carEvidence,
+    dispose,
+  };
 }

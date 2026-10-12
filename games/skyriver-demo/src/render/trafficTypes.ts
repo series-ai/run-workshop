@@ -113,6 +113,29 @@ export interface SkyriverTrafficOptions {
   readonly bounds?: TrafficBounds;
 }
 
+export interface TrafficCarEvidence {
+  readonly carId: number;
+  readonly requested: boolean;
+  readonly admitted: boolean;
+  readonly hullMeshName: string | null;
+  readonly hullSlot: number;
+  readonly streakSlot: number;
+  readonly position: readonly [number, number, number];
+  readonly physicalScale: number;
+  readonly profileIndex: number;
+  readonly visibility: number;
+  readonly lampFade: number;
+  readonly sourceStream: number;
+  readonly sourceOriginM: number;
+  readonly sourceTimeS: number;
+  readonly projectedExtentCssPx: number;
+  readonly allBehindNear: boolean;
+  readonly nearCrossing: boolean;
+  readonly projectionMode: 'view-frame' | 'sphere-compatibility';
+  readonly trailMode: TrafficTrailMode;
+  readonly trailModeWeight: number;
+}
+
 /**
  * The traffic swarm. Construct with createSkyriverTraffic(); add `objects` to the scene; call
  * update() once per rendered frame.
@@ -137,6 +160,9 @@ export interface SkyriverTraffic {
    */
   setPixelAngle(inverseFocalLengthBufferPx: number, inverseFocalLengthCssPx: number): void;
 
+  /** Binds the current camera view matrix and near plane distance in meters for projected hull size. */
+  setCameraFrame(viewMatrix: ArrayLike<number>, nearM: number): void;
+
   /**
    * T6R-2: the presented shuttle pose (sim turns for yaw) and its speed, m/s. The escort vehicles
    * fly in formation off it. Call once per frame before update().
@@ -154,6 +180,12 @@ export interface SkyriverTraffic {
 
   /** A fresh snapshot of the live counters. Not called per frame by this module. */
   stats(): TrafficStats;
+
+  /**
+   * Diagnostic snapshot of actual current state for a permanent ID.
+   * Reports actual current rows and state only.
+   */
+  carEvidence(permanentID: number): TrafficCarEvidence | null;
 
   /** Releases geometries, materials and the generated glow texture. */
   dispose(): void;

@@ -38,11 +38,20 @@ export function hullLodAlpha(distanceM: number): number {
 }
 
 /**
- * Hull visibility combining lifecycle presence and far dissolve distance.
- * Returns clamp(lifecyclePresence, 0, 1) * (1 - smoothstep(750, 1300, distanceM)).
+ * Zero presence stays hidden.
+ * A conservative body extent of 2 to 6 CSS pixels raises far coverage to full coverage.
+ * This extent is a box bound, not a silhouette measurement.
  */
-export function trafficHullVisibility(distanceM: number, lifecyclePresence: number): number {
-  return clamp01(lifecyclePresence) * (1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, distanceM));
+export function trafficHullVisibility(
+  distanceM: number,
+  lifecyclePresence: number,
+  projectedExtentCssPx = 0,
+): number {
+  const presence = clamp01(lifecyclePresence);
+  if (presence <= 0) return 0;
+  const far = presence * (1 - smoothstep(HULL_DISSOLVE_START_M, HULL_DRAW_DISTANCE_M, distanceM));
+  const resolved = smoothstep(2, 6, projectedExtentCssPx);
+  return far + (1 - far) * resolved;
 }
 
 /** Keeps the low-tier far fade at zero presence, then adopts the hull LOD cap by threshold. */
