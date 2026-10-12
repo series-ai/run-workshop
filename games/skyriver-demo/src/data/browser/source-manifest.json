@@ -66,8 +66,8 @@
   },
   {
     "path": "src/render/city.ts",
-    "sha256": "ad2d03d9b39ca99643f2e4bbfa8ef6894020b07b447ba93f13ebfe2b664e3242",
-    "byteLength": 657085
+    "sha256": "7d01ccb39557fb432721052b9ba452e86ae162aa9dba9130def5140137cbaf07",
+    "byteLength": 657627
   },
   {
     "path": "src/render/citySnapshotCodec.ts",

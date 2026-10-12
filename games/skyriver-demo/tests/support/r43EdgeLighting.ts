@@ -19,6 +19,17 @@ const FRAGMENT_DELTAS = [
 ] as const;
 
 export function withoutR43EdgeLighting(source: string, key: string): string {
+  if (key === 'towerFragment') {
+    const debugDeltas = [
+      ['uniform float uRimAmplitude;\n', ''],
+      ['return uRimAmplitude * min( vec3( 0.04 ), baseY * chroma / chromaY * catchWeight );',
+        'return min( vec3( 0.04 ), baseY * chroma / chromaY * catchWeight );'],
+    ] as const;
+    for (const [approved, original] of debugDeltas) {
+      if (source.split(approved).length !== 2) throw new Error(`R43_RIM_DEBUG_DELTA_CHANGED:${key}`);
+      source = source.replace(approved, original);
+    }
+  }
   const deltas = key === 'towerVertex' ? [VERTEX_DELTA]
     : key === 'towerFragment' ? FRAGMENT_DELTAS : [];
   for (const [approved] of deltas) {

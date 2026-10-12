@@ -2,11 +2,11 @@
   "codecVersion": 2,
   "runtime": "browser",
   "canonicalSeed": 424242,
-  "sourceManifestDigest": "17a8209071331aa3de5b85954bee565848205eb19b13d37fa57bb8182dca141a",
+  "sourceManifestDigest": "6174714036d797bc19f65f30fb8b7969124d1bcd4e4b54d3731748cf7aec983a",
   "layoutSignature": "96cf1452cdb6c85d482b8cc0302d9a8d072818828d391d9408c24414831e5995",
   "payloadHash": "aac02ce040fff65ea202b509b5264c17d5d2fb1b339276fbba54be6886be1742",
   "payloadBytes": 13351226,
-  "payloadSha256": "63736ba985e5b8d76dbaab93e363ad9d9cc6fca2802e93f9748fc01e3ea0a5a9",
-  "gzipBytes": 1962244,
-  "gzipSha256": "6088715e4f7c475e11d05fe11154617419a8b186ba3069fbb79bbe7389710dd1"
+  "payloadSha256": "59c629e7aeb4ebdfc5376f856a1cc528142f25aeebf11642a066c2e40f7e1b1a",
+  "gzipBytes": 1962252,
+  "gzipSha256": "ee8553aa2066f39ddc37721bcd389a4cf0e0573c64c796b94876ca1880a90524"
 }

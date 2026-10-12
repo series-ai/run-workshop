@@ -9776,6 +9776,13 @@ void main() {
 }
 `;
 
+/** Read the debug amplitude once at the material boundary. */
+export function parseSkyriverRimAmplitude(value: string | null): number {
+  if (value === null || value.trim() === '') return 1;
+  const amplitude = Number(value);
+  return Number.isFinite(amplitude) && amplitude >= 0 && amplitude <= 10 ? amplitude : 1;
+}
+
 const TOWER_FRAGMENT = /* glsl */ `
 #define EMISSIVE_GAIN ${SKYRIVER_EMISSIVE_GAIN.toFixed(4)}
 uniform float uTime;
@@ -9785,6 +9792,7 @@ uniform float uConcreteLevel;
 uniform vec3 uConcreteAmbient;
 uniform vec3 uWetTint;
 uniform float uContactAllowed;
+uniform float uRimAmplitude;
 
 varying vec2 vSurf;
 varying float vSeed;
@@ -9923,7 +9931,7 @@ vec3 familyEdgeLight( vec3 base, vec3 chroma, float catchWeight ) {
   float baseY = dot( base, vec3( 0.2126, 0.7152, 0.0722 ) );
   float chromaY = max( dot( chroma, vec3( 0.2126, 0.7152, 0.0722 ) ), 1e-4 );
   // This term adds at most eight percent of the material light. It has no emission.
-  return min( vec3( 0.04 ), baseY * chroma / chromaY * catchWeight );
+  return uRimAmplitude * min( vec3( 0.04 ), baseY * chroma / chromaY * catchWeight );
 }
 
 void main() {
@@ -13668,6 +13676,9 @@ export class SkyriverCity {
         uConcreteAmbient: { value: concreteAmbient },
         uWetTint: { value: wetTint },
         uContactAllowed: { value: 1 },
+        uRimAmplitude: { value: parseSkyriverRimAmplitude(
+          typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('rim'),
+        ) },
         uInterior: { value: this.interiorAtlas.texture },
         uInteriorFade: { value: new THREE.Vector2(SKYRIVER_INTERIOR_FADE.full[0], SKYRIVER_INTERIOR_FADE.full[1]) },
         uInteriorStrength: { value: 1 },
