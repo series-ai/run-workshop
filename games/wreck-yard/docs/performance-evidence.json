@@ -6823,20 +6823,96 @@
       },
       "attractionRoute": "pass",
       "browserErrors": [],
-      "productionIndexBytesReportedKiB": 7272.21,
-      "productionIndexGzipReportedKiB": 2045.6,
       "profileArtifactPresentInProduction": false,
       "profileArtifactEncodedLengthChecked": 7799184,
       "ciPassed": 57,
       "mergeRequirement": "One human approval. Tier 2, risk high. PO label alone does not satisfy this gate.",
-      "publication": "Pending merge approval. Original game stays on published rc.40.",
+      "publication": "At this candidate check, publication was pending. See sdkPublishedVerification for the completed release.",
       "initialLiveStartupFailure": "The isolated server had no development login settings. The test stopped at RUN sign-in. The rerun used the existing local settings in process memory and passed.",
       "rawLogs": [
         "/private/tmp/wreck-sdk-validation-tests.log",
         "/private/tmp/wreck-sdk-validation-build.log",
         "/private/tmp/wreck-sdk-validation-live-auth.log",
         "/private/tmp/wreck-sdk-validation-attractions.log"
-      ]
+      ],
+      "productionIndexReportedKB": 7272.21,
+      "productionIndexGzipReportedKB": 2045.6
     }
+  },
+  "sdkPublishedVerification": {
+    "version": "6.0.0-rc.41",
+    "productionWasmSha256": "5f6a3d861cf3eb79a2f8060d6c4b5512673a943044a52a9d20b39f0f2fef985f",
+    "simulationSourceHash": "38d5f2cde9e8d448f029fd2921a743e4a40e19dc84c03abf7bed829003e2469d",
+    "profileEncodedLength": 7799184,
+    "productionFiles": [
+      "_rundot_bootstrap.adac7990.js",
+      "core-CUZ70pdB-BA1gbrF-.js",
+      "dist-DxOnYUkS-BnlByyFe.js",
+      "index-Bz_XE5BX.js"
+    ],
+    "profileBinaryPresentInProduction": false,
+    "assets": [
+      {
+        "file": "_rundot_bootstrap.adac7990.js",
+        "bytes": 4530,
+        "gzipBytes": 1749
+      },
+      {
+        "file": "core-CUZ70pdB-BA1gbrF-.js",
+        "bytes": 1276,
+        "gzipBytes": 586
+      },
+      {
+        "file": "dist-DxOnYUkS-BnlByyFe.js",
+        "bytes": 46945,
+        "gzipBytes": 20679
+      },
+      {
+        "file": "index-Bz_XE5BX.js",
+        "bytes": 7272430,
+        "gzipBytes": 2039876
+      }
+    ],
+    "totalJsBytes": 7325181,
+    "totalJsGzipBytes": 2062890,
+    "status": "published and verified",
+    "releaseUrl": "https://github.com/series-ai/venus/releases/tag/syncplay/v6.0.0-rc.41",
+    "releasePublishedAt": "2026-10-12T01:58:25Z",
+    "workflowUrl": "https://github.com/series-ai/venus/actions/runs/38192491750",
+    "workflowConclusion": "success",
+    "mergeCommit": "c7a4de54e2d0559fc92422698c8430848e1a4cb7",
+    "mergeAuthority": "User authorized admin squash merge of PR #5367 and rc.41 publication.",
+    "packageIntegrity": "sha512-Zt1U2zs6qmtPjnaFEkNR+wQRJXes5Iw02pbnlVnbuv4FnqVjVMwbo0Q/SGko0GqAycOLIoW6pBk7S5SWlkappA==",
+    "packageFileParity": {
+      "referenceFileCount": 574,
+      "publishedFileCount": 574,
+      "changedFiles": []
+    },
+    "gameTests": {
+      "passed": 346,
+      "failed": 0
+    },
+    "liveChecks": {
+      "passed": 7,
+      "failed": 0
+    },
+    "build": "pass",
+    "nativeRegression": "Exact 390-frame state/contact trace and both 360-frame kinematic contact traces match rc.40.",
+    "e2e": {
+      "passed": 3,
+      "failed": 1,
+      "failingTest": "style-vista",
+      "inkFraction": 0.037,
+      "darkFraction24": 0.159,
+      "darkFractionLimit": 0.12,
+      "earlierDarkFraction24": 0.15,
+      "thresholdsChanged": false
+    },
+    "examplesMirror": "Optional mirror skipped because its deploy token is not configured. SDK publication completed.",
+    "rawLogs": [
+      "/private/tmp/wreck-published-rc41-checks.log",
+      "/private/tmp/wreck-published-rc41-live.log",
+      "/private/tmp/wreck-published-rc41-e2e.log"
+    ]
   }
 }
