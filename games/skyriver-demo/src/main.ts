@@ -515,7 +515,7 @@ export function createSkyriverApp(options: SkyriverAppOptions): SkyriverApp {
       inverseFocalLength / Math.max(1, cssSize.y),
     );
     frame.camera.updateMatrixWorld(true);
-    traffic.setCameraFrame(frame.camera.matrixWorldInverse.elements, frame.camera.near);
+    traffic.setCameraFrame(frame.camera.matrixWorldInverse.elements, frame.camera.near, frame.camera.projectionMatrix.elements);
     traffic.update({ tick: frame.tick, alpha: frame.alpha }, frame.camera.position);
   };
   scene.addFrameListener(onFrame);

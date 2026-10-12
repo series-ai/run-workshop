@@ -41,8 +41,8 @@
   },
   {
     "path": "src/main.ts",
-    "sha256": "7681f4b2c84649584535a2140bbb1d65e80a1f56e794a124e12630e263dd4a99",
-    "byteLength": 53155
+    "sha256": "b6f927693bce692a1507db4cf39ff44a5cdea8202e537747abd7dff21d61b9b8",
+    "byteLength": 53195
   },
   {
     "path": "src/render/atmosphere.ts",
@@ -211,8 +211,8 @@
   },
   {
     "path": "src/render/traffic.ts",
-    "sha256": "ffcf10c1b4b385746a30ab8b438a2c85c68e17369653f4daf486e02dd24e94b5",
-    "byteLength": 131138
+    "sha256": "ec4c5400b7fb65393104f5c963b48be171575240cf47b2923b5e6b6edd318a5b",
+    "byteLength": 141380
   },
   {
     "path": "src/render/trafficAppearance.ts",
@@ -236,8 +236,8 @@
   },
   {
     "path": "src/render/trafficTypes.ts",
-    "sha256": "9f2b98163c85e8251115e53d086abf21677e830712d47d896048d095d7f063ac",
-    "byteLength": 8108
+    "sha256": "cfe894fe0ebe01067886b782a3e38acbbe9431aee4b23147cc58bd2f9c6d233e",
+    "byteLength": 9771
   },
   {
     "path": "src/render/volumeFog.ts",

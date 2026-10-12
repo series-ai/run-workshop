@@ -113,8 +113,38 @@ export interface SkyriverTrafficOptions {
   readonly bounds?: TrafficBounds;
 }
 
+export type TrafficAdmissionBlockedReason = 'camera-unbound' | 'anchor-cohort-entry-unsupported' | 'no-hidden-route-point' | 'entry-budget-pending';
+export interface TrafficAdmissionEntryWitness {
+  readonly timeS: number;
+  readonly addressM: number;
+  readonly position: readonly [number, number, number];
+  readonly radiusM: number;
+  readonly plane: 'near' | 'left' | 'right' | 'bottom' | 'top' | 'far';
+  readonly candidateIndex: number;
+  readonly viewMatrix: readonly number[];
+  readonly projectionMatrix: readonly number[] | null;
+}
+
 export interface TrafficCarEvidence {
   readonly carId: number;
+  readonly admissionPhase: 'initial' | 'route-entry' | 'blocked' | 'retired' | 'inactive';
+  readonly presentationPhaseOffsetM: number;
+  readonly admissionBlockedReason: TrafficAdmissionBlockedReason | null;
+  readonly admissionEntryWitness: TrafficAdmissionEntryWitness | null;
+  /** The search checks at most16 route addresses. Failure is not a whole-route visibility proof. */
+  readonly admissionCandidateCount: number;
+  readonly admissionRetryAtS: number | null;
+  readonly prospectiveVisibility: number | null;
+  /** Null means that this source pose was not evaluated in the current update. */
+  readonly envelopeOutside: boolean | null;
+  readonly envelopeRadiusM: number;
+  /** Along-route speed. Fixed escorts use0 relative to the anchor. Escort3 uses its actual -330 m/s arc. */
+  readonly sourceSignedSpeedMps: number;
+  readonly poseTimeS: number | null;
+  readonly poseEvaluated: boolean;
+  /** Actual prospective Float32 hull row. Null if this update did not evaluate the ID. */
+  readonly prospectiveHullMatrix: readonly number[] | null;
+  readonly drawn: boolean;
   readonly requested: boolean;
   readonly admitted: boolean;
   readonly hullMeshName: string | null;
@@ -161,7 +191,7 @@ export interface SkyriverTraffic {
   setPixelAngle(inverseFocalLengthBufferPx: number, inverseFocalLengthCssPx: number): void;
 
   /** Binds the current camera view matrix and near plane distance in meters for projected hull size. */
-  setCameraFrame(viewMatrix: ArrayLike<number>, nearM: number): void;
+  setCameraFrame(viewMatrix: ArrayLike<number>, nearM: number, projectionMatrix?: ArrayLike<number>): void;
 
   /**
    * T6R-2: the presented shuttle pose (sim turns for yaw) and its speed, m/s. The escort vehicles

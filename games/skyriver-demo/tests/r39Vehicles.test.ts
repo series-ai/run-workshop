@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from 'vitest';
-import { BufferGeometry, InstancedBufferGeometry, InstancedMesh, Matrix4, Mesh, PerspectiveCamera, Ray, Vector3 } from 'three';
+import { BufferGeometry, InstancedBufferGeometry, InstancedMesh, Frustum, Matrix4, Mesh, PerspectiveCamera, Ray, Sphere, Vector3 } from 'three';
 import { deriveTrafficParams } from '../src/sim/derive';
 import { carTrafficPlan, createSkyriverTraffic, TRAFFIC_QUALITY_TIERS } from '../src/render/traffic';
 import { createSkyriverShuttle, SHUTTLE_NOZZLE_ROOTS_LOCAL, SHUTTLE_WAKE_SAMPLE_COUNT } from '../src/render/shuttle';
@@ -228,7 +228,7 @@ describe('R39 independent physical vehicle output', () => {
     for (const a of [0, 1, 2]) for (const variant of [false, true]) expect(trafficRenderProfile(a, variant, true)).toBe(5);
   });
 
-  it.each([0, 424242, 2147483647, 4294967295])('routes every admitted CPU car and omits only zero-visibility lamps for seed %i', (seed) => {
+  it.each([0, 424242, 2147483647, 4294967295])('routes every logical CPU car and allocates the exact visible hull and lamp partition for seed %i', (seed) => {
     const params = deriveTrafficParams(seed, 2400);
     for (const mode of ['view-frame', 'sphere-compatibility'] as const) {
       const actual = createSkyriverTraffic({ seed, quality: TRAFFIC_QUALITY_TIERS.high, maxImpostors: 0 });
@@ -239,7 +239,7 @@ describe('R39 independent physical vehicle output', () => {
         actual.setAnchor(0, 1500, 0, 0, 160, 0, 0);
         if (mode === 'view-frame') {
           actual.setPixelAngle(cssAngle, cssAngle);
-          actual.setCameraFrame(camera.matrixWorldInverse.elements, camera.near);
+          actual.setCameraFrame(camera.matrixWorldInverse.elements, camera.near, camera.projectionMatrix.elements);
         }
         actual.update(12, camera.position);
         const streak = actual.objects.find(object => object.name === 'skyriver.traffic.streaks');
@@ -251,7 +251,9 @@ describe('R39 independent physical vehicle output', () => {
           const id = lod.getZ(slot); expect(lampSlots.has(id)).toBe(false); lampSlots.set(id, slot);
         }
         const hulls = actual.objects.filter((object): object is InstancedMesh => object instanceof InstancedMesh);
-        expect(hulls.reduce((sum, mesh) => sum + mesh.count, 0)).toBe(2400);
+        const nativeCount = hulls.reduce((sum, mesh) => sum + mesh.count, 0);
+        const frustum = new Frustum().setFromProjectionMatrix(new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+        let culledCount = 0;
         const ownedSlots = new Set<string>(), expectedLampIds = new Set<number>();
         const smooth = (start: number, end: number, value: number) => {
           const x = Math.max(0, Math.min(1, (value - start) / (end - start))); return x * x * (3 - 2 * x);
@@ -259,17 +261,26 @@ describe('R39 independent physical vehicle output', () => {
         for (let id = 0; id < 2400; id += 1) {
           const owner = actual.carEvidence(id); if (!owner) throw Error('R39_NATIVE_ID_EVIDENCE_REQUIRED');
           expect(owner.carId).toBe(id); expect(owner.admitted).toBe(true); expect(owner.requested).toBe(true);
-          const mesh = hulls.find(hull => hull.name === owner.hullMeshName);
-          if (!mesh) throw Error('R39_ADMITTED_HULL_MISSING');
-          expect(owner.hullSlot).toBeGreaterThanOrEqual(0); expect(owner.hullSlot).toBeLessThan(mesh.count);
-          const key = mesh.name + ':' + owner.hullSlot; expect(ownedSlots.has(key)).toBe(false); ownedSlots.add(key);
-          const type = names.findIndex(name => mesh.name === 'skyriver.traffic.' + name);
+          const type = owner.profileIndex;
+          const mesh = hulls.find(hull => hull.name === 'skyriver.traffic.' + names[type]);
+          if (!mesh) throw Error('R39_LOGICAL_PROFILE_MISSING');
+          expect(owner.poseEvaluated).toBe(true);
+          if (!owner.prospectiveHullMatrix) throw Error('R39_PROSPECTIVE_MATRIX_MISSING');
+          if (owner.drawn) {
+            expect(owner.hullMeshName).toBe(mesh.name);
+            expect(owner.hullSlot).toBeGreaterThanOrEqual(0); expect(owner.hullSlot).toBeLessThan(mesh.count);
+            const key = mesh.name + ':' + owner.hullSlot; expect(ownedSlots.has(key)).toBe(false); ownedSlots.add(key);
+          } else {
+            expect(owner.hullMeshName).toBeNull(); expect(owner.hullSlot).toBe(-1); expect(owner.streakSlot).toBe(-1);
+            culledCount += 1;
+          }
           expect(type).toBeGreaterThanOrEqual(0); expect(owner.profileIndex).toBe(type);
           const role: { role: import('../src/render/traffic').CarRole; stream: number } = { role: 'free', stream: 255 };
           carTrafficPlan(seed, id, role);
           if (role.role === 'stream' && STREAMS[role.stream]![5]! <= 70) expect(type).toBe(5);
           else expect([[0, 3], [1, 2], [2, 4]][params.archetype[id]!]!).toContain(type);
-          const matrix = new Matrix4().fromArray(mesh.instanceMatrix.array, owner.hullSlot * 16);
+          const matrix = new Matrix4().fromArray(owner.prospectiveHullMatrix);
+          if (owner.drawn) expect(Array.from(mesh.instanceMatrix.array.slice(owner.hullSlot * 16, owner.hullSlot * 16 + 16))).toEqual(owner.prospectiveHullMatrix);
           const center = new Vector3().setFromMatrixPosition(matrix), distance = center.distanceTo(camera.position);
           mesh.geometry.computeBoundingBox(); const box = mesh.geometry.boundingBox;
           if (!box) throw Error('R39_NATIVE_BODY_BOUNDS_REQUIRED');
@@ -287,11 +298,18 @@ describe('R39 independent physical vehicle output', () => {
               (Math.max(...projected.map(point => point.x)) - Math.min(...projected.map(point => point.x))) * 640,
               (Math.max(...projected.map(point => point.y)) - Math.min(...projected.map(point => point.y))) * 360);
           const expected = behind ? 0 : smooth(0.125, 0.5, extent);
-          const hullFade = mesh.geometry.getAttribute('aFade').getX(owner.hullSlot);
-          expect(hullFade).toBeCloseTo(expected, 5);
+          expect(owner.prospectiveVisibility).toBeCloseTo(expected, 5);
+          const outside = mode === 'view-frame'
+            ? !frustum.intersectsSphere(new Sphere(center, owner.envelopeRadiusM))
+            : false;
+          if (mode === 'view-frame') expect(owner.envelopeOutside).toBe(outside);
+          const mustDraw = expected > 0 && !outside;
+          expect(owner.drawn).toBe(mustDraw);
           const slot = lampSlots.get(id);
-          if (expected > 0) { expectedLampIds.add(id); expect(slot).toBeDefined(); }
-          else { expect(hullFade).toBe(0); expect(slot).toBeUndefined(); }
+          if (mustDraw) {
+            expect(mesh.geometry.getAttribute('aFade').getX(owner.hullSlot)).toBeCloseTo(expected, 5);
+            expectedLampIds.add(id); expect(slot).toBeDefined();
+          } else { expect(owner.visibility).toBe(0); expect(slot).toBeUndefined(); }
           if (slot !== undefined) {
             expect(shape.getX(slot)).toBe(type); expect(lod.getX(slot)).toBe(1); expect(lod.getY(slot)).toBe(0);
             expect(lampFade.getX(slot)).toBeCloseTo(expected, 5);
@@ -299,7 +317,8 @@ describe('R39 independent physical vehicle output', () => {
             expect(new Vector3(position.getX(slot), position.getY(slot), position.getZ(slot)).distanceTo(center)).toBeLessThan(1e-4);
           }
         }
-        expect(ownedSlots.size).toBe(2400);
+        expect(ownedSlots.size).toBe(nativeCount);
+        expect(nativeCount + culledCount).toBe(2400);
         expect(new Set(lampSlots.keys())).toEqual(expectedLampIds);
         expect(lampSlots.size + (2400 - expectedLampIds.size)).toBe(2400);
       } finally { actual.dispose(); }

@@ -435,6 +435,22 @@ function cpuAppearanceRecords(traffic: ReturnType<typeof createSkyriverTraffic>)
   }
   expect(usedStreakIds.size).toBe(count);
   expect(positiveHulls + zeroHulls).toBe(records.length);
+  const nativeIds = new Set(records.map(record => record[0]));
+  for (let id = 0; id < capacity; id += 1) {
+    const evidence = traffic.carEvidence(id);
+    if (!evidence || !evidence.admitted || nativeIds.has(id)) continue;
+    expect(evidence.drawn).toBe(false);
+    expect(evidence.hullSlot).toBe(-1); expect(evidence.streakSlot).toBe(-1);
+    expect(evidence.poseEvaluated).toBe(true);
+    if (!evidence.prospectiveHullMatrix) throw Error('R28_CULLED_PHYSICAL_MATRIX_MISSING');
+    const matrix = evidence.prospectiveHullMatrix;
+    const physicalScale = Math.fround(evidence.physicalScale);
+    for (const axis of [0, 1, 2]) expect(Math.abs(evidence.position[axis]! - matrix[12 + axis]!)).toBeLessThan(1e-4);
+    for (const column of [0, 4, 8]) expect(Math.abs(Math.hypot(matrix[column]!, matrix[column + 1]!, matrix[column + 2]!) - physicalScale)).toBeLessThanOrEqual(1e-5);
+    expect(evidence.prospectiveVisibility === 0 || evidence.envelopeOutside === true).toBe(true);
+    expect(byId.has(id)).toBe(false);
+    records.push([id, evidence.profileIndex, physicalScale]);
+  }
 
   records.sort((a, b) => a[0]! - b[0]!);
   return new Float32Array(records.flat());

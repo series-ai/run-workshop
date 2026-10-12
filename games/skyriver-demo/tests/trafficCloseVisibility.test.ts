@@ -90,7 +90,7 @@ function update(traffic: Traffic, time: number, view: PerspectiveCamera, dpr = 1
   const focal = view.projectionMatrix.elements[5]!;
   traffic.setPixelAngle(2 / (focal * 720 * dpr), 2 / (focal * 720));
   const bind = Reflect.get(traffic, 'setCameraFrame');
-  if (typeof bind === 'function') Reflect.apply(bind, traffic, [view.matrixWorldInverse.elements, view.near]);
+  if (typeof bind === 'function') Reflect.apply(bind, traffic, [view.matrixWorldInverse.elements, view.near, view.projectionMatrix.elements]);
   traffic.update(time, view.position);
 }
 function extent(actual: Row, view: PerspectiveCamera): { css: number; behind: boolean; crossing: boolean } {
@@ -217,7 +217,7 @@ describe('R44 close visibility from actual traffic buffers', () => {
           let wrongFade: number | null = null;
           if (dpr > 1) {
             traffic.setPixelAngle(bufferAngle, bufferAngle);
-            traffic.setCameraFrame(view.matrixWorldInverse.elements, view.near);
+            traffic.setCameraFrame(view.matrixWorldInverse.elements, view.near, view.projectionMatrix.elements);
             traffic.update(10, view.position);
             const wrong = requiredRow(traffic, 1000);
             wrongFade = wrong.hullFade;
@@ -266,8 +266,10 @@ describe('R44 close visibility from actual traffic buffers', () => {
         throw Error('CLOSE_REAL_PROFILE_REQUIRED:' + profile);
       });
       const samples = [];
+      // Save each native row before another profile moves the test camera.
+      const initialRows = new Map(selectedIds.map(id => [id, requiredRow(traffic, id)]));
       for (const id of selectedIds) {
-        const initial = requiredRow(traffic, id);
+        const initial = initialRows.get(id)!;
         const forward = new Vector3(initial.matrix[8]!, initial.matrix[9]!, initial.matrix[10]!).normalize();
         const right = new Vector3(initial.matrix[0]!, initial.matrix[1]!, initial.matrix[2]!).normalize();
         for (const angle of [0, 45, 90]) {

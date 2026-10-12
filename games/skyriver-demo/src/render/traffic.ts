@@ -56,6 +56,7 @@ import {
   Vector4,
 } from 'three';
 import type { Object3D } from 'three';
+import type { TrafficAdmissionBlockedReason, TrafficAdmissionEntryWitness } from './trafficTypes';
 
 import { deriveTrafficParams, TRAFFIC_ARCHETYPE_COUNT, TRAFFIC_MAX_CARS } from '../sim/derive';
 import { CHASM_BOUNDS, SKYRIVER_TICK_RATE } from '../sim/systems';
@@ -97,6 +98,7 @@ import {
   TRAFFIC_HULL_HEADLIGHT_RGB,
   TRAFFIC_HULL_SIGN_RGB,
   TRAFFIC_HULL_TAILLIGHT_RGB,
+  TRAFFIC_LAMP_PHYSICAL_RADIUS_CEILING_SCALE,
   TRAFFIC_LAMP_FRUSTUM_MARGIN_CSS_PX,
   TRAFFIC_LAMP_KERNEL_CENTER_EPSILON,
   TRAFFIC_LAMP_KERNEL_CORE_SCALE,
@@ -1681,7 +1683,7 @@ const carPlanShares = STREAMS.reduce<number[]>((acc, st) => { acc.push((acc[acc.
 
 /**
  * The permanent role and stream of one car index. Pure in (seed, car) — no tier, no time — so a
- * quality change can never move a car, and the hop census below is exact rather than sampled.
+ * quality change cannot alter its role or stream, and the hop census below is exact rather than sampled.
  */
 export function carTrafficPlan(seed: number, car: number, out: CarPlan): void {
   const h = (k: number): number => hash01(car ^ (seed | 0), k);
@@ -1869,8 +1871,7 @@ export function createSkyriverTraffic(options: SkyriverTrafficOptions): Skyriver
   /**
    * R21 per-car flow, from the shared model. A stream car's speed is its own sample inside its class
    * band, not the stream's nominal speed, and its route records the branch it took and the course
-   * change it makes once a lap. Every value is a function of the permanent car index, so a tier
-   * change never moves a car.
+   * change it makes once a lap. Every value is a function of the permanent car index, so an admitted car keeps its route. New cohorts can receive a hidden presentation phase offset.
    */
   const carCruiseMps = new Float32Array(maxCarCount);
   const carEffectiveMps = new Float32Array(maxCarCount);
@@ -2367,6 +2368,23 @@ if (vTrafficGlass > 0.5) {
 
   // R44 Close-Range Fade Mini: coherent per-permanentID admission and continuous source motion.
   const admitted = new Uint8Array(maxCarCount);
+  const initialPrefix = options.quality.carCount;
+  // New organic cohorts keep this presentation offset. It is not restored to their old phase.
+  const entryPhaseOffset = new Float64Array(maxCarCount);
+  const entryWitness: (TrafficAdmissionEntryWitness | null)[] = Array.from({ length: maxCarCount }, () => null);
+  const entryBlocked: (TrafficAdmissionBlockedReason | null)[] = Array.from({ length: maxCarCount }, () => null);
+  const envelopeHidden = new Uint8Array(maxCarCount);
+  const entryCandidateCount = new Uint8Array(maxCarCount);
+  const prospectivePresence = new Float32Array(maxCarCount);
+  const entryRetryAt = new Float64Array(maxCarCount).fill(-Infinity);
+  const lastEntryAttemptTime = new Float64Array(maxCarCount).fill(NaN);
+  let entryCandidateBudget = 256;
+  const poseGeneration = new Float64Array(maxCarCount);
+  const evidenceHullMatrix = new Float32Array(maxCarCount * 16);
+  let currentPoseGeneration = 0;
+  const envelopeRadius = new Float64Array(maxCarCount);
+  const sourceSignedSpeed = new Float64Array(maxCarCount);
+  const poseTime = new Float64Array(maxCarCount).fill(NaN);
   let requestedPrefix = options.quality.carCount;
   for (let c = 0; c < requestedPrefix; c += 1) {
     admitted[c] = 1;
@@ -2374,6 +2392,8 @@ if (vTrafficGlass > 0.5) {
 
   const cameraView = new Float64Array(16);
   let cameraFrameBound = false;
+  const cameraProjection = new Float64Array(16);
+  let cameraProjectionBound = false;
   let cameraNearM = 1;
   let cssPixelAngle = 0.0012;
   const projectedCorners = new Float64Array(24);
@@ -2384,14 +2404,21 @@ if (vTrafficGlass > 0.5) {
   const evidenceCrossesNear = new Uint8Array(maxCarCount);
   const admittedTrailPolicy: TrafficTrailMode[] = Array.from({ length: maxCarCount }, () => options.quality.trails);
 
-  function setCameraFrame(viewMatrix: ArrayLike<number>, nearM: number): void {
+  function setCameraFrame(viewMatrix: ArrayLike<number>, nearM: number, projectionMatrix?: ArrayLike<number>): void {
     if (viewMatrix.length !== 16 || !Number.isFinite(nearM) || nearM <= 0) fail('SKYRIVER_TRAFFIC_CAMERA_FRAME_INVALID');
-    for (let i = 0; i < 16; i += 1) {
-      const value = viewMatrix[i]!;
-      if (!Number.isFinite(value)) fail('SKYRIVER_TRAFFIC_CAMERA_FRAME_INVALID');
-      cameraView[i] = value;
+    if (projectionMatrix !== undefined && projectionMatrix.length !== 16) fail('SKYRIVER_TRAFFIC_CAMERA_PROJECTION_INVALID');
+    for (let i = 0; i < 16; i++) {
+      if (!Number.isFinite(viewMatrix[i]!)) fail('SKYRIVER_TRAFFIC_CAMERA_FRAME_INVALID');
+      if (projectionMatrix !== undefined && !Number.isFinite(projectionMatrix[i]!)) fail('SKYRIVER_TRAFFIC_CAMERA_PROJECTION_INVALID');
     }
-    cameraNearM = nearM;
+    const actualNear = projectionMatrix === undefined ? nearM : projectionMatrix[14]! / (projectionMatrix[10]! - 1);
+    if (!(actualNear > 0) || !Number.isFinite(actualNear)) fail('SKYRIVER_TRAFFIC_CAMERA_PROJECTION_INVALID');
+    for (let i = 0; i < 16; i++) {
+      cameraView[i] = viewMatrix[i]!;
+      if (projectionMatrix !== undefined) cameraProjection[i] = projectionMatrix[i]!;
+    }
+    cameraProjectionBound = projectionMatrix !== undefined;
+    cameraNearM = actualNear;
     cameraFrameBound = true;
   }
 
@@ -2432,6 +2459,52 @@ if (vTrafficGlass > 0.5) {
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     }
     return Math.max(maxX - minX, maxY - minY);
+  }
+
+  const wholeEnvelopeBase = hullLocalBounds.map((box, profileIndex) => {
+    const hullRadius = Math.hypot(Math.max(Math.abs(box[0]!), Math.abs(box[3]!)),
+      Math.max(Math.abs(box[1]!), Math.abs(box[4]!)), Math.max(Math.abs(box[2]!), Math.abs(box[5]!)));
+    const profile = TRAFFIC_APPEARANCE_PROFILES[profileIndex]!;
+    const lampRadius = (lamp: typeof profile.front): number => Math.hypot(
+      (lamp.kind === 'pair' ? lamp.centreXM : 0) + lamp.widthM * 0.5,
+      Math.abs(lamp.yM) + lamp.heightM * 0.5, Math.abs(lamp.zM));
+    const lampBound = Math.ceil(Math.max(lampRadius(profile.front), lampRadius(profile.rear))
+      * TRAFFIC_LAMP_PHYSICAL_RADIUS_CEILING_SCALE) / TRAFFIC_LAMP_PHYSICAL_RADIUS_CEILING_SCALE;
+    return { hullRadius, lampBound };
+  });
+  const frustumPlaneNames = ['left', 'right', 'bottom', 'top', 'near', 'far'] as const;
+  let hiddenEnvelopePlane: TrafficAdmissionEntryWitness['plane'] | null = null;
+  let testedEnvelopeRadius = 0;
+
+  /** This bound includes hulls, both lamp groups, maximum trail and screen filter/cap support. */
+  function envelopeOutside(car: number, x: number, y: number, z: number): boolean {
+    hiddenEnvelopePlane = null;
+    if (!cameraFrameBound) { testedEnvelopeRadius = 0; return false; }
+    const vx = cameraView[0]! * x + cameraView[4]! * y + cameraView[8]! * z + cameraView[12]!;
+    const vy = cameraView[1]! * x + cameraView[5]! * y + cameraView[9]! * z + cameraView[13]!;
+    const vz = cameraView[2]! * x + cameraView[6]! * y + cameraView[10]! * z + cameraView[14]!;
+    const base = wholeEnvelopeBase[renderArchetype[car]!]!;
+    const scale = sizeScale[car]!;
+    const physical = Math.max(base.hullRadius * scale, base.lampBound * scale + TRAFFIC_TRAIL_MAX_M);
+    const pixelMargin = Math.max(-vz + physical, cameraNearM) * cssPixelAngle
+      * (TRAFFIC_LAMP_FRUSTUM_MARGIN_CSS_PX + TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE);
+    const radius = physical + Math.max(TRAFFIC_TRAIL_START_RADIUS_M, pixelMargin);
+    testedEnvelopeRadius = radius;
+    if (-vz + radius < cameraNearM) { hiddenEnvelopePlane = 'near'; return true; }
+    if (!cameraProjectionBound) return false;
+    for (let plane = 0; plane < 6; plane++) {
+      const row = plane >> 1;
+      const sign = (plane & 1) === 0 ? 1 : -1;
+      const a = cameraProjection[3]! + sign * cameraProjection[row]!;
+      const b = cameraProjection[7]! + sign * cameraProjection[4 + row]!;
+      const c = cameraProjection[11]! + sign * cameraProjection[8 + row]!;
+      const d = cameraProjection[15]! + sign * cameraProjection[12 + row]!;
+      if (a * vx + b * vy + c * vz + d < -radius * Math.hypot(a, b, c)) {
+        hiddenEnvelopePlane = frustumPlaneNames[plane]!;
+        return true;
+      }
+    }
+    return false;
   }
 
   // Preallocated per-permanentID evidence buffers.
@@ -2568,6 +2641,55 @@ if (vTrafficGlass > 0.5) {
     out.scatterRow = scatterRowOf(carPhase[car]!, carAppearance[car]!);
   }
 
+  function chooseOrganicEntry(car: number, t: number): boolean {
+    entryCandidateCount[car] = 0;
+    if (!cameraFrameBound) { entryBlocked[car] = 'camera-unbound'; return false; }
+    if (car < ESCORT_COUNT + CHASE_COUNT) { entryBlocked[car] = 'anchor-cohort-entry-unsupported'; return false; }
+    if (t < entryRetryAt[car]! && !(t < lastEntryAttemptTime[car]!)) return false;
+    if (entryCandidateBudget < 16) { entryBlocked[car] = 'entry-budget-pending'; return false; }
+    lastEntryAttemptTime[car] = t;
+    const stream = carStream[car]! !== 255;
+    if (stream) loadCarFlow(car, carFlowScratch);
+    const speed = stream ? carFlowScratch.effectiveMps : carSpeed[car]!;
+    const direction = stream ? carFlowScratch.direction : carDirection[car]!;
+    const original = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
+    const retainedOffset = entryPhaseOffset[car]!;
+    for (let candidate = 0; candidate < 16; candidate++) {
+      entryCandidateCount[car] = candidate + 1;
+      entryCandidateBudget -= 1;
+      const offset = retainedOffset + direction * candidate * CANYON_LOOP_LENGTH_M / 16;
+      const address = original + offset;
+      let x: number, y: number, z: number;
+      if (stream) {
+        evaluateCanyonPose(model, carFlowScratch, address, t, carPhase[car]!, carAppearance[car]!, carRow[car]!, carPose);
+        sampleWarpRow(model.table, carPose.wrappedM / STREAM_PATH_STEP_M, carWarpRow);
+        const lateral = clamp(carPose.x, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
+        x = carWarpRow.x + lateral * carWarpRow.cos;
+        z = carWarpRow.z - lateral * carWarpRow.sin;
+        y = carPose.y;
+      } else {
+        const drift = carDriftA[car]! * Math.sin(t * carDriftW[car]! + carDriftP[car]!);
+        const climb = carClimbA[car]! * Math.sin(t * carClimbW[car]! + carClimbP[car]!);
+        warpCanyon(clamp(carHomeX[car]! + drift, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M), address, carWarp);
+        x = carWarp.x; z = carWarp.z; y = carHomeY[car]! + climb;
+      }
+      if (!envelopeOutside(car, Math.fround(x), Math.fround(y), Math.fround(z))) continue;
+      entryPhaseOffset[car] = offset;
+      entryBlocked[car] = null;
+      entryRetryAt[car] = -Infinity;
+      entryWitness[car] = { timeS: t, addressM: address, position: [Math.fround(x), Math.fround(y), Math.fround(z)],
+        radiusM: testedEnvelopeRadius, plane: hiddenEnvelopePlane!, candidateIndex: candidate,
+        viewMatrix: Array.from(cameraView), projectionMatrix: cameraProjectionBound ? Array.from(cameraProjection) : null };
+      admitted[car] = 1;
+      admittedTrailPolicy[car] = trailTo;
+      return true;
+    }
+    // These16 samples are bounded. This does not prove that the whole route is visible.
+    entryBlocked[car] = 'no-hidden-route-point';
+    entryRetryAt[car] = t + 1 + (car % 64) / 64;
+    return false;
+  }
+
   function setQuality(quality: TrafficQuality): void {
     assertQuality(quality, maxCarCount);
     if (quality.thrusterBudget > streakCapacity) fail('SKYRIVER_TRAFFIC_TIER_GLOW_OVER_CAPACITY');
@@ -2592,6 +2714,8 @@ if (vTrafficGlass > 0.5) {
    */
   function update(time: TrafficTime, camera: TrafficPoint): void {
     const t = secondsOf(time);
+    entryCandidateBudget = 256;
+    currentPoseGeneration += 1;
     const camX = camera.x;
     const camY = camera.y;
     const camZ = camera.z;
@@ -2637,8 +2761,22 @@ if (vTrafficGlass > 0.5) {
       for (let i = 0; i < group.length; i += 1) {
         const car = group[i]!;
         const requested = car < requestedPrefix;
-        const wasAdmitted = admitted[car] === 1;
-        if (!requested && !wasAdmitted) continue;
+        let wasAdmitted = admitted[car] === 1;
+        evidenceVisibility[car] = 0;
+        evidenceLampFade[car] = 0;
+        if (!wasAdmitted) {
+          envelopeHidden[car] = 0;
+          envelopeRadius[car] = 0;
+          evidenceExtentCss[car] = 0;
+          evidenceAllBehind[car] = 0;
+          evidenceCrossesNear[car] = 0;
+          prospectivePresence[car] = 0;
+        }
+        if (!requested && !wasAdmitted) { entryBlocked[car] = null; continue; }
+        if (requested && !wasAdmitted) {
+          if (!chooseOrganicEntry(car, t)) continue;
+          wasAdmitted = true;
+        }
 
         let direction = carDirection[car]!;
         let speed = carSpeed[car]!;
@@ -2745,8 +2883,8 @@ if (vTrafficGlass > 0.5) {
               v = chaseOriginV[chaseIdx]! + carPhase[car]! * CHASE_WINDOW_M + direction * speed * t;
               sourceOrigin = chaseOriginV[chaseIdx]!;
             } else {
-              v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
-              sourceOrigin = carPhase[car]! * CANYON_LOOP_LENGTH_M;
+              v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t + entryPhaseOffset[car]!;
+              sourceOrigin = carPhase[car]! * CANYON_LOOP_LENGTH_M + entryPhaseOffset[car]!;
             }
             sourceStream = k;
             evaluateCanyonPose(model, carFlowScratch, v, t, carPhase[car]!, carAppearance[car]!, carRow[car]!, carPose);
@@ -2769,8 +2907,8 @@ if (vTrafficGlass > 0.5) {
             x = clamp(routeLateral(v) + carHomeX[car]! + drift * 0.6, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = routeAltitude(v) + carHomeY[car]! + climb * 0.6;
           } else {
-            v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t;
-            sourceOrigin = carPhase[car]! * CANYON_LOOP_LENGTH_M;
+            v = carPhase[car]! * CANYON_LOOP_LENGTH_M + direction * speed * t + entryPhaseOffset[car]!;
+            sourceOrigin = carPhase[car]! * CANYON_LOOP_LENGTH_M + entryPhaseOffset[car]!;
             sourceStream = carStream[car]!;
             x = clamp(carHomeX[car]! + drift, -CAR_CORRIDOR_HALF_M, CAR_CORRIDOR_HALF_M);
             y = carHomeY[car]! + climb;
@@ -2813,6 +2951,10 @@ if (vTrafficGlass > 0.5) {
         const distanceSq = dx * dx + dy * dy + dz * dz;
         const distanceM = Math.sqrt(distanceSq);
 
+        poseTime[car] = t;
+        poseGeneration[car] = currentPoseGeneration;
+        sourceSignedSpeed[car] = car < ESCORT_COUNT - 1 && anchorValid ? 0
+          : car === ESCORT_COUNT - 1 && anchorValid ? -330 : direction * speed;
         evidencePx[car] = px;
         evidencePy[car] = py;
         evidencePz[car] = pz;
@@ -2858,19 +3000,20 @@ if (vTrafficGlass > 0.5) {
         matrices[offset + 13] = py;
         matrices[offset + 14] = pz;
         matrices[offset + 15] = 1;
+        for (let element = 0; element < 16; element++) evidenceHullMatrix[car * 16 + element] = matrices[offset + element]!;
 
         const projectedExtent = projectedHullExtent(archetype, matrices, offset, scale, distanceM);
         evidenceExtentCss[car] = projectedExtent;
         evidenceAllBehind[car] = projectionAllBehind ? 1 : 0;
         evidenceCrossesNear[car] = projectionCrossesNear ? 1 : 0;
         const prospectiveVisibility = projectionAllBehind ? 0 : trafficHullVisibility(distanceM, 1, projectedExtent);
-        if (wasAdmitted) {
-          if (!requested && prospectiveVisibility === 0) { admitted[car] = 0; continue; }
-        } else {
-          if (prospectiveVisibility !== 0) continue;
-          admitted[car] = 1;
-          admittedTrailPolicy[car] = trailTo;
-        }
+        prospectivePresence[car] = prospectiveVisibility;
+        const outside = envelopeOutside(car, matrices[offset + 12]!, matrices[offset + 13]!, matrices[offset + 14]!);
+        envelopeHidden[car] = outside ? 1 : 0;
+        envelopeRadius[car] = testedEnvelopeRadius;
+        if (wasAdmitted && !requested && outside) { admitted[car] = 0; continue; }
+        // Logical admission survives culling. The native buffers contain only positive visible rows.
+        if (prospectiveVisibility === 0 || outside) continue;
         const visibility = prospectiveVisibility;
         evidenceVisibility[car] = visibility;
         evidenceLampFade[car] = visibility;
@@ -2980,6 +3123,22 @@ if (vTrafficGlass > 0.5) {
     const id = permanentID;
     return {
       carId: permanentID,
+      admissionPhase: adm ? (entryWitness[id] !== null ? 'route-entry' : 'initial')
+        : entryBlocked[id] !== null ? 'blocked' : entryWitness[id] !== null || id < initialPrefix ? 'retired' : 'inactive',
+      presentationPhaseOffsetM: entryPhaseOffset[id]!,
+      admissionBlockedReason: entryBlocked[id]!,
+      admissionEntryWitness: entryWitness[id]!,
+      admissionCandidateCount: entryCandidateCount[id]!,
+      admissionRetryAtS: Number.isFinite(entryRetryAt[id]!) ? entryRetryAt[id]! : null,
+      prospectiveVisibility: poseGeneration[id] === currentPoseGeneration && currentPoseGeneration > 0 ? prospectivePresence[id]! : null,
+      envelopeOutside: poseGeneration[id] === currentPoseGeneration && currentPoseGeneration > 0 ? envelopeHidden[id] === 1 : null,
+      envelopeRadiusM: envelopeRadius[id]!,
+      sourceSignedSpeedMps: sourceSignedSpeed[id]!,
+      poseTimeS: Number.isNaN(poseTime[id]!) ? null : poseTime[id]!,
+      poseEvaluated: poseGeneration[id] === currentPoseGeneration && currentPoseGeneration > 0,
+      prospectiveHullMatrix: poseGeneration[id] === currentPoseGeneration && currentPoseGeneration > 0
+        ? Array.from(evidenceHullMatrix.subarray(id * 16, id * 16 + 16)) : null,
+      drawn: hSlot >= 0,
       requested: req,
       admitted: adm,
       hullMeshName: meshName,
