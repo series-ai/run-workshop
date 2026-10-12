@@ -48,7 +48,7 @@ import {
   TRAFFIC_LAMP_MIN_DIAMETER_PX,
 } from '../../src/render/trafficAppearance';
 
-/** Measure the projected source by finite differences. This does not call the model kernel. */
+/** Measure the physical endpoint spans. This does not call the model kernel. */
 export function independentLampProjection(typeIndex: number, head: boolean, scale: number, camera: TrafficCameraProjection,
   physical: { readonly position: readonly [number, number, number]; readonly direction: readonly [number, number, number];
     readonly bankRadians: number; readonly clampPitch?: boolean } = { position: [0, 0, 0], direction: [0, 0, 1], bankRadians: 0 }) {
@@ -73,19 +73,17 @@ export function independentLampProjection(typeIndex: number, head: boolean, scal
     return { x: clip[0]! / clip[3]! * camera.cssWidthPx * 0.5,
       y: clip[1]! / clip[3]! * camera.cssHeightPx * 0.5, depth: -view[2]! };
   };
-  const epsilon = 1e-3;
   const along = (axis: Vector3, amount: number) => project([center[0] + axis.x * amount,
     center[1] + axis.y * amount, center[2] + axis.z * amount]);
-  const x0 = along(right, -epsilon), x1 = along(right, epsilon);
-  const y0 = along(up, -epsilon), y1 = along(up, epsilon);
-  const dx = [(x1.x - x0.x) / (2 * epsilon), (x1.y - x0.y) / (2 * epsilon)];
-  const dy = [(y1.x - y0.x) / (2 * epsilon), (y1.y - y0.y) / (2 * epsilon)];
-  const xLength = Math.hypot(dx[0]!, dx[1]!);
   const width = (p.kind === 'pair' ? p.widthM : p.widthM / 2) * scale * 0.5;
   const height = p.heightM * scale * 0.5;
-  const a = (dx[0]! * width) ** 2 + (dy[0]! * height) ** 2;
-  const b = dx[0]! * dx[1]! * width ** 2 + dy[0]! * dy[1]! * height ** 2;
-  const c = (dx[1]! * width) ** 2 + (dy[1]! * height) ** 2;
+  const x0 = along(right, -width), x1 = along(right, width);
+  const y0 = along(up, -height), y1 = along(up, height);
+  const dx = [(x1.x - x0.x) / 2, (x1.y - x0.y) / 2];
+  const dy = [(y1.x - y0.x) / 2, (y1.y - y0.y) / 2];
+  const a = dx[0]! ** 2 + dy[0]! ** 2;
+  const b = dx[0]! * dx[1]! + dy[0]! * dy[1]!;
+  const c = dx[1]! ** 2 + dy[1]! ** 2;
   const radius = Math.hypot((a - c) / 2, b);
   const high = Math.sqrt(Math.max((a + c) / 2 + radius, 0));
   const low = Math.sqrt(Math.max((a + c) / 2 - radius, 0));
@@ -102,8 +100,10 @@ export function independentLampProjection(typeIndex: number, head: boolean, scal
     return floorSize + (physical - start) ** 2 / (2 * (end - start));
   };
   const flooredHigh = smoothFloor(high), flooredLow = smoothFloor(low);
-  const pairSpan = xLength * (p.kind === 'pair' ? p.centreXM : p.widthM / 4) * scale;
   const pairScale = (p.kind === 'pair' ? p.centreXM : p.widthM / 4) * scale;
+  const pair0 = along(right, -pairScale), pair1 = along(right, pairScale);
+  const pairX = (pair1.x - pair0.x) / 2, pairY = (pair1.y - pair0.y) / 2;
+  const pairSpan = Math.hypot(pairX, pairY);
   const floorHalfX = flooredHigh * cos ** 2 + flooredLow * sin ** 2;
   const floorHalfY = flooredHigh * sin ** 2 + flooredLow * cos ** 2;
   const floorOffDiagonal = (flooredHigh - flooredLow) * cos * sin;
@@ -111,8 +111,8 @@ export function independentLampProjection(typeIndex: number, head: boolean, scal
   const lampDistance = Math.hypot(...delta);
   return { sourceHalfX, sourceHalfY, sourceRadius: high,
     floorHalfX, floorHalfY,
-    supportHalfX: Math.abs(floorHalfX) + Math.abs(floorOffDiagonal) + Math.abs(dx[0]! * pairScale),
-    supportHalfY: Math.abs(floorHalfY) + Math.abs(floorOffDiagonal) + Math.abs(dx[1]! * pairScale),
+    supportHalfX: Math.abs(floorHalfX) + Math.abs(floorOffDiagonal) + Math.abs(pairX),
+    supportHalfY: Math.abs(floorHalfY) + Math.abs(floorOffDiagonal) + Math.abs(pairY),
     floorArea: flooredHigh * flooredLow,
     pairSpan, depth: project(center).depth, lampDistance,
     facing: (delta[0]! * forward.x + delta[1]! * forward.y + delta[2]! * forward.z) / lampDistance };

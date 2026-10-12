@@ -304,7 +304,7 @@ bool trafficLampInView(vec3 pos, float type, float scale, float cssPixelScale, f
     || trafficLampOutsidePlane(row3 - row2, point, radius));
 }
 ${TRAFFIC_PROJECTION_GLSL}
-void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float scale,
+bool trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float scale,
   bool front, float lampSide, float cssPixelScale, out vec3 lamp, out vec4 centre,
   out mat2 footprint, out vec2 halfSize, out vec2 pairOffset, out float lampGain) {
   vec3 right0 = normalize(vec3(forward.z, 0.0, -forward.x));
@@ -316,24 +316,37 @@ void trafficLampKernel(vec3 pos, vec3 forward, float bank, float type, float sca
   vec3 group = pos + scale * (forward * shape.w + upW * profile.y);
   lamp = group + rightW * lampSide * shape.x * scale;
   centre = viewMatrix * vec4(lamp, 1.0);
-  vec4 groupV = viewMatrix * vec4(group, 1.0);
   vec3 rightV = mat3(viewMatrix) * rightW;
   vec3 upV = mat3(viewMatrix) * upW;
-  float depth = max(-groupV.z, 1.0);
-  vec2 rightP = rightV.xy + groupV.xy * rightV.z / depth;
-  vec2 upP = upV.xy + groupV.xy * upV.z / depth;
+  float nearPlane = trafficProjectionNear();
+  float sourceHalfWidth = (shape.x + shape.y * 0.5) * scale;
+  float sourceHalfHeight = shape.z * scale * 0.5;
+  // The physical patch bound is tested before any perspective division.
+  if (centre.z - abs(rightV.z) * sourceHalfWidth - abs(upV.z) * sourceHalfHeight > -nearPlane) return false;
+  float sourceClipFraction = trafficSourceNearFraction(centre, rightV * sourceHalfWidth, upV * sourceHalfHeight);
+  bool rightVisible;
+  bool upVisible;
+  bool pairVisible;
+  vec2 rightAnchor = trafficFiniteAnchor(centre, rightV * shape.y * scale * 0.5, vec2(1.0, 0.0), rightVisible);
+  vec2 upAnchor = trafficFiniteAnchor(centre, upV * sourceHalfHeight, vec2(0.0, 1.0), upVisible);
+  vec2 pairAnchor = trafficFiniteAnchor(centre, rightV * shape.x * scale, vec2(1.0, 0.0), pairVisible);
+  float depth = max(-centre.z, nearPlane);
+  // This is a bounded halo proxy, not a physical core or an occlusion claim.
+  centre.z = -depth;
   float cssPixelM = depth * cssPixelScale;
   float floorSize = ${glslNumber(TRAFFIC_LAMP_MIN_DIAMETER_PX / 2)} * cssPixelM;
-  mat2 basis = mat2(rightP * shape.y * scale * 0.5, upP * shape.z * scale * 0.5);
+  mat2 basis = mat2(rightAnchor * depth, upAnchor * depth);
   mat2 source = trafficPsdRoot(basis * transpose(basis));
   footprint = trafficSpectralFloor(source, floorSize, ${glslNumber(TRAFFIC_LAMP_FLOOR_BLEND_SHARE)});
   halfSize = vec2(footprint[0][0], footprint[1][1]);
-  pairOffset = rightP * shape.x * scale;
+  pairOffset = pairAnchor * depth;
   float sourceRadius = 0.5 * (source[0][0] + source[1][1])
     + length(vec2(0.5 * (source[0][0] - source[1][1]), source[0][1]));
   float extent = sourceRadius / floorSize;
   lampGain = mix(${glslNumber(TRAFFIC_LAMP_FLOOR_MIN_GAIN)}, 1.0,
     smoothstep(${glslNumber(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE)},
       ${glslNumber(1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE)}, extent));
+  lampGain *= sourceClipFraction;
+  return true;
 }
 `;

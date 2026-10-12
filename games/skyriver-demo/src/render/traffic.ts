@@ -1207,9 +1207,18 @@ void main() {
   vec2 lampHalfSize;
   vec2 pairOffset;
   float lampGain;
-  trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head, lampSide,
+  bool lampVisible = trafficLampKernel(aCarPos, dir, aCarShape.y, type, scale, head, lampSide,
     uCssPixelAngle, lamp, v0, lampFootprint, lampHalfSize, pairOffset, lampGain);
-  vPairOffset = inverse(lampFootprint) * pairOffset;
+  if (!isTrail && !lampVisible) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
+  if (isTrail) {
+    v0 = viewMatrix * vec4(lamp, 1.0);
+    vPairOffset = vec2(0.0);
+  } else {
+    vPairOffset = inverse(lampFootprint) * pairOffset;
+  }
   float trail = isTrail
     ? min(speed * uTrailSeconds, min(uTrailMax, uTrailCarLengths * trafficCarLength(type) * scale))
       * trafficTrailFarFade(length(cameraPosition - aCarPos))
@@ -1250,7 +1259,7 @@ void main() {
   } else {
     vec2 corner = vec2(aCorner.x * 2.0 - 1.0, aCorner.y);
     vec2 filterSize = abs(lampFootprint[0]) + abs(lampFootprint[1])
-      + abs(pairOffset) + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+      + abs(pairOffset) + vec2(-v0.z * uPixelAngle * 0.5);
     vec2 local = corner * filterSize;
     vec2 uv = inverse(lampFootprint) * local;
     v = v0;
@@ -1275,7 +1284,7 @@ void main() {
     vIntensity *= 1.0 - smoothstep( 0.72, 0.90, - facing );
   }
 
-  vIntensity *= lampGain;
+  if (!isTrail) vIntensity *= lampGain;
   #ifdef USE_FOG
     vFogDepth = - v.z;
     vSkyFogHeight = lamp.y;
@@ -1586,12 +1595,15 @@ void main() {
   vec2 halfSize;
   vec2 pairOffset;
   float lampGain;
-  trafficLampKernel(pos, dir, 0.0, type, scale, head, lampSide,
-    uCssPixelAngle, lamp, v0, lampFootprint, halfSize, pairOffset, lampGain);
+  if (!trafficLampKernel(pos, dir, 0.0, type, scale, head, lampSide,
+    uCssPixelAngle, lamp, v0, lampFootprint, halfSize, pairOffset, lampGain)) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   vec3 toLamp = cameraPosition - lamp;
   float facing = dot(dir, toLamp / max(length(toLamp), 1.0));
   vec2 filterSize = abs(lampFootprint[0]) + abs(lampFootprint[1]) + abs(pairOffset)
-    + vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5);
+    + vec2(-v0.z * uPixelAngle * 0.5);
   vec2 local = vec2(end * 2.0 - 1.0, aCorner.y) * filterSize;
   vec4 vv = v0;
   vv.xy += local;

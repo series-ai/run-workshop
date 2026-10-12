@@ -22,7 +22,7 @@ export interface ContinuityMetrics {
 export function lampSupportCss(projection: TrafficLampKernelProjection, camera: SameCarTrafficAppearanceInput['camera']): readonly [number, number] {
   const [xx, xy, yy] = projection.footprintView;
   const [u, v] = projection.pairOffsetUv;
-  const divisor = Math.max(-projection.centerView[2], 1) * camera.pixelAngleCss;
+  const divisor = -projection.centerView[2] * camera.pixelAngleCss;
   return [2 * (Math.abs(xx) + Math.abs(xy) + Math.abs(xx * u + xy * v)) / divisor,
     2 * (Math.abs(xy) + Math.abs(yy) + Math.abs(xy * u + yy * v)) / divisor];
 }
@@ -255,12 +255,9 @@ export function continuityViolations(rows: readonly ContinuityRow[], probe: (inp
     check(row.distanceM, 'trail distance response', Math.abs(row.output.streak.trail.distanceFade - lengthFade), 1e-12);
     const baseTrail = !row.input.trailTransition.enabled ? 0 : trailMode === 'all' ? 1 : trailMode === 'streams' ? (row.input.trailClass === 1 ? 1 : 0)
       : 1 - independentSmoothstep(TRAFFIC_TRAIL_NEAR_FADE_BAND_M[0] ** 2, TRAFFIC_TRAIL_NEAR_FADE_BAND_M[1] ** 2, row.distanceM ** 2);
-    const extent = row.referenceTail.sourceRadius / (TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5);
-    const floorGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
-      * independentSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
     const trailPickup = independentSmoothstep(TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[0], TRAFFIC_CPU_TRAIL_PICKUP_BAND_M[1], row.referenceTail.lampDistance);
     const viewGain = 1 - independentSmoothstep(0.72, 0.90, -row.referenceTail.facing);
-    const trailGain = referenceVisibility(row.input) * baseTrail * trailPickup * floorGain * viewGain;
+    const trailGain = referenceVisibility(row.input) * baseTrail * trailPickup * viewGain;
     check(row.distanceM, 'trail source gain', Math.abs(row.output.streak.trail.sourceGain - trailGain), 1e-9);
     const parent = baseTrail;
     check(row.distanceM, 'trail clip eligibility', row.output.streak.trail.clippedByAttributeCutoff === (parent <= TRAFFIC_CPU_TRAIL_ATTRIBUTE_CUTOFF) ? 0 : 1, 0);

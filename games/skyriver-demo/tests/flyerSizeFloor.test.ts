@@ -604,7 +604,7 @@ describe('R32 independent CSS coverage and physical pixel filter', () => {
       expect(source).toContain('float radius = physicalRadius + 3.0 * cssPixelScale * max(-point.z + physicalRadius, 1.0);');
       expect(source).toMatch(/trafficLampKernel\([\s\S]*?uCssPixelAngle, lamp, v0,/);
       expect(source).toMatch(/trafficLampInView\([^;]+uCssPixelAngle/);
-      expect(source).toContain('vec2(max(-v0.z, 1.0) * uPixelAngle * 0.5)');
+      expect(source).toContain('vec2(-v0.z * uPixelAngle * 0.5)');
       const uses = source.match(/uCssPixelAngle/g) ?? [];
       expect(uses).toHaveLength(source === cpuMaterial.vertexShader ? 4 : 3);
     }

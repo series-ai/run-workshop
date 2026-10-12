@@ -1,4 +1,4 @@
-import { trafficFootprintCovariance, trafficPsdRoot, trafficSpectralFloor, trafficInverseFootprint, trafficApplyFootprint, type TrafficSymmetric2 } from './trafficProjection';
+import { trafficFootprintCovariance, trafficPsdRoot, trafficSpectralFloor, trafficInverseFootprint, trafficApplyFootprint, trafficProjectionNear, trafficClipSegment, trafficClipPolygon, trafficClipKernelFraction, type TrafficClipVertex, type TrafficSymmetric2 } from './trafficProjection';
 /**
  * @file trafficAppearanceModel.ts
  * Pure appearance math shared by diagnostics and traffic source. This file needs no WebGL or Three.js.
@@ -134,6 +134,16 @@ export interface TrafficLampKernelProjection {
   /** Legacy summary. Active projection uses the full matrix below. */
   readonly axis: TrafficVec2;
   readonly sourceFootprintView: TrafficSymmetric2;
+  readonly physicalCenterView: TrafficVec4;
+  readonly nearPlaneM: number;
+  readonly sourceClipFraction: number;
+  /** Physical group bound. This includes the gap between a pair. It is not native core geometry. */
+  readonly clippedSourceVertices: readonly TrafficClipVertex[];
+  readonly sourceAnchorSegments: {
+    readonly right: readonly [TrafficClipVertex, TrafficClipVertex] | null;
+    readonly up: readonly [TrafficClipVertex, TrafficClipVertex] | null;
+    readonly pair: readonly [TrafficClipVertex, TrafficClipVertex] | null;
+  };
   readonly footprintView: TrafficSymmetric2;
   readonly inverseFootprintView: TrafficSymmetric2;
   readonly pairOffsetUv: TrafficVec2;
@@ -355,6 +365,8 @@ export interface IndependentImpostorAppearance {
 }
 
 export interface TrafficTrailAppearance {
+  readonly physicalStartView: TrafficVec4;
+  readonly physicalEndView: TrafficVec4;
   readonly modeWeight: number;
   readonly distanceFade: number;
   readonly pickup: number;
@@ -561,20 +573,40 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
     throw new Error('SKYRIVER_TRAFFIC_MODEL_APPEARANCE_INVALID');
   }
   const frame = viewAxis(input);
-  const view = frame.lampView;
-  const depth = Math.max(-frame.groupView[2], 1);
-  const rightP: TrafficVec2 = [
-    frame.rightView[0] + frame.groupView[0] * frame.rightView[2] / depth,
-    frame.rightView[1] + frame.groupView[1] * frame.rightView[2] / depth,
-  ];
-  const upP: TrafficVec2 = [
-    frame.upView[0] + frame.groupView[0] * frame.upView[2] / depth,
-    frame.upView[1] + frame.groupView[1] * frame.upView[2] / depth,
-  ];
-  const basisRight: TrafficVec2 = [rightP[0] * frame.shape.width * input.physicalScale * 0.5,
-    rightP[1] * frame.shape.width * input.physicalScale * 0.5];
-  const basisUp: TrafficVec2 = [upP[0] * frame.shape.height * input.physicalScale * 0.5,
-    upP[1] * frame.shape.height * input.physicalScale * 0.5];
+  const physicalCenterView = frame.lampView;
+  const nearPlaneM = trafficProjectionNear(input.camera.projectionMatrix);
+  const plane = [0, 0, -1, -nearPlaneM] as const;
+  const depth = Math.max(-physicalCenterView[2], nearPlaneM);
+  const view: TrafficVec4 = [physicalCenterView[0], physicalCenterView[1], -depth, physicalCenterView[3]];
+  const anchor = (axis: TrafficVec3, halfSize: number, kernelAxis: TrafficVec2): readonly [TrafficClipVertex, TrafficClipVertex] | null => {
+    const tangent = scale3(axis, halfSize);
+    const a: TrafficClipVertex = { view: [physicalCenterView[0] - tangent[0], physicalCenterView[1] - tangent[1], physicalCenterView[2] - tangent[2], 1], kernel: [-kernelAxis[0], -kernelAxis[1]] };
+    const b: TrafficClipVertex = { view: [physicalCenterView[0] + tangent[0], physicalCenterView[1] + tangent[1], physicalCenterView[2] + tangent[2], 1], kernel: kernelAxis };
+    return trafficClipSegment(a, b, plane);
+  };
+  const sourceAnchorSegments = {
+    right: anchor(frame.rightView, frame.shape.width * input.physicalScale * 0.5, [1, 0]),
+    up: anchor(frame.upView, frame.shape.height * input.physicalScale * 0.5, [0, 1]),
+    pair: anchor(frame.rightView, frame.shape.x * input.physicalScale, [1, 0]),
+  };
+  const finiteAnchor = (segment: readonly [TrafficClipVertex, TrafficClipVertex] | null): TrafficVec2 => {
+    if (segment === null) return [0, 0];
+    const [a, b] = segment;
+    return [0.5 * depth * (b.view[0] / -b.view[2] - a.view[0] / -a.view[2]),
+      0.5 * depth * (b.view[1] / -b.view[2] - a.view[1] / -a.view[2])];
+  };
+  const basisRight = finiteAnchor(sourceAnchorSegments.right);
+  const basisUp = finiteAnchor(sourceAnchorSegments.up);
+  const sourceHalfWidth = (frame.shape.x + frame.shape.width * 0.5) * input.physicalScale;
+  const sourceHalfHeight = frame.shape.height * input.physicalScale * 0.5;
+  const physicalVertices: TrafficClipVertex[] = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => ({
+    view: [physicalCenterView[0] + frame.rightView[0] * sourceHalfWidth * x! + frame.upView[0] * sourceHalfHeight * y!,
+      physicalCenterView[1] + frame.rightView[1] * sourceHalfWidth * x! + frame.upView[1] * sourceHalfHeight * y!,
+      physicalCenterView[2] + frame.rightView[2] * sourceHalfWidth * x! + frame.upView[2] * sourceHalfHeight * y!, 1],
+    kernel: [x!, y!],
+  }));
+  const clippedSourceVertices = trafficClipPolygon(physicalVertices, [plane]);
+  const sourceClipFraction = trafficClipKernelFraction(clippedSourceVertices);
   const sourceFootprintView = trafficPsdRoot(trafficFootprintCovariance(basisRight, basisUp));
   const floorSize = TRAFFIC_LAMP_MIN_DIAMETER_PX * 0.5 * depth * input.camera.pixelAngleCss;
   const footprintView = trafficSpectralFloor(sourceFootprintView, floorSize, TRAFFIC_LAMP_FLOOR_BLEND_SHARE);
@@ -584,8 +616,7 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
   const floorX = footprintView[0];
   const floorY = footprintView[2];
   const axis: TrafficVec2 = [1, 0];
-  const pairVector: TrafficVec2 = [rightP[0] * frame.shape.x * input.physicalScale,
-    rightP[1] * frame.shape.x * input.physicalScale];
+  const pairVector = finiteAnchor(sourceAnchorSegments.pair);
   const pairOffsetUv = trafficApplyFootprint(inverseFootprintView, pairVector);
   const pairHalfSpan = Math.hypot(...pairVector);
   const halfBufferX = floorX / (depth * input.camera.pixelAngleBuffer);
@@ -607,8 +638,8 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
   const halfPixelUvCss: TrafficVec2 = [halfPixelUvBuffer[0] * scaleDpr, halfPixelUvBuffer[1] * scaleDpr];
   const sourceRadius = (sourceX + sourceY) * 0.5 + Math.hypot((sourceX - sourceY) * 0.5, sourceFootprintView[1]);
   const extent = sourceRadius / floorSize;
-  const lampGain = TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
-    * trafficAppearanceSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent);
+  const lampGain = sourceClipFraction * (TRAFFIC_LAMP_FLOOR_MIN_GAIN + (1 - TRAFFIC_LAMP_FLOOR_MIN_GAIN)
+    * trafficAppearanceSmoothstep(1 - TRAFFIC_LAMP_FLOOR_BLEND_SHARE, 1 + TRAFFIC_LAMP_FLOOR_BLEND_SHARE, extent));
   const centerClip = matrixPoint(input.camera.projectionMatrix, view);
   const reciprocalW = centerClip[3] !== 0 ? 1 / centerClip[3] : 0;
   const centerNdc: TrafficVec2 = [centerClip[0] * reciprocalW, centerClip[1] * reciprocalW];
@@ -639,7 +670,8 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
     centerBufferPx,
     centerCssPx,
     axis,
-    sourceFootprintView, footprintView, inverseFootprintView, pairOffsetUv,
+    sourceFootprintView, physicalCenterView, nearPlaneM, sourceClipFraction, clippedSourceVertices, sourceAnchorSegments,
+    footprintView, inverseFootprintView, pairOffsetUv,
     sourceHalfSizeView: [sourceX, sourceY],
     sourceHalfSizeBufferPx: [sourceX / (depth * input.camera.pixelAngleBuffer), sourceY / (depth * input.camera.pixelAngleBuffer)],
     sourceHalfSizeCssPx: [sourceX / (depth * input.camera.pixelAngleCss), sourceY / (depth * input.camera.pixelAngleCss)],
@@ -659,8 +691,8 @@ export function projectTrafficLampKernel(input: TrafficLampKernelInput): Traffic
     facingGain: trafficLampFacingGain(facing, input.side === 'head'),
     lampGain,
     facingLengthFloorM,
-    inView: projectedFrustumContains(input.position, frame.profile, input.physicalScale, input.camera, input.extraCullM ?? 0),
-    cameraDepthM: -view[2],
+    inView: clippedSourceVertices.length > 0 && projectedFrustumContains(input.position, frame.profile, input.physicalScale, input.camera, input.extraCullM ?? 0),
+    cameraDepthM: -physicalCenterView[2],
   };
 }
 
@@ -1216,7 +1248,7 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const rear = add3(input.position, scale3(forward, sourceProfile(profileAt(input.typeIndex), 'tail').zM * input.sizeScale));
   const carScreen = projectedDistanceView(front, rear, input.camera);
   for (let step = 0; step < TRAFFIC_TRAIL_SCREEN_CAP_REFINEMENTS; step += 1) {
-    const startView = trailKernel.centerView;
+    const startView = trailKernel.physicalCenterView;
     const trailScreen = Math.hypot(
       startView[0] / Math.max(-startView[2], 1) - toEndView[0] / Math.max(-toEndView[2], 1),
       startView[1] / Math.max(-startView[2], 1) - toEndView[1] / Math.max(-toEndView[2], 1),
@@ -1228,9 +1260,9 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
       toEndView = viewPoint(end, input.camera);
     }
   }
-  const projectedLengthViewM = Math.hypot(toEndView[0] - trailKernel.centerView[0], toEndView[1] - trailKernel.centerView[1]);
+  const projectedLengthViewM = Math.hypot(toEndView[0] - trailKernel.physicalCenterView[0], toEndView[1] - trailKernel.physicalCenterView[1]);
   const startRadiusViewM = Math.max(TRAFFIC_TRAIL_START_RADIUS_M,
-    -trailKernel.centerView[2] * input.camera.pixelAngleCss * TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE);
+    -trailKernel.physicalCenterView[2] * input.camera.pixelAngleCss * TRAFFIC_TRAIL_START_CSS_PIXEL_SCALE);
   const endRadiusViewM = startRadiusViewM * TRAFFIC_TRAIL_END_WIDTH_SHARE;
   const lengthInRadii = projectedLengthViewM / (0.5 * (startRadiusViewM + endRadiusViewM));
   const toCameraDelta: TrafficVec3 = [input.camera.position[0] - lamp[0], input.camera.position[1] - lamp[1], input.camera.position[2] - lamp[2]];
@@ -1238,20 +1270,20 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const toCamera = toCameraLength > 0 ? scale3(toCameraDelta, 1 / toCameraLength) : [0, 0, 0] as const;
   const trailColorWarm = trafficAppearanceSmoothstep(TRAFFIC_TRAIL_WARM_FACING_BAND[0], TRAFFIC_TRAIL_WARM_FACING_BAND[1], dot3(forward, toCamera));
   const trailColor = mixRgb(rgb(...TRAFFIC_STREAK_TAIL_RGB), rgb(...TRAFFIC_STREAK_TRAIL_WARM_RGB), trailColorWarm);
-  const gain = finalFade * modeWeight * pickup * trailKernel.lampGain * viewGain;
+  const gain = finalFade * modeWeight * pickup * viewGain;
   const fogAttenuation = fogLightFactor(input.fogFactor);
   const sourceRgbLinear = multiplyRgb(trailColor, gain * IMPOSTOR_INTENSITY * input.emissiveGain * TRAFFIC_TRAIL_ALPHA);
-  const deltaX = toEndView[0] - trailKernel.centerView[0];
-  const deltaY = toEndView[1] - trailKernel.centerView[1];
+  const deltaX = toEndView[0] - trailKernel.physicalCenterView[0];
+  const deltaY = toEndView[1] - trailKernel.physicalCenterView[1];
   const deltaLength = Math.hypot(deltaX, deltaY);
   const axis: TrafficVec2 = deltaLength > 1e-4 ? [deltaX / deltaLength, deltaY / deltaLength] : [0, -1];
   const side: TrafficVec2 = [-axis[1], axis[0]];
   const projectCorner = (endFraction: 0 | 1, sideSign: -1 | 1): ProjectedTrailCorner => {
     const radius = startRadiusViewM + (endRadiusViewM - startRadiusViewM) * endFraction;
     const center: TrafficVec3 = [
-      trailKernel.centerView[0] + deltaX * endFraction,
-      trailKernel.centerView[1] + deltaY * endFraction,
-      trailKernel.centerView[2] + (toEndView[2] - trailKernel.centerView[2]) * endFraction,
+      trailKernel.physicalCenterView[0] + deltaX * endFraction,
+      trailKernel.physicalCenterView[1] + deltaY * endFraction,
+      trailKernel.physicalCenterView[2] + (toEndView[2] - trailKernel.physicalCenterView[2]) * endFraction,
     ];
     const along = (endFraction * 2 - 1) * radius;
     const across = sideSign * radius;
@@ -1277,12 +1309,14 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
   const integratedTrail = integrateProjectedTrail(trailCorners, input.camera, lengthInRadii);
   const continuousEnergyRgb = multiplyRgb(sourceRgbLinear, integratedTrail.kernelCssPx2 * fogAttenuation);
   const continuousEnergyRefinementDeltaRgb = multiplyRgb(sourceRgbLinear, integratedTrail.refinementDeltaCssPx2 * fogAttenuation);
-  const clippedByFrustum = !trailKernel.inView;
+  const clippedByFrustum = !projectedFrustumContains(input.position, profileAt(input.typeIndex), input.sizeScale, input.camera, TRAFFIC_TRAIL_MAX_M);
   const clippedByClipVolume = integratedTrail.areaCssPx2 <= 0;
   const rendered = (input.hasStreakRecord ?? true) && !clippedByAttributeCutoff && !clippedByFrustum && !clippedByClipVolume;
   const zeroRgb = rgb(0, 0, 0);
   const sampleKernel = (alongRadius: number, side: number): number => trailKernelValue(alongRadius, side, lengthInRadii);
   return {
+    physicalStartView: trailKernel.physicalCenterView,
+    physicalEndView: [toEndView[0], toEndView[1], toEndView[2], 1],
     modeWeight,
     distanceFade,
     pickup,
@@ -1291,8 +1325,8 @@ function cpuTrailAppearance(input: SameCarTrafficAppearanceInput, lod: SameCarLi
     alphaScale: TRAFFIC_TRAIL_ALPHA,
     startRadiusViewM,
     endRadiusViewM,
-    startRadiusCssPx: startRadiusViewM / Math.max(-trailKernel.centerView[2] * input.camera.pixelAngleCss, 1e-8),
-    endRadiusCssPx: endRadiusViewM / Math.max(-trailKernel.centerView[2] * input.camera.pixelAngleCss, 1e-8),
+    startRadiusCssPx: startRadiusViewM / Math.max(-trailKernel.physicalCenterView[2] * input.camera.pixelAngleCss, 1e-8),
+    endRadiusCssPx: endRadiusViewM / Math.max(-trailKernel.physicalCenterView[2] * input.camera.pixelAngleCss, 1e-8),
     lengthM,
     projectedLengthViewM,
     lengthInRadii,

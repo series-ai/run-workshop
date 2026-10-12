@@ -211,23 +211,23 @@
   },
   {
     "path": "src/render/traffic.ts",
-    "sha256": "16ddc54df072b766e1c51fe6402e0dd9e161fc5321624f24d17b421e139960f9",
-    "byteLength": 130862
+    "sha256": "ffcf10c1b4b385746a30ab8b438a2c85c68e17369653f4daf486e02dd24e94b5",
+    "byteLength": 131138
   },
   {
     "path": "src/render/trafficAppearance.ts",
-    "sha256": "cfb378a4f3439537f82ed4b73eede8927534305b8edc523c8591496e85a0f7ea",
-    "byteLength": 17993
+    "sha256": "2a16653ab105d229e21848942434e02d3a555c3a0f6039b7a1f0e84e640c542a",
+    "byteLength": 18790
   },
   {
     "path": "src/render/trafficAppearanceModel.ts",
-    "sha256": "1b35c9fe052b6478028e973d060718d38949bdb58e65d0ac184d284bf992b3c5",
-    "byteLength": 64191
+    "sha256": "a511498a1f51f9c3901430507c1e3e813ee2704132117b95d15b7ecbb6a4dccb",
+    "byteLength": 67086
   },
   {
     "path": "src/render/trafficProjection.ts",
-    "sha256": "937b5f256c757241a3f40ab9773dfbf98895c600a763a2702c926a8cd22ed1a4",
-    "byteLength": 3537
+    "sha256": "cf850921dd82d17bd2952f74dee35cd7a415b35020b110ab76648baf5c267bd4",
+    "byteLength": 9428
   },
   {
     "path": "src/render/trafficStreams.ts",

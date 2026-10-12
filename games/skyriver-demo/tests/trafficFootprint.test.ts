@@ -227,7 +227,7 @@ describe('R44 matrix-only physical camera integration', () => {
                 position: [17, 3, -8], direction: [0, 0, 1], bankRadians: bank, camera: cameraFrame });
               for (const value of [...projected.footprintView, ...projected.inverseFootprintView,
                 ...projected.pairOffsetUv, ...projected.filterHalfSizeCssPx]) expect(Number.isFinite(value)).toBe(true);
-              const scale = Math.max(-projected.centerView[2], 1) * cameraFrame.pixelAngleCss;
+              const scale = -projected.centerView[2] * cameraFrame.pixelAngleCss;
               const [xx, xy, yy] = projected.footprintView;
               const low = (xx + yy) / 2 - Math.hypot((xx - yy) / 2, xy);
               expect(low / scale).toBeGreaterThanOrEqual(floorHalfCss - 1e-10);
@@ -237,17 +237,15 @@ describe('R44 matrix-only physical camera integration', () => {
               const up = new Vector3(-Math.sin(bank), Math.cos(bank), 0);
               const center = new Vector3(17, 3, -8).addScaledVector(up, patch.yM * 2);
               center.z += patch.zM * 2;
-              const finiteTangent = (direction: Vector3): TrafficProjectionVec2 => {
-                const h = 1e-3;
-                const a = center.clone().addScaledVector(direction, -h).project(camera);
-                const b = center.clone().addScaledVector(direction, h).project(camera);
-                return [(b.x - a.x) * 1280 / (4 * h), (b.y - a.y) * 720 / (4 * h)];
+              const physicalHalfSpan = (direction: Vector3, halfSize: number): TrafficProjectionVec2 => {
+                const a = center.clone().addScaledVector(direction, -halfSize).project(camera);
+                const b = center.clone().addScaledVector(direction, halfSize).project(camera);
+                return [(b.x - a.x) * 1280 / 4, (b.y - a.y) * 720 / 4];
               };
-              const rx = finiteTangent(right), uy = finiteTangent(up);
               const halfWidth = patch.kind === 'pair' ? patch.widthM : patch.widthM / 2;
               const halfHeight = patch.heightM;
-              const physicalRight: TrafficProjectionVec2 = [rx[0] * halfWidth, rx[1] * halfWidth];
-              const physicalUp: TrafficProjectionVec2 = [uy[0] * halfHeight, uy[1] * halfHeight];
+              const physicalRight = physicalHalfSpan(right, halfWidth);
+              const physicalUp = physicalHalfSpan(up, halfHeight);
               const source: TrafficSymmetric2 = [projected.sourceFootprintView[0] / scale,
                 projected.sourceFootprintView[1] / scale, projected.sourceFootprintView[2] / scale];
               for (const testAngle of angles) {
@@ -258,9 +256,10 @@ describe('R44 matrix-only physical camera integration', () => {
                 expect(Math.abs(actual - expected) / Math.max(expected, 1e-6)).toBeLessThanOrEqual(1e-6);
               }
               const pairHalfWidth = (patch.kind === 'pair' ? patch.centreXM : patch.widthM / 4) * 2;
+              const expectedPair = physicalHalfSpan(right, pairHalfWidth);
               const pair = trafficApplyFootprint(projected.footprintView, projected.pairOffsetUv);
-              expect(pair[0] / scale).toBeCloseTo(rx[0] * pairHalfWidth, 7);
-              expect(pair[1] / scale).toBeCloseTo(rx[1] * pairHalfWidth, 7);
+              expect(pair[0] / scale).toBeCloseTo(expectedPair[0], 7);
+              expect(pair[1] / scale).toBeCloseTo(expectedPair[1], 7);
               const energy = integrateTrafficLampKernel(projected);
               expect(Number.isFinite(energy.bodyKernelCssPx2)).toBe(true);
               const a = physicalRight[0] ** 2 + physicalUp[0] ** 2;
