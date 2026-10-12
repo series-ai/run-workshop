@@ -467,7 +467,28 @@ function LoadedCharacter({
     const liveRollingCheck = operative ? operative.isRolling : isRolling;
     if (muzzleTipRef.current && isHoldingFirearm && liveAliveCheck && !liveRollingCheck && liveAction !== "kick") {
       muzzleTipRef.current.getWorldPosition(_scratchMuzzlePos);
-      muzzleTipRef.current.getWorldDirection(_scratchMuzzleDir);
+      const sinF = Math.sin(liveFacing);
+      const cosF = Math.cos(liveFacing);
+      _scratchMuzzleDir.set(sinF, 0, cosF);
+
+      const opX = operative ? operative.x : (groupRef.current ? groupRef.current.position.x : 0);
+      const opZ = operative ? operative.z : (groupRef.current ? groupRef.current.position.z : 0);
+      const dx = _scratchMuzzlePos.x - opX;
+      const dz = _scratchMuzzlePos.z - opZ;
+      const forwardDot = dx * sinF + dz * cosF;
+
+      // If hand bone animation swung behind the torso (forwardDot < 0.35), enforce forward gun exit spot
+      if (forwardDot < 0.35) {
+        const forward = activeWeapon === "shotgun" ? 0.72 : 0.68;
+        const rightLateral = 0.20;
+        const rightX = -cosF;
+        const rightZ = sinF;
+        _scratchMuzzlePos.set(
+          opX + sinF * forward + rightX * rightLateral,
+          (operative?.y || 0) + 1.15,
+          opZ + cosF * forward + rightZ * rightLateral
+        );
+      }
       onMuzzleSample?.({ pos: _scratchMuzzlePos, dir: _scratchMuzzleDir });
     }
   });

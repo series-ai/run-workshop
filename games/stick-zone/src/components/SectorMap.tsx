@@ -569,7 +569,7 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       makeTex("TACTICAL OPERATIONS", "SECTOR 7 SAT-LINK & TELEMETRY", "#38bdf8")
     );
     setBulletTrapTex(
-      makeStencilTex(800, 160, "BALLISTIC RETARDER // AP TRAP", "LIVE FIRE BACKSTOP - EAR PRO REQ", "#ef4444")
+      makeStencilTex(800, 160, "BALLISTIC DECELERATOR // AP TRAP", "LIVE FIRE BACKSTOP - EAR PRO REQ", "#ef4444")
     );
     setCqbSignTex(
       makeStencilTex(800, 160, "CQB STRIKE CAGE // MELEE RANGE", "STRIKE PAD IMPACT CALIBRATION", "#0284c7")
@@ -1004,23 +1004,25 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         </mesh>
       )}
 
-      {/* Guidance Runway & Ingress Chevrons */}
+      {/* Guidance Runway & Ingress Directional Arrows (Pointing South towards the exit airlock) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.165, -61]} receiveShadow>
         <planeGeometry args={[3.2, 16]} />
         <meshStandardMaterial color="#1e293b" transparent opacity={0.75} roughness={0.8} />
       </mesh>
       {[-67, -64, -61, -58, -55].map((zPos, idx) => (
         <group key={`chevron_${idx}`} position={[0, 0.170, zPos]} rotation={[-Math.PI / 2, 0, 0]}>
-          <mesh position={[0, 0, 0]}>
-            <planeGeometry args={[1.8, 0.28]} />
+          {/* Arrow Staff: Longitudinal shaft pointing South towards the exit */}
+          <mesh position={[0, 0.15, 0]}>
+            <planeGeometry args={[0.26, 1.2]} />
             <meshBasicMaterial color="#38bdf8" />
           </mesh>
-          <mesh position={[-0.7, 0.2, 0]} rotation={[0, 0, -Math.PI / 4]}>
-            <planeGeometry args={[0.5, 0.2]} />
+          {/* Arrow Head: Left & Right angled wings meeting at South tip pointing at exit airlock */}
+          <mesh position={[-0.24, -0.52, 0]} rotation={[0, 0, Math.PI / 4]}>
+            <planeGeometry args={[0.22, 0.62]} />
             <meshBasicMaterial color="#38bdf8" />
           </mesh>
-          <mesh position={[0.7, 0.2, 0]} rotation={[0, 0, Math.PI / 4]}>
-            <planeGeometry args={[0.5, 0.2]} />
+          <mesh position={[0.24, -0.52, 0]} rotation={[0, 0, -Math.PI / 4]}>
+            <planeGeometry args={[0.22, 0.62]} />
             <meshBasicMaterial color="#38bdf8" />
           </mesh>
         </group>

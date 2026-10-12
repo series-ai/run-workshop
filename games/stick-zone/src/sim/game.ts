@@ -912,8 +912,8 @@ export class SectorDepotSimulation {
       };
     }
 
-    // Mathematically exact geometric fallback: forward in aim direction, right weapon flank (-cosF, sinF)
-    const forward = operative.weapon === "shotgun" ? 0.68 : 0.62;
+    // Authoritative forward gun exit spot in front of operative
+    const forward = operative.weapon === "shotgun" ? 0.72 : 0.68;
     const rightLateral = 0.20;
     const rightX = -cosF;
     const rightZ = sinF;

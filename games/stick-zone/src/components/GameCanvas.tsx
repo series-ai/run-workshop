@@ -348,18 +348,18 @@ const ActiveProjectilesRenderer: React.FC<{ sim: SectorDepotSimulation }> = ({ s
       const dirY = p.vy / speed;
       const dirZ = p.vz / speed;
 
-      const baseScale = p.isPellet ? 0.85 : 1.15;
+      const baseScale = p.isPellet ? 0.75 : 1.0;
 
       // Core & Outline matrix
       _dummy.position.set(p.x, p.y, p.z);
       _dummy.lookAt(p.x + dirX, p.y + dirY, p.z + dirZ);
-      _dummy.scale.set(baseScale, baseScale, baseScale * 1.3);
+      _dummy.scale.set(baseScale, baseScale, baseScale * 1.2);
       _dummy.updateMatrix();
       coreInstanced.setMatrixAt(i, _dummy.matrix);
       outlineInstanced.setMatrixAt(i, _dummy.matrix);
 
-      // Tail matrix
-      const tailLen = p.isPellet ? 1.0 : 2.0; // Unified projectile caliber tail length
+      // Tail matrix: sleek aerodynamic tracer trail matching shooting velocity
+      const tailLen = p.isPellet ? 0.55 : 0.95;
       _dummy.scale.set(baseScale * 0.8, baseScale * 0.8, tailLen);
       _dummy.updateMatrix();
       tailInstanced.setMatrixAt(i, _dummy.matrix);
@@ -692,10 +692,11 @@ const PresentationFXManager: React.FC<{
           : sim.squadmate.id === ev.shooterId
           ? sim.squadmate
           : sim.rivals.find((r) => r.id === ev.shooterId);
-        const muzzlePos = shooter?.muzzlePos ?? ev.origin;
-        const muzzleDir = shooter?.muzzleDir ?? ev.dir;
+        // Authoritative fire event origin and dir guarantee visuals exit from front gun tip along aim vector
+        const muzzlePos = ev.origin ?? shooter?.muzzlePos;
+        const muzzleDir = ev.dir ?? shooter?.muzzleDir ?? { x: Math.sin(shooter?.facing ?? 0), y: 0, z: Math.cos(shooter?.facing ?? 0) };
 
-        // Compute 2D screen-projected firing angle (0 = East/+X, PI/2 = North/-Z, PI = West/-X, -PI/2 = South/+Z)
+        // Compute 2D screen-projected firing angle matching the actual shooting direction
         const fireAngle = Math.atan2(-muzzleDir.z, muzzleDir.x);
         const flashPreset = ev.weapon === "shotgun" ? "shotgun-flash" : "rifle-flash";
         const flashScale = ev.weapon === "shotgun" ? 1.7 : 1.35;

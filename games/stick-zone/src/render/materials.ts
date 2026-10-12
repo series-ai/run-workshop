@@ -45,13 +45,13 @@ export const SharedGeometries = {
   unitBox: new THREE.BoxGeometry(1, 1, 1),
   unitPlane: new THREE.PlaneGeometry(1, 1),
   unitCircle16: new THREE.CircleGeometry(1, 16),
-  projectileCore: new THREE.SphereGeometry(0.16, 12, 12),
-  projectileOutline: new THREE.SphereGeometry(0.22, 12, 12),
+  projectileCore: new THREE.SphereGeometry(0.055, 10, 10),
+  projectileOutline: new THREE.SphereGeometry(0.08, 10, 10),
   projectileTail: (() => {
-    const geo = new THREE.CylinderGeometry(0.035, 0.14, 1.0, 8);
+    const geo = new THREE.CylinderGeometry(0.018, 0.055, 1.0, 8);
     geo.rotateX(Math.PI / 2);
     geo.translate(0, 0, -0.5);
     return geo;
   })(),
-  projectileShadow: new THREE.CircleGeometry(0.26, 16),
+  projectileShadow: new THREE.CircleGeometry(0.09, 12),
 };
