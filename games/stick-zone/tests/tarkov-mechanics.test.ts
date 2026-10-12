@@ -1,3 +1,4 @@
+import { computePrefabObstacleBox, PREFAB_CATALOG, FOB_PREFABS, FOB_PREFAB_OBSTACLES } from "../src/sim/prefabs.js";
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SectorDepotSimulation, type GameInput } from '../src/sim/game.js';
 import { authoritativeLedgerCommit, verifySettlementReceipt, AuthoritativeSettlementLedger, registerDeployment, defaultSettlementLedger } from '../src/sim/airlock.js';
@@ -1474,5 +1475,69 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
       sim.step(makeInput());
     }
     expect(sim.damageIndicators.length).toBe(0);
+  });
+
+  it('35. Authoritative Prefab System: Environment prop prefabs automatically generate synchronized collision geometry', () => {
+    // 1. Rotation and Scale AABB derivation
+    const barrierDef = PREFAB_CATALOG.barrierConcrete;
+    expect(barrierDef).toBeDefined();
+    expect(barrierDef.collision).toBeDefined();
+
+    // Standard unrotated barrier at (0, 0, 0)
+    const unrotatedBox = computePrefabObstacleBox({
+      id: "test_unrotated",
+      prefabKey: "barrierConcrete",
+      position: [0, 0, 0],
+      rotation: [0, 0, 0],
+      scale: 1.0,
+    });
+    expect(unrotatedBox).toBeDefined();
+    expect(unrotatedBox?.maxX).toBeCloseTo(1.1, 1);
+    expect(unrotatedBox?.maxZ).toBeCloseTo(0.35, 1);
+
+    // 90-degree rotated barrier (halfWidth and halfDepth swap axes)
+    const rotatedBox = computePrefabObstacleBox({
+      id: "test_rotated",
+      prefabKey: "barrierConcrete",
+      position: [10, 0, 20],
+      rotation: [0, Math.PI / 2, 0],
+      scale: 1.0,
+    });
+    expect(rotatedBox).toBeDefined();
+    expect(rotatedBox?.maxX - rotatedBox?.minX!).toBeCloseTo(0.7, 1);
+    expect(rotatedBox?.maxZ - rotatedBox?.minZ!).toBeCloseTo(2.2, 1);
+
+    // 2. Placed FOB prefabs generate physical collision automatically in game simulation
+    expect(FOB_PREFABS.length).toBeGreaterThanOrEqual(15);
+    expect(FOB_PREFAB_OBSTACLES.length).toBeGreaterThanOrEqual(15);
+
+    // Workbench at [-5.6, 0, -69.8] blocks entry
+    expect(sim.checkContainerCollision(-5.6, -69.8, 0.45)).toBe(true);
+
+    // Diesel generator at [6.5, 0, -63.0] blocks entry
+    expect(sim.checkContainerCollision(6.5, -63.0, 0.45)).toBe(true);
+
+    // Firing stall barrier partition at [-3.3, 0, -61.2] blocks entry
+    expect(sim.checkContainerCollision(-3.3, -61.2, 0.45)).toBe(true);
+
+    // 3. Bullet ray obstruction through placed prefabs
+    const rayBlockedByGenerator = sim.checkContainerRayObstruction(4.0, -63.0, 9.0, -63.0, 1.0, 1.0);
+    expect(rayBlockedByGenerator).toBe(true);
+
+    const rayBlockedByWorkbench = sim.checkContainerRayObstruction(-3.0, -69.8, -8.0, -69.8, 1.0, 1.0);
+    expect(rayBlockedByWorkbench).toBe(true);
+
+    // 4. Critical corridors and test coordinates remain completely unobstructed
+    // Central runway corridor at x = 0
+    expect(sim.checkContainerCollision(0.0, -66.0, 0.45)).toBe(false);
+    expect(sim.checkContainerCollision(0.0, -60.0, 0.45)).toBe(false);
+    expect(sim.checkContainerCollision(0.0, -54.0, 0.45)).toBe(false);
+
+    // Firing range shooting line to dummy [-5, 0, -60] to [-5, 0, -64]
+    expect(sim.checkContainerCollision(-5.0, -60.0, 0.45)).toBe(false);
+    expect(sim.checkContainerRayObstruction(-5.0, -60.0, -5.0, -63.9, 1.0, 1.0)).toBe(false);
+
+    // Looting point at training supply locker [4.5, 0, -63.0]
+    expect(sim.checkContainerCollision(4.5, -63.0, 0.45)).toBe(false);
   });
 });

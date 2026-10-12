@@ -105,6 +105,7 @@ import { SharedMaterials } from "../render/materials.js";
 import type { LootCrate } from "../sim/game.js";
 import { MAP_CONTAINERS } from "../sim/game.js";
 import { InklineModel } from "./InklineModel.js";
+import { FOB_PREFABS, PREFAB_CATALOG, type PrefabInstance } from "../sim/prefabs.js";
 import { globalCutaway } from "../render/cutaway.js";
 
 interface SectorMapProps {
@@ -113,6 +114,68 @@ interface SectorMapProps {
   lastDummyHitTick?: number;
   lastDummyHitSide?: "left" | "right";
 }
+
+
+/**
+ * Reusable PrefabModel component that renders any PrefabInstance in 3D.
+ * Connects directly to the authoritative PREFAB_CATALOG so visual props
+ * and physical collision geometry always stay in 100% sync.
+ */
+const PrefabModel: React.FC<{
+  instance: PrefabInstance;
+  bulletTrapTex?: THREE.CanvasTexture | null;
+}> = ({ instance, bulletTrapTex }) => {
+  const def = PREFAB_CATALOG[instance.prefabKey];
+
+  if (def?.assetKey) {
+    return (
+      <InklineModel
+        assetKey={def.assetKey}
+        position={instance.position}
+        rotation={instance.rotation}
+        scale={instance.scale ?? def.defaultScale}
+      />
+    );
+  }
+
+  if (instance.prefabKey === "bulletTrapBackstop") {
+    return (
+      <group position={instance.position}>
+        <mesh position={[0, 1.4, 0]} rotation={[-0.15, 0, 0]} castShadow receiveShadow>
+          <boxGeometry args={[3.2, 2.6, 0.2]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.7} metalness={0.6} />
+        </mesh>
+        {bulletTrapTex && (
+          <mesh position={[0, 2.6, 0.12]}>
+            <planeGeometry args={[3.0, 0.6]} />
+            <meshBasicMaterial map={bulletTrapTex} transparent />
+          </mesh>
+        )}
+      </group>
+    );
+  }
+
+  if (instance.prefabKey === "shootingRestBench") {
+    return (
+      <group position={instance.position}>
+        <mesh position={[0, 0.85, 0]} receiveShadow castShadow>
+          <boxGeometry args={[1.8, 0.08, 0.7]} />
+          <meshStandardMaterial color="#1e293b" roughness={0.7} metalness={0.4} />
+        </mesh>
+        {[-0.75, 0.75].map((lx) =>
+          [-0.25, 0.25].map((lz) => (
+            <mesh key={`leg_${lx}_${lz}`} position={[lx, 0.42, lz]} castShadow>
+              <cylinderGeometry args={[0.04, 0.04, 0.84, 8]} />
+              <meshStandardMaterial color="#0f172a" metalness={0.7} />
+            </mesh>
+          ))
+        )}
+      </group>
+    );
+  }
+
+  return null;
+};
 
 export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDummyHitTick, lastDummyHitSide }) => {
   const mapRootRef = React.useRef<THREE.Group>(null);
@@ -476,17 +539,14 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       )}
 
       {/* --- NORTH REINFORCED BLAST HANGAR WALL (Behind Spawn at z = -73.0) --- */}
-      {/* Main North Structural Wall */}
       <mesh position={[0, 3.2, -73.5]} receiveShadow castShadow>
         <boxGeometry args={[16.8, 6.4, 1.2]} />
         <meshStandardMaterial color="#1e293b" roughness={0.7} />
       </mesh>
-      {/* Heavy Recessed Blast Door Frame */}
       <mesh position={[0, 2.7, -73.0]} receiveShadow castShadow>
         <boxGeometry args={[6.4, 5.2, 0.5]} />
         <meshStandardMaterial color="#0f172a" roughness={0.6} metalness={0.5} />
       </mesh>
-      {/* Blast Door Vertical Split Line & Armor Ribs */}
       <mesh position={[0, 2.7, -72.7]}>
         <boxGeometry args={[0.06, 5.0, 0.2]} />
         <meshStandardMaterial color="#090d16" roughness={0.4} />
@@ -497,14 +557,12 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
           <meshStandardMaterial color="#1e293b" roughness={0.5} metalness={0.7} />
         </mesh>
       ))}
-      {/* Blast Door Lintel Hazard Stripe */}
       {hazardStripeTex && (
         <mesh position={[0, 5.2, -72.7]}>
           <planeGeometry args={[6.2, 0.45]} />
           <meshBasicMaterial map={hazardStripeTex} />
         </mesh>
       )}
-      {/* Warning Clearance Beacon Lights */}
       <group position={[-2.8, 5.2, -72.6]}>
         <mesh>
           <cylinderGeometry args={[0.12, 0.14, 0.25, 12]} />
@@ -519,7 +577,6 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         </mesh>
         <pointLight color="#ef4444" intensity={0.5} distance={6} />
       </group>
-      {/* Corner Support Pillars */}
       <mesh position={[-8.0, 3.2, -73.0]} receiveShadow castShadow>
         <boxGeometry args={[1.2, 6.4, 1.2]} />
         <meshStandardMaterial color="#0f172a" roughness={0.6} />
@@ -528,7 +585,6 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         <boxGeometry args={[1.2, 6.4, 1.2]} />
         <meshStandardMaterial color="#0f172a" roughness={0.6} />
       </mesh>
-      {/* Master FOB Header Signboard Overhead */}
       <group position={[0, 4.4, -72.8]}>
         <mesh>
           <planeGeometry args={[8.0, 1.5]} />
@@ -545,7 +601,6 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         <boxGeometry args={[0.8, 6.4, 21.2]} />
         <meshStandardMaterial color="#1e293b" roughness={0.7} />
       </mesh>
-      {/* Structural Steel Buttress Columns Every 4.5M */}
       {[-71.5, -67.0, -62.5, -58.0, -53.5].map((zCol, idx) => (
         <React.Fragment key={`buttress_${idx}`}>
           <mesh position={[-7.75, 3.2, zCol]} receiveShadow castShadow>
@@ -558,48 +613,40 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
           </mesh>
         </React.Fragment>
       ))}
-      {/* High-Level Wall Exhaust Ventilation Fans */}
       <InklineModel assetKey="ventFan" position={[-7.7, 4.2, -68.0]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
       <InklineModel assetKey="ventFan" position={[7.7, 4.2, -68.0]} rotation={[0, -Math.PI / 2, 0]} scale={1.4} />
       <InklineModel assetKey="ventFan" position={[-7.7, 4.2, -58.0]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
       <InklineModel assetKey="ventFan" position={[7.7, 4.2, -58.0]} rotation={[0, -Math.PI / 2, 0]} scale={1.4} />
 
-      {/* --- OVERHEAD INDUSTRIAL SERVICE BAY ARCHES & GANTRY CRANE TRUSS --- */}
-      {/* Service Bay Arch 1: Framing the Armory / Firing Range Staging Area */}
+      {/* --- OVERHEAD SERVICE BAY ARCHES & GANTRY CRANE TRUSS --- */}
       <InklineModel assetKey="serviceBayArch" position={[0, 0, -68.5]} scale={[1.9, 1.8, 1.8]} />
-      {/* Service Bay Arch 2: Framing the Sector 7 Airlock Approach */}
       <InklineModel assetKey="serviceBayArch" position={[0, 0, -57.0]} scale={[1.9, 1.8, 1.8]} />
-      {/* Overhead High-Level Yellow Crane Beam */}
       <mesh position={[0, 5.2, -63.0]} castShadow>
         <boxGeometry args={[0.3, 0.4, 18.0]} />
         <meshStandardMaterial color="#eab308" roughness={0.4} metalness={0.7} />
       </mesh>
-      {/* Warm Downward Overhead Spotlights */}
       <spotLight position={[0, 5.0, -66.0]} target-position={[0, 0, -66.0]} color="#ffedd5" intensity={0.8} angle={0.8} penumbra={0.6} />
       <spotLight position={[0, 5.0, -54.0]} target-position={[0, 0, -54.0]} color="#bae6fd" intensity={0.85} angle={0.8} penumbra={0.6} />
 
-      {/* --- ZONE 1: TACTICAL ARMORY & WEAPONS MAINTENANCE BAY (North-West: z in [-72, -67]) --- */}
-      {/* Armory Maintenance Workbench */}
-      <InklineModel assetKey="serviceBayWorkbench" position={[-5.6, 0, -69.8]} scale={1.3} rotation={[0, 0, 0]} />
-      {/* Wall-Mounted Electrical Cabinet & Power Panels */}
-      <InklineModel assetKey="electricalPanelWall" position={[-7.6, 1.6, -69.8]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
-      <InklineModel assetKey="electricalCabinet" position={[-7.5, 0, -71.8]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
-      {/* Armory Mounted Weapon Rack Display on North Wall */}
+      {/* =========================================================================
+          AUTHORITATIVE FOB ENVIRONMENT PREFABS (Visual 3D & Physical Collision)
+         ========================================================================= */}
+      {FOB_PREFABS.map((inst) => (
+        <PrefabModel key={inst.id} instance={inst} bulletTrapTex={bulletTrapTex} />
+      ))}
+
+      {/* Armory Wall Weapon Rack & Signboard */}
       <group position={[-5.6, 0, -72.6]}>
-        {/* Steel Backboard Mounting Plate */}
         <mesh position={[0, 1.8, 0]}>
           <boxGeometry args={[2.8, 1.6, 0.08]} />
           <meshStandardMaterial color="#0f172a" roughness={0.6} metalness={0.5} />
         </mesh>
-        {/* Mounted Weapons on Racks */}
         <InklineModel assetKey="rifle" position={[0, 2.25, 0.08]} rotation={[0, 0, 0]} scale={1.2} />
         <InklineModel assetKey="shotgun" position={[0, 1.65, 0.08]} rotation={[0, 0, 0]} scale={1.2} />
         <InklineModel assetKey="sword" position={[0, 1.10, 0.08]} rotation={[0, 0, 0]} scale={1.2} />
       </group>
-      {/* Ammunition Crates Stack in Armory */}
-      <InklineModel assetKey="crateMilitary" position={[-3.8, 0, -71.2]} scale={1.3} />
+      <InklineModel assetKey="electricalPanelWall" position={[-7.6, 1.6, -69.8]} rotation={[0, Math.PI / 2, 0]} scale={1.4} />
       <InklineModel assetKey="crateHeavyWooden" position={[-3.8, 0.72, -71.2]} scale={1.0} />
-      {/* Overhead Armory Signboard */}
       <group position={[-5.6, 2.8, -69.8]}>
         <mesh>
           <planeGeometry args={[3.2, 0.7]} />
@@ -607,30 +654,18 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         </mesh>
       </group>
 
-      {/* --- ZONE 2: TACTICAL OPERATIONS & COMMUNICATIONS OUTPOST (North-East: z in [-72, -67]) --- */}
-      {/* Dual Tactical Command Consoles */}
-      <InklineModel assetKey="terminalConsole" position={[4.2, 0, -69.5]} scale={1.3} rotation={[0, -Math.PI / 3, 0]} />
-      <InklineModel assetKey="terminalConsole" position={[6.0, 0, -69.5]} scale={1.3} rotation={[0, -2 * Math.PI / 3, 0]} />
-      {/* Sci-Fi Power Core & Machine Transformer */}
-      <InklineModel assetKey="powerCore" position={[5.4, 0, -71.6]} scale={1.5} />
-      <InklineModel assetKey="machineTransformer" position={[7.2, 0, -71.2]} scale={1.4} />
-      {/* Tactical Holographic Map Briefing Table */}
+      {/* Tactical Holographic Map Display Table */}
       <group position={[5.1, 0, -67.2]}>
-        {/* Hologram Pedestal Base */}
         <mesh position={[0, 0.35, 0]} receiveShadow castShadow>
           <cylinderGeometry args={[0.55, 0.65, 0.7, 16]} />
           <meshStandardMaterial color="#0f172a" roughness={0.5} metalness={0.7} />
         </mesh>
-        {/* Floating Illuminated Holographic Sector 7 Display */}
         <mesh position={[0, 1.35, 0]} rotation={[-Math.PI / 4, 0, 0]}>
           <planeGeometry args={[2.2, 1.5]} />
           {hologramMapTex && <meshBasicMaterial map={hologramMapTex} transparent side={THREE.DoubleSide} />}
         </mesh>
         <pointLight position={[0, 1.35, 0]} color="#38bdf8" intensity={0.6} distance={4} />
       </group>
-      {/* Security Camera Surveillance Mast */}
-      <InklineModel assetKey="securityCameraPole" position={[7.4, 0, -66.5]} scale={1.6} />
-      {/* Overhead Comms Signboard */}
       <group position={[5.1, 2.8, -69.8]}>
         <mesh>
           <planeGeometry args={[3.2, 0.7]} />
@@ -638,8 +673,7 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         </mesh>
       </group>
 
-      {/* --- ZONE 3: LANE 01 BALLISTIC RANGE & BULLET TRAP STALL (West: z in [-66, -58]) --- */}
-      {/* Left Target Dummy (Exact test location at [-5.0, 0, -64]) */}
+      {/* Target Dummies with Spring Recoil (Dynamic hit detection & checklist progression) */}
       <FOBTargetDummy
         position={[-5.0, 0, -64]}
         color="#d97706"
@@ -647,47 +681,34 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         lastHitTick={lastDummyHitTick}
         hitSide={lastDummyHitSide}
       />
-      {/* Heavy Bullet Trap Impact Backstop Behind Dummy at z = -65.5 */}
-      <group position={[-5.0, 0, -65.6]}>
-        <mesh position={[0, 1.4, 0]} rotation={[-0.15, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[3.2, 2.6, 0.2]} />
-          <meshStandardMaterial color="#0f172a" roughness={0.7} metalness={0.6} />
+      <FOBTargetDummy
+        position={[5.0, 0, -64]}
+        color="#0284c7"
+        side="right"
+        lastHitTick={lastDummyHitTick}
+        hitSide={lastDummyHitSide}
+      />
+
+      {/* Medical Station & Stencils */}
+      <group position={[7.5, 1.8, -63.0]}>
+        <mesh receiveShadow castShadow>
+          <boxGeometry args={[0.3, 0.8, 0.6]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.4} />
         </mesh>
-        {/* Stenciled Bullet Trap Signboard */}
-        <mesh position={[0, 2.6, 0.12]}>
-          <planeGeometry args={[3.0, 0.6]} />
-          {bulletTrapTex && <meshBasicMaterial map={bulletTrapTex} transparent />}
+        <mesh position={[-0.16, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+          <planeGeometry args={[0.35, 0.35]} />
+          <meshBasicMaterial color="#10b981" />
         </mesh>
       </group>
-      {/* Flanking Concrete Protection Barrier Behind Dummy */}
-      <InklineModel assetKey="barrierConcrete" position={[-6.4, 0, -64.2]} scale={1.35} />
-      {/* Firing Stall Ballistic Separation Partition */}
-      <InklineModel assetKey="barrierConcrete" position={[-3.3, 0, -61.2]} rotation={[0, Math.PI / 2, 0]} scale={1.35} />
-      {/* Shooting Rest Station Bench */}
-      <group position={[-5.0, 0, -58.2]}>
-        {/* Table Top */}
-        <mesh position={[0, 0.85, 0]} receiveShadow castShadow>
-          <boxGeometry args={[1.8, 0.08, 0.7]} />
-          <meshStandardMaterial color="#1e293b" roughness={0.7} metalness={0.4} />
-        </mesh>
-        {/* Table Legs */}
-        {[-0.75, 0.75].map((lx) =>
-          [-0.25, 0.25].map((lz) => (
-            <mesh key={`leg_${lx}_${lz}`} position={[lx, 0.42, lz]} castShadow>
-              <cylinderGeometry args={[0.04, 0.04, 0.84, 8]} />
-              <meshStandardMaterial color="#0f172a" metalness={0.7} />
-            </mesh>
-          ))
-        )}
-      </group>
-      {/* Floor Stencils & Distance Calibration Markers */}
+      <InklineModel assetKey="palletMetal" position={[4.5, 0.08, -63.0]} scale={1.4} />
+
+      {/* Floor Decals & Distance Markers */}
       {firingDecalTex && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-4.8, 0.168, -58.8]} receiveShadow>
           <planeGeometry args={[3.2, 0.65]} />
           <meshBasicMaterial map={firingDecalTex} transparent opacity={0.88} />
         </mesh>
       )}
-      {/* Distance Lines: 5M at -59, 10M at -54 */}
       <group position={[-5.0, 0.166, -59.0]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[2.8, 0.15]} />
@@ -700,37 +721,6 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
           <meshBasicMaterial color="#f59e0b" />
         </mesh>
       </group>
-
-      {/* --- ZONE 4: LANE 02 CQB MELEE COMBAT & SUPPLY LOCKER STALL (East: z in [-66, -58]) --- */}
-      {/* Right Melee/Kick Sparring Target Dummy (Exact test location at [5.0, 0, -64]) */}
-      <FOBTargetDummy
-        position={[5.0, 0, -64]}
-        color="#0284c7"
-        side="right"
-        lastHitTick={lastDummyHitTick}
-        hitSide={lastDummyHitSide}
-      />
-      {/* CQB Melee Stall Partition */}
-      <InklineModel assetKey="barrierConcrete" position={[3.3, 0, -61.2]} rotation={[0, Math.PI / 2, 0]} scale={1.35} />
-      {/* Training Supply Locker Pallet Base (crate_fob_training at [4.5, 0, -63]) */}
-      <InklineModel assetKey="palletMetal" position={[4.5, 0.08, -63.0]} scale={1.4} />
-      {/* Wall-Mounted Medical First Aid Station */}
-      <group position={[7.5, 1.8, -63.0]}>
-        <mesh receiveShadow castShadow>
-          <boxGeometry args={[0.3, 0.8, 0.6]} />
-          <meshStandardMaterial color="#f8fafc" roughness={0.4} />
-        </mesh>
-        {/* Emergency Medical Cross Stencil */}
-        <mesh position={[-0.16, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
-          <planeGeometry args={[0.35, 0.35]} />
-          <meshBasicMaterial color="#10b981" />
-        </mesh>
-      </group>
-      {/* Heavy Diesel Backup Generator */}
-      <InklineModel assetKey="generatorLarge" position={[6.5, 0, -63.0]} scale={1.25} rotation={[0, -Math.PI / 2, 0]} />
-      {/* Corner Cable Spools */}
-      <InklineModel assetKey="cableSpoolMetal" position={[6.8, 0, -59.5]} scale={1.2} />
-      {/* Floor Stencils */}
       {lockerDecalTex && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4.8, 0.168, -58.8]} receiveShadow>
           <planeGeometry args={[3.2, 0.65]} />
@@ -744,13 +734,11 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         </mesh>
       )}
 
-      {/* --- ZONE 5: CENTRAL GUIDANCE RUNWAY & DECONTAMINATION AIRLOCK PORTAL --- */}
-      {/* Central Tactical Guidance Runway */}
+      {/* Guidance Runway & Ingress Chevrons */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.165, -61]} receiveShadow>
         <planeGeometry args={[3.2, 16]} />
         <meshStandardMaterial color="#1e293b" transparent opacity={0.75} roughness={0.8} />
       </mesh>
-      {/* Dynamic Luminous Chevron Ingress Markings */}
       {[-67, -64, -61, -58, -55].map((zPos, idx) => (
         <group key={`chevron_${idx}`} position={[0, 0.170, zPos]} rotation={[-Math.PI / 2, 0, 0]}>
           <mesh position={[0, 0, 0]}>
@@ -767,28 +755,22 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
           </mesh>
         </group>
       ))}
-      {/* Full-Width Diagonal Hazard Warning Threshold Across Runway */}
+
+      {/* Hazard Warning Threshold & Airlock Decals */}
       {hazardStripeTex && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.169, -54.0]} receiveShadow>
           <planeGeometry args={[6.8, 0.8]} />
           <meshBasicMaterial map={hazardStripeTex} />
         </mesh>
       )}
-      {/* Stenciled Sector 7 Gateway Decal */}
       {airlockDecalTex && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.170, -54.8]} receiveShadow>
           <planeGeometry args={[4.2, 0.65]} />
           <meshBasicMaterial map={airlockDecalTex} transparent opacity={0.92} />
         </mesh>
       )}
-      {/* Decontamination Drainage Mist Grates */}
       <InklineModel assetKey="grateDrain" position={[-2.2, 0.08, -53.2]} scale={1.5} />
       <InklineModel assetKey="grateDrain" position={[2.2, 0.08, -53.2]} scale={1.5} />
-      {/* Flanking Heavy Blast Revetments & Bollards Framing Airlock Approach */}
-      <InklineModel assetKey="barrierConcrete" position={[-4.5, 0, -54.5]} rotation={[0, 0, 0]} scale={1.4} />
-      <InklineModel assetKey="barrierConcrete" position={[4.5, 0, -54.5]} rotation={[0, 0, 0]} scale={1.4} />
-      <InklineModel assetKey="bollardHeavy" position={[-2.6, 0, -53.8]} scale={1.5} />
-      <InklineModel assetKey="bollardHeavy" position={[2.6, 0, -53.8]} scale={1.5} />
 
       {/* =========================================================================
           3. SPATIAL AIRLOCK GATEWAY (Bridge between FOB Hub & Depot Spoke at z: -52)
@@ -797,9 +779,7 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
         {/* Gateway Teleporter Pad */}
         <InklineModel assetKey="teleporterPad" position={[0, 0.05, 0]} scale={2.6} />
 
-        {/* Flanking Warp Beacons */}
-        <InklineModel assetKey="warpBeacon" position={[-4.5, 0, 0]} scale={1.8} />
-        <InklineModel assetKey="warpBeacon" position={[4.5, 0, 0]} scale={1.8} />
+        {/* Warp Beacons rendered via authoritative FOB_PREFABS */}
 
         {/* Graphic Security Boundary Ring (#151716 Pitch Black Ink) */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>

@@ -1,3 +1,4 @@
+import { FOB_PREFAB_OBSTACLES } from "./prefabs.js";
 import { DEPOT_CRATE_CONFIGS } from "./crates.js";
 import { calculateShotgunHit } from './shotgunCollision.js';
 export type PresentationEvent =
@@ -295,22 +296,13 @@ export const FIELD_OBSTACLES: ObstacleBox[] = [
 
   // FOB Staging Outpost (z: -85 to -50)
   // FOB North Wall Behind Outpost
-  { minX: -8.0, maxX: 8.0, minZ: -73.6, maxZ: -72.4 },
+  { minX: -8.5, maxX: 8.5, minZ: -74.0, maxZ: -72.6 },
   // FOB Side Enclosure Walls
-  { minX: -8.5, maxX: -7.5, minZ: -73.0, maxZ: -52.0 },
-  { minX: 7.5, maxX: 8.5, minZ: -73.0, maxZ: -52.0 },
-  // FOB Concrete Security Barriers
-  { minX: -7.5, maxX: -4.8, minZ: -64.2, maxZ: -62.8 },
-  { minX: 4.8, maxX: 7.5, minZ: -64.2, maxZ: -62.8 },
-  // FOB Power Cores & Consoles
-  { minX: -5.4, maxX: -3.8, minZ: -71.8, maxZ: -70.2 },
-  { minX: 3.8, maxX: 5.4, minZ: -71.8, maxZ: -70.2 },
-  { minX: -4.5, maxX: -3.1, minZ: -67.8, maxZ: -66.2 },
-  { minX: 3.1, maxX: 4.5, minZ: -67.8, maxZ: -66.2 },
+  { minX: -8.8, maxX: -7.6, minZ: -73.5, maxZ: -52.0 },
+  { minX: 7.6, maxX: 8.8, minZ: -73.5, maxZ: -52.0 },
 
-  // Spatial Airlock Flanking Warp Beacons at z = -52
-  { minX: -5.2, maxX: -3.8, minZ: -52.8, maxZ: -51.2 },
-  { minX: 3.8, maxX: 5.2, minZ: -52.8, maxZ: -51.2 },
+  // Automatic Prefab Collision Boxes for all FOB placed props
+  ...FOB_PREFAB_OBSTACLES,
 
   // Emergency Bunker Exfil Bulkhead & Blast Doors at (-45, -45)
   { minX: -49.0, maxX: -41.0, minZ: -48.5, maxZ: -46.5 },

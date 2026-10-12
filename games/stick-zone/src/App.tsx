@@ -77,6 +77,7 @@ const MainApp: React.FC = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       (window as any).__stickZoneSim = sim;
+      (window as any).__STICK_ZONE_SIM__ = sim;
     }
   }, [sim]);
 
