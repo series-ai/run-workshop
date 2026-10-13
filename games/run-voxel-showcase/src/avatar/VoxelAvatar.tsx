@@ -12,7 +12,7 @@ import { AVATAR_ACTION_STRIKES } from '@rvx/contracts/clips'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { useEffect, useMemo, useRef } from 'react'
-import { AnimationMixer, Color, PropertyBinding, SkinnedMesh, type AnimationClip, type Group, type Mesh, type MeshStandardMaterial, type Object3D } from 'three'
+import { AnimationMixer, Color, LoopOnce, PropertyBinding, SkinnedMesh, type AnimationAction, type AnimationClip, type Group, type Mesh, type MeshStandardMaterial, type Object3D } from 'three'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { PackCatalog, VoxelModelEntry } from '@rvx/contracts/catalog'
 import type { PackKey } from '@rvx/contracts/packs'
@@ -23,6 +23,8 @@ import { assertPartsRigCompatible, assertSkinRigCompatible } from '../guards/rig
 import { leafId } from '../leaves'
 import { useAssetUrls } from '../useAssetUrl'
 import { SocketPfx, type ClipClock } from '../pfx/SocketPfx'
+import { oneShotCycle, oneShotPose } from '../pack3d/PackModel'
+import { clipCloses } from './clipCloses'
 import { PartIndex, resolveVisibleParts, type AvatarSelection } from './compose'
 
 /** The PN rig faces +X; three.js turns it to the camera with -90° yaw. */
@@ -221,18 +223,44 @@ function LoadedAvatar({ selection, catalogs, plan, urls, heldPfx }: VoxelAvatarP
   const mixer = useMemo(() => new AnimationMixer(avatar.root), [avatar])
   // Action clips (swings, shots, casts) time a held item's manual one-shots to their strikes; other clips leave them on a timer.
   const clipClock = useRef<ClipClock | null>(null)
+  // A clip that ends in another pose than it starts (a rise, an aim) would snap back if looped:
+  // play it once, hold, blend home and repeat, as the gallery does for one-shots.
+  const oneShot = useRef<{ main: AnimationAction; start: AnimationAction; elapsed: number } | null>(null)
   useEffect(() => {
     const action = mixer.clipAction(avatar.clip)
-    action.reset().fadeIn(0.15).play()
     const strikes = AVATAR_ACTION_STRIKES[avatar.clip.name]
-    clipClock.current = strikes ? { elapsed: 0, duration: avatar.clip.duration, strikes } : null
+    const duration = avatar.clip.duration
+    if (clipCloses(avatar.clip)) {
+      action.reset().fadeIn(0.15).play()
+      clipClock.current = strikes ? { elapsed: 0, duration, strikes } : null
+    } else {
+      action.setLoop(LoopOnce, 1).reset().play()
+      action.paused = true
+      const start = mixer.clipAction(avatar.clip.clone())
+      start.setLoop(LoopOnce, 1).reset().play()
+      start.paused = true
+      start.setEffectiveWeight(0)
+      oneShot.current = { main: action, start, elapsed: 0 }
+      const period = oneShotCycle(duration).period
+      clipClock.current = strikes ? { elapsed: 0, duration: period, strikes: strikes.map((f) => (f * duration) / period), oneShot: true } : null
+    }
     ;(window as unknown as { __rvxAvatar?: unknown }).__rvxAvatar = { root: avatar.root, mixer, clip: avatar.clip.name, key: JSON.stringify(selection) }
     return () => {
+      oneShot.current = null
       mixer.stopAllAction()
       mixer.uncacheRoot(avatar.root)
     }
   }, [mixer, avatar, selection])
   useFrame((_, delta) => {
+    const pair = oneShot.current
+    if (pair) {
+      pair.elapsed += delta
+      const { time, weight } = oneShotPose(pair.main.getClip().duration, pair.elapsed)
+      pair.main.time = time
+      pair.main.setEffectiveWeight(weight)
+      pair.start.time = 0
+      pair.start.setEffectiveWeight(1 - weight)
+    }
     mixer.update(delta)
     if (clipClock.current) clipClock.current.elapsed += delta
   })

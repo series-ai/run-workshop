@@ -6,7 +6,8 @@ clear above the chest, so the face reads from the front: two red eyes and
 a bone jaw. A rounded olive helmet sits on the head with a chin strap.
 The right hand holds the rifle at the hip, pointed forward; the left arm
 reaches out. Clips: idle (head turn), move
-(march), attack (rifle recoil), hit (stagger), death (falls on its side).
+(march), attack (braces, fires and is rocked
+back by the recoil), hit (stagger), death (falls on its side).
 Faces -Z.
 """
 import numpy as np
@@ -146,11 +147,18 @@ def _build():
         "leg-r": {"rot": keys((0, (-18, 0, 0)), (0.45, (18, 0, 0)), (0.9, (-18, 0, 0)))},
         "head": {"rot": keys((0, (0, 0, -4)), (0.45, (0, 0, 4)), (0.9, (0, 0, -4)))},
     }
+    # attack: lean in and brace the rifle (f0-9), fire at f10, the recoil
+    # kicks the rifle back and the muzzle up in one frame (impact f11)
+    # and rocks the whole body back, then it eases forward onto aim.
+    f = 1 / 30
+    fire, imp = 10 * f, 11 * f
     attack = {
-        "arm-r": {"rot": keys((0, (0, 0, 0)), (0.2, (8, 0, 0)), (0.4, (-4, 0, 0)), (0.7, (0, 0, 0)))},
-        "arm-l": {"rot": keys((0, (0, 0, 0)), (0.2, (8, 0, 0)), (0.4, (-4, 0, 0)), (0.7, (0, 0, 0)))},
-        "rifle": {"loc": keys((0, (0, 0, 0)), (0.2, (0, 0, 0)), (0.25, (0, 0, 2)), (0.4, (0, 0, 0)), (0.7, (0, 0, 0)))},
-        "head": {"rot": keys((0, (0, 0, 0)), (0.25, (8, 0, 0)), (0.5, (0, 0, 0)))},
+        "zombie-soldier": {"rot": keys((0, (0, 0, 0)), (8 * f, (-5, 0, 2)), (fire, (-6, 0, 2)), (imp, (5, 0, -3)), (13 * f, (7, 0, -4)), (18 * f, (3, 0, -1)), (26 * f, (0, 0, 0))),
+                           "loc": keys((0, (0, 0, 0)), (8 * f, (0, 0.7, -0.5)), (fire, (0, 0.8, -0.5)), (imp, (0, 1.0, 1.5)), (13 * f, (0, 1.3, 2)), (18 * f, (0, 0.4, 1)), (26 * f, (0, 0, 0)))},
+        "arm-r": {"rot": keys((0, (0, 0, 0)), (8 * f, (-8, 0, 0)), (fire, (-10, 0, 0)), (imp, (24, 0, 4)), (13 * f, (28, 0, 5)), (18 * f, (8, 0, 0)), (26 * f, (0, 0, 0)))},
+        "arm-l": {"rot": keys((0, (0, 0, 0)), (8 * f, (14, 0, 0)), (fire, (16, 0, 0)), (imp, (-10, 0, -10)), (14 * f, (-16, 0, -14)), (20 * f, (4, 0, 0)), (26 * f, (0, 0, 0)))},
+        "rifle": {"loc": keys((0, (0, 0, 0)), (fire, (0, 0, 0)), (imp, (0, 0.5, 3.5)), (13 * f, (0, 0.5, 3)), (18 * f, (0, 0, 0.5)), (26 * f, (0, 0, 0)))},
+        "head": {"rot": keys((0, (0, 0, 0)), (8 * f, (-8, 0, 0)), (fire, (-9, 0, 0)), (12 * f, (16, 0, 4)), (15 * f, (18, 0, 5)), (21 * f, (2, 0, 0)), (26 * f, (0, 0, 0)))},
     }
     hit = {
         "zombie-soldier": {"rot": keys((0, (0, 0, 0)), (0.1, (0, 0, 12)), (0.55, (0, 0, 0)))},
@@ -159,9 +167,9 @@ def _build():
     death = {"zombie-soldier": {"rot": keys((0, (0, 0, 0)), (0.5, (0, 0, 28)), (1.1, (0, 0, 82)))},
              "head": {"rot": keys((0, (0, 0, 0)), (1.1, (0, 0, -15)))}}
     return make("creatures", "zombie-soldier", "Zombie Soldier", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-rifle", (30.5, 22, 0.5), parent="rifle")],
-                pfx=[fx("rvx-apocalypse-shotgun-blast", "socket-rifle", "clip:attack", at=0.22, size=9)])
+                pfx=[fx("rvx-apocalypse-shotgun-blast", "socket-rifle", "clip:attack", at=fire, size=9)])
 
 
 def build():

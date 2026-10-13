@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>House kit builder</title>
+<style>
+  :root { --bg: #ece5d8; --ink: #2a2522; --chip: #fff8ee; --accent: #e8743b; --line: #d6cbb8; --street: 168px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.3 ui-sans-serif, system-ui, -apple-system, sans-serif; overflow: hidden; }
+  #panel { position: fixed; left: 0; top: 0; bottom: 0; width: 290px; overflow-y: auto; padding: 12px 14px 16px; background: rgba(236,229,216,0.96); border-right: 1px solid var(--line); z-index: 3; }
+  #panel h1 { font-size: 17px; margin: 0 0 10px; }
+  .row { margin: 0 0 10px; }
+  .row > label, .row > .lbl { display: block; font-weight: 600; margin-bottom: 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  button { font: inherit; border: 1px solid #cdbfa8; background: var(--chip); padding: 4px 10px; border-radius: 999px; cursor: pointer; }
+  button.on { background: var(--accent); border-color: var(--accent); color: white; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .swatch { width: 26px; height: 26px; padding: 0; border-radius: 50%; border-width: 4px; }
+  .swatch.on { outline: 3px solid var(--accent); outline-offset: 1px; }
+  select { font: inherit; padding: 4px 8px; border-radius: 8px; border: 1px solid #cdbfa8; background: var(--chip); width: 100%; }
+  .chips.sw .swatch { width: 22px; height: 22px; border-width: 1px; border-color: #0002; }
+  .side { display: flex; align-items: center; gap: 3px; margin-bottom: 4px; }
+  .side > span { width: 58px; }
+  .side button { padding: 2px 8px; font-size: 12px; }
+  .extras { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; }
+  .extras label { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+  .extras label.off { opacity: 0.45; cursor: help; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  #recipeOut { display: none; margin-top: 6px; font: 11px/1.3 ui-monospace, monospace; white-space: pre-wrap; word-break: break-all; background: var(--chip); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+  #stats { position: fixed; top: 10px; right: 14px; z-index: 2; background: rgba(255,248,238,0.9); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-variant-numeric: tabular-nums; min-width: 210px; }
+  #stats div { display: flex; justify-content: space-between; gap: 14px; }
+  #stats .warn { color: #b3361b; font-weight: 600; }
+  #stats .ok { color: #3d7a3a; }
+  #main { position: fixed; left: 290px; top: 0; right: 0; bottom: var(--street); }
+  body.nostreet #main { bottom: 0; }
+  #c { width: 100%; height: 100%; display: block; }
+  #street { position: fixed; left: 290px; right: 0; bottom: 0; height: var(--street); border-top: 1px solid var(--line); background: #f3ede3; }
+  body.nostreet #street { display: none; }
+  #sc { width: 100%; height: 100%; display: block; cursor: pointer; }
+  #labels { position: absolute; left: 0; right: 0; bottom: 3px; display: flex; pointer-events: none; }
+  #labels span { flex: 1; text-align: center; font-size: 11px; font-weight: 600; opacity: 0.75; }
+  #labels span.on { color: var(--accent); opacity: 1; }
+  #hint { position: fixed; left: 304px; top: 10px; z-index: 2; opacity: 0.55; }
+  #busy { position: fixed; left: 304px; top: 30px; z-index: 2; color: var(--accent); font-weight: 600; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three-build/three.module.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="panel">
+  <h1>House kit builder</h1>
+  <div class="row"><label for="recipe">Named house</label><select id="recipe"><option value="">— custom —</option></select></div>
+  <div class="row actions">
+    <button id="random">Random</button>
+    <button id="explode">Explode</button>
+    <button id="streetBtn" class="on">Street</button>
+    <button id="kidBtn" class="on">Kid</button>
+    <button id="copy">Copy recipe JSON</button>
+  </div>
+  <div id="recipeOut"></div>
+  <div class="row"><span class="lbl">Width</span><div class="chips" id="width"></div></div>
+  <div class="row"><span class="lbl">Roof</span><div class="chips" id="roof"></div></div>
+  <div class="row"><span class="lbl">Gingerbread</span><div class="chips" id="gingerbread"></div></div>
+  <div class="row"><span class="lbl">Porch</span><div class="chips" id="porch"></div></div>
+  <div class="row"><span class="lbl">Rail</span><div class="chips" id="rail"></div></div>
+  <div class="row"><span class="lbl">Porch frieze</span><div class="chips" id="frieze"></div></div>
+  <div class="row"><span class="lbl">Siding</span><div class="chips" id="siding"></div></div>
+  <div class="row"><span class="lbl">Gable window</span><div class="chips" id="gable_window"></div></div>
+  <div class="row"><span class="lbl">Cross gable</span><div class="chips" id="cross_style"></div></div>
+  <div class="row"><span class="lbl">Palette preset <span id="palname" style="font-weight:400;opacity:.6"></span></span><div class="chips" id="palette"></div></div>
+  <div class="row"><span class="lbl">Body</span><div class="chips sw" id="col-body"></div></div>
+  <div class="row"><span class="lbl">Trim</span><div class="chips sw" id="col-trim"></div></div>
+  <div class="row"><span class="lbl">Roof</span><div class="chips sw" id="col-roof"></div></div>
+  <div class="row"><span class="lbl">Porch</span><div class="chips sw" id="col-porch"></div></div>
+  <div class="row"><span class="lbl">Extras</span><div id="sided"></div><div class="extras" id="extras"></div></div>
+</div>
+<div id="main"><canvas id="c"></canvas></div>
+<div id="hint">Drag to orbit · scroll to zoom · click a house in the street to load it</div>
+<div id="busy"></div>
+<div id="stats"></div>
+<div id="street"><canvas id="sc"></canvas><div id="labels"></div></div>
+<script type="module" src="./houses.js"></script>
+</body>
+</html>

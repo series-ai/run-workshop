@@ -1,0 +1,500 @@
+[
+ {
+  "breed": "Domestic Shorthair",
+  "file": "domestic-shorthair.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Domestic Shorthair (ginger)",
+  "file": "domestic-shorthair-ginger.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Domestic Shorthair (tuxedo)",
+  "file": "domestic-shorthair-tuxedo.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Domestic Shorthair (calico)",
+  "file": "domestic-shorthair-calico.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Domestic Shorthair (tortie)",
+  "file": "domestic-shorthair-tortie.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Domestic Shorthair (grey tabby)",
+  "file": "domestic-shorthair-grey-tabby.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Domestic Longhair",
+  "file": "domestic-longhair.glb",
+  "build": "large",
+  "length_m": 0.55
+ },
+ {
+  "breed": "American Shorthair",
+  "file": "american-shorthair.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "European Shorthair",
+  "file": "european-shorthair.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "American Bobtail",
+  "file": "american-bobtail.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Japanese Bobtail",
+  "file": "japanese-bobtail.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Kurilian Bobtail",
+  "file": "kurilian-bobtail.glb",
+  "build": "large",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Manx",
+  "file": "manx.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Cymric",
+  "file": "cymric.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "American Curl",
+  "file": "american-curl.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Pixie-bob",
+  "file": "pixie-bob.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "American Wirehair",
+  "file": "american-wirehair.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Snowshoe",
+  "file": "snowshoe.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "British Shorthair",
+  "file": "british-shorthair.glb",
+  "build": "cobby",
+  "length_m": 0.66
+ },
+ {
+  "breed": "British Shorthair (lilac)",
+  "file": "british-shorthair-lilac.glb",
+  "build": "cobby",
+  "length_m": 0.66
+ },
+ {
+  "breed": "British Longhair",
+  "file": "british-longhair.glb",
+  "build": "cobby",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Chartreux",
+  "file": "chartreux.glb",
+  "build": "cobby",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Scottish Fold",
+  "file": "scottish-fold.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Scottish Straight",
+  "file": "scottish-straight.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Highland Fold",
+  "file": "highland-fold.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Persian",
+  "file": "persian.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Persian (black)",
+  "file": "persian-black.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Exotic Shorthair",
+  "file": "exotic-shorthair.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Himalayan",
+  "file": "himalayan.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Burmilla",
+  "file": "burmilla.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Burmese",
+  "file": "burmese.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Bombay",
+  "file": "bombay.glb",
+  "build": "cobby",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Selkirk Rex",
+  "file": "selkirk-rex.glb",
+  "build": "cobby",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Siamese",
+  "file": "siamese.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Siamese (blue point)",
+  "file": "siamese-blue-point.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Oriental Shorthair",
+  "file": "oriental-shorthair.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Oriental Longhair",
+  "file": "oriental-longhair.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Balinese",
+  "file": "balinese.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Javanese",
+  "file": "javanese.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Colorpoint Shorthair",
+  "file": "colorpoint-shorthair.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Thai",
+  "file": "thai.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Tonkinese",
+  "file": "tonkinese.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Peterbald",
+  "file": "peterbald.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Cornish Rex",
+  "file": "cornish-rex.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Devon Rex",
+  "file": "devon-rex.glb",
+  "build": "wild",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Sphynx",
+  "file": "sphynx.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Donskoy",
+  "file": "donskoy.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Lykoi",
+  "file": "lykoi.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Abyssinian",
+  "file": "abyssinian.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Somali",
+  "file": "somali.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Singapura",
+  "file": "singapura.glb",
+  "build": "wild",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Russian Blue",
+  "file": "russian-blue.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Nebelung",
+  "file": "nebelung.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Korat",
+  "file": "korat.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Bengal",
+  "file": "bengal.glb",
+  "build": "wild",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Bengal (snow)",
+  "file": "bengal-snow.glb",
+  "build": "wild",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Egyptian Mau",
+  "file": "egyptian-mau.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Ocicat",
+  "file": "ocicat.glb",
+  "build": "wild",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Savannah",
+  "file": "savannah.glb",
+  "build": "wild",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Serengeti",
+  "file": "serengeti.glb",
+  "build": "wild",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Toyger",
+  "file": "toyger.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Chausie",
+  "file": "chausie.glb",
+  "build": "wild",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Turkish Angora",
+  "file": "turkish-angora.glb",
+  "build": "wild",
+  "length_m": 0.55
+ },
+ {
+  "breed": "LaPerm",
+  "file": "laperm.glb",
+  "build": "domestic",
+  "length_m": 0.55
+ },
+ {
+  "breed": "Maine Coon",
+  "file": "maine-coon.glb",
+  "build": "large",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Maine Coon (silver)",
+  "file": "maine-coon-silver.glb",
+  "build": "large",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Norwegian Forest Cat",
+  "file": "norwegian-forest-cat.glb",
+  "build": "large",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Siberian",
+  "file": "siberian.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Neva Masquerade",
+  "file": "neva-masquerade.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Ragdoll",
+  "file": "ragdoll.glb",
+  "build": "large",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Birman",
+  "file": "birman.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Ragamuffin",
+  "file": "ragamuffin.glb",
+  "build": "large",
+  "length_m": 0.8
+ },
+ {
+  "breed": "Turkish Van",
+  "file": "turkish-van.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Siberian Forest (blue)",
+  "file": "siberian-forest-blue.glb",
+  "build": "large",
+  "length_m": 0.66
+ },
+ {
+  "breed": "Munchkin",
+  "file": "munchkin.glb",
+  "build": "munchkin",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Munchkin Longhair",
+  "file": "munchkin-longhair.glb",
+  "build": "munchkin",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Minskin",
+  "file": "minskin.glb",
+  "build": "munchkin",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Bambino",
+  "file": "bambino.glb",
+  "build": "munchkin",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Lambkin",
+  "file": "lambkin.glb",
+  "build": "munchkin",
+  "length_m": 0.45
+ },
+ {
+  "breed": "Kitten (ginger)",
+  "file": "kitten-ginger.glb",
+  "build": "kitten",
+  "length_m": 0.3
+ },
+ {
+  "breed": "Kitten (tuxedo)",
+  "file": "kitten-tuxedo.glb",
+  "build": "kitten",
+  "length_m": 0.3
+ },
+ {
+  "breed": "Kitten (calico)",
+  "file": "kitten-calico.glb",
+  "build": "kitten",
+  "length_m": 0.3
+ },
+ {
+  "breed": "Kitten (fluffy)",
+  "file": "kitten-fluffy.glb",
+  "build": "kitten",
+  "length_m": 0.3
+ }
+]

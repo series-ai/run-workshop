@@ -20,6 +20,7 @@ node --import tsx scripts/check-expansion.ts  # exact counts, clips, bindings an
 npm run catalog            # games/run-voxel-showcase/public/catalog/{index.json,<pack>/catalog.json}
 npm run snapshot -- --out sheet.png [--clip open@0.5] [--clip-from other.glb] a.glb …   # dev contact sheet
 npm run lineup -- --out lineup.png <rvx id | pn:<file stem> | a.glb> …   # native-scale lineup next to a person gauge
+$BLENDER_BIN -b --factory-startup --python blender/clip_strip.py -- --out strip.png --clip attack [--frames 8] a.glb   # one clip, fixed camera, front + side
 # previews and icons come from the showcase: (cd ../../games/run-voxel-showcase && npm run thumbnails -- --pack fantasy [--icons])
 npm test                   # unit tests;  npm run test:integration  needs a built fantasy pack
 ```
@@ -105,6 +106,29 @@ per unit (`blender/atlas.py`), so colour detail costs no triangles. Check
 every asset by eye: `npm run review -- --pack <pack> --only <slug> --clips`
 writes a sheet with four views, one frame per clip and a native-scale
 lineup with PN references of its class.
+
+## Clip timing
+
+Clips are keyed in seconds and baked by Blender, so Blender's curves decide
+how motion moves between keys. The exporter adjusts two things:
+
+- Looping clips (`Clip(loop=True)`, the default) run through their seam.
+  Auto-clamped Bezier lies flat on a curve's first and last key, which
+  made every loop slow to a stop at the seam and read as a reset.
+  `export.seamless_loop` gives closing channels a Cycles modifier (the seam
+  handles are computed across the wrap) and channels that do not close (a
+  whole-turn spin) linear extrapolation.
+- A one-shot with `Clip(impact=seconds)` lands its blow at full speed: every
+  key span that ends on the impact frame accelerates into it (cubic ease-in)
+  instead of easing in, and the next span leaves the contact pose from
+  rest. Put the contact key on a whole frame (seconds × 30) for every
+  channel that strikes.
+
+An attack that reads: a wind-up opposite the strike (about a third of the
+clip, the whole body taking part), a strike of 2–5 frames into the impact
+key, follow-through and a short hold on contact, then recovery. Check it
+with `blender/clip_strip.py`, which keeps the camera fixed so a lunge
+shows.
 
 ## Kit (Pirate Nation style world assets)
 

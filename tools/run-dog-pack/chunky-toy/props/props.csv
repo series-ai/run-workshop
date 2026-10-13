@@ -1,0 +1,42 @@
+slug,name,group,tier,height,look
+towel,Old towel,bed,basic,0.05,an old faded blue bath towel crumpled loosely in a heap on the floor
+cardboard-box,Cardboard box bed,bed,basic,0.3,an open brown cardboard box with the flaps folded out and a crumpled old grey blanket inside
+donut-bed,Donut bed,bed,standard,0.3,a round fluffy donut-shaped dog bed in light grey with a thick raised rim
+pillow-bed,Pillow bed,bed,standard,0.15,a big flat square tan dog cushion pillow with button tufts
+dog-house,Dog house,bed,standard,1.2,"a small wooden dog house painted red with a white trim, a grey pitched roof and an arched doorway"
+crate,Crate,bed,standard,0.9,a black wire dog crate with a soft blue blanket inside and the door open
+blanket,Blanket,bed,standard,0.04,a folded red and white plaid dog blanket lying flat
+bolster-bed,Bolster bed,bed,premium,0.3,a rectangular dog bed with a navy blue cushion and raised padded sides on three sides
+sofa-bed,Dog sofa,bed,premium,0.4,"a small dog sofa with a tufted dark green velvet seat cushion, rounded arms and short round wooden legs"
+frame-bed,Wooden frame bed,bed,premium,0.3,a low wooden dog bed frame on four short legs holding a thick cream cushion and a small round pillow
+teepee,Teepee tent,bed,premium,0.9,a small dog teepee tent made of white canvas over four wooden poles with a grey round cushion inside the open doorway
+stick,Stick,toy,basic,0.05,"a short chunky brown wooden stick with one small side twig, lying horizontally on the ground, seen from the side and slightly above"
+old-sock,Knotted sock,toy,basic,0.05,"an old grey sock tied in one knot in the middle, lying flat"
+plastic-bottle,Plastic bottle,toy,basic,0.07,"an empty crumpled clear plastic water bottle with a blue cap, lying on its side"
+tennis-ball,Tennis ball,toy,standard,0.09,a bright yellow-green tennis ball with a white curved seam line
+rubber-ball,Rubber ball,toy,standard,0.12,a shiny red rubber ball with one white stripe around it
+squeaky-bone,Squeaky bone,toy,standard,0.08,"a chunky blue rubber dog toy shaped like a cartoon bone, lying flat"
+rope-toy,Rope tug toy,toy,standard,0.08,"a thick twisted rope dog toy in red and white stripes with a big knot at each end, lying flat"
+frisbee,Flying disc,toy,standard,0.04,"a bright orange plastic flying disc for dogs, lying flat"
+plush-duck,Plush duck,toy,standard,0.18,"a soft yellow plush duck dog toy with an orange beak, sitting"
+plush-carrot,Plush carrot,toy,standard,0.2,"a soft orange plush carrot dog toy with green leaves, lying on its side"
+chew-toy,Rubber chew toy,toy,standard,0.14,"a red rubber dog chew toy made of three stacked rounded bulbs, standing upright"
+tug-ring,Tug ring,toy,standard,0.05,"a chunky purple rubber ring dog toy, lying flat"
+cotton-rope,Cotton rope,toy,standard,0.07,"a thick plain beige cotton rope dog toy with one big knot at each end, lying flat"
+leather-ball,Leather ball,toy,premium,0.12,a stitched tan leather dog ball with dark brown seams and panels
+puzzle-toy,Puzzle toy,toy,premium,0.06,a round flat wooden dog puzzle board with six round sliding covers and small treat holes
+plush-fox,Plush fox,toy,premium,0.2,"a soft plush fox dog toy in rust orange with a cream chest and dark brown paws, sitting"
+tin-dish,Tin dish,care,basic,0.05,a dented old round aluminium pie tin on the floor with a little water in it
+margarine-tub,Margarine tub,care,basic,0.07,"an empty round white plastic margarine tub without a lid, used as a dog food dish"
+water-bowl,Water bowl,care,standard,0.1,a round blue ceramic dog water bowl filled with water
+kibble-bag,Kibble bag,care,standard,0.45,"a tall paper bag of dog food, folded closed at the top, with a simple bone picture on the front"
+treat-jar,Treat jar,care,standard,0.3,"a clear glass jar with a red lid, filled with small bone-shaped dog biscuits"
+brush,Brush,care,standard,0.05,"a wooden dog grooming brush with a short handle and soft bristles, lying flat"
+collar-leash,Collar and leash,care,standard,0.05,"a red dog collar with a gold round tag and a coiled red leash attached, lying flat"
+bath-tub,Bath tub,care,standard,0.4,"a small white enamel tub on short legs filled with bubbles, for washing a dog"
+shampoo,Shampoo bottle,care,standard,0.18,"a squeeze bottle of dog shampoo, light blue with a white cap and a paw print label"
+poop-bags,Poop bag holder,care,standard,0.1,a small green bone-shaped holder with a roll of green poop bags coming out of it
+fire-hydrant,Fire hydrant,care,standard,0.6,a short red fire hydrant
+floor-bowl,Floor bowl,care,standard,0.09,a wide shallow empty round stainless steel dog bowl with a flat bottom and sloped sides and a thick rolled rim
+raised-feeder,Raised feeder,care,premium,0.25,a small wooden raised dog feeder stand holding two steel bowls
+water-fountain,Water fountain,care,premium,0.22,"a round white ceramic pet drinking fountain: a wide shallow basin filled with blue water, with a small low dome in the centre where water bubbles out of a short spout"

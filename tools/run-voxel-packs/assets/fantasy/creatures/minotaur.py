@@ -380,12 +380,13 @@ def build():
     # a diagonal swing: the arm lifts the axe up and back over the right
     # shoulder, then drives it down and across the body to the left hip.
     # Each key step stays under 150 degrees (the export takes the short way).
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.22, 70, 0, 28), (0.40, 135, 0, 40), (0.50, 95, -10, 10), (0.58, 45, -20, -20), (0.70, 40, -20, -22), (1.10, 0, 0, 0))},
-              "axe": {"rot": keys((0, 0, 0, 0), (0.22, -10, 0, 0), (0.40, -40, 0, 0), (0.50, -80, 0, 0), (0.58, -110, 0, 0), (0.70, -105, 0, 0), (1.10, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.40, 6, -16, 0), (0.58, -10, 22, 0), (0.70, -8, 20, 0), (1.10, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.40, -8, 8, 0), (0.58, 10, -10, 0), (1.10, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.40, 20, 0, -20), (0.58, -16, 0, -6), (1.10, 0, 0, 0))},
-              "minotaur": {"loc": keys((0, 0, 0, 0), (0.40, 0, 0, 1.5), (0.58, 0, 0, -3.0), (0.70, 0, 0, -3.0), (1.10, 0, 0, 0))}}
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 70, 0, 28), (0.3667, 135, 0, 40), (0.4333, 140, 0, 42), (0.5667, 45, -20, -20), (0.6333, 38, -24, -26), (0.7667, 42, -20, -22), (1.1333, 0, 0, 0))},
+              "axe": {"rot": keys((0, 0, 0, 0), (0.2, -10, 0, 0), (0.3667, -40, 0, 0), (0.4333, -46, 0, 0), (0.5667, -112, 0, 0), (0.6333, -118, 0, 0), (0.7667, -110, 0, 0), (1.1333, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.3667, 10, -20, 0), (0.4333, 12, -24, 0), (0.5667, -14, 24, 0), (0.6333, -17, 28, 0), (0.7667, -13, 22, 0), (1.1333, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4667, -10, 10, 0), (0.6, 12, -12, 0), (0.6667, 14, -14, 0), (0.8, 9, -9, 0), (1.1333, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, 24, 0, -24), (0.6, -20, 0, -6), (0.7, -22, 0, -6), (1.1333, 0, 0, 0))},
+              "tail": {"rot": keys((0, 0, 0, 0), (0.4667, 0, 0, 16), (0.6667, 0, 0, -18), (0.8667, 0, 0, 8), (1.1333, 0, 0, 0))},
+              "minotaur": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 2.5), (0.4333, 0, 0, 3), (0.5667, 0, 0, -6.5), (0.6333, 0, 0, -7.5), (0.7667, 0, 0, -6.5), (1.1333, 0, 0, 0))}}
     hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 14, 0, 6), (0.45, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.10, 18, -10, 6), (0.45, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.10, -14, 0, -20), (0.45, 0, 0, 0))},
@@ -402,6 +403,6 @@ def build():
              "tail": {"rot": keys((0, 0, 0, 0), (0.90, 70, 0, 0))}}
     edge = (AXE_HEAD[0] + 10.0, AXE_HEAD[1], (AXE_Z[0] + AXE_Z[1]) / 2)
     return asset("creatures", "minotaur", "Minotaur", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-function", at=to_root(edge), parent="axe")],
-                 fx=[pfx("rvx-fantasy-slash-arc", "socket-function", "clip:attack", size=26, at=0.42)])
+                 fx=[pfx("rvx-fantasy-slash-arc", "socket-function", "clip:attack", size=26, at=0.4667)])

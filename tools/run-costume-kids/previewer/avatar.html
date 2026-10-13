@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boo Brigade · kid builder</title>
+<style>
+  :root {
+    --bg: #ece5d8; --panel: #f7f2e9; --ink: #2b2620; --muted: #7a7064; --line: #d9cfbf; --chip: #fffaf2; --on: #2b2620; --on-ink: #fffaf2;
+    --stage: #f3ede3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1d1b19; --panel: #262320; --ink: #eee6da; --muted: #a2978a; --line: #3b3631; --chip: #302c28; --on: #eee6da; --on-ink: #1d1b19; --stage: #2a2724; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.3 system-ui, sans-serif; }
+  #app { display: grid; grid-template-columns: 1fr 380px; height: 100%; }
+  #stage { position: relative; min-height: 0; background: var(--stage); }
+  #c { width: 100%; height: 100%; display: block; touch-action: none; }
+  #loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; transition: opacity .3s; }
+  #loading .spin { width: 34px; height: 34px; border: 3px solid var(--line); border-top-color: var(--ink); border-radius: 50%; animation: s 0.8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  #clips { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 6px; overflow-x: auto; padding: 10px; scrollbar-width: none; }
+  #panel { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 14px 14px 40px; }
+  h1 { font-size: 16px; margin: 0 0 10px; }
+  .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .top { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  section { border-top: 1px solid var(--line); padding: 12px 0; }
+  section > label { display: block; font-weight: 600; margin-bottom: 8px; }
+  button { font: inherit; color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; white-space: nowrap; }
+  button.on { background: var(--on); color: var(--on-ink); border-color: var(--on); }
+  .top button { border-radius: 10px; padding: 8px 0; }
+  .ways { margin-top: 8px; }
+  .ways button { font-size: 12px; padding: 3px 9px; }
+  .chan { display: grid; grid-template-columns: 96px 1fr 30px; align-items: center; gap: 6px; margin-top: 6px; min-height: 26px; }
+  .chan.off { display: none; }
+  .chan span { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sw { display: flex; gap: 3px; overflow-x: auto; scrollbar-width: none; }
+  .sw i { flex: 0 0 20px; height: 20px; border-radius: 6px; border: 1px solid var(--line); cursor: pointer; }
+  .sw i.on { outline: 2px solid var(--ink); outline-offset: 1px; }
+  input[type=color] { width: 30px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; }
+  .skins i { width: 30px; height: 30px; border-radius: 50%; }
+  #crowdbar { position: absolute; top: 10px; left: 10px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 760px) {
+    #app { grid-template-columns: 1fr; grid-template-rows: 52vh 1fr; }
+    #panel { border-left: 0; border-top: 1px solid var(--line); }
+  }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three-build/three.module.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="c"></canvas>
+    <div id="loading"><div class="spin"></div></div>
+    <div id="crowdbar"></div>
+    <div id="clips"></div>
+  </div>
+  <div id="panel">
+    <h1>Boo Brigade · kid builder</h1>
+    <div class="top">
+      <button id="random">Randomise</button>
+      <button id="crowd">Crowd</button>
+      <button id="copy">Copy look</button>
+    </div>
+    <section><label>Ready-made</label><div class="row" id="looks"></div></section>
+    <section><label>Skin</label><div class="row skins sw" id="skins"></div></section>
+    <div id="slots"></div>
+  </div>
+</div>
+<script type="module" src="./avatar.js"></script>
+</body>
+</html>

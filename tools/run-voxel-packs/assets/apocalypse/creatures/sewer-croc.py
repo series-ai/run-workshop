@@ -7,7 +7,8 @@ of sloped scutes (small pyramids, true slopes) run down the back and join
 into one crest on the tail. Olive hide, a pale belly with scale plates,
 sewer mud on the legs and teeth along the jaw line are paint. The
 mutation is the accent: eyes that glow teal and teal boils on the
-shoulder. Clips: idle (tail sway), move (sprawl walk), attack (jaw snap),
+shoulder. Clips: idle (tail sway), move (sprawl walk), attack (rears and gapes, lunges into
+a jaw snap and a death-roll twist),
 hit, death (rolls over). Faces -Z.
 """
 import numpy as np
@@ -178,17 +179,27 @@ def _build():
     move = {"tail": {"rot": wave(walk, (0, 14, 0))}, "head": {"rot": wave(walk, (0, -5, 0))},
             "leg-front-l": {"rot": wave(walk, (0, 18, 0))}, "leg-back-r": {"rot": wave(walk, (0, 18, 0))},
             "leg-front-r": {"rot": wave(walk, (0, 18, 0), phase=np.pi)}, "leg-back-l": {"rot": wave(walk, (0, 18, 0), phase=np.pi)}}
-    attack = {"head": {"rot": seq((0, 0, 0, 0), (0.2, 12, 0, 0), (0.4, -4, 0, 0), (0.8, 0, 0, 0))},
-              "jaw": {"rot": seq((0, 0, 0, 0), (0.2, -26, 0, 0), (0.32, 0, 0, 0), (0.8, 0, 0, 0))},
-              "sewer-croc": {"loc": seq((0, 0, 0, 0), (0.2, 0, 0, 1.5), (0.35, 0, 0, -4), (0.8, 0, 0, 0))}}
+    # attack: pull back, rear the snout and gape (f0-10), lunge 2 frames into
+    # the snap (impact f12: jaws shut, snout slammed down), then a
+    # death-roll twist with the jaws clamped and the tail whipping a beat
+    # behind, then slide back to the spot.
+    f = 1 / 30
+    imp = 12 * f
+    attack = {"head": {"rot": seq((0, 0, 0, 0), (8 * f, 24, 0, 0), (10 * f, 28, 0, 0), (imp, -4, 0, 0), (14 * f, -8, 0, 0), (19 * f, -4, 0, 0), (30 * f, 0, 0, 0))},
+              "jaw": {"rot": seq((0, 0, 0, 0), (8 * f, -38, 0, 0), (10 * f, -44, 0, 0), (imp, 0, 0, 0), (20 * f, 0, 0, 0), (24 * f, -10, 0, 0), (30 * f, 0, 0, 0))},
+              "sewer-croc": {"loc": seq((0, 0, 0, 0), (8 * f, 0, 1.0, 4), (10 * f, 0, 1.5, 5), (imp, 0, 1.8, -14), (14 * f, 0, 3.0, -16), (15 * f, 0, 3.8, -16), (18 * f, 0, 2.6, -15), (19 * f, 0, 1.8, -14), (21 * f, 0, 1.8, -13), (30 * f, 0, 0, 0)),
+                             "rot": seq((0, 0, 0, 0), (8 * f, 2, 0, 0), (10 * f, 3, 0, 0), (imp, -2, 0, 0), (15 * f, -2, 0, 8), (18 * f, -2, 0, -6), (21 * f, 0, 0, 3), (30 * f, 0, 0, 0))},
+              "tail": {"rot": seq((0, 0, 0, 0), (9 * f, 0, 18, 0), (13 * f, 0, -24, 0), (16 * f, 0, 20, 0), (20 * f, 0, -12, 0), (25 * f, 0, 5, 0), (30 * f, 0, 0, 0))}}
+    for leg_name, wind, hit_ in (("leg-front-l", -8, 18), ("leg-front-r", -8, 18), ("leg-back-l", 6, -10), ("leg-back-r", 6, -10)):
+        attack[leg_name] = {"rot": seq((0, 0, 0, 0), (8 * f, wind, 0, 0), (imp, hit_, 0, 0), (14 * f, hit_ * 1.1, 0, 0), (19 * f, hit_ * 0.8, 0, 0), (30 * f, 0, 0, 0))}
     hit = {"head": {"rot": seq((0, 0, 0, 0), (0.12, 10, 12, 0), (0.55, 0, 0, 0))},
            "tail": {"rot": seq((0, 0, 0, 0), (0.12, 0, -16, 0), (0.55, 0, 0, 0))}}
     death = {"sewer-croc": {"rot": seq((0, 0, 0, 0), (0.45, 0, 0, 14), (1.2, 0, 0, 80))},
              "jaw": {"rot": seq((0, 0, 0, 0), (1.2, -18, 0, 0))}}
     return make("creatures", "sewer-croc", "Sewer Crocodile", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-jaw", (CX, 8, 1), parent="head")],
-                pfx=[fx("rvx-apocalypse-vomit-spray", "socket-jaw", "clip:attack", at=0.22, size=11, aim=(0, 0, -1))])
+                pfx=[fx("rvx-apocalypse-vomit-spray", "socket-jaw", "clip:attack", at=imp, size=11, aim=(0, 0, -1))])
 
 
 def build():

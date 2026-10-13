@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Chonky Hounds benchmark</title>
+<style>body { margin: 0; font: 14px system-ui; } canvas { display: block; } #out { position: fixed; top: 8px; left: 8px; background: #fffd; padding: 8px 10px; white-space: pre; }</style>
+</head>
+<body>
+<div id="out">Loading…</div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Benchmark: N dogs (all 30 breeds, cycled) animating in rings with random colorways and
+// markings, for 400 frames. Reports CPU ms per frame for the dog updates, GPU-bound render
+// time (render + gl.finish), draw calls, triangles and texture memory.
+//   bench.html?n=30            desktop build      bench.html?n=30&mobile    dist/ build, lite materials
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+const Q = new URLSearchParams(location.search);
+const N = +(Q.get('n') || 30), MOBILE = Q.has('mobile'), BASE = MOBILE ? 'dist/' : '';
+const { loadClipLibrary, setupDog } = await import(`./${BASE}dogclips.js`);
+const { loadCoats } = await import(`./${BASE}dogcoat.js`);
+const renderer = new THREE.WebGLRenderer({ antialias: !MOBILE });
+renderer.setPixelRatio(1);
+renderer.setSize(720, 1280);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xbfe6f5);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8fc06a, 1.8));
+const sun = new THREE.DirectionalLight(0xffffff, 2); sun.position.set(3, 8, 5); scene.add(sun);
+const camera = new THREE.PerspectiveCamera(50, 720 / 1280, 0.1, 100);
+camera.position.set(0, 9, 10); camera.lookAt(0, 0, 0);
+
+const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+const ktx2 = MOBILE ? new KTX2Loader().setTranscoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/basis/').detectSupport(renderer) : null;
+if (ktx2) loader.setKTX2Loader(ktx2);
+const t0 = performance.now();
+const lib = await loadClipLibrary(loader, `${BASE}rigged/clips.glb`);
+const coats = await loadCoats(`${BASE}coats.json`, `${BASE}rigged/coats/`, { ktx2Loader: ktx2 });
+const breeds = (await (await fetch(`${BASE}breeds.csv`)).text()).trim().split('\n').slice(1).map(l => l.split(',')[0]);
+const G = {};
+await Promise.all(breeds.map(async b => { G[b] = await loader.loadAsync(`${BASE}rigged/${b}.glb`); }));
+await coats.preload(breeds);
+const loadMs = performance.now() - t0;
+
+const GAITS = ['walk', 'trot', 'run', 'gallop'];
+const dogs = [];
+let seed = 3; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+for (let i = 0; i < N; i++) {
+  const b = breeds[i % breeds.length];
+  const g = SkeletonUtils.clone(G[b].scene);
+  scene.add(g);
+  const dog = setupDog(g, lib);
+  const coat = coats.applyNow(g, b, { lite: MOBILE });
+  const list = coats.index[b].colorways;
+  const pal = { ...list[Math.floor(rnd() * list.length)] };
+  if (i % 2) pal.marks = { ...(pal.marks || {}), sock_fl: ['#eeedea', 0.2], muzzle: ['#eeedea', 0.5] };
+  coat.set(pal);
+  const ring = 1.5 + (i % 4) * 1.2, slot = i / N * Math.PI * 2;
+  // half gaits, half poses (the pose clips use the floor guards)
+  const clip = i % 2 ? GAITS[i % 4] : ['sit_loop', 'beg_loop', 'down_loop', 'sploot_loop', 'play_dead_loop', 'idle'][i % 6];
+  dog.play(clip, { time: rnd() * 2 });
+  dogs.push({ g, dog, ring, slot, gait: GAITS.includes(clip) });
+}
+
+const gl = renderer.getContext();
+let upd = 0, ren = 0, frames = 0;
+const FRAMES = 400;
+function frame() {
+  const dt = 1 / 60;
+  const a = performance.now();
+  for (const d of dogs) {
+    d.slot += d.gait ? dt * 0.6 / d.ring : 0;
+    d.g.position.set(Math.cos(d.slot) * d.ring, 0, Math.sin(d.slot) * d.ring);
+    d.g.rotation.y = -d.slot;
+    d.dog.update(dt);
+  }
+  const b = performance.now();
+  renderer.render(scene, camera);
+  gl.finish();
+  const c = performance.now();
+  if (frames > 30) { upd += b - a; ren += c - b; }   // skip warm-up (shader compiles)
+  frames++;
+  if (frames < FRAMES) requestAnimationFrame(frame);
+  else {
+    const info = renderer.info, n = FRAMES - 31;
+    let tex = 0;
+    const seen = new Set();
+    scene.traverse(o => { if (o.isMesh) [o.material].flat().forEach(m => { if (m.map && !seen.has(m.map)) { seen.add(m.map); const t = m.map; tex += t.isCompressedTexture ? t.mipmaps.reduce((s, mm) => s + mm.data.byteLength, 0) : (t.image?.width || 0) * (t.image?.height || 0) * 4 * 1.33; } }); });
+    const res = { n: N, mobile: MOBILE, loadMs: +loadMs.toFixed(0), updateMs: +(upd / n).toFixed(3), renderMs: +(ren / n).toFixed(3),
+      calls: info.render.calls, triangles: info.render.triangles, programs: info.programs.length, coatTexMB: +(tex / 1048576).toFixed(1) };
+    window.result = res;
+    document.getElementById('out').textContent = JSON.stringify(res, null, 1);
+    document.title = 'DONE';
+  }
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -265,12 +265,12 @@ def build():
     # across the front, to the left hip. The keys were solved for tip and hand targets (the cut
     # crosses the front, so it reads from the preview camera on the shield side); each key step
     # stays under 150 degrees, as the export takes the shortest way between keys.
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 25, -42, 35), (0.42, 78, -37, 43), (0.49, 64, 13, 35), (0.55, 3, 33, -14), (0.65, 3, 33, -14), (1.05, 0, 0, 0))},
-              "scimitar": {"rot": keys((0, 0, 0, 0), (0.2, 11, -14, -32), (0.42, -10, -30, -44), (0.49, -59, -14, -21), (0.55, -64, -2, -8), (0.65, -64, -2, -8), (1.05, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.2, 3, -10, 0), (0.42, 6, -20, 0), (0.49, -4, 0, 0), (0.55, -14, 22, 0), (1.05, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.42, 8, 10, 0), (0.55, -8, -8, 0), (1.05, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.42, 20, 0, -10), (0.55, -10, 0, 0), (1.05, 0, 0, 0))},
-              "goblin": {"loc": keys((0, 0, 0, 0), (0.2, 0, 0, 0.7), (0.42, 0, 0, 1.5), (0.49, 0, 0, -0.7), (0.55, 0, 0, -3), (1.05, 0, 0, 0))}}
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 25, -42, 35), (0.3667, 74, -36, 41), (0.4333, 80, -38, 44), (0.5333, 3, 33, -14), (0.6, -5, 38, -20), (0.7333, 0, 35, -16), (1.0333, 0, 0, 0))},
+              "scimitar": {"rot": keys((0, 0, 0, 0), (0.2, 11, -14, -32), (0.3667, -8, -28, -42), (0.4333, -11, -31, -45), (0.5333, -64, -2, -8), (0.6, -70, 2, -4), (0.7333, -66, 0, -6), (1.0333, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.2, 4, -12, 0), (0.3667, 8, -23, 0), (0.4333, 9, -26, 0), (0.5333, -16, 24, 0), (0.6, -19, 28, 0), (0.7333, -15, 23, 0), (1.0333, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4333, 10, 12, 0), (0.5667, -9, -8, 0), (0.6333, -12, -11, 0), (0.7667, -8, -7, 0), (1.0333, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, 22, 0, -12), (0.5667, -12, 0, 2), (0.6667, -14, 0, 3), (1.0333, 0, 0, 0))},
+              "goblin": {"loc": keys((0, 0, 0, 0), (0.2, 0, 0, 0.8), (0.3667, 0, 0, 1.7), (0.4333, 0, 0, 2.0), (0.5333, 0, 0, -4), (0.6, 0, 0, -4.6), (0.7333, 0, 0, -4), (1.0333, 0, 0, 0))}}
     hit = {"body": {"rot": keys((0, 0, 0, 0), (0.1, 18, 0, 8), (0.45, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.1, 16, -12, 6), (0.45, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.1, -20, 0, -25), (0.45, 0, 0, 0))},
@@ -285,9 +285,9 @@ def build():
              "leg-r": {"rot": keys((0, 0, 0, 0), (0.75, -45, 0, 10))}}
     tip = (CX + 12.5, 30.0, CZ - 13.0)
     return asset("creatures", "goblin", "Goblin Raider", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5333), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-blade", at=to_root(tip), parent="scimitar")],
                  # The trail spans the blade: from the hilt (offset back from the tip socket) along the blade to the tip.
-                 # It starts just before the cut (0.42 s): the trail takes a frame or two to start, and the
+                 # It starts just before the cut (0.4 s): the trail takes a frame or two to start, and the
                  # end of the wind-up is too slow to draw, so the wind-up leaves no trail.
-                 fx=[pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=19.6, aim=(0.0, 0.967, -0.254), offset=(0.0, -19.0, 5.0), at=0.36)])
+                 fx=[pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=19.6, aim=(0.0, 0.967, -0.254), offset=(0.0, -19.0, 5.0), at=0.4)])
