@@ -72,10 +72,9 @@ const FIST_HEIGHT = 0.2
 
 const partsPromises = new Map<string, Promise<BodyParts>>()
 /** Load the rigged arm + leg from `base` (default set; '/assets/body/skin' = the clean-topology build). */
-export function loadBodyParts(base = '/assets/body'): Promise<BodyParts> {
+export function loadBodyParts(base = '/assets/body', loader = new GLTFLoader()): Promise<BodyParts> {
   let partsPromise = partsPromises.get(base)
   partsPromise ??= (async () => {
-    const loader = new GLTFLoader()
     const load = async (url: string, darkTop: number) => {
       const root = (await loader.loadAsync(url)).scene
       root.traverse((o) => {

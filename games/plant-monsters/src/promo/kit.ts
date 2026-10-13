@@ -30,8 +30,15 @@ export interface Kit {
   stalk: THREE.Material
 }
 
-export async function loadKit(): Promise<Kit> {
-  const loader = new GLTFLoader()
+/**
+ * Load everything a tot needs: the leaf models (monstera, pothos, snake plant, ZZ) and the rigged limbs.
+ * `base` is the folder holding monstera/, pothos/, kit/ and body/; `ext` is the kit leaves' file type ('.glb' in the
+ * shipped pack); pass a `loader` set up with the meshopt decoder for compressed files.
+ */
+export async function loadKit(base = '/assets/', opts: { ext?: string; leafDir?: string; loader?: GLTFLoader } = {}): Promise<Kit> {
+  if (!base.endsWith('/')) base += '/'
+  const ext = opts.ext ?? '.gltf'
+  const loader = opts.loader ?? new GLTFLoader()
   const loadDouble = async (url: string) => {
     const obj = (await loader.loadAsync(url)).scene
     obj.traverse((o) => {
@@ -40,20 +47,20 @@ export async function loadKit(): Promise<Kit> {
     })
     return obj
   }
-  const monstera = new Map(await Promise.all(MONSTERA_FILES.map(async (f) => [f, await loadDouble(`/assets/monstera/${f}.glb`)] as const)))
+  const monstera = new Map(await Promise.all(MONSTERA_FILES.map(async (f) => [f, await loadDouble(`${base}monstera/${f}.glb`)] as const)))
   let map: THREE.Texture | null = null
   monstera.get('monstera_fenestrated_stage5')!.traverse((o) => {
     const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined
     if (m?.map) map = m.map
   })
   const stalk = new THREE.MeshStandardMaterial({ map, roughness: 0.9, metalness: 0 })
-  const pothos = await Promise.all(POTHOS_FILES.map((f) => loadDouble(`/assets/pothos/${f}.glb`)))
+  const pothos = await Promise.all(POTHOS_FILES.map((f) => loadDouble(`${base}pothos/${f}.glb`)))
   const assets: PlantAssets = { monstera, pothos, stalkMaterial: stalk, rootMaterial: new THREE.MeshStandardMaterial({ color: '#7a5a3c', roughness: 1 }) }
   assets.pothosVariants = pothos.map((leaf, si) => Array.from({ length: 12 }, (_, k) => withPattern(leaf, `var:pothos:${si * 12 + k}:${[1.6, 1.25, 1][si]}`, `pv${si}`, 'planar')))
   const loadSet = (prefix: string) =>
-    Promise.all(['small', 'medium', 'large'].map((s) => Promise.all(['A', 'B', 'C'].map((v) => loadDouble(`/assets/kit/${prefix}_${s}_${v}.gltf`)))))
+    Promise.all(['small', 'medium', 'large'].map((s) => Promise.all(['A', 'B', 'C'].map((v) => loadDouble(`${base}${opts.leafDir ?? 'kit'}/${prefix}_${s}_${v}${ext}`)))))
   const clump: ClumpAssets = { sansevieria: await loadSet('sansevieria_leaf'), zz: await loadSet('zzplant_leaf'), leafMaterial: stalk }
-  return { assets, clump, parts: await loadBodyParts(), stalk }
+  return { assets, clump, parts: await loadBodyParts(`${base}body`, loader), stalk }
 }
 
 /**
@@ -83,6 +90,7 @@ function recolor(root: THREE.Object3D, tint: string, overlay?: string, lift = 0.
             .replace('#include <map_fragment>', `#include <map_fragment>\n  diffuseColor.rgb = uTint * (${lift.toFixed(2)} + 1.9 * dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)));`)
         }
         c.customProgramCacheKey = () => 'tint' + tint
+        c.userData.tint = { tint, lift } // so the tint can be baked into the texture (the pack exporter)
       }
       tintCache.set(key, c)
       t = c
@@ -103,7 +111,7 @@ const TINTED: Partial<Record<Species, { tint?: string; overlay?: string; lift?: 
   dottie: { tint: '#3a2a3a', lift: 0.25, overlay: '#f2a3c0' }, // Calathea 'Dottie': dark plum, hot-pink markings
 }
 /** Which Albo pattern Blanche's new leaf gets (?sportix= to try others). */
-const SPORT_IX = Number(new URLSearchParams(location.search).get('sportix') ?? 1)
+const SPORT_IX = Number((typeof location !== 'undefined' && new URLSearchParams(location.search).get('sportix')) || 1)
 let plainPothos: PlantAssets | null = null
 let fleckPothos: PlantAssets | null = null
 let laurentiiClump: ClumpAssets | null = null

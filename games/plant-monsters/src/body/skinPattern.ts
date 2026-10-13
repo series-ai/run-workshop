@@ -20,9 +20,9 @@ export const SKIN_PATTERNS = {
 } as const
 
 export type SkinPattern = keyof typeof SKIN_PATTERNS
-const IDS: Record<SkinPattern, number> = { none: 0, vitiligo: 1, marble: 2, splash: 3, spots: 4, speckle: 5, brindle: 6, wavy: 7, pinstripe: 8 }
+export const IDS: Record<SkinPattern, number> = { none: 0, vitiligo: 1, marble: 2, splash: 3, spots: 4, speckle: 5, brindle: 6, wavy: 7, pinstripe: 8 }
 
-const NOISE = /* glsl */ `
+export const NOISE = /* glsl */ `
   float h31(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
   vec3 h33(vec3 p) { return vec3(h31(p), h31(p + 17.3), h31(p + 41.7)); }
   float vnoise(vec3 x) {
@@ -86,6 +86,7 @@ export function skinMaterial(o: SkinOptions): THREE.MeshStandardMaterial {
   const hit = cache.get(key)
   if (hit) return hit
   const m = new THREE.MeshStandardMaterial({ color: o.skin, roughness: 0.7, vertexColors: true })
+  m.userData.skinOpts = { ...o, pattern } // so the pattern can be baked to a texture (the pack exporter)
   if (pattern !== 'none') {
     const uniforms = {
       uPatternColor: { value: new THREE.Color(o.patternColor ?? '#f1ead4') },
