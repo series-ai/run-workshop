@@ -1,0 +1,7 @@
+{
+ "_about": "Curled tails, picked on side renders (Blender space of the optimised model: y back, z up, x = 0). curl: [y, z, radius] of the coil; base: [y, z] where it leaves the body; above_z: coil vertices are above this height, or behind rear_y. rig.py makes every vertex in the coil tail, with bones running from the base through the coil.",
+ "pug": {"curl": [0.449, 0.701, 0.12], "base": [0.457, 0.645], "above_z": 0.655, "rear_y": 0.5},
+ "shiba-inu": {"curl": [0.412, 0.652, 0.16], "base": [0.452, 0.612], "above_z": 0.635, "rear_y": 0.462},
+ "samoyed": {"curl": [0.393, 0.74, 0.22], "base": [0.521, 0.56], "above_z": 0.67, "rear_y": 0.505},
+ "pomeranian": {"curl": [0.42, 0.811, 0.18], "base": [0.468, 0.7], "above_z": 0.76, "rear_y": 0.58}
+}

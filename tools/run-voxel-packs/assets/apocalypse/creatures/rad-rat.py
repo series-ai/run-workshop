@@ -5,7 +5,8 @@ An oversized irradiated sewer rat, a chunky caricature: a fat pear body
 pink ears, two glowing green eyes and two huge buck teeth, glowing lime
 tumour lumps on its back, pink paws and a long pink tail that curls up.
 Fur, mange and whiskers are paint. Clips: idle (sniff), move (scurry),
-attack (snapping lunge), hit, death (rolls over). Faces -Z.
+attack (crouches back, darts in
+and holds a double snap), hit, death (rolls over). Faces -Z.
 """
 import numpy as np
 
@@ -92,11 +93,20 @@ def build():
             "leg-bl": {"rot": wave(sc, (-40, 0, 0))}, "leg-br": {"rot": wave(sc, (40, 0, 0))},
             "body": {"loc": wave(sc, (0, 0.5, 0), double=True), "rot": wave(sc, (0, 5, 0))},
             "tail": {"rot": wave(sc, (0, 18, 0), phase=1.0)}, "head": {"rot": wave(sc, (5, 0, 0), phase=0.6)}}
-    attack = {"body": {"loc": seq((0, 0, 0, 0), (0.15, 0, 0, 1.5), (0.3, 0, 1, -4), (0.6, 0, 0, 0)), "rot": seq((0, 0, 0, 0), (0.15, 8, 0, 0), (0.3, -12, 0, 0), (0.6, 0, 0, 0))},
-              "head": {"rot": seq((0, 0, 0, 0), (0.18, 22, 0, 0), (0.3, -14, 0, 0), (0.4, 8, 0, 0), (0.6, 0, 0, 0))}}
+    # attack: crouch back and rear the head (f0-8), dart 3 frames into the
+    # bite (impact f11), overshoot, hold the bite, then scuttle back.
+    f = 1 / 30
+    imp = 11 * f
+    R = rig.root.name
+    attack = {R: {"loc": seq((0, 0, 0, 0), (6 * f, 0, 0.6, 2.5), (8 * f, 0, 0.5, 3), (imp, 0, 1.6, -6), (13 * f, 0, 1.9, -7), (17 * f, 0, 1.3, -6), (26 * f, 0, 0, 0))},
+              "body": {"rot": seq((0, 0, 0, 0), (6 * f, 12, 0, 0), (8 * f, 14, 0, 0), (imp, -6, 0, 0), (13 * f, -9, 0, 0), (17 * f, -6, 0, 0), (26 * f, 0, 0, 0))},
+              "head": {"rot": seq((0, 0, 0, 0), (7 * f, 28, 0, 0), (9 * f, 32, 0, 0), (imp, -14, 0, 0), (13 * f, -18, 0, 0), (14 * f, -6, 0, 0), (15 * f, -16, 0, 0), (18 * f, -10, 0, 0), (26 * f, 0, 0, 0))},
+              "tail": {"rot": seq((0, 0, 0, 0), (7 * f, -25, 15, 0), (imp, 10, -10, 0), (14 * f, 25, -20, 0), (18 * f, -5, 12, 0), (22 * f, 4, -5, 0), (26 * f, 0, 0, 0))}}
+    for leg_name, wind, hit_ in (("leg-fl", -18, 45), ("leg-fr", -18, 40), ("leg-bl", 18, -30), ("leg-br", 18, -28)):
+        attack[leg_name] = {"rot": seq((0, 0, 0, 0), (6 * f, wind, 0, 0), (imp, hit_, 0, 0), (13 * f, hit_ * 1.1, 0, 0), (17 * f, hit_ * 0.8, 0, 0), (26 * f, 0, 0, 0))}
     hit = {"body": {"rot": seq((0, 0, 0, 0), (0.1, 10, 0, 10), (0.4, 0, 0, 0)), "loc": seq((0, 0, 0, 0), (0.1, 0, 0, 1.5), (0.4, 0, 0, 0))}}
     death = {rig.root.name: {"rot": seq((0, 0, 0, 0), (0.25, 0, 0, -15), (0.6, 0, 0, 175), (0.8, 0, 0, 168), (1.0, 0, 0, 172)), "loc": seq((0, 0, 0, 0), (0.6, 0, 11, 0), (1.0, 0, 10, 0))},
              "leg-fl": {"rot": seq((0, 0, 0, 0), (0.6, 30, 0, 0))}, "leg-br": {"rot": seq((0, 0, 0, 0), (0.6, -30, 0, 0))}}
     return make("creatures", "rad-rat", "Rad Rat", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-body", (CX, 8.0, 13.0), parent="body")])

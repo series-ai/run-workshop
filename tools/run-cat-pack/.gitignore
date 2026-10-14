@@ -1,0 +1,12 @@
+.env
+.asset-bot/
+
+# Bulky intermediates: raw 50k-tri AI meshes and early previews. The four
+# papercraft models are kept as the art-direction reference.
+models/*
+!models/4-papercraft-*.glb
+previews/
+__pycache__/
+
+# npm (scripts/package.mjs)
+node_modules/

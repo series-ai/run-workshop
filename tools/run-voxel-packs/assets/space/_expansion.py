@@ -982,15 +982,27 @@ def _crystal_golem() -> object:
     idle = {"body": {"rot": wave(3.2, "y", 2)}, "arm-l": {"rot": wave(3.2, "z", 2)}, "arm-r": {"rot": wave(3.2, "z", -2)}}
     move = {"leg-l": {"rot": wave(1.4, "x", 18)}, "leg-r": {"rot": wave(1.4, "x", -18)},
             "arm-l": {"rot": wave(1.4, "x", -12)}, "arm-r": {"rot": wave(1.4, "x", 12)}, "body": {"loc": wave(1.4, "y", 1)}}
-    attack = {"arm-r": {"rot": [(0, z), (0.25, (-15, 0, -20)), (0.55, (50, 0, 4)), (1.0, z)],
-                        "loc": [(0, z), (0.25, (0, 1, 0)), (0.55, (0, -2, 0)), (1.0, z)]}}
+    # Hammer fist: the golem leans back and twists the right shoulder away
+    # with the fist high over its head (0-0.4 s), brings it down in 3 frames
+    # onto the target in front (impact 0.5 s) as the whole body bows and
+    # steps into it, holds, then straightens. The legs counter the bow so
+    # the feet stay flat.
+    F = 1 / 30
+    hit_t = 15 * F
+    attack = {"arm-r": {"rot": [(0, z), (6 * F, (80, 0, 12)), (12 * F, (160, 0, 14)), (hit_t, (72, 0, 0)), (17 * F, (84, 0, -4)),
+                                (23 * F, (78, 0, -2)), (33 * F, z)]},
+              "arm-l": {"rot": [(0, z), (12 * F, (34, 0, -8)), (hit_t + F, (-24, 0, -6)), (19 * F, (-30, 0, -6)), (24 * F, (-20, 0, -4)), (33 * F, z)]},
+              "body": {"rot": [(0, z), (12 * F, (10, -16, 0)), (hit_t, (-18, 14, 0)), (17 * F, (-21, 16, 0)), (23 * F, (-18, 14, 0)), (33 * F, z)]},
+              "leg-l": {"rot": [(0, z), (12 * F, (-10, 16, 0)), (hit_t, (18, -14, 0)), (17 * F, (21, -16, 0)), (23 * F, (18, -14, 0)), (33 * F, z)]},
+              "leg-r": {"rot": [(0, z), (12 * F, (-10, 16, 0)), (hit_t, (18, -14, 0)), (17 * F, (21, -16, 0)), (23 * F, (18, -14, 0)), (33 * F, z)]},
+              "golem": {"loc": [(0, z), (12 * F, (0, 0, 3)), (hit_t, (0, 0, -7)), (17 * F, (0, 0, -8)), (23 * F, (0, 0, -7)), (33 * F, z)]}}
     hit = {"body": {"rot": [(0, z), (0.12, (10, 0, -12)), (0.5, z)]}}
     death = {"body": {"rot": [(0, z), (0.45, (0, 0, 16)), (1.0, (0, 0, 72))], "loc": [(0, z), (1.0, (0, -12, 0))]},
              "arm-l": {"rot": [(0, z), (1.0, (0, 0, 28))]}, "arm-r": {"rot": [(0, z), (1.0, (0, 0, -34))]}}
     sock = rig.sock("socket-impact", (cx + 32, 13, cz - 3), parent="arm-r")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "crystal-golem", "Crystal Golem", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-impact", "trigger": "clip:attack", "size": 24, "aim": [0, -1, 0], "at": 0.55}])
+                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-impact", "trigger": "clip:attack", "size": 24, "aim": [0, -1, 0], "at": round(hit_t, 3)}])
 
 
 def _space_jelly() -> object:
@@ -1033,16 +1045,32 @@ def _space_jelly() -> object:
     z = (0.0, 0.0, 0.0)
     idle = {"bell": {"rot": wave(2.8, "z", 3)}, "jelly": {"loc": wave(2.8, "y", 1.2)}}
     move = {f"tentacle-{i}": {"rot": wave(1.8, "z", 12, phase=i * 0.7)} for i in range(4)}
-    attack = {f"tentacle-{i}": {"rot": [(0, z), (0.28, (0, 0, 42 if i % 2 else -42)), (0.54, (0, 0, -8)), (1, z)]} for i in (0, 1)}
+    # Lash and spit: the jelly rises and rears its bell back while the side
+    # and front tentacles coil up (0-0.33 s), then in 2 frames the bell
+    # snaps forward to spit acid and the tentacles whip down as the whole
+    # jelly lunges (impact 0.4 s). The two rear tentacles trail a frame
+    # behind; everything drifts back after a short hold.
+    F = 1 / 30
+    hit_t = 12 * F
+
+    def lash(i: int, up: float, down: float, lag: int = 0):
+        sg = 1 if i % 2 else -1
+        return {"rot": [(0, z), ((10 + lag) * F, (0, 0, sg * up)), (hit_t + lag * F, (0, 0, -sg * down)),
+                        ((14 + lag) * F, (0, 0, -sg * (down + 6))), ((19 + lag) * F, (0, 0, -sg * down)), (30 * F, z)]}
+
+    attack = {"tentacle-0": lash(0, 50, 10), "tentacle-1": lash(1, 62, 12),
+              "tentacle-2": lash(2, 34, 8, lag=1), "tentacle-3": lash(3, 30, 8, lag=2),
+              "bell": {"rot": [(0, z), (10 * F, (22, 0, 0)), (hit_t, (-20, 0, 0)), (14 * F, (-25, 0, 0)), (19 * F, (-20, 0, 0)), (30 * F, z)]},
+              "jelly": {"loc": [(0, z), (10 * F, (0, 7, 5)), (hit_t, (0, 4, -7)), (14 * F, (0, 3.5, -8)), (19 * F, (0, 4, -7)), (30 * F, z)]}}
     hit = {"bell": {"rot": [(0, z), (0.1, (12, 0, 0)), (0.48, z)]}, "jelly": {"loc": [(0, z), (0.1, (0, 0, 2)), (0.48, z)]}}
     death = {"bell": {"rot": [(0, z), (1, (72, 0, 0))], "loc": [(0, z), (1, (0, -14, 0))]},
              **{f"tentacle-{i}": {"rot": [(0, z), (1, (0, 0, 34 if i % 2 else -34))]} for i in range(4)}}
     sock = rig.sock("socket-spores", (cx, 52, cz - 14), parent="bell")
     spit = rig.sock("socket-acid", (cx, 37, cz - 20), parent="bell")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "space-jelly", "Space Jelly", rig.root, clips=clips, sockets=[sock, spit],
                  pfx=[{"effectId": "rvx-space-spore-drift", "socket": "socket-spores", "trigger": "idle", "size": 13},
-                      {"effectId": "rvx-space-acid-spray", "socket": "socket-acid", "trigger": "clip:attack", "size": 12, "aim": [0, 0, -1], "at": 0.5}])
+                      {"effectId": "rvx-space-acid-spray", "socket": "socket-acid", "trigger": "clip:attack", "size": 12, "aim": [0, 0, -1], "at": round(hit_t, 3)}])
 
 
 def _astro_crab() -> object:
@@ -1098,15 +1126,25 @@ def _astro_crab() -> object:
     z = (0.0, 0.0, 0.0)
     idle = {"shell": {"rot": wave(3.2, "y", 2)}, "claw-l": {"rot": wave(3.2, "z", 3)}, "claw-r": {"rot": wave(3.2, "z", -3)}}
     move = {f"leg-{i}": {"rot": wave(1.2, "x", 16, phase=i * math.pi / 3)} for i in range(6)}
-    attack = {"claw-l": {"rot": [(0, z), (0.3, (0, 0, 24)), (0.55, (0, 0, -12)), (0.9, z)]},
-              "claw-r": {"rot": [(0, z), (0.3, (0, 0, -24)), (0.55, (0, 0, 12)), (0.9, z)]}}
+    # Double claw smash: the crab rears up and back with both claws raised
+    # high and spread (0-0.33 s), then in 2 frames scuttles forward and
+    # hammers both claws down together (impact 0.4 s), the shell dipping
+    # into the blow; it holds, then backs off to its spot.
+    F = 1 / 30
+    hit_t = 12 * F
+    attack = {"claw-l": {"rot": [(0, z), (10 * F, (58, 0, 22)), (hit_t, (-14, 0, -8)), (14 * F, (-20, 0, -10)), (19 * F, (-14, 0, -8)), (30 * F, z)]},
+              "claw-r": {"rot": [(0, z), (10 * F, (58, 0, -22)), (hit_t, (-14, 0, 8)), (14 * F, (-20, 0, 10)), (19 * F, (-14, 0, 8)), (30 * F, z)]},
+              "shell": {"rot": [(0, z), (10 * F, (9, 0, 0)), (hit_t, (-3, 0, 0)), (14 * F, (-4, 0, 0)), (19 * F, (-3, 0, 0)), (30 * F, z)]},
+              "crab": {"loc": [(0, z), (10 * F, (0, 3.5, 5)), (hit_t, (0, 1.0, -9)), (14 * F, (0, 1.0, -10)), (19 * F, (0, 1.0, -9)), (30 * F, z)]},
+              **{f"leg-{i}": {"rot": [(0, z), ((10 + i % 3) * F, (-12, 0, 0)), ((hit_t + (1 + i % 3) * F), (10, 0, 0)), (20 * F, (4, 0, 0)), (30 * F, z)]}
+                 for i in range(6)}}
     hit = {"shell": {"rot": [(0, z), (0.12, (0, 0, 10)), (0.5, z)]}}
     death = {"shell": {"rot": [(0, z), (1.0, (42, 0, 0))], "loc": [(0, z), (1.0, (0, -8, 0))]},
              "claw-l": {"rot": [(0, z), (1.0, (0, 0, 35))]}, "claw-r": {"rot": [(0, z), (1.0, (0, 0, -35))]}}
     sock = rig.sock("socket-claw-impact", (cx + 35, 11, cz - 25), parent="claw-r")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "astro-crab", "Astro Crab", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-claw-impact", "trigger": "clip:attack", "size": 16, "aim": [0, -1, 0], "at": 0.58}])
+                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-claw-impact", "trigger": "clip:attack", "size": 16, "aim": [0, -1, 0], "at": round(hit_t, 3)}])
 
 
 def _void_stalker() -> object:
@@ -1153,15 +1191,27 @@ def _void_stalker() -> object:
     z = (0.0, 0.0, 0.0)
     idle = {"body": {"rot": wave(2.8, "y", 2)}, "leg-0": {"rot": wave(2.8, "z", 3)}, "leg-1": {"rot": wave(2.8, "z", -3)}}
     move = {f"leg-{i}": {"rot": wave(0.8, "x", 24, phase=i * math.pi / 2)} for i in range(4)}
-    attack = {"body": {"loc": [(0, z), (0.2, (0, 0, -3)), (0.42, (0, 2, 4)), (0.85, z)],
-                       "rot": [(0, z), (0.2, (-8, 0, 0)), (0.42, (14, 0, 0)), (0.85, z)]}}
+    # Pounce and rake: the stalker sinks back on its haunches, the head up
+    # and the front-right claw cocked high and wide (0-0.33 s), then
+    # springs forward in 3 frames, raking the claw across in front
+    # (impact 0.433 s) with the body pitched down into the blow; it holds
+    # the lunge and slinks back to its spot.
+    F = 1 / 30
+    hit_t = 13 * F
+    attack = {"body": {"rot": [(0, z), (10 * F, (12, 6, 0)), (hit_t, (-9, -8, 0)), (15 * F, (-11, -10, 0)), (20 * F, (-8, -6, 0)), (30 * F, z)]},
+              "stalker": {"loc": [(0, z), (10 * F, (0, 3.5, 7)), (hit_t, (0, 3.0, -10)), (15 * F, (0, 2.6, -11)), (20 * F, (0, 2.4, -10)),
+                                  (30 * F, z)]},
+              "leg-1": {"rot": [(0, z), (10 * F, (0, -45, 55)), (hit_t, (0, 55, -8)), (15 * F, (0, 66, -12)), (20 * F, (0, 55, -6)), (30 * F, z)]},
+              "leg-0": {"rot": [(0, z), (10 * F, (0, 0, -18)), (hit_t + F, (0, 10, 8)), (20 * F, (0, 6, 4)), (30 * F, z)]},
+              "leg-2": {"rot": [(0, z), (10 * F, (-14, 0, 0)), (hit_t + F, (22, 0, 0)), (20 * F, (10, 0, 0)), (30 * F, z)]},
+              "leg-3": {"rot": [(0, z), (10 * F, (-14, 0, 0)), (hit_t + F, (22, 0, 0)), (20 * F, (10, 0, 0)), (30 * F, z)]}}
     hit = {"body": {"rot": [(0, z), (0.1, (0, 0, 14)), (0.5, z)]}}
     death = {"body": {"rot": [(0, z), (1.0, (0, 0, 78))], "loc": [(0, z), (1.0, (0, -8, 0))]},
              **{f"leg-{i}": {"rot": [(0, z), (1.0, (0, 0, 18 if i % 2 else -18))]} for i in range(4)}}
     sock = rig.sock("socket-slash", (cx + 18, 15, 16), parent="leg-1")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "void-stalker", "Void Stalker", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-plasma-slash", "socket": "socket-slash", "trigger": "clip:attack", "size": 14, "aim": [0, 0, -1], "at": 0.42}])
+                 pfx=[{"effectId": "rvx-space-plasma-slash", "socket": "socket-slash", "trigger": "clip:attack", "size": 14, "aim": [0, 0, -1], "at": round(hit_t - 2 / 30, 3)}])
 
 
 def make_creature(slug: str) -> object:
@@ -1191,6 +1241,7 @@ def _vehicle_grid(kind: str) -> tuple[Grid, dict, dict, list, list]:
     }
     S = specs[kind]
     cx, cz = S[0] // 2, S[2] // 2
+    F = 1 / 30
     body = Grid(*S)
     X, Y, Z = coords(body)
     parts: dict[str, Grid] = {}
@@ -1340,11 +1391,21 @@ def _vehicle_grid(kind: str) -> tuple[Grid, dict, dict, list, list]:
             joints[f"hover-pad-{s}"] = (cx + s * 28, 5, cz)
         pfx.extend([
             {"effectId": "rvx-space-hover-thrust", "socket": "socket-thrust", "trigger": "clip:move", "size": 18, "aim": [0, -1, 0]},
-            {"effectId": "rvx-space-cannon-blast", "socket": "socket-muzzle", "trigger": "clip:attack", "size": 18, "aim": [0, 0, -1], "at": 0.45},
+            {"effectId": "rvx-space-cannon-blast", "socket": "socket-muzzle", "trigger": "clip:attack", "size": 18, "aim": [0, 0, -1], "at": 0.4},
         ])
         clips = [Clip("idle", {"turret": {"rot": spin(8.0, "y", 360)}}),
                  Clip("move", {"hover-pad--1": {"loc": wave(1.4, "y", 1.1)}, "hover-pad-1": {"loc": wave(1.4, "y", 1.1, phase=math.pi)}, "body": {"rot": wave(1.4, "x", 2)}}),
-                 Clip("attack", {"turret": {"rot": [(0, z0), (0.22, (0, 4, 0)), (0.6, (0, -3, 0)), (1, z0)], "loc": [(0, z0), (0.2, (0, 0, -2)), (0.55, (0, 0, 1)), (1, z0)]}}, loop=False)]
+                 # Cannon shot: the tank squats on its pads, nose down, and the
+                 # turret draws back and lifts the barrel (0-0.37 s); it fires
+                 # at 0.4 s and in one frame the barrel slams back, the muzzle
+                 # flips up and the whole hull is kicked back nose-up, then it
+                 # floats forward to rest.
+                 Clip("attack", {"turret": {"rot": [(0, z0), (11 * F, (5, 0, 0)), (12 * F, (4, 0, 0)), (13 * F, (14, 0, 0)), (16 * F, (9, 0, 0)), (22 * F, (3, 0, 0)), (30 * F, z0)],
+                                            "loc": [(0, z0), (11 * F, (0, 0, 1.5)), (12 * F, (0, 0, -1.0)), (13 * F, (0, 0.5, 5.0)), (16 * F, (0, 0, 3.5)), (22 * F, (0, 0, 1.0)), (30 * F, z0)]},
+                                 "body": {"rot": [(0, z0), (11 * F, (-2.5, 0, 0)), (12 * F, (-2.5, 0, 0)), (13 * F, (5, 0, 0)), (16 * F, (6, 0, 0)), (22 * F, (1.5, 0, 0)), (30 * F, z0)],
+                                          "loc": [(0, z0), (11 * F, (0, -0.5, 0)), (12 * F, (0, -0.5, 0)), (13 * F, (0, 2.0, 4.0)), (16 * F, (0, 2.5, 5.5)), (22 * F, (0, 1.0, 2.0)), (30 * F, z0)]},
+                                 **{f"hover-pad-{s}": {"loc": [(0, z0), (11 * F, (0, 0.8, 0)), (13 * F, (0, -0.5, 0)), (17 * F, (0, 0.6, 0)), (30 * F, z0)]} for s in (-1, 1)}},
+                      loop=False, impact=12 * F)]
     elif kind == "mining-crawler":
         # Six large wheels, a glazed driver cab, and a powered front drill.
         hull = plan(body, [(12, 8), (56, 8), (63, 20), (63, 75), (55, 88), (13, 88), (5, 72), (5, 22)], 13, 30, "steel", 5,
@@ -1420,7 +1481,14 @@ def _vehicle_grid(kind: str) -> tuple[Grid, dict, dict, list, list]:
         ])
         clips = [Clip("idle", {"body": {"loc": wave(2.4, "y", 0.4)}}),
                  Clip("move", {"body": {"rot": wave(0.8, "z", 12)}, "flare--1": {"loc": wave(0.8, "z", 1)}, "flare-1": {"loc": wave(0.8, "z", 1, phase=math.pi)}}),
-                 Clip("attack", {"body": {"rot": [(0, z0), (0.2, (-3, 0, 0)), (0.45, (4, 0, 0)), (0.8, z0)]}}, loop=False)]
+                 # Strafing shot: the speeder rises, pulls back and banks
+                 # (0-0.37 s), dips its nose onto the target and fires at 0.4 s
+                 # with a short lunge; the recoil kicks it back nose-up in one
+                 # frame and the engines flare, then it settles.
+                 Clip("attack", {"body": {"rot": [(0, z0), (11 * F, (10, 0, 16)), (12 * F, (-7, 0, 4)), (13 * F, (11, 0, -5)), (16 * F, (12, 0, -6)), (22 * F, (3, 0, -2)), (30 * F, z0)],
+                                          "loc": [(0, z0), (11 * F, (0, 6.0, 7)), (12 * F, (0, 5.0, -7)), (13 * F, (0, 6.0, 1.0)), (16 * F, (0, 6.0, 3.0)), (22 * F, (0, 3.0, 1.0)), (30 * F, z0)]},
+                                 **{f"flare-{s}": {"loc": [(0, z0), (11 * F, (0, 0, -1.5)), (12 * F, (0, 0, 2.5)), (15 * F, (0, 0, 1.5)), (22 * F, z0), (30 * F, z0)]} for s in (-1, 1)}},
+                      loop=False, impact=12 * F)]
     return body, parts, joints, clips, pfx
 
 

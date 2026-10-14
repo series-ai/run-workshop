@@ -1,0 +1,23 @@
+<!doctype html><html><body style="margin:0"><canvas id="c" width="1600" height="500"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+const Q = new URLSearchParams(location.search);
+const file = Q.get('file'), clips = (Q.get('clips') ?? 'idle,walk,hop,sit,swing').split(','), t = Number(Q.get('t') ?? 0.4);
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+r.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#e9e3d8');
+scene.add(new THREE.HemisphereLight('#fff', '#998', 2.2)); const d = new THREE.DirectionalLight('#fff', 2); d.position.set(3, 6, 5); scene.add(d);
+const g = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync(file);
+const W = 320;
+clips.forEach((name, i) => {
+  const o = SkeletonUtils.clone(g.scene); o.position.x = (i - (clips.length - 1) / 2) * 3.4; scene.add(o);
+  const m = new THREE.AnimationMixer(o); const c = g.animations.find((a) => a.name === name);
+  if (c) { m.clipAction(c).play(); m.update(Math.min(t * c.duration, c.duration - 0.001)); }
+});
+const cam = new THREE.PerspectiveCamera(30, 1600 / 500, 0.1, 200); cam.position.set(0, 3.2, 17); cam.lookAt(0, 1.6, 0);
+r.render(scene, cam);
+document.title = 'OK ' + g.animations.length;
+</script></body></html>

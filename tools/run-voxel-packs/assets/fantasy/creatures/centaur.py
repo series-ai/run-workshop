@@ -13,8 +13,9 @@ on the back. The detail is paint (S1): hide patches on the coat, hair
 strands, leather wraps.
 
 Clips: idle (breathe, look round, swish the tail, paw the ground), attack
-(draw the string back, loose the arrow: the PFX at the bow socket, the
-arrow leaves the string, then a new one is nocked), hit (the torso and
+(rear onto the hind legs and draw the string back, loose the arrow: the
+PFX at the bow socket, the arrow leaves the string, the bow kicks and the
+body jolts back, then a new one is nocked), hit (the torso and
 head snap back), death (the legs buckle and it rolls onto its left side).
 Faces -Z.
 """
@@ -410,15 +411,19 @@ def build():
             "tail": {"rot": keys(z, (0.6, 0, 16, 0), (1.8, 0, -16, 0), (2.4, 0, 0, 0))},
             "leg-fr": {"rot": keys(z, (1.0, 0, 0, 0), (1.25, 26, 0, 0), (1.5, 0, 0, 0), (2.4, 0, 0, 0)),
                        "loc": keys(z, (1.0, 0, 0, 0), (1.05, 0, 0.6, 0), (1.45, 0, 0.6, 0), (1.5, 0, 0, 0), (2.4, 0, 0, 0))}}
-    # draw: the elbow swings back and the forearm pulls the string hand back
-    # to the chest; loose at 0.35 (the arrow is gone), nock again by 1.2
-    attack = {"arm-r": {"rot": keys(z, (0.28, 0, 18, 0), (0.35, 0, 24, 0), (0.6, 0, 22, 0), (1.2, 0, 0, 0))},
-              "forearm-r": {"rot": keys(z, (0.28, 0, 30, 0), (0.35, 0, 40, 0), (0.6, 0, 36, 0), (1.2, 0, 0, 0))},
-              "arrow": {"scale": keys((0, 1, 1, 1), (0.34, 1, 1, 1), (0.36, 0.05, 0.05, 0.05), (1.0, 0.05, 0.05, 0.05), (1.1, 1, 1, 1))},
-              "torso": {"rot": keys(z, (0.28, 0, -10, 0), (0.35, -4, -12, 0), (0.6, 0, -8, 0), (1.2, 0, 0, 0))},
-              "bow": {"rot": keys(z, (0.34, 0, 0, 0), (0.4, -8, 0, 0), (0.6, 0, 0, 0))},
-              "leg-fl": {"rot": keys(z, (0.3, 10, 0, 0), (0.45, 0, 0, 0)), "loc": keys(z, (0.05, 0, 0.5, 0), (0.4, 0, 0.5, 0), (0.45, 0, 0, 0))},
-              "tail": {"rot": keys(z, (0.35, -18, 0, 0), (0.8, 0, 0, 0))}}
+    # draw (0-0.43 s): the horse body rears onto its hind legs, the torso leans back and twists,
+    # the elbow swings back and the forearm pulls the string hand to the chest; a beat of held
+    # tension, then the loose at 0.5 s (the arrow is gone): the string hand flies back, the bow
+    # kicks, the torso and horse body jolt back and the front hooves come down; nock again by 1.1
+    attack = {"arm-r": {"rot": keys(z, (0.3667, 0, 30, 0), (0.4333, 0, 33, 0), (0.5, 0, 34, 0), (0.5333, 0, 44, 0), (0.6, 0, 46, 0), (0.7667, 0, 40, 0), (1.1667, 0, 0, 0))},
+              "forearm-r": {"rot": keys(z, (0.3667, 0, 46, 0), (0.4333, 0, 52, 0), (0.5, 0, 54, 0), (0.5333, 0, 30, 0), (0.6, 0, 24, 0), (0.7667, 0, 28, 0), (1.1667, 0, 0, 0))},
+              "arrow": {"scale": keys((0, 1, 1, 1), (0.5, 1, 1, 1), (0.5333, 0.05, 0.05, 0.05), (1.0333, 0.05, 0.05, 0.05), (1.1, 1, 1, 1))},
+              "torso": {"rot": keys(z, (0.3667, 9, -20, 0), (0.4333, 12, -25, 0), (0.5, 12, -26, 0), (0.5667, 16, -24, 0), (0.6333, 15, -23, 0), (0.7667, 9, -14, 0), (1.1667, 0, 0, 0))},
+              "head": {"rot": keys(z, (0.4333, -6, 8, 0), (0.5, -6, 8, 0), (0.6, 8, 4, 0), (0.8, 2, 2, 0), (1.1667, 0, 0, 0))},
+              "bow": {"rot": keys(z, (0.4333, 4, 0, 0), (0.5, 4, 0, 0), (0.5333, -16, 0, 0), (0.6, -20, 0, 0), (0.7, -8, 0, 0), (0.8667, 2, 0, 0), (1.0, 0, 0, 0))},
+              "body": {"rot": keys(z, (0.3667, 7.5, 0, 0), (0.4333, 9, 0, 0), (0.5, 9, 0, 0), (0.5667, -0.5, 0, 0), (0.6333, 0.5, 0, 0), (0.8, 0, 0, 0)),
+                       "loc": keys(z, (0.3667, 0, 3.6, 0.4), (0.4333, 0, 4.3, 0.5), (0.5, 0, 4.3, 0.5), (0.5667, 0, 0.4, 2.0), (0.6333, 0, 0.3, 2.2), (0.8, 0, 0, 1.2), (1.1667, 0, 0, 0))},
+              "tail": {"rot": keys(z, (0.4333, 14, 0, 0), (0.5667, -26, 0, 0), (0.7, -30, 0, 0), (0.9, 6, 0, 0), (1.1667, 0, 0, 0))}}
     hit = {"torso": {"rot": keys(z, (0.1, 16, 8, 0), (0.35, 12, 6, 0), (0.7, 0, 0, 0))},
            "head": {"rot": keys(z, (0.1, 18, -10, 6), (0.35, 12, -6, 4), (0.7, 0, 0, 0))},
            "body": {"loc": keys(z, (0.1, 0, 0, 2.0), (0.35, 0, 0, 1.4), (0.7, 0, 0, 0))},
@@ -437,6 +442,6 @@ def build():
              "tail": {"rot": keys(z, (1.05, 0, -20, 0), (1.6, 0, -18, 0))}}
     rest = to_root((BOW_X, HAND_L[1] + 0.6, HAND_L[2] - 2.0))
     return asset("creatures", "centaur", "Centaur", root,
-                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", keyed(root, attack), loop=False), Clip("hit", keyed(root, hit), loop=False), Clip("death", keyed(root, death), loop=False)],
+                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", keyed(root, attack), loop=False, impact=0.5), Clip("hit", keyed(root, hit), loop=False), Clip("death", keyed(root, death), loop=False)],
                  sockets=[Socket("socket-function", at=rest, parent="bow")],
-                 fx=[pfx("rvx-fantasy-bow-release", "socket-function", "clip:attack", size=20, at=0.35)])
+                 fx=[pfx("rvx-fantasy-bow-release", "socket-function", "clip:attack", size=20, at=0.5)])

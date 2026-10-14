@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Facet Fauna: Cats - cover</title>
+<style>body { margin: 0; overflow: hidden; background: #f3eee6; }</style></head>
+<body>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Cover scene for the asset library: ready-made breeds, each frozen mid-clip,
+// on a warm floor with soft blob shadows. Screenshot at 1024 x 768.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(2);
+renderer.setSize(1024, 768);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf3eee6);
+scene.fog = new THREE.Fog(0xf3eee6, 6.5, 12);
+scene.add(new THREE.HemisphereLight(0xfffaf2, 0xb8a99a, 2.1));
+const sun = new THREE.DirectionalLight(0xffffff, 2.3);
+sun.position.set(-2, 5, 4);
+scene.add(sun);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64).rotateX(-Math.PI / 2),
+  new THREE.MeshLambertMaterial({ color: 0xe9dfd1 }));
+scene.add(floor);
+const c = document.createElement('canvas');
+c.width = c.height = 64;
+const g = c.getContext('2d');
+const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+grad.addColorStop(0, 'rgba(60,40,20,0.30)');
+grad.addColorStop(1, 'rgba(60,40,20,0)');
+g.fillStyle = grad;
+g.fillRect(0, 0, 64, 64);
+const blobMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false });
+
+// [file, clip, time, x, z, turn] - turn 0 faces the camera
+const CATS = [
+  ['maine-coon', 'lie_idle', 1.2, -1.0, -0.65, 0.9],
+  ['siamese', 'tail_question', 0.7, -0.05, -0.85, 0.6],
+  ['british-shorthair', 'sit_idle', 1.0, 0.95, -0.7, -0.5],
+  ['bengal', 'stretch', 0.8, -1.35, 0.25, 1.0],
+  ['domestic-shorthair-ginger', 'sit_idle', 0.5, -0.3, 0.05, 0.3],
+  ['persian', 'loaf_idle', 2.0, 0.6, 0.05, -0.4],
+  ['russian-blue', 'tail_wave', 0.6, 1.5, 0.2, -1.0],
+  ['domestic-shorthair-tuxedo', 'head_tilt', 0.5, -0.75, 0.85, 0.5],
+  ['kitten-calico', 'slow_blink', 1.0, 0.2, 0.8, 0.0],
+  ['munchkin', 'paw_swipe', 0.3, 1.05, 0.8, -0.6],
+];
+const loader = new GLTFLoader();
+await Promise.all(CATS.map(async ([f, clip, t, x, z, turn]) => {
+  const gl = await loader.loadAsync(`breeds/${f}.glb`);
+  const cat = gl.scene;
+  cat.position.set(x, 0, z);
+  cat.rotation.y = -Math.PI / 2 + turn;
+  cat.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+  scene.add(cat);
+  const mixer = new THREE.AnimationMixer(cat);
+  mixer.clipAction(gl.animations.find(a => a.name === clip)).play();
+  mixer.setTime(t);
+  const s = new THREE.Mesh(new THREE.PlaneGeometry(0.75 * cat.scale.x / 0.6, 0.75 * cat.scale.x / 0.6).rotateX(-Math.PI / 2), blobMat);
+  s.position.set(x, 0.003, z);
+  scene.add(s);
+}));
+const camera = new THREE.PerspectiveCamera(29, 4 / 3, 0.1, 50);
+camera.position.set(0, 2.35, 4.75);
+camera.lookAt(0.05, 0.15, 0.2);
+renderer.setAnimationLoop(() => renderer.render(scene, camera));
+</script>
+</body>
+</html>

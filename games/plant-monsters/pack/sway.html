@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Terra Tots: leaf sway test</title>
+<style>
+  html,body{margin:0;height:100%;background:#efe6d6;font:14px system-ui,sans-serif;color:#3b3226;overflow:hidden}
+  #ui{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;background:#fffaf0;padding:8px 14px;border-radius:10px;box-shadow:0 2px 8px #0002;z-index:2}
+  .lab{position:fixed;top:64px;width:33.33%;text-align:center;pointer-events:none}
+  .lab b{display:block;font-size:17px}
+  .calls{font-size:13px;opacity:.75}
+  canvas{display:block}
+</style></head>
+<body>
+<div id="ui">
+  <label>Tot <select id="who"></select></label>
+  <label>Clip <select id="anim"></select></label>
+  <label><input type="checkbox" id="merge"> merge meshes</label>
+</div>
+<div class="lab" style="left:0;width:50%"><b>Whole plant sways</b><span class="calls" id="c0"></span></div>
+<div class="lab" style="left:50%;width:50%"><b>Every leaf sways too</b><span class="calls" id="c1"></span></div>
+<script type="module" src="/src/pack/sway.ts"></script>
+</body></html>

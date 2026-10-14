@@ -1,0 +1,19 @@
+.env
+.asset-bot/
+
+# Bulky intermediates: raw 50k-tri AI meshes and early previews. The four
+# papercraft models are kept as the art-direction reference.
+models/*
+!models/4-papercraft-*.glb
+previews/
+__pycache__/
+
+# Quick test bakes (build_dog.py --only ...), viewed with kit/?dev=1
+kit/builds-dev/
+
+# npm (scripts/package.mjs)
+node_modules/
+
+# Ready-made breeds: generated (python3 scripts/build_breeds.py --ready),
+# shipped compressed to the asset library by scripts/package.mjs
+kit/breeds/

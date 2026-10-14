@@ -1,0 +1,46 @@
+{
+ "arms": [
+  {
+   "id": "Q1",
+   "desc": "current: 1352 tris"
+  },
+  {
+   "id": "P110",
+   "desc": "896 tris"
+  },
+  {
+   "id": "P75",
+   "desc": "612 tris"
+  },
+  {
+   "id": "P50",
+   "desc": "420 tris"
+  },
+  {
+   "id": "P35",
+   "desc": "272 tris"
+  }
+ ],
+ "legs": [
+  {
+   "id": "Q1",
+   "desc": "current: 1244 tris"
+  },
+  {
+   "id": "P110",
+   "desc": "860 tris"
+  },
+  {
+   "id": "P75",
+   "desc": "640 tris"
+  },
+  {
+   "id": "P50",
+   "desc": "404 tris"
+  },
+  {
+   "id": "P35",
+   "desc": "232 tris"
+  }
+ ]
+}

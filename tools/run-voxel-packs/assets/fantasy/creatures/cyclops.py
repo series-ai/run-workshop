@@ -421,12 +421,12 @@ def build():
     # then swings forward and down, and the wrist turns the club head over
     # into the ground in front of the feet. Each key step stays under 150
     # degrees, as the export takes the short way between keys.
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.22, 70, 0, 6), (0.42, 150, 0, 10), (0.56, 112, 0, 6), (0.66, 32, 0, 2), (0.80, 30, 0, 2), (1.30, 0, 0, 0))},
-              "club": {"rot": keys((0, 0, 0, 0), (0.22, -20, 0, 0), (0.42, -55, 0, 0), (0.56, -110, 0, 0), (0.66, -172, 0, 0), (0.80, -170, 0, 0), (1.30, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.42, 9, -8, 0), (0.66, -14, 6, 0), (0.80, -12, 4, 0), (1.30, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.42, -6, 0, 0), (0.66, 10, 0, 0), (1.30, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.42, -18, 0, -14), (0.66, 30, 0, -8), (1.30, 0, 0, 0))},
-              "cyclops": {"loc": keys((0, 0, 0, 0), (0.42, 0, 0, 1.5), (0.66, 0, 0, -3.0), (0.80, 0, 0, -3.0), (1.30, 0, 0, 0))}}
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 70, 0, 6), (0.3667, 145, 0, 10), (0.4333, 150, 0, 10), (0.5667, 44, 0, 2), (0.6333, 43, 0, 1), (0.7667, 44, 0, 2), (0.9667, 26, 0, 1), (1.1667, 0, 0, 0))},
+              "club": {"rot": keys((0, 0, 0, 0), (0.2, -20, 0, 0), (0.3667, -50, 0, 0), (0.4333, -58, 0, 0), (0.5667, -172, 0, 0), (0.6333, -176, 0, 0), (0.7667, -172, 0, 0), (0.9667, -90, 0, 0), (1.1667, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.3667, 11, -8, 0), (0.4333, 13, -10, 0), (0.5667, -18, 6, 0), (0.6333, -21, 7, 0), (0.7667, -17, 5, 0), (1.1667, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4667, 10, 0, 0), (0.6, -12, 0, 0), (0.6667, -15, 0, 0), (0.8, -10, 0, 0), (1.1667, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, -22, 0, -16), (0.6, 34, 0, -8), (0.7, 38, 0, -8), (1.1667, 0, 0, 0))},
+              "cyclops": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 2.5), (0.4333, 0, 0, 3), (0.5667, 0, 0, -7), (0.6333, 0, 0, -8), (0.7667, 0, 0, -7), (1.1667, 0, 0, 0))}}
     hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 12, 0, 6), (0.50, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.10, 16, -12, 4), (0.50, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.10, -14, 0, -18), (0.50, 0, 0, 0))},
@@ -442,6 +442,6 @@ def build():
              "leg-r": {"rot": keys((0, 0, 0, 0), (1.00, 4, 0, 8))}}
     head_pt = (CLUB_TOP[0], CLUB_TOP[1] - 8.0, CLUB_TOP[2])
     return asset("creatures", "cyclops", "Cyclops", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-function", at=to_root(head_pt), parent="club")],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-function", "clip:attack", size=34, at=0.64)])
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-function", "clip:attack", size=34, at=0.5667)])

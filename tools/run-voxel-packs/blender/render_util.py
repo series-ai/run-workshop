@@ -71,8 +71,8 @@ def visible_meshes(scene):
     return [o for o in scene.objects if o.type == "MESH" and o not in shapes and not o.hide_render]
 
 
-def render_scene(png: str, size: int, direction: Vector) -> None:
-    scene = bpy.context.scene
+def scene_bounds(scene) -> tuple[Vector, Vector]:
+    """World bounds of the visible meshes in the current frame."""
     deps = bpy.context.evaluated_depsgraph_get()
     pts = []
     for o in visible_meshes(scene):
@@ -84,6 +84,13 @@ def render_scene(png: str, size: int, direction: Vector) -> None:
         raise RuntimeError("nothing visible to render")
     lo = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
     hi = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    return lo, hi
+
+
+def render_scene(png: str, size: int, direction: Vector, bounds: tuple[Vector, Vector] | None = None) -> None:
+    """Render the scene framed on `bounds` (default: this frame's bounds)."""
+    scene = bpy.context.scene
+    lo, hi = bounds or scene_bounds(scene)
     centre, radius = (lo + hi) / 2, max((hi - lo).length / 2, 1e-4)
     cam_data = bpy.data.cameras.new("cam")
     cam_data.type = "ORTHO"

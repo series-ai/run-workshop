@@ -1,0 +1,26 @@
+import { chromium } from "playwright";
+const b = await chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader"] });
+const p = await b.newPage({ viewport: { width: 1500, height: 1000 } });
+const errs = [];
+p.on("pageerror", (e) => errs.push("pageerror " + e));
+p.on("console", (m) => { if (m.type() === "error") errs.push(m.type() + " " + m.text()); });
+await p.goto("http://127.0.0.1:5205/houses.html");
+await p.waitForFunction(() => window.__ready && window.__houses.current, null, { timeout: 120000 });
+await p.waitForTimeout(4000);
+const info = async () => p.evaluate(() => document.getElementById("stats").innerText.replace(/\n/g, " | "));
+const shot = async (name, patch) => {
+  if (patch) await p.evaluate((x) => window.__houses.set(x), patch);
+  await p.waitForTimeout(2500);
+  await p.screenshot({ path: `/tmp/rck-houses-${name}.png` });
+  console.log(name, await info());
+};
+await shot("house-a");
+await shot("hipgable", { width: "medium", roof: "hip-gable", gable_window: "round", porch: "centre", turret: "none", bay: "right", wing: "none", chimney: "right", dormer: false, balcony: false, palette: "teal", colours: { body: "#549494", trim: "#f5e6c7", roof: "#4c2e45", porch: "#f5e6c7" } });
+await shot("roundcross", { roof: "cross", cross_style: "round", gable_window: "round", gingerbread: "valance", frieze: "scallop", bay: "none", chimney: "none", palette: "sage", colours: { body: "#94ab85", trim: "#f5e6c7", roof: "#383842", porch: "#f5e6c7" } });
+await shot("wings", { roof: "gable", wing: "both", porch: "centre", chimney: "both", gingerbread: "pendant", gable_window: "arched", palette: "lavender", colours: { body: "#a38fb8", trim: "#f5e6c7", roof: "#4f304c", porch: "#f5e6c7" } });
+console.log("wing left on wrap:", await p.evaluate(() => { window.__houses.set({ porch: "wrap" }); return null; }));
+await p.waitForTimeout(1500);
+console.log("after wrap:", await p.evaluate(() => JSON.stringify({ wing: window.__houses.state.wing, title: [...document.querySelectorAll('#sided .side')].find((r) => r.dataset.e === "wing").querySelector('button[data-v=left]').title })));
+await shot("brick", { siding: "brick", porch: "right", turret: "left", wing: "right", chimney: "left", bay: "none", roof: "gable", rail: "fancy", frieze: "pendant", colours: { body: "#9e4d3d", trim: "#fcfaf2", roof: "#40566b", porch: "#456654" } });
+console.log("ERRORS", JSON.stringify(errs));
+await b.close();
