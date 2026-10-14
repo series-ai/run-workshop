@@ -28,6 +28,16 @@ const io = new NodeIO()
   .registerExtensions(ALL_EXTENSIONS)
   .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
 
+/** Joint indices as bytes where a skin has under 256 joints (the merged meshes bind each part to one joint). */
+function byteJoints(doc) {
+  for (const mesh of doc.getRoot().listMeshes())
+    for (const prim of mesh.listPrimitives()) {
+      const acc = prim.getAttribute('JOINTS_0');
+      if (!acc || acc.getArray() instanceof Uint8Array || acc.getMax([])[0] > 255) continue;
+      acc.setArray(Uint8Array.from(acc.getArray()));
+    }
+}
+
 let before = 0;
 let after = 0;
 for (const dir of ['characters', 'pots', 'props', 'pests']) {
@@ -47,8 +57,9 @@ for (const dir of ['characters', 'pots', 'props', 'pests']) {
       dedup(),
       prune(),
       reorder({ encoder: MeshoptEncoder }),
-      quantize({ pattern: /^(NORMAL|COLOR_0)$/, quantizeNormal: 8, quantizeColor: 8 }),
+      quantize({ pattern: /^(NORMAL|COLOR_0|WEIGHTS_0)$/, quantizeNormal: 8, quantizeColor: 8, quantizeWeight: 8 }),
     );
+    byteJoints(doc);
     doc.createExtension(KHRMeshQuantization).setRequired(true);
     doc.createExtension(EXTMeshoptCompression).setRequired(true)
       .setEncoderOptions({ method: EXTMeshoptCompression.EncoderMethod.FILTER });

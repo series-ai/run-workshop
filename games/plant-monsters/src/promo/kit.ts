@@ -4,6 +4,7 @@ import { buildPot, potById } from '../body/pots'
 import { buildMonster, loadBodyParts, type BodyParts, type Monster } from '../body/limbs'
 import { poseMonster, type MonsterAnim } from '../body/anims'
 import type { SkinPattern } from '../body/skinPattern'
+import { mergeMeshes, unmergeMeshes } from '../pack/merge'
 import { withPattern, type PatternName } from '../plant/leafPatterns'
 import { alocasia, birdOfParadise, calathea, growClump, peaceLily, type ClumpSpec } from '../plant/species'
 import { growMonstera, growPothos, growPothosCrown, growSansevieria, growZZ, type ClumpAssets, type PlantAssets } from '../plant/plant'
@@ -166,6 +167,8 @@ export interface TotOptions {
   seed?: number
   /** Overall size (1 = normal): big mature plants get a bigger pot and body, little ones a smaller one. */
   size?: number
+  /** 'leaves' (default): every leaf sways on its own spring as well as the whole plant; 'plant': the plant sways as one. */
+  sway?: 'plant' | 'leaves'
 }
 
 const SCALE = 1.6 // body units -> scene units (as in the viewer)
@@ -194,9 +197,24 @@ export class Tot {
     })
   }
   setPlant(species: Species, age: number, sport = false) {
+    const merged = this.merged
+    if (merged) this.mergeMeshes(false)
     this.holder.clear()
-    this.holder.add(growPlant(this.kit, species, age, this.r, this.monster.pot.height * SCALE * 0.95, sport))
+    const plant = growPlant(this.kit, species, age, this.r, this.monster.pot.height * SCALE * 0.95, sport)
+    // the leaves hang off the plant's parts (a whole plant, a pothos vine) as groups; the stems are plain meshes
+    if ((this.o.sway ?? 'leaves') === 'leaves') for (const part of plant.children) for (const leaf of part.children) if (!(leaf as THREE.Mesh).isMesh) leaf.userData.leafSpring = true
+    this.holder.add(plant)
     this.holder.traverse((x) => (x.castShadow = true))
+    if (merged) this.mergeMeshes()
+  }
+  private merged: THREE.SkinnedMesh[] | null = null
+  /**
+   * Draw the plant and pot as one mesh per material: a tot drops from 40 to 100+ draw calls to about 20, and moves the
+   * same. Stays on through setPlant. The props (couch, seed pod...) show and hide, so they stay separate.
+   */
+  mergeMeshes(on = true) {
+    if (this.merged) unmergeMeshes(this.merged)
+    this.merged = on ? mergeMeshes(this.root, [this.monster.pot.group], (o) => !!o.userData.fx) : null
   }
   /** Pose at time t; returns travel speed in scene units / s. */
   pose(t: number, anim = this.anim) {

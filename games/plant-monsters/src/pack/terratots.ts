@@ -5,6 +5,7 @@
  *   const kit = await TT.loadPackKit('assets/terra-tots/kit/', loader)   // a GLTFLoader with the meshopt decoder
  *   const tot = new TT.Tot(kit, { species: 'monstera', age: 0.8, pot: 'egg', cw: 0, skin: '#e6b08c', pattern: 'vitiligo' })
  *   scene.add(tot.root)
+ *   tot.mergeMeshes()   // optional: plant and pot as one mesh per material (about 20 draw calls instead of 40 to 150+)
  *   // every frame: tot.pose(time, 'walk')   (any of TT.ANIMS; returns the travel speed for walking clips)
  *
  * Plants grow leaf by leaf (`age` 0..1, or `tot.setPlant(species, age)` live), 37 pots in their colourways, limbs with
@@ -18,6 +19,7 @@ export { skinMaterial, SKIN_PATTERNS, type SkinPattern } from '../body/skinPatte
 export { PROPS, hanger, ceilingHook, rope, pest, type Prop, type HangerKind, type PestKind } from '../props/props'
 export { infest, clearPests, rollPestCount, PEST_KINDS, MAX_PESTS } from '../props/infest'
 export { MEMBERS, CAST, who, cast, look } from './cast'
+export { mergeMeshes, unmergeMeshes } from './merge'
 
 import { loadKit as load } from '../promo/kit'
 import type { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'

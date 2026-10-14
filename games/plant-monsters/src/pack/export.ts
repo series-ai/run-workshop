@@ -6,14 +6,18 @@ import { buildPot, POTS } from '../body/pots'
 import { PROPS } from '../props/props'
 import { MEMBERS, look, age, SIZE } from './cast'
 import { bakeLimbs, bakeTints } from './bake'
+import { mergeMeshes } from './merge'
 
 /**
  * The Terra Tots pack exporter (pack/index.html). Builds every character, bakes every procedural clip into keyframe
  * tracks (nodes and limb bones, the leaves' follow-through, and the props a clip uses, shown and hidden by scale),
- * bakes the shader-only looks into textures, and posts each GLB to pack/server.py. Also exports every pot in every
- * colourway, the props and the pests.
+ * bakes the shader-only looks into textures, merges the meshes (one skinned mesh per material, each original mesh a
+ * bone) and posts each GLB to pack/server.py. Also exports every pot in every colourway, the props and the pests.
  *
  *   ?only=characters|pots|props   ?name=<file stem>   (defaults to everything)
+ *
+ * Run it in Chrome on the GPU (headless: --use-angle=metal --enable-gpu): the limb markings' noise comes out different on
+ * the software renderer.
  */
 
 const Q = new URLSearchParams(location.search)
@@ -93,6 +97,14 @@ function differs(a: Float32Array, rest: number[], eps: number) {
   return false
 }
 
+/** Every other key (and always the last, so loops close). */
+function every2(times: Float32Array, values: Float32Array, size: number): [Float32Array, Float32Array] {
+  const keep = [...times.keys()].filter((i) => i % 2 === 0 || i === times.length - 1)
+  const v = new Float32Array(keep.length * size)
+  keep.forEach((i, k) => v.set(values.subarray(i * size, i * size + size), k * size))
+  return [Float32Array.from(keep, (i) => times[i]), v]
+}
+
 /** Build the clip: a track for every node that moves away from its rest pose in this clip. */
 function toClip(name: string, nodes: THREE.Object3D[], rest: Sample[], frames: Sample[], dur: number) {
   const n = frames[0].p.length / 3
@@ -102,7 +114,11 @@ function toClip(name: string, nodes: THREE.Object3D[], rest: Sample[], frames: S
     const f = frames[k]
     const r = rest[k]
     if (differs(f.p, [...r.p], 1e-5)) tracks.push(new THREE.VectorKeyframeTrack(`${o.uuid}.position`, times, f.p))
-    if (differs(f.q, [...r.q], 1e-5) && differs(f.q, [...r.q].map((v) => -v), 1e-5)) tracks.push(new THREE.QuaternionKeyframeTrack(`${o.uuid}.quaternion`, times, f.q))
+    if (differs(f.q, [...r.q], 1e-5) && differs(f.q, [...r.q].map((v) => -v), 1e-5)) {
+      // a leaf's own spring is smooth and small: every other frame is plenty (keeps the files small)
+      if (o.userData.leafSpring) tracks.push(new THREE.QuaternionKeyframeTrack(`${o.uuid}.quaternion`, ...every2(times, f.q, 4)))
+      else tracks.push(new THREE.QuaternionKeyframeTrack(`${o.uuid}.quaternion`, times, f.q))
+    }
     if (differs(f.s, [...r.s], 1e-5)) tracks.push(new THREE.VectorKeyframeTrack(`${o.uuid}.scale`, times, f.s))
   })
   return new THREE.AnimationClip(name, dur, tracks)
@@ -137,6 +153,12 @@ async function exportCharacter(kit: Kit, c: Character) {
   for (const [anim] of CLIPS) tot.pose(0.5, anim)
   bakeLimbs(root)
   bakeTints(root)
+  // everything but the limbs into one skinned mesh per material (hidden props are baked as scale 0, so they can join
+  // too); bind with nothing collapsed, the clips set every scale anyway
+  root.traverse((o) => {
+    if (o !== root && Math.min(Math.abs(o.scale.x), Math.abs(o.scale.y), Math.abs(o.scale.z)) < 1e-4) o.scale.set(1, 1, 1)
+  })
+  mergeMeshes(root)
   nameNodes(root)
   const nodes = nodesOf(root)
   // the rest pose: standing idle at t = 0, props hidden (scale 0)

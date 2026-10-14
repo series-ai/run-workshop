@@ -42,7 +42,7 @@ function leafSpots(plant: THREE.Object3D, minUp: number) {
   const nm = new THREE.Matrix3()
   plant.traverse((o) => {
     const mesh = o as THREE.Mesh
-    if (!mesh.isMesh || mesh.userData.pest) return
+    if (!(mesh.isMesh || mesh.userData.merged) || mesh.userData.pest) return // (merged leaves still carry their geometry)
     const pos = mesh.geometry.getAttribute('position') as THREE.BufferAttribute | undefined
     if (!pos) return
     const idx = mesh.geometry.getIndex()

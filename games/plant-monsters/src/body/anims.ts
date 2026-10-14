@@ -1172,6 +1172,9 @@ function applyFx(m: Monster, f: Frame, t: number) {
 
 // --- leaves -------------------------------------------------------------------------------------------------------
 
+/** How much a single leaf's own spring moves, against the whole plant's (it rides on that too). */
+const LEAF_GAIN = 0.7
+
 /**
  * Leaves with follow-through: each leaf stem is a damped spring driven by the pot's motion (they lag when it lurches,
  * bounce after landings, trail behind spins) plus a gentle living sway (`f.waggle`, `f.waggleRate`).
@@ -1199,29 +1202,35 @@ function waggle(m: Monster, f: Frame, t: number) {
   // acceleration in the socket's frame: leaves tip against it (inertia)
   const local = acc.clone().applyQuaternion(q.clone().invert())
   const still = dt === 1 / 60 && reset
-  let k = 0
+  // each part of the plant (a whole plant, a pothos vine) springs, and so does each leaf marked `leafSpring` on it
+  const parts: [THREE.Object3D, number][] = []
   for (const holder of m.socket.children)
     for (const plant of holder.children)
       for (const part of plant.children) {
-        const q0: THREE.Quaternion = (part.userData.q0 ??= part.quaternion.clone())
-        const p = k++ * 1.7
-        const sp = st.springs.get(part) ?? [0, 0, 0, 0, 0, 0]
-        // stiffer and faster for small parts, slower and floppier for big ones: vary by index
-        const stiff = 90 + 50 * Math.sin(p * 2.3) ** 2
-        const damp = f.leafDamp ?? 4.5
-        const sway = [f.waggle * Math.sin(t * f.waggleRate * 2.1 + p * 0.7), f.waggle * 0.7 * Math.sin(t * f.waggleRate * 1.6 + p * 1.3), 0]
-        const drive = [THREE.MathUtils.clamp(-local.z * 0.012, -0.5, 0.5) + THREE.MathUtils.clamp(local.y * 0.01, -0.4, 0.4) * (0.6 + 0.4 * Math.sin(p)), THREE.MathUtils.clamp(local.x * 0.012, -0.5, 0.5), THREE.MathUtils.clamp(-yawRate * 0.06, -0.6, 0.6)]
-        if (!still)
-          for (let a = 0; a < 3; a++) {
-            const target = sway[a] + drive[a]
-            const accA = stiff * (target - sp[a]) - damp * sp[3 + a]
-            sp[3 + a] += accA * dt
-            sp[a] += sp[3 + a] * dt
-            sp[a] = THREE.MathUtils.clamp(sp[a], -0.7, 0.7)
-          }
-        st.springs.set(part, sp)
-        part.quaternion.copy(q0).premultiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(sp[0], sp[2], sp[1])))
+        parts.push([part, 1])
+        for (const leaf of part.children) if (leaf.userData.leafSpring) parts.push([leaf, LEAF_GAIN])
       }
+  let k = 0
+  for (const [part, gain] of parts) {
+    const q0: THREE.Quaternion = (part.userData.q0 ??= part.quaternion.clone())
+    const p = k++ * 1.7
+    const sp = st.springs.get(part) ?? [0, 0, 0, 0, 0, 0]
+    // stiffer and faster for small parts, slower and floppier for big ones: vary by index
+    const stiff = 90 + 50 * Math.sin(p * 2.3) ** 2
+    const damp = f.leafDamp ?? 4.5
+    const sway = [f.waggle * Math.sin(t * f.waggleRate * 2.1 + p * 0.7), f.waggle * 0.7 * Math.sin(t * f.waggleRate * 1.6 + p * 1.3), 0]
+    const drive = [THREE.MathUtils.clamp(-local.z * 0.012, -0.5, 0.5) + THREE.MathUtils.clamp(local.y * 0.01, -0.4, 0.4) * (0.6 + 0.4 * Math.sin(p)), THREE.MathUtils.clamp(local.x * 0.012, -0.5, 0.5), THREE.MathUtils.clamp(-yawRate * 0.06, -0.6, 0.6)]
+    if (!still)
+      for (let a = 0; a < 3; a++) {
+        const target = (sway[a] + drive[a]) * gain
+        const accA = stiff * (target - sp[a]) - damp * sp[3 + a]
+        sp[3 + a] += accA * dt
+        sp[a] += sp[3 + a] * dt
+        sp[a] = THREE.MathUtils.clamp(sp[a], -0.7, 0.7)
+      }
+    st.springs.set(part, sp)
+    part.quaternion.copy(q0).premultiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(sp[0], sp[2], sp[1])))
+  }
 }
 
 /**
