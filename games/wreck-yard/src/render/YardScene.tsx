@@ -4,6 +4,8 @@ import { ShippingCrates } from './ShippingCrates';
 import { StorageAttraction } from './StorageAttraction';
 import { ReturnsDepartment } from './ReturnsDepartment';
 import { PortalEffects } from './PortalEffects';
+import { YardDepartments } from './YardDepartments';
+import { LostPropertyBelt } from './LostPropertyBelt';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -87,6 +89,8 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
       <StorageAttraction renderRef={renderRef} />
       <ShippingCrates bodies={bodies} renderRef={renderRef} />
       <ReturnsDepartment />
+      <YardDepartments renderRef={renderRef} />
+      <LostPropertyBelt renderRef={renderRef} />
       <PortalEffects renderRef={renderRef} />
       <ArenaCage renderRef={renderRef} />
       <VoxelBodies bodies={bodies} renderRef={renderRef} worldOcclusion={worldOcclusion} />

@@ -10,6 +10,19 @@ everyone in sync.
 
 > New to run-workshop? Start with [Getting Started](../../GETTING_STARTED.md).
 
+## Yard departments
+
+The yard is an industrial test site. Each department has a short task and a
+questionable safety claim. Use the directory and floor numbers to find storage,
+balance tests, cutting, floating, impact tests, driving, and delivery.
+
+The southwest **Lost Property** belt moves loose parts through native contact
+surface motion. Put a part on the belt and collect it at the other end.
+Collection is not guaranteed. The belt uses the normal grab and throw controls.
+
+See [the department guide](docs/departments.txt) for the activities and their
+Syncplay features.
+
 ## Local setup
 
 ```bash
@@ -194,10 +207,10 @@ Wreck Yard uses a custom retro-futuristic cel-shaded graphic novel aesthetic tar
 
 ### Pipeline architecture
 
-1. **Quantized Cel Shading:** All geometry renders via `<Toon>` materials (`toonMaterial.tsx`) and the raymarched voxel volume shader (`toonGlsl.ts`), quantizing lighting into discrete stepped diffuse bands (`ART_STYLE.ramp`).
+1. **Stepped shading:** World surfaces use `<Toon>` materials (`toonMaterial.tsx`) and the voxel volume shader (`toonGlsl.ts`). `ART_STYLE.ramp` sets the light bands. Department signs use unlit materials to keep text clear.
 2. **Ink Edge Post-Process:** `InkComposer.tsx` runs a single composite pass executing a 4-sample screen-space depth + normal Sobel kernel (`inkShader.ts`), drawing dark ink line contours (`ART_STYLE.ink`) around voxel bodies, props, and architectural silhouettes while excluding uninked background elements (such as the stepped sky dome).
 3. **Multi-layer Industrial Skyline:** Procedural silhouettes (`skylineShapes.ts`, `Skyline.tsx`) populate the distant yard horizon across quantized atmospheric depth steps.
-4. **Greedy Voxel Dressing:** Procedural scrap stacks, concrete barriers, and salvage debris (`voxelProps.ts`, `voxelMesher.ts`, `YardDressing.tsx`) merge coplanar faces into single-draw-call meshes within a strict 250,000 triangle budget.
+4. **Department dressing:** `src/scene/departments.ts` supplies the signs, floor numbers, and directory. `YardDepartments.tsx` uses one atlas and three merged meshes. `LostPropertyBelt.tsx` adds three meshes. The belt drawing uses the same dimensions and speed as its native collider.
 
 ### Single tuning point
 

@@ -1,0 +1,124 @@
+Wreck Yard departments
+======================
+
+The yard is a test site with poor safety claims. Each department gives one
+short action. The signs use the same dry industrial tone as Returns.
+Floor numbers, marked work areas, and a directory connect the departments.
+The existing tools and controls operate every task.
+
+Department activities
+---------------------
+
+Northwest: Perfectly Safe Storage. Use the lift, move boxes, or cut a lower
+support. The stack, lift, and guarded restack remain unchanged.
+
+North: Incoming Liability. Use the drum control. The overhead belt carries
+the drum through native contact surface motion. Drums can burn and explode.
+
+Northeast: Claims Assessment. Put a loose part through the hoop. The shared
+dunk counter records a downward crossing. The receiving crates remain nearby.
+
+East: Roadworthy Until Impact. Drive the buggy over the ramp and into the
+loose crash wall. The native vehicle supplies wheel contact and suspension.
+
+Southeast: Express Claims. Load the catapult bucket and use Launch. The
+existing launch sends loose bodies toward the hoop.
+
+Southwest: Lost Property. Put a loose part on the low belt. Native surface
+velocity moves it to the marked exit. Collection is not guaranteed.
+
+Southwest inner yard: Impact Inspection. Use a heavy ball on the pins. The
+balls, pins, and hopper use real collision and body motion. No bowling score
+or automatic reset is claimed.
+
+West deck: Some Assembly Required. Cut a loose container or wreck into
+smaller parts. The original voxel bodies remain movable and cuttable.
+
+West inner yard: Load Balance Office. Put scrap on one end of the plank.
+The plank rests on a solid pivot. It has no native joint.
+
+West center: Warranty Reduction. Cut a lower tower support. Voxel carving
+and component splitting produce the loose parts.
+
+Center: Float Test. Compare a crate with heavy ballast in the tank. Native
+fluid buoyancy and drag determine the motion. Water still puts out the torch.
+
+Portal bays: Delivery and Returns. Move through the opening with a loose
+object, or send a thrown object through. Gravity and torch fire stop at the
+opening. The recent tool limit remains in place.
+
+Lost Property implementation
+----------------------------
+
+src/sim/lostProperty.ts defines one box. Its center is
+(-8.5, FLOOR_Y + 0.22, 20.8) m. Its full size is (4.6, 0.44, 1.5) m.
+src/sim/shell.ts adds it to the native shell with the existing rubber belt
+material. The established physics setup sets surface velocity once to
+(1.35, 0, 0) m/s. There is no new per-tick simulation loop or spawn control.
+The renderer reads the same box definition.
+
+The refresh adds one static body. It adds no initial dynamic body or joint.
+It keeps all 400 storage crates, 36 receiving crates, and original loose
+props. Native tests check the new volume against rotated initial prop bounds.
+The lift lane, buggy runway, player starts, and portal approaches stay clear.
+
+The belt drawing follows the simulation frame. Solo pause freezes it. A room
+menu does not pause the shared simulation, so its belt continues to move.
+The shader pattern repeats after 25.3 m. Its bounded phase keeps the rib and
+arrow motion precise during long mobile sessions.
+This is a scene refresh. It is not a repair for the open stack recovery issue.
+
+Verification
+------------
+
+From games/wreck-yard:
+
+  npx vitest run src/sim/lostProperty.test.ts --maxWorkers=1
+  npx vitest run src/sim/liftApproach.test.ts src/sim/portalTools.test.ts src/sim/solidScenery.test.ts --maxWorkers=1
+  npm run identity:generate
+  npm run build
+
+The native belt test uses the real WASM engine. It checks contact motion,
+a floor control, checkpoint replay, initial placement, and the body budget.
+
+Use the local development server for the visual check:
+
+  npm run dev -- --host 127.0.0.1 --port 4494 --strictPort
+
+Before a scene edit, save the control views:
+
+  AUDIT_URL=http://127.0.0.1:4494 DEPARTMENT_SHOTS=test-results/departments/browser/control node scripts/verify-departments.mjs --baseline
+
+After the edit, compare the same views:
+
+  AUDIT_URL=http://127.0.0.1:4494 DEPARTMENT_BASELINE=test-results/departments/browser/control/results.json node scripts/verify-departments.mjs
+
+The script owns and closes its browser. Stop the development server when the
+check ends. Evidence stays under test-results/departments/. The completed
+department plan records the original control and final results. Browser
+emulation does not prove physical iPhone performance.
+
+Acceptance record: 17 October 2026
+---------------------------------
+
+The native belt checks pass 4/4. Lift approach, portal tools, and solid
+scenery checks pass 70/70. The final build passes the identity check,
+TypeScript, and Vite. The production smoke and play-gate checks pass 4/4.
+
+The browser check compares 39 fixed views with the original scene. It also
+captures 36 panel close views. The maximum increase is seven main-scene draw
+calls. The source adds six meshes. Three warmed solo resets keep six owned
+geometries, five materials, and one texture. Global warmed resource counts
+also stay equal. Solo pause holds the belt phase. Resume advances it with
+the simulation frame.
+
+The control report is browser/baseline-2026-10-17T17-33-26-028Z/results.json.
+The final report is browser/final-2026-10-17T17-52-01-051Z/results.json.
+Both paths are under test-results/departments/. The same folder holds the
+native, regression, source review, and visual review evidence.
+
+One real-input route stopped at existing scrap before it reached the belt.
+Browser carrying is not proved. The real native contact test proves belt
+transport. The room-menu clock behavior has source review only. This check
+does not prove multiplayer room behavior or performance on a physical iPhone.
+The open stack performance and recovery work remains separate.
