@@ -104,7 +104,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#5a564d' }}>
+    <div className="yard-app" style={{ position: 'fixed', inset: 0, background: '#5a564d' }}>
       <YardScene
         controller={controller}
         onAudioFrame={audio.frame}

@@ -18,6 +18,16 @@
   --yard-hazard: repeating-linear-gradient(-45deg, var(--yard-mustard) 0 9px, var(--yard-ink) 9px 18px);
 }
 
+.yard-app {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.yard-app :is(input, textarea, [contenteditable="true"], .yard-tape, .yard-modal__details pre) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 .yard-plate {
   position: relative;
   background: linear-gradient(180deg, var(--yard-steel-hi), var(--yard-steel) 55%);
