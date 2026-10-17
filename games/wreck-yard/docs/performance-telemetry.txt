@@ -373,6 +373,10 @@ This is a desktop host result. It is not an iPhone frame-rate measurement.
 The report separates world.step from world.latest. It does not isolate the
 native solver from all other work inside world.step.
 
+The user confirmed that the iPhone Max ran the game in the RUN app on iOS 17.
+The user thinks that the stuck zoom also enlarged the HUD. This needs a check
+in the RUN app web view.
+
 The exact iOS 17 runtime and physical iPhone are unavailable here. Chrome uses
 real CDP touch delivery. Current WebKit uses its supported native tap API.
 These checks do not prove iOS 17 pinch or double-tap behavior.

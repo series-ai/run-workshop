@@ -22,7 +22,7 @@ describe('tool feedback', () => {
   });
 
   it('reports blocked at the wall when the gravity gun hits static scenery', () => {
-    const state = click(settled(), { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...ray([0, 0, 20], [0, 0, 30]) });
+    const state = click(settled(), { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...ray([2, 0, 20], [2, 0, 30]) });
     const feedback = state.players[0]!.feedback!;
     expect(feedback.result).toBe('blocked');
     expect(feedback.point[2]).toBeCloseTo(25.7, 1);
@@ -87,7 +87,7 @@ describe('tool feedback', () => {
     expect(far.players[0]!.torch).toBeNull();
     sim.restore(start);
     sim.release(start);
-    const wall = click(sim, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([0, 0, 20], [0, 0, 30]) });
+    const wall = click(sim, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...ray([2, 0, 20], [2, 0, 30]) });
     expect(wall.players[0]!.feedback!.result).toBe('miss');
     expect(wall.players[0]!.feedback!.point[2]).toBeCloseTo(20 + TORCH_RANGE, 1);
   });

@@ -1,7 +1,7 @@
 import { meters, type PhysicsWorld3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { PortalRenderEnd3D, PortalRenderPair3D } from '@series-inc/rundot-syncplay/physics/3d';
 import { FLOOR_Y } from './constants';
-import type { Vec3 } from './math';
+import { add, rotateInverse, scale, sub, type Vec3 } from './math';
 import type { ShellBox } from './setPieces';
 
 export const RETURNS_PAIR_ID = 1;
@@ -108,6 +108,30 @@ const PLANE_EPSILON = 1e-5;
 const OPENING_CLEARANCE = 0.02;
 const EXIT_CAST_DISTANCE = 0.45;
 const FLOOR_CONTACT_TOLERANCE = 0.02;
+
+/** The first open aperture on a tool segment, from either face. */
+export function toolPortalBlock(world: PhysicsWorld3D, start: Vec3, end: Vec3): { readonly distance: number; readonly point: Vec3 } | null {
+  const travel = sub(end, start);
+  let nearest = Infinity;
+  for (const pair of world.portalPairs ?? []) {
+    if (!pair.open) continue;
+    for (const portal of [pair.portalA, pair.portalB]) {
+      const rotation = [portal.rotation.x, portal.rotation.y, portal.rotation.z, portal.rotation.w] as const;
+      const localStart = rotateInverse(sub(start, [portal.position.x, portal.position.y, portal.position.z]), rotation);
+      const localTravel = rotateInverse(travel, rotation);
+      if (Math.abs(localTravel[2]) <= PLANE_EPSILON) continue;
+      const fraction = -localStart[2] / localTravel[2];
+      if (fraction < 0 || fraction > 1 || fraction >= nearest) continue;
+      if (Math.abs(localStart[0] + localTravel[0] * fraction) > portal.opening.width / 2
+        || Math.abs(localStart[1] + localTravel[1] * fraction) > portal.opening.height / 2) continue;
+      nearest = fraction;
+    }
+  }
+  return nearest === Infinity ? null : {
+    distance: Math.hypot(...travel) * nearest,
+    point: add(start, scale(travel, nearest)),
+  };
+}
 
 function signedDistance(end: PortalRenderEnd3D, point: Vec3): number {
   const yaw = yawOf(end);

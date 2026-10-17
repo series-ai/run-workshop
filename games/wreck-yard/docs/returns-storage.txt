@@ -1,6 +1,28 @@
 Returns Department and Perfectly Safe Storage
 
 The local game now has one fixed portal pair and a four-floor freight lift.
+
+Tool limit, 2026-10-16: Gravity grab, remote punt, and torch fire stop at an
+open portal opening. The nearest target before the opening still works.
+Shots beside the opening use the normal solid query. Feedback ends at the
+portal plane. The torch does not heat objects beyond that plane.
+A held object is released without a throw or punt if its beam or requested
+hold point crosses the opening. Players and thrown objects can still cross.
+
+The limit checks the floor-adjusted hold point and its next motion step.
+A native object crossing also ends the hold before the next input. The
+initial hold distance stops before the opening so a close target can be held.
+The native portal tool suite passes 51 tests. It covers both ends and faces,
+targets before and beside the opening, closed portals, parallel rays, native
+crossings, replay, and release without a boost. Ten existing passage tests
+and ten tool feedback tests pass. The production build passes.
+The production browser check passes 17 aperture and player-passage checks.
+It checks visible tool endpoints at both ends and records no page, shader,
+or session errors. Separate real-input checks confirm normal cuts, grabs,
+releases, and freely punted object passage. The carry route met loose scrap
+before the opening. Its browser hold-release check remains unproved; the
+native tests cover that rule.
+
 DELIVERY and RETURNS connect opposite ends of the yard. Players, loose props,
 and the buggy can cross. The view shows the linked yard. Bodies that cross
 use clipped copies and interpolation counters.

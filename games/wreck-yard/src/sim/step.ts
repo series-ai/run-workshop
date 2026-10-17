@@ -59,6 +59,7 @@ import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import type { ShellBox } from './setPieces';
 import { stepBuggy } from './vehicle';
 import { movePlayer } from './movement';
+import { toolPortalBlock } from './returns';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
 import { advanceHoldPoint, grabServo } from './grab';
 import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
@@ -90,6 +91,7 @@ import {
   createInitialPlayer,
   type ContraptionState,
   type FuelDrumState,
+  type GrabState,
   type PlayerState,
   type PlayerTool,
   type YardBody,
@@ -126,21 +128,27 @@ interface Working {
   readonly frame: number;
 }
 
-/** The first solid along the aim ray. Static shell boxes block the ray. */
+/** The first body, solid, or open aperture along the tool ray. */
 type AimHit =
   | { readonly kind: 'body'; readonly body: YardBody; readonly hit: Hit }
   | { readonly kind: 'solid'; readonly point: Vec3 }
+  | { readonly kind: 'portal'; readonly point: Vec3 }
   | { readonly kind: 'none'; readonly point: Vec3 };
 
 function aimRay(w: Working, origin: Vec3, direction: Vec3, maxDistance = MAX_RAY_DISTANCE): AimHit {
+  const end = add(origin, scale(direction, maxDistance));
+  const portal = toolPortalBlock(w.physics.world, origin, end);
+  if (portal && portal.distance <= 1e-5) return { kind: 'portal', point: portal.point };
   const hits = w.physics.world.raycast({
     x: meters(origin[0]), y: meters(origin[1]), z: meters(origin[2]),
     dx: direction[0], dy: direction[1], dz: direction[2],
-    maxDistance: meters(maxDistance),
+    maxDistance: meters(portal?.distance ?? maxDistance),
+    maxPortalDepth: 0,
     layerMask: WORLD_LAYER,
   });
   const first = hits[0];
-  if (!first) return { kind: 'none', point: add(origin, scale(direction, maxDistance)) };
+  if (portal && (!first || first.distance >= portal.distance)) return { kind: 'portal', point: portal.point };
+  if (!first) return { kind: 'none', point: end };
   const point: Vec3 = [first.point.x, first.point.y, first.point.z];
   const bodyId = bodyNameOf(first.bodyKey);
   const body = isShell(bodyId) ? undefined : findBody(w.bodies, bodyId);
@@ -324,6 +332,18 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
 }
 
 
+function grabAim(body: YardBody, ray: { origin: Vec3; direction: Vec3 }, distance: number): Vec3 {
+  const aim = add(ray.origin, scale(ray.direction, distance));
+  const floorY = FLOOR_Y + halfExtents(body.dims)[1] + GRAB_FLOOR_CLEARANCE;
+  return [aim[0], Math.max(aim[1], floorY), aim[2]];
+}
+
+function grabPortalBlock(w: Working, ray: { origin: Vec3; direction: Vec3 }, grab: GrabState, includeAim: boolean) {
+  const held = physicsBodyById(w.physics, grab.bodyId)!;
+  return toolPortalBlock(w.physics.world, ray.origin, [held.x, held.y, held.z])
+    ?? (includeAim ? toolPortalBlock(w.physics.world, ray.origin, grabAim(findBody(w.bodies, grab.bodyId)!, ray, grab.distance)) : null);
+}
+
 function stepHand(
   w: Working,
   input: YardInput,
@@ -337,6 +357,15 @@ function stepHand(
   if (input.drop) {
     return { ...player, grab: null, torch: null, torchTicks: 0,
       wasPressed: input.pressed, wasSecondaryPressed: input.secondary };
+  }
+
+  if (grab) {
+    const portal = grabPortalBlock(w, ray, grab, input.pressed);
+    if (portal) {
+      return { ...player, grab: null, torch: null, torchTicks: 0,
+        wasPressed: input.pressed, wasSecondaryPressed: input.secondary,
+        feedback: toolFeedback(w, 'blocked', portal.point) };
+    }
   }
 
   // Secondary action: Gravity Gun PUNT
@@ -384,13 +413,21 @@ function stepHand(
     const aim = aimRay(w, ray.origin, ray.direction);
     const physics = aim.kind === 'body' ? physicsBodyById(w.physics, aim.body.id) : undefined;
     if (aim.kind === 'body' && aim.body.motion === 'dynamic' && physics) {
+      const distance = clamp(aim.hit.distance, 2.5, 6.0);
+      const portal = toolPortalBlock(w.physics.world, ray.origin, add(ray.origin, scale(ray.direction, distance)));
       grab = {
         bodyId: aim.body.id,
-        distance: clamp(aim.hit.distance, 2.5, 6.0),
+        distance: portal ? Math.max(0, portal.distance - 0.01) : distance,
         target: [physics.x, physics.y, physics.z],
         targetVelocity: [0, 0, 0],
       };
-      feedback = toolFeedback(w, 'grab', aim.hit.point);
+      const blocked = grabPortalBlock(w, ray, grab, true);
+      if (blocked) {
+        grab = null;
+        feedback = toolFeedback(w, 'blocked', blocked.point);
+      } else {
+        feedback = toolFeedback(w, 'grab', aim.hit.point);
+      }
     } else {
       const button = aim.kind === 'solid' ? buttonAt(aim.point) : null;
       feedback = button ? pressButton(w, button) : refusal(w, aim);
@@ -399,19 +436,23 @@ function stepHand(
 
   if (grab && input.pressed) {
     const body = findBody(w.bodies, grab.bodyId)!;
-    const aim = add(ray.origin, scale(ray.direction, grab.distance));
-    const floorY = FLOOR_Y + halfExtents(body.dims)[1] + GRAB_FLOOR_CLEARANCE;
-    const hold = advanceHoldPoint({ point: grab.target, velocity: grab.targetVelocity }, [aim[0], Math.max(aim[1], floorY), aim[2]]);
-    const physics = physicsBodyById(w.physics, grab.bodyId)!;
-    const position: Vec3 = [physics.x, physics.y, physics.z];
-    const gap = sub(hold.point, position);
-    if (gap[0] * gap[0] + gap[1] * gap[1] + gap[2] * gap[2] > GRAB_BREAK_DISTANCE * GRAB_BREAK_DISTANCE) {
-      // The body is stuck far behind the hold point (wedged or knocked away): let go.
+    const hold = advanceHoldPoint({ point: grab.target, velocity: grab.targetVelocity }, grabAim(body, ray, grab.distance));
+    const portal = toolPortalBlock(w.physics.world, ray.origin, hold.point);
+    if (portal) {
       grab = null;
+      feedback = toolFeedback(w, 'blocked', portal.point);
     } else {
-      wakeShippingStack(w.physics, grab.bodyId);
-      const applied = grabServo(w.physics.world, physicsBodyHandle(w.physics, grab.bodyId), hold);
-      grab = applied ? { ...grab, target: hold.point, targetVelocity: hold.velocity } : null;
+      const physics = physicsBodyById(w.physics, grab.bodyId)!;
+      const position: Vec3 = [physics.x, physics.y, physics.z];
+      const gap = sub(hold.point, position);
+      if (gap[0] * gap[0] + gap[1] * gap[1] + gap[2] * gap[2] > GRAB_BREAK_DISTANCE * GRAB_BREAK_DISTANCE) {
+        // Release a body that stays too far from the hold point.
+        grab = null;
+      } else {
+        wakeShippingStack(w.physics, grab.bodyId);
+        const applied = grabServo(w.physics.world, physicsBodyHandle(w.physics, grab.bodyId), hold);
+        grab = applied ? { ...grab, target: hold.point, targetVelocity: hold.velocity } : null;
+      }
     }
   } else if (grab && !input.pressed) {
     const physics = physicsBodyById(w.physics, grab.bodyId)!;
@@ -476,7 +517,7 @@ function stepTorch(
       torchTicks: 0,
       wasPressed: true,
       wasSecondaryPressed: input.secondary,
-      feedback: toolFeedback(w, aim.kind === 'solid' ? 'scorch' : 'miss', aim.point),
+      feedback: toolFeedback(w, aim.kind === 'none' ? 'miss' : 'scorch', aim.point),
     };
   }
   const { body, hit } = aim;
@@ -1101,9 +1142,19 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
   stepContraptions(w, state.world);
 
-  // Sync vehicle riders with the post-step vehicle position
+  // Release teleported holds and move riders to the post-step chassis position.
   for (let slot = 0; slot < w.players.length; slot += 1) {
     const p = w.players[slot];
+    if (p?.grab) {
+      const heldId = w.physics.bodyIds.get(p.grab.bodyId);
+      const crossing = latest.portalCrossings?.find((entry) => entry.bodyId === heldId);
+      if (crossing) {
+        const pair = w.physics.world.portalPairs?.find((entry) => entry.id === crossing.portalId);
+        const end = crossing.enteredEnd === 'A' ? pair?.portalA : pair?.portalB;
+        w.players[slot] = { ...p, grab: null,
+          feedback: end ? toolFeedback(w, 'blocked', [end.position.x, end.position.y, end.position.z]) : p.feedback };
+      }
+    }
     if (p?.ridingVehicle) {
       const chassis = physicsBodyById(w.physics, 'vehicle-chassis');
       if (chassis) {
