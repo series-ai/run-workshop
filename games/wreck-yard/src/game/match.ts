@@ -2,6 +2,7 @@ import {
   createSyncplayRunner,
   type SyncplayRoomTransport,
   type SyncplayRunner,
+  type SyncplayRunnerSnapshot,
   type SyncplayRunnerStatus,
 } from "@series-inc/rundot-syncplay/browser";
 import {
@@ -10,7 +11,7 @@ import {
   NEUTRAL_INPUT,
   type YardInput,
 } from "../sim/input";
-import { TICK_RATE } from "../sim/constants";
+import { MAX_PLAYERS, TICK_RATE } from "../sim/constants";
 import { createYardRuntime, yardRoomOptions, YARD_INPUT_OWNERSHIP } from "../sim/session";
 import type { YardState } from "../sim/state";
 import {
@@ -47,6 +48,25 @@ export interface MatchSnapshot {
   readonly localSlot: number;
   readonly roomCode: string | null;
   readonly rollbackCount: number;
+  readonly crew: CrewPresence;
+}
+
+export interface CrewPresence {
+  readonly occupied: number | null;
+  readonly capacity: number;
+}
+
+function crewPresence(snapshot: SyncplayRunnerSnapshot<YardRender>): CrewPresence {
+  if (snapshot.status === "offline") return { occupied: 1, capacity: 1 };
+  const capacity = snapshot.occupancy?.maxPlayers ?? MAX_PLAYERS;
+  if (snapshot.status === "stopped" || snapshot.status === "error") {
+    return { occupied: null, capacity };
+  }
+  const presence = snapshot.presence;
+  const occupied = presence?.length && !presence.includes("unknown")
+    ? presence.filter((seat) => seat === "human" || seat === "substituted").length
+    : snapshot.occupancy?.occupied ?? null;
+  return { occupied, capacity };
 }
 
 export interface MatchDeps {
@@ -157,6 +177,7 @@ export class MatchController {
   private error: string | null = null;
   private errorDetails: MatchErrorDetails | null = null;
   private roomCode: string | null = null;
+  private crew: CrewPresence = { occupied: null, capacity: MAX_PLAYERS };
   private lastPumpMs: number | null = null;
   /** Solo only: the pause menu holds the yard still (src/game/playGate.ts soloPaused). */
   private paused = false;
@@ -199,14 +220,17 @@ export class MatchController {
       // The controller remains connecting until the runtime is ready or fails.
       if (this.status === "connecting" && snapshot.status === "stopped") return;
       const next = mapStatus(snapshot.status);
+      const nextCrew = crewPresence(snapshot);
       const nextError =
         snapshot.status === "error"
           ? (snapshot.error?.message ?? "Connection lost")
           : next === "live"
             ? null
             : this.error;
-      if (next !== this.status || nextError !== this.error) {
+      if (next !== this.status || nextError !== this.error
+        || nextCrew.occupied !== this.crew.occupied || nextCrew.capacity !== this.crew.capacity) {
         this.status = next;
+        this.crew = nextCrew;
         this.error = nextError;
         if (snapshot.status === "error" && snapshot.error) {
           this.errorDetails = formatMatchError(snapshot.error, {
@@ -220,7 +244,7 @@ export class MatchController {
     });
   }
 
-  /** Status and room changes only. Frame updates are read through `getRender()` each frame. */
+  /** Status, room, and crew changes. Read frame updates through getRender(). */
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => {
@@ -255,6 +279,7 @@ export class MatchController {
     this.sampled = null;
     this.paused = false;
     this.solo = request.kind === "solo";
+    this.crew = { occupied: null, capacity: this.solo ? 1 : MAX_PLAYERS };
     this.error = null;
     this.errorDetails = null;
     this.status = "connecting";
@@ -302,6 +327,7 @@ export class MatchController {
       this.error = formatted.error;
       this.errorDetails = formatted.details;
       this.status = "error";
+      this.crew = { occupied: null, capacity: this.crew.capacity };
       this.publish();
     }
   }
@@ -347,6 +373,7 @@ export class MatchController {
       localSlot: this.runner.localSlot,
       roomCode: this.roomCode,
       rollbackCount: this.runner.rollbackCount,
+      crew: this.crew,
     };
   }
 
@@ -371,6 +398,7 @@ export class MatchController {
     this.sampled = null;
     this.paused = false;
     this.solo = false;
+    this.crew = { occupied: null, capacity: MAX_PLAYERS };
     this.status = "idle";
     this.error = null;
     this.errorDetails = null;

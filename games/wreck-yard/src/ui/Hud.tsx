@@ -112,7 +112,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
           <div className="yard-title__meta">
             <StatusLamp status={snapshot.status} />
             {snapshot.roomCode ? <span className="yard-tape" aria-label={`Room ${snapshot.roomCode}`}>{snapshot.roomCode}</span> : null}
-            <span className="yard-crew">Crew {render?.players?.length ?? 1}/4</span>
+            <span className="yard-crew">Crew {snapshot.crew.occupied ?? '…'}/{snapshot.crew.capacity}</span>
           </div>
           {live ? (
             <div className="yard-tally" aria-live="polite">
