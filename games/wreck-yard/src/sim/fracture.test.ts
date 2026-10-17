@@ -11,7 +11,7 @@ function bar(motion: 'dynamic' | 'fixed'): YardBody {
   const dims = { x: 30, y: 12, z: 12 };
   const voxels = makeEmptyVoxelField(dims);
   stampBox(voxels, dims, { x: 0, y: 0, z: 0 }, { x: 29, y: 11, z: 11 }, 3);
-  return { id: 'bar', label: 'Bar', dims, voxels, motion, buoyancy: 0.1, anchorFaces: motion === 'fixed' ? ['-x'] : [], impactCooldownUntil: 0, heat: null };
+  return { id: 'bar', label: 'Bar', material: 'steel', dims, voxels, motion, buoyancy: 0.1, anchorFaces: motion === 'fixed' ? ['-x'] : [], impactCooldownUntil: 0, heat: null };
 }
 
 const pose = { position: [0, 1, 0] as const, rotation: IDENTITY_QUAT, linearVelocity: [0.01, 0, 0] as const, angularVelocity: [0, 0, 0] as const };
@@ -98,11 +98,10 @@ describe('fractureBody', () => {
   });
 
   it('separates a body on either axis, not just the one the stroke happens to cross', () => {
-    // The same body cut vertically and horizontally at its midpoint must come
-    // apart both ways. A surface gouge alone left the halves joined behind the
-    // cut, which is what made vertical and horizontal strokes behave differently.
+    // Explicit cuts across the full depth must separate either axis.
+    // Start at the current half-cell inset from the front cell boundary.
     const slab = bar('dynamic');
-    const zIn = 12 - 1 - 1.35;
+    const zIn = 12 - 0.5 - 0.5;
     const vertical: FractureContact = {
       start: [15, 13, zIn], end: [15, -2, zIn], through: [15, 13, -3], throughEnd: [15, -2, -3],
       radius: TORCH_RADIUS, worldPoint: [0, 1, 0], impulseBoost: 0,
@@ -116,9 +115,7 @@ describe('fractureBody', () => {
   });
 
   it('does not separate a body when the stroke is only a surface gouge', () => {
-    // The same stroke without the through cut stays a groove: this is the
-    // behaviour the fix replaces, and pinning it down keeps the through cut
-    // from silently regressing to a no-op.
+    // A surface stroke must leave the material behind it connected.
     const gouge: FractureContact = {
       start: [15, 13, 10.65], end: [15, -2, 10.65], through: [15, 13, 10.65], throughEnd: [15, -2, 10.65],
       radius: TORCH_RADIUS, worldPoint: [0, 1, 0], impulseBoost: 0,
@@ -142,7 +139,7 @@ describe('fractureBody', () => {
 
   it('splits an anchored bar horizontally and yields exactly one fixed piece and dynamic piece', () => {
     const fixedBar = bar('fixed');
-    const zIn = 12 - 1 - 1.35;
+    const zIn = 12 - 0.5 - 0.5;
     const horizontalCut: FractureContact = {
       start: [-1, 6, zIn], end: [31, 6, zIn], through: [-1, 6, -3], throughEnd: [31, 6, -3],
       radius: TORCH_RADIUS, worldPoint: [0, 1, 0], impulseBoost: 0,
@@ -156,5 +153,20 @@ describe('fractureBody', () => {
     expect(dynamicFragments).toHaveLength(1);
     expect(dynamicFragments[0]!.body.id).toBe('bar-p10');
     expect(dynamicFragments[0]!.physics.body.kind).toBe('dynamic');
+  });
+
+  it('keeps the storage bay and the crate faces on every fragment of a dark crate', () => {
+    const crate: YardBody = {
+      ...bar('dynamic'),
+      storageBay: 'storage',
+      crateFaces: { east: { tone: 'dark' }, south: { tone: 'light', arrow: 'up' }, frame: 'dark' },
+    };
+    const result = fractureBody(crate, pose, cutThrough(15), 0, 0);
+    expect(result.fragments.length).toBeGreaterThan(1);
+    for (const fragment of result.fragments) {
+      expect(fragment.body.material).toBe(crate.material);
+      expect(fragment.body.storageBay).toBe('storage');
+      expect(fragment.body.crateFaces).toEqual(crate.crateFaces);
+    }
   });
 });

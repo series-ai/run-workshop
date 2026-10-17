@@ -2,35 +2,66 @@ import type { AttractionState } from './attractions';
 import type { DeterministicVehicleState3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { VoxelDims } from 'voxel-kit';
 import type { Vec3 } from './math';
+import type { YardMaterial } from './materials';
+import { FLOODLIGHT_MASTS, floodlightLensId } from './setPieces';
 import type { YardPhysicsWorldState } from './physics';
 
 export type AnchorFace = '+x' | '-x' | '+y' | '-y' | '+z' | '-z';
 export type BodyMotion = 'dynamic' | 'fixed';
 
-/** The way a light crate's arrow points. */
-export type CrateArrow = 'up' | 'down' | 'left' | 'right';
-/** How a shipping crate's face reads. The renderer uses it. Physics ignores it. */
+/** The ways a light crate's arrow can point. Saved bytes are checked against this list. */
+export const CRATE_ARROWS = ['up', 'left', 'right'] as const;
+export type CrateArrow = (typeof CRATE_ARROWS)[number];
+/** How one visible face of a shipping crate reads. The renderer uses it. Physics ignores it. */
 export type CrateFace =
   | { readonly tone: 'light'; readonly arrow: CrateArrow }
   | { readonly tone: 'dark' };
+/**
+ * The two visible faces of a storage crate, and the tone of its frame. The frame
+ * follows the face that carries the art: the south face on the front row, and
+ * the east face elsewhere. The other faces are plain.
+ */
+export interface CrateFaces {
+  readonly east: CrateFace;
+  readonly south: CrateFace;
+  readonly frame: CrateFace['tone'];
+}
 
-export interface YardBody {
-  readonly renderModel?: 'shipping-crate';
-  readonly storageBay?: 'storage' | 'returns';
-  /** Shipping crates only. Missing means a light crate with the arrow up. */
-  readonly crateFace?: CrateFace;
+interface YardBodyFields {
   readonly id: string;
   readonly label: string;
+  /** The surface: Syncplay friction and restitution, and the impact sound. Fragments keep it. */
+  readonly material: YardMaterial;
   readonly dims: VoxelDims;
   readonly voxels: Uint8Array;
   readonly motion: BodyMotion;
   readonly buoyancy: number;
   readonly anchorFaces: readonly AnchorFace[];
+  /**
+   * A whole loose tire rolls on a cylinder collider around its local y axis.
+   * Any cut piece of it has no such field, so it uses voxel colliders.
+   */
+  readonly collider?: 'cylinder';
   /** Frame at which a hit may damage the body (a fuel drum) again. */
   readonly impactCooldownUntil: number;
   /** The last torch or blast heat on the body, until its scorch cools (HEAT). */
   readonly heat: BodyHeat | null;
 }
+
+/** A crate, and each fragment of one, keeps its bay and its faces. */
+interface StorageBayFields {
+  readonly storageBay: 'storage' | 'returns';
+  readonly crateFaces: CrateFaces;
+}
+
+/**
+ * A yard body. A body with faces always has a bay. An intact shipping crate
+ * also has `renderModel: 'shipping-crate'`. Any other body has none of these.
+ */
+export type YardBody = YardBodyFields & (
+  | ({ readonly renderModel?: 'shipping-crate' } & StorageBayFields)
+  | { readonly renderModel?: undefined; readonly storageBay?: undefined; readonly crateFaces?: undefined }
+);
 
 export interface BodyHeat {
   readonly frame: number;
@@ -107,6 +138,8 @@ export interface YardStats {
   readonly dunks: number;
   /** Fuel drums that blew up (sim/fuelDrum.ts). */
   readonly explosions: number;
+  /** Floodlight lenses that a hit broke (sim/floodlights.ts). */
+  readonly lampsSmashed: number;
 }
 
 /** A catapult-launched body that flies without damping until frame `until`. */
@@ -131,6 +164,45 @@ export interface Explosion {
   readonly frame: number;
 }
 
+/** One corner floodlight (sim/floodlights.ts). */
+export interface LampState {
+  readonly lampId: string;
+  /** 0 when the lens is whole. Hits and blasts add damage. At 1 the lens breaks. */
+  readonly damage: number;
+  /** Frame of the last hit that did not break the lens. The lamp flickers after it. */
+  readonly flickerFrame: number;
+  /** Frame on which the lens broke, or null while it is whole. */
+  readonly brokenAt: number | null;
+}
+
+/**
+ * A hard contact between two surfaces, kept for a few ticks so that the sound
+ * and the hit effects see it (sim/impacts.ts). `bodyId` is a yard body in the
+ * contact; the other side can be a static box.
+ */
+export interface Impact {
+  readonly bodyId: string;
+  readonly materials: readonly [YardMaterial, YardMaterial];
+  readonly at: Vec3;
+  /** Closing speed (m/s). */
+  readonly speed: number;
+  readonly frame: number;
+}
+
+/** A storage crate that a hard hit split apart, kept for a short time for the sound and the splinters. */
+export interface CrateBreak {
+  readonly crateId: string;
+  readonly at: Vec3;
+  readonly frame: number;
+}
+
+/** A floodlight lens that a hit broke, kept for a short time so the render can show the glass falling. */
+export interface LampSmash {
+  readonly lampId: string;
+  readonly at: Vec3;
+  readonly frame: number;
+}
+
 export interface ContraptionState {
   /** Frame of the last drum drop; -Infinity is not JSON, so "never" is a large negative frame. */
   readonly lastDropFrame: number;
@@ -140,6 +212,16 @@ export interface ContraptionState {
   readonly explosions: readonly Explosion[];
   readonly lastLaunchFrame: number;
   readonly ballistic: readonly BallisticBody[];
+  /** The four corner floodlights, in FLOODLIGHT_MASTS order. A broken lens comes back later (sim/floodlights.ts). */
+  readonly lamps: readonly LampState[];
+  /** Recent lens smashes, oldest first (sim/floodlights.ts LAMP_SHOW_TICKS). */
+  readonly lampSmashes: readonly LampSmash[];
+  /** While all four lamps are out: the frame on which they all come back on. Null otherwise. */
+  readonly lightsOutUntil: number | null;
+  /** Frame on which lamps last came back on. The render flickers them on, and the sound plays. */
+  readonly relitFrame: number;
+  /** Recent FRAGILE crate breaks, oldest first (sim/crateBreak.ts CRATE_BREAK_SHOW_TICKS): the sound and the splinters. */
+  readonly crateBreaks: readonly CrateBreak[];
 }
 
 export const NEVER_FRAME = -1_000_000;
@@ -150,6 +232,11 @@ export const INITIAL_CONTRAPTIONS: ContraptionState = {
   explosions: [],
   lastLaunchFrame: NEVER_FRAME,
   ballistic: [],
+  lamps: FLOODLIGHT_MASTS.map(([x, z]) => ({ lampId: floodlightLensId(x, z), damage: 0, flickerFrame: NEVER_FRAME, brokenAt: null })),
+  lampSmashes: [],
+  lightsOutUntil: null,
+  relitFrame: NEVER_FRAME,
+  crateBreaks: [],
 };
 
 /** What the renderer draws for one wheel. Syncplay's vehicle step reports it. */
@@ -171,6 +258,8 @@ export interface YardState {
   readonly players: readonly PlayerState[];
   readonly stats: YardStats;
   readonly contraptions: ContraptionState;
+  /** Hard contacts of the last few ticks, oldest first (sim/impacts.ts IMPACT_SHOW_TICKS). */
+  readonly impacts: readonly Impact[];
   readonly nextSerial: number;
 }
 

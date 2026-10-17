@@ -41,7 +41,7 @@ function torchDrag(
       from[1] + (to[1] - from[1]) * t,
       from[2] + (to[2] - from[2]) * t,
     ] as const;
-    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt(target) };
+    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay([target[0], target[1], target[2] + 2], [0, 0, -1]) };
     next = run(sim, [cut], 4);
   }
   return next;
@@ -83,12 +83,18 @@ describe('stepYard', () => {
     expect(state.stats.throws).toBe(1);
   });
 
-  it('drops a moving held body without the desktop release boost', () => {
+  it.each(['ground', 'airborne'] as const)('drops a moving held body without the desktop release boost (%s)', (location) => {
     const sim = testSim(1);
     const state = run(sim, [NEUTRAL_INPUT], 30);
     const body = physicsStateBodyById(state.world, 'ballast-box')!;
-    const hold = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([body.x, body.y, body.z]) };
+    let hold = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...rayAt([body.x, body.y, body.z]) };
     sim.step([hold]);
+    if (location === 'airborne') {
+      hold = { ...hold, ...rayAt([body.x, body.y + 2, body.z]) };
+      const lifted = run(sim, [hold], 45);
+      expect(lifted.players[0]!.grab?.bodyId).toBe('ballast-box');
+      expect(physicsStateBodyById(lifted.world, 'ballast-box')!.y).toBeGreaterThan(body.y + 1);
+    }
     sim.edit((physics) => setPhysicsBodyVelocity(physics, 'ballast-box', [0.1, 0.02, 0]));
     const save = sim.save();
     try {
@@ -98,10 +104,14 @@ describe('stepYard', () => {
       const dropped = sim.step([{ ...hold, pressed: false, drop: true }]);
       expect(dropped.players[0]!.grab).toBeNull();
       const unboosted = physicsStateBodyById(dropped.world, 'ballast-box')!;
+      const contact = sim.physics.world.latest().contacts.some((entry) => entry.type !== 'exit'
+        && [entry.bodyKeyA, entry.bodyKeyB].includes('ballast-box'));
+      expect(contact).toBe(location === 'ground');
       sim.restore({ ...save, state: { ...save.state, players: save.state.players.map((p) => ({ ...p, grab: null })) } });
       const free = sim.step([NEUTRAL_INPUT]);
       expect(unboosted).toEqual(physicsStateBodyById(free.world, 'ballast-box'));
-      expect(Math.abs(boosted.vx)).toBeGreaterThan(Math.abs(unboosted.vx));
+      // A ground contact can stop both bodies. Compare the boost in free flight.
+      if (location === 'airborne') expect(Math.abs(boosted.vx)).toBeGreaterThan(Math.abs(unboosted.vx));
       expect(unboosted.vx).toBeLessThanOrEqual(0.1);
     } finally { sim.release(save); }
   });
@@ -163,7 +173,7 @@ describe('stepYard', () => {
     const sim = testSim(1);
     let state = run(sim, [NEUTRAL_INPUT], 5);
     const gantry = physicsStateBodyById(state.world, 'steel-gantry')!;
-    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt([gantry.x + 0.2, gantry.y + 0.2, gantry.z]) };
+    const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...torchAt([gantry.x - 0.72, gantry.y + 0.36, gantry.z]) };
     state = run(sim, [cut], 12);
     expect(state.stats.torchCuts).toBeGreaterThanOrEqual(1);
     const pieces = state.bodies.filter((b) => b.label === 'Steel Gantry');
@@ -174,8 +184,7 @@ describe('stepYard', () => {
   });
 
   it('splits a body with a torch stroke on either axis', () => {
-    // The reported bug: a vertical stroke broke a piece off the gantry and the
-    // same stroke horizontally did not. Both must separate it now.
+    // Cut across the thin connector on each axis. Both strokes must detach it.
     const gantryPieces = (state: YardState) => state.bodies.filter((b) => b.label === 'Steel Gantry');
     const settle = (): YardSim => {
       const sim = testSim(1);
@@ -184,20 +193,20 @@ describe('stepYard', () => {
     };
     const gantry = physicsStateBodyById(settle().state.world, 'steel-gantry')!;
 
-    // Vertical stroke down the gantry's front, spanning past both edges.
+    // Use sub-cell samples across the connector on the front face.
     const vertical = torchDrag(
       settle(),
-      [gantry.x, gantry.y + 1.3, gantry.z],
-      [gantry.x, gantry.y - 1.3, gantry.z],
+      [gantry.x - 0.72, gantry.y + 0.6, gantry.z],
+      [gantry.x - 0.72, gantry.y + 0.1, gantry.z],
       16,
     );
     expect(gantryPieces(vertical).length).toBeGreaterThan(1);
 
-    // Horizontal stroke across the same face, spanning past both edges.
+    // Cross the same connector on the horizontal axis.
     const horizontal = torchDrag(
       settle(),
-      [gantry.x - 1.3, gantry.y, gantry.z],
-      [gantry.x + 1.3, gantry.y, gantry.z],
+      [gantry.x - 1, gantry.y + 0.36, gantry.z],
+      [gantry.x - 0.4, gantry.y + 0.36, gantry.z],
       16,
     );
     expect(gantryPieces(horizontal).length).toBeGreaterThan(1);
@@ -207,8 +216,7 @@ describe('stepYard', () => {
 
   it('does not split a body when the torch only grazes it', () => {
     // A held point on a thick body removes surface material but cannot sever it.
-    // The cut registers; the body stays whole. This is the behaviour the
-    // through cut replaces, and it must not regress into a fabricated split.
+    // The cut registers. The remaining material must keep the body connected.
     const sim = testSim(1);
     let state = run(sim, [NEUTRAL_INPUT], 5);
     const pallet = physicsStateBodyById(state.world, 'timber-pallet')!;

@@ -23,7 +23,7 @@ interface SlotMeshes {
 /**
  * One-shot tool feedback, so every click shows a result:
  * - refusal: a straight red beam to what blocked the gun (or into the air on a miss)
- * - lock: a flash on the object the gun took hold of (the tractor beam then takes over)
+ * - lock: a flash for a control press; a held object uses its surface shader
  * - burst: a shock ring that pushes the object out, and a small ring leaving the muzzle (throw, punt)
  * - heat: an orange glow where the torch hits
  */
@@ -100,7 +100,7 @@ export function ToolFeedbackBeams({ renderRef, tool }: { renderRef: MutableRefOb
         }
       }
 
-      const flashes = effect.kind === 'burst' || effect.kind === 'lock' || effect.kind === 'heat' || (effect.kind === 'refusal' && effect.flash);
+      const flashes = effect.kind === 'burst' || (effect.kind === 'lock' && feedback.result !== 'grab') || effect.kind === 'heat' || (effect.kind === 'refusal' && effect.flash);
       if (flashes) {
         // Grow with distance so a far impact still reads on screen.
         const base = effect.kind === 'burst' ? 0.9 : 0.35;

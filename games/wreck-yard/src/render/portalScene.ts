@@ -118,12 +118,71 @@ function asThreePlane(plane: PortalPlane4): THREE.Plane {
   return new THREE.Plane(new THREE.Vector3(plane[0], plane[1], plane[2]), plane[3]);
 }
 
+function preservePortalAlpha(scene: THREE.Scene): () => void {
+  const saved = new Map<THREE.Material, {
+    blending: THREE.Blending;
+    src: THREE.BlendingSrcFactor;
+    dst: THREE.BlendingDstFactor;
+    equation: THREE.BlendingEquation;
+    srcAlpha: THREE.BlendingSrcFactor | null;
+    dstAlpha: THREE.BlendingDstFactor | null;
+    equationAlpha: THREE.BlendingEquation | null;
+  }>();
+  scene.traverseVisible((object) => {
+    if (!(object instanceof THREE.Mesh || object instanceof THREE.Sprite || object instanceof THREE.Points || object instanceof THREE.Line)) return;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) {
+      if ((!material.transparent && material.blending === THREE.NormalBlending)
+        || material.blending === THREE.NoBlending || saved.has(material)) continue;
+      saved.set(material, { blending: material.blending, src: material.blendSrc, dst: material.blendDst, equation: material.blendEquation,
+        srcAlpha: material.blendSrcAlpha, dstAlpha: material.blendDstAlpha, equationAlpha: material.blendEquationAlpha });
+      switch (material.blending) {
+        case THREE.NormalBlending:
+          material.blendSrc = material.premultipliedAlpha ? THREE.OneFactor : THREE.SrcAlphaFactor;
+          material.blendDst = THREE.OneMinusSrcAlphaFactor;
+          break;
+        case THREE.AdditiveBlending:
+          material.blendSrc = material.premultipliedAlpha ? THREE.OneFactor : THREE.SrcAlphaFactor;
+          material.blendDst = THREE.OneFactor;
+          break;
+        case THREE.SubtractiveBlending:
+          material.blendSrc = THREE.ZeroFactor;
+          material.blendDst = THREE.OneMinusSrcColorFactor;
+          break;
+        case THREE.MultiplyBlending:
+          material.blendSrc = THREE.ZeroFactor;
+          material.blendDst = THREE.SrcColorFactor;
+          break;
+        case THREE.CustomBlending:
+          break;
+      }
+      if (material.blending !== THREE.CustomBlending) material.blendEquation = THREE.AddEquation;
+      material.blending = THREE.CustomBlending;
+      material.blendSrcAlpha = THREE.ZeroFactor;
+      material.blendDstAlpha = THREE.OneFactor;
+      material.blendEquationAlpha = THREE.AddEquation;
+    }
+  });
+  return () => {
+    for (const [material, state] of saved) {
+      material.blending = state.blending;
+      material.blendSrc = state.src;
+      material.blendDst = state.dst;
+      material.blendEquation = state.equation;
+      material.blendSrcAlpha = state.srcAlpha;
+      material.blendDstAlpha = state.dstAlpha;
+      material.blendEquationAlpha = state.equationAlpha;
+    }
+  };
+}
+
 export function createReturnsPortalHooks({
   renderer,
   scene,
   camera,
   eyeCamera,
   surfaces,
+  afterView,
 }: {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
@@ -131,6 +190,7 @@ export function createReturnsPortalHooks({
   camera: THREE.PerspectiveCamera;
   eyeCamera: THREE.Camera;
   surfaces: ReturnsPortalSurfaces;
+  afterView: (draw: Parameters<PortalStencilHooks3D['drawScene']>[0]) => void;
 }): PortalStencilHooks3D {
   const base = createThreePortalStencilHooks3D({
     renderer,
@@ -199,8 +259,11 @@ export function createReturnsPortalHooks({
       const shadowNeedsUpdate = renderer.shadowMap.needsUpdate;
       let restoreVisibility = () => {};
       let restoreCulling = () => {};
+      let restoreAlpha = () => {};
+      const previousBeforeRender = scene.onBeforeRender;
       try {
         restoreVisibility = setPortalViewObjects(scene, draw.view !== undefined);
+        restoreAlpha = preservePortalAlpha(scene);
         if (draw.view) {
           renderer.shadowMap.autoUpdate = false;
           renderer.shadowMap.needsUpdate = false;
@@ -216,7 +279,16 @@ export function createReturnsPortalHooks({
         const phase = draw.view ? 'portal.render' : 'render.main';
         const timing = beginPhase(phase);
         const gpu = beginGpu(renderer, phase);
-        try { base.drawScene(draw); }
+        // The SDK locks the scene depth mask. Let each material keep its own
+        // depthWrite value so transparent effects do not fill the depth buffer.
+        scene.onBeforeRender = (...args) => {
+          previousBeforeRender.apply(scene, args);
+          renderer.state.buffers.depth.setLocked(false);
+        };
+        try {
+          base.drawScene(draw);
+          if (draw.view) afterView(draw);
+        }
         finally { endGpu(renderer, gpu); endPhase(phase, timing); }
       } finally {
         setPortalViewClipOnScene(scene, null);
@@ -224,6 +296,8 @@ export function createReturnsPortalHooks({
         renderer.shadowMap.needsUpdate = shadowNeedsUpdate;
         restoreCulling();
         restoreVisibility();
+        restoreAlpha();
+        scene.onBeforeRender = previousBeforeRender;
         renderer.clippingPlanes = oldClippingPlanes;
         renderer.localClippingEnabled = oldLocalClippingEnabled;
         camera.layers.mask = oldLayers;

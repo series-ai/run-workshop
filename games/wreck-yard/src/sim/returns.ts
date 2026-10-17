@@ -54,7 +54,8 @@ function frameSolids(end: PortalRenderEnd3D, label: string): ShellBox[] {
     center: worldCenter(end, part.center),
     size: [...part.size] as [number, number, number],
     rotation: [0, yaw, 0],
-  } as ShellBox));
+    material: 'steel',
+  }));
 }
 
 export const RETURNS_SOLIDS: readonly ShellBox[] = Object.freeze([

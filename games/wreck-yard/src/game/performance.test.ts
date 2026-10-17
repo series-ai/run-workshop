@@ -60,7 +60,7 @@ describe('native performance regressions', () => {
     expect(baseline.state.stats.throws).toBe(1);
     step(NEUTRAL_INPUT);
     const gantry = physicsStateBodyById(baseline.state.world, 'steel-gantry')!;
-    const cut = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...aimAbove(gantry.x + 0.2, gantry.y + 0.2, gantry.z, 2) };
+    const cut = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...aimAbove(gantry.x - 0.72, gantry.y + 0.36, gantry.z, 2) };
     for (let tick = 0; tick < 12; tick += 1) step(cut);
     expect(baseline.state.stats.torchCuts).toBeGreaterThan(0);
     expect(baseline.state.bodies.filter((body) => body.label === 'Steel Gantry').length).toBeGreaterThan(1);

@@ -30,27 +30,21 @@ export const GRAB_TARGET_MAX_SPEED = 5.5;
 export const GRAB_TARGET_ACCEL = 18;
 /**
  * The held body closes its gap to the hold point over this time (s). The servo
- * sets velocity directly; a physics joint made every world step 5x slower
- * (see grab.ts).
+ * uses the SDK force servo (see grab.ts).
  */
 export const GRAB_SERVO_TIME = 0.1;
 /** Spin kept per tick while held, so a carried body does not tumble. */
 export const GRAB_SPIN_KEEP = 0.7;
-/** Largest acceleration the servo applies to a held body (m/s²), the same for every mass. */
+/** Servo acceleration budget before gravity compensation (m/s²), the same for every mass. */
 export const GRAB_MAX_ACCEL = 40;
 /** Release multiplies the body's real velocity, so a still hold drops straight down. */
 export const THROW_BOOST = 1.16;
 
 export const TORCH_PULSE_TICKS = 3;
-export const TORCH_RADIUS = 2.15;
-export const TORCH_INSET = 1.35;
-/**
- * Extra voxels the torch cuts past the far side of the body. The carve runs
- * from the surface point, through the body along the surface normal, and out
- * the other side, so a stroke separates material on any axis instead of
- * gouging a fixed depth and only splitting when the body happens to be thin.
- */
-export const TORCH_THROUGH_MARGIN = 2;
+/** Cell radius and inward inset for a local surface cut. */
+export const TORCH_RADIUS = 1.25;
+export const TORCH_INSET = 0.5;
+export const TORCH_MAX_STROKE = 2.5;
 /** Voxels that torch or blast heat touched. They glow, then cool (HEAT) into BURNT_MATERIAL. */
 export const SCORCH_MATERIAL = 5;
 /** Burnt voxels: what a scorch leaves once it is cold (PROP_COLOR.burnt). */
@@ -70,8 +64,6 @@ export const MIN_FRAGMENT_VOXELS = 28;
 export const MAX_TORCH_FRAGMENTS = 5;
 export const CUT_SEPARATION_BIAS = 0.01;
 export const BLAST_SEPARATION_BIAS = 0.045;
-
-export const YARD_MATERIAL = { friction: 0.82, restitution: 0.08 } as const;
 
 export const TANK = {
   center: [2.95, 0, 0.55] as const,

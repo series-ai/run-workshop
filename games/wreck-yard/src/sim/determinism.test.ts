@@ -1,8 +1,9 @@
-import { assertDeterministicAsync, assertLateJoinHydrationAsync, assertPresentationParity } from '@series-inc/rundot-syncplay/testing';
+import { canonicalStringify, createSyncplayRunner, type NetworkedSyncplayClient } from '@series-inc/rundot-syncplay/browser';
+import { assertDeterministicAsync, assertLateJoinHydrationAsync, createSimulatedSyncplayMatch } from '@series-inc/rundot-syncplay/testing';
 import { describe, expect, it } from 'vitest';
 import { decodeYardInput, encodeYardInput, NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
 import { createYardRuntime, yardRoomOptions } from './session';
-import { projectYard, interpolateYard } from '../render/presentation';
+import { projectYard, interpolateYard, type YardRender } from '../render/presentation';
 import type { YardState } from './state';
 
 const PLAYERS = 2;
@@ -35,36 +36,81 @@ describe('wreck yard determinism', () => {
   }, 300_000);
 
   it('presents the same frames offline and through the authority room', async () => {
-    const proof = await assertPresentationParity({
-      runnerConfig: {
-        runtimeFactory: createYardRuntime,
-        defaultInput: NEUTRAL_INPUT,
-        encodeInput: encodeYardInput,
-        decodeInput: decodeYardInput,
-        presentation: { project: projectYard, interpolate: interpolateYard },
+    const frames = 20;
+    const offlineProjections = new Map<number, string>();
+    const offline = createSyncplayRunner<YardState, YardInput, unknown, YardState, YardRender>({
+      inputOwnership: room.inputOwnership,
+      runtimeFactory: createYardRuntime,
+      defaultInput: NEUTRAL_INPUT,
+      encodeInput: encodeYardInput,
+      decodeInput: decodeYardInput,
+      presentation: {
+        project: (state, context) => {
+          offlineProjections.set(state.frame, canonicalStringify(state));
+          return projectYard(state, context);
+        },
+        interpolate: interpolateYard,
       },
+    });
+    const match = createSimulatedSyncplayMatch({
       roomConfig: {
+        ...room,
         playerCount: PLAYERS,
         seed: 7,
         hardToleranceTicks: 6,
         tickRateHz: 30,
         redundancyWindowTicks: 8,
-        runtimeIdentity: room.runtimeIdentity,
-        sessionConfigBytes: room.sessionConfigBytes,
-        sessionConfigDigest: room.sessionConfigDigest,
         neutralInput: null,
       },
-      offline: { identity: room.runtimeIdentity, sessionConfigBytes: room.sessionConfigBytes, playerCount: PLAYERS, localSlot: 0 },
-      inputForFrame: scriptedInput,
-      frames: 20,
-      minComparedFrames: 5,
     });
-    expect(proof.comparedFrames).toBeGreaterThanOrEqual(5);
+    const clients: NetworkedSyncplayClient<YardState>[] = [];
+    try {
+      await offline.start({ mode: 'offline', identity: room.runtimeIdentity, sessionConfigBytes: room.sessionConfigBytes,
+        playerCount: PLAYERS, localSlot: 0, botInputForTick: scriptedInput });
+      for (let frame = 1; frame <= frames; frame += 1) {
+        offline.applyInput(scriptedInput(0, frame));
+        offline.update(1000 / 30);
+        expect(offlineProjections.has(frame)).toBe(true);
+      }
+      for (let slot = 0; slot < PLAYERS; slot += 1) {
+        const peer = match.connect(`parity-${slot}`, {
+          inputOwnership: room.inputOwnership,
+          runtimeFactory: createYardRuntime,
+          defaultInput: NEUTRAL_INPUT,
+          // Authority tick T produces state frame T + 1.
+          localInputForTick: (_slot, tick) => scriptedInput(slot, tick + 1),
+          encodeInput: encodeYardInput,
+          decodeInput: decodeYardInput,
+          confirmedPresentationBufferSize: frames + 8,
+        });
+        clients.push(peer.client);
+      }
+      await match.advanceAsync(frames + 8);
+      await match.settleAsync();
+      for (const client of clients) {
+        let comparedFrames = 0;
+        for (const entry of client.drainConfirmedPresentationFrames()) {
+          const expected = offlineProjections.get(entry.frame);
+          if (expected === undefined) continue;
+          expect(canonicalStringify(entry.projection), `state frame ${entry.frame}`).toBe(expected);
+          comparedFrames += 1;
+        }
+        expect(comparedFrames).toBeGreaterThanOrEqual(5);
+      }
+    } finally {
+      const cleanup = await Promise.allSettled([
+        Promise.resolve().then(() => offline.dispose()),
+        ...clients.map((client) => Promise.resolve().then(() => client.dispose())),
+      ]);
+      const failures = cleanup.filter((result) => result.status === 'rejected');
+      if (failures.length) throw new AggregateError(failures.map((result) => result.reason), 'Parity cleanup failed');
+    }
   }, 500_000);
 
   it('hydrates a late joiner to the same checksum', async () => {
     const proof = await assertLateJoinHydrationAsync({
       roomConfig: {
+        inputOwnership: room.inputOwnership,
         playerCount: PLAYERS,
         seed: 11,
         hardToleranceTicks: 6,
@@ -77,6 +123,7 @@ describe('wreck yard determinism', () => {
         neutralInput: null,
       },
       clientOptions: (index) => ({
+        inputOwnership: room.inputOwnership,
         runtimeFactory: createYardRuntime,
         defaultInput: NEUTRAL_INPUT,
         localInputForTick: (slot, tick) => scriptedInput((slot + index) % PLAYERS, tick),

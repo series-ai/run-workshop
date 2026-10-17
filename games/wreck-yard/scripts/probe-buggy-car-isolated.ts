@@ -17,7 +17,8 @@ import {
 } from '@series-inc/rundot-syncplay/physics/3d';
 import { YardSim } from '../src/sim/sim';
 import { NEUTRAL_INPUT } from '../src/sim/input';
-import { FLOOR_Y, GRAVITY, TICK_RATE, YARD_MATERIAL } from '../src/sim/constants';
+import { FLOOR_Y, GRAVITY, TICK_RATE } from '../src/sim/constants';
+import { MATERIAL_COEFFICIENTS } from '../src/sim/materials';
 import { fullPhysicsBodyById, type OpenYardPhysicsWorld } from '../src/sim/physics';
 import { BUGGY_WHEELS, stepBuggy } from '../src/sim/vehicle';
 import '../src/deterministicMath';
@@ -69,7 +70,7 @@ const fixture = {
     kind: 'static', key: 'floor',
     shape: { type: 'box', halfX: 100, halfY: 0.1, halfZ: 100 },
     position: { x: 0, y: FLOOR_Y - 0.1, z: 0 },
-    friction: YARD_MATERIAL.friction, restitution: YARD_MATERIAL.restitution,
+    ...MATERIAL_COEFFICIENTS.concrete,
     layer: sourceCar.layer, mask: sourceCar.mask,
   },
   car: copyBody(sourceCar, 'car', [0, sourceCar.position.y, 0], { x: 0, y: 0, z: 0, w: 1 }),
@@ -101,8 +102,7 @@ for (const yaw of [0, Math.PI / 2]) {
           kind: 'static', key: 'floor',
           shape: { type: 'box', halfX: meters(100), halfY: meters(0.1), halfZ: meters(100) },
           position: vec3(meters, 0, FLOOR_Y - 0.1, 0),
-          friction: YARD_MATERIAL.friction,
-          restitution: YARD_MATERIAL.restitution,
+          ...MATERIAL_COEFFICIENTS.concrete,
           layer: sourceCar.layer, mask: sourceCar.mask,
         }),
         car: includeCar ? edit.createBody(copyBody(sourceCar, 'car', [0, sourceCar.position.y, 0], { x: 0, y: Math.sin(yaw / 2), z: 0, w: Math.cos(yaw / 2) })) : undefined,

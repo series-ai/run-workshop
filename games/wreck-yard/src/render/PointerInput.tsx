@@ -1,3 +1,4 @@
+import { perfActive, perfCount } from '../perf/recorder';
 import { recordInputEvent } from '../perf/localInput';
 import { elevatorPanelWithinReach, restackWithinReach, type AttractionRequest, type AttractionCommand } from '../sim/attractions';
 import { queueAttraction } from '../ui/AttractionControls';
@@ -445,6 +446,11 @@ export function PointerInput({
 
     // Behind the gate or the pause menu: keep the view and tool, stop the rest.
     const input = inputLive(gateRef.current.state) ? playInput : pausedInput(playInput);
+    if (perfActive()) {
+      perfCount('input.primary', Number(input.pressed));
+      perfCount('input.moveX', Math.abs(input.moveX));
+      perfCount('input.moveZ', Math.abs(input.moveZ));
+    }
     controller.setInput(input);
     controller.pump(performance.now());
     const nextRender = controller.getRender();

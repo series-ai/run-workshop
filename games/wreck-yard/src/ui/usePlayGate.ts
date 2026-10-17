@@ -34,7 +34,7 @@ export interface PlayGateApi {
  * port state changes, the match status, and click handlers go in; pointer
  * release, input clearing, and the solo pause come out.
  */
-export function usePlayGate(port: CapturePort, controller: MatchController, match: { readonly status: MatchStatus; readonly modalOpen: boolean; readonly touchControls?: boolean }): PlayGateApi {
+export function usePlayGate(port: CapturePort, controller: MatchController, match: { readonly status: MatchStatus; readonly touchControls?: boolean }): PlayGateApi {
   const current = useRef<GateState>(initialGate(port.caps, { active: false, pointerLocked: false }, match.touchControls));
   const [state, setState] = useState(current.current);
   const clearListeners = useRef(new Set<() => void>());
@@ -74,14 +74,17 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
     };
   }, [port, dispatch]);
 
-  // The match menu and error modal need the cursor; a match start settles when it leaves "connecting".
-  const lastStatus = useRef<MatchStatus>(match.status);
+  // Observe each controller transition before React can combine status renders.
   useEffect(() => {
-    const previous = lastStatus.current;
-    lastStatus.current = match.status;
-    if (previous === 'connecting' && match.status !== 'connecting') dispatch({ type: 'match-settled' });
-    dispatch({ type: 'cursor-needed', on: match.status !== 'live' || match.modalOpen });
-  }, [match.status, match.modalOpen, dispatch]);
+    const syncMatch = () => {
+      const status = controller.snapshot().status;
+      dispatch({ type: 'cursor-needed', on: status !== 'live' });
+      if (current.current.matchStarting && status !== 'connecting') dispatch({ type: 'match-settled' });
+    };
+    const stop = controller.subscribe(syncMatch);
+    syncMatch();
+    return stop;
+  }, [controller, dispatch]);
 
   // Derived, not a one-shot effect, so a match start cannot undo it.
   useEffect(() => {

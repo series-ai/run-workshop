@@ -10,8 +10,8 @@ import { beginPhase, endPhase, perfActive, perfCount } from '../perf/recorder';
 
 /**
  * The physics part of a save. A save made by this sim holds a native
- * checkpoint in its live world; a save decoded from bytes (late join, replay)
- * holds the bytes until it is restored.
+ * checkpoint in its live world until it leaves the native window. Older saves
+ * and saves decoded from bytes hold raw physics bytes until they are restored.
  */
 export type YardPhysicsSave =
   | { readonly kind: 'checkpoint'; readonly checkpoint: PhysicsCheckpoint3D }
@@ -22,10 +22,18 @@ export interface YardSave {
   readonly physics: YardPhysicsSave;
 }
 
+/** Change storage without replacing the public save handle or its state. */
+interface OwnedYardSave {
+  readonly state: YardState;
+  physics: YardPhysicsSave;
+}
+
+const MAX_NATIVE_CHECKPOINTS = 32;
+
 /**
  * The live yard: one physics world that each tick steps in place, and the
- * state it is at. Rollback restores a save; nothing serializes the world
- * unless a peer needs the bytes. Syncplay drives it through session.ts.
+ * state it is at. Recent saves use native checkpoints. Older saves use raw
+ * physics bytes. Syncplay drives it through session.ts.
  */
 export class YardSim {
   readonly physics: OpenYardPhysicsWorld;
@@ -33,7 +41,7 @@ export class YardSim {
   #revision = 0n;
   #released = new WeakSet<YardSave>();
   #disposed = false;
-  #liveCheckpoints = 0;
+  #nativeSaves = new Set<OwnedYardSave>();
   #peakCheckpoints = 0;
 
   private constructor(physics: OpenYardPhysicsWorld, state: YardState) {
@@ -86,13 +94,19 @@ export class YardSim {
 
   save(): YardSave {
     this.#assertLive();
+    this.#makeCheckpointRoom();
     const phaseStart = beginPhase('checkpoint.capture');
-    const checkpoint = this.physics.world.captureCheckpoint();
-    endPhase('checkpoint.capture', phaseStart);
-    this.#liveCheckpoints += 1;
-    this.#peakCheckpoints = Math.max(this.#peakCheckpoints, this.#liveCheckpoints);
+    let checkpoint: PhysicsCheckpoint3D;
+    try {
+      checkpoint = this.physics.world.captureCheckpoint();
+    } finally {
+      endPhase('checkpoint.capture', phaseStart);
+    }
+    const save: OwnedYardSave = { state: this.#state, physics: { kind: 'checkpoint', checkpoint } };
+    this.#nativeSaves.add(save);
+    this.#peakCheckpoints = Math.max(this.#peakCheckpoints, this.#nativeSaves.size);
     this.#recordCheckpointCounts();
-    return { state: this.#state, physics: { kind: 'checkpoint', checkpoint } };
+    return save;
   }
 
   restore(save: YardSave): void {
@@ -120,14 +134,17 @@ export class YardSim {
 
   release(save: YardSave): void {
     this.#assertHeld(save);
-    this.#released.add(save);
     if (save.physics.kind === 'checkpoint' && !this.#disposed) {
       const phaseStart = beginPhase('checkpoint.release');
-      this.physics.world.releaseCheckpoint(save.physics.checkpoint);
-      this.#liveCheckpoints = Math.max(0, this.#liveCheckpoints - 1);
-      this.#recordCheckpointCounts();
-      endPhase('checkpoint.release', phaseStart);
+      try {
+        this.physics.world.releaseCheckpoint(save.physics.checkpoint);
+        this.#nativeSaves.delete(save);
+        this.#recordCheckpointCounts();
+      } finally {
+        endPhase('checkpoint.release', phaseStart);
+      }
     }
+    this.#released.add(save);
   }
 
   encode(save: YardSave): Uint8Array {
@@ -167,8 +184,25 @@ export class YardSim {
     if (this.#disposed) return;
     this.#disposed = true;
     this.physics.world.dispose();
-    this.#liveCheckpoints = 0;
+    this.#nativeSaves.clear();
     this.#recordCheckpointCounts();
+  }
+
+  #makeCheckpointRoom(): void {
+    if (this.#nativeSaves.size < MAX_NATIVE_CHECKPOINTS) return;
+    // Set order follows capture order, including captures after a rollback.
+    const oldest = this.#nativeSaves.values().next().value;
+    if (!oldest || oldest.physics.kind !== 'checkpoint') throw new Error('WRECK_YARD_NATIVE_SAVE_INVALID');
+    const phaseStart = beginPhase('checkpoint.spill');
+    try {
+      const bytes = this.physics.world.serializeCheckpoint(oldest.physics.checkpoint);
+      this.physics.world.releaseCheckpoint(oldest.physics.checkpoint);
+      oldest.physics = { kind: 'bytes', bytes };
+      this.#nativeSaves.delete(oldest);
+      this.#recordCheckpointCounts();
+    } finally {
+      endPhase('checkpoint.spill', phaseStart);
+    }
   }
 
   #assertLive(): void {
@@ -181,7 +215,7 @@ export class YardSim {
 
   #recordCheckpointCounts(): void {
     if (!perfActive()) return;
-    perfCount('checkpoint.live', this.#liveCheckpoints);
+    perfCount('checkpoint.live', this.#nativeSaves.size);
     perfCount('checkpoint.peak', this.#peakCheckpoints);
   }
 }

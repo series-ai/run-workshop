@@ -4,8 +4,8 @@
     "abiVersion": 1,
     "tickRate": 30,
     "inputSchemaId": "345106daf692f7b46b579d422c1552238acf759aa3b943c2d9cc029f3e338664",
-    "stateSchemaId": "e5a9b1e8466616d61248e4bd8c6184ec96cf098e0eedf230d3ad72368a4f85fe",
-    "deterministicVersion": "wreck-yard@1+syncplay@6.0.0-rc.41",
-    "engineIdentityHash": "b825ccf273dce711e98985e1db765e049ded123fd75a254c3234006737bc6a75"
+    "stateSchemaId": "5e02b315d955d10831012bcf648424b349a5491ea460f2fd9d13df3ecb76aa17",
+    "deterministicVersion": "wreck-yard@1+syncplay@6.0.0-rc.54",
+    "engineIdentityHash": "0bf325937abd342325cd5bdfed903669defb095d14041ce347e9ef359f04fd86"
   }
 }

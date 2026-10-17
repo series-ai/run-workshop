@@ -26,6 +26,27 @@ function Block({ center, size, color }: { center: V3; size: V3; color: string })
   );
 }
 
+/**
+ * The top of the ground landing, which sits level with the yard floor. The offset
+ * draws this top over the floor and over the box beneath it. The box sides keep
+ * their depth, so they cannot show through the floor.
+ */
+function LandingTop({ center, size, color }: { center: V3; size: V3; color: string }) {
+  return (
+    <mesh position={[center[0], center[1] + size[1] / 2, center[2]]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow raycast={noRaycast}>
+      <planeGeometry args={[size[0], size[2]]} />
+      <Toon color={color} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
+    </mesh>
+  );
+}
+
+function groundLanding(): (typeof STORAGE_SOLIDS)[number] {
+  const solid = STORAGE_SOLIDS.find((entry) => entry.id === 'storage-landing-0');
+  if (!solid) throw new Error('WRECK_YARD_GROUND_LANDING_MISSING');
+  return solid;
+}
+const GROUND_LANDING = groundLanding();
+
 interface CanvasPanel {
   readonly context: CanvasRenderingContext2D;
   readonly material: THREE.MeshBasicMaterial;
@@ -367,6 +388,7 @@ function ElevatorShaft({ renderRef }: { renderRef: MutableRefObject<YardRender |
           color={solid.id.startsWith('storage-guide') ? STEEL : '#756b57'}
         />
       ))}
+      <LandingTop center={GROUND_LANDING.center} size={GROUND_LANDING.size} color="#756b57" />
       {[0, 1, 2, 3].map((floor) => <LandingSign key={floor} floor={floor as ElevatorFloor} />)}
       <ElevatorCar renderRef={renderRef} />
     </group>

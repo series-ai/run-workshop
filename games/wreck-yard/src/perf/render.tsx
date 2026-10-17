@@ -34,7 +34,7 @@ export function finishPerfFrame(renderer: THREE.WebGLRenderer, simFrame: number)
 }
 
 export function PerfFrame({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {
-  const { gl, scene } = useThree();
+  const { gl, scene, camera } = useThree();
   const previous = useRef(0);
   useEffect(() => {
     const timer = new GpuTimer(gl.getContext());
@@ -57,7 +57,14 @@ export function PerfFrame({ renderRef }: { renderRef: MutableRefObject<YardRende
     if (previous.current) perfCount('frame.intervalMs', now - previous.current);
     previous.current = now;
     timers.get(gl)?.poll(renderFrame);
+    perfCount('viewport.scale', window.visualViewport?.scale ?? 1);
+    if (camera instanceof THREE.PerspectiveCamera) perfCount('camera.fov', camera.fov);
+    perfCount('camera.zoom', camera.zoom);
     if (renderFrame % 60 === 0) {
+      const heap = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+      if (heap) perfCount('memory.jsHeapUsedBytes', heap.usedJSHeapSize);
+      const bodies = renderRef.current?.bodies;
+      if (bodies) perfCount('render.voxelBodies', bodies.reduce((sum, body) => sum + Number(body.renderModel !== 'shipping-crate'), 0));
       const arrays = new Set<ArrayBufferLike>();
       scene.traverse((object) => {
         const mesh = object as THREE.Mesh;

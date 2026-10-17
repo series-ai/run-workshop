@@ -5,7 +5,8 @@ import { makeEmptyVoxelField, stampBox, stampSphere, type VoxelDims } from 'voxe
 import { FLOOR_Y, getTerrainHeightAt, TANK, VOXEL_SIZE } from './constants';
 import { IDENTITY_QUAT, type Quat, type Vec3 } from './math';
 import { createWorld, makePhysicsBody, readWorldState, type OpenYardPhysicsWorld } from './physics';
-import { DECK_HEIGHT, yardProps } from './props';
+import type { YardMaterial } from './materials';
+import { DECK_HEIGHT, looseTirePreset, yardProps, yawQuat } from './props';
 import { createInitialPlayer, INITIAL_CONTRAPTIONS, type AnchorFace, type BodyMotion, type YardBody, type YardState } from './state';
 
 type VolumePreset = { dims: VoxelDims; voxels: Uint8Array };
@@ -284,6 +285,7 @@ export interface Spawn {
 function spawn(
   id: string,
   label: string,
+  material: YardMaterial,
   preset: VolumePreset,
   position: Vec3,
   buoyancy = 0.2,
@@ -292,11 +294,14 @@ function spawn(
   anchorFaces: readonly AnchorFace[] = [],
 ): Spawn {
   return {
-    body: { id, label, dims: preset.dims, voxels: preset.voxels, motion, buoyancy, anchorFaces, impactCooldownUntil: 0, heat: null },
+    body: { id, label, material, dims: preset.dims, voxels: preset.voxels, motion, buoyancy, anchorFaces, impactCooldownUntil: 0, heat: null },
     position,
     rotation,
   };
 }
+
+/** Center heights of the loose tires above the floor: five tires 0.32 m wide, with a small gap. */
+const LOOSE_TIRE_HEIGHTS = [0, 1, 2, 3, 4].map((index) => 0.17 + index * 0.33);
 
 export function createSpawns(): Spawn[] {
   const steel = makeSteelCase();
@@ -313,61 +318,68 @@ export function createSpawns(): Spawn[] {
   const tower = makeDestructibleTower();
   const hazard = makeHazardBarrel();
   const floatDrum = makeBuoyantFloatDrum();
+  const looseTire = looseTirePreset();
 
   return [
     // Original core set
-    spawn('steel-case', 'Steel Case', steel, [-2.35, steelY + 0.4, -1.4], 0.1),
-    spawn('timber-pallet', 'Timber Pallet', timber, [-2.35, timberY + 0.4, -1.4], 0.28, YAW_POS_008),
-    spawn('steel-gantry', 'Steel Gantry', makeSteelGantry(), [2.18, 1.74, TANK.center[2]], 0.08, IDENTITY_QUAT, 'fixed', ['-x']),
-    spawn('float-crate', 'Float Crate', makeFloatCrate(), [TANK.center[0] + 0.35, 0.04, TANK.center[2] + 0.2], 1, YAW_POS_008),
-    spawn('float-drum', 'Flotation Drum', floatDrum, [TANK.center[0] - 0.65, 0.04, TANK.center[2] - 0.25], 1.2, YAW_NEG_014),
-    spawn('ballast-box', 'Ballast Box', ballast, [-0.1, restY(ballast.dims) + 0.48, 1.3], 0.05, YAW_NEG_014),
-    spawn('hazard-drum-1', 'Hazard Drum 1', hazard, [0.5, restY(hazard.dims), -2.2], 0.35, YAW_POS_008),
-    spawn('hazard-drum-2', 'Hazard Drum 2', hazard, [-2.2, restY(hazard.dims), 2.2], 0.35, YAW_NEG_014),
+    spawn('steel-case', 'Steel Case', 'steel', steel, [-2.35, steelY + 0.4, -1.4], 0.1),
+    spawn('timber-pallet', 'Timber Pallet', 'wood', timber, [-2.35, timberY + 0.4, -1.4], 0.28, YAW_POS_008),
+    spawn('steel-gantry', 'Steel Gantry', 'steel', makeSteelGantry(), [2.18, 1.74, TANK.center[2]], 0.08, IDENTITY_QUAT, 'fixed', ['-x']),
+    spawn('float-crate', 'Float Crate', 'wood', makeFloatCrate(), [TANK.center[0] + 0.35, 0.04, TANK.center[2] + 0.2], 1, YAW_POS_008),
+    spawn('float-drum', 'Flotation Drum', 'steel', floatDrum, [TANK.center[0] - 0.65, 0.04, TANK.center[2] - 0.25], 1.2, YAW_NEG_014),
+    spawn('ballast-box', 'Ballast Box', 'steel', ballast, [-0.1, restY(ballast.dims) + 0.48, 1.3], 0.05, YAW_NEG_014),
+    spawn('hazard-drum-1', 'Hazard Drum 1', 'steel', hazard, [0.5, restY(hazard.dims), -2.2], 0.35, YAW_POS_008),
+    spawn('hazard-drum-2', 'Hazard Drum 2', 'steel', hazard, [-2.2, restY(hazard.dims), 2.2], 0.35, YAW_NEG_014),
 
     // Seesaw sector (Positioned clear of driving runway, aligned with pivot joint)
-    spawn('seesaw-plank', 'Seesaw Plank', seesaw, [-14, FLOOR_Y + 0.9 + 0.18, -6], 0.2),
+    spawn('seesaw-plank', 'Seesaw Plank', 'wood', seesaw, [-14, FLOOR_Y + 0.9 + 0.18, -6], 0.2),
 
     // Ball drop sector
-    spawn('bowling-ball-1', 'Heavy Demolition Ball 1', ball, [-12, restY(ball.dims) + HOPPER_TOP, 12], 0.05),
-    spawn('bowling-ball-2', 'Heavy Demolition Ball 2', ball, [-12.8, restY(ball.dims) + HOPPER_TOP, 11.2], 0.05),
+    spawn('bowling-ball-1', 'Heavy Demolition Ball 1', 'steel', ball, [-12, restY(ball.dims) + HOPPER_TOP, 12], 0.05),
+    spawn('bowling-ball-2', 'Heavy Demolition Ball 2', 'steel', ball, [-12.8, restY(ball.dims) + HOPPER_TOP, 11.2], 0.05),
 
     // Astro Bot Playground: 6-Pin Bowling Triangle Alley
-    spawn('bowling-pin-1', 'Bowling Pin 1', pin, [-6.0, restY(pin.dims), 12.0], 0.3),
-    spawn('bowling-pin-2', 'Bowling Pin 2', pin, [-5.2, restY(pin.dims), 13.6], 0.3),
-    spawn('bowling-pin-3', 'Bowling Pin 3', pin, [-6.8, restY(pin.dims), 13.6], 0.3),
-    spawn('bowling-pin-4', 'Bowling Pin 4', pin, [-4.4, restY(pin.dims), 15.2], 0.3),
-    spawn('bowling-pin-5', 'Bowling Pin 5', pin, [-6.0, restY(pin.dims), 15.2], 0.3),
-    spawn('bowling-pin-6', 'Bowling Pin 6', pin, [-7.6, restY(pin.dims), 15.2], 0.3),
+    spawn('bowling-pin-1', 'Bowling Pin 1', 'wood', pin, [-6.0, restY(pin.dims), 12.0], 0.3),
+    spawn('bowling-pin-2', 'Bowling Pin 2', 'wood', pin, [-5.2, restY(pin.dims), 13.6], 0.3),
+    spawn('bowling-pin-3', 'Bowling Pin 3', 'wood', pin, [-6.8, restY(pin.dims), 13.6], 0.3),
+    spawn('bowling-pin-4', 'Bowling Pin 4', 'wood', pin, [-4.4, restY(pin.dims), 15.2], 0.3),
+    spawn('bowling-pin-5', 'Bowling Pin 5', 'wood', pin, [-6.0, restY(pin.dims), 15.2], 0.3),
+    spawn('bowling-pin-6', 'Bowling Pin 6', 'wood', pin, [-7.6, restY(pin.dims), 15.2], 0.3),
 
     // Astro Bot High-Speed Driving Runway: Teardown-Style Unified Buggy at [14, -12] facing South
-    spawn('vehicle-chassis', 'Sandbox Buggy', buggy, [14.0, FLOOR_Y + getTerrainHeightAt(14, -12) + 1.45, -12.0], 0.25, [0, 1, 0, 0]),
+    spawn('vehicle-chassis', 'Sandbox Buggy', 'steel', buggy, [14.0, FLOOR_Y + getTerrainHeightAt(14, -12) + 1.45, -12.0], 0.25, [0, 1, 0, 0]),
 
     // Astro Bot Domino Crash Wall (Directly at the Stunt Jump landing zone)
-    spawn('domino-crate-1', 'Domino Crate 1', steel, [12.6, steelY, 13.0], 0.1),
-    spawn('domino-crate-2', 'Domino Crate 2', timber, [14.0, steelY, 13.0], 0.28),
-    spawn('domino-crate-3', 'Domino Crate 3', steel, [15.4, steelY, 13.0], 0.1),
-    spawn('hazard-drum-jump', 'Jump Hazard Drum', hazard, [14.0, restY(hazard.dims) + 0.8, 13.0], 0.35),
+    spawn('domino-crate-1', 'Domino Crate 1', 'steel', steel, [12.6, steelY, 13.0], 0.1),
+    spawn('domino-crate-2', 'Domino Crate 2', 'wood', timber, [14.0, steelY, 13.0], 0.28),
+    spawn('domino-crate-3', 'Domino Crate 3', 'steel', steel, [15.4, steelY, 13.0], 0.1),
+    spawn('hazard-drum-jump', 'Jump Hazard Drum', 'steel', hazard, [14.0, restY(hazard.dims) + 0.8, 13.0], 0.35),
 
     // Loose props on the west loading deck (top 1.0 m above the floor) and by the east barriers.
-    spawn('deck-drum-1', 'Oil Drum', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.0], 0.35),
-    spawn('deck-drum-2', 'Oil Drum', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.9], 0.35),
-    spawn('deck-drum-3', 'Oil Drum', hazard, [-21.75, restY(hazard.dims) + DECK_HEIGHT, 9.45], 0.35),
-    spawn('deck-pallet-1', 'Pallet', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT, 9.5], 0.3, YAW_POS_008),
-    spawn('deck-pallet-2', 'Pallet', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT + 0.25, 9.5], 0.3),
-    spawn('yard-drum-1', 'Oil Drum', hazard, [18.9, restY(hazard.dims), 4.0], 0.35),
-    spawn('yard-pallet-1', 'Pallet', flatPallet, [20.4, restY(flatPallet.dims), 3.5], 0.3, YAW_NEG_014),
+    spawn('deck-drum-1', 'Oil Drum', 'steel', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.0], 0.35),
+    spawn('deck-drum-2', 'Oil Drum', 'steel', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.9], 0.35),
+    spawn('deck-drum-3', 'Oil Drum', 'steel', hazard, [-21.75, restY(hazard.dims) + DECK_HEIGHT, 9.45], 0.35),
+    spawn('deck-pallet-1', 'Pallet', 'wood', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT, 9.5], 0.3, YAW_POS_008),
+    spawn('deck-pallet-2', 'Pallet', 'wood', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT + 0.25, 9.5], 0.3),
+    spawn('yard-drum-1', 'Oil Drum', 'steel', hazard, [18.9, restY(hazard.dims), 4.0], 0.35),
+    spawn('yard-pallet-1', 'Pallet', 'wood', flatPallet, [20.4, restY(flatPallet.dims), 3.5], 0.3, YAW_NEG_014),
 
     // Astro Bot Drift Slalom Cones (Guiding the sweeping southern hairpin curve)
-    spawn('slalom-drum-1', 'Slalom Drum 1', hazard, [10.0, restY(hazard.dims), 18.0], 0.35),
-    spawn('slalom-drum-2', 'Slalom Drum 2', hazard, [2.0, restY(hazard.dims), 19.0], 0.35),
-    spawn('slalom-drum-3', 'Slalom Drum 3', hazard, [-6.0, restY(hazard.dims), 18.0], 0.35),
+    spawn('slalom-drum-1', 'Slalom Drum 1', 'steel', hazard, [10.0, restY(hazard.dims), 18.0], 0.35),
+    spawn('slalom-drum-2', 'Slalom Drum 2', 'steel', hazard, [2.0, restY(hazard.dims), 19.0], 0.35),
+    spawn('slalom-drum-3', 'Slalom Drum 3', 'steel', hazard, [-6.0, restY(hazard.dims), 18.0], 0.35),
 
     // Destructible tower sector (North-West playground edge)
-    spawn('destructible-tower', 'Destructible Tower', tower, [-16, restY(tower.dims), 0], 0.15),
+    spawn('destructible-tower', 'Destructible Tower', 'concrete', tower, [-16, restY(tower.dims), 0], 0.15),
+
+    // Loose tires in a stack: each one rolls and bounces on its own (physics.ts tireCollider).
+    ...LOOSE_TIRE_HEIGHTS.map((height, index) => {
+      const entry = spawn(`loose-tire-${index}`, 'Loose Tire', 'rubber', looseTire, [5.0, FLOOR_Y + height, 4.6], 0.5, yawQuat(index * 0.7));
+      return { ...entry, body: { ...entry.body, collider: 'cylinder' as const } };
+    }),
 
     // Yard props: wrecks, containers, concrete, tires, bales, and loose scrap.
-    ...yardProps().map((prop) => spawn(prop.id, prop.label, prop.preset, prop.position, prop.buoyancy, prop.rotation)),
+    ...yardProps().map((prop) => spawn(prop.id, prop.label, prop.material, prop.preset, prop.position, prop.buoyancy, prop.rotation)),
   ];
 }
 
@@ -399,8 +411,9 @@ export function createInitialYard(playerCount: number): { readonly physics: Open
       bodies: spawns.map((entry) => entry.body),
       world: readWorldState(physics),
       players: Array.from({ length: playerCount }, (_, slot) => createInitialPlayer(slot)),
-      stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0, explosions: 0 },
+      stats: { torchCuts: 0, throws: 0, fractures: 0, dunks: 0, explosions: 0, lampsSmashed: 0 },
       contraptions: INITIAL_CONTRAPTIONS,
+      impacts: [],
       attractions: INITIAL_ATTRACTIONS,
       nextSerial: 0,
     },

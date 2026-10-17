@@ -37,6 +37,10 @@ export const InkShader = {
     uVignette: { value: ART_STYLE.post.grade.vignette },
     uGrime: { value: 0 },
     uCameraWorld: { value: new THREE.Matrix4() },
+    uLinearOutput: { value: 0 },
+    uPortalTransit: { value: 0 },
+    uPortalDistortion: { value: 0 },
+    uPortalTime: { value: 0 },
   },
 
   vertexShader: /* glsl */ `
@@ -85,6 +89,10 @@ export const InkShader = {
     uniform float uVignette;
     uniform float uGrime;
     uniform mat4 uCameraWorld;
+    uniform float uLinearOutput;
+    uniform float uPortalTransit;
+    uniform float uPortalDistortion;
+    uniform float uPortalTime;
 
     float hash2(vec2 p) {
       return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -111,9 +119,9 @@ export const InkShader = {
       );
     }
 
-    float linearizeDepth(float d) {
-      float z_ndc = d * 2.0 - 1.0;
-      return (2.0 * uCameraNear * uCameraFar) / (uCameraFar + uCameraNear - z_ndc * (uCameraFar - uCameraNear));
+    float linearizeDepth(vec2 uv, float d) {
+      vec4 h = uInverseProjection * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);
+      return -h.z / h.w;
     }
 
     // Mathematically exact view-position reconstruction without extra homogeneous divide
@@ -131,26 +139,29 @@ export const InkShader = {
     }
 
     void main() {
-      vec4 base = texture2D(tDiffuse, vUv);
+      vec2 centeredUv = vUv - 0.5;
+      vec2 sceneUv = clamp(vUv + centeredUv * sin(length(centeredUv) * 24.0 - uPortalTime * 18.0) * uPortalDistortion * 0.008, vec2(0.0), vec2(1.0));
+      vec4 base = texture2D(tDiffuse, clamp(sceneUv, vec2(0.0), vec2(1.0)));
       vec3 color = base.rgb;
+      bool needsDepthStyle = base.a > 0.5;
 
       // Ambient occlusion (high tier). Four bilinear taps blur the half-res noise.
-      if (uAOStrength > 0.0) {
+      if (uAOStrength > 0.0 && needsDepthStyle) {
         float ao = 0.25 * (
-          texture2D(tAO, vUv + vec2(-1.0, -1.0) * uAOTexel).r +
-          texture2D(tAO, vUv + vec2(1.0, -1.0) * uAOTexel).r +
-          texture2D(tAO, vUv + vec2(-1.0, 1.0) * uAOTexel).r +
-          texture2D(tAO, vUv + vec2(1.0, 1.0) * uAOTexel).r);
+          texture2D(tAO, sceneUv + vec2(-1.0, -1.0) * uAOTexel).r +
+          texture2D(tAO, sceneUv + vec2(1.0, -1.0) * uAOTexel).r +
+          texture2D(tAO, sceneUv + vec2(-1.0, 1.0) * uAOTexel).r +
+          texture2D(tAO, sceneUv + vec2(1.0, 1.0) * uAOTexel).r);
         float luma0 = dot(color, vec3(0.299, 0.587, 0.114));
         color *= mix(1.0, ao, uAOStrength * (1.0 - step(uEmissiveLumaCutoff, luma0)));
       }
 
-      if (uEnableInk > 0.5) {
-        float dCenterRaw = texture2D(tDepth, vUv).r;
+      if (uEnableInk > 0.5 && needsDepthStyle) {
+        float dCenterRaw = texture2D(tDepth, sceneUv).r;
 
         // Skip sky (depth near 1.0)
         if (dCenterRaw < 0.9999) {
-          float dCenter = linearizeDepth(dCenterRaw);
+          float dCenter = linearizeDepth(sceneUv, dCenterRaw);
           // Match the nearest-filtered depth samples to their pixel centers.
           float samplePixels = max(1.0, floor(uInkWidth * (uResolution.y / 1080.0) + 0.5));
           vec2 texel = samplePixels / uResolution;
@@ -164,16 +175,16 @@ export const InkShader = {
 
           float d[4];
           for (int i = 0; i < 4; i++) {
-            float dRaw = texture2D(tDepth, vUv + offsets[i]).r;
-            d[i] = linearizeDepth(dRaw);
+            float dRaw = texture2D(tDepth, sceneUv + offsets[i]).r;
+            d[i] = linearizeDepth(sceneUv + offsets[i], dRaw);
           }
 
           // Reconstruct view positions of center and 4 cardinal neighbors
-          vec3 pC = reconstructViewPos(vUv, dCenter);
-          vec3 pR = reconstructViewPos(vUv + offsets[0], d[0]);
-          vec3 pL = reconstructViewPos(vUv + offsets[1], d[1]);
-          vec3 pU = reconstructViewPos(vUv + offsets[2], d[2]);
-          vec3 pD = reconstructViewPos(vUv + offsets[3], d[3]);
+          vec3 pC = reconstructViewPos(sceneUv, dCenter);
+          vec3 pR = reconstructViewPos(sceneUv + offsets[0], d[0]);
+          vec3 pL = reconstructViewPos(sceneUv + offsets[1], d[1]);
+          vec3 pU = reconstructViewPos(sceneUv + offsets[2], d[2]);
+          vec3 pD = reconstructViewPos(sceneUv + offsets[3], d[3]);
 
           // Pick the smaller depth difference on each axis to avoid straddling depth discontinuities
           vec3 dx = abs(d[0] - dCenter) < abs(d[1] - dCenter) ? (pR - pC) : (pC - pL);
@@ -244,6 +255,11 @@ export const InkShader = {
         }
       }
 
+      if (uLinearOutput > 0.5) {
+        gl_FragColor = vec4(color, 0.0);
+        return;
+      }
+
       // Composite 1/4-resolution bloom with 4 diagonal taps
       if (uEnableBloom > 0.5) {
         vec2 bloomTexel = uBloomTexel;
@@ -272,7 +288,9 @@ export const InkShader = {
       display *= mix(uShadowTint, uHighlightTint, smoothstep(0.12, 0.7, luma));
       vec2 centered = vUv - 0.5;
       display *= 1.0 - uVignette * smoothstep(0.2, 0.75, dot(centered, centered) * 2.0);
-      gl_FragColor = vec4(clamp(display, 0.0, 1.0), base.a);
+      float transitEdge = smoothstep(0.05, 0.65, length(centered));
+      display = mix(display, vec3(0.48, 0.72, 0.70), uPortalTransit * (0.06 + transitEdge * 0.16));
+      gl_FragColor = vec4(clamp(display, 0.0, 1.0), 1.0);
     }
   `,
 };

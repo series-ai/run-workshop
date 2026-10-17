@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef, useState, type MutableRefObject } from 'react';
+import { useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import {
   portalExitClipPlane3D,
@@ -21,6 +21,9 @@ import { RETURNS_PAIR } from '../sim/returns';
 import { portalEndClipPlane } from './portalScene';
 import type { VoxelPortalCopy } from './VoxelVolumeRenderer';
 import { CRATE_APPEARANCE } from './crateAppearance';
+import { crateTone } from '../sim/crateArt';
+import { instancedShippingCrateIds } from './ShippingCrates';
+import { useReducedMotionRef } from './reducedMotion';
 
 /** Heat lights: a fixed pool, so a new scorch never changes the light count (and recompiles shaders). */
 const HEAT_LIGHTS = 3;
@@ -42,18 +45,31 @@ for (const [name, code] of Object.entries(PROP_COLOR) as [PropColor, number][]) 
   const emissive = name === 'spark' || name === 'glow' ? 60 : 0;
   materialParams.set([190, name === 'ink' ? 20 : 70, emissive, 40], offset);
 }
-const cratePalette = palette.slice();
-const crateWood = new THREE.Color(CRATE_APPEARANCE.wood).convertLinearToSRGB();
-cratePalette.set([Math.round(crateWood.r * 255), Math.round(crateWood.g * 255), Math.round(crateWood.b * 255), 255], 2 * 4);
+/** The palette with the crate wood slot set to one stain. */
+function cratePaletteWith(stain: string): typeof palette {
+  const colors = palette.slice();
+  const wood = new THREE.Color(stain).convertLinearToSRGB();
+  colors.set([Math.round(wood.r * 255), Math.round(wood.g * 255), Math.round(wood.b * 255), 255], 2 * 4);
+  return colors;
+}
+const lightCratePalette = cratePaletteWith(CRATE_APPEARANCE.wood);
+const darkCratePalette = cratePaletteWith(CRATE_APPEARANCE.darkWood);
+/** The palette for a body. A storage body keeps its crate tone, also after a cut. */
+export function bodyPalette(body: YardBody): typeof palette {
+  if (!body.storageBay) return palette;
+  return crateTone(body.crateFaces) === 'dark' ? darkCratePalette : lightCratePalette;
+}
 // Scorch voxels (SCORCH_MATERIAL) take their color and glow from the heat age in the shader.
-function VoxelBody({ body, renderRef, worldOcclusion }: {
+function VoxelBody({ body, renderRef, worldOcclusion, reducedMotion }: {
   body: YardBody;
   renderRef: MutableRefObject<YardRender | null>;
   worldOcclusion: WorldOcclusionRuntime;
+  reducedMotion: { readonly current: boolean };
 }) {
   const group = useRef<THREE.Group>(null);
   const copiedWheels = useRef<THREE.Group>(null);
   const heatRef = useRef<BodyHeatLook>({ age: COLD_AGE, at: [0, 0, 0] });
+  const gravityRef = useRef({ held: false, time: 0 });
   const portalClipRef = useRef<PortalPlane4 | null>(null);
   const wheelCopyClipRef = useRef<PortalPlane4 | null>(null);
   const portalCopyRef = useRef<VoxelPortalCopy | null>(null);
@@ -75,8 +91,10 @@ function VoxelBody({ body, renderRef, worldOcclusion }: {
     return { copy, entryClip };
   }, []);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
     const render = renderRef.current;
+    gravityRef.current.held = render?.players.some((player) => player.grabbing === body.id && !player.ridingVehicle) ?? false;
+    gravityRef.current.time = reducedMotion.current ? 0 : clock.elapsedTime;
     const heat = render ? heatOfBody(render.bodies, body.id) : null;
     heatRef.current.age = render ? heatAge(render.frame, heat) : COLD_AGE;
     if (heat) heatRef.current.at = [heat.at[0], heat.at[1], heat.at[2]];
@@ -107,7 +125,7 @@ function VoxelBody({ body, renderRef, worldOcclusion }: {
   });
 
   return (
-    <group ref={group}>
+    <group ref={group} name={`voxel-body-${body.id}`}>
       {body.id === 'vehicle-chassis' && <BuggyWheels renderRef={renderRef} clipPlaneRef={portalClipRef} />}
       {body.id === 'vehicle-chassis' && (
         <group ref={copiedWheels} matrixAutoUpdate={false} visible={false}>
@@ -117,14 +135,14 @@ function VoxelBody({ body, renderRef, worldOcclusion }: {
       <VoxelVolumeRenderer
         dims={body.dims}
         voxels={body.voxels}
-        palette={body.storageBay ? cratePalette : palette}
+        palette={bodyPalette(body)}
         materialParams={materialParams}
         voxelSize={VOXEL_SIZE}
         heatRef={heatRef}
+        gravityRef={gravityRef}
         worldOcclusion={worldOcclusion}
         portalClipRef={portalClipRef}
         portalCopyRef={portalCopyRef}
-        portalStraddlerOnly={body.renderModel === 'shipping-crate'}
       />
     </group>
   );
@@ -176,24 +194,13 @@ export function VoxelBodies({ bodies, renderRef, worldOcclusion }: {
   renderRef: MutableRefObject<YardRender | null>;
   worldOcclusion: WorldOcclusionRuntime;
 }) {
-  const [straddlingIds, setStraddlingIds] = useState<ReadonlySet<string>>(() => new Set());
-  const lastStraddlingIds = useRef('');
-  useFrame(() => {
-    const ids = (renderRef.current?.portalStraddlers ?? [])
-      .filter((entry) => entry.pairId === RETURNS_PAIR.id)
-      .map((entry) => entry.bodyId)
-      .sort();
-    const key = ids.join('\u0000');
-    if (key !== lastStraddlingIds.current) {
-      lastStraddlingIds.current = key;
-      setStraddlingIds(new Set(ids));
-    }
-  });
+  const crateIds = useMemo(() => instancedShippingCrateIds(bodies), [bodies]);
+  const reducedMotion = useReducedMotionRef();
 
   return (
     <>
       <HeatLights renderRef={renderRef} />
-      {bodies.map((body) => body.renderModel === 'shipping-crate' && !straddlingIds.has(body.id)
+      {bodies.map((body) => crateIds.has(body.id)
         ? null
         : (
           <VoxelBody
@@ -201,6 +208,7 @@ export function VoxelBodies({ bodies, renderRef, worldOcclusion }: {
             body={body}
             renderRef={renderRef}
             worldOcclusion={worldOcclusion}
+            reducedMotion={reducedMotion}
           />
         ))}
     </>

@@ -118,11 +118,11 @@ export function FirstPersonTool({
       // Plasma Core Pulsing
       const time = state.clock.elapsedTime;
       if (coreInnerRef.current) {
-        const pulse = isGrabbing ? 1.25 + Math.sin(time * 24) * 0.25 : 1.0 + Math.sin(time * 6) * 0.08;
+        const pulse = isGrabbing ? 1.25 : 1.0 + Math.sin(time * 6) * 0.08;
         coreInnerRef.current.scale.set(pulse, pulse, pulse);
       }
       if (coreOuterRef.current) {
-        const pulseOuter = isGrabbing ? 1.35 + Math.cos(time * 18) * 0.3 : 1.05 + Math.cos(time * 4) * 0.06;
+        const pulseOuter = isGrabbing ? 1.35 : 1.05 + Math.cos(time * 4) * 0.06;
         coreOuterRef.current.scale.set(pulseOuter, pulseOuter, pulseOuter);
       }
 
@@ -252,6 +252,7 @@ export function FirstPersonTool({
               color="#e0f2fe"
               transparent
               opacity={0.35}
+              depthWrite={false}
             />
           </mesh>
 
@@ -283,6 +284,7 @@ export function FirstPersonTool({
               color="#ea580c"
               transparent
               opacity={0.8}
+              depthWrite={false}
               toneMapped={false}
             />
           </mesh>

@@ -3,7 +3,7 @@
   "generator": "scripts/prepare-audio.mjs",
   "encoderVersion": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
   "codec": "MPEG Layer III",
-  "totalBytes": 416325,
+  "totalBytes": 462720,
   "verification": "FFmpeg decoded output checks. No listening check was done.",
   "retiredSources": [
     {
@@ -42,6 +42,69 @@
     "successfulCalls": 1,
     "successfulCreditsUsed": 3,
     "failedCalls": 0
+  },
+  "materialSoundGeneration": {
+    "successfulCalls": 4,
+    "successfulCreditsUsed": 22,
+    "failedCalls": 0,
+    "rejectedTakes": [
+      {
+        "generationId": "c682adf2-9d22-4e77-a312-3b5950c642f4",
+        "for": "rubber-impact",
+        "reason": "Peak 0.03, with several separate hits."
+      },
+      {
+        "generationId": "00ce9429-3049-4a69-806f-266530767e70",
+        "for": "glass-break",
+        "reason": "A 90 ms soft start and scattered late hits."
+      }
+    ]
+  },
+  "feedbackSoundGeneration": {
+    "successfulCalls": 12,
+    "successfulCreditsUsed": 52,
+    "failedCalls": 4,
+    "failedCall": {
+      "error": "IOException: ~/.rundot/config.json was in use by another call",
+      "chargeResult": "No generation ID returned"
+    },
+    "rejectedTakes": [
+      {
+        "generationId": "a85d0553-0d18-4c9e-8c90-99957e4228fe",
+        "for": "glass-impact",
+        "reason": "A low thud with almost no sound above 1 kHz. It did not read as glass."
+      },
+      {
+        "generationId": "e7f60d04-95c2-4c7a-bc34-8ddd9e781547",
+        "for": "glass-impact",
+        "reason": "A low thud with almost no sound above 1 kHz. It did not read as glass."
+      },
+      {
+        "generationId": "545adbf2-7d15-41bf-bb03-1772bb5bdaf3",
+        "for": "glass-impact",
+        "reason": "A clean clink, but softer at the start than the kept take."
+      },
+      {
+        "generationId": "ff52413c-b2e5-4c74-8424-d74ed6e3cf83",
+        "for": "crate-break",
+        "reason": "A slower 40 ms start than the kept take."
+      },
+      {
+        "generationId": "479d0dc9-8609-4f78-b99f-5679c14f4f0e",
+        "for": "lamp-fizz",
+        "reason": "One 0.15 s zap. The lamp flicker lasts 1.2 s."
+      },
+      {
+        "generationId": "c443f4ba-cd45-43ed-8f3c-1ca8337aa0c8",
+        "for": "lights-out",
+        "reason": "Almost all of it is below 200 Hz, with several separate hits."
+      },
+      {
+        "generationId": "f74af8d4-a088-4895-b9bb-c3fe73f0be82",
+        "for": "relamp",
+        "reason": "Quiet, and almost all of it is below 200 Hz."
+      }
+    ]
   },
   "assets": [
     {
@@ -853,6 +916,287 @@
         "first25msRms": 0.030365611514020934,
         "last25msRms": 0.000180069377422106,
         "edgeRmsRatio": 168.6328455661842
+      }
+    },
+    {
+      "name": "glass-break",
+      "path": "/audio/glass-break.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 7149,
+      "outputSha256": "00c10cc8222521924ebe84acd9b7d705ec60d3cd612ea5f647c41829c8b5cde3",
+      "source": {
+        "path": "art/audio/raw/glass-break.mp3",
+        "receiptPath": "art/audio/raw/glass-break.mp3.json",
+        "sha256": "788768071ce939f2157f5d12464b3f96a50851f8139182d8e5b8b6cfbaac3b8e",
+        "generationId": "d9bc8fa6-ec08-41db-b51d-9d7567de9fe3",
+        "prompt": "One single industrial floodlight lamp glass panel shattering when hit, a bright sharp glass crack and burst followed by small glass shards falling and tinkling onto concrete below. Immediate attack, natural decay, no repeated breaks, no explosion, no electrical buzz, no room reverb, no voice or music. Clear and crisp but not piercing.",
+        "type": "sfx",
+        "durationSec": 1.6,
+        "provider": "elevenlabs",
+        "creditsUsed": 6
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.79,
+        "normalizationGain": 0.7514910617883701,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.81,
+        "peak": 0.6063501238822937,
+        "rms": 0.04548960766699093,
+        "rmsDbfs": -26.841756176039134,
+        "seamMaxJump": 0.025175987735565286,
+        "adjacentDerivativeRms": 0.13881660167350257,
+        "adjacentDerivativeP99": 0.5244078636169434,
+        "seamToDerivativeP99": 0.04800841002253777,
+        "first25msRms": 0.10502135546227509,
+        "last25msRms": 0.0008046583749636571,
+        "edgeRmsRatio": 130.51669967024011
+      }
+    },
+    {
+      "name": "glass-impact",
+      "path": "/audio/glass-impact.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 2733,
+      "outputSha256": "44ef8c25b5239d2204d05e7bed5da822e2d608cc5adbc58aab3997189b3e3e5a",
+      "source": {
+        "path": "art/audio/raw/glass-impact.mp3",
+        "receiptPath": "art/audio/raw/glass-impact.mp3.json",
+        "sha256": "1dfcda899afe6272dd618f00a84e58a85291970a87cb6c1f3abaf846e2812b03",
+        "generationId": "aaad023f-2600-48ac-8610-d6c70e7438da",
+        "prompt": "A small hard object hits an industrial floodlight glass lens without breaking it: one bright short glass clink with a clear high ring and a faint rattle of its metal frame. Immediate attack, short clean decay, no low thud, no shattering, no repeated hits, no room reverb, no voice or music.",
+        "type": "sfx",
+        "durationSec": 0.8,
+        "provider": "elevenlabs",
+        "creditsUsed": 3
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.545,
+        "normalizationGain": 1.3997518740848585,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.255,
+        "peak": 0.6278018355369568,
+        "rms": 0.07553643498850851,
+        "rmsDbfs": -22.436870319043052,
+        "seamMaxJump": 0.006642437392656575,
+        "adjacentDerivativeRms": 0.05201635755206427,
+        "adjacentDerivativeP99": 0.2398582361638546,
+        "seamToDerivativeP99": 0.02769318035057558,
+        "first25msRms": 0.2130970747548281,
+        "last25msRms": 0.0007463489053413406,
+        "edgeRmsRatio": 285.51937737132306
+      }
+    },
+    {
+      "name": "crate-break",
+      "path": "/audio/crate-break.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 6765,
+      "outputSha256": "88778b7be47fed1703d77a9c49b156486607fed33e10561d893af9c8222661e3",
+      "source": {
+        "path": "art/audio/raw/crate-break.mp3",
+        "receiptPath": "art/audio/raw/crate-break.mp3.json",
+        "sha256": "bb938c77f0b21160484382cf952603d329f3fa847a30896638241ce40780f98a",
+        "generationId": "381edcb5-fbda-49d1-bfc6-b9c76b664a74",
+        "prompt": "One single wooden shipping crate smashing apart on concrete, a loud dry wooden crack and splintering burst as the boards split, then a few wooden pieces clattering down. Immediate attack, short natural decay, no repeated crashes, no glass, no metal, no room reverb, no voice or music.",
+        "type": "sfx",
+        "durationSec": 1.3,
+        "provider": "elevenlabs",
+        "creditsUsed": 5
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.535,
+        "normalizationGain": 0.5057586562758151,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.7459583333333333,
+        "peak": 0.6069802641868591,
+        "rms": 0.0372605016300626,
+        "rmsDbfs": -28.57502605175759,
+        "seamMaxJump": 0.0004981922470506106,
+        "adjacentDerivativeRms": 0.032646879834695816,
+        "adjacentDerivativeP99": 0.14328927919268608,
+        "seamToDerivativeP99": 0.0034768284819178563,
+        "first25msRms": 0.1281315599608408,
+        "last25msRms": 0.00048591221093725607,
+        "edgeRmsRatio": 263.69281750234904
+      }
+    },
+    {
+      "name": "lamp-fizz",
+      "path": "/audio/lamp-fizz.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 7149,
+      "outputSha256": "1cdfe4eab3b2f67f514d33de91ee8d26878057ffe56e21997c9f7b979347031f",
+      "source": {
+        "path": "art/audio/raw/lamp-fizz.mp3",
+        "receiptPath": "art/audio/raw/lamp-fizz.mp3.json",
+        "sha256": "6bede5e1ebb816b39e5481ca7c91c03b1f576cade4f6ba193a419b8019f0ff46",
+        "generationId": "4c633961-d198-4a90-86c4-f945c0098293",
+        "prompt": "A damaged industrial floodlight flickering after a hit, a short electrical sputter and crackle with a brief buzzing hum that cuts in and out, then stops. Close dry game sound. No explosion, no glass breaking, no sparks shower, no room reverb, no voice or music.",
+        "type": "sfx",
+        "durationSec": 1,
+        "provider": "elevenlabs",
+        "creditsUsed": 3
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.205,
+        "normalizationGain": 2.596885078232625,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.795,
+        "peak": 0.6184203624725342,
+        "rms": 0.10017012029595168,
+        "rmsDbfs": -19.985236093484765,
+        "seamMaxJump": 0.03964110770175466,
+        "adjacentDerivativeRms": 0.14939194526035032,
+        "adjacentDerivativeP99": 0.48461879044771194,
+        "seamToDerivativeP99": 0.08179853625801939,
+        "first25msRms": 0.17390854865652383,
+        "last25msRms": 0.0007233627372892083,
+        "edgeRmsRatio": 240.41679186882598
+      }
+    },
+    {
+      "name": "lights-out",
+      "path": "/audio/lights-out.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 7917,
+      "outputSha256": "4a98de5be27b013638af69601f0443653b9321a4592dff483fc1aa0425f5c1e2",
+      "source": {
+        "path": "art/audio/raw/lights-out.mp3",
+        "receiptPath": "art/audio/raw/lights-out.mp3.json",
+        "sha256": "b38fd30be0f1222225951619e7b36c854b7adaa5e800db5ce5527bbaf5494d9d",
+        "generationId": "a072ec7b-5c8f-4853-8976-8c8c80bb6e58",
+        "prompt": "Large stadium floodlights switching off all at once, a heavy electrical relay clunk followed by a deep power-down hum that winds down and fades to silence. Industrial yard at night. No explosion, no alarm, no voice, no music, no room reverb.",
+        "type": "sfx",
+        "durationSec": 2,
+        "provider": "elevenlabs",
+        "creditsUsed": 6
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 1.1,
+        "normalizationGain": 1.426571493792462,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 0.9,
+        "peak": 0.6160160303115845,
+        "rms": 0.08756483426114378,
+        "rmsDbfs": -21.153405400057544,
+        "seamMaxJump": 0.006563458984601311,
+        "adjacentDerivativeRms": 0.014700267639177853,
+        "adjacentDerivativeP99": 0.053278366453014314,
+        "seamToDerivativeP99": 0.12319182102532299,
+        "first25msRms": 0.14746346562902254,
+        "last25msRms": 0.0011486396436767184,
+        "edgeRmsRatio": 128.3809647706411
+      }
+    },
+    {
+      "name": "relamp",
+      "path": "/audio/relamp.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 9645,
+      "outputSha256": "e73fceeedbc76ec32a659a83f71c2d2ca1456731d71b1ab12b8e21f7a450a0fb",
+      "source": {
+        "path": "art/audio/raw/relamp.mp3",
+        "receiptPath": "art/audio/raw/relamp.mp3.json",
+        "sha256": "a1a3a0783b820392416a5c0c2f23edde061092f2bf98bbf45755fa95f57259f7",
+        "generationId": "b5d7b03e-0ff4-4d23-af55-77e17105ca5b",
+        "prompt": "Large stadium floodlights switching back on, a heavy electrical relay clunk followed by a rising ballast hum and a soft electric buzz that settles to a steady quiet tone, then fades. Industrial yard. No explosion, no alarm, no voice, no music, no room reverb.",
+        "type": "sfx",
+        "durationSec": 2,
+        "provider": "elevenlabs",
+        "creditsUsed": 6
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.895,
+        "normalizationGain": 1.4641799627684535,
+        "targetPeak": 0.65
+      },
+      "measurements": {
+        "durationSeconds": 1.1059583333333334,
+        "peak": 0.6038987636566162,
+        "rms": 0.06616128530103296,
+        "rmsDbfs": -23.587921328564804,
+        "seamMaxJump": 0.009614394111849833,
+        "adjacentDerivativeRms": 0.03386112589800899,
+        "adjacentDerivativeP99": 0.11194455623626709,
+        "seamToDerivativeP99": 0.08588532068998476,
+        "first25msRms": 0.18519711849480094,
+        "last25msRms": 0.0011318354479734917,
+        "edgeRmsRatio": 163.62548003456627
+      }
+    },
+    {
+      "name": "rubber-impact",
+      "path": "/audio/rubber-impact.mp3",
+      "loop": false,
+      "channels": 1,
+      "sampleRate": 24000,
+      "bitrateKbps": 64,
+      "bytes": 5037,
+      "outputSha256": "1e7ba517a3de2fe30b7dbd282a9399f16dbc9b2eceb9acfe9486cbd1b4690de4",
+      "source": {
+        "path": "art/audio/raw/rubber-impact.mp3",
+        "receiptPath": "art/audio/raw/rubber-impact.mp3.json",
+        "sha256": "51a7a617b5396c4abec3d4041ebdc67f7cb856e023eae7d7ff96de86a9019ffc",
+        "generationId": "2ce3f6b5-5bf7-4b36-a3d0-1f8cd4bbdb0d",
+        "prompt": "One single heavy stack of old rubber tires dropping onto concrete, a deep bouncy rubber thud with a short soft rubbery wobble. Immediate attack, short clean decay, no repeated hits, no squeak, no metal, no room reverb, no voice or music. Weighty and muffled, not sharp.",
+        "type": "sfx",
+        "durationSec": 1.1,
+        "provider": "elevenlabs",
+        "creditsUsed": 5
+      },
+      "processing": {
+        "trimStartSeconds": 0,
+        "trimEndSeconds": 0.535,
+        "normalizationGain": 1.0545271836019197,
+        "targetPeak": 0.65,
+        "filter": "highpass=f=70,highpass=f=70,equalizer=f=400:t=q:w=1:g=10,equalizer=f=1000:t=q:w=1.2:g=8"
+      },
+      "measurements": {
+        "durationSeconds": 0.545,
+        "peak": 0.6205694079399109,
+        "rms": 0.060084435724956274,
+        "rmsDbfs": -24.42476026183492,
+        "seamMaxJump": 0.0019955611628574843,
+        "adjacentDerivativeRms": 0.009825408846248405,
+        "adjacentDerivativeP99": 0.047559864819049835,
+        "seamToDerivativeP99": 0.041958932609458835,
+        "first25msRms": 0.20861958727365273,
+        "last25msRms": 0.0011252594267385906,
+        "edgeRmsRatio": 185.3968803250179
       }
     }
   ]

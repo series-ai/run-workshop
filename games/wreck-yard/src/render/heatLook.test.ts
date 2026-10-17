@@ -12,7 +12,7 @@ describe('heat look', () => {
 
   it('reads the heat of a body from the given body list', () => {
     const body = (id: string, frame: number | null): YardBody => ({
-      id, label: id, dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([5]), motion: 'dynamic', buoyancy: 0, anchorFaces: [],
+      id, label: id, material: 'concrete', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([5]), motion: 'dynamic', buoyancy: 0, anchorFaces: [],
       impactCooldownUntil: 0, heat: frame === null ? null : { frame, at: [0, 0, 0] },
     });
     const before = [body('a', 10), body('b', null)];

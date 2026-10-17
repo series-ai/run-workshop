@@ -1,3 +1,4 @@
+import { Timeline, type PerfTimeline } from './timeline';
 import { GPU_PHASES, type GpuPhase, type GpuTimer, type GpuTimerExport } from './gpuTimer.js';
 
 export const CPU_PHASES = [
@@ -22,6 +23,20 @@ export const CPU_PHASES = [
   'post.ao',
   'post.bloom',
   'post.composite',
+  'checkpoint.spill',
+  'sim.physicsStep',
+  'sim.physicsLatest',
+  'sim.players',
+  'sim.stackWake',
+  'sim.fractures',
+  'sim.impacts',
+  'sim.crateBreak',
+  'sim.cooling',
+  'sim.worldRead',
+  'fracture.carve',
+  'fracture.split',
+  'fracture.cook',
+  'fracture.edit',
 ] as const;
 
 export const COUNTER_LABELS = [
@@ -50,6 +65,21 @@ export const COUNTER_LABELS = [
   'webgl.ownedBufferBytes',
   'memory.wasmBytes',
   'webgl.postTargetBytesEstimate',
+  'sim.contacts',
+  'sim.impacts',
+  'torch.pendingCuts',
+  'torch.cuts',
+  'fracture.removedVoxels',
+  'fracture.fragments',
+  'input.primary',
+  'input.moveX',
+  'input.moveZ',
+  'viewport.scale',
+  'camera.fov',
+  'camera.zoom',
+  'memory.jsHeapUsedBytes',
+  'sim.hotBodies',
+  'render.voxelBodies',
 ] as const;
 
 export const INPUT_STAGES = ['event', 'sample', 'apply', 'renderSubmission'] as const;
@@ -160,8 +190,26 @@ export interface WebGLResourceSnapshot {
   ownedBufferBytes?: number;
 }
 
+export interface PerfViewport {
+  width: number;
+  height: number;
+  pixelRatio: number;
+  scale: number;
+}
+
+export interface PerfCaptureContext {
+  capturedAt: string;
+  deterministicVersion: string;
+  engineIdentityHash: string;
+  userAgent: string;
+  hardwareConcurrency: number | null;
+  viewportAtStart: PerfViewport;
+  viewportAtExport?: PerfViewport;
+}
+
 export interface PerfReport {
   schemaVersion: 1;
+  context?: PerfCaptureContext;
   units: { time: 'ms'; memory: 'bytes' };
   startedAtMs: number;
   stoppedAtMs: number;
@@ -172,6 +220,7 @@ export interface PerfReport {
   totalRecords: number;
   overwrittenRecords: number;
   records: PerfRecord[];
+  timeline: PerfTimeline;
   phaseSummary: Partial<Record<CpuPhase, QuantileSummary>>;
   gpuPhaseSummary: Partial<Record<GpuPhase, QuantileSummary>>;
   counterSummary: Partial<Record<CounterLabel, QuantileSummary>>;
@@ -216,6 +265,21 @@ const CPU_PHASE_IDS: Record<CpuPhase, number> = {
   'post.ao': 18,
   'post.bloom': 19,
   'post.composite': 20,
+  'checkpoint.spill': 21,
+  'sim.physicsStep': 22,
+  'sim.physicsLatest': 23,
+  'sim.players': 24,
+  'sim.stackWake': 25,
+  'sim.fractures': 26,
+  'sim.impacts': 27,
+  'sim.crateBreak': 28,
+  'sim.cooling': 29,
+  'sim.worldRead': 30,
+  'fracture.carve': 31,
+  'fracture.split': 32,
+  'fracture.cook': 33,
+  'fracture.edit': 34,
+
 };
 
 const COUNTER_IDS: Record<CounterLabel, number> = {
@@ -244,6 +308,22 @@ const COUNTER_IDS: Record<CounterLabel, number> = {
   'webgl.ownedBufferBytes': 22,
   'memory.wasmBytes': 23,
   'webgl.postTargetBytesEstimate': 24,
+  'sim.contacts': 25,
+  'sim.impacts': 26,
+  'torch.pendingCuts': 27,
+  'torch.cuts': 28,
+  'fracture.removedVoxels': 29,
+  'fracture.fragments': 30,
+  'input.primary': 31,
+  'input.moveX': 32,
+  'input.moveZ': 33,
+  'viewport.scale': 34,
+  'camera.fov': 35,
+  'camera.zoom': 36,
+  'memory.jsHeapUsedBytes': 37,
+  'sim.hotBodies': 38,
+  'render.voxelBodies': 39,
+
 };
 
 const INPUT_STAGE_IDS: Record<InputStage, number> = {
@@ -264,6 +344,7 @@ const WEBGL_COUNTER_IDS = {
 
 export class PerfRecorder {
   private active = false;
+  private timeline: Timeline | undefined;
   private capacity = 0;
   private maxDurationMs = DEFAULT_MAX_DURATION_MS;
   private startedAtMs = 0;
@@ -289,6 +370,15 @@ export class PerfRecorder {
     return this.active;
   }
 
+  get status(): { active: boolean; elapsedMs: number; maxDurationMs: number; totalRecords: number } {
+    return {
+      active: this.active,
+      elapsedMs: this.capacity ? Math.max(0, (this.active ? performance.now() : this.stoppedAtMs) - this.startedAtMs) : 0,
+      maxDurationMs: this.maxDurationMs,
+      totalRecords: this.totalRecords,
+    };
+  }
+
   get lastInputSequence(): number {
     return this.latestInputSequence;
   }
@@ -305,6 +395,7 @@ export class PerfRecorder {
 
     this.stop();
     this.capacity = capacity;
+    this.timeline = new Timeline(maxDurationMs, CPU_PHASES, COUNTER_LABELS);
     this.maxDurationMs = maxDurationMs;
     this.recordTypes = new Uint8Array(capacity);
     this.labelIds = new Uint8Array(capacity);
@@ -338,6 +429,7 @@ export class PerfRecorder {
     this.labelIds = new Uint8Array(0);
     this.data = new Float64Array(0);
     this.capacity = 0;
+    this.timeline = undefined;
     this.writeIndex = 0;
     this.recordCount = 0;
     this.totalRecords = 0;
@@ -365,13 +457,14 @@ export class PerfRecorder {
   }
 
   endPhase(label: CpuPhase, start: number): void {
-    if (start <= 0 || !Number.isFinite(start)) return;
-    const timestampMs = this.timestampIfActive();
+    if (!this.active || start <= 0 || !Number.isFinite(start) || start < this.startedAtMs) return;
+    const timestampMs = performance.now();
     const labelId = CPU_PHASE_IDS[label];
     if (timestampMs === INVALID_TIMESTAMP || labelId === undefined) return;
     const durationMs = timestampMs - start;
     if (!Number.isFinite(durationMs) || durationMs < 0) return;
     this.write(RECORD_PHASE, labelId, start, durationMs, 0, this.currentRenderFrame, this.currentSimFrame, 0);
+    if (timestampMs - this.startedAtMs >= this.maxDurationMs) this.stopAt(timestampMs);
   }
 
   count(label: CounterLabel, value: number): void {
@@ -465,6 +558,7 @@ export class PerfRecorder {
       totalRecords: this.totalRecords,
       overwrittenRecords: Math.max(0, this.totalRecords - this.recordCount),
       records,
+      timeline: this.timeline?.export(elapsedMs) ?? { binDurationMs: 1000, bins: [] },
       phaseSummary,
       gpuPhaseSummary,
       counterSummary,
@@ -509,6 +603,7 @@ export class PerfRecorder {
     simFrame: number,
     sequence: number,
   ): void {
+    this.timeline?.write(type, labelId, timestampMs - this.startedAtMs, durationMs, value, renderFrame, simFrame);
     const index = this.writeIndex;
     const offset = index * RECORD_STRIDE;
     this.recordTypes[index] = type;

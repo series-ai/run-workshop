@@ -26,7 +26,7 @@ No extra render pass was added.
 | Yard background | Quiet city hum; distant drill and steam sounds |
 | Torch active, cutting, or hitting steel | Pressurized torch loop; cutting changes its level and pitch |
 | Torch enters water | Steam quench |
-| Gravity grab and hold | Grab pulse, then a quiet beam loop |
+| Gravity grab and hold | Grab sound, then a quiet gravity hold loop |
 | Punt and throw | Different rates and levels of the gravity pulse |
 | Release without a throw | Quiet latch |
 | Jetpack active | Turbine loop |

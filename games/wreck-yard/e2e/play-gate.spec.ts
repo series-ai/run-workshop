@@ -65,3 +65,50 @@ test('start plate, pause menu, resume, leave, and the drag-look fallback', async
 
   expect(pageErrors).toEqual([]);
 });
+
+test('four warm solo starts keep the menu, capture, and simulation active', async ({ page }) => {
+  const pageErrors: string[] = [];
+  const cycles: Array<{ cycle: number; beforeCalls: number; startFrame?: number; endFrame?: number; captureCalls?: string[] }> = [];
+  page.on('pageerror', error => pageErrors.push(String(error)));
+  await page.goto('/?capture=fake', { waitUntil: 'networkidle' });
+  const gate = page.locator('[data-gate-view]');
+  await expect(page.getByRole('button', { name: 'Click to play', exact: true })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Click to play', exact: true }).click();
+  await expect(gate).toHaveCount(0);
+  await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 15_000 });
+
+  type WarmWindow = Window & {
+    __CAPTURE_FAKE__: Fake & { getState(): Promise<{ active: boolean; pointerLocked: boolean }> };
+    __WRECK_YARD_CONTROLLER__: { getRender(): { frame: number } | null; isPaused(): boolean };
+  };
+  const frame = () => page.evaluate(() => (window as WarmWindow).__WRECK_YARD_CONTROLLER__.getRender()?.frame ?? -1);
+
+  try {
+    for (let cycle = 1; cycle <= 4; cycle++) {
+      await page.getByRole('button', { name: 'Leave Match', exact: true }).click();
+      const play = page.getByRole('button', { name: 'Play Solo', exact: true });
+      await expect(play, `cycle ${cycle}: the match menu must return`).toBeVisible({ timeout: 10_000 });
+      const record: (typeof cycles)[number] = { cycle, beforeCalls: (await calls(page)).length };
+      cycles.push(record);
+      await play.click();
+      await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 15_000 });
+      await expect(gate, `cycle ${cycle}: a successful capture must keep the gate closed`).toHaveCount(0);
+      record.startFrame = await frame();
+      expect(record.startFrame).toBeGreaterThanOrEqual(0);
+      await expect.poll(frame, { message: `cycle ${cycle}: the real simulation must advance`, timeout: 10_000 })
+        .toBeGreaterThan(record.startFrame + 5);
+      record.endFrame = await frame();
+      expect(await page.evaluate(() => (window as WarmWindow).__WRECK_YARD_CONTROLLER__.isPaused())).toBe(false);
+      expect(await page.evaluate(() => (window as WarmWindow).__CAPTURE_FAKE__.getState()))
+        .toEqual({ active: true, pointerLocked: true });
+      record.captureCalls = (await calls(page)).slice(record.beforeCalls);
+      expect(record.captureCalls.some(call => call === 'setPointerLock:true' || call === 'requestFullscreen:true')).toBe(true);
+      expect(record.captureCalls, `cycle ${cycle}: start must not release its accepted capture`).not.toContain('setPointerLock:false');
+      expect(record.captureCalls).not.toContain('exitFullscreen');
+      await expect(gate).toHaveCount(0);
+    }
+    expect(pageErrors).toEqual([]);
+  } finally {
+    await test.info().attach('warm-solo-starts', { body: JSON.stringify({ cycles, calls: await calls(page), pageErrors }, null, 2), contentType: 'application/json' });
+  }
+});

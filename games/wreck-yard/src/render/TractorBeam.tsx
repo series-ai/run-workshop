@@ -1,11 +1,11 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useMemo, useRef, type MutableRefObject } from 'react';
+import { useLayoutEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { MAX_PLAYERS } from '../sim/constants';
 import type { UiTool } from './keyBindings';
 import type { YardRender } from './presentation';
+import { useReducedMotionRef } from './reducedMotion';
 import { glowTexture } from './style/glowTexture';
-import { bezierPoint, tractorControlPoint } from './toolFeedback';
 import { toolMuzzleAndAim } from './toolMuzzle';
 
 const SEGMENTS = 22;
@@ -13,103 +13,120 @@ const BEADS = 7;
 const UP = new THREE.Vector3(0, 1, 0);
 const ENERGY = new THREE.Color('#7dd3fc').multiplyScalar(2.2);
 const CORE = new THREE.Color('#e0f7ff').multiplyScalar(2.6);
+const ADDITIVE = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true, toneMapped: false } as const;
+const noRaycast = () => null;
 
-/**
- * Tractor beam while the gravity gun holds a body: a curve that leaves the
- * muzzle along the aim and bends into the held body, so a lagging body bends
- * the beam. Beads of energy flow along it toward the body.
- */
+function curvePoint(out: THREE.Vector3, start: THREE.Vector3, control: THREE.Vector3, end: THREE.Vector3, t: number): void {
+  const remaining = 1 - t;
+  out.copy(start).multiplyScalar(remaining * remaining)
+    .addScaledVector(control, 2 * remaining * t)
+    .addScaledVector(end, t * t);
+}
+
+function uploadInstances(mesh: THREE.InstancedMesh | null, count: number): void {
+  if (!mesh) return;
+  mesh.count = count;
+  if (count > 0) mesh.instanceMatrix.needsUpdate = true;
+}
+
+/** A fixed pool draws each held body's beam. Width and endpoint size stay constant. */
 export function TractorBeam({ renderRef, tool }: { renderRef: MutableRefObject<YardRender | null>; tool: UiTool }) {
   const { camera } = useThree();
+  const reducedMotion = useReducedMotionRef();
   const sheath = useRef<THREE.InstancedMesh>(null);
   const core = useRef<THREE.InstancedMesh>(null);
   const beads = useRef<THREE.InstancedMesh>(null);
-  const ends = useRef<(THREE.Sprite | null)[]>([]);
-  const s = useMemo(() => ({
+  const ends = useRef<(THREE.Sprite | null)[]>(Array.from({ length: MAX_PLAYERS }, () => null));
+  const flow = useRef(0);
+  const scratch = useMemo(() => ({
     muzzle: new THREE.Vector3(), aim: new THREE.Vector3(), right: new THREE.Vector3(), up: new THREE.Vector3(),
-    a: new THREE.Vector3(), b: new THREE.Vector3(), dir: new THREE.Vector3(), object: new THREE.Object3D(),
+    control: new THREE.Vector3(), target: new THREE.Vector3(),
+    a: new THREE.Vector3(), b: new THREE.Vector3(), direction: new THREE.Vector3(), transform: new THREE.Object3D(),
   }), []);
 
-  useFrame(({ clock }) => {
+  useLayoutEffect(() => {
+    sheath.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    core.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    beads.current?.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  }, []);
+
+  useFrame((_, delta) => {
     const render = renderRef.current;
-    const time = clock.elapsedTime;
-    let segment = 0;
-    let bead = 0;
+    if (!render) flow.current = 0;
+    else if (!reducedMotion.current) flow.current = (flow.current + Math.min(delta, 0.1) * 1.6) % 1;
+    let segmentCount = 0;
+    let beadCount = 0;
     for (let slot = 0; slot < MAX_PLAYERS; slot += 1) {
       const glow = ends.current[slot];
       if (glow) glow.visible = false;
-      const player = render?.players.find((p) => p.slot === slot);
-      const pose = player?.grabbing ? render?.poses.get(player.grabbing) : undefined;
-      if (!render || !player || !pose || player.ridingVehicle) continue;
-
-      toolMuzzleAndAim(player, slot === render.localSlot && tool !== 'orbit', camera, s.muzzle, s.aim, s);
-      const p0 = [s.muzzle.x, s.muzzle.y, s.muzzle.z] as const;
-      const p2 = pose.position;
-      const p1 = tractorControlPoint(p0, [s.aim.x, s.aim.y, s.aim.z], p2);
-
-      // Sheath and core segments along the curve, with a small energy shimmer.
-      for (let i = 0; i < SEGMENTS; i += 1) {
-        s.a.fromArray(bezierPoint(p0, p1, p2, i / SEGMENTS));
-        s.b.fromArray(bezierPoint(p0, p1, p2, (i + 1) / SEGMENTS));
-        s.dir.subVectors(s.b, s.a);
-        const length = s.dir.length();
-        const shimmer = 1 + 0.35 * Math.sin(time * 24 - i * 0.9);
-        s.object.position.copy(s.a).addScaledVector(s.dir, 0.5);
-        s.object.quaternion.setFromUnitVectors(UP, s.dir.divideScalar(length));
-        s.object.scale.set(shimmer, length, shimmer);
-        s.object.updateMatrix();
-        sheath.current?.setMatrixAt(segment, s.object.matrix);
-        s.object.scale.set(1, length, 1);
-        s.object.updateMatrix();
-        core.current?.setMatrixAt(segment, s.object.matrix);
-        segment += 1;
-      }
-      // Beads flow from the gun to the body.
-      for (let i = 0; i < BEADS; i += 1) {
-        const t = (time * 1.6 + i / BEADS) % 1;
-        s.object.position.fromArray(bezierPoint(p0, p1, p2, t));
-        s.object.quaternion.identity();
-        s.object.scale.setScalar(0.5 + 0.5 * Math.sin(t * Math.PI));
-        s.object.updateMatrix();
-        beads.current?.setMatrixAt(bead, s.object.matrix);
-        bead += 1;
-      }
-      if (glow) {
-        glow.position.set(p2[0], p2[1], p2[2]);
-        const size = 0.9 + 0.15 * Math.sin(time * 18);
-        glow.scale.set(size, size, 1);
-        glow.visible = true;
+    }
+    if (render) {
+      const s = scratch;
+      for (const player of render.players) {
+        const pose = player.grabbing ? render.poses.get(player.grabbing) : undefined;
+        if (!pose || player.ridingVehicle) continue;
+        toolMuzzleAndAim(player, player.slot === render.localSlot && tool !== 'orbit', camera, s.muzzle, s.aim, s);
+        s.target.fromArray(pose.position);
+        const reach = s.muzzle.distanceTo(s.target);
+        if (reach < 1e-4) continue;
+        s.control.copy(s.muzzle).addScaledVector(s.aim, reach * 0.55);
+        s.a.copy(s.muzzle);
+        for (let index = 0; index < SEGMENTS; index += 1) {
+          curvePoint(s.b, s.muzzle, s.control, s.target, (index + 1) / SEGMENTS);
+          s.direction.subVectors(s.b, s.a);
+          const length = s.direction.length();
+          if (length > 1e-5) {
+            s.transform.position.copy(s.a).addScaledVector(s.direction, 0.5);
+            s.transform.quaternion.setFromUnitVectors(UP, s.direction.divideScalar(length));
+            s.transform.scale.set(1, length, 1);
+            s.transform.updateMatrix();
+            sheath.current?.setMatrixAt(segmentCount, s.transform.matrix);
+            core.current?.setMatrixAt(segmentCount, s.transform.matrix);
+            segmentCount += 1;
+          }
+          s.a.copy(s.b);
+        }
+        s.transform.quaternion.identity();
+        s.transform.scale.setScalar(0.8);
+        for (let index = 0; index < BEADS; index += 1) {
+          curvePoint(s.transform.position, s.muzzle, s.control, s.target, (flow.current + index / BEADS) % 1);
+          s.transform.updateMatrix();
+          beads.current?.setMatrixAt(beadCount, s.transform.matrix);
+          beadCount += 1;
+        }
+        const glow = ends.current[player.slot];
+        if (glow) {
+          glow.position.copy(s.target);
+          glow.visible = true;
+        }
       }
     }
-    for (const mesh of [sheath.current, core.current]) {
-      if (!mesh) continue;
-      mesh.count = segment;
-      mesh.instanceMatrix.needsUpdate = true;
-    }
-    if (beads.current) {
-      beads.current.count = bead;
-      beads.current.instanceMatrix.needsUpdate = true;
-    }
+    uploadInstances(sheath.current, segmentCount);
+    uploadInstances(core.current, segmentCount);
+    uploadInstances(beads.current, beadCount);
   });
 
-  const additive = { transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false } as const;
   return (
     <group name="TractorBeam">
-      <instancedMesh ref={sheath} args={[undefined, undefined, SEGMENTS * MAX_PLAYERS]} frustumCulled={false} renderOrder={10}>
+      <instancedMesh name="tractor-beam-sheath" ref={sheath} args={[undefined, undefined, SEGMENTS * MAX_PLAYERS]}
+        count={0} frustumCulled={false} raycast={noRaycast} renderOrder={10}>
         <cylinderGeometry args={[0.055, 0.055, 1, 8, 1, true]} />
-        <meshBasicMaterial color={ENERGY} opacity={0.28} {...additive} />
+        <meshBasicMaterial name="tractor-beam-sheath-material" color={ENERGY} opacity={0.28} {...ADDITIVE} />
       </instancedMesh>
-      <instancedMesh ref={core} args={[undefined, undefined, SEGMENTS * MAX_PLAYERS]} frustumCulled={false} renderOrder={11}>
+      <instancedMesh name="tractor-beam-core" ref={core} args={[undefined, undefined, SEGMENTS * MAX_PLAYERS]}
+        count={0} frustumCulled={false} raycast={noRaycast} renderOrder={11}>
         <cylinderGeometry args={[0.014, 0.014, 1, 6, 1, true]} />
-        <meshBasicMaterial color={CORE} opacity={0.95} {...additive} />
+        <meshBasicMaterial name="tractor-beam-core-material" color={CORE} opacity={0.95} {...ADDITIVE} />
       </instancedMesh>
-      <instancedMesh ref={beads} args={[undefined, undefined, BEADS * MAX_PLAYERS]} frustumCulled={false} renderOrder={12}>
+      <instancedMesh name="tractor-beam-beads" ref={beads} args={[undefined, undefined, BEADS * MAX_PLAYERS]}
+        count={0} frustumCulled={false} raycast={noRaycast} renderOrder={12}>
         <sphereGeometry args={[0.045, 8, 6]} />
-        <meshBasicMaterial color={CORE} opacity={0.9} {...additive} />
+        <meshBasicMaterial name="tractor-beam-beads-material" color={CORE} opacity={0.9} {...ADDITIVE} />
       </instancedMesh>
       {Array.from({ length: MAX_PLAYERS }, (_, slot) => (
-        <sprite key={slot} ref={(sprite) => { ends.current[slot] = sprite; }} visible={false} renderOrder={12}>
-          <spriteMaterial map={glowTexture()} color={ENERGY} opacity={0.55} {...additive} />
+        <sprite key={slot} name={`tractor-beam-end-${slot}`} ref={(sprite) => { ends.current[slot] = sprite; }}
+          scale={[0.9, 0.9, 1]} visible={false} raycast={noRaycast} renderOrder={12}>
+          <spriteMaterial name={`tractor-beam-end-material-${slot}`} map={glowTexture()} color={ENERGY} opacity={0.55} {...ADDITIVE} />
         </sprite>
       ))}
     </group>

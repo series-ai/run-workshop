@@ -12,7 +12,6 @@ import {
   IMPACT_COOLDOWN_TICKS,
   TICK_RATE,
   JETPACK_FUEL_DRAIN,
-  LINEAR_DAMPING,
   JETPACK_FUEL_RECHARGE,
   JETPACK_THRUST_XZ,
   JETPACK_THRUST_Y,
@@ -21,12 +20,13 @@ import {
   PLAYER_EYE_OFFSET,
   PLAYER_GRAVITY,
   PLAYER_MOVE_SPEED,
+  SHELL_PREFIX,
   THROW_BOOST,
   withinBuggyMountRange,
   TORCH_INSET,
   TORCH_PULSE_TICKS,
   TORCH_RADIUS,
-  TORCH_THROUGH_MARGIN,
+  TORCH_MAX_STROKE,
   VOXEL_SIZE,
 } from './constants';
 import { WORLD_LAYER } from './cage';
@@ -52,12 +52,16 @@ import { coolVoxels } from './heat';
 import { waterEntry } from './water';
 import { BLAST, blastDirection, blastFalloff, damageDrum, dentVoxels, EXPLOSION_SHOW_TICKS, FUEL_DRUM, hitDamage, scorchVoxels } from './fuelDrum';
 import { fuelDrumPreset } from './props';
+import { damageLamp, FLOODLIGHT, FLOODLIGHT_LENSES, floodlightLensByKey, lampHitDamage, lampsToRelight, LAMP_SHOW_TICKS, LIGHTS_OUT_TICKS, REPAIR_TICKS, wholeLamp } from './floodlights';
+import { breakCrate, CRATE_BREAK, CRATE_BREAK_SHOW_TICKS, isBreakableCrate } from './crateBreak';
+import { collectImpacts, keepImpacts } from './impacts';
+import { SHELL_BOXES, shellBoxQuaternion } from './shell';
+import type { ShellBox } from './setPieces';
 import { stepBuggy } from './vehicle';
 import { movePlayer } from './movement';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
 import { advanceHoldPoint, grabServo } from './grab';
 import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
-import type { VoxelDims } from 'voxel-kit';
 import {
   addPhysicsBodies,
   halfExtents,
@@ -72,8 +76,10 @@ import {
   removePhysicsBody,
   replacePhysicsBody,
   setPhysicsBodyMotion,
+  shellBody,
   wakeShippingStack,
   setPhysicsBodyLinearDamping,
+  bodyLinearDamping,
   setPhysicsBodyVelocity,
   readWorldState,
   type OpenYardPhysicsWorld,
@@ -92,7 +98,7 @@ import {
   type ToolFeedback,
   type ToolResult,
 } from './state';
-import { beginPhase, endPhase } from '../perf/recorder';
+import { beginPhase, endPhase, perfActive, perfCount } from '../perf/recorder';
 
 interface Hit {
   readonly bodyId: string;
@@ -163,24 +169,6 @@ function worldToVoxel(body: YardBody, physics: YardPhysicsBody3D, worldPoint: Ve
     local[1] / VOXEL_SIZE + (body.dims.y - 1) * 0.5,
     local[2] / VOXEL_SIZE + (body.dims.z - 1) * 0.5,
   ];
-}
-
-/**
- * Steps along `direction` through a voxel-space box `[0, dims]` and returns
- * the distance in voxels from `from` to the exit face.
- */
-function voxelsToExitBox(from: Vec3, direction: Vec3, dims: VoxelDims): number {
-  const min: Vec3 = [-0.5, -0.5, -0.5];
-  const max: Vec3 = [dims.x - 0.5, dims.y - 0.5, dims.z - 0.5];
-  let far = 0;
-  for (let axis = 0; axis < 3; axis += 1) {
-    const d = direction[axis];
-    if (d === 0) continue;
-    const boundary = d > 0 ? max[axis] : min[axis];
-    const distance = (boundary - from[axis]) / d;
-    if (distance > far) far = distance;
-  }
-  return far;
 }
 
 function findBody(bodies: readonly YardBody[], id: string): YardBody | undefined {
@@ -421,12 +409,9 @@ function stepHand(
       // The body is stuck far behind the hold point (wedged or knocked away): let go.
       grab = null;
     } else {
-      const motion = grabServo(position, {
-        linear: [physics.vx, physics.vy, physics.vz],
-        angular: [physics.angularVel.x, physics.angularVel.y, physics.angularVel.z],
-      }, hold);
-      setPhysicsBodyMotion(w.physics, grab.bodyId, motion.linear, motion.angular);
-      grab = { ...grab, target: hold.point, targetVelocity: hold.velocity };
+      wakeShippingStack(w.physics, grab.bodyId);
+      const applied = grabServo(w.physics.world, physicsBodyHandle(w.physics, grab.bodyId), hold);
+      grab = applied ? { ...grab, target: hold.point, targetVelocity: hold.velocity } : null;
     }
   } else if (grab && !input.pressed) {
     const physics = physicsBodyById(w.physics, grab.bodyId)!;
@@ -503,7 +488,9 @@ function stepTorch(
   const surface = worldToVoxel(body, physics, hit.point);
   const point = sub(surface, scale(localNormal, TORCH_INSET));
   const sameBody = player.torch?.bodyId === body.id;
-  const prev = sameBody ? player.torch!.prev : point;
+  const previous = sameBody ? player.torch!.prev : point;
+  const delta = sub(point, previous);
+  const prev = Math.hypot(...delta) <= TORCH_MAX_STROKE ? previous : point;
   const torchTicks = sameBody ? player.torchTicks + 1 : 1;
 
   if (drumOf(w, body.id)) {
@@ -527,18 +514,14 @@ function stepTorch(
   }
 
   if (torchTicks % TORCH_PULSE_TICKS === 0) {
-    // The through cut is the whole stroke translated out the far side, so both
-    // ends of the stroke clear the body wall instead of only the far end.
-    const depth = voxelsToExitBox(point, localNormal, body.dims) + TORCH_THROUGH_MARGIN;
-    const shift = scale(localNormal, -depth);
     w.fractures.push({
       bodyId: body.id,
       countsAsCut: true,
       contact: {
         start: prev,
         end: point,
-        through: add(prev, shift),
-        throughEnd: add(point, shift),
+        through: prev,
+        throughEnd: point,
         radius: TORCH_RADIUS,
         worldPoint: hit.point,
         impulseBoost: 0,
@@ -662,6 +645,119 @@ function queueDrumHits(w: Working, contacts: readonly PhysicsContactEvent3D[], f
   }
 }
 
+/**
+ * Hits from yard bodies damage the floodlight lenses. A lamp that takes damage
+ * flickers. A lens at full damage breaks: it leaves the physics world, and the
+ * state records the smash for the render and the sound.
+ */
+function hitFloodlights(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
+  for (const contact of contacts) {
+    if (contact.type !== 'enter' || contact.closingSpeed < FLOODLIGHT.minHitSpeed) continue;
+    const keys = [contact.bodyKeyA, contact.bodyKeyB];
+    const lensKey = keys.find((key) => floodlightLensByKey(key) !== undefined);
+    const lens = floodlightLensByKey(lensKey);
+    if (!lens) continue;
+    const hitter = keys.some((key) => key !== undefined && key !== lensKey && findBody(w.bodies, bodyNameOf(key)) !== undefined);
+    if (hitter) hurtLamp(w, lens.lampId, lampHitDamage(contact.closingSpeed), frame);
+  }
+}
+
+/** Adds damage to one lamp. A lamp that breaks leaves the world; the fourth one starts lights out. */
+function hurtLamp(w: Working, lampId: string, damage: number, frame: number): void {
+  const lamp = w.contraptions.lamps.find((entry) => entry.lampId === lampId);
+  if (!lamp) throw new Error(`WRECK_YARD_LAMP_UNKNOWN: ${lampId}`);
+  const next = damageLamp(lamp, damage, frame);
+  if (next === lamp) return;
+  const lamps = w.contraptions.lamps.map((entry) => (entry.lampId === lampId ? next : entry));
+  if (next.brokenAt === null) {
+    w.contraptions = { ...w.contraptions, lamps };
+    return;
+  }
+  const lens = FLOODLIGHT_LENSES.find((entry) => entry.lampId === lampId)!;
+  removePhysicsBody(w.physics, `${SHELL_PREFIX}${lampId}`);
+  const allOut = lamps.every((entry) => entry.brokenAt !== null);
+  w.contraptions = {
+    ...w.contraptions,
+    lamps,
+    lampSmashes: [...w.contraptions.lampSmashes, { lampId, at: lens.at, frame }],
+    lightsOutUntil: allOut && w.contraptions.lightsOutUntil === null ? frame + LIGHTS_OUT_TICKS : w.contraptions.lightsOutUntil,
+  };
+  w.stats = { ...w.stats, lampsSmashed: w.stats.lampsSmashed + 1 };
+}
+
+/** True while a yard body is inside the space of a lens: the lens must not come back on top of it. */
+function lensSpaceTaken(w: Working, box: ShellBox): boolean {
+  const [qx, qy, qz, qw] = shellBoxQuaternion(box);
+  const hits = w.physics.world.overlap({
+    x: meters(box.center[0]), y: meters(box.center[1]), z: meters(box.center[2]),
+    shape: { type: 'box', halfX: meters(box.size[0] / 2), halfY: meters(box.size[1] / 2), halfZ: meters(box.size[2] / 2) },
+    orientation: { x: qx, y: qy, z: qz, w: qw },
+    hitTriggers: false, hitSensors: false,
+  });
+  return hits.some((hit) => hit.bodyKey !== undefined && findBody(w.bodies, hit.bodyKey) !== undefined);
+}
+
+/**
+ * Broken lamps come back: one at a time after REPAIR_TICKS, or all four when
+ * lights out ends. A lamp with a body in its lens space waits for a later tick.
+ * Lights out ends when the last lamp is back.
+ */
+function relightFloodlights(w: Working, frame: number): void {
+  const boxes = lampsToRelight(w.contraptions, frame).map((lampId) => {
+    const box = SHELL_BOXES.find((entry) => entry.id === lampId);
+    if (!box) throw new Error(`WRECK_YARD_LAMP_SHELL_MISSING: ${lampId}`);
+    return box;
+  }).filter((box) => !lensSpaceTaken(w, box));
+  if (boxes.length === 0 && !(w.contraptions.lightsOutUntil !== null && frame >= w.contraptions.lightsOutUntil)) return;
+  addPhysicsBodies(w.physics, boxes.map(shellBody));
+  const ids = boxes.map((box) => box.id);
+  const lightsOutEnds = w.contraptions.lightsOutUntil !== null && frame >= w.contraptions.lightsOutUntil;
+  const lamps = w.contraptions.lamps.map((lamp) => {
+    // A lamp that comes back flickers on, as after a hit.
+    if (ids.includes(lamp.lampId)) return { ...wholeLamp(lamp.lampId), flickerFrame: frame };
+    // Lights out always ends on time. A lamp that a body still blocks is due for repair now,
+    // so it tries again on each tick until its space is free.
+    if (lightsOutEnds && lamp.brokenAt !== null) return { ...lamp, brokenAt: Math.min(lamp.brokenAt, frame - REPAIR_TICKS) };
+    return lamp;
+  });
+  // relitFrame moves only when a lamp comes back: it starts the relamp sound.
+  w.contraptions = { ...w.contraptions, lamps, lightsOutUntil: null, relitFrame: ids.length > 0 ? frame : w.contraptions.relitFrame };
+}
+
+/**
+ * FRAGILE crates: a hard hit splits a whole storage crate into four pieces
+ * (sim/crateBreak.ts). At most CRATE_BREAK.maxPerTick crates break in one tick,
+ * and none break while the world is near its body budget.
+ */
+function breakCrates(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
+  let broken = 0;
+  for (const contact of contacts) {
+    if (broken >= CRATE_BREAK.maxPerTick) return;
+    if (contact.type === 'exit' || contact.closingSpeed < CRATE_BREAK.speed) continue;
+    for (const key of [contact.bodyKeyA, contact.bodyKeyB]) {
+      if (broken >= CRATE_BREAK.maxPerTick || w.physics.bodyIds.size >= CRATE_BREAK.bodyBudget) return;
+      const body = key === undefined ? undefined : findBody(w.bodies, bodyNameOf(key));
+      const view = body ? physicsBodyById(w.physics, body.id) : undefined;
+      if (!body || !view || !isBreakableCrate(body) || w.fractures.some((pending) => pending.bodyId === body.id)) continue;
+      const at: Vec3 = [contact.point.x, contact.point.y, contact.point.z];
+      const result = breakCrate(body, poseOf(view), worldToVoxel(body, view, at), w.nextSerial, frame);
+      w.contraptions = { ...w.contraptions, crateBreaks: [...w.contraptions.crateBreaks, { crateId: body.id, at, frame }] };
+      w.nextSerial = result.nextSerial;
+      const index = w.bodies.findIndex((entry) => entry.id === body.id);
+      w.bodies = [...w.bodies.slice(0, index), ...result.fragments.map((fragment) => fragment.body), ...w.bodies.slice(index + 1)];
+      removePhysicsBody(w.physics, body.id);
+      addPhysicsBodies(w.physics, result.fragments.map((fragment) => fragment.physics));
+      w.stats = { ...w.stats, fractures: w.stats.fractures + 1 };
+      w.players = w.players.map((player) => ({
+        ...player,
+        grab: player.grab?.bodyId === body.id ? null : player.grab,
+        torch: player.torch?.bodyId === body.id ? null : player.torch,
+      }));
+      broken += 1;
+    }
+  }
+}
+
 /** Meters around the flame point that stay hot: the torch carve radius plus one voxel. */
 const FLAME_HEAT_REACH = (TORCH_RADIUS + 1) * VOXEL_SIZE;
 
@@ -701,12 +797,16 @@ function applyFractures(w: Working, frame: number): void {
     const source = pending.countsAsCut ? body : { ...body, impactCooldownUntil: frame + IMPACT_COOLDOWN_TICKS };
     const result = fractureBody(source, poseOf(physics), pending.contact, w.nextSerial, frame);
     const remaining = result.fragments.reduce((sum, fragment) => sum + voxelStats(fragment.body.voxels).occupiedCount, 0);
-    if (remaining >= voxelStats(source.voxels).occupiedCount) {
+    const sourceCount = voxelStats(source.voxels).occupiedCount;
+    if (remaining >= sourceCount) {
       // Nothing left to carve here, but a held torch keeps the spot hot.
       const at = scale(add(pending.contact.start, pending.contact.end), 0.5);
       w.bodies = w.bodies.map((entry) => (entry.id === pending.bodyId ? { ...entry, heat: { frame, at } } : entry));
       continue;
     }
+    perfCount('fracture.removedVoxels', sourceCount - remaining);
+    perfCount('fracture.fragments', result.fragments.length);
+    const editStart = beginPhase('fracture.edit');
     w.nextSerial = result.nextSerial;
     const index = w.bodies.findIndex((entry) => entry.id === pending.bodyId);
     w.bodies = [...w.bodies.slice(0, index), ...result.fragments.map((fragment) => fragment.body), ...w.bodies.slice(index + 1)];
@@ -715,6 +815,7 @@ function applyFractures(w: Working, frame: number): void {
     if (replacing) replacePhysicsBody(w.physics, replacing.physics);
     else removePhysicsBody(w.physics, pending.bodyId);
     addPhysicsBodies(w.physics, added.map((fragment) => fragment.physics));
+    endPhase('fracture.edit', editStart);
     w.stats = pending.countsAsCut
       ? { ...w.stats, torchCuts: w.stats.torchCuts + 1 }
       : { ...w.stats, fractures: w.stats.fractures + 1 };
@@ -782,7 +883,7 @@ function dropDrum(w: Working): void {
   w.nextSerial += 1;
   // The fall from the belt would damage the drum: it is safe until it has landed.
   const body: YardBody = {
-    id, label: FUEL_DRUM.label, dims: preset.dims, voxels: preset.voxels, motion: 'dynamic', buoyancy: 0.3, anchorFaces: [],
+    id, label: FUEL_DRUM.label, material: 'steel', dims: preset.dims, voxels: preset.voxels, motion: 'dynamic', buoyancy: 0.3, anchorFaces: [],
     impactCooldownUntil: w.frame + DRUM_DROP_TICKS,
     heat: null,
   };
@@ -799,6 +900,8 @@ function stepDrums(w: Working): void {
     ...w.contraptions,
     drums: w.contraptions.drums.filter((drum) => findBody(w.bodies, drum.bodyId)),
     explosions: w.contraptions.explosions.filter((entry) => w.frame - entry.frame <= EXPLOSION_SHOW_TICKS),
+    lampSmashes: w.contraptions.lampSmashes.filter((entry) => w.frame - entry.frame <= LAMP_SHOW_TICKS),
+    crateBreaks: w.contraptions.crateBreaks.filter((entry) => w.frame - entry.frame <= CRATE_BREAK_SHOW_TICKS),
   };
 }
 
@@ -818,6 +921,13 @@ function explodeDrum(w: Working, id: string): void {
     explosions: [...w.contraptions.explosions, { at, radius: BLAST.radius, frame: w.frame }],
   };
   w.stats = { ...w.stats, explosions: w.stats.explosions + 1 };
+
+  // The blast reaches the lamps too: a close one breaks a lens, and a far one makes it flicker.
+  // Lamp frames use the frame that the step starts from, as hits do (w.frame is the next frame).
+  for (const lens of FLOODLIGHT_LENSES) {
+    const falloff = blastFalloff(Math.hypot(lens.at[0] - at[0], lens.at[1] - at[1], lens.at[2] - at[2]));
+    if (falloff > 0) hurtLamp(w, lens.lampId, FLOODLIGHT.blastDamage * falloff, w.frame - 1);
+  }
 
   for (const body of w.bodies) {
     if (body.motion !== 'dynamic') continue;
@@ -923,7 +1033,9 @@ function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
   const c = w.contraptions;
   if (c.ballistic.some((entry) => entry.until <= w.frame || !findBody(w.bodies, entry.bodyId))) {
     for (const entry of c.ballistic) {
-      if (entry.until <= w.frame && findBody(w.bodies, entry.bodyId)) setPhysicsBodyLinearDamping(w.physics, entry.bodyId, LINEAR_DAMPING);
+      // The body gets its own damping back: a loose tire keeps its lower damping (physics.ts bodyLinearDamping).
+      const landed = entry.until <= w.frame ? findBody(w.bodies, entry.bodyId) : undefined;
+      if (landed) setPhysicsBodyLinearDamping(w.physics, entry.bodyId, bodyLinearDamping(landed));
     }
     w.contraptions = { ...c, ballistic: c.ballistic.filter((entry) => entry.until > w.frame && findBody(w.bodies, entry.bodyId)) };
   }
@@ -958,23 +1070,32 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   w.bodies = requested.bodies;
   w.attractions = requested.attractions;
 
+  const playersStart = beginPhase('sim.players');
   for (let slot = 0; slot < w.players.length; slot += 1) {
     const input = inputs[slot];
     if (!input) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
     w.players[slot] = stepPlayer(w, slot, input);
   }
 
+  endPhase('sim.players', playersStart);
+  const wakeStart = beginPhase('sim.stackWake');
   for (const bay of ['storage', 'returns']) {
     const movingCrate = state.world.bodies.find((body) => body.id.startsWith(`shipping-${bay}-`) && Math.hypot(body.vx, body.vy, body.vz) > 0.0003);
     if (movingCrate) wakeShippingStack(w.physics, movingCrate.id);
   }
+  endPhase('sim.stackWake', wakeStart);
   const driver = w.players.find((player) => player.ridingVehicle);
   const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.attractions = startElevatorStep(w.physics, w.attractions, w.players);
   endPhase('sim.gameBefore', phaseStart);
   phaseStart = beginPhase('sim.nativeStep');
+  const stepStart = beginPhase('sim.physicsStep');
   w.physics.world.step();
+  endPhase('sim.physicsStep', stepStart);
+  const latestStart = beginPhase('sim.physicsLatest');
   const latest = w.physics.world.latest();
+  endPhase('sim.physicsLatest', latestStart);
+  perfCount('sim.contacts', latest.contacts.length);
   endPhase('sim.nativeStep', phaseStart);
   phaseStart = beginPhase('sim.gameAfter');
   w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
@@ -1000,19 +1121,41 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     }
   }
 
+  // Impacts name the bodies as the contacts saw them, before any of them breaks this tick.
+  const impactsStart = beginPhase('sim.impacts');
+  const impacts = collectImpacts(latest.contacts, (key) => (key === undefined ? undefined : findBody(w.bodies, key)), state.frame);
   queueDrumHits(w, latest.contacts, state.frame);
+  hitFloodlights(w, latest.contacts, state.frame);
+  relightFloodlights(w, state.frame);
+  endPhase('sim.impacts', impactsStart);
+  perfCount('sim.impacts', impacts.length);
+  let workStart = beginPhase('sim.crateBreak');
+  breakCrates(w, latest.contacts, state.frame);
+  endPhase('sim.crateBreak', workStart);
+  if (perfActive()) perfCount('torch.pendingCuts', w.fractures.reduce((sum, entry) => sum + Number(entry.countsAsCut), 0));
+  const cutsBefore = w.stats.torchCuts;
+  workStart = beginPhase('sim.fractures');
   applyFractures(w, state.frame);
+  endPhase('sim.fractures', workStart);
+  perfCount('torch.cuts', w.stats.torchCuts - cutsBefore);
+  workStart = beginPhase('sim.cooling');
   coolBodies(w);
+  endPhase('sim.cooling', workStart);
+  if (perfActive()) perfCount('sim.hotBodies', w.bodies.reduce((sum, body) => sum + Number(body.heat !== null), 0));
+  const readStart = beginPhase('sim.worldRead');
+  const world = readWorldState(w.physics, latest.fluidInteractions, latest);
+  endPhase('sim.worldRead', readStart);
 
   const nextState: YardState = {
     frame: state.frame + 1,
     buggyWheels: buggy?.wheels ?? [],
     buggyVehicle: buggy?.vehicle,
     bodies: w.bodies,
-    world: readWorldState(w.physics, latest.fluidInteractions),
+    world,
     players: w.players,
     stats: w.stats,
     contraptions: w.contraptions,
+    impacts: keepImpacts(state.impacts, impacts, state.frame),
     attractions: w.attractions,
     nextSerial: w.nextSerial,
   };

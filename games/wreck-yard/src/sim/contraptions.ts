@@ -1,6 +1,6 @@
 import { DT, FLOOR_Y, GRAVITY } from './constants';
 import type { Vec3 } from './math';
-import type { ShellBox } from './setPieces';
+import { ofMaterial, type ShellBox, type ShellShape } from './setPieces';
 import type { ContraptionState } from './state';
 
 /**
@@ -195,10 +195,10 @@ export function buttonTop(id: ButtonId): Vec3 {
 // ---------------------------------------------------------------------------
 // Static collision for everything above. render/Contraptions.tsx draws the same boxes.
 
-const box = (id: string, center: Vec3Tuple, size: Vec3Tuple, rotation?: readonly [number, number, number]): ShellBox =>
+const box = (id: string, center: Vec3Tuple, size: Vec3Tuple, rotation?: readonly [number, number, number]): ShellShape =>
   rotation ? { id: `set-${id}`, center, size, rotation } : { id: `set-${id}`, center, size };
 
-function ringSegments(): ShellBox[] {
+function ringSegments(): ShellShape[] {
   const [cx, cy, cz] = HOOP.center;
   const length = 2 * Math.PI * HOOP.ringRadius / HOOP.segments + 0.04;
   return Array.from({ length: HOOP.segments }, (_, index) => {
@@ -224,39 +224,44 @@ export const CATAPULT_ARM_REST = ARM_REST;
 
 export const CONTRAPTION_COLLIDERS: readonly ShellBox[] = [
   // Hoop: ring, rim bracket, backboard, pole, and the arm from pole to backboard.
-  ...ringSegments(),
-  box('hoop-bracket', [HOOP.center[0], HOOP.center[1], HOOP.center[2] - HOOP.ringRadius - 0.25], [0.4, 0.16, 0.5]),
-  box('hoop-backboard', HOOP.backboard.center, HOOP.backboard.size),
-  box('hoop-pole', HOOP.pole.center, HOOP.pole.size),
-  box('hoop-pole-arm', [HOOP.center[0], HOOP.backboard.center[1], -24.75], [0.3, 0.3, 0.8]),
-  box('dunk-sign', DUNK_SIGN.panel.center, DUNK_SIGN.panel.size),
-  ...DUNK_SIGN.posts.map((post, index) => box(`dunk-sign-post-${index}`, post.center, post.size)),
+  ...ofMaterial('steel', [
+    ...ringSegments(),
+    box('hoop-bracket', [HOOP.center[0], HOOP.center[1], HOOP.center[2] - HOOP.ringRadius - 0.25], [0.4, 0.16, 0.5]),
+    box('hoop-backboard', HOOP.backboard.center, HOOP.backboard.size),
+    box('hoop-pole', HOOP.pole.center, HOOP.pole.size),
+    box('hoop-pole-arm', [HOOP.center[0], HOOP.backboard.center[1], -24.75], [0.3, 0.3, 0.8]),
+    box('dunk-sign', DUNK_SIGN.panel.center, DUNK_SIGN.panel.size),
+    ...DUNK_SIGN.posts.map((post, index) => box(`dunk-sign-post-${index}`, post.center, post.size)),
 
-  // Conveyor: belt deck (frame and rollers inside it), side rails, legs, feeder housing.
-  {
+  ]),
+
+  // Conveyor: a rubber belt deck (frame and rollers inside it), steel side rails, legs, and feeder housing.
+  ...ofMaterial('rubber', [{
     ...box('conveyor-belt', [CONVEYOR.x, CONVEYOR.topY - 0.15, (CONVEYOR.zStart + CONVEYOR.zEnd) / 2], [CONVEYOR.width + 0.2, 0.3, CONVEYOR.zEnd - CONVEYOR.zStart]),
     surfaceVelocity: [0, 0, CONVEYOR.speed],
-  },
-  ...[-1, 1].map((side) => box(`conveyor-rail-${side}`, [CONVEYOR.x + side * (CONVEYOR.width / 2 + 0.12), CONVEYOR.topY + 0.2, (CONVEYOR.zStart + CONVEYOR.zEnd) / 2], [0.12, 0.5, CONVEYOR.zEnd - CONVEYOR.zStart])),
-  ...CONVEYOR.legZ.flatMap((z) => [-1, 1].map((side) => box(`conveyor-leg-${z}-${side}`,
-    [CONVEYOR.x + side * 0.9, (FLOOR_Y + CONVEYOR.topY - 0.3) / 2, z], [0.28, CONVEYOR.topY - 0.3 - FLOOR_Y, 0.28]))),
-  ...CONVEYOR.legZ.map((z) => box(`conveyor-crossbar-${z}`, [CONVEYOR.x, CONVEYOR.topY - 0.45, z], [2.1, 0.2, 0.3])),
-  box('conveyor-feeder-roof', [CONVEYOR.x, CONVEYOR.topY + 2.1, -28], [2.4, 0.2, 2.2]),
-  ...[-1, 1].map((side) => box(`conveyor-feeder-wall-${side}`, [CONVEYOR.x + side * 1.1, CONVEYOR.topY + 1.0, -28], [0.2, 2.2, 2.2])),
+  }]),
+  ...ofMaterial('steel', [
+    ...[-1, 1].map((side) => box(`conveyor-rail-${side}`, [CONVEYOR.x + side * (CONVEYOR.width / 2 + 0.12), CONVEYOR.topY + 0.2, (CONVEYOR.zStart + CONVEYOR.zEnd) / 2], [0.12, 0.5, CONVEYOR.zEnd - CONVEYOR.zStart])),
+    ...CONVEYOR.legZ.flatMap((z) => [-1, 1].map((side) => box(`conveyor-leg-${z}-${side}`,
+      [CONVEYOR.x + side * 0.9, (FLOOR_Y + CONVEYOR.topY - 0.3) / 2, z], [0.28, CONVEYOR.topY - 0.3 - FLOOR_Y, 0.28]))),
+    ...CONVEYOR.legZ.map((z) => box(`conveyor-crossbar-${z}`, [CONVEYOR.x, CONVEYOR.topY - 0.45, z], [2.1, 0.2, 0.3])),
+    box('conveyor-feeder-roof', [CONVEYOR.x, CONVEYOR.topY + 2.1, -28], [2.4, 0.2, 2.2]),
+    ...[-1, 1].map((side) => box(`conveyor-feeder-wall-${side}`, [CONVEYOR.x + side * 1.1, CONVEYOR.topY + 1.0, -28], [0.2, 2.2, 2.2])),
 
-  // Catapult: base rails, uprights, stop bar, arm at rest, bucket, and the rest block under it.
-  ...[-1, 1].map((side) => box(`catapult-rail-${side}`, [axleX + side * 1.25, FLOOR_Y + 0.15, 22.6], [0.3, 0.3, 5.4])),
-  ...[-1, 1].map((side) => box(`catapult-upright-${side}`, [axleX + side * 1.25, (FLOOR_Y + axleY + 0.9) / 2, axleZ], [0.3, axleY + 0.9 - FLOOR_Y, 0.3])),
-  box('catapult-stop-bar', [axleX, axleY + 0.75, axleZ - 0.25], [2.8, 0.25, 0.25]),
-  box('catapult-axle', [axleX, axleY, axleZ], [2.5, 0.16, 0.16]),
-  box('catapult-arm', ARM_REST.center, [0.3, 0.3, ARM_REST.length], [ARM_REST.pitch, 0, 0]),
-  box('catapult-bucket-floor', [bucketX, bucketY - 0.06, bucketZ], [bucketOuter, 0.12, bucketOuter]),
-  ...[-1, 1].map((side) => box(`catapult-bucket-wall-x${side}`, [bucketX + side * (CATAPULT.bucketHalf + 0.05), bucketY + CATAPULT.wallHeight / 2, bucketZ], [0.1, CATAPULT.wallHeight, bucketOuter])),
-  ...[-1, 1].map((side) => box(`catapult-bucket-wall-z${side}`, [bucketX, bucketY + CATAPULT.wallHeight / 2, bucketZ + side * (CATAPULT.bucketHalf + 0.05)], [bucketOuter, CATAPULT.wallHeight, 0.1])),
-  box('catapult-rest', [bucketX, (FLOOR_Y + bucketY - 0.12) / 2, bucketZ], [0.9, bucketY - 0.12 - FLOOR_Y, 0.9]),
+    // Catapult: base rails, uprights, stop bar, arm at rest, bucket, and the rest block under it.
+    ...[-1, 1].map((side) => box(`catapult-rail-${side}`, [axleX + side * 1.25, FLOOR_Y + 0.15, 22.6], [0.3, 0.3, 5.4])),
+    ...[-1, 1].map((side) => box(`catapult-upright-${side}`, [axleX + side * 1.25, (FLOOR_Y + axleY + 0.9) / 2, axleZ], [0.3, axleY + 0.9 - FLOOR_Y, 0.3])),
+    box('catapult-stop-bar', [axleX, axleY + 0.75, axleZ - 0.25], [2.8, 0.25, 0.25]),
+    box('catapult-axle', [axleX, axleY, axleZ], [2.5, 0.16, 0.16]),
+    box('catapult-arm', ARM_REST.center, [0.3, 0.3, ARM_REST.length], [ARM_REST.pitch, 0, 0]),
+    box('catapult-bucket-floor', [bucketX, bucketY - 0.06, bucketZ], [bucketOuter, 0.12, bucketOuter]),
+    ...[-1, 1].map((side) => box(`catapult-bucket-wall-x${side}`, [bucketX + side * (CATAPULT.bucketHalf + 0.05), bucketY + CATAPULT.wallHeight / 2, bucketZ], [0.1, CATAPULT.wallHeight, bucketOuter])),
+    ...[-1, 1].map((side) => box(`catapult-bucket-wall-z${side}`, [bucketX, bucketY + CATAPULT.wallHeight / 2, bucketZ + side * (CATAPULT.bucketHalf + 0.05)], [bucketOuter, CATAPULT.wallHeight, 0.1])),
+    box('catapult-rest', [bucketX, (FLOOR_Y + bucketY - 0.12) / 2, bucketZ], [0.9, bucketY - 0.12 - FLOOR_Y, 0.9]),
 
-  // Button pedestals.
-  ...BUTTONS.map((button) => box(`button-${button.id}`,
-    [button.base[0], button.base[1] + (BUTTON_PEDESTAL.size[1] + BUTTON_PEDESTAL.capHeight) / 2, button.base[2]],
-    [BUTTON_PEDESTAL.size[0], BUTTON_PEDESTAL.size[1] + BUTTON_PEDESTAL.capHeight, BUTTON_PEDESTAL.size[2]])),
+    // Button pedestals.
+    ...BUTTONS.map((button) => box(`button-${button.id}`,
+      [button.base[0], button.base[1] + (BUTTON_PEDESTAL.size[1] + BUTTON_PEDESTAL.capHeight) / 2, button.base[2]],
+      [BUTTON_PEDESTAL.size[0], BUTTON_PEDESTAL.size[1] + BUTTON_PEDESTAL.capHeight, BUTTON_PEDESTAL.size[2]])),
+  ]),
 ];

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { YardCueTracker, soundMaterial, type ShotCue } from './cues';
+import { IMPACT_SOUND, impactSounds, SECOND_SOUND_GAIN, YardCueTracker, type ShotCue } from './cues';
 import { interpolateYard, projectYard, type YardRender } from '../render/presentation';
 import { FLOOR_Y, PLAYER_RADIUS, TANK_SPEC } from '../sim/constants';
 import { BUTTONS, DROP_COOLDOWN_TICKS } from '../sim/contraptions';
 import { FUEL_DRUM } from '../sim/fuelDrum';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from '../sim/input';
 import { physicsStateBodyById, replacePhysicsPose } from '../sim/physics';
+import { FLOODLIGHT_MASTS, floodlightLensCenter, mastYaw } from '../sim/setPieces';
 import type { YardSim } from '../sim/sim';
 import { patchPlayer, patchState, testSim } from '../sim/testSim';
 
@@ -36,13 +37,114 @@ function renderTrace(trace: readonly YardRender[], rate: number): ShotCue[] {
 }
 
 describe('audio cues from native simulation', () => {
-  it('uses physical prop material instead of paint color', () => {
+  it('uses the body material instead of paint color', () => {
     const sim = testSim();
-    for (const [label, material] of [['Wrecked Car', 'metal'], ['Shipping Container', 'metal'], ['Concrete Block', 'concrete'], ['Jersey Barrier', 'concrete'], ['Pallet', 'wood']] as const) {
+    for (const [label, sound] of [['Wrecked Car', 'metal'], ['Shipping Container', 'metal'], ['Concrete Block', 'concrete'], ['Jersey Barrier', 'concrete'], ['Pallet', 'wood'], ['Tire Stack', 'rubber'], ['Shipping Crate', 'wood']] as const) {
       const bodies = sim.state.bodies.filter(body => body.label === label);
       expect(bodies.length).toBeGreaterThan(0);
-      for (const body of bodies) expect(soundMaterial(body), body.id).toBe(material);
+      for (const body of bodies) expect(IMPACT_SOUND[body.material], body.id).toBe(sound);
     }
+  });
+
+  it('plays the glass sound once when a lens breaks, and a player at the spawn hears it', () => {
+    const sim = testSim();
+    const [mastX, mastZ] = FLOODLIGHT_MASTS[1]!;
+    const [lensX, lensY, lensZ] = floodlightLensCenter(mastX, mastZ);
+    // Fire the hazard drum at the lens from 0.5 m on the yard side, at 6 m/s (m/tick below).
+    const face = [Math.sin(mastYaw(mastX, mastZ)), Math.cos(mastYaw(mastX, mastZ))] as const;
+    sim.edit((physics) => replacePhysicsPose(physics, 'hazard-drum-1', {
+      x: lensX + face[0] * 0.5, y: lensY, z: lensZ + face[1] * 0.5, vx: -face[0] * 6 / 30, vy: 0, vz: -face[1] * 6 / 30,
+    }));
+    const trace = [project(sim)];
+    for (let i = 0; i < 20; i++) {
+      sim.step([NEUTRAL_INPUT]);
+      trace.push(project(sim));
+    }
+    expect(trace.at(-1)!.stats.lampsSmashed).toBe(1);
+    // The spawn is about 40 m from the lens, past the 32 m reach of an impact.
+    const glass = renderTrace(trace, 60).filter(shot => shot.sound === 'glassBreak');
+    expect(glass).toHaveLength(1);
+    expect(glass[0]!.at).toEqual(floodlightLensCenter(mastX, mastZ));
+  });
+
+  it('picks the sounds of a hit from both materials: the one you hear most, then the other more quietly', () => {
+    expect(impactSounds(['wood', 'concrete'])).toEqual({ first: 'wood', second: null });
+    expect(impactSounds(['concrete', 'steel'])).toEqual({ first: 'metal', second: null });
+    expect(impactSounds(['wood', 'steel'])).toEqual({ first: 'metal', second: 'wood' });
+    expect(impactSounds(['rubber', 'glass'])).toEqual({ first: 'glass', second: 'rubber' });
+    expect(impactSounds(['steel', 'steel'])).toEqual({ first: 'metal', second: null });
+    expect(SECOND_SOUND_GAIN).toBeLessThan(1);
+  });
+
+  it('plays both sounds of a steel and wood hit through the tracker, and each one once', () => {
+    const sim = testSim();
+    steps(sim, 2);
+    const tracker = new YardCueTracker();
+    tracker.seed(project(sim), 1);
+    const at: [number, number, number] = [-3, FLOOR_Y + 0.5, 6];
+    patchState(sim, state => ({ ...state, impacts: [{ bodyId: 'yard-drum-1', materials: ['wood', 'steel'], at, speed: 6, frame: state.frame }] }));
+    sim.step([NEUTRAL_INPUT]);
+    const first = tracker.update(project(sim), 1).shots.filter(s => s.id.includes('yard-drum-1'));
+    expect(first.map(s => s.sound).sort()).toEqual(['metal', 'wood']);
+    expect(first.find(s => s.sound === 'wood')!.gain).toBeCloseTo(first.find(s => s.sound === 'metal')!.gain * SECOND_SOUND_GAIN, 6);
+    sim.step([NEUTRAL_INPUT]);
+    expect(tracker.update(project(sim), 1).shots.filter(s => s.id.includes('yard-drum-1'))).toEqual([]);
+  });
+
+  it('plays a lamp smash that a rollback shows a few frames late, once', () => {
+    const sim = testSim();
+    steps(sim, 6);
+    const tracker = new YardCueTracker();
+    tracker.seed(project(sim), 1);
+    const lamp = sim.state.contraptions.lamps[0]!;
+    // The smash is stamped 3 frames before the frame the tracker has already seen.
+    patchState(sim, state => ({
+      ...state,
+      contraptions: {
+        ...state.contraptions,
+        lamps: state.contraptions.lamps.map(entry => (entry.lampId === lamp.lampId ? { ...entry, damage: 1, brokenAt: state.frame - 3 } : entry)),
+        lampSmashes: [{ lampId: lamp.lampId, at: [-21, FLOOR_Y + 11.2, -20.7], frame: state.frame - 3 }],
+      },
+    }));
+    sim.step([NEUTRAL_INPUT]);
+    expect(tracker.update(project(sim), 1).shots.filter(s => s.sound === 'glassBreak')).toHaveLength(1);
+    sim.step([NEUTRAL_INPUT]);
+    expect(tracker.update(project(sim), 1).shots.filter(s => s.sound === 'glassBreak')).toEqual([]);
+  });
+
+  it('plays a fizz when a lamp flickers, lights out when the fourth lamp breaks, and relamp when they come back', () => {
+    const sim = testSim();
+    steps(sim, 2);
+    const tracker = new YardCueTracker();
+    tracker.seed(project(sim), 1);
+    const lampIds = sim.state.contraptions.lamps.map(lamp => lamp.lampId);
+    // A flicker on frame f is a lamp hit below a break.
+    patchState(sim, state => ({ ...state, contraptions: { ...state.contraptions, lamps: state.contraptions.lamps.map((lamp, index) => (index === 0 ? { ...lamp, damage: 0.5, flickerFrame: state.frame } : lamp)) } }));
+    sim.step([NEUTRAL_INPUT]);
+    expect(tracker.update(project(sim), 1).shots.filter(s => s.sound === 'lampFizz').map(s => s.id)).toEqual([`fizz:${lampIds[0]}@${sim.state.frame - 1}`]);
+    patchState(sim, state => ({ ...state, contraptions: { ...state.contraptions, lightsOutUntil: state.frame + 600 } }));
+    sim.step([NEUTRAL_INPUT]);
+    expect(tracker.update(project(sim), 1).shots.filter(s => s.sound === 'lightsOut')).toHaveLength(1);
+    patchState(sim, state => ({ ...state, contraptions: { ...state.contraptions, lightsOutUntil: null, relitFrame: state.frame } }));
+    sim.step([NEUTRAL_INPUT]);
+    const shots = tracker.update(project(sim), 1).shots;
+    expect(shots.filter(s => s.sound === 'relamp')).toHaveLength(1);
+    expect(shots.filter(s => s.sound === 'lightsOut')).toEqual([]);
+  });
+
+  it('plays the crate break sound when a FRAGILE crate falls 5 m and breaks', () => {
+    const sim = testSim();
+    steps(sim, 2);
+    patchPlayer(sim, { x: 4, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: 12, vx: 0, vy: 0, vz: 0 });
+    const id = sim.state.bodies.find(body => body.storageBay === 'returns')!.id;
+    sim.edit(physics => replacePhysicsPose(physics, id, { x: 4, y: FLOOR_Y + 0.6, z: 8, vx: 0, vy: -Math.sqrt(2 * 9.81 * 5) / 30, vz: 0 }));
+    const trace = [project(sim)];
+    for (let i = 0; i < 15; i++) {
+      sim.step([NEUTRAL_INPUT]);
+      trace.push(project(sim));
+    }
+    expect(trace.at(-1)!.stats.fractures).toBe(1);
+    expect(renderTrace(trace, 30).filter(shot => shot.sound === 'crateBreak')).toHaveLength(1);
   });
 
   it('emits the same cues at 30, 60, and 120 render frames per second', () => {

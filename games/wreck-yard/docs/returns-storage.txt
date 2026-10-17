@@ -99,3 +99,147 @@ deployment is included. The plan is .plans/wreck-yard-returns-storage.html.
 TypeScript, identity, build, and all seven live checks pass. Production E2E
 passes three tests. The existing style-vista baseline fails: ink fraction
 0.027 is below its 0.03 minimum. Its threshold was not changed.
+
+Portal rendering update: 2026-10-16
+Portal views now receive ink, cavity, ambient occlusion, and world surface
+detail before the SDK restores the aperture depth. Each view uses its own
+inverse projection. This includes the oblique portal projection. Nested
+views keep their processed color. Bloom and display color run once.
+Transparent effects retain their depth-write settings and blend color.
+
+Whole crates keep their atlas labels, tint, frame, and toon material while
+they cross. Only active crossings allocate clipped crate copies. Ordinary
+crates keep their shared batches. Cut fragments keep voxel rendering.
+
+The aperture has a faint moving film. A crossing causes a short surface
+ripple. Local player passage also causes a half-second view effect. The
+reduced-motion setting stops film motion and view distortion. The remaining
+color pulse is smaller. A new session starts without a passage pulse.
+
+To repeat the checks, start the development server on port 4486. Run:
+AUDIT_URL=http://127.0.0.1:4486 node scripts/verify-portal-finish.mjs
+AUDIT_URL=http://127.0.0.1:4486 ATTRACTION_SHOTS=test-results/portal-finish/crate node scripts/verify-attractions.mjs --crate-portal-proof
+Evidence is in test-results/portal-finish/. The standalone image proof is
+.plans/wreck-yard-portal-proof.html at the repository root.
+
+Gravity hold surface update: 2026-10-16
+A held body now gets cyan edge light and slow bands on its own opaque
+material. The shader adds light. It does not change alpha, depth, geometry,
+or physics. Voxel bodies, whole crate labels and frames, and clipped portal
+halves use the same light function. Each crate batch has separate held-index
+uniforms. Ordinary crates keep their shared draws.
+
+The continuous tractor beam, energy beads, target glow, and grab flash are
+removed. Refusal, throw, punt, and torch feedback remain. The gun's transparent
+chamber and outer core no longer write depth. Its core size stays fixed during
+a hold. Reduced motion freezes the surface bands. Release and session reset
+clear the held state. The existing gravity hold sound remains.
+
+Start the development server on port 4487. Run:
+AUDIT_URL=http://127.0.0.1:4487 node scripts/verify-gravity-surface.mjs
+AUDIT_URL=http://127.0.0.1:4487 ATTRACTION_SHOTS=test-results/gravity-surface/crate node scripts/verify-attractions.mjs --crate-portal-proof
+Evidence is in test-results/gravity-surface/.
+
+Production release 1.5.0: 2026-10-16
+The user requested build and deployment. The production build passed and
+matched the tested artifact. Predeploy passed with zero critical findings
+and six existing warnings. Both the portal update and gravity surface update
+are deployed to private production game zKinTNVlj4miAVGr47Ir. A separate
+game-info request confirmed version 1.5.0. No server configuration
+changed. Release evidence is in test-results/release-1.5.0/.
+
+Checkpoint storage repair: 2026-10-16
+The reported native capture failure was reproduced at frame 199 in a
+four-player falling-stack trace. The native engine has a 160 MiB retained
+memory limit. The game now keeps 32 recent native saves. It stores older
+physics saves as raw bytes in the same save handles. The runner keeps all
+256 logical saves and the 240-frame catch-up contract. No SDK patch or
+dependency change is part of this repair.
+
+The repaired trace reached frame 600. Restore, checksum, replay, and late-join
+bytes matched. Native retained memory peaked at 28.6 MB. Raw JavaScript
+physics buffers peaked at 227 MB. Disposal released all native resources.
+Capture time, including conversion, was 3.24 ms median on the loaded host.
+The trace does not establish a device memory or frame-time budget. A retained
+catch-up batch can require more byte storage than the steady history.
+
+The full breakables browser check passed beyond frame 3394. It broke all
+lamps, waited for relighting, broke a crate, and punted a tire 16.11 m.
+All required sounds played. No page error occurred. Both idle and busy
+600-frame runner checks kept 256 logical saves and 32 native saves. They
+released all saves on disposal. The three production browser tests passed.
+Evidence is in test-results/checkpoint-repair/. Production remains at 1.5.0.
+The full suite passed 444 tests across 67 files. The production build and
+identity check passed. Independent review found no blocking issue. The
+completed plan is .plans/done/wreck-yard-checkpoint-memory.html.
+
+Interaction and performance repair: 2026-10-16
+The gravity beam is restored beside the held-object shader. It has a cyan
+sheath, bright core, flowing beads, and endpoint light. Fixed instance pools
+reuse scratch data. Width and endpoint size stay constant. Additive materials
+test depth and do not write depth. Reduced motion stops bead flow. Release
+and missing poses clear the beam. The existing weapon depth fixes remain.
+
+Portal depth effects now run within the portal rectangle. Filter borders
+preserve AO sampling. The final copy retains stencil clipping. Material
+parity, recursion, passage effects, and quality settings remain. A matched
+paused test measured a per-view GPU p50 reduction from 3.04/3.72 ms to about
+1.18 ms. CPU submission was higher in that capture. No whole-frame gain is
+claimed from the paused test.
+
+The game no longer reads the full physics output twice per tick. It reuses
+step straddlers, filters removed native IDs, and still reads current motion.
+The real browser drive also found a fast-start menu fault. React can combine
+connecting and live in one render. The gate now observes each controller status directly. Cursor need updates
+before the start flag settles. Syncplay also emits stopped while it acquires
+an offline runtime. The controller keeps connecting during that internal
+step. An explicit stop still publishes idle. Errors remain visible. This
+prevents a false menu return from releasing capture and pausing a new match.
+Repeated leave/start actions are part of acceptance.
+
+Production release 1.6.0: 2026-10-16
+The user requested the update, verification, deployment, and records update.
+The registry still names 6.0.0-rc.54 as the current RC. The fresh build matches
+the tested index-lpouvZdV.js bundle exactly. Predeploy passed with zero
+critical findings and the same six existing warnings. The private production
+game now reports 1.6.0 as both latest version and release version. No server
+configuration changed. Release notes were included in the deployment.
+
+This release includes the checkpoint allocation repair, restored gravity
+beam beside the object shader, portal scissor repair, reused step output,
+start/capture repair, and explicit copy input mode for rc.54. Verification
+passed 452 tests, four production-build browser tests, 50 portal checks,
+71 gravity checks, 16 targeted interaction actions, and exact 600-frame
+checkpoint replay. These local checks use the deployed bundle. Known large
+stack, raw JavaScript history, audio startup, and shader startup costs remain.
+Release evidence is in test-results/release-rc54/. The hosted web check
+followed the private short link into the public catalog. That public lookup
+returned Tag not found before requesting any private build. It does not
+show a missing private upload. Live private gameplay and cloud bundle SHA
+remain unverified. The link is unchanged from 1.5.0. No commit ran.
+
+Mobile input and local cuts: 2026-10-16
+-------------------------------------
+
+A short Cut tap supplies one three-tick pulse. The cut has a 1.25-cell radius
+and a 0.5-cell inward inset. A stationary pulse reaches at most 1.75 cells
+behind the contact surface. Nearby strokes join. A jump above 2.5 cells
+starts a new local cut. Repeated burns can reach deeper material.
+
+Touch controls prevent native page gestures within their own targets.
+Each pointer owns one action. A terminal event removes only that owner.
+Window terminal handlers and a last-touch check clear residual touch owners.
+Normal release preserves a confirmed Grab and queued actions. Cancel does
+not commit an action. Pause accepts a nonprimary touch while other controls
+are held. This fixes a reproduced missing compatibility-click path.
+
+Pause now contains Performance capture. Record, resume, repeat the action,
+release the tool, wait for recovery, then save the local JSON report.
+The report uses the native share sheet when available. A share failure uses
+a download. Cancelling the share sheet keeps the report for another attempt.
+
+Real Chrome touch checks pass 31 assertions. Both phone capture layouts save
+reports with complete one-second summaries. Current WebKit 26.6 passes its
+native tap and Pause checks. Exact iOS 17 gestures and phone hardware timing
+remain unverified. The enlarged HUD report suggests page zoom. No game path
+that changes camera FOV or camera zoom was found.

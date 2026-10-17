@@ -9,6 +9,7 @@ import { toonGlsl } from './style/toonGlsl';
 import { isMobileDevice } from './DynamicDpr';
 import type { PortalPlane4 } from '@series-inc/rundot-syncplay/physics/3d';
 import { markPortalViewClipMaterial, type PortalViewClipUniforms } from './portalScene';
+import { gravitySurfaceGlsl } from './gravitySurface';
 
 type MeshSurfaceProps = Omit<ThreeElements['mesh'], 'args' | 'material' | 'position' | 'scale'>;
 type VoxelDims = { x: number; y: number; z: number };
@@ -32,6 +33,7 @@ export type VoxelVolumeRendererProps = MeshSurfaceProps & {
   position?: [number, number, number];
   /** The body's last heat (heatLook.ts): its age in seconds and its voxel-space center. */
   heatRef?: { readonly current: BodyHeatLook };
+  gravityRef?: { readonly current: { readonly held: boolean; readonly time: number } };
   worldOcclusion?: {
     texture: THREE.Data3DTexture;
     min: [number, number, number];
@@ -81,6 +83,7 @@ export function VoxelVolumeRenderer({
   voxelSize = 0.08,
   position = [0, 0, 0],
   heatRef,
+  gravityRef,
   worldOcclusion,
   portalClipRef,
   portalCopyRef,
@@ -180,6 +183,8 @@ export function VoxelVolumeRenderer({
     uniform vec3 uWorldMin;
     uniform vec3 uWorldMax;
     uniform vec3 uSunDir;
+    uniform float uGravityHeld;
+    uniform float uGravityTime;
     uniform vec3 uSunColor;
     uniform vec3 uSkyColor;
     uniform vec3 uGroundColor;
@@ -206,6 +211,7 @@ export function VoxelVolumeRenderer({
 
     ${toonGlsl}
     ${HEAT_GLSL}
+    ${gravitySurfaceGlsl}
 
     out vec4 outColor;
 
@@ -461,6 +467,8 @@ export function VoxelVolumeRenderer({
             shaded += emissiveColor;
           }
 
+          shaded += gravitySurfaceLight(hitLS, worldNormal, viewDir, uGravityHeld, uGravityTime);
+
           // Astra Teardown Height Fog (Industrial Ground Dust Haze)
           shaded = mix(shaded, uFogColor, yardFog(worldPos, cameraPosition, -0.86));
           // Linear into the ink composer's target; sRGB only straight to the screen.
@@ -523,6 +531,8 @@ export function VoxelVolumeRenderer({
         uMacroCellSize: { value: macroVolume.cellSize },
         uWorldMin: { value: new THREE.Vector3(...(worldOcclusion?.min ?? [0, 0, 0])) },
         uWorldMax: { value: new THREE.Vector3(...(worldOcclusion?.max ?? [1, 1, 1])) },
+        uGravityHeld: { value: 0 },
+        uGravityTime: { value: 0 },
         uSunDir: {
           value: new THREE.Vector3(...(worldOcclusion?.sunDirection ?? [0.55, 0.82, 0.25])).normalize(),
         },
@@ -598,6 +608,10 @@ export function VoxelVolumeRenderer({
   ]);
 
   useFrame(() => {
+    for (const target of [material, portalMaterial]) {
+      target.uniforms.uGravityHeld!.value = gravityRef?.current.held ? 1 : 0;
+      target.uniforms.uGravityTime!.value = gravityRef?.current.time ?? 0;
+    }
     const heat = heatRef?.current;
     material.uniforms.uHeatAge!.value = heat?.age ?? COLD_AGE;
     portalMaterial.uniforms.uHeatAge!.value = heat?.age ?? COLD_AGE;

@@ -28,7 +28,7 @@ describe('voxelStats and bodyMass', () => {
     const a = voxelStats(voxels, dims);
     expect(a.occupiedCount).toBe(8);
     expect(voxelStats(voxels, dims)).toBe(a);
-    const body: YardBody = { id: 'b', label: 'b', dims, voxels, motion: 'dynamic', buoyancy: 0, anchorFaces: [], impactCooldownUntil: 0, heat: null };
+    const body: YardBody = { id: 'b', label: 'b', material: 'steel', dims, voxels, motion: 'dynamic', buoyancy: 0, anchorFaces: [], impactCooldownUntil: 0, heat: null };
     expect(bodyMass(body)).toBeCloseTo(8 * VOXEL_SIZE ** 3 * 1.5, 9);
   });
 });
@@ -47,7 +47,7 @@ describe('createInitialYard', () => {
   });
 
   it('makes a static physics body without orientation', () => {
-    const body: YardBody = { id: 'g', label: 'g', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([2]), motion: 'fixed', buoyancy: 0, anchorFaces: ['-x'], impactCooldownUntil: 0, heat: null };
+    const body: YardBody = { id: 'g', label: 'g', material: 'wood', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([2]), motion: 'fixed', buoyancy: 0, anchorFaces: ['-x'], impactCooldownUntil: 0, heat: null };
     const physics = makePhysicsBody(body, { position: [1, 2, 3], rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] });
     expect(physics.body.kind).toBe('static');
     expect(physics.body.orientation).toEqual({ x: 0, y: 0, z: 0, w: 1 });
@@ -82,7 +82,7 @@ describe('body keys', () => {
     expect(unkeyed(sim)).toEqual([]);
     for (let i = 0; i < 5; i += 1) sim.step([NEUTRAL_INPUT]);
     const gantry = physicsBodyById(sim.physics, 'steel-gantry')!;
-    const target = [gantry.x + 0.2, gantry.y + 0.2, gantry.z] as const;
+    const target = [gantry.x - 0.72, gantry.y + 0.36, gantry.z] as const;
     const origin = [target[0], target[1] + 2, target[2] + 0.001] as const;
     const cut = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay(origin, [target[0] - origin[0], target[1] - origin[1], target[2] - origin[2]]) };
     for (let i = 0; i < 12; i += 1) sim.step([cut]);

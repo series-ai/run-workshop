@@ -1,6 +1,7 @@
 import { applyLook, type LookAngles } from '../render/pointerMapping';
 import type { PlayerRenderPose } from '../render/presentation';
 import { TOOL, type YardInput } from '../sim/input';
+import { TORCH_PULSE_TICKS } from '../sim/constants';
 
 export const TOUCH_LOOK_SENSITIVITY = 0.004;
 export type TouchWeapon =
@@ -16,6 +17,8 @@ export interface TouchInput {
   moveZ: -1 | 0 | 1;
   primary: boolean;
   cutQueued: boolean;
+  cutUntilFrame: number | null;
+  sampledFrame: number | null;
   primaryRearm: boolean;
   secondaryRearm: boolean;
   shots: TouchShot[];
@@ -32,7 +35,7 @@ export interface TouchInput {
   lookY: number;
 }
 export function neutralTouchInput(): TouchInput {
-  return { moveX: 0, moveZ: 0, primary: false, cutQueued: false, primaryRearm: false,
+  return { moveX: 0, moveZ: 0, primary: false, cutQueued: false, cutUntilFrame: null, sampledFrame: null, primaryRearm: false,
     secondaryRearm: false, shots: [], dropQueued: false, dropUntilFrame: null, weapon: { kind: 'idle' },
     feedbackFrame: -1, onWeaponChange: null, view: { yaw: 0, pitch: 0 },
     jetpack: false, use: false, useQueued: false, lookX: 0, lookY: 0 };
@@ -45,6 +48,7 @@ export function clearTouchWeapon(input: TouchInput): void {
   input.dropQueued ||= input.weapon.kind !== 'idle';
   input.primary = false;
   input.cutQueued = false;
+  input.cutUntilFrame = null;
   input.primaryRearm = true;
   input.secondaryRearm = true;
   input.shots = [];
@@ -55,6 +59,14 @@ export function clearTouchInput(input: TouchInput): void {
   const { onWeaponChange, view, feedbackFrame, dropUntilFrame } = input;
   Object.assign(input, neutralTouchInput(), { dropQueued, dropUntilFrame, onWeaponChange, view, feedbackFrame });
   setTouchWeapon(input, { kind: 'idle' });
+}
+/** Coalesce taps until the initial pulse has reached the input sampler. */
+export function queueTouchCut(input: TouchInput): void {
+  input.primary = true;
+  if (!input.cutQueued) {
+    input.cutQueued = true;
+    input.cutUntilFrame = null;
+  }
 }
 export function queueTouchShot(input: TouchInput, kind: TouchShot['kind']): void {
   input.shots.push({ kind, aim: applyLook(input.view, input.lookX, input.lookY, TOUCH_LOOK_SENSITIVITY) });
@@ -69,7 +81,19 @@ export function touchPrimary(input: TouchInput, tool: YardInput['tool']): boolea
 /** Syncplay has read this input for a scheduled tick. */
 export function consumeTouchSample(input: TouchInput, sent: YardInput, frame: number): void {
   if (!sent.pressed) input.primaryRearm = false;
-  if (sent.tool === TOOL.torch && sent.pressed) input.cutQueued = false;
+  if (sent.tool === TOOL.torch && sent.pressed && input.cutQueued) {
+    if (input.cutUntilFrame === null) {
+      const before = input.sampledFrame;
+      input.cutUntilFrame = before !== null && before < frame
+        ? before + TORCH_PULSE_TICKS
+        : frame + TORCH_PULSE_TICKS - 1;
+    }
+    if (frame >= input.cutUntilFrame) {
+      input.cutQueued = false;
+      input.cutUntilFrame = null;
+    }
+  }
+  input.sampledFrame = frame;
   if (sent.secondary) { input.shots.shift(); input.secondaryRearm = true; }
   else input.secondaryRearm = false;
   input.useQueued = false;

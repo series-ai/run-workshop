@@ -24,9 +24,13 @@ const clips = [
     fadeInSeconds: 0.015, fadeOutSeconds: 0.04, maxDurationSeconds: 0.18,
     maxDecodedDurationSeconds: 0.2, maxDecodedPeak: 0.25, detailedMeasurements: true },
   ...['tool-switch', 'metal-impact', 'wood-impact', 'concrete-impact',
-    'water-splash', 'quench', 'gravity-pulse', 'explosion', 'mechanism'].map((name) => ({
+    'water-splash', 'quench', 'gravity-pulse', 'explosion', 'mechanism', 'glass-break',
+    'glass-impact', 'crate-break', 'lamp-fizz', 'lights-out', 'relamp'].map((name) => ({
     name, loop: false, channels: 1, rate: 24000, bitrate: 64,
   })),
+  // The generated thud is mostly below 200 Hz. The filter lifts its 400 Hz and 1 kHz body, so small speakers play it.
+  { name: 'rubber-impact', loop: false, channels: 1, rate: 24000, bitrate: 64,
+    filter: 'highpass=f=70,highpass=f=70,equalizer=f=400:t=q:w=1:g=10,equalizer=f=1000:t=q:w=1.2:g=8' },
 ];
 
 function run(args, input) {
@@ -269,7 +273,23 @@ const manifest = {
     reason: 'The user asked for a quieter walking sound with less click.' }],
   replacementGeneration: { successfulCalls: 3, successfulCreditsUsed: 74, failedCalls: 1,
     failedCall: { kind: 'sfx', durationSeconds: 24, error: 'AUDIO_GEN_UNKNOWN_ERROR', chargeResult: 'Not returned by CLI' } },
-  walkingReplacementGeneration: { successfulCalls: 1, successfulCreditsUsed: 3, failedCalls: 0 }, assets,
+  walkingReplacementGeneration: { successfulCalls: 1, successfulCreditsUsed: 3, failedCalls: 0 },
+  materialSoundGeneration: { successfulCalls: 4, successfulCreditsUsed: 22, failedCalls: 0,
+    rejectedTakes: [
+      { generationId: 'c682adf2-9d22-4e77-a312-3b5950c642f4', for: 'rubber-impact', reason: 'Peak 0.03, with several separate hits.' },
+      { generationId: '00ce9429-3049-4a69-806f-266530767e70', for: 'glass-break', reason: 'A 90 ms soft start and scattered late hits.' },
+    ] },
+  feedbackSoundGeneration: { successfulCalls: 12, successfulCreditsUsed: 52, failedCalls: 4,
+    failedCall: { error: 'IOException: ~/.rundot/config.json was in use by another call', chargeResult: 'No generation ID returned' },
+    rejectedTakes: [
+      { generationId: 'a85d0553-0d18-4c9e-8c90-99957e4228fe', for: 'glass-impact', reason: 'A low thud with almost no sound above 1 kHz. It did not read as glass.' },
+      { generationId: 'e7f60d04-95c2-4c7a-bc34-8ddd9e781547', for: 'glass-impact', reason: 'A low thud with almost no sound above 1 kHz. It did not read as glass.' },
+      { generationId: '545adbf2-7d15-41bf-bb03-1772bb5bdaf3', for: 'glass-impact', reason: 'A clean clink, but softer at the start than the kept take.' },
+      { generationId: 'ff52413c-b2e5-4c74-8424-d74ed6e3cf83', for: 'crate-break', reason: 'A slower 40 ms start than the kept take.' },
+      { generationId: '479d0dc9-8609-4f78-b99f-5679c14f4f0e', for: 'lamp-fizz', reason: 'One 0.15 s zap. The lamp flicker lasts 1.2 s.' },
+      { generationId: 'c443f4ba-cd45-43ed-8f3c-1ca8337aa0c8', for: 'lights-out', reason: 'Almost all of it is below 200 Hz, with several separate hits.' },
+      { generationId: 'f74af8d4-a088-4895-b9bb-c3fe73f0be82', for: 'relamp', reason: 'Quiet, and almost all of it is below 200 Hz.' },
+    ] }, assets,
 };
 writeFileSync(resolve(root, 'art/audio/manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 const retiredOutput = resolve(outputRoot, 'yard-ambient.mp3');
@@ -334,6 +354,17 @@ The walking replacement uses one successful SFX call. It used 3 credits.
 The old walking source and receipt are in \`art/audio/raw/retired/robot-step-clicky.mp3\` and its JSON file.
 Only the processed files and the check page are in \`public/audio/\`.
 
+## Material sounds
+
+The rubber impact and the glass break use four successful SFX calls. They used 22 credits.
+Each prompt asked for two takes. The script keeps one take of each.
+The other rubber take was almost silent and had several hits. The other glass take had a slow start and scattered late hits.
+The rubber source is mostly below 200 Hz. Its filter lifts 400 Hz and 1 kHz, so small speakers can play it.
+
+The glass knock, crate break, lamp fizz, lights-out, and relamp sounds use twelve successful SFX calls. They used 52 credits.
+Four more calls failed before generation, because ten calls at the same time locked the CLI config file. They returned no generation ID.
+The first two glass knock takes were low thuds, so a brighter prompt made two more. The manifest lists each rejected take and the reason.
+
 ## Processing
 
 Run \`node scripts/prepare-audio.mjs\` from this project to rebuild all files.
@@ -345,7 +376,7 @@ The threshold is 1% of the strongest block RMS, with a minimum of 0.0004.
 Other action effects keep their 0.5 ms start fade and 15 ms end fade.
 The short start fade keeps the attack.
 The distant drill and steam use a 40 ms start fade and an 80 ms end fade.
-The walking update keeps the same hashes for the other 16 output files.
+Each update keeps the same hashes for the output files that it does not change.
 Each output hash is in the manifest as outputSha256.
 
 For each loop, FFmpeg changes the time length without changing the pitch.

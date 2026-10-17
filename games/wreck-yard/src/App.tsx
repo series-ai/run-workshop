@@ -62,8 +62,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
     () => selectCapturePort({ ...capture, win: window, lockTarget: () => canvasRef.current }),
     [capture],
   );
-  const modalOpen = snapshot.status === 'error' && Boolean(snapshot.errorDetails);
-  const gate = usePlayGate(port, controller, { status: snapshot.status, modalOpen, touchControls });
+  const gate = usePlayGate(port, controller, { status: snapshot.status, touchControls });
 
   const audio = useYardAudio(snapshot.status === 'live' && inputLive(gate.state), capture.sdkReady);
 

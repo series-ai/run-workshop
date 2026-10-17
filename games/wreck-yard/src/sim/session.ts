@@ -17,6 +17,9 @@ import type { YardState } from './state';
 
 const productIdentity = generated.runtimeIdentity as KinetixRuntimeIdentity;
 
+/** Keep the same input contract in the runner and room metadata. */
+export const YARD_INPUT_OWNERSHIP = 'copy' as const;
+
 export function yardIdentity(): KinetixRuntimeIdentity {
   return { ...productIdentity };
 }
@@ -35,8 +38,8 @@ export function decodeYardSessionConfig(bytes: Uint8Array): YardSessionConfig {
 export type YardRuntime = OwnedKinetixRuntime<YardState, YardInput>;
 
 /**
- * An owned runtime: Syncplay holds saves as native checkpoints in one live
- * world (sim.ts) and asks for bytes only to checksum or to send a late joiner.
+ * An owned runtime: Syncplay holds the full save history. The sim keeps recent
+ * physics saves as native checkpoints and stores older saves as bytes.
  * The runner disposes the lease; that releases every save, then the world.
  */
 export function createYardRuntime(identity: KinetixRuntimeIdentity, sessionConfigBytes: Uint8Array): KinetixRuntimeLease<YardRuntime> {
@@ -89,6 +92,7 @@ export function createYardRuntime(identity: KinetixRuntimeIdentity, sessionConfi
 }
 
 export interface YardRoomOptions {
+  readonly inputOwnership: typeof YARD_INPUT_OWNERSHIP;
   readonly maxPlayers: number;
   readonly runtimeIdentity: KinetixRuntimeIdentity;
   readonly sessionConfigBytes: Uint8Array;
@@ -98,6 +102,7 @@ export interface YardRoomOptions {
 export function yardRoomOptions(playerCount: number): YardRoomOptions {
   const sessionConfigBytes = encodeYardSessionConfig({ playerCount });
   return {
+    inputOwnership: YARD_INPUT_OWNERSHIP,
     maxPlayers: playerCount,
     runtimeIdentity: yardIdentity(),
     sessionConfigBytes,

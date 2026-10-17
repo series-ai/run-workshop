@@ -1,4 +1,4 @@
-import { AUDIO_BANK, isAmbienceSound, type AudioSettings, type SoundId } from './bank';
+import { AUDIO_BANK, isAmbienceSound, soundFalloff, type AudioSettings, type SoundId } from './bank';
 import { YardCueTracker, type LoopCue, type ShotCue } from './cues';
 import type { YardRender } from '../render/presentation';
 import type { Vec3 } from '../sim/math';
@@ -210,7 +210,7 @@ export class YardAudio {
   private place(voice: Voice, cue: ShotCue | LoopCue, fade: number): void {
     const delta: Vec3 = [cue.at[0] - this.listener.position[0], cue.at[1] - this.listener.position[1], cue.at[2] - this.listener.position[2]];
     const distance = Math.hypot(...delta);
-    const falloff = isAmbienceSound(cue.sound) ? 30 : 6;
+    const falloff = soundFalloff(cue.sound);
     const attenuation = 1 / (1 + (distance / falloff) ** 2);
     const pan = distance < 1 ? 0 : Math.max(-0.85, Math.min(0.85, delta.reduce((sum, v, i) => sum + v * this.listener.right[i]!, 0) / distance));
     const now = this.context!.currentTime;

@@ -7,6 +7,7 @@ describe('PoseCache zero-allocation pose tracking', () => {
   const dummyBody = (id: string): YardBody => ({
     id,
     label: id,
+    material: 'steel',
     dims: { x: 2, y: 2, z: 2 },
     voxels: new Uint8Array(8),
     motion: 'dynamic',

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { interpolateYard, projectYard, type YardRender } from '../render/presentation';
 import { TICK_RATE } from '../sim/constants';
 import { decodeYardInput, encodeYardInput, NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from '../sim/input';
-import { createYardRuntime, yardRoomOptions } from '../sim/session';
+import { createYardRuntime, yardRoomOptions, YARD_INPUT_OWNERSHIP } from '../sim/session';
 import type { YardState } from '../sim/state';
 import { clearTouchInput, consumeTouchSample, neutralTouchInput, queueTouchShot, setTouchWeapon, syncTouchWeapon, touchPrimary } from '../ui/touchInput';
 import { MatchController } from './match';
@@ -29,6 +29,7 @@ async function startRoom(delay: number) {
   const samples: { input: YardInput; frame: number }[] = [];
   let input = NEUTRAL_INPUT;
   const runner = createSyncplayRunner<YardState, YardInput, unknown, YardState, YardRender>({
+    inputOwnership: YARD_INPUT_OWNERSHIP,
     runtimeFactory: createYardRuntime,
     defaultInput: NEUTRAL_INPUT,
     encodeInput: encodeYardInput,

@@ -43,15 +43,10 @@ export const AmbientOcclusionShader = {
 
     const int SAMPLES = 12;
 
-    float linearizeDepth(float d) {
-      float z = d * 2.0 - 1.0;
-      return (2.0 * uCameraNear * uCameraFar) / (uCameraFar + uCameraNear - z * (uCameraFar - uCameraNear));
-    }
-
     vec3 viewPos(vec2 uv) {
-      float z = linearizeDepth(texture2D(tDepth, uv).r);
-      vec4 h = uInverseProjection * vec4(uv * 2.0 - 1.0, 1.0, 1.0);
-      return h.xyz * (z / -h.z);
+      float depth = texture2D(tDepth, uv).r;
+      vec4 h = uInverseProjection * vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+      return h.xyz / h.w;
     }
 
     void main() {

@@ -20,7 +20,7 @@ describe('torch heat', () => {
     const sim = testSim(1);
     for (let i = 0; i < 5; i += 1) sim.step([NEUTRAL_INPUT]);
     const gantry = physicsStateBodyById(sim.state.world, 'steel-gantry')!;
-    const target = [gantry.x + 0.2, gantry.y + 0.2, gantry.z] as const;
+    const target = [gantry.x - 0.72, gantry.y + 0.36, gantry.z] as const;
     const origin = [target[0], target[1] + 2, target[2] + 0.001] as const;
     const cut: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay(origin, [target[0] - origin[0], target[1] - origin[1], target[2] - origin[2]]) };
     for (let i = 0; i < 12; i += 1) sim.step([cut]);

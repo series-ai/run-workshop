@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { YardBody } from '../sim/state';
 import { bodyGeometryChanged, wrapYaw } from './inputPresentation';
 
-const body: YardBody = { id: 'test', label: 'Test', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([1]), motion: 'dynamic', buoyancy: 0, anchorFaces: [], impactCooldownUntil: 0, heat: null };
+const body: YardBody = { id: 'test', label: 'Test', material: 'concrete', dims: { x: 1, y: 1, z: 1 }, voxels: new Uint8Array([1]), motion: 'dynamic', buoyancy: 0, anchorFaces: [], impactCooldownUntil: 0, heat: null };
 
 describe('presentation input', () => {
   it('keeps aim consistent after multiple full turns', () => {

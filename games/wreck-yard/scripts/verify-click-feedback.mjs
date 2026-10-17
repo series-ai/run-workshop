@@ -61,7 +61,7 @@ try {
     return best.p;
   });
   await click('gun-grab', 'hand', target, { release: false });
-  // 4. Hold with the tractor beam while swinging the aim: the lagging body bends the beam.
+  // 4. Hold the object and move the aim. Its surface carries the hold effect.
   // Keep the first grab. A release moves the body away from the saved aim point.
   await page.waitForFunction(() => {
     const render = window.__WRECK_YARD_CONTROLLER__.getRender();
@@ -72,8 +72,8 @@ try {
   await page.evaluate(([yaw, pitch]) => window.__SET_LOOK_ANGLES__(yaw + 0.45, pitch + 0.1), [aimNow.yaw, aimNow.pitch]);
   await page.waitForTimeout(90);
   const holding = await local();
-  await shot('gun-hold-bend');
-  results['gun-hold-bend'] = { holding: holding.grabbing };
+  await shot('gun-hold-surface');
+  results['gun-hold-surface'] = { holding: holding.grabbing };
   // 5. Release: the throw shows an energy burst, not a beam.
   await page.waitForTimeout(400);
   await page.evaluate(() => window.__SIMULATE_INPUT__({ pressed: false }));
@@ -113,7 +113,7 @@ try {
   assert.equal(results['gun-grab'].result, 'grab');
   assert.equal(results['torch-out-of-range'].result, 'miss');
   assert.equal(results['torch-scorch-floor'].result, 'scorch');
-  assert.ok(results['gun-hold-bend'].holding, 'the tractor beam case was not holding a body');
+  assert.ok(results['gun-hold-surface'].holding, 'the surface effect case was not holding a body');
   assert.equal(results['gun-throw-burst'].result, 'throw');
   assert.equal(results['gun-punt-burst'].result, 'punt');
   assert.deepEqual(errors, []);

@@ -1,10 +1,12 @@
+import { beginPhase, endPhase } from '../perf/recorder';
 import {
+  carveVoxelChunk,
   splitVoxelComponents,
   VoxelAnchorFaceMask,
+  VoxelStatus,
   type VoxelSubChunk,
 } from '@series-inc/rundot-syncplay/physics/3d';
 import {
-  carveCapsule,
   carveParallelogram,
   scorchCapsuleShell,
   scorchParallelogramShell,
@@ -55,6 +57,19 @@ function point(v: Vec3) {
   return { x: v[0], y: v[1], z: v[2] };
 }
 
+function carveContactCapsule(voxels: Uint8Array, dims: YardBody['dims'], contact: FractureContact): Uint8Array {
+  const segment = sub(contact.end, contact.start);
+  const lengthSquared = segment[0] * segment[0] + segment[1] * segment[1] + segment[2] * segment[2];
+  // Keep the original short-segment cutoff. All carve coordinates are in cells.
+  const result = carveVoxelChunk(toChunk(voxels, dims), lengthSquared <= 1e-6 ? {
+    op: 'carve', shapeType: 'sphere', sphereCenter: point(contact.start), sphereRadius: contact.radius,
+  } : {
+    op: 'carve', shapeType: 'capsule', capsuleP0: point(contact.start), capsuleP1: point(contact.end), capsuleRadius: contact.radius,
+  }, { mutateInPlace: false });
+  if (result.status !== VoxelStatus.Success) throw new Error(`WRECK_YARD_VOXEL_CARVE_FAILED: ${result.status}`);
+  return result.occupancy;
+}
+
 function orderSubChunks(a: VoxelSubChunk, b: VoxelSubChunk): number {
   if (a.occupiedCount !== b.occupiedCount) return b.occupiedCount - a.occupiedCount;
   if (a.offsetCells.x !== b.offsetCells.x) return a.offsetCells.x - b.offsetCells.x;
@@ -94,6 +109,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
     || contact.through[1] !== contact.start[1]
     || contact.through[2] !== contact.start[2];
 
+  const carveStart = beginPhase('fracture.carve');
   const heated = cutsThrough
     ? scorchParallelogramShell(
       source.voxels,
@@ -126,12 +142,15 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
       point(contact.throughEnd),
       contact.radius,
     )
-    : carveCapsule(heated, source.dims, point(contact.start), point(contact.end), contact.radius);
+    : carveContactCapsule(heated, source.dims, contact);
+  endPhase('fracture.carve', carveStart);
+  const splitStart = beginPhase('fracture.split');
   const parts = [...splitVoxelComponents(toChunk(carved, source.dims), {
     anchorFacesMask: anchorFacesMask(source.anchorFaces),
   }).subChunks]
     .filter((part) => part.occupiedCount >= MIN_FRAGMENT_VOXELS)
     .sort(orderSubChunks);
+  endPhase('fracture.split', splitStart);
   const entries = source.motion === 'fixed' ? parts : parts.slice(0, MAX_TORCH_FRAGMENTS);
   if (entries.length === 0) return { fragments: [], nextSerial: serial };
 
@@ -179,19 +198,23 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
       }
     }
 
-    const body: YardBody = {
+    const shared = {
       id,
       label: source.label,
-      ...(source.storageBay ? { storageBay: source.storageBay } : {}),
+      material: source.material,
       dims,
       voxels,
-      motion: anchored ? 'fixed' : 'dynamic',
+      motion: anchored ? 'fixed' as const : 'dynamic' as const,
       buoyancy: source.buoyancy,
       anchorFaces: anchored ? source.anchorFaces : [],
       impactCooldownUntil: source.impactCooldownUntil,
       heat: { frame, at: sub(heatAt, [entry.offsetCells.x, entry.offsetCells.y, entry.offsetCells.z]) },
     };
+    // A crate fragment keeps its bay and its faces. Any other body has neither.
+    const body: YardBody = source.crateFaces ? { ...shared, storageBay: source.storageBay, crateFaces: source.crateFaces } : shared;
+    const cookStart = beginPhase('fracture.cook');
     const physics = makePhysicsBody(body, { position, rotation: pose.rotation, linearVelocity, angularVelocity });
+    endPhase('fracture.cook', cookStart);
     return { body, physics };
   });
 

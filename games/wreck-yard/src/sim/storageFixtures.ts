@@ -1,15 +1,15 @@
 import { ELEVATOR, STORAGE } from './attractions';
 import { FLOOR_Y } from './constants';
-import type { ShellBox } from './setPieces';
+import { ofMaterial, type ShellBox, type ShellShape } from './setPieces';
 
-const box = (id: string, center: [number, number, number], size: [number, number, number]): ShellBox => ({ id, center, size });
+const box = (id: string, center: [number, number, number], size: [number, number, number]): ShellShape => ({ id, center, size });
 
 /** The fixed roof height leaves 3 m above the highest platform stop. */
 export const STORAGE_SHAFT_TOP_Y = ELEVATOR.floors[3] + 3;
 export const STORAGE_LANDING_SIGN_X = -8.83;
 
 /** Fixed storage parts that need static physics boxes. STORAGE_SOLIDS stays in attractions.ts. */
-export const STORAGE_FIXTURE_SOLIDS: readonly ShellBox[] = [
+export const STORAGE_FIXTURE_SOLIDS: readonly ShellBox[] = ofMaterial('steel', [
   box('storage-elevator-roof', [ELEVATOR.x, STORAGE_SHAFT_TOP_Y, ELEVATOR.z], [3.5, 0.18, 3.5]),
   ...([0, 1, 2, 3] as const).map((floor) => box(
     `storage-landing-sign-${floor}`,
@@ -21,7 +21,7 @@ export const STORAGE_FIXTURE_SOLIDS: readonly ShellBox[] = [
   box('storage-restack-top', [ELEVATOR.resetButton[0], FLOOR_Y + 0.78, ELEVATOR.resetButton[2]], [0.74, 0.16, 0.74]),
   box('storage-restack-button', [ELEVATOR.resetButton[0], FLOOR_Y + 0.91, ELEVATOR.resetButton[2]], [0.5, 0.12, 0.5]),
   box('storage-restack-sign', [ELEVATOR.resetButton[0], FLOOR_Y + 1.38, ELEVATOR.resetButton[2] + 0.37], [1.55, 0.82, 0.12]),
-];
+]);
 
 /** Center and size for the control panel, relative to the native elevator body center. */
 export const STORAGE_ELEVATOR_CAR_FIXTURE = {

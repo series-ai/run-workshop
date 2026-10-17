@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addPhysicsBodies, makePhysicsBody, makeWorld, physicsBodyHandle, physicsStateBodyById, type OpenYardPhysicsWorld } from './physics';
+import { addPhysicsBodies, makePhysicsBody, makeWorld, physicsBodyHandle, physicsStateBodyById, readBodyInput, type OpenYardPhysicsWorld } from './physics';
 import { blockPreset } from './props';
 import { createInitialPlayer } from './state';
 import { movePlayer } from './movement';
@@ -12,7 +12,7 @@ describe('scene collision', () => {
   it('stops the player at a wall and permits travel along it', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
-      addPhysicsBodies(physics, [{ id: 'wall', body: { kind: 'static', shape: { type: 'box', halfX: meters(.1), halfY: meters(3), halfZ: meters(4) }, position: vec3(meters, 0, 0, 0) } }]);
+      addPhysicsBodies(physics, [{ id: 'wall', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(.1), halfY: meters(3), halfZ: meters(4) }, position: vec3(meters, 0, 0, 0) } }]);
       const result = movePlayer(physics, { ...createInitialPlayer(), x: -1, y: .3, z: 0 }, [30, 0, 3]);
       expect(result.x).toBeLessThan(-.49);
       expect(result.z).toBeGreaterThan(0);
@@ -22,7 +22,7 @@ describe('scene collision', () => {
   it('lands on a raised platform instead of passing through it', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
-      addPhysicsBodies(physics, [{ id: 'platform', body: { kind: 'static', shape: { type: 'box', halfX: meters(3), halfY: meters(.5), halfZ: meters(3) }, position: vec3(meters, 0, 0, 0) } }]);
+      addPhysicsBodies(physics, [{ id: 'platform', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(3), halfY: meters(.5), halfZ: meters(3) }, position: vec3(meters, 0, 0, 0) } }]);
       let player = { ...createInitialPlayer(), x: 0, y: 1, z: 0, grounded: false };
       for (let i = 0; i < 10; i++) {
         const result = movePlayer(physics, player, [0, -3, 0]);
@@ -38,7 +38,7 @@ describe('scene collision', () => {
   it('stops upward jetpack movement at a ceiling', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
-      addPhysicsBodies(physics, [{ id: 'ceiling', body: { kind: 'static', shape: { type: 'box', halfX: meters(3), halfY: meters(.1), halfZ: meters(3) }, position: vec3(meters, 0, 2, 0) } }]);
+      addPhysicsBodies(physics, [{ id: 'ceiling', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(3), halfY: meters(.1), halfZ: meters(3) }, position: vec3(meters, 0, 2, 0) } }]);
       const result = movePlayer(physics, { ...createInitialPlayer(), x: 0, y: .4, z: 0, grounded: false }, [0, 30, 0]);
       expect(result.y).toBeLessThanOrEqual(.51);
       expect(result.y).toBeGreaterThanOrEqual(.4);
@@ -49,7 +49,7 @@ describe('scene collision', () => {
   it('carries a standing player by one tick of platform motion', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
-      addPhysicsBodies(physics, [{ id: 'moving-platform', body: { kind: 'dynamic', mass: kilograms(10), shape: { type: 'box', halfX: meters(3), halfY: meters(.5), halfZ: meters(3) }, position: vec3(meters, 0, 0, 0), linearVelocity: vec3(metersPerSecond, 3, 0, 0) } }]);
+      addPhysicsBodies(physics, [{ id: 'moving-platform', body: { material: 'concrete', kind: 'dynamic', mass: kilograms(10), shape: { type: 'box', halfX: meters(3), halfY: meters(.5), halfZ: meters(3) }, position: vec3(meters, 0, 0, 0), linearVelocity: vec3(metersPerSecond, 3, 0, 0) } }]);
       const result = movePlayer(physics, { ...createInitialPlayer(), x: 0, y: .9, z: 0, grounded: true }, [0, 0, 0]);
       expect(result.grounded).toBe(true);
       expect(result.x).toBeCloseTo(3 * DT, 3);
@@ -65,8 +65,7 @@ describe('standing on voxel bodies', () => {
     const sim = testSim(1);
     sim.edit((physics) => {
       const handle = physicsBodyHandle(physics, 'steel-case');
-      const body = physics.world.readBody(handle);
-      physics.world.edit((edit) => edit.replaceBody(handle, { ...body, position: vec3(meters, 2, FLOOR_Y + 2, 14), orientation, sleeping: false }));
+      physics.world.edit((edit) => edit.replaceBody(handle, { ...readBodyInput(physics, handle), position: vec3(meters, 2, FLOOR_Y + 2, 14), orientation, sleeping: false }));
     });
     for (let i = 0; i < 60; i += 1) sim.step([NEUTRAL_INPUT]);
     const crate = physicsStateBodyById(sim.state.world, 'steel-case')!;
@@ -95,14 +94,14 @@ describe('stepping over low edges', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
       const obstacle = concrete ? makePhysicsBody({
-        ...blockPreset(15, Math.round(height / 0.08), 15), id: 'box', label: 'Concrete Block',
+        ...blockPreset(15, Math.round(height / 0.08), 15), id: 'box', label: 'Concrete Block', material: 'concrete',
         motion: kind === 'static' ? 'fixed' : 'dynamic', buoyancy: 0.05, anchorFaces: [], impactCooldownUntil: 0, heat: null,
       }, { position: [0, FLOOR_Y + height / 2, 0], rotation: [0, 0, 0, 1], linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0] }) : {
-        id: 'box', body: { kind, shape: { type: 'box' as const, halfX: meters(0.6), halfY: meters(height / 2), halfZ: meters(0.6) },
+        id: 'box', body: { material: 'concrete' as const, kind, shape: { type: 'box' as const, halfX: meters(0.6), halfY: meters(height / 2), halfZ: meters(0.6) },
         position: vec3(meters, 0, FLOOR_Y + height / 2, 0), ...(kind === 'dynamic' ? { mass: kilograms(0.5) } : {}) },
       };
       addPhysicsBodies(physics, [
-        { id: 'floor', body: { kind: 'static', shape: { type: 'box', halfX: meters(20), halfY: meters(0.1), halfZ: meters(20) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } },
+        { id: 'floor', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(20), halfY: meters(0.1), halfZ: meters(20) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } },
         obstacle,
       ]);
       let player = { ...createInitialPlayer(), x: -1.5 * dir[0], y: FLOOR_Y + 0.41, z: -1.5 * dir[1], grounded: true };
@@ -143,9 +142,9 @@ describe('stepping over low edges', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
       addPhysicsBodies(physics, [
-        { id: 'floor', body: { kind: 'static', shape: { type: 'box', halfX: meters(20), halfY: meters(0.1), halfZ: meters(20) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } },
-        { id: 'step', body: { kind: 'static', shape: { type: 'box', halfX: meters(0.6), halfY: meters(0.15), halfZ: meters(0.6) }, position: vec3(meters, 0, FLOOR_Y + 0.15, 0) } },
-        { id: 'ceiling', body: { kind: 'static', shape: { type: 'box', halfX: meters(3), halfY: meters(0.1), halfZ: meters(3) }, position: vec3(meters, 0, FLOOR_Y + 2.0, 0) } },
+        { id: 'floor', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(20), halfY: meters(0.1), halfZ: meters(20) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } },
+        { id: 'step', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(0.6), halfY: meters(0.15), halfZ: meters(0.6) }, position: vec3(meters, 0, FLOOR_Y + 0.15, 0) } },
+        { id: 'ceiling', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(3), halfY: meters(0.1), halfZ: meters(3) }, position: vec3(meters, 0, FLOOR_Y + 2.0, 0) } },
       ]);
       let player = { ...createInitialPlayer(), x: -1.5, y: FLOOR_Y + 0.41, z: 0, grounded: true };
       for (let tick = 0; tick < 30; tick += 1) player = { ...player, ...movePlayer(physics, player, [6, -3, 0]) };
@@ -157,7 +156,7 @@ describe('stepping over low edges', () => {
   it('keeps a blocked move inside the arena bounds', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
-      addPhysicsBodies(physics, [{ id: 'floor', body: { kind: 'static', shape: { type: 'box', halfX: meters(30), halfY: meters(0.1), halfZ: meters(30) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } }]);
+      addPhysicsBodies(physics, [{ id: 'floor', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(30), halfY: meters(0.1), halfZ: meters(30) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } }]);
       const result = movePlayer(physics, { ...createInitialPlayer(), x: ARENA_EXTENT - 1.1, y: FLOOR_Y + 0.41, z: 0, grounded: true }, [6, -3, 0]);
       expect(result.x).toBeLessThanOrEqual(ARENA_EXTENT - 1);
     } finally { physics.world.dispose(); }
@@ -181,8 +180,8 @@ describe('stepping over low edges', () => {
     const physics: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
     try {
       addPhysicsBodies(physics, [
-        { id: 'floor', body: { kind: 'static', shape: { type: 'box', halfX: meters(20), halfY: meters(0.1), halfZ: meters(20) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } },
-        { id: 'plate', body: { kind: 'dynamic', mass: kilograms(0.5), shape: { type: 'box', halfX: meters(0.6), halfY: meters(0.04), halfZ: meters(0.44) }, position: vec3(meters, 0, FLOOR_Y + 0.04, 0) } },
+        { id: 'floor', body: { material: 'concrete', kind: 'static', shape: { type: 'box', halfX: meters(20), halfY: meters(0.1), halfZ: meters(20) }, position: vec3(meters, 0, FLOOR_Y - 0.1, 0) } },
+        { id: 'plate', body: { material: 'concrete', kind: 'dynamic', mass: kilograms(0.5), shape: { type: 'box', halfX: meters(0.6), halfY: meters(0.04), halfZ: meters(0.44) }, position: vec3(meters, 0, FLOOR_Y + 0.04, 0) } },
       ]);
       // The pose from the yard: capsule center at the plate's edge, walking away from it.
       let player = { ...createInitialPlayer(), x: -0.15, y: FLOOR_Y + 0.41, z: -0.45, grounded: true };

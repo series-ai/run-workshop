@@ -21,12 +21,13 @@ import {
   type PhysicsBody3D,
   type PhysicsBodyHandle3D,
   type PhysicsBodyId3D,
-  type PhysicsBodyInput3D,
+  type PhysicsNamedBodyInput3D,
   type PhysicsFluidHandle3D,
   type PhysicsFluidInput3D,
   type PhysicsFluidInteraction3D,
   type PhysicsBodyMotion3D,
   type PhysicsWorld3D,
+  type PhysicsLatestOutputs3D,
   type VoxelCompoundShape,
 } from '@series-inc/rundot-syncplay/physics/3d';
 import type { VoxelDims } from 'voxel-kit';
@@ -38,10 +39,11 @@ import {
   TANK,
   TICK_RATE,
   VOXEL_SIZE,
-  YARD_MATERIAL,
 } from './constants';
 import { CAGE_LAYER, CAGE_PANELS, WORLD_LAYER } from './cage';
+import { LIFT_DECK_MATERIAL, PHYSICS_MATERIALS, type PhysicsMaterialName } from './materials';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
+import type { ShellBox } from './setPieces';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 import { WATER_BOUNDS } from './water';
@@ -63,9 +65,14 @@ export interface VoxelStats {
   readonly occupiedCount: number;
 }
 
+/**
+ * A body for the yard world. It always names a world material (sim/materials.ts),
+ * so each contact reports the material of both sides. The type rejects inline
+ * friction and restitution.
+ */
 export interface YardPhysicsBodyInput3D {
   readonly id: string;
-  readonly body: PhysicsBodyInput3D;
+  readonly body: PhysicsNamedBodyInput3D & { readonly material: PhysicsMaterialName };
 }
 
 export interface YardPhysicsBody3D {
@@ -128,9 +135,9 @@ function bodyTopology(open: OpenYardPhysicsWorld): BodyTopology {
 }
 
 /**
- * Native checkpoints the runtime can hold at once. Syncplay's session keeps
- * 256 saves (its default snapshot buffer), plus one catch-up batch of up to
- * 240 ticks (the runner's default limit), plus saves loaded from bytes.
+ * Logical checkpoint capacity for the runner. Keep its 256 saves and a
+ * catch-up batch of up to 240 ticks, plus two import scratch slots.
+ * YardSim keeps 32 recent saves in native storage. Older saves use bytes.
  */
 export const CHECKPOINT_BUDGET = {
   maxLiveCheckpoints: 256 + 240 + 2,
@@ -205,6 +212,31 @@ export function bodyMass(body: YardBody): number {
   return Math.max(0.001, occupiedCount * VOXEL_SIZE * VOXEL_SIZE * VOXEL_SIZE * densityScale);
 }
 
+/**
+ * Damping of a whole loose tire: the part of its speed that it keeps each tick. Other
+ * bodies keep less (LINEAR_DAMPING and ANGULAR_DAMPING), so a tire rolls farther.
+ */
+const TIRE_DAMPING = { linear: 0.995, angular: 0.99 } as const;
+
+/** The linear damping that a body has when nothing (a catapult launch) changes it. */
+export function bodyLinearDamping(body: YardBody): number {
+  return body.collider === 'cylinder' ? TIRE_DAMPING.linear : LINEAR_DAMPING;
+}
+
+/** Hole radius (m) of a loose tire (props.ts looseTirePreset). Its inertia is a thick ring, not a solid disc. */
+const TIRE_HOLE_RADIUS = 0.2;
+
+/** A cylinder around local y that rolls on its tread: the collider of a whole loose tire. */
+function tireCollider(mass: number, radius: number, width: number) {
+  const across = mass * (3 * (radius * radius + TIRE_HOLE_RADIUS * TIRE_HOLE_RADIUS) + width * width) / 12;
+  return { status: 0, body: {
+    shape: { type: 'cylinder' as const, radius: meters(radius), halfHeight: meters(width / 2) },
+    mass: kilograms(mass),
+    inertia: { xx: kilogramMetersSquared(across), yy: kilogramMetersSquared(mass * (radius * radius + TIRE_HOLE_RADIUS * TIRE_HOLE_RADIUS) / 2), zz: kilogramMetersSquared(across) },
+    centerOfMass: vec3(meters, 0, 0, 0),
+  } };
+}
+
 export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBodyInput3D {
   const mass = bodyMass(body);
   const fullCrate = body.renderModel === 'shipping-crate' && voxelStats(body.voxels).occupiedCount === body.voxels.length;
@@ -214,7 +246,7 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
     shape: { type: 'box' as const, halfX: meters(sx / 2), halfY: meters(sy / 2), halfZ: meters(sz / 2) },
     mass: kilograms(mass), inertia: { xx: kilogramMetersSquared(mass * (sy * sy + sz * sz) / 12), yy: kilogramMetersSquared(mass * (sx * sx + sz * sz) / 12), zz: kilogramMetersSquared(mass * (sx * sx + sy * sy) / 12) },
     centerOfMass: vec3(meters, 0, 0, 0),
-  } } : cookVoxelBody(toChunk(body.voxels, body.dims), kilograms(mass), { originOffset: originOffset(body.dims) });
+  } } : body.collider === 'cylinder' ? tireCollider(mass, sx / 2, sy) : cookVoxelBody(toChunk(body.voxels, body.dims), kilograms(mass), { originOffset: originOffset(body.dims) });
   if (cooked.status !== 0) throw new Error(`WRECK_YARD_VOXEL_BODY_EMPTY: ${body.id}`);
   return {
     id: body.id,
@@ -229,10 +261,26 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
       inertia: cooked.body.inertia,
       centerOfMass: cooked.body.centerOfMass,
       sleeping: fullCrate && pose.linearVelocity.every((v) => v === 0) && pose.angularVelocity.every((v) => v === 0),
-      linearDamping: LINEAR_DAMPING,
-      angularDamping: ANGULAR_DAMPING,
-      friction: YARD_MATERIAL.friction,
-      restitution: YARD_MATERIAL.restitution,
+      // A whole loose tire keeps rolling: it has less damping than other bodies.
+      linearDamping: bodyLinearDamping(body),
+      angularDamping: body.collider === 'cylinder' ? TIRE_DAMPING.angular : ANGULAR_DAMPING,
+      material: body.material,
+      layer: WORLD_LAYER,
+      mask: 0xffffffff,
+    },
+  };
+}
+
+/** The static physics body of one shell box. A repaired floodlight lens comes back through it. */
+export function shellBody(box: ShellBox): YardPhysicsBodyInput3D {
+  return {
+    id: `${SHELL_PREFIX}${box.id}`,
+    body: {
+      kind: 'static' as const,
+      position: vec3(meters, box.center),
+      shape: { type: 'box' as const, halfX: meters(box.size[0] * 0.5), halfY: meters(box.size[1] * 0.5), halfZ: meters(box.size[2] * 0.5) },
+      orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
+      material: box.material,
       layer: WORLD_LAYER,
       mask: 0xffffffff,
     },
@@ -240,28 +288,15 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
 }
 
 export function shellBodies(): YardPhysicsBodyInput3D[] {
-  const boxes = SHELL_BOXES.map((box) => ({
-    id: `${SHELL_PREFIX}${box.id}`,
-    body: {
-      kind: 'static' as const,
-      position: vec3(meters, box.center),
-      shape: { type: 'box' as const, halfX: meters(box.size[0] * 0.5), halfY: meters(box.size[1] * 0.5), halfZ: meters(box.size[2] * 0.5) },
-      orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
-      friction: YARD_MATERIAL.friction,
-      restitution: YARD_MATERIAL.restitution,
-      layer: WORLD_LAYER,
-      mask: 0xffffffff,
-    },
-  }));
-  // The cage sits on its own layer, so aim rays (layerMask WORLD_LAYER) pass through it.
-  const cage = CAGE_PANELS.map((panel) => ({
+  const boxes = SHELL_BOXES.map(shellBody);
+  // The cage is a steel mesh. It sits on its own layer, so aim rays (layerMask WORLD_LAYER) pass through it.
+  const cage = CAGE_PANELS.map((panel): YardPhysicsBodyInput3D => ({
     id: `${SHELL_PREFIX}${panel.id}`,
     body: {
       kind: 'static' as const,
       position: vec3(meters, panel.center),
       shape: { type: 'box' as const, halfX: meters(panel.size[0] * 0.5), halfY: meters(panel.size[1] * 0.5), halfZ: meters(panel.size[2] * 0.5) },
-      friction: YARD_MATERIAL.friction,
-      restitution: YARD_MATERIAL.restitution,
+      material: 'steel',
       layer: CAGE_LAYER,
       mask: 0xffffffff,
     },
@@ -275,6 +310,8 @@ export function makeWorld(): PhysicsWorld3D {
     initialGravity: vec3(metersPerSecondSquared, 0, -GRAVITY, 0),
     capacity: PHYSICS_CAPACITY,
     portalProxyCapacity: 256,
+    // Named contact materials (Syncplay rc.49). Every body names one (sim/materials.ts).
+    materials: PHYSICS_MATERIALS,
   });
 }
 
@@ -361,7 +398,8 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYard
   const open: OpenYardPhysicsWorld = { world: makeWorld(), bodyIds: new Map() };
   let built = false;
   try {
-    addPhysicsBodies(open, [...shellBodies(), ...bodies, { id: ELEVATOR.id, body: { kind: 'kinematic', position: vec3(meters, ELEVATOR.x, ELEVATOR.floors[0] - ELEVATOR.size[1] / 2, ELEVATOR.z), shape: { type: 'compound', children: [{ shape: { type: 'box', halfX: meters(ELEVATOR.size[0] / 2), halfY: meters(ELEVATOR.size[1] / 2), halfZ: meters(ELEVATOR.size[2] / 2) }, offset: vec3(meters, 0, 0, 0) }, { shape: { type: 'box', halfX: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[0] / 2), halfY: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[1] / 2), halfZ: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[2] / 2) }, offset: vec3(meters, STORAGE_ELEVATOR_CAR_FIXTURE.center) }] }, friction: 0.9, restitution: 0, layer: WORLD_LAYER, mask: 0xffffffff } }]);
+    // The lift car is the one surface outside the yard materials: high friction and no bounce, so crates ride it.
+    addPhysicsBodies(open, [...shellBodies(), ...bodies, { id: ELEVATOR.id, body: { kind: 'kinematic', position: vec3(meters, ELEVATOR.x, ELEVATOR.floors[0] - ELEVATOR.size[1] / 2, ELEVATOR.z), shape: { type: 'compound', children: [{ shape: { type: 'box', halfX: meters(ELEVATOR.size[0] / 2), halfY: meters(ELEVATOR.size[1] / 2), halfZ: meters(ELEVATOR.size[2] / 2) }, offset: vec3(meters, 0, 0, 0) }, { shape: { type: 'box', halfX: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[0] / 2), halfY: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[1] / 2), halfZ: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[2] / 2) }, offset: vec3(meters, STORAGE_ELEVATOR_CAR_FIXTURE.center) }] }, material: LIFT_DECK_MATERIAL, layer: WORLD_LAYER, mask: 0xffffffff } }]);
     createReturnsPair(open.world);
     // Conveyor belts. The surface velocity is part of the checkpoint (6.0.0-rc.13), so once is enough.
     for (const box of SHELL_BOXES) {
@@ -385,14 +423,24 @@ export function setBodyNames(open: OpenYardPhysicsWorld, bodyIds: YardPhysicsWor
   for (const [name, id] of bodyIds) open.bodyIds.set(name, BigInt(id) as PhysicsBodyId3D);
 }
 
-/** Reads the sim's view of the live world after a step or an edit. */
+/**
+ * Reads current motion after a step or edit. Reuse step outputs only when no
+ * portal pair was changed after that step. Removed bodies lose their rows.
+ */
 export function readWorldState(
   open: OpenYardPhysicsWorld,
   fluidInteractions?: readonly PhysicsFluidInteraction3D[],
+  stepOutputs?: Pick<PhysicsLatestOutputs3D, 'portalStraddlers'>,
 ): YardPhysicsWorldState {
   const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status, MOTION_BATCH.teleports);
   const topology = bodyTopology(open);
   const { names } = topology;
+  const portalStraddlers: NonNullable<YardPhysicsWorldState['portalStraddlers']>[number][] = [];
+  for (const entry of (stepOutputs ?? open.world.latest()).portalStraddlers ?? []) {
+    const bodyId = topology.nativeNames.get(entry.bodyId);
+    if (bodyId) portalStraddlers.push({ bodyId, pairId: entry.pairId, end: entry.end });
+    else if (!stepOutputs) throw new Error('WRECK_YARD_PORTAL_BODY_MISSING');
+  }
   if (perfActive()) {
     let active = 0, sleeping = 0;
     for (let row = 0; row < count; row += 1) {
@@ -419,11 +467,7 @@ export function readWorldState(
   }
   return {
     frame: Number(open.world.info().frame),
-    portalStraddlers: (open.world.latest().portalStraddlers ?? []).map((entry) => {
-      const bodyId = topology.nativeNames.get(entry.bodyId);
-      if (!bodyId) throw new Error('WRECK_YARD_PORTAL_BODY_MISSING');
-      return { bodyId, pairId: entry.pairId, end: entry.end };
-    }),
+    portalStraddlers,
     bodies,
     bodyIds: topology.ids,
     fluidInteractions: interactions.length > 0 ? interactions : undefined,
@@ -495,9 +539,15 @@ export function removePhysicsBody(open: OpenYardPhysicsWorld, id: string): void 
   removePhysicsBodies(open, [id]);
 }
 
+/**
+ * Gives a body a new shape (a torch cut or a dent) at the same id. Syncplay rc.51
+ * can fail replaceBody with a new shape in the full yard: "topology edit peak
+ * bound was below the allocation" (rc.46 to rc.48 pass the same cuts). Until a fix
+ * ships, the yard removes the body and adds it again with the same id and key.
+ */
 export function replacePhysicsBody(open: OpenYardPhysicsWorld, body: YardPhysicsBodyInput3D): void {
-  wakeShippingStack(open, body.id);
-  open.world.edit((edit) => edit.replaceBody(physicsBodyHandle(open, body.id), body.body));
+  removePhysicsBodies(open, [body.id]);
+  addPhysicsBodies(open, [body]);
 }
 
 /** Sets linear velocity (m/tick) and wakes the body. The SDK setter is ~8x cheaper than a replaceBody edit. */
@@ -515,26 +565,25 @@ export function setPhysicsBodyMotion(open: OpenYardPhysicsWorld, id: string, lin
 }
 
 /**
- * Moves a body and sets its velocity (m/s), spin (rad/s), and linear damping
- * in one edit. The catapult uses it: a launched body flies undamped.
+ * Moves a body and sets its velocity (m/s), spin (rad/s), and linear damping.
+ * The catapult uses it to launch a body without damping.
  */
 export function launchPhysicsBody(open: OpenYardPhysicsWorld, id: string, position: Vec3, velocity: Vec3, spin: Vec3, linearDamping: number): void {
   const handle = physicsBodyHandle(open, id);
-  const body = open.world.readBody(handle);
-  open.world.edit((edit) => edit.replaceBody(handle, {
-    ...body,
+  const body = open.world.readMotion(handle);
+  open.world.setBodyTransform(handle, {
     position: vec3(meters, position),
-    linearVelocity: vec3(metersPerSecond, velocity),
-    angularVelocity: vec3(radiansPerSecond, spin),
-    linearDamping,
-    sleeping: false,
-  }));
+    orientation: body.orientation,
+  });
+  open.world.setLinearVelocity(handle, vec3(metersPerSecond, velocity));
+  open.world.setAngularVelocity(handle, vec3(radiansPerSecond, spin));
+  open.world.setBodyLinearDamping(handle, linearDamping);
+  open.world.wakeBody(handle);
 }
 
 export function setPhysicsBodyLinearDamping(open: OpenYardPhysicsWorld, id: string, linearDamping: number): void {
   const handle = physicsBodyHandle(open, id);
-  const body = open.world.readBody(handle);
-  open.world.edit((edit) => edit.replaceBody(handle, { ...body, linearDamping }));
+  open.world.setBodyLinearDamping(handle, linearDamping);
 }
 
 export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: string, angularVelocity: Vec3): void {
@@ -547,17 +596,28 @@ export function replacePhysicsPose(
   pose: Partial<Pick<YardPhysicsBody3D, 'x' | 'y' | 'z' | 'vx' | 'vy' | 'vz'>>,
 ): void {
   const handle = physicsBodyHandle(open, id);
-  const body = open.world.readBody(handle);
-  open.world.edit((edit) => edit.replaceBody(handle, {
-    ...body,
+  const body = open.world.readMotion(handle);
+  open.world.setBodyTransform(handle, {
     position: vec3(meters, pose.x ?? body.position.x, pose.y ?? body.position.y, pose.z ?? body.position.z),
-    linearVelocity: {
-      x: pose.vx === undefined ? body.linearVelocity.x : metersPerSecond(pose.vx * TICK_RATE),
-      y: pose.vy === undefined ? body.linearVelocity.y : metersPerSecond(pose.vy * TICK_RATE),
-      z: pose.vz === undefined ? body.linearVelocity.z : metersPerSecond(pose.vz * TICK_RATE),
-    },
-    sleeping: false,
-  }));
+    orientation: body.orientation,
+  });
+  open.world.setLinearVelocity(handle, {
+    x: pose.vx === undefined ? body.linearVelocity.x : metersPerSecond(pose.vx * TICK_RATE),
+    y: pose.vy === undefined ? body.linearVelocity.y : metersPerSecond(pose.vy * TICK_RATE),
+    z: pose.vz === undefined ? body.linearVelocity.z : metersPerSecond(pose.vz * TICK_RATE),
+  });
+  open.world.wakeBody(handle);
+}
+
+/**
+ * A live body as a replace input that keeps its named material. A read body also
+ * carries the resolved coefficients; passed back as they are, they would turn
+ * the body into an inline-material body, and its contacts would lose the name.
+ */
+export function readBodyInput(open: OpenYardPhysicsWorld, handle: PhysicsBodyHandle3D) {
+  const { friction: _friction, restitution: _restitution, rollingResistance: _rolling, materialSource, ...rest } = open.world.readBody(handle);
+  if (materialSource.kind !== 'named') throw new Error(`WRECK_YARD_BODY_MATERIAL_NOT_NAMED: ${rest.key ?? String(rest.id)}`);
+  return { ...rest, material: materialSource.material };
 }
 
 export function isShell(bodyId: string): boolean {

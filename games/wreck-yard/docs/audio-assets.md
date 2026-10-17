@@ -1,6 +1,6 @@
 # Audio files
 
-The game uses 17 local MP3 files. Their total size is 416325 bytes.
+The game uses 24 local MP3 files. Their total size is 462720 bytes.
 The city hum uses two channels at 32 kHz and 80 kbps.
 The effects use one channel at 24 kHz and 64 kbps.
 MP3 files can play in Safari. Browser playback needs a user input.
@@ -20,6 +20,17 @@ The walking replacement uses one successful SFX call. It used 3 credits.
 The old walking source and receipt are in `art/audio/raw/retired/robot-step-clicky.mp3` and its JSON file.
 Only the processed files and the check page are in `public/audio/`.
 
+## Material sounds
+
+The rubber impact and the glass break use four successful SFX calls. They used 22 credits.
+Each prompt asked for two takes. The script keeps one take of each.
+The other rubber take was almost silent and had several hits. The other glass take had a slow start and scattered late hits.
+The rubber source is mostly below 200 Hz. Its filter lifts 400 Hz and 1 kHz, so small speakers can play it.
+
+The glass knock, crate break, lamp fizz, lights-out, and relamp sounds use twelve successful SFX calls. They used 52 credits.
+Four more calls failed before generation, because ten calls at the same time locked the CLI config file. They returned no generation ID.
+The first two glass knock takes were low thuds, so a brighter prompt made two more. The manifest lists each rejected take and the reason.
+
 ## Processing
 
 Run `node scripts/prepare-audio.mjs` from this project to rebuild all files.
@@ -31,7 +42,7 @@ The threshold is 1% of the strongest block RMS, with a minimum of 0.0004.
 Other action effects keep their 0.5 ms start fade and 15 ms end fade.
 The short start fade keeps the attack.
 The distant drill and steam use a 40 ms start fade and an 80 ms end fade.
-The walking update keeps the same hashes for the other 16 output files.
+Each update keeps the same hashes for the output files that it does not change.
 Each output hash is in the manifest as outputSha256.
 
 For each loop, FFmpeg changes the time length without changing the pitch.
@@ -126,3 +137,10 @@ They do not prove that a loop has no audible change in tone or rhythm.
 | gravity-pulse | 0.420 | 4077 | 0.6188 | 0.0990 | — | — | — |
 | explosion | 1.190 | 10221 | 0.6163 | 0.1470 | — | — | — |
 | mechanism | 1.130 | 9837 | 0.6293 | 0.0698 | — | — | — |
+| glass-break | 0.810 | 7149 | 0.6064 | 0.0455 | — | — | — |
+| glass-impact | 0.255 | 2733 | 0.6278 | 0.0755 | — | — | — |
+| crate-break | 0.746 | 6765 | 0.6070 | 0.0373 | — | — | — |
+| lamp-fizz | 0.795 | 7149 | 0.6184 | 0.1002 | — | — | — |
+| lights-out | 0.900 | 7917 | 0.6160 | 0.0876 | — | — | — |
+| relamp | 1.106 | 9645 | 0.6039 | 0.0662 | — | — | — |
+| rubber-impact | 0.545 | 5037 | 0.6206 | 0.0601 | — | — | — |

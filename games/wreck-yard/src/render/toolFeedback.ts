@@ -13,7 +13,7 @@ const STEAM = '#e8e6e3';
 /**
  * The effect for each tool result:
  * - refusal: a straight red beam to what blocked the gun (or into the air on a miss)
- * - lock: a flash on the object the gun took hold of; the tractor beam takes over while held
+ * - lock: a new hold or control press; held objects use a surface shader
  * - burst: an energy burst that pushes the object out (throw on release, punt)
  * - heat: the torch's glowing mark where it hits
  * - quench: the torch flame met water; TorchJet draws the steam
@@ -89,20 +89,4 @@ export function towardCamera(point: V3, camera: V3, distance: number): [number, 
   if (length < 1e-6) return [point[0], point[1], point[2]];
   const step = Math.min(distance, length * 0.5) / length;
   return [point[0] + d[0] * step, point[1] + d[1] * step, point[2] + d[2] * step];
-}
-
-/**
- * Tractor beam curve: a quadratic Bézier that leaves the muzzle along the aim
- * and ends on the held object. When the object lags behind the aim, the beam bends.
- */
-export function tractorControlPoint(muzzle: V3, aim: V3, target: V3): V3 {
-  const reach = Math.hypot(target[0] - muzzle[0], target[1] - muzzle[1], target[2] - muzzle[2]) * 0.55;
-  return [muzzle[0] + aim[0] * reach, muzzle[1] + aim[1] * reach, muzzle[2] + aim[2] * reach];
-}
-
-export function bezierPoint(p0: V3, p1: V3, p2: V3, t: number): [number, number, number] {
-  const a = (1 - t) * (1 - t);
-  const b = 2 * (1 - t) * t;
-  const c = t * t;
-  return [a * p0[0] + b * p1[0] + c * p2[0], a * p0[1] + b * p1[1] + c * p2[1], a * p0[2] + b * p1[2] + c * p2[2]];
 }

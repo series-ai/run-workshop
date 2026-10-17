@@ -2,7 +2,7 @@ import { DT, FLOOR_Y, VOXEL_SIZE } from './constants';
 import { ELEVATOR, STORAGE, STORAGE_BOUNDS, type AttractionState } from './attractions';
 import type { Vec3 } from './math';
 import type { YardBody } from './state';
-import { LIGHT_UP, storageCrateFace } from './crateArt';
+import { LIGHT_FACES, storageCrateFaces } from './crateArt';
 
 export interface CrateSpawn { readonly body: YardBody; readonly position: Vec3; readonly rotation: readonly [number, number, number, number] }
 const CRATE_DIMS = { x: 12, y: 12, z: 12 };
@@ -14,11 +14,11 @@ export function createCrateSpawns(bay: 'storage' | 'returns'): CrateSpawn[] {
   const result: CrateSpawn[] = [];
   for (let tier = 0; tier < tiers; tier++) for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) {
     const index = (tier * rows + row) * columns + col;
-    const crateFace = bay === 'storage' ? storageCrateFace(col, row, tier, { columns, rows, tiers }) : LIGHT_UP;
+    const crateFaces = bay === 'storage' ? storageCrateFaces(col, row, tier, { columns, rows, tiers }) : LIGHT_FACES;
     result.push({
-      body: { id: `shipping-${bay}-${index}`, label: 'Shipping Crate', dims: CRATE_DIMS, voxels: CRATE_VOXELS,
+      body: { id: `shipping-${bay}-${index}`, label: 'Shipping Crate', material: 'wood', dims: CRATE_DIMS, voxels: CRATE_VOXELS,
         motion: 'dynamic', buoyancy: 0.2, anchorFaces: [], impactCooldownUntil: 0, heat: null,
-        storageBay: bay, renderModel: 'shipping-crate', crateFace },
+        storageBay: bay, renderModel: 'shipping-crate', crateFaces },
       position: [cx + (col - (columns - 1) / 2) * STORAGE.spacing, FLOOR_Y + STORAGE.size / 2 + tier * STORAGE.spacing, cz + (row - (rows - 1) / 2) * STORAGE.spacing],
       rotation: [0, 0, 0, 1],
     });

@@ -3,6 +3,7 @@ import type { AttractionRequest } from '../sim/attractions';
 import { ShippingCrates } from './ShippingCrates';
 import { StorageAttraction } from './StorageAttraction';
 import { ReturnsDepartment } from './ReturnsDepartment';
+import { PortalEffects } from './PortalEffects';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -22,6 +23,7 @@ import { VoxelBodies } from './VoxelBodies';
 import { YardShell } from './YardShell';
 import { Contraptions } from './Contraptions';
 import { ArenaCage } from './ArenaCage';
+import { ImpactEffects } from './ImpactEffects';
 import { Explosions } from './Explosions';
 import { FuelDrumFx } from './FuelDrumFx';
 import { InkComposer } from './style/InkComposer';
@@ -85,6 +87,7 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
       <StorageAttraction renderRef={renderRef} />
       <ShippingCrates bodies={bodies} renderRef={renderRef} />
       <ReturnsDepartment />
+      <PortalEffects renderRef={renderRef} />
       <ArenaCage renderRef={renderRef} />
       <VoxelBodies bodies={bodies} renderRef={renderRef} worldOcclusion={worldOcclusion} />
       <PlayerAvatars renderRef={renderRef} tool={tool} />
@@ -97,6 +100,7 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
       </group>
       <FuelDrumFx renderRef={renderRef} />
       <Explosions renderRef={renderRef} />
+      <ImpactEffects renderRef={renderRef} />
       <OcclusionUpdater renderRef={renderRef} worldOcclusion={worldOcclusion} />
       <InkComposer enableInk={true} samples={isMobileDevice() ? 0 : 4} quality={quality} renderRef={renderRef} />
       {onQualityFallback && quality === 'high' ? <QualityFallback onFallback={onQualityFallback} /> : null}

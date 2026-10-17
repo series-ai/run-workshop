@@ -11,7 +11,7 @@ import {
   type YardInput,
 } from "../sim/input";
 import { TICK_RATE } from "../sim/constants";
-import { createYardRuntime, yardRoomOptions } from "../sim/session";
+import { createYardRuntime, yardRoomOptions, YARD_INPUT_OWNERSHIP } from "../sim/session";
 import type { YardState } from "../sim/state";
 import {
   interpolateYard,
@@ -173,6 +173,7 @@ export class MatchController {
       YardState,
       YardRender
     >({
+      inputOwnership: YARD_INPUT_OWNERSHIP,
       runtimeFactory: createYardRuntime,
       defaultInput: NEUTRAL_INPUT,
       encodeInput: encodeYardInput,
@@ -194,6 +195,9 @@ export class MatchController {
         this.render = snapshot.renderState;
       }
       if (this.starting) return;
+      // Offline start reports stopped while it acquires the runtime.
+      // The controller remains connecting until the runtime is ready or fails.
+      if (this.status === "connecting" && snapshot.status === "stopped") return;
       const next = mapStatus(snapshot.status);
       const nextError =
         snapshot.status === "error"

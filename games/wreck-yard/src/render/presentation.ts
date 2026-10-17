@@ -2,7 +2,7 @@ import type { AttractionState } from '../sim/attractions';
 import type { SyncplayRunnerStatus } from '@series-inc/rundot-syncplay/browser';
 import { lerp, lerpAngle, quatNlerp, type Quat, type Vec3 } from '../sim/math';
 import { isShell } from '../sim/physics';
-import type { BuggyWheelState, ContraptionState, YardBody, YardState, YardStats, ToolFeedback } from '../sim/state';
+import type { BuggyWheelState, ContraptionState, Impact, YardBody, YardState, YardStats, ToolFeedback } from '../sim/state';
 import { TANK_SPEC } from '../sim/constants';
 import type { SoundMotion } from '../audio/cues';
 import { beginPhase, endPhase, perfActive, perfCount } from '../perf/recorder';
@@ -43,6 +43,8 @@ export interface YardRender {
   readonly localSlot: number;
   readonly stats: YardStats;
   readonly contraptions: ContraptionState;
+  /** Hard contacts of the last few ticks (sim/impacts.ts): hit sounds and hit effects. */
+  readonly impacts: readonly Impact[];
   readonly floating: number;
 }
 
@@ -109,6 +111,7 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     localSlot: context.localSlot,
     stats: state.stats,
     contraptions: state.contraptions,
+    impacts: state.impacts,
     attractions: state.attractions,
     floating,
   };

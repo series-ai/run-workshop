@@ -1,4 +1,5 @@
 import './Hud.css';
+import { PerformanceControls } from './PerformanceControls';
 import { AudioControls } from './AudioControls';
 import type { YardAudioControl } from '../audio/useYardAudio';
 import { canExitFullscreen, cursorNeededNow, type GateNotice, type GateState } from '../game/playGate';
@@ -118,6 +119,7 @@ export function PlayGate({ audio, gate, inRoom, quality, onQuality, onLeave, tou
           ) : null}
         </div>
         {audio ? <AudioControls audio={audio} /> : null}
+        <PerformanceControls />
         <button type="button" className="yard-button yard-button--danger" onClick={onLeave}>Leave match</button>
         {canExitFullscreen(state) ? <div className="yard-gate__small">Esc again: leave fullscreen</div> : null}
         {touchControls ? <div className="yard-gate__hint">Left pad: move. Right side: drag to look.</div> : <ControlsHint />}

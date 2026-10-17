@@ -1,5 +1,6 @@
 import { makeEmptyVoxelField, stampBox, type VoxelDims } from 'voxel-kit';
 import { BURNT_MATERIAL, FLOOR_Y, VOXEL_SIZE } from './constants';
+import type { YardMaterial } from './materials';
 import type { Quat, Vec3 } from './math';
 import { RIG, RIG_TORCH_X } from './setPieces';
 
@@ -27,6 +28,7 @@ export interface VolumePreset {
 export interface PropSpawn {
   readonly id: string;
   readonly label: string;
+  readonly material: YardMaterial;
   readonly preset: VolumePreset;
   readonly position: Vec3;
   readonly rotation: Quat;
@@ -139,6 +141,23 @@ export function balePreset(seed: number): VolumePreset {
 }
 
 /**
+ * One loose tire lying flat: 1.04 m across and 0.32 m wide, a black tread
+ * ring around a grey wheel rim and an open hole. Its collider is a cylinder
+ * (physics.ts LOOSE_TIRE), so it rolls on its tread and stacks on its side.
+ */
+export function looseTirePreset(): VolumePreset {
+  const { dims, voxels } = field(13, 4, 13);
+  for (let z = 0; z < 13; z++) for (let y = 0; y < 4; y++) for (let x = 0; x < 13; x++) {
+    const radius = Math.hypot(x - 6, z - 6);
+    if (radius > 6.4 || radius < 2.4) continue;
+    // The rim shows on the two side faces only. The tread wraps the whole ring.
+    const rim = radius < 3.6 && (y === 0 || y === 3);
+    voxels[x + y * dims.x + z * dims.x * dims.y] = PROP_COLOR[rim ? 'grey' : 'ink'];
+  }
+  return { dims, voxels };
+}
+
+/**
  * Four tires stacked flat, 1.04 m across and 0.96 m high. The outline is a
  * chamfered square with a solid core: a ring shape rocks and never sleeps.
  */
@@ -245,6 +264,12 @@ function restAt(preset: VolumePreset, base = 0): number {
   return FLOOR_Y + base + heightOf(preset) * 0.5 + 0.02;
 }
 
+/** Height of the top of the work beam under the torch. The torch sparks start above it. */
+export function rigBeamTop(): number {
+  const beam = scrapPreset('beam', 70);
+  return restAt(beam) + heightOf(beam) * 0.5;
+}
+
 const CAR_PAINTS: readonly PropColor[] = ['rust', 'teal', 'mustard', 'orange', 'grey'];
 
 /** A stack of crushed cars. `alongX` lays the car length along world x. */
@@ -254,7 +279,7 @@ function carStack(id: string, x: number, z: number, alongX: boolean, tiers: numb
   for (let tier = 0; tier < tiers; tier += 1) {
     const preset = carPreset(seed * 10 + tier, CAR_PAINTS[(seed + tier) % CAR_PAINTS.length]!, 0.55 + (tier % 2) * 0.3);
     const jitter = tier % 2 === 0 ? 0.03 : -0.04;
-    spawns.push({ id: `${id}-${tier}`, label: 'Wrecked Car', preset, position: [x, restAt(preset, level), z], rotation: yawQuat((alongX ? QUARTER : 0) + jitter), buoyancy: 0.2 });
+    spawns.push({ id: `${id}-${tier}`, label: 'Wrecked Car', material: 'steel', preset, position: [x, restAt(preset, level), z], rotation: yawQuat((alongX ? QUARTER : 0) + jitter), buoyancy: 0.2 });
     level += heightOf(preset) + 0.03;
   }
   return spawns;
@@ -268,6 +293,7 @@ function blockRow(id: string, x: number, z: number, alongX: boolean, count: numb
   return Array.from({ length: count }, (_, index) => ({
     id: `${id}-${index}`,
     label: 'Concrete Block',
+    material: 'concrete',
     preset,
     position: [x + (alongX ? start + index * pitch : 0), restAt(preset), z + (alongX ? 0 : start + index * pitch)] as Vec3,
     rotation: yawQuat(alongX ? 0 : QUARTER),
@@ -277,30 +303,30 @@ function blockRow(id: string, x: number, z: number, alongX: boolean, count: numb
 
 function slab(id: string, lengthVoxels: number, x: number, z: number, yaw: number): PropSpawn {
   const preset = blockPreset(lengthVoxels, 4, 9);
-  return { id, label: 'Concrete Block', preset, position: [x, restAt(preset), z], rotation: yawQuat(yaw), buoyancy: 0.05 };
+  return { id, label: 'Concrete Block', material: 'concrete', preset, position: [x, restAt(preset), z], rotation: yawQuat(yaw), buoyancy: 0.05 };
 }
 
 /** `iso` turns the container a quarter so its length runs along world z. */
 function container(id: string, x: number, z: number, yaw: number, color: PropColor, base = 0, iso = false): PropSpawn {
   const preset = containerPreset(color);
-  return { id, label: 'Shipping Container', preset, position: [x, restAt(preset, base), z], rotation: yawQuat(yaw + (iso ? QUARTER : 0)), buoyancy: 0.6 };
+  return { id, label: 'Shipping Container', material: 'steel', preset, position: [x, restAt(preset, base), z], rotation: yawQuat(yaw + (iso ? QUARTER : 0)), buoyancy: 0.6 };
 }
 
 function jersey(id: string, x: number, z: number, yaw: number): PropSpawn {
   const preset = jerseyBarrierPreset();
-  return { id, label: 'Jersey Barrier', preset, position: [x, restAt(preset), z], rotation: yawQuat(yaw), buoyancy: 0.05 };
+  return { id, label: 'Jersey Barrier', material: 'concrete', preset, position: [x, restAt(preset), z], rotation: yawQuat(yaw), buoyancy: 0.05 };
 }
 
 function tireWall(id: string, x: number, z: number): PropSpawn[] {
   const preset = tireStackPreset();
   return [-1.1, 0, 1.1].map((offset, index) => ({
-    id: `${id}-${index}`, label: 'Tire Stack', preset, position: [x + offset, restAt(preset), z] as Vec3, rotation: yawQuat(index * 0.4), buoyancy: 0.5,
+    id: `${id}-${index}`, label: 'Tire Stack', material: 'rubber', preset, position: [x + offset, restAt(preset), z] as Vec3, rotation: yawQuat(index * 0.4), buoyancy: 0.5,
   }));
 }
 
 function bale(id: string, seed: number, x: number, z: number, yaw: number, base = 0): PropSpawn {
   const preset = balePreset(seed);
-  return { id, label: 'Scrap Bale', preset, position: [x, restAt(preset, base), z], rotation: yawQuat(yaw), buoyancy: 0.1 };
+  return { id, label: 'Scrap Bale', material: 'steel', preset, position: [x, restAt(preset, base), z], rotation: yawQuat(yaw), buoyancy: 0.1 };
 }
 
 /** Loose scrap on open ground, clear of the play zones and the contraptions (sim/contraptions.ts). */
@@ -369,14 +395,14 @@ export function yardProps(): PropSpawn[] {
     bale('bale-2', 62, -9.9, -0.55, -0.15, heightOf(bale0) + 0.03),
 
     // Demolition rig: the work beam lies under the torch head; the target car waits south of the rig.
-    { id: 'rig-work-beam', label: 'Steel Beam', preset: workBeam, position: [RIG[0] + RIG_TORCH_X, restAt(workBeam), RIG[2]], rotation: yawQuat(QUARTER), buoyancy: 0.05 },
+    { id: 'rig-work-beam', label: 'Steel Beam', material: 'steel', preset: workBeam, position: [RIG[0] + RIG_TORCH_X, restAt(workBeam), RIG[2]], rotation: yawQuat(QUARTER), buoyancy: 0.05 },
     // East of the walk from the yard centre to the lift front.
     ...carStack('rig-target-car', RIG[0] + 1.5, -12.4, true, 1, 49),
 
-    ...SCRAP_SPOTS.map(([x, z], index) => {
+    ...SCRAP_SPOTS.map(([x, z], index): PropSpawn => {
       const kind = SCRAP_KINDS[index % SCRAP_KINDS.length]!;
       const preset = scrapPreset(kind, 100 + index);
-      return { id: `scrap-${index}`, label: 'Scrap', preset, position: [x, restAt(preset), z] as Vec3, rotation: yawQuat(index * 0.9), buoyancy: kind === 'pipe' ? 0.4 : 0.1 };
+      return { id: `scrap-${index}`, label: 'Scrap', material: 'steel', preset, position: [x, restAt(preset), z] as Vec3, rotation: yawQuat(index * 0.9), buoyancy: kind === 'pipe' ? 0.4 : 0.1 };
     }),
   ];
 }

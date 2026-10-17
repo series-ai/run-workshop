@@ -7,15 +7,18 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import type { WaterTankSpec } from 'voxel-kit';
 import { FLOOR_Y, getTerrainHeightAt, TANK, TANK_SPEC, TERRAIN_COLS, TERRAIN_ROWS, TERRAIN_SPACING } from '../sim/constants';
 import { SHELL_BOXES } from '../sim/shell';
-import { FLOODLIGHT_MASTS, MAST_LAMP_HEIGHT, mastYaw, openTankFrameBoxes, RIG, TANK_RIM, VEHICLE_RAMP } from '../sim/setPieces';
+import { openTankFrameBoxes, RIG, RIG_TORCH_Y, TANK_RIM, VEHICLE_RAMP } from '../sim/setPieces';
+import { rigBeamTop } from '../sim/props';
 import { RAMP_PARTS } from './rampParts';
-import { glowTexture } from './style/glowTexture';
 import { SkyDome } from './SkyDome';
 import { Skyline } from './Skyline';
 import { AtmosphereDust } from './AtmosphereDust';
 import { WaterCaustics, WaterSurface } from './Water';
 import { isMobileDevice } from './DynamicDpr';
 import type { YardRender } from './presentation';
+import { FloodlightMasts, yardLightLevel } from './Floodlights';
+import { brokenLampIds } from '../sim/floodlights';
+import { useReducedMotionRef } from './reducedMotion';
 
 const noRaycast = () => null;
 const tuple3 = (x: number, y: number, z: number): [number, number, number] => [x, y, z];
@@ -168,12 +171,20 @@ const AQUARIUM_FRAME_GEOMETRY = aquariumFrameGeometry();
 const SPARK_COUNT = 180;
 /** Spark launches per second. Phases spread the sparks across the cycle. */
 const SPARK_RATE = 1.6;
-/** Torch-local heights. The torch sits 0.7 m above the floor. */
-const SPARK_TIP_Y = -0.45;
+/** Each spark rises this far above its launch point before it falls (m). */
+const SPARK_ARC = 0.32;
+/** Sparks launch this far above the top of the work beam (m). */
+const SPARK_CLEAR_OF_BEAM = 0.05;
+/** Torch-local floor height. The torch sits RIG_TORCH_Y above the floor. */
 const SPARK_FLOOR_Y = -0.69;
 
 function CuttingRigSparks() {
-  const { geom, positionAttr, colorAttr, seeds, baseColors } = useMemo(() => {
+  // Users who ask for less motion see the spray frozen at its start phase. The flag follows the system setting.
+  const reducedMotion = useReducedMotionRef();
+  const frozen = useRef(false);
+  const { geom, positionAttr, colorAttr, seeds, baseColors, startY } = useMemo(() => {
+    // Torch-local launch height: just above the top of the work beam.
+    const startY = rigBeamTop() - (RIG[1] + RIG_TORCH_Y) + SPARK_CLEAR_OF_BEAM;
     const positions = new Float32Array(SPARK_COUNT * 3);
     const baseColors = new Float32Array(SPARK_COUNT * 3);
     // Per spark: launch angle, landing reach, and phase. The golden ratio spreads them evenly.
@@ -185,7 +196,7 @@ function CuttingRigSparks() {
       seeds[i * 3] = i * 2.39996;
       seeds[i * 3 + 1] = 0.25 + 0.7 * ((i * 0.618034) % 1);
       seeds[i * 3 + 2] = (i * 0.754877) % 1;
-      positions[i * 3 + 1] = SPARK_TIP_Y;
+      positions[i * 3 + 1] = startY;
 
       const col = i % 3 === 0 ? cSpark : cGlow;
       baseColors[i * 3] = col.r;
@@ -198,25 +209,36 @@ function CuttingRigSparks() {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', positionAttr);
     g.setAttribute('color', colorAttr);
-    return { geom: g, positionAttr, colorAttr, seeds, baseColors };
+    return { geom: g, positionAttr, colorAttr, seeds, baseColors, startY };
   }, []);
 
-  useFrame(({ clock }) => {
-    // Read the clock without advancing it. R3F advances it once per frame.
-    const time = clock.elapsedTime;
+  const writeSparks = (time: number) => {
     for (let i = 0; i < SPARK_COUNT; i++) {
       const life = (time * SPARK_RATE + seeds[i * 3 + 2]!) % 1;
       const angle = seeds[i * 3]!;
       const reach = seeds[i * 3 + 1]! * life;
-      // Gravity: the spark falls faster as it travels.
-      const height = SPARK_TIP_Y - (SPARK_TIP_Y - SPARK_FLOOR_Y) * life * life;
+      // Each spark rises, then falls under gravity to the floor.
+      const height = startY + SPARK_ARC * 4 * life * (1 - life) - (startY - SPARK_FLOOR_Y) * life * life;
       positionAttr.setXYZ(i, Math.cos(angle) * reach, height, Math.sin(angle) * reach);
-      // Sparks cool as they fall.
-      const cool = 1 - 0.7 * life;
+      // Sparks fade to black as they cool. Additive blending makes black invisible.
+      const cool = 1 - life;
       colorAttr.setXYZ(i, baseColors[i * 3]! * cool, baseColors[i * 3 + 1]! * cool, baseColors[i * 3 + 2]! * cool);
     }
     positionAttr.needsUpdate = true;
     colorAttr.needsUpdate = true;
+  };
+
+  useFrame(({ clock }) => {
+    if (reducedMotion.current) {
+      // The frozen spray is written once. Further frames would write the same values.
+      if (frozen.current) return;
+      writeSparks(0);
+      frozen.current = true;
+      return;
+    }
+    frozen.current = false;
+    // Read the clock without advancing it. R3F advances it once per frame.
+    writeSparks(clock.elapsedTime);
   });
 
   return (
@@ -226,6 +248,7 @@ function CuttingRigSparks() {
         vertexColors
         toneMapped={false}
         transparent
+        blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
     </points>
@@ -256,56 +279,6 @@ function wallTrimGeometry(size: readonly [number, number, number]): THREE.Buffer
   wallTrimCache.set(key, merged);
   return merged;
 }
-const FLOODLIGHT_COLOR = '#ffe5a3';
-/** Lens color above 1.0 in the HDR target, so the bloom picks it up. */
-const FLOODLIGHT_LENS = new THREE.Color(FLOODLIGHT_COLOR).multiplyScalar(3);
-
-function createMastSteelGeometry(): THREE.BufferGeometry {
-  const geoms: THREE.BufferGeometry[] = [];
-  const mast = new THREE.CylinderGeometry(0.2, 0.35, 11, 8);
-  mast.translate(0, 5.5, 0);
-  geoms.push(mast);
-
-  const head = new THREE.BoxGeometry(2.4, 0.4, 0.6);
-  head.translate(0, MAST_LAMP_HEIGHT, 0);
-  geoms.push(head);
-
-  for (const lx of [-0.8, 0, 0.8]) {
-    const b1 = new THREE.BoxGeometry(0.55, 0.3, 0.2);
-    b1.rotateX(0.45);
-    b1.translate(lx, MAST_LAMP_HEIGHT + 0.15, 0.32);
-    geoms.push(b1);
-
-    const b2 = new THREE.BoxGeometry(0.55, 0.3, 0.2);
-    b2.rotateX(0.45);
-    b2.translate(lx, MAST_LAMP_HEIGHT - 0.15, 0.32);
-    geoms.push(b2);
-  }
-  const merged = BufferGeometryUtils.mergeGeometries(geoms);
-  geoms.forEach((g) => g.dispose());
-  return merged;
-}
-
-function createMastLensesGeometry(): THREE.BufferGeometry {
-  const geoms: THREE.BufferGeometry[] = [];
-  for (const lx of [-0.8, 0, 0.8]) {
-    const l1 = new THREE.PlaneGeometry(0.5, 0.24);
-    l1.rotateX(0.45);
-    l1.translate(lx, MAST_LAMP_HEIGHT + 0.15, 0.32 + 0.11);
-    geoms.push(l1);
-
-    const l2 = new THREE.PlaneGeometry(0.5, 0.24);
-    l2.rotateX(0.45);
-    l2.translate(lx, MAST_LAMP_HEIGHT - 0.15, 0.32 + 0.11);
-    geoms.push(l2);
-  }
-  const merged = BufferGeometryUtils.mergeGeometries(geoms);
-  geoms.forEach((g) => g.dispose());
-  return merged;
-}
-
-const MAST_STEEL_GEOM = createMastSteelGeometry();
-const MAST_LENSES_GEOM = createMastLensesGeometry();
 
 function GravityHopper({ position }: { position: [number, number, number] }) {
   return (
@@ -383,6 +356,21 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
   const lightRig = deriveLightRig(ART_STYLE);
 
   const dirLightRef = useRef<THREE.DirectionalLight>(null);
+  const skyLightRef = useRef<THREE.HemisphereLight>(null);
+  const lightLevel = useRef({ key: 1, sky: 1 });
+
+  // The yard dims as lamps break (Floodlights.tsx yardLightLevel). The change eases in over about half a second.
+  useFrame((_, delta) => {
+    const render = renderRef?.current;
+    const lit = render ? render.contraptions.lamps.length - brokenLampIds(render.contraptions).length : 4;
+    const target = yardLightLevel(lit);
+    const ease = 1 - Math.exp(-delta * 4);
+    const level = lightLevel.current;
+    level.key += (target.key - level.key) * ease;
+    level.sky += (target.sky - level.sky) * ease;
+    if (dirLightRef.current) dirLightRef.current.intensity = Math.PI * 1.05 * level.key;
+    if (skyLightRef.current) skyLightRef.current.intensity = Math.PI * 0.5 * level.sky;
+  });
   const lastPoseBuffer = useRef<Float32Array>(new Float32Array(64 * 3));
   const lastBodyCount = useRef(-1);
   const framesSinceUpdate = useRef(0);
@@ -468,6 +456,7 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
         color={new THREE.Color(...YARD_LIGHTING.ambientFloor)}
       />
       <hemisphereLight
+        ref={skyLightRef}
         args={[
           new THREE.Color(...YARD_LIGHTING.sky),
           new THREE.Color(...YARD_LIGHTING.ground),
@@ -534,31 +523,8 @@ export function YardShell({ renderRef }: { renderRef?: React.MutableRefObject<Ya
         </group>
       ))}
 
-      {/* High-mast floodlights at the four corners, turned to face the yard */}
-      {FLOODLIGHT_MASTS.map(([x, z]) => (
-        <group key={`mast-${x}-${z}`} position={[x, FLOOR_Y, z]} rotation={[0, mastYaw(x, z), 0]}>
-          <mesh position={[0, 0.6, 0]} castShadow receiveShadow raycast={noRaycast}>
-            <boxGeometry args={[2.0, 1.2, 2.0]} />
-            <Toon color={ART_STYLE.palette.concreteShade} />
-          </mesh>
-          <mesh geometry={MAST_STEEL_GEOM} castShadow raycast={noRaycast}>
-            <Toon color={ART_STYLE.palette.ink} />
-          </mesh>
-          <mesh geometry={MAST_LENSES_GEOM} raycast={noRaycast}>
-            <meshBasicMaterial color={FLOODLIGHT_LENS} toneMapped={false} />
-          </mesh>
-          <sprite position={[0, MAST_LAMP_HEIGHT, 0.9]} scale={[6, 6, 1]} raycast={noRaycast}>
-            <spriteMaterial
-              color={FLOODLIGHT_COLOR}
-              map={glowTexture()}
-              blending={THREE.AdditiveBlending}
-              depthWrite={false}
-              fog={false}
-              toneMapped={false}
-            />
-          </sprite>
-        </group>
-      ))}
+      {/* High-mast floodlights at the four corners. A hit can break each lens. */}
+      <FloodlightMasts renderRef={renderRef} />
 
       {/* ========================================================================= */}
       {/* CONCRETE RETAINING WALLS & SLAB JOINTS (D6 SPEC)                          */}

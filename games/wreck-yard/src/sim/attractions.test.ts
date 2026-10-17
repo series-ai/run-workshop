@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ELEVATOR, STORAGE, STORAGE_BOUNDS, type AttractionCommand, type ElevatorFloor } from './attractions';
 import { DT, FLOOR_Y, PLAYER_HEIGHT, PLAYER_MOVE_SPEED, PLAYER_RADIUS, TICK_RATE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
-import { physicsStateBodyById, removePhysicsBody, replacePhysicsPose, setPhysicsBodyLinearDamping, setPhysicsBodyVelocity } from './physics';
+import { makePhysicsBody, physicsStateBodyById, removePhysicsBody, replacePhysicsBody, replacePhysicsPose, setPhysicsBodyLinearDamping, setPhysicsBodyVelocity } from './physics';
 import { YardSim } from './sim';
 import { RETURNS_PAIR } from './returns';
 import { createCrateSpawns } from './storage';
@@ -54,7 +54,8 @@ describe('native storage attraction', () => {
     const bottom = spawns.slice(0, layerSize).map((spawn) => physicsStateBodyById(sim.state.world, spawn.body.id)!);
     const top = spawns.slice(-layerSize).map((spawn) => physicsStateBodyById(sim.state.world, spawn.body.id)!);
     sim.edit((physics) => {
-      for (const spawn of spawns.slice(0, STORAGE.columns * STORAGE.rows)) setPhysicsBodyVelocity(physics, spawn.body.id, [0, 0, 12 / TICK_RATE]);
+      // Below CRATE_BREAK.speed (8 m/s): a harder shove breaks FRAGILE crates (crateBreak.test.ts).
+      for (const spawn of spawns.slice(0, STORAGE.columns * STORAGE.rows)) setPhysicsBodyVelocity(physics, spawn.body.id, [0, 0, 6 / TICK_RATE]);
     });
     step(sim, 180);
     const moved = (before: typeof bottom[number], distance: number) => {
@@ -182,10 +183,17 @@ describe('native storage attraction', () => {
 
   it('removes cut storage fragments outside the bay on restack', () => {
     const sim = testSim();
-    sim.edit((physics) => replacePhysicsPose(physics, 'shipping-storage-399', { x: 5, y: FLOOR_Y + STORAGE.size / 2, z: 11, vx: 0, vy: 0, vz: 0 }));
+    const source = sim.state.bodies.find((body) => body.id === 'shipping-storage-399')!;
+    // Fix a thin crate in place to test fragment ownership with a local stroke.
+    const plate = { ...source, motion: 'fixed' as const, anchorFaces: ['-x'] as const, dims: { ...source.dims, z: 2 }, voxels: source.voxels.slice(0, source.dims.x * source.dims.y * 2) };
+    sim.edit((physics) => replacePhysicsBody(physics, makePhysicsBody(plate, {
+      position: [5, FLOOR_Y + STORAGE.size / 2, 11], rotation: [0, 0, 0, 1],
+      linearVelocity: [0, 0, 0], angularVelocity: [0, 0, 0],
+    })));
+    patchState(sim, (state) => ({ ...state, bodies: state.bodies.map((body) => body.id === source.id ? plate : body) }));
     step(sim, 10);
-    for (let i = 0; i <= 12; i++) {
-      const y = FLOOR_Y + STORAGE.size + 0.1 - i * (STORAGE.size + 0.2) / 12;
+    for (let i = 0; i <= 32; i++) {
+      const y = FLOOR_Y + STORAGE.size + 0.02 - i * (STORAGE.size + 0.04) / 32;
       step(sim, 4, { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay([5, y, 13], [0, 0, -1]) });
     }
     const fragments = sim.state.bodies.filter((body) => body.id.startsWith('shipping-storage-399-p'));
@@ -284,9 +292,10 @@ describe('native returns doors', () => {
     const sim = testSim();
     const id = 'shipping-returns-35';
     sim.edit((physics) => replacePhysicsPose(physics, id, { x: -2, y: FLOOR_Y + 1.6, z: 19, vx: 0, vy: 0, vz: 8 / TICK_RATE }));
+    const setupTeleports = physicsStateBodyById(sim.state.world, id)!.teleportCounter!;
     step(sim, 12);
     const body = physicsStateBodyById(sim.state.world, id)!;
-    expect(body.teleportCounter).toBe(1);
+    expect(body.teleportCounter).toBe(setupTeleports + 1);
     expect(body.x).toBeCloseTo(7, 1);
     expect(body.z).toBeLessThan(-15);
     expect(body.vz).toBeGreaterThan(0);
@@ -296,6 +305,7 @@ describe('native returns doors', () => {
     const sim = testSim();
     patchPlayer(sim, { x: -2, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: 19.5, vx: 0, vy: 0, vz: 0, grounded: true });
     sim.edit((physics) => replacePhysicsPose(physics, 'shipping-returns-35', { x: -3.2, y: FLOOR_Y + 1.6, z: 19.5, vx: 0, vy: 0, vz: 8 / TICK_RATE }));
+    const setupTeleports = physicsStateBodyById(sim.state.world, 'shipping-returns-35')!.teleportCounter!;
     step(sim);
     expect(sim.state.world.portalStraddlers?.some((entry) => entry.bodyId === 'shipping-returns-35')).toBe(true);
     const input = { ...NEUTRAL_INPUT, moveZ: -1 };
@@ -304,7 +314,7 @@ describe('native returns doors', () => {
       const bytes = sim.encode(saved);
       step(sim, 15, input);
       expect(sim.state.players[0]!.portalTeleports).toBe(1);
-      expect(physicsStateBodyById(sim.state.world, 'shipping-returns-35')!.teleportCounter).toBe(1);
+      expect(physicsStateBodyById(sim.state.world, 'shipping-returns-35')!.teleportCounter).toBe(setupTeleports + 1);
       const expected = liveBytes(sim);
       sim.restore(saved);
       step(sim, 15, input);
@@ -324,10 +334,11 @@ describe('native returns doors', () => {
     step(sim, 1, { ...NEUTRAL_INPUT, use: true });
     expect(sim.state.players[0]!.ridingVehicle).toBe(true);
     sim.edit((physics) => setPhysicsBodyVelocity(physics, 'vehicle-chassis', [0, 0, -8 / TICK_RATE]));
+    const setupTeleports = physicsStateBodyById(sim.state.world, 'vehicle-chassis')!.teleportCounter!;
     step(sim, 25, { ...NEUTRAL_INPUT, moveZ: 1 });
     const chassis = physicsStateBodyById(sim.state.world, 'vehicle-chassis')!;
     const rider = sim.state.players[0]!;
-    expect(chassis.teleportCounter).toBe(1);
+    expect(chassis.teleportCounter).toBe(setupTeleports + 1);
     expect(rider.portalTeleports).toBe(1);
     expect(rider.ridingVehicle).toBe(true);
     expect(rider.x).toBe(chassis.x);

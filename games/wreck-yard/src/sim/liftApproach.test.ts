@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { ELEVATOR, elevatorPanelWithinReach } from './attractions';
+import { ELEVATOR, STORAGE, elevatorPanelWithinReach } from './attractions';
 import { ARENA_EXTENT, FLOOR_Y, PLAYER_HEIGHT, PLAYER_RADIUS, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT } from './input';
 import { STEP_HEIGHT } from './movement';
 import type { Quat } from './math';
 import { yardProps } from './props';
 import { PLAYER_SPAWN_POINTS } from './state';
+import { createCrateSpawns } from './storage';
 import { SHELL_BOXES, shellBoxBounds } from './shell';
 import { patchPlayer, testSim } from './testSim';
 
@@ -37,6 +38,12 @@ function solids(): Box[] {
   for (const prop of yardProps()) {
     const [hx, hy, hz] = worldHalfSize(prop.preset.dims, prop.rotation);
     boxes.push({ minX: prop.position[0] - hx, maxX: prop.position[0] + hx, minY: prop.position[1] - hy, maxY: prop.position[1] + hy, minZ: prop.position[2] - hz, maxZ: prop.position[2] + hz });
+  }
+  // The storage crates start in the stack beside the lift. Their footprints count as solids.
+  const half = STORAGE.size / 2;
+  for (const spawn of createCrateSpawns('storage')) {
+    const [x, y, z] = spawn.position;
+    boxes.push({ minX: x - half, maxX: x + half, minY: y - half, maxY: y + half, minZ: z - half, maxZ: z + half });
   }
   return boxes.filter((box) => box.maxY > FLOOR_Y + STEP_HEIGHT && box.minY < FLOOR_Y + PLAYER_HEIGHT);
 }

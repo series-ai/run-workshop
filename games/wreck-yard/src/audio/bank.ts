@@ -11,6 +11,15 @@ export const AUDIO_BANK = {
   metal: { file: 'metal-impact', loop: false, gain: 0.65 },
   wood: { file: 'wood-impact', loop: false, gain: 0.65 },
   concrete: { file: 'concrete-impact', loop: false, gain: 0.6 },
+  rubber: { file: 'rubber-impact', loop: false, gain: 0.55 },
+  glass: { file: 'glass-impact', loop: false, gain: 0.4 },
+  /** A floodlight is 11 m up, so its sounds carry farther than an impact. */
+  glassBreak: { file: 'glass-break', loop: false, gain: 0.65, falloff: 18 },
+  lampFizz: { file: 'lamp-fizz', loop: false, gain: 0.25, falloff: 18 },
+  crateBreak: { file: 'crate-break', loop: false, gain: 0.9 },
+  /** Lights out and relamp play at the listener: the whole yard hears them. */
+  lightsOut: { file: 'lights-out', loop: false, gain: 0.65 },
+  relamp: { file: 'relamp', loop: false, gain: 0.75 },
   pulse: { file: 'gravity-pulse', loop: false, gain: 0.6 },
   explosion: { file: 'explosion', loop: false, gain: 0.8 },
   splash: { file: 'water-splash', loop: false, gain: 0.55 },
@@ -31,6 +40,13 @@ export function parseAudioSettings(raw: unknown): AudioSettings {
   const level = (item: unknown, fallback: number) => typeof item === 'number' && Number.isFinite(item) ? Math.max(0, Math.min(1, item)) : fallback;
   // Keep the saved level when the Music control becomes Ambience.
   return { muted: value.muted === true, ambience: level(value.ambience ?? value.music, DEFAULT_AUDIO.ambience), effects: level(value.effects, DEFAULT_AUDIO.effects) };
+}
+
+/** Distance (m) at which a sound falls to half its level. */
+export function soundFalloff(sound: SoundId): number {
+  const entry = AUDIO_BANK[sound];
+  if ('falloff' in entry) return entry.falloff;
+  return isAmbienceSound(sound) ? 30 : 6;
 }
 
 export function isAmbienceSound(sound: SoundId): boolean {

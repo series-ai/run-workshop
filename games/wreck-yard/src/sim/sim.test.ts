@@ -20,7 +20,7 @@ function scriptedInputs(): readonly YardInput[] {
   const inputs: YardInput[] = [];
   for (let tick = 0; tick < 150; tick += 1) {
     if (tick < 20) inputs.push(NEUTRAL_INPUT);
-    else if (tick < 80) inputs.push({ ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: tick % 20 !== 19, ...aim([gantry.x + 0.2 - (tick % 20) * 0.03, gantry.y + 0.2, gantry.z], 2) });
+    else if (tick < 80) inputs.push({ ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: tick % 20 !== 19, ...aim([gantry.x - 0.72, gantry.y + 0.36, gantry.z], 2) });
     else if (tick < 130) inputs.push({ ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...aim([ballast.x + Math.sin(tick / 12), ballast.y + 1.5, ballast.z], 6) });
     else inputs.push(NEUTRAL_INPUT);
   }

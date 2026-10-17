@@ -2,7 +2,7 @@ import { ELEVATOR } from './attractions';
 import { physicsBodyById } from './physics';
 import { returnsCrossing } from './returns';
 import { stepDeterministicKcc3D } from '@series-inc/rundot-syncplay/browser';
-import { meters } from '@series-inc/rundot-syncplay/physics/3d';
+import { frameGravity, meters } from '@series-inc/rundot-syncplay/physics/3d';
 import { ARENA_EXTENT, DT, FLOOR_Y, PLAYER_HEIGHT, PLAYER_RADIUS } from './constants';
 import type { Vec3 } from './math';
 import type { OpenYardPhysicsWorld } from './physics';
@@ -125,7 +125,7 @@ function moveWithKcc(physics: OpenYardPhysicsWorld, player: PlayerPose, velocity
     groundOnStaticBodies: true,
     standOnDynamicBodies: true,
     // Gravity and jetpack acceleration already ran in the game step.
-    processors: [{ id: 'yard-gravity', order: 0, process: (body) => ({ ...body, vy: body.vy + 1 }) }],
+    gravityPerFrame: frameGravity(0),
   });
   return {
     x: result.body.x, y: result.body.y - HALF_HEIGHT, z: result.body.z,

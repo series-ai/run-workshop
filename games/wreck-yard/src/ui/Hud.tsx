@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './Hud.css';
 import type { MatchRequest, MatchSnapshot } from '../game/match';
 import { TOOL_KEY_LABELS, type UiTool } from '../render/keyBindings';
@@ -77,6 +77,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
   gate: PlayGateApi;
 }) {
   const [code, setCode] = useState('');
+  const pausePointerHandled = useRef(false);
   const render = snapshot.render;
   const live = snapshot.status === 'live';
   const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
@@ -117,7 +118,8 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
             <div className="yard-tally" aria-live="polite">
               <span><b>{render?.stats.torchCuts ?? 0}</b>Cuts</span>
               <span><b>{render?.stats.throws ?? 0}</b>Throws</span>
-              <span><b>{render?.stats.fractures ?? 0}</b>Breaks</span>
+              {/* A broken floodlight lens counts as a break. */}
+              <span><b>{(render?.stats.fractures ?? 0) + (render?.stats.lampsSmashed ?? 0)}</b>Breaks</span>
               <span><b>{render?.stats.explosions ?? 0}</b>Booms</span>
             </div>
           ) : null}
@@ -157,7 +159,18 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
               <span className="yard-switch__label">Graphics</span>
               <span className="yard-switch__track"><span className={quality === 'high' ? 'is-on' : ''}>Hi</span><span className={quality === 'low' ? 'is-on' : ''}>Lo</span></span>
             </button> : null}
-            {touchControls ? <button type="button" className="yard-button yard-touch-pause" aria-label="Pause" onClick={gate.pause}><span aria-hidden="true" /></button>
+            {touchControls ? <button type="button" className="yard-button yard-touch-pause" aria-label="Pause"
+              onPointerDown={(event) => {
+                pausePointerHandled.current = event.pointerType === 'touch' || event.pointerType === 'pen';
+                if (!pausePointerHandled.current) return;
+                event.preventDefault();
+                gate.pause();
+              }}
+              onClick={(event) => {
+                const handled = pausePointerHandled.current;
+                pausePointerHandled.current = false;
+                if (event.detail === 0 || !handled) gate.pause();
+              }}><span aria-hidden="true" /></button>
               : <button type="button" className="yard-button yard-button--danger" onClick={onStop}>Leave Match</button>}
           </div>
         ) : null}
