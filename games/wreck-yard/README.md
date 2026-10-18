@@ -38,6 +38,8 @@ to that room. The game does not offer offline play. A room server must be
 available. Server failures offer **Retry** and **New room**.
 
 `rundot/realtime.config.json` declares the four-seat deterministic room type.
+The multiplayer build plugin copies it to `dist/rooms.config.json`. RUN needs
+that build artifact to start hosted rooms. Keep it in each deployment.
 The normal playground can upload server configuration when it starts. The
 local test server below uses the SDK WebSocket authority without that upload.
 
@@ -82,6 +84,21 @@ npm run deploy
 The deploy script includes `--orientation Landscape`. It does not request
 public visibility. To check the built files without an upload, run
 `rundot game preflight --phase dist --dist-dir ./dist`.
+
+To check the deployed multiplayer flow, use two dedicated Chrome test profiles
+that are signed in to different RUN accounts. Close those profiles first.
+Set `AUDIT_URL` to the private web player URL. It must keep `tag=private` and
+the share key. The short link can redirect to the public catalog on desktop.
+
+```bash
+AUDIT_PROFILE_A=/path/to/test-player-a AUDIT_PROFILE_B=/path/to/test-player-b \
+  AUDIT_URL="$AUDIT_URL" AUDIT_CHANNEL=chrome \
+  node scripts/verify-hosted-multiplayer.mjs
+```
+
+The check covers room creation, copy and join, remote movement, leaving,
+rejoining, invalid-code recovery, and room switching. It records access blocks
+separately from game failures. Local artifact checks do not prove hosted play.
 
 See the [Rundot init docs](https://github.com/series-ai/venus-sdk-docs/blob/main/rundot-developer-platform/initializing-your-game.md)
 and [deploy docs](https://github.com/series-ai/venus-sdk-docs/blob/main/rundot-developer-platform/deploying-your-game.md).
