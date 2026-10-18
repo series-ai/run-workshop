@@ -135,6 +135,21 @@ Do not hide the avatars alone: that would leave invisible simulation blockers.
 Verification
 ------------
 
+The 1.8.1 local built-artifact check found an intentional-leave delay. The
+client left at once. The other client's crew count changed from 2/4 to 1/4
+after 30.6 seconds. Its simulation continued during that time. This result
+does not prove the timing of a hosted room.
+
+Game SDK 5.28's public ServerRoom.leave() closes the socket. Syncplay's
+transport.close() calls that method. The room server treats socket closure
+as a disconnect and keeps membership during reconnect grace. No supported
+public operation removes membership at once. The deprecated RoomsV1 API
+belongs to another room system and must not be used for this purpose.
+
+The SDK needs an explicit intentional-leave message. That message must remove
+membership before socket closure. Unexpected disconnects must retain their
+reconnect grace. No SDK or server policy changed during this check.
+
 From games/wreck-yard:
 
   SYNCPLAY_SOURCE_OVERRIDE= npx vitest run src/game/crewSeats.test.ts --maxWorkers=1
