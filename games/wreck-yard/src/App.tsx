@@ -46,7 +46,11 @@ export default function App({ capture }: { capture: CaptureSurface }) {
     setQualityIsAutomatic(false);
     setQuality('low');
   };
-  const [lastRequest, setLastRequest] = useState<RoomRequest>({ kind: 'create' });
+  const initialRequest = useMemo<RoomRequest>(() => {
+    const code = new URLSearchParams(window.location.search).get('room')?.replace(/\s/g, '').toUpperCase();
+    return code ? { kind: 'join', code } : { kind: 'create' };
+  }, []);
+  const [lastRequest, setLastRequest] = useState<RoomRequest>(initialRequest);
 
   // One port for the app's life: the host SDK, the browser, none, or the test fake.
   const attractionInput = useRef<AttractionRequest>({ command: 0, sequence: 0 });
@@ -77,14 +81,14 @@ export default function App({ capture }: { capture: CaptureSurface }) {
     (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__ = controller;
     const unsubscribe = controller.subscribe(() => setSnapshot(controller.snapshot()));
     // StrictMode cancels its probe before the initial room request starts.
-    queueMicrotask(() => { if (!cancelled) void controller.start({ kind: 'create' }); });
+    queueMicrotask(() => { if (!cancelled) void controller.start(initialRequest); });
     return () => {
       cancelled = true;
       unsubscribe();
       controller.stop();
       delete (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__;
     };
-  }, [controller]);
+  }, [controller, initialRequest]);
 
   useEffect(() => {
     if (snapshot.status !== 'live') return;

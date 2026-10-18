@@ -32,6 +32,9 @@ npm run dev
 ```
 
 Open the printed URL. The app creates a multiplayer room on launch.
+To join at startup, open a second tab with `?room=CODE`. Use the first tab's
+room code. The game removes spaces and converts the code to uppercase.
+An invalid code shows the existing connection error and recovery controls.
 Open **Pause** to see **Your room code**. Use **Copy code** to share it.
 Paste another code into **Join another room**, then select **Join** to move
 to that room. The game does not offer offline play. A room server must be
@@ -40,10 +43,28 @@ available. Server failures offer **Retry** and **New room**.
 `rundot/realtime.config.json` declares the four-seat deterministic room type.
 The multiplayer build plugin copies it to `dist/rooms.config.json`. RUN needs
 that build artifact to start hosted rooms. Keep it in each deployment.
-The normal playground can upload server configuration when it starts. The
-local test server below uses the SDK WebSocket authority without that upload.
+Ordinary `npm run dev` uses the local SDK WebSocket authority on port 4399.
+Set `WRECK_YARD_ROOM_PORT` to use another room port. The local path does not
+start the remote playground or upload server configuration.
 
-To run that local server:
+`npm run dev -- --mode playground` selects the remote playground. That mode
+can upload its server configuration. The SDK `?rundotPlayer=player2` option
+selects a playground identity. Plain local play uses a separate identity per
+tab. Use `?room=CODE` to join a room in either mode.
+
+To test the normal dev path with two local players in installed Chrome:
+
+```bash
+npx playwright test --config playwright.dev.config.ts
+```
+
+This check uses ports 4497 and 4498. Set `PLAYWRIGHT_CHANNEL=chromium` to
+compare the bundled browser. It tests URL joining, movement, interpolation,
+leaving, rejoining, retry, and room switching with the real SDK authority.
+See [the local verification record](docs/local-multiplayer-verification.md)
+for measured rates and open failures.
+
+The standard browser tests use this separate local server entry point:
 
 ```bash
 node scripts/serve-local-multiplayer.mjs
@@ -216,7 +237,7 @@ check. It saves desktop and phone-width images in `test-results/player-robots/`.
 
 ## Commands
 
-- `npm run dev` — dev server with the RUN sandbox
+- `npm run dev` — game and local multiplayer authority
 - `npm run build` — identity check, typecheck, production build
 - `npm test` — unit, codec, and determinism tests
 - `npm run test:e2e` — Playwright smoke test against the preview build
@@ -246,6 +267,11 @@ check. It saves desktop and phone-width images in `test-results/player-robots/`.
 - Voxel operations come from [tools/voxel-kit](../../tools/voxel-kit/).
 
 ## Units
+
+Syncplay and the room authority run at 30 Hz. Rendering uses the display
+animation loop and interpolates body, player, and wheel poses between ticks.
+The client simulation and rendering share the main thread. A slow simulation
+tick can still delay drawing.
 
 The syncplay solver integrates per tick. Positions are meters, velocities are
 meters per tick, and gravity is meters per tick². `src/sim/constants.ts` holds
