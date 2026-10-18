@@ -92,7 +92,7 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
   }, [controller, state, match.status]);
 
   const engage = useCallback(async () => {
-    if (current.current.look === 'drag') {
+    if (current.current.look === 'drag' || current.current.orbit) {
       dispatch({ type: 'resume' });
       return;
     }

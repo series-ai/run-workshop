@@ -95,7 +95,7 @@ export function initialGate(caps: SurfaceCaps, surface: SurfaceState, preferDrag
     notice: null,
     hasPlayed: false,
     orbit: false,
-    // The app starts a solo match on load; the menu is up until it is live.
+    // The app creates a room on load. Show the menu until the room is live.
     cursorNeeded: true,
     matchStarting: false,
     requestId: 0,
@@ -251,15 +251,15 @@ export function reduceGate(state: GateState, event: GateEvent): Step {
       return { state: { ...state, look: 'capture', view: 'paused', hasPlayed: true, notice: null }, effects };
     }
     case 'pause': {
-      if (!inputLive(state) || state.view !== 'playing') return { state, effects };
+      if (!inputLive(state)) return { state, effects };
       effects.push('clear-input');
       if (state.surface.pointerLocked) effects.push('release-pointer');
       return { state: { ...state, view: 'paused', hasPlayed: true }, effects };
     }
     case 'resume': {
-      if (state.look !== 'drag' || state.view !== 'paused' || cursorNeededNow(state)) return { state, effects };
+      if ((state.look !== 'drag' && !state.orbit) || state.view !== 'paused' || cursorNeededNow(state)) return { state, effects };
       effects.push('clear-input');
-      return { state: { ...state, view: 'playing' }, effects };
+      return { state: { ...state, view: state.orbit && state.look === 'capture' ? 'free-cursor' : 'playing' }, effects };
     }
     default: {
       const unreachable: never = event;

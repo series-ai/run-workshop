@@ -1,6 +1,7 @@
 import './Hud.css';
 import { PerformanceControls } from './PerformanceControls';
 import { AudioControls } from './AudioControls';
+import { RoomControls } from './RoomControls';
 import type { YardAudioControl } from '../audio/useYardAudio';
 import { canExitFullscreen, cursorNeededNow, type GateNotice, type GateState } from '../game/playGate';
 import type { RenderQuality } from '../render/renderQuality';
@@ -48,18 +49,19 @@ function plateFor(state: GateState): 'start' | 'paused' | 'chip' | null {
  * The start plate and the pause menu (spec: .plans/wreck-yard-fullscreen-play-gate.html).
  * It draws nothing while the match menu or an error modal needs the cursor.
  */
-export function PlayGate({ audio, gate, inRoom, quality, onQuality, onLeave, touchControls = false }: {
+export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, onLeave, touchControls = false }: {
   audio?: YardAudioControl;
   touchControls?: boolean;
   gate: PlayGateApi;
-  inRoom: boolean;
+  roomCode: string | null;
+  onJoin: (code: string) => void;
   quality: RenderQuality;
   onQuality: (quality: RenderQuality) => void;
   onLeave: () => void;
 }) {
   const { state } = gate;
   const plate = plateFor(state);
-  const busy = state.view === 'engaging';
+  const busy = state.view === 'engaging' || state.matchStarting;
   if (plate === null) return null;
 
   if (plate === 'chip') {
@@ -98,12 +100,11 @@ export function PlayGate({ audio, gate, inRoom, quality, onQuality, onLeave, tou
       <section className="yard-plate yard-plate--gate yard-plate--paused" aria-label="Paused">
         <div className="yard-gate__stripe" aria-hidden="true" />
         <h1 className="yard-gate__title yard-gate__title--small">Paused</h1>
-        {inRoom
-          ? <div className="yard-notice yard-notice--info">The match continues. You stand still until you resume.</div>
-          : <div className="yard-gate__small">Solo is paused</div>}
+        <div className="yard-gate__small">The room continues while you pause.</div>
+        <RoomControls key={roomCode} roomCode={roomCode} disabled={busy} onJoin={onJoin} />
         <NoticeLine notice={state.notice} action="Resume" />
         <button type="button" className="yard-button yard-button--primary yard-button--big" disabled={busy} onClick={() => { void gate.engage(); }}>
-          {busy ? <><span className="yard-spinner" aria-hidden="true" />Capturing…</> : fullscreen || state.look === 'drag' ? 'Resume' : 'Resume fullscreen'}
+            {busy ? <><span className="yard-spinner" aria-hidden="true" />{state.matchStarting ? 'Connecting…' : 'Capturing…'}</> : fullscreen || state.look === 'drag' || state.orbit ? 'Resume' : 'Resume fullscreen'}
         </button>
         {showDragFallback(state.notice) ? (
           <button type="button" className="yard-button" onClick={gate.chooseDrag}>Play in a window (drag to look)</button>

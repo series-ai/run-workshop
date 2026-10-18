@@ -264,6 +264,16 @@
 .yard-input::placeholder { color: #5f6a74; }
 .yard-input:focus { outline: 2px solid var(--yard-mustard); outline-offset: 1px; }
 
+.yard-room-controls { display:grid; gap:14px; min-width:0; text-align:left; }
+.yard-room-controls__group { display:grid; gap:6px; margin:0; min-width:0; }
+.yard-room-controls label { font:600 14px/1.3 var(--yard-text); color:var(--yard-bone); }
+.yard-room-controls small { font:400 12px/1.4 var(--yard-text); color:var(--yard-bone-dim); }
+.yard-room-controls .yard-gate__row > input { flex:1 1 0; width:0; min-height:44px; }
+.yard-room-controls .yard-gate__row > button { flex:0 0 auto; min-height:44px; }
+.yard-room-code { color:var(--yard-mustard); }
+.yard-gate { overflow:auto; }
+.yard-plate--gate { margin:auto; flex-shrink:0; }
+
 /* --- Center: reticle and prompt ------------------------------------------ */
 .yard-center {
   position: absolute;
@@ -500,7 +510,7 @@
   .yard-plate--paused > * { grid-column:1; }
   .yard-plate--paused .yard-gate__title { font-size:42px; }
   .yard-plate--paused .yard-gate__small { margin:0; }
-  .yard-plate--paused > .yard-audio { grid-column:2; grid-row:1 / span 5; align-self:center; padding:8px 12px; gap:4px; }
+  .yard-plate--paused > .yard-audio { grid-column:2; grid-row:1 / span 5; align-self:start; padding:8px 12px; gap:4px; }
   .yard-plate--paused .yard-audio__mute,.yard-plate--paused .yard-audio__level input { min-height:44px; }
   .yard-plate--paused .yard-gate__hint { grid-column:1 / -1; margin:0; justify-content:center; }
 }

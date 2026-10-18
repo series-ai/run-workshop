@@ -2,7 +2,7 @@ import type { AttractionRequest } from './sim/attractions';
 import { AttractionControls } from './ui/AttractionControls';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { selectCapturePort, type HostSystemLike } from './game/capturePort';
-import { MatchController, type MatchRequest, type MatchSnapshot } from './game/match';
+import { MatchController, type RoomRequest, type MatchSnapshot } from './game/match';
 import { createRoomTransport, joinRoomTransport, quickMatchTransport } from './net/rooms';
 import { YardScene } from './render/YardScene';
 import type { UiTool } from './render/keyBindings';
@@ -53,7 +53,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
     setQualityIsAutomatic(false);
     setQuality('low');
   };
-  const [lastRequest, setLastRequest] = useState<MatchRequest>({ kind: 'solo' });
+  const [lastRequest, setLastRequest] = useState<RoomRequest>({ kind: 'create' });
 
   // One port for the app's life: the host SDK, the browser, none, or the test fake.
   const attractionInput = useRef<AttractionRequest>({ command: 0, sequence: 0 });
@@ -69,7 +69,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
   useEffect(() => {
     (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__ = controller;
     const unsubscribe = controller.subscribe(() => setSnapshot(controller.snapshot()));
-    void controller.start({ kind: 'solo' });
+    void controller.start({ kind: 'create' });
     return () => {
       unsubscribe();
       controller.stop();
@@ -84,15 +84,11 @@ export default function App({ capture }: { capture: CaptureSurface }) {
   }, [controller, snapshot.status]);
 
   /** Every match button: capture in this click, then start the match. */
-  const start = (request: MatchRequest) => {
+  const start = (request: RoomRequest) => {
     setLastRequest(request);
     void gate.engageForMatch(() => {
       void controller.start(request);
     });
-  };
-
-  const playSolo = () => {
-    start({ kind: 'solo' });
   };
 
   const retry = () => {
@@ -124,7 +120,6 @@ export default function App({ capture }: { capture: CaptureSurface }) {
         quality={quality}
         onQuality={chooseQuality}
         onStart={start}
-        onStop={() => controller.stop()}
         onRetry={retry}
         gate={gate}
         touchControls={touchControls}
@@ -134,7 +129,8 @@ export default function App({ capture }: { capture: CaptureSurface }) {
       <PlayGate
         audio={audio}
         gate={gate}
-        inRoom={lastRequest.kind !== 'solo'}
+        roomCode={snapshot.roomCode}
+        onJoin={(code) => start({ kind: 'join', code })}
         quality={quality}
         onQuality={chooseQuality}
         onLeave={() => controller.stop()}
@@ -143,7 +139,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
       {snapshot.status === 'error' && snapshot.errorDetails ? (
         <ErrorModal
           details={snapshot.errorDetails}
-          onPlaySolo={playSolo}
+          onNewRoom={() => start({ kind: 'create' })}
           onRetry={retry}
           onDismiss={dismissError}
         />

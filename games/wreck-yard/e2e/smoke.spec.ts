@@ -1,69 +1,70 @@
 import { expect, test } from '@playwright/test';
 
-test('solo yard loads its bodies with no page errors', async ({ page }) => {
+test('a multiplayer yard starts with a room code and no page errors', async ({ page }) => {
   const pageErrors: string[] = [];
-  page.on('pageerror', (error) => pageErrors.push(String(error)));
-
-  await page.goto('/?capture=off', { waitUntil: 'networkidle' });
-  await expect(page.getByText('Wreck Yard')).toBeVisible();
+  page.on('pageerror', error => pageErrors.push(String(error)));
+  await page.goto('/?capture=off&quality=low');
+  await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 45_000 });
   await expect(page.locator('canvas')).toBeVisible();
-  await expect.poll(
-    () => page.evaluate(() => (window as unknown as { __WRECK_YARD_CONTROLLER__?: { getRender(): { bodies: unknown[] } | null } }).__WRECK_YARD_CONTROLLER__?.getRender()?.bodies.length ?? 0),
-    { timeout: 15_000 },
-  ).toBeGreaterThan(5);
-  await expect(page.locator('[data-match-status="live"]')).toBeVisible();
-
+  await expect(page.locator('.yard-crew')).toHaveText('Crew 1/4');
+  await expect(page.getByRole('button', { name: /solo/i })).toHaveCount(0);
   await page.getByRole('button', { name: /Plasma Torch/i }).click();
-  const box = await page.locator('canvas').boundingBox();
-  expect(box).not.toBeNull();
-  await page.mouse.move(box!.x + box!.width * 0.5, box!.y + box!.height * 0.32);
-  await page.mouse.down();
-  await page.mouse.move(box!.x + box!.width * 0.47, box!.y + box!.height * 0.34, { steps: 6 });
-  await page.waitForTimeout(400);
-  await page.mouse.up();
-
-  await page.screenshot({ path: 'test-results/wreck-yard-smoke.png' });
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const code = page.getByRole('textbox', { name: 'Your room code' });
+  await expect(code).toHaveValue(/^[A-Z0-9]{6}$/);
+  const ownCode = await code.inputValue();
+  await expect(page.getByRole('button', { name: 'Join', exact: true })).toBeDisabled();
+  await page.getByRole('textbox', { name: 'Join another room' }).fill(ownCode.toLowerCase());
+  await expect(page.getByRole('button', { name: 'Join', exact: true })).toBeDisabled();
+  await page.screenshot({ path: 'test-results/multiplayer-pause.png' });
+  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(page.locator('[aria-label="Paused"]')).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
 
-test('surfaces server error modal with helpful details and fallback to solo mode', async ({ page }) => {
-  await page.goto('/?capture=off', { waitUntil: 'networkidle' });
-  await expect(page.getByText('Wreck Yard')).toBeVisible();
-
-  // Leave active solo session
-  await page.getByRole('button', { name: /Leave/i }).click();
-  await expect(page.getByRole('button', { name: /Play solo/i })).toBeVisible();
-
-  // Inject runner start aborted error into join transport
-  await page.evaluate(() => {
-    const c = (window as unknown as { __WRECK_YARD_CONTROLLER__?: { deps: { joinRoomTransport: () => Promise<never> } } }).__WRECK_YARD_CONTROLLER__;
-    if (c) {
-      c.deps.joinRoomTransport = () => {
-        const err = new Error('Runner start was aborted. Start the runner again when the required resources are available.');
-        Object.assign(err, { code: 'runner.start-aborted' });
-        return Promise.reject(err);
-      };
-    }
-  });
-
-  // Enter a room code and attempt to join
-  const codeInput = page.getByRole('textbox', { name: 'Room code' });
-  await codeInput.fill('FAIL');
-  await page.getByRole('button', { name: 'Join' }).click();
-
-  // Modal alert dialog should appear with helpful context
+test('a failed room join offers network recovery without offline play', async ({ page }) => {
+  await page.goto('/?capture=off&quality=low');
+  await page.getByRole('button', { name: 'Pause', exact: true }).waitFor({ timeout: 45_000 });
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Join another room' }).fill('INVALID');
+  await page.getByRole('button', { name: 'Join', exact: true }).click();
   const modal = page.getByRole('alertdialog');
-  await expect(modal).toBeVisible({ timeout: 10_000 });
-  await expect(modal).toContainText('Multiplayer Server Unavailable');
-  await expect(modal).toContainText('Technical Details');
+  await expect(modal).toBeVisible({ timeout: 30_000 });
+  await expect(modal.getByRole('button', { name: /solo/i })).toHaveCount(0);
+  await expect(modal.getByRole('button', { name: 'Retry', exact: true })).toBeVisible();
+  await modal.getByRole('button', { name: 'New room', exact: true }).click();
+  await expect(modal).toHaveCount(0);
+  await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 45_000 });
+  await expect(page.locator('.yard-crew')).toHaveText('Crew 1/4');
+});
 
-  // Verify technical details toggle
-  await modal.getByText('Technical Details').click();
-  await expect(modal.getByText('Runner start was aborted')).toBeVisible();
-  await expect(modal.getByRole('button', { name: 'Copy error' })).toBeVisible();
-
-  // Verify Play Solo (Offline) button in modal restores session
-  await modal.getByRole('button', { name: /Play Solo/i }).click();
-  await expect(modal).not.toBeVisible();
-  await expect(page.locator('[data-match-status="live"]')).toBeVisible();
+test('pause shares a code and a second player can paste it to join', async ({ page, context }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(String(error)));
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/?capture=off&quality=low');
+  await page.getByRole('button', { name: 'Pause', exact: true }).waitFor({ timeout: 45_000 });
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const roomCode = await page.getByRole('textbox', { name: 'Your room code' }).inputValue();
+  await page.getByRole('button', { name: 'Copy code', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(roomCode);
+  const guest = await context.newPage();
+  guest.on('pageerror', error => pageErrors.push(String(error)));
+  try {
+    await guest.goto('/?capture=off&quality=low');
+    await guest.getByRole('button', { name: 'Pause', exact: true }).waitFor({ timeout: 45_000 });
+    await guest.getByRole('button', { name: 'Pause', exact: true }).click();
+    const input = guest.getByRole('textbox', { name: 'Join another room' });
+    await input.focus();
+    await input.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
+    await expect(input).toHaveValue(roomCode);
+    await guest.getByRole('button', { name: 'Join', exact: true }).click();
+    await expect(guest.locator('[data-match-status="live"]')).toBeVisible({ timeout: 45_000 });
+    await expect(guest.locator('.yard-tape')).toHaveText(roomCode);
+    await expect(guest.locator('.yard-crew')).toHaveText('Crew 2/4', { timeout: 30_000 });
+    await expect(page.locator('.yard-crew')).toHaveText('Crew 2/4', { timeout: 30_000 });
+    await guest.screenshot({ path: 'test-results/multiplayer-joined.png' });
+    expect(pageErrors).toEqual([]);
+  } finally { await guest.close(); }
 });

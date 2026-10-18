@@ -29,6 +29,8 @@ export type MatchRequest =
   | { readonly kind: "create" }
   | { readonly kind: "join"; readonly code: string };
 
+export type RoomRequest = Exclude<MatchRequest, { readonly kind: "solo" }>;
+
 export type MatchStatus = "idle" | "connecting" | "live" | "error";
 
 export interface MatchErrorDetails {
@@ -58,7 +60,7 @@ export interface CrewPresence {
 
 function crewPresence(snapshot: SyncplayRunnerSnapshot<YardRender>): CrewPresence {
   if (snapshot.status === "offline") return { occupied: 1, capacity: 1 };
-  const capacity = snapshot.occupancy?.maxPlayers ?? MAX_PLAYERS;
+  const capacity = snapshot.presence?.length || snapshot.occupancy?.maxPlayers || MAX_PLAYERS;
   if (snapshot.status === "stopped" || snapshot.status === "error") {
     return { occupied: null, capacity };
   }
@@ -99,6 +101,7 @@ export function formatMatchError(
     technical.includes("WebSocket") ||
     technical.includes("network") ||
     technical.includes("room rejected") ||
+    technical.includes("server bundle") ||
     technical.includes("Failed to fetch") ||
     technical.includes("Connection lost") ||
     technical.includes("SYNCPLAY_TRANSPORT");
@@ -109,7 +112,7 @@ export function formatMatchError(
       details: {
         title: "Multiplayer Server Unavailable",
         message:
-          "The multiplayer session could not start because the realtime server was unreachable or the connection was interrupted. You can play offline in Solo mode with full physics, buoyancy, and cutting, or retry connecting.",
+          "The room could not start because the server was unavailable or the connection stopped. Check the connection. Then retry or create a new room.",
         technical,
         code: code ?? "runner.start-aborted",
         isServerError: true,
@@ -306,7 +309,10 @@ export class MatchController {
           : request.kind === "create"
             ? await this.deps.createRoomTransport()
             : await this.deps.joinRoomTransport(request.code);
-      if (this.startGeneration !== generation) return;
+      if (this.startGeneration !== generation) {
+        transport.close();
+        return;
+      }
       this.roomCode = transport.roomCode ?? null;
       this.publish();
       await this.runner.start({

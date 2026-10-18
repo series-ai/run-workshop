@@ -4,12 +4,12 @@ import type { MatchErrorDetails } from '../game/match';
 
 export interface ErrorModalProps {
   readonly details: MatchErrorDetails;
-  readonly onPlaySolo: () => void;
+  readonly onNewRoom: () => void;
   readonly onRetry: () => void;
   readonly onDismiss: () => void;
 }
 
-export function ErrorModal({ details, onPlaySolo, onRetry, onDismiss }: ErrorModalProps) {
+export function ErrorModal({ details, onNewRoom, onRetry, onDismiss }: ErrorModalProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -75,9 +75,7 @@ export function ErrorModal({ details, onPlaySolo, onRetry, onDismiss }: ErrorMod
         <div className="yard-modal__actions">
           <button type="button" className="yard-button" onClick={onDismiss}>Dismiss</button>
           <button type="button" className={details.isServerError ? 'yard-button' : 'yard-button yard-button--primary'} onClick={onRetry}>Retry</button>
-          {details.isServerError ? (
-            <button type="button" className="yard-button yard-button--primary" onClick={onPlaySolo}>Play Solo (Offline)</button>
-          ) : null}
+          <button type="button" className="yard-button yard-button--primary" onClick={onNewRoom}>New room</button>
         </div>
       </div>
     </div>

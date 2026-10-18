@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import './Hud.css';
-import type { MatchRequest, MatchSnapshot } from '../game/match';
+import type { RoomRequest, MatchSnapshot } from '../game/match';
 import { TOOL_KEY_LABELS, type UiTool } from '../render/keyBindings';
 import type { RenderQuality } from '../render/renderQuality';
 import { withinBuggyMountRange } from '../sim/constants';
 import { buttonWithinReach } from '../sim/contraptions';
 import { canCapture, cursorNeededNow, fullscreenToggleCall } from '../game/playGate';
 import type { PlayGateApi } from './usePlayGate';
+import { RoomControls } from './RoomControls';
 
 const TOOL_NAMES: Readonly<Record<UiTool, string>> = { hand: 'Gravity Gun', torch: 'Plasma Torch', orbit: 'Orbit' };
 const FUEL_SEGMENTS = 14;
@@ -63,20 +64,18 @@ function Reticle({ tool, grabbing }: { tool: UiTool; grabbing: boolean }) {
   );
 }
 
-export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onStop, onRetry, gate, touchControls = false }: {
+export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRetry, gate, touchControls = false }: {
   touchControls?: boolean;
   quality: RenderQuality;
   onQuality: (quality: RenderQuality) => void;
   snapshot: MatchSnapshot;
   tool: UiTool;
   onTool: (tool: UiTool) => void;
-  onStart: (request: MatchRequest) => void;
-  onStop: () => void;
+  onStart: (request: RoomRequest) => void;
   /** Re-runs the last requested action after a terminal error. */
   onRetry: () => void;
   gate: PlayGateApi;
 }) {
-  const [code, setCode] = useState('');
   const pausePointerHandled = useRef(false);
   const render = snapshot.render;
   const live = snapshot.status === 'live';
@@ -171,7 +170,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
                 pausePointerHandled.current = false;
                 if (event.detail === 0 || !handled) gate.pause();
               }}><span aria-hidden="true" /></button>
-              : <button type="button" className="yard-button yard-button--danger" onClick={onStop}>Leave Match</button>}
+              : <button type="button" className="yard-button" onClick={gate.pause}>Pause</button>}
           </div>
         ) : null}
       </div>
@@ -189,22 +188,9 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onSto
               </div>
             ) : null}
             {/* A match button already captured the mouse: only the status shows until the match settles. */}
-            {gateState.matchStarting ? null : (<>
-            <button type="button" className="yard-button yard-button--primary" onClick={() => onStart({ kind: 'solo' })}>Play Solo</button>
-            <div className="yard-gate__row">
-              <button type="button" className="yard-button" onClick={() => onStart({ kind: 'quick' })}>Quick Match</button>
-              <button type="button" className="yard-button" onClick={() => onStart({ kind: 'create' })}>Create Room</button>
-            </div>
-            <div className="yard-gate__row">
-              <input
-                className="yard-input"
-                aria-label="Room code"
-                value={code}
-                onChange={(event) => setCode(event.target.value.trim().toUpperCase())}
-                placeholder="ROOM CODE"
-              />
-              <button type="button" className="yard-button" onClick={() => onStart({ kind: 'join', code })} disabled={code.length === 0}>Join</button>
-            </div>
+            {snapshot.status === 'connecting' ? <p className="yard-gate__small">Connecting to the room…</p> : (<>
+            <button type="button" className="yard-button yard-button--primary" onClick={() => onStart({ kind: 'create' })}>New room</button>
+            <RoomControls onJoin={(code) => onStart({ kind: 'join', code })} />
             {snapshot.status === 'error' ? (
               <button type="button" className="yard-button yard-button--primary" onClick={onRetry}>Retry</button>
             ) : null}

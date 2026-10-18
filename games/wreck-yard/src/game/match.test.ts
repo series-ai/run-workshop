@@ -102,7 +102,7 @@ describe('MatchController', () => {
     expect(controller.snapshot().error).toContain('Runner start was aborted');
     expect(controller.snapshot().errorDetails?.isServerError).toBe(true);
     expect(controller.snapshot().errorDetails?.title).toBe('Multiplayer Server Unavailable');
-    expect(controller.snapshot().errorDetails?.message).toContain('Solo mode');
+    expect(controller.snapshot().errorDetails?.message).toContain('retry or create a new room');
   });
 
   it('allows dismissing errors and resets state to idle', async () => {

@@ -43,11 +43,11 @@ test('start plate, pause menu, resume, leave, and the drag-look fallback', async
   // Leave Match from the pause menu: the match menu shows with no gate over it.
   await emit(page, true, false);
   await page.getByRole('button', { name: 'Leave match' }).click();
-  await expect(page.getByRole('button', { name: 'Play Solo' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New room' })).toBeVisible();
   await expect(gate).toHaveCount(0);
 
-  // Play Solo captures in the same click, then the match goes live.
-  await page.getByRole('button', { name: 'Play Solo' }).click();
+  // New room captures in the same click, then the match goes live.
+  await page.getByRole('button', { name: 'New room' }).click();
   await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 15_000 });
   await expect(gate).toHaveCount(0);
   expect(await calls(page)).toContain('setPointerLock:true');
@@ -66,7 +66,7 @@ test('start plate, pause menu, resume, leave, and the drag-look fallback', async
   expect(pageErrors).toEqual([]);
 });
 
-test('four warm solo starts keep the menu, capture, and simulation active', async ({ page }) => {
+test('four warm room starts keep the menu, capture, and simulation active', async ({ page }) => {
   const pageErrors: string[] = [];
   const cycles: Array<{ cycle: number; beforeCalls: number; startFrame?: number; endFrame?: number; captureCalls?: string[] }> = [];
   page.on('pageerror', error => pageErrors.push(String(error)));
@@ -85,8 +85,9 @@ test('four warm solo starts keep the menu, capture, and simulation active', asyn
 
   try {
     for (let cycle = 1; cycle <= 4; cycle++) {
-      await page.getByRole('button', { name: 'Leave Match', exact: true }).click();
-      const play = page.getByRole('button', { name: 'Play Solo', exact: true });
+      await page.getByRole('button', { name: 'Pause', exact: true }).click();
+      await page.getByRole('button', { name: 'Leave match', exact: true }).click();
+      const play = page.getByRole('button', { name: 'New room', exact: true });
       await expect(play, `cycle ${cycle}: the match menu must return`).toBeVisible({ timeout: 10_000 });
       const record: (typeof cycles)[number] = { cycle, beforeCalls: (await calls(page)).length };
       cycles.push(record);
@@ -109,6 +110,37 @@ test('four warm solo starts keep the menu, capture, and simulation active', asyn
     }
     expect(pageErrors).toEqual([]);
   } finally {
-    await test.info().attach('warm-solo-starts', { body: JSON.stringify({ cycles, calls: await calls(page), pageErrors }, null, 2), contentType: 'application/json' });
+    await test.info().attach('warm-room-starts', { body: JSON.stringify({ cycles, calls: await calls(page), pageErrors }, null, 2), contentType: 'application/json' });
   }
+});
+
+test('Orbit can pause and resume without another capture request', async ({ page }) => {
+  await page.goto('/?capture=fake&quality=low');
+  await page.getByRole('button', { name: 'Click to play' }).click();
+  const orbit = page.getByRole('button', { name: 'Orbit (O)', exact: true });
+  await orbit.click();
+  await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Your room code' })).toBeVisible();
+  const before = await calls(page);
+  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(orbit).toHaveAttribute('aria-pressed', 'true');
+  expect(await calls(page)).toEqual(before);
+});
+
+test('a refused capture cannot enable Join during a pending connection', async ({ page }) => {
+  let release = () => {};
+  const ready = new Promise<void>(resolve => { release = resolve; });
+  try {
+    await page.goto('/?capture=fake&quality=low');
+    await page.getByRole('button', { name: 'Click to play' }).click();
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Join another room' }).fill('INVALID');
+    await page.route('**/tickets', async route => { await ready; await route.continue(); });
+    await refuseNext(page);
+    await page.getByRole('button', { name: 'Join', exact: true }).click();
+    await expect(page.getByText('Connecting to the room…')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Join', exact: true })).toBeDisabled();
+    release();
+    await expect(page.getByRole('alertdialog')).toBeVisible();
+  } finally { release(); }
 });

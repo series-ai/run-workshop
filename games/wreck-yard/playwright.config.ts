@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: 'npm run preview',
+    command: 'node scripts/serve-local-multiplayer.mjs',
     url: 'http://127.0.0.1:4398',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,

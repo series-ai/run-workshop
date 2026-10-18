@@ -24,7 +24,7 @@ async function drain() {
   for (let turn = 0; turn < 12; turn++) await Promise.resolve();
 }
 
-function fixture(match: SimulatedSyncplayMatch, id: string, occupancy: number | null = 1) {
+function fixture(match: SimulatedSyncplayMatch, id: string, occupancy: number | null = 1, metadataCapacity = 4) {
   let raw: SimulatedSyncplayTransport | undefined;
   const transport = async (): Promise<SyncplayRoomTransport> => {
     raw = match.openTransport(id);
@@ -35,7 +35,7 @@ function fixture(match: SimulatedSyncplayMatch, id: string, occupancy: number | 
     // The raw runner transport permits absent occupancy. This tests that boundary.
     // It does not claim that the deployed room transport omits this field.
     if (occupancy === null) return extra as unknown as SyncplayRoomTransport;
-    return { ...extra, occupancy: { players: [], occupied: occupancy, maxPlayers: 4, full: occupancy === 4, locked: false } };
+    return { ...extra, occupancy: { players: [], occupied: occupancy, maxPlayers: metadataCapacity, full: occupancy === metadataCapacity, locked: false } };
   };
   const controller = new MatchController({ createRoomTransport: transport, quickMatchTransport: transport, joinRoomTransport: transport });
   controller.setInput(NEUTRAL_INPUT);
@@ -175,6 +175,27 @@ describe('crew seats with the real SDK authority and Yard runtime', () => {
       unsubscribe();
       for (const client of [newcomer, guest, owner]) client.controller.stop();
     }
+  });
+
+  it('uses confirmed engine capacity when room metadata reports one seat', async () => {
+    const match = room();
+    const owner = fixture(match, 'owner', 1, 1);
+    const drive = driver(match, [owner]);
+    try {
+      await drive.start(owner);
+      await drive.pump(12);
+      const confirmed = observation(owner);
+      await evidence('capacity-metadata-gap', {
+        transportMetadata: { occupied: 1, maxPlayers: 1 },
+        confirmed, authorityCapacity: match.room.playerCount,
+        authority: match.room.netcodeStats(),
+        limit: 'This reproduces the local acknowledgement metadata gap. It does not change SDK or room capacity.',
+      });
+      expect(match.room.playerCount).toBe(4);
+      expect(confirmed.avatarSlots).toBe(4);
+      expect(confirmed.status).toBe('live');
+      expect(confirmed.crew).toEqual({ occupied: 1, capacity: 4 });
+    } finally { owner.controller.stop(); }
   });
 
   it('clears network crew on stop and reports one offline player after restart', async () => {

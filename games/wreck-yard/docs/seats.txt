@@ -26,6 +26,13 @@ Human and substituted both count as occupied. Unknown is not empty.
 Transport occupancy can supply a display fallback while confirmed presence
 is unknown. It is room metadata, not a deterministic game input.
 
+The runner's slot array supplies capacity when available. Before that array
+arrives, use transport maxPlayers, then the authored maximum. Game SDK 5.28's
+local WebSocket server omits maxPlayers from room:joined. Its client defaults
+to one despite a four-seat authority. This affects room metadata. The native
+session and runner slot array retain the correct four-slot capacity. The local
+server must include maxPlayers, players, and creator status in its join reply.
+
 The local display correction exposes crew.occupied and crew.capacity through
 MatchSnapshot. It updates the existing Crew label. Solo shows 1/1. A four-seat
 room with one confirmed human shows 1/4. A missing packet does not reduce it.
@@ -73,8 +80,9 @@ but it takes a bare array. The wrapped realtime config also serves the local
 sidecar. Adding seatPolicy to yardRoomOptions does not activate it: the rc.54
 browser helper neither accepts nor forwards that field.
 
-No room policy file was installed or deployed by this audit. The deployed
-server implementation and policy were not verified. Do not enable recycling
+The game now declares the deterministic room type in rundot/realtime.config.json.
+It does not set an explicit seat policy. No server policy was deployed by this
+audit. The deployed implementation and policy were not verified. Do not enable recycling
 and describe the game integration as complete until canonical cleanup passes.
 
 Remaining SDK boundary
@@ -152,3 +160,34 @@ to 2/4, back to 1/4, and then to 2/4. Ten substituted inputs kept it at 2/4.
 The authority reached tick 71 with checksum e103a7892eaf34b3. These checks prove
 the local display path. They do not prove canonical leave cleanup or hosted
 room configuration. No dependency, identity, physics, or server policy changed.
+
+Multiplayer session flow
+------------------------
+
+Each game launch creates a multiplayer room. Pause shows the current code and
+a Copy code button. The code remains selectable if clipboard access fails.
+The Join another room field accepts typed or pasted codes. Joining leaves the
+current room. An empty code and the current room code cannot be submitted.
+Pause blocks local input while the authority continues. Product menus and
+error recovery do not offer solo play. Offline mode remains in MatchController
+for native simulation tools and tests.
+
+The controller closes transports returned by a superseded start. This prevents
+a room seat leak during React StrictMode startup and repeated room requests.
+The real-authority regression checks cover stop, restart, and network pause.
+
+The session change passed 24 real-authority/controller checks, 29 gate checks,
+and seven browser tests. Chrome and WebKit desktop plus Chrome touch layouts
+passed the pause, code, resume, and input checks. Real clipboard copy/paste
+and a two-player room join passed. An injected browser clipboard rejection
+verified the manual-copy UI. Native clipboard-denial behavior in RUN remains
+unverified. No page errors occurred in the feature checks.
+
+The existing vista brightness check still fails. A controlled comparison
+gave both multiplayer and the old solo startup behavior a median luma of 35.3
+and dark fraction of 0.173. The limits are 40 and 0.12. Camera pose, viewport,
+and fonts matched. This session change did not cause that brightness failure.
+
+Use scripts/serve-local-multiplayer.mjs for local checks. The standard browser
+test configuration starts it. The vista test also uses that local server.
+It does not start a separate authenticated playground server.

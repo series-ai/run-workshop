@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createServer, type ViteDevServer } from 'vite';
 import { analyzeImageMetrics } from '../scripts/style-metrics.mjs';
 
 const VISTA_CAMERA = {
@@ -16,36 +15,13 @@ type VistaWindow = Window & {
 };
 
 test.describe('Wreck Yard Style Vista E2E', () => {
-  let server: ViteDevServer | undefined;
-  let devUrl: string;
-
-  test.beforeAll(async () => {
-    server = await createServer({
-      root: path.resolve('.'),
-      server: { host: '127.0.0.1', port: 0, strictPort: true, hmr: false },
-    });
-    try {
-      await server.listen();
-      const address = server.httpServer?.address();
-      if (!address || typeof address === 'string') throw new Error('Style server has no TCP address.');
-      devUrl = `http://127.0.0.1:${address.port}`;
-    } catch (error) {
-      await server.close();
-      throw error;
-    }
-  });
-
-  test.afterAll(async () => {
-    await server?.close();
-  });
-
   test('captures vista camera view and records baseline style metrics', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', (err) => pageErrors.push(String(err)));
     page.on('console', (msg) => console.log('[BROWSER]', msg.type(), msg.text()));
 
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto(`${devUrl}/?capture=off`);
+    await page.goto('/?capture=off');
 
     await expect(page.getByText('Wreck Yard')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('canvas')).toBeVisible();

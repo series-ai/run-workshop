@@ -31,8 +31,30 @@ cp .env.example .env   # optional for local play
 npm run dev
 ```
 
-Open the printed URL. The app starts in solo mode. Use **Quick match**,
-**Create room**, or **Join** with a room code to play together.
+Open the printed URL. The app creates a multiplayer room on launch.
+Open **Pause** to see **Your room code**. Use **Copy code** to share it.
+Paste another code into **Join another room**, then select **Join** to move
+to that room. The game does not offer offline play. A room server must be
+available. Server failures offer **Retry** and **New room**.
+
+`rundot/realtime.config.json` declares the four-seat deterministic room type.
+The normal playground can upload server configuration when it starts. The
+local test server below uses the SDK WebSocket authority without that upload.
+
+To run that local server:
+
+```bash
+node scripts/serve-local-multiplayer.mjs
+```
+
+Open `http://127.0.0.1:4398` in two tabs. Each tab gets a local player identity.
+Copy one room code, then join it from the other tab. The local room server uses
+port 4399. Stop both servers with Ctrl+C. The room and capture checks also
+start this local server when it is not already running:
+
+```bash
+npx playwright test e2e/smoke.spec.ts e2e/play-gate.spec.ts --workers=1
+```
 
 ## Rundot initialization and deployment
 
@@ -69,8 +91,9 @@ and [deploy docs](https://github.com/series-ai/venus-sdk-docs/blob/main/rundot-d
 On a surface that can capture the mouse (desktop web, Steam), the yard runs
 behind a start plate. One click on **Click to play** enters fullscreen and
 captures the mouse. When the cursor comes free (Escape, the RUN toolbar,
-alt-tab), the pause menu opens: solo stops, and a room keeps running while you
-stand still. **Resume** captures the mouse again, and enters fullscreen again if
+alt-tab), the pause menu opens. The room keeps running while your input stops.
+The desktop **Pause** button and the mobile pause button open the same menu.
+**Resume** captures the mouse again, and enters fullscreen again if
 you left it. A second Escape, or **Exit fullscreen** in the pause menu, leaves
 fullscreen. The orbit tool (`O`) frees the cursor without the menu; click the
 yard to look again. If the browser keeps refusing the capture, **Play in a
@@ -186,7 +209,7 @@ check. It saves desktop and phone-width images in `test-results/player-robots/`.
   here reads a clock. Trig runs through the Syncplay deterministic math shim
   (`src/deterministicMath.ts`), which loads before any sim module. The identity generator
   hashes every file in this folder plus the kit.
-- `src/game/match.ts` — the syncplay runner controller (solo and rooms).
+- `src/game/match.ts` — the Syncplay room controller. Offline mode remains for physics tools and tests.
 - `src/net/rooms.ts` — room transports through the RUN SDK realtime API.
 - `src/render/` — presentation: projection and interpolation, the raymarched
   voxel renderer, yard shell, water, occlusion, pointer input.
