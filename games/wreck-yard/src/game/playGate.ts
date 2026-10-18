@@ -70,6 +70,7 @@ export type GateEvent =
   | { readonly type: 'choose-drag' }
   | { readonly type: 'choose-capture' }
   | { readonly type: 'choose-touch' }
+  | { readonly type: 'choose-controller' }
   | { readonly type: 'pause' }
   | { readonly type: 'resume' };
 
@@ -240,11 +241,13 @@ export function reduceGate(state: GateState, event: GateEvent): Step {
       if (state.view !== 'start' && state.view !== 'paused') return { state, effects };
       return { state: { ...state, look: 'drag', view: 'playing', notice: null }, effects };
     }
+    case 'choose-controller':
     case 'choose-touch': {
       if (state.look === 'drag') return { state, effects };
       effects.push('clear-input');
       if (state.surface.pointerLocked) effects.push('release-pointer');
-      return { state: { ...state, look: 'drag', view: state.view === 'paused' ? 'paused' : 'playing', requestId: 0, engagedFrom: null, notice: null }, effects };
+      const view = state.view === 'paused' ? 'paused' : event.type === 'choose-controller' && state.view === 'start' ? 'start' : 'playing';
+      return { state: { ...state, look: 'drag', view, requestId: 0, engagedFrom: null, notice: null }, effects };
     }
     case 'choose-capture': {
       if (state.look !== 'drag' || !canCapture(state.caps)) return { state, effects };
@@ -257,9 +260,9 @@ export function reduceGate(state: GateState, event: GateEvent): Step {
       return { state: { ...state, view: 'paused', hasPlayed: true }, effects };
     }
     case 'resume': {
-      if ((state.look !== 'drag' && !state.orbit) || state.view !== 'paused' || cursorNeededNow(state)) return { state, effects };
+      if ((state.look !== 'drag' && !state.orbit) || (state.view !== 'paused' && state.view !== 'start') || cursorNeededNow(state)) return { state, effects };
       effects.push('clear-input');
-      return { state: { ...state, view: state.orbit && state.look === 'capture' ? 'free-cursor' : 'playing' }, effects };
+      return { state: { ...state, hasPlayed: true, view: state.orbit && state.look === 'capture' ? 'free-cursor' : 'playing' }, effects };
     }
     default: {
       const unreachable: never = event;

@@ -22,6 +22,7 @@ export interface PlayGateApi {
   /** Mobile web: fullscreen without a lock, on and off. */
   toggleFullscreen(): Promise<void>;
   chooseDrag(): void;
+  chooseController(): void;
   pause(): void;
   chooseCapture(): Promise<void>;
   setOrbit(on: boolean): void;
@@ -131,6 +132,7 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
   }, [dispatch, port]);
 
   const chooseDrag = useCallback(() => dispatch({ type: 'choose-drag' }), [dispatch]);
+  const chooseController = useCallback(() => dispatch({ type: 'choose-controller' }), [dispatch]);
   const pause = useCallback(() => dispatch({ type: 'pause' }), [dispatch]);
 
   const chooseCapture = useCallback(async () => {
@@ -146,6 +148,6 @@ export function usePlayGate(port: CapturePort, controller: MatchController, matc
   }, []);
 
   return useMemo(() => ({
-    state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseCapture, pause, setOrbit, onClearInput,
-  }), [state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseCapture, pause, setOrbit, onClearInput]);
+    state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseController, chooseCapture, pause, setOrbit, onClearInput,
+  }), [state, port, engage, engageForMatch, exitFullscreen, toggleFullscreen, chooseDrag, chooseController, chooseCapture, pause, setOrbit, onClearInput]);
 }

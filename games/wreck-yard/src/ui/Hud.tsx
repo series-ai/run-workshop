@@ -64,7 +64,8 @@ function Reticle({ tool, grabbing }: { tool: UiTool; grabbing: boolean }) {
   );
 }
 
-export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRetry, gate, touchControls = false }: {
+export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRetry, gate, touchControls = false, controllerActive = false }: {
+  controllerActive?: boolean;
   touchControls?: boolean;
   quality: RenderQuality;
   onQuality: (quality: RenderQuality) => void;
@@ -96,13 +97,13 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRet
   const gateState = gate.state;
   const behindGate = !cursorNeededNow(gateState)
     && (gateState.view === 'start' || gateState.view === 'paused' || gateState.view === 'engaging');
-  const offerCapture = !touchControls && gateState.look === 'drag' && canCapture(gateState.caps);
+  const offerCapture = !touchControls && !controllerActive && gateState.look === 'drag' && canCapture(gateState.caps);
   const fullscreenToggle = fullscreenToggleCall(gateState);
   const aiming = live && tool !== 'orbit' && !isRiding && !behindGate;
 
   return (
     <>
-      <div className={`yard-hud-top${touchControls ? ' yard-hud-top--touch' : ''}`}>
+      <div className={`yard-hud-top${touchControls ? ' yard-hud-top--touch' : ''}${controllerActive ? ' yard-hud-top--controller' : ''}`}>
         {live && !touchControls ? (
         <section className="yard-plate yard-plate--title">
           <div className="yard-title">
@@ -137,7 +138,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRet
                 onClick={() => onTool(entry)}
                 disabled={isRiding}
               >
-                <Key>{TOOL_KEY_LABELS[entry]}</Key>
+                <Key>{controllerActive ? entry === 'hand' ? 'LB' : entry === 'torch' ? 'RB' : 'Select' : TOOL_KEY_LABELS[entry]}</Key>
                 <span>{touchControls && entry === 'hand' ? 'Grab' : touchControls && entry === 'torch' ? 'Torch' : TOOL_NAMES[entry]}</span>
               </button>
             ))}
@@ -149,7 +150,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRet
             {offerCapture ? (
               <button type="button" className="yard-button" onClick={() => { void gate.chooseCapture(); }}>Capture mouse</button>
             ) : null}
-            {!touchControls && fullscreenToggle !== 'none' ? (
+            {!touchControls && fullscreenToggle !== 'none' && (!controllerActive || fullscreenToggle === 'exit-fullscreen') ? (
               <button type="button" className="yard-button" aria-pressed={fullscreenToggle === 'exit-fullscreen'} onClick={() => { void gate.toggleFullscreen(); }}>
                 {fullscreenToggle === 'exit-fullscreen' ? 'Exit fullscreen' : 'Fullscreen'}
               </button>
@@ -189,8 +190,8 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRet
             ) : null}
             {/* A match button already captured the mouse: only the status shows until the match settles. */}
             {snapshot.status === 'connecting' ? <p className="yard-gate__small">Connecting to the room…</p> : (<>
-            <button type="button" className="yard-button yard-button--primary" onClick={() => onStart({ kind: 'create' })}>New room</button>
-            <RoomControls onJoin={(code) => onStart({ kind: 'join', code })} />
+            <button type="button" data-controller-default className="yard-button yard-button--primary" onClick={() => onStart({ kind: 'create' })}>New room</button>
+            <RoomControls onJoin={(code) => onStart({ kind: 'join', code })} controllerActive={controllerActive} />
             {snapshot.status === 'error' ? (
               <button type="button" className="yard-button yard-button--primary" onClick={onRetry}>Retry</button>
             ) : null}
@@ -208,7 +209,7 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRet
       {live && prompt && !touchControls ? (
         <div className="yard-prompt" data-prompt={prompt}>
           {/* E is use (buttons, the buggy); the punt is on the right mouse button. */}
-          {touchControls ? null : prompt === 'Punt' ? <Key wide>RMB</Key> : <Key>E</Key>}
+          {touchControls ? null : prompt === 'Punt' ? <Key wide>{controllerActive ? 'LT' : 'RMB'}</Key> : <Key>{controllerActive ? 'X' : 'E'}</Key>}
           <span>{prompt}</span>
         </div>
       ) : null}
@@ -217,7 +218,11 @@ export function Hud({ snapshot, tool, onTool, quality, onQuality, onStart, onRet
         <div className={touchControls ? `yard-touch-fuel${canMountBuggy || reachableButton ? ' yard-touch-fuel--context' : ''}` : undefined}><FuelGauge fuel={localPlayer?.fuel ?? 100} burning={Boolean(localPlayer?.jetpackActive)} /></div>
       ) : null}
 
-      {live && !touchControls ? (
+      {live && controllerActive ? <div className="yard-controller-hints" aria-label="Controller controls">
+        {tool === 'orbit' ? 'RS Orbit · LS Zoom · Select Return · Start Pause'
+          : isRiding ? 'LS Drive · RS Look · X Exit · A Jet · Start Pause'
+            : 'LS Move · RS Look · RT Tool · LT Punt · A Jet · X Use · B Drop · LB / RB Tools · Start Pause'}
+      </div> : live && !touchControls ? (
         <div className={`yard-legend${isRiding ? ' yard-legend--driving' : ''}`}>
           {isRiding ? (
             <>

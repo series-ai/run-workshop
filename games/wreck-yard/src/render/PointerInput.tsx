@@ -9,6 +9,7 @@ import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/
 import { CAMERA_BASE, CAMERA_LOOK_AT } from './viewConstants';
 import { TOOL, type Tool, type YardInput } from '../sim/input';
 import type { MatchController } from '../game/match';
+import type { YardControllerInput } from '../ui/useControllerInput';
 import type { YardBody } from '../sim/state';
 import type { YardRender } from './presentation';
 import { bodyGeometryChanged, wrapYaw } from './inputPresentation';
@@ -51,7 +52,9 @@ export function PointerInput({
   gate,
   touchInput,
   attractionInput,
+  controllerInput,
 }: {
+  controllerInput?: YardControllerInput;
   attractionInput?: MutableRefObject<AttractionRequest>;
   touchInput?: MutableRefObject<TouchInput>;
   controller: MatchController;
@@ -324,6 +327,8 @@ export function PointerInput({
   /** Chassis position last frame and smoothed forward speed (m/s), for chase recentering. */
   const lastChassisPosition = useRef<readonly [number, number, number] | null>(null);
   const chassisForwardSpeed = useRef(0);
+  const controllerOrbit = useMemo(() => new THREE.Spherical(), []);
+  const controllerOffset = useMemo(() => new THREE.Vector3(), []);
 
   const updateCamera = (render: YardRender | null, deltaSeconds: number) => {
     const localPlayer = render?.players?.find((p) => p.slot === render?.localSlot);
@@ -411,6 +416,43 @@ export function PointerInput({
   };
 
   useFrame((_, deltaSeconds) => {
+    controllerInput?.poll(performance.now());
+    const pad = controllerInput?.state.frame;
+    let controllerUse = Boolean(pad?.use);
+    const playing = inputLive(gateRef.current.state);
+    let frameTool = tool;
+    if (pad?.tool && playing) {
+      frameTool = pad.tool === 'orbit' ? tool === 'orbit' ? lastPlayTool.current : 'orbit' : pad.tool;
+      onToolChange?.(frameTool);
+    }
+    if (pad && playing) {
+      const dt = Math.min(Math.max(deltaSeconds, 0), 0.05);
+      if (pad.lookX || pad.lookY) lastLookMs.current = performance.now();
+      if (frameTool === 'orbit') {
+        if (pad.lookX || pad.lookY || pad.moveZ) {
+          controllerOrbit.setFromVector3(controllerOffset.copy(camera.position).sub(controls.target));
+          controllerOrbit.theta -= pad.lookX * dt * 2.4;
+          controllerOrbit.phi = THREE.MathUtils.clamp(controllerOrbit.phi + pad.lookY * dt * 2.0, controls.minPolarAngle, controls.maxPolarAngle);
+          controllerOrbit.radius = THREE.MathUtils.clamp(controllerOrbit.radius * Math.exp(-pad.moveZ * dt), controls.minDistance, controls.maxDistance);
+          camera.position.copy(controls.target).add(controllerOffset.setFromSpherical(controllerOrbit));
+        }
+      } else {
+        const view = applyLook({ yaw: yaw.current, pitch: pitch.current }, pad.lookX, pad.lookY, dt * 2.4);
+        yaw.current = view.yaw;
+        pitch.current = view.pitch;
+      }
+      const render = renderRef.current;
+      const player = render?.players.find(candidate => candidate.slot === render.localSlot);
+      if (attractionInput && player && render && !player.ridingVehicle) {
+        if (pad.floor !== null && elevatorPanelWithinReach(player.position, render.attractions.elevator.y)) {
+          queueAttraction(attractionInput.current, (pad.floor + 1) as AttractionCommand);
+        }
+        if (restackWithinReach(player.position)) {
+          controllerUse = false;
+          if (pad.useEdge) queueAttraction(attractionInput.current, 5);
+        }
+      }
+    }
     const touch = touchInput?.current;
     if (touch && inputLive(gateRef.current.state) && tool !== 'orbit') {
       if (touch.lookX !== 0 || touch.lookY !== 0) lastLookMs.current = performance.now();
@@ -421,23 +463,23 @@ export function PointerInput({
     if (touch) { touch.lookX = 0; touch.lookY = 0; touch.view = { yaw: yaw.current, pitch: pitch.current }; }
     const shot = touch && !touch.secondaryRearm && !touch.dropQueued ? touch.shots[0] : undefined;
     const aim = shot?.aim ?? { yaw: yaw.current, pitch: pitch.current };
-    const moveX = THREE.MathUtils.clamp((touch?.moveX ?? 0) + (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
+    const moveX = THREE.MathUtils.clamp((pad?.moveX ?? 0) + (touch?.moveX ?? 0) + (keys.current.has('KeyD') || keys.current.has('ArrowRight') ? 1 : 0) -
                   (keys.current.has('KeyA') || keys.current.has('ArrowLeft') ? 1 : 0), -1, 1);
-    const moveZ = THREE.MathUtils.clamp((touch?.moveZ ?? 0) + (keys.current.has('KeyW') || keys.current.has('ArrowUp') ? 1 : 0) -
+    const moveZ = THREE.MathUtils.clamp((pad?.moveZ ?? 0) + (touch?.moveZ ?? 0) + (keys.current.has('KeyW') || keys.current.has('ArrowUp') ? 1 : 0) -
                   (keys.current.has('KeyS') || keys.current.has('ArrowDown') ? 1 : 0), -1, 1);
-    const jetpack = isThrusterHeld(keys.current) || Boolean(touch?.jetpack);
+    const jetpack = isThrusterHeld(keys.current) || Boolean(touch?.jetpack) || Boolean(pad?.jetpack);
 
     const playInput: YardInput = {
       attraction: attractionInput?.current.command ?? 0,
       attractionRequest: attractionInput?.current.sequence ?? 0,
-      tool: toSimTool(tool),
-      pressed: tool !== 'orbit' && (buttons.current.primary || Boolean(touch && touchPrimary(touch, toSimTool(tool)))),
-      secondary: tool !== 'orbit' && (buttons.current.punt || Boolean(shot)),
-      drop: Boolean(touch?.dropQueued),
-      use: keyUse.current || Boolean(touch?.use || touch?.useQueued),
-      jetpack: tool !== 'orbit' && jetpack,
-      moveX: tool !== 'orbit' ? moveX : 0,
-      moveZ: tool !== 'orbit' ? moveZ : 0,
+      tool: toSimTool(frameTool),
+      pressed: frameTool !== 'orbit' && (buttons.current.primary || Boolean(pad?.primary) || Boolean(touch && touchPrimary(touch, toSimTool(frameTool)))),
+      secondary: frameTool !== 'orbit' && (buttons.current.punt || Boolean(pad?.secondary) || Boolean(shot)),
+      drop: Boolean(touch?.dropQueued || pad?.drop),
+      use: keyUse.current || Boolean(touch?.use || touch?.useQueued) || controllerUse,
+      jetpack: frameTool !== 'orbit' && jetpack,
+      moveX: frameTool !== 'orbit' ? moveX : 0,
+      moveZ: frameTool !== 'orbit' ? moveZ : 0,
       yaw: Math.round(wrapYaw(aim.yaw) * 1000),
       pitch: Math.round(aim.pitch * 1000) || 0,
       ox: 0, oy: 0, oz: 0,
@@ -456,6 +498,7 @@ export function PointerInput({
     const nextRender = controller.getRender();
     // A network pump can schedule input without advancing the render frame.
     const sampled = controller.sampledInput;
+    if (sampled?.input === input) controllerInput?.state.consume();
     if (touch && sampled?.input === input) consumeTouchSample(touch, input, sampled.frame);
     if (touch && nextRender) syncTouchWeapon(touch, nextRender.frame,
       nextRender.players.find((player) => player.slot === nextRender.localSlot));

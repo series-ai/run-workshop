@@ -53,7 +53,7 @@ port 4399. Stop both servers with Ctrl+C. The room and capture checks also
 start this local server when it is not already running:
 
 ```bash
-npx playwright test e2e/smoke.spec.ts e2e/play-gate.spec.ts --workers=1
+npx playwright test e2e/controller.spec.ts e2e/smoke.spec.ts e2e/play-gate.spec.ts --workers=1
 ```
 
 ## Rundot initialization and deployment
@@ -87,6 +87,16 @@ See the [Rundot init docs](https://github.com/series-ai/venus-sdk-docs/blob/main
 and [deploy docs](https://github.com/series-ai/venus-sdk-docs/blob/main/rundot-developer-platform/deploying-your-game.md).
 
 ## Controls and fullscreen
+
+Controllers use the RUN SDK Gamepad API. Use LS to move, RS to look, RT for
+the tool, LT to punt, A for the jetpack, X to use, and B to drop. LB selects
+gravity. RB selects the torch. Select toggles Orbit. Start pauses or resumes.
+In Orbit, RS rotates and LS changes distance.
+
+Menus support Dpad or LS navigation, A to select, and B to return. Pause has
+an **Enter code** keypad for joining with a controller. Left and right adjust
+a selected sound slider. Controller play does not need pointer capture.
+See [controller controls and verification](docs/controllers.txt).
 
 On a surface that can capture the mouse (desktop web, Steam), the yard runs
 behind a start plate. One click on **Click to play** enters fullscreen and

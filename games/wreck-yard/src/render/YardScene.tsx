@@ -35,6 +35,7 @@ import { DynamicDpr, isMobileDevice } from './DynamicDpr';
 import { nextSlowWindowCount, QUALITY_FALLBACK, type RenderQuality } from './renderQuality';
 import type { YardAudioControl } from '../audio/useYardAudio';
 import type { TouchInput } from '../ui/touchInput';
+import type { YardControllerInput } from '../ui/useControllerInput';
 
 /** Drops the automatic high tier to low when frames stay slow. */
 function QualityFallback({ onFallback }: { onFallback: () => void }) {
@@ -63,7 +64,8 @@ function AudioFrame({ controller, renderRef, onFrame }: { controller: MatchContr
   return null;
 }
 
-function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback, onToolChange, bodies, renderRef, onBodiesChange, gate, touchInput, attractionInput }: {
+function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback, onToolChange, bodies, renderRef, onBodiesChange, gate, touchInput, attractionInput, controllerInput }: {
+  controllerInput?: YardControllerInput;
   attractionInput?: React.MutableRefObject<AttractionRequest>;
   onAudioFrame?: YardAudioControl['frame'];
   touchInput?: React.MutableRefObject<TouchInput>;
@@ -82,7 +84,7 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
   return (
     <>
       <PerfFrame renderRef={renderRef} />
-      <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} gate={gate} touchInput={touchInput} attractionInput={attractionInput} />
+      <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} gate={gate} touchInput={touchInput} attractionInput={attractionInput} controllerInput={controllerInput} />
       {onAudioFrame ? <AudioFrame controller={controller} renderRef={renderRef} onFrame={onAudioFrame} /> : null}
       <YardShell renderRef={renderRef} />
       <Contraptions renderRef={renderRef} />
@@ -112,7 +114,8 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
   );
 }
 
-export function YardScene({ onAudioFrame, controller, tool, quality, onQualityFallback, onToolChange, gate, onCanvas, touchInput, attractionInput }: {
+export function YardScene({ onAudioFrame, controller, tool, quality, onQualityFallback, onToolChange, gate, onCanvas, touchInput, attractionInput, controllerInput }: {
+  controllerInput?: YardControllerInput;
   attractionInput?: React.MutableRefObject<AttractionRequest>;
   onAudioFrame?: YardAudioControl['frame'];
   touchInput?: React.MutableRefObject<TouchInput>;
@@ -171,7 +174,7 @@ export function YardScene({ onAudioFrame, controller, tool, quality, onQualityFa
         minDpr={isMobile ? 0.85 : 1.0}
         maxDpr={isMobile ? 1.25 : 1.5}
       />
-      <SceneRoot onAudioFrame={onAudioFrame} controller={controller} tool={tool} quality={quality} onQualityFallback={onQualityFallback} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} onBodiesChange={setBodies} gate={gate} touchInput={touchInput} attractionInput={attractionInput} />
+      <SceneRoot onAudioFrame={onAudioFrame} controller={controller} tool={tool} quality={quality} onQualityFallback={onQualityFallback} onToolChange={onToolChange} bodies={bodies} renderRef={renderRef} onBodiesChange={setBodies} gate={gate} touchInput={touchInput} attractionInput={attractionInput} controllerInput={controllerInput} />
     </Canvas>
   );
 }

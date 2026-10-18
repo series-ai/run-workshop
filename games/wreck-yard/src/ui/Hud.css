@@ -271,6 +271,19 @@
 .yard-room-controls .yard-gate__row > input { flex:1 1 0; width:0; min-height:44px; }
 .yard-room-controls .yard-gate__row > button { flex:0 0 auto; min-height:44px; }
 .yard-room-code { color:var(--yard-mustard); }
+[data-controller-focused="true"] { outline:3px solid var(--yard-teal); outline-offset:3px; }
+.yard-controller-hints { position:absolute; bottom:16px; left:16px; right:16px; padding:8px 12px; width:fit-content; max-width:calc(100% - 32px); background:var(--yard-ink); color:var(--yard-bone); font:600 13px/1.6 var(--yard-text); pointer-events:none; }
+.yard-controller-keypad { position:fixed; inset:0; z-index:35; display:grid; padding:16px; background:#141a21ee; overflow:auto; }
+.yard-controller-keypad__card { width:min(420px,100%); margin:auto; padding:20px; display:grid; gap:12px; }
+.yard-controller-keypad h2 { margin:0; font:400 30px/1.1 var(--yard-display); text-transform:uppercase; }
+.yard-controller-keypad output { color:var(--yard-mustard); font:400 26px/1.5 var(--yard-display); letter-spacing:.3em; text-align:center; }
+.yard-controller-keypad__keys { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+.yard-controller-keypad .yard-button { min-height:44px; padding:8px; }
+@media(max-width:600px) {
+  .yard-hud-top--controller .yard-plate--title { display:none; }
+  .yard-hud-top--controller .yard-toolbar { max-width:calc(100vw - 100px); flex-wrap:wrap; }
+  .yard-controller-hints { font-size:12px; }
+}
 .yard-gate { overflow:auto; }
 .yard-plate--gate { margin:auto; flex-shrink:0; }
 

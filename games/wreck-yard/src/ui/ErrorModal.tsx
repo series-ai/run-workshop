@@ -73,8 +73,8 @@ export function ErrorModal({ details, onNewRoom, onRetry, onDismiss }: ErrorModa
         </details>
 
         <div className="yard-modal__actions">
-          <button type="button" className="yard-button" onClick={onDismiss}>Dismiss</button>
-          <button type="button" className={details.isServerError ? 'yard-button' : 'yard-button yard-button--primary'} onClick={onRetry}>Retry</button>
+          <button type="button" data-controller-back className="yard-button" onClick={onDismiss}>Dismiss</button>
+          <button type="button" data-controller-default className={details.isServerError ? 'yard-button' : 'yard-button yard-button--primary'} onClick={onRetry}>Retry</button>
           <button type="button" className="yard-button yard-button--primary" onClick={onNewRoom}>New room</button>
         </div>
       </div>

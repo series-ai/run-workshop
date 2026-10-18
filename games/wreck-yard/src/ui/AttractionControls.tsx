@@ -9,7 +9,7 @@ export function queueAttraction(request: AttractionRequest, command: AttractionC
   request.command = command;
   request.sequence = (request.sequence + 1) & 65535;
 }
-export function AttractionControls({ snapshot, gate, request }: { snapshot: MatchSnapshot; gate: PlayGateApi; request: MutableRefObject<AttractionRequest> }) {
+export function AttractionControls({ snapshot, gate, request, controllerActive = false }: { snapshot: MatchSnapshot; gate: PlayGateApi; request: MutableRefObject<AttractionRequest>; controllerActive?: boolean }) {
   const render = snapshot.render;
   const player = render?.players.find((p) => p.slot === render.localSlot);
   const live = snapshot.status === 'live' && inputLive(gate.state) && !player?.ridingVehicle;
@@ -26,7 +26,7 @@ export function AttractionControls({ snapshot, gate, request }: { snapshot: Matc
   if ((!panel && !reset) || !elevator || !render) return null;
   return <section className="attraction-controls" aria-label={panel ? 'Elevator floors' : 'Storage reset'} onPointerDown={(event) => event.stopPropagation()}>
     {panel ? <><div className="attraction-controls__title">FREIGHT LIFT <small>{elevator.status === 'blocked' ? 'Path blocked' : elevator.status === 'moving' ? 'Moving' : 'Select floor'}</small></div>
-      <div className="attraction-controls__floors">{[0, 1, 2, 3].map((floor) => <button key={floor} type="button" aria-label={`Elevator floor ${floor === 0 ? 'ground' : floor}`} aria-pressed={elevator.target === floor} onClick={() => queueAttraction(request.current, (floor + 1) as AttractionCommand)}>{floor === 0 ? 'G' : floor}</button>)}</div><small className="attraction-controls__keys">Keys: G · 1 · 2 · 3</small></>
-      : <><div className="attraction-controls__title">PERFECTLY SAFE STORAGE</div><button type="button" onClick={() => queueAttraction(request.current, 5)}>RESTACK</button>{render.attractions.resetStatus === 'blocked' ? <small role="status">Clear people and other objects from the bay.</small> : <small>Clear the bay before reset.</small>}</>}
+      <div className="attraction-controls__floors">{[0, 1, 2, 3].map((floor) => <button key={floor} type="button" aria-label={`Elevator floor ${floor === 0 ? 'ground' : floor}`} aria-pressed={elevator.target === floor} onClick={() => queueAttraction(request.current, (floor + 1) as AttractionCommand)}>{floor === 0 ? 'G' : floor}</button>)}</div><small className="attraction-controls__keys">{controllerActive ? 'Dpad: ↓ G · ← 1 · ↑ 2 · → 3' : 'Keys: G · 1 · 2 · 3'}</small></>
+      : <><div className="attraction-controls__title">PERFECTLY SAFE STORAGE</div><button type="button" onClick={() => queueAttraction(request.current, 5)}>RESTACK{controllerActive ? ' (X)' : ''}</button>{render.attractions.resetStatus === 'blocked' ? <small role="status">Clear people and other objects from the bay.</small> : <small>Clear the bay before reset.</small>}</>}
   </section>;
 }

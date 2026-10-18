@@ -16,6 +16,7 @@ import { TouchControls } from './ui/TouchControls';
 import { useYardAudio } from './audio/useYardAudio';
 import { inputLive } from './game/playGate';
 import { neutralTouchInput, usesTouchControls } from './ui/touchInput';
+import { useControllerInput } from './ui/useControllerInput';
 
 /** What src/main.tsx learned from the RUN SDK, for the capture port. */
 export interface CaptureSurface {
@@ -34,14 +35,6 @@ export default function App({ capture }: { capture: CaptureSurface }) {
   const [touchControls, setTouchControls] = useState(usesTouchControls);
   const touchInput = useRef(neutralTouchInput());
   useEffect(() => { if (touchControls && tool === 'orbit') setTool('hand'); }, [touchControls, tool]);
-  useEffect(() => {
-    const chooseInput = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse') setTouchControls(false);
-      else if (event.pointerType === 'touch' || event.pointerType === 'pen') setTouchControls(true);
-    };
-    window.addEventListener('pointerdown', chooseInput, true);
-    return () => window.removeEventListener('pointerdown', chooseInput, true);
-  }, []);
   const [quality, setQuality] = useState<RenderQuality>(() => readRenderQuality(isMobileDevice()));
   // The tier is automatic until the player picks one or the URL sets it.
   const [qualityIsAutomatic, setQualityIsAutomatic] = useState(() => !new URLSearchParams(window.location.search).has('quality'));
@@ -63,14 +56,30 @@ export default function App({ capture }: { capture: CaptureSurface }) {
     [capture],
   );
   const gate = usePlayGate(port, controller, { status: snapshot.status, touchControls });
+  const gamepad = useControllerInput(capture.sdkReady, gate, snapshot.status);
+  useEffect(() => { if (gamepad.active) setTouchControls(false); }, [gamepad.active]);
+  useEffect(() => {
+    const chooseInput = (event: PointerEvent) => {
+      gamepad.input.deactivate();
+      if (event.pointerType === 'mouse') setTouchControls(false);
+      else if (event.pointerType === 'touch' || event.pointerType === 'pen') setTouchControls(true);
+    };
+    const keyboard = () => gamepad.input.deactivate();
+    window.addEventListener('pointerdown', chooseInput, true);
+    window.addEventListener('keydown', keyboard, true);
+    return () => { window.removeEventListener('pointerdown', chooseInput, true); window.removeEventListener('keydown', keyboard, true); };
+  }, [gamepad.input]);
 
   const audio = useYardAudio(snapshot.status === 'live' && inputLive(gate.state), capture.sdkReady);
 
   useEffect(() => {
+    let cancelled = false;
     (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__ = controller;
     const unsubscribe = controller.subscribe(() => setSnapshot(controller.snapshot()));
-    void controller.start({ kind: 'create' });
+    // StrictMode cancels its probe before the initial room request starts.
+    queueMicrotask(() => { if (!cancelled) void controller.start({ kind: 'create' }); });
     return () => {
+      cancelled = true;
       unsubscribe();
       controller.stop();
       delete (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__;
@@ -103,6 +112,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
     <div className="yard-app" style={{ position: 'fixed', inset: 0, background: '#5a564d' }}>
       <YardScene
         controller={controller}
+        controllerInput={gamepad.input}
         onAudioFrame={audio.frame}
         tool={tool}
         quality={quality}
@@ -123,9 +133,10 @@ export default function App({ capture }: { capture: CaptureSurface }) {
         onRetry={retry}
         gate={gate}
         touchControls={touchControls}
+        controllerActive={gamepad.active}
       />
       {touchControls ? <TouchControls input={touchInput} snapshot={snapshot} tool={tool} gate={gate} onTool={setTool} /> : null}
-      <AttractionControls snapshot={snapshot} gate={gate} request={attractionInput} />
+      <AttractionControls snapshot={snapshot} gate={gate} request={attractionInput} controllerActive={gamepad.active} />
       <PlayGate
         audio={audio}
         gate={gate}
@@ -135,6 +146,8 @@ export default function App({ capture }: { capture: CaptureSurface }) {
         onQuality={chooseQuality}
         onLeave={() => controller.stop()}
         touchControls={touchControls}
+        controllerActive={gamepad.active}
+        controllerConnected={gamepad.connected}
       />
       {snapshot.status === 'error' && snapshot.errorDetails ? (
         <ErrorModal

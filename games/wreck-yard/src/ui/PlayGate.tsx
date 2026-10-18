@@ -37,7 +37,7 @@ function showDragFallback(notice: GateNotice): boolean {
 /** Which plate the gate shows; engaging keeps the plate it started from. */
 function plateFor(state: GateState): 'start' | 'paused' | 'chip' | null {
   if (cursorNeededNow(state)) return null;
-  if (state.look === 'drag') return state.view === 'paused' ? 'paused' : null;
+  if (state.look === 'drag') return state.view === 'paused' ? 'paused' : state.view === 'start' ? 'start' : null;
   const view = state.view === 'engaging' ? state.engagedFrom : state.view;
   if (view === 'start') return 'start';
   if (view === 'paused') return 'paused';
@@ -49,9 +49,11 @@ function plateFor(state: GateState): 'start' | 'paused' | 'chip' | null {
  * The start plate and the pause menu (spec: .plans/wreck-yard-fullscreen-play-gate.html).
  * It draws nothing while the match menu or an error modal needs the cursor.
  */
-export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, onLeave, touchControls = false }: {
+export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, onLeave, touchControls = false, controllerActive = false, controllerConnected = false }: {
   audio?: YardAudioControl;
   touchControls?: boolean;
+  controllerActive?: boolean;
+  controllerConnected?: boolean;
   gate: PlayGateApi;
   roomCode: string | null;
   onJoin: (code: string) => void;
@@ -82,13 +84,13 @@ export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, on
             Welcome to Wreck Yard, a multiplayer demo of the RUN Syncplay engine for fast, real-time, cross-platform multiplayer.
           </p>
           <NoticeLine notice={state.notice} action="Play" />
-          <button type="button" className="yard-button yard-button--primary yard-button--big" disabled={busy} onClick={() => { void gate.engage(); }}>
+          <button type="button" data-controller-default className="yard-button yard-button--primary yard-button--big" disabled={busy} onClick={() => { void gate.engage(); }}>
             {busy ? <><span className="yard-spinner" aria-hidden="true" />Going fullscreen…</> : 'Click to play'}
           </button>
           {showDragFallback(state.notice) ? (
             <button type="button" className="yard-button" onClick={gate.chooseDrag}>Play in a window (drag to look)</button>
           ) : null}
-          <ControlsHint />
+          {controllerConnected ? <div className="yard-gate__hint">A Play · Dpad Navigate</div> : <ControlsHint />}
         </section>
       </div>
     );
@@ -101,9 +103,10 @@ export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, on
         <div className="yard-gate__stripe" aria-hidden="true" />
         <h1 className="yard-gate__title yard-gate__title--small">Paused</h1>
         <div className="yard-gate__small">The room continues while you pause.</div>
-        <RoomControls key={roomCode} roomCode={roomCode} disabled={busy} onJoin={onJoin} />
+        {controllerActive && !controllerConnected ? <p role="status">Controller disconnected. Input stopped.</p> : null}
+        <RoomControls key={roomCode} roomCode={roomCode} disabled={busy} onJoin={onJoin} controllerActive={controllerActive} />
         <NoticeLine notice={state.notice} action="Resume" />
-        <button type="button" className="yard-button yard-button--primary yard-button--big" disabled={busy} onClick={() => { void gate.engage(); }}>
+        <button type="button" data-controller-default data-controller-back className="yard-button yard-button--primary yard-button--big" disabled={busy} onClick={() => { void gate.engage(); }}>
             {busy ? <><span className="yard-spinner" aria-hidden="true" />{state.matchStarting ? 'Connecting…' : 'Capturing…'}</> : fullscreen || state.look === 'drag' || state.orbit ? 'Resume' : 'Resume fullscreen'}
         </button>
         {showDragFallback(state.notice) ? (
@@ -115,7 +118,7 @@ export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, on
           </button>
           {canExitFullscreen(state) ? (
             <button type="button" className="yard-button" onClick={() => { void gate.exitFullscreen(); }}>Exit fullscreen</button>
-          ) : state.look === 'drag' && state.caps.fullscreen === 'toggleable' ? (
+          ) : !controllerActive && state.look === 'drag' && state.caps.fullscreen === 'toggleable' ? (
             <button type="button" className="yard-button" onClick={() => { void gate.toggleFullscreen(); }}>Fullscreen</button>
           ) : null}
         </div>
@@ -123,7 +126,7 @@ export function PlayGate({ audio, gate, roomCode, onJoin, quality, onQuality, on
         <PerformanceControls />
         <button type="button" className="yard-button yard-button--danger" onClick={onLeave}>Leave match</button>
         {canExitFullscreen(state) ? <div className="yard-gate__small">Esc again: leave fullscreen</div> : null}
-        {touchControls ? <div className="yard-gate__hint">Left pad: move. Right side: drag to look.</div> : <ControlsHint />}
+        {controllerActive ? <div className="yard-gate__hint">Dpad Navigate · A Select · B Back</div> : touchControls ? <div className="yard-gate__hint">Left pad: move. Right side: drag to look.</div> : <ControlsHint />}
       </section>
     </div>
   );
