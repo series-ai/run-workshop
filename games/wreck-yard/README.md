@@ -64,6 +64,24 @@ leaving, rejoining, retry, and room switching with the real SDK authority.
 See [the local verification record](docs/local-multiplayer-verification.md)
 for measured rates and open failures.
 
+The rc.55 stress checks use extracted official package directories. They keep
+the main project dependency unchanged:
+
+```bash
+node scripts/repro-syncplay-body-count.mjs --sdk /path/to/rc55/package --out test-results/body-count-new.json --require-stable
+node scripts/repro-syncplay-topology-bound.mjs --sdk /path/to/rc55/package --out test-results/topology-new.json --require-success
+node scripts/stress-syncplay-rc55.mjs --rc54 /path/to/rc54/package --rc55 /path/to/rc55/package --outdir test-results/native-stress-new
+RC55_GAME_DIR=/path/to/isolated/wreck-yard npx playwright test --config playwright.rc55.config.ts
+```
+
+Use new output paths for each run. Strict native checks return exit 1 when a
+gate fails. The full native campaign also records expected rc.54 control
+failures. Read its per-run results and `rc55Pass` separately from the combined
+exit code. The browser checks require an isolated rc.55 installation and its
+generated runtime identity. They use ports 4517 and 4518. The main project
+remains on its current dependency. See [the stress test record](docs/rc55-stress-results.txt)
+and [the team prompt](docs/syncplay-rc55-team-prompt.txt).
+
 The standard browser tests use this separate local server entry point:
 
 ```bash
