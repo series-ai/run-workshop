@@ -82,6 +82,16 @@ generated runtime identity. They use ports 4517 and 4518. The main project
 remains on its current dependency. See [the stress test record](docs/rc55-stress-results.txt)
 and [the team prompt](docs/syncplay-rc55-team-prompt.txt).
 
+The [rc.56 validation record](docs/rc56-validation-results.txt) includes a new
+installed-runtime restore regression. The [updated team prompt](docs/syncplay-rc56-team-prompt.txt)
+keeps the prior findings and adds this repro:
+
+```bash
+node scripts/repro-syncplay-latest-restore.mjs --sdk /path/to/package --out test-results/latest-restore-new.json
+```
+
+The repro returns exit 0 on official rc.55 and exit 1 on official rc.56.
+
 The standard browser tests use this separate local server entry point:
 
 ```bash

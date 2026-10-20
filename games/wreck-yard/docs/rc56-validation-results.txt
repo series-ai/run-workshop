@@ -1,0 +1,138 @@
+rc.56 validation
+================
+
+Date: 20 October 2026, Pacific time.
+Game source: b90bcd07.
+SDK: published 6.0.0-rc.56.
+SDK git: e374bedabd068570a9a19b5fa88686e7efe64b1b.
+Control: published 6.0.0-rc.55.
+
+The checks used a separate checkout and a copy of the official package.
+The main dependency and local solver experiments were not changed.
+The isolated runtime identity used rc.56 at 30 Hz.
+
+Package changes
+---------------
+
+Both packages contain 584 files. Eleven files changed. They cover native
+physics, checkpoint storage, physics output caching, generated WASM, one
+core declaration, and package metadata. Network, runner, seat, and transport
+code is byte-identical. Public dist declarations are byte-identical.
+The core declaration adds ensureReadable(). No new game-facing feature
+requires adoption in the public physics API. Internal optimizations apply
+when the package is used.
+
+Regression and stability checks
+-------------------------------
+
+Build, identity check, and TypeScript passed. The suite passed 538 of 539
+tests across 74 files. The only failure is the same cage sky-ray fixture
+that fails on official rc.54 and rc.55.
+
+The 16/17-body boundary remains. Sixteen bodies pass with maximum shift
+0.007931 m. Seventeen bodies fail with maximum shift 12.289766 m.
+Exact replay and native resource cleanup pass.
+
+The dense 400-box test has the same complete motion trace and final digest
+as rc.55. At frame 2520, 372 bodies remain active. Maximum final shift is
+13.262026 m. The maximum over the run is 13.263102 m. Exact replay, finite
+state, and disposal pass. Displacement and recovery gates fail.
+
+The topology edit still fails with status -8:
+  topology edit peak bound was below the allocation
+It fails with and without a retained checkpoint. Release and retry also
+fail. State remains unchanged after failure. Native cleanup passes.
+
+Performance
+-----------
+
+The contact timing probe ran in rc.55, rc.56, rc.56, rc.55 order.
+Each run used a separate process. Timed workloads ran in sequence.
+Public step plus latest output times, in milliseconds:
+
+  Version/run   Rest p50/p95     Shove p50/p95
+  rc.55 A       3.248 / 3.499    14.199 / 15.624
+  rc.56 B       1.453 / 1.634    13.925 / 15.388
+  rc.56 B       1.459 / 1.642    13.832 / 15.165
+  rc.55 A       3.258 / 3.488    14.003 / 15.426
+
+Sleeping-scene median cost falls by about 55 percent. Active-scene times
+overlap. Sampled body motion and common contact outputs match. These
+measurements include API and output work. They are not pure solver times
+or proof of phone performance.
+
+Checkpoint storage
+------------------
+
+The four-player storage drive reached 600 frames. It retained 256 logical
+saves and at most 32 retained native captures. Checksum import briefly used
+a 33rd native slot. Old-state decode, replay, checksum, and encoded output
+passed. Native ownership returned to zero after disposal.
+
+Peak raw JS physics buffers remained 227070676 bytes, or 216.55 MiB.
+Native retained high-water was 27250184 bytes, or 25.99 MiB.
+Tick including capture p50/p90 was 21.560/25.781 ms.
+Capture/conversion p50/p90 was 1.387/1.548 ms.
+These timing samples are not an ABBA comparison with the prior storage run.
+The memory metrics overlap. Do not add them. This is not a leak finding.
+
+New rc.56 regression
+--------------------
+
+The public createPhysicsInstalledRuntimeAdapter3D restore path leaves the
+facade latest() cache stale. The real-WASM repro uses one body and one tick:
+
+  Capture frame 0.
+  Advance the runtime to frame 1.
+  Read world.latest().
+  Restore frame 0 through runtime.restore(saved).
+  Read world.latest() again.
+
+rc.55 returns runtime/native/latest frames 0/0/0. The check exits 0.
+rc.56 returns runtime/native/latest frames 0/0/1. The check exits 1.
+The rc.56 result is the same object returned before restore.
+Both runs release owned native resources.
+
+The facade cache is cleared for facade mutations, but the attached controller
+restores raw state and portal state without clearing the cache. ensureReadable
+checks access but does not check the cache frame or revision. Our custom
+YardSim restore uses the facade and clears the cache. Thus the app suite
+does not cover this SDK integration path.
+
+Run from games/wreck-yard with a new output path:
+
+  node scripts/repro-syncplay-latest-restore.mjs --sdk /path/to/package --out test-results/latest-restore-new.json
+
+Checkpoint implementation and remaining requests
+-----------------------------------------------
+
+Native checkpoints now share static slabs. Dynamic caches and events stay
+per checkpoint. The in-memory representation changed. The wire snapshot
+versions, ABI, digest revision, and 160 MiB module limit did not change.
+Cross-version checkpoint import was not tested.
+
+The new static sharing reduces native retained storage in this fixture.
+Serialized older JS saves still contain full state. Runner-level history
+controls remain unchanged. The prior network recovery, snapshot target,
+ordered seat context, and intentional leave requests remain open.
+
+Local browser checks
+--------------------
+
+All three existing headless multiplayer cases passed in 107.4 seconds:
+URL join, peer lifecycle, display interpolation, same-owner rejoin, invalid
+room retry, recovery, and room switching. The checks used normal npm run dev
+in the isolated rc.56 checkout. The browser and server closed. Ports 4497
+and 4498 have no listener after the run. These checks do not cover hosted
+operation, physical phones, or the prior CPU-stall recovery case.
+
+Scope
+-----
+
+The existing body-count, topology, dense, and timing fixtures are unchanged.
+The latest-restore repro is new.
+Raw results are under test-results/rc56-validation/.
+The package and source checkout remain under /private/tmp/wreck-yard-rc56-audit/.
+The prior rc.55 torch, slow-client, and aged-room traces were not repeated.
+Unchanged network code does not establish a fresh runtime result.
+No deployment was made.

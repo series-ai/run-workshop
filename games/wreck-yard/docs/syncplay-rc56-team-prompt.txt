@@ -1,0 +1,182 @@
+rc.56 update to the Wreck Yard request
+=====================================
+
+Latest tested package: @series-inc/rundot-syncplay 6.0.0-rc.56.
+Git: e374bedabd068570a9a19b5fa88686e7efe64b1b.
+This release predates the request below. Keep all seven requests open.
+The new tests confirm that the body-count boundary and topology edit
+failures remain. The network, runner, and transport code is unchanged.
+Do not treat the prior rc.55 browser traces below as new rc.56 results.
+
+rc.56 improves the sleeping 400-box step-plus-read median from about
+3.25 ms to 1.46 ms in an rc.55/56/56/55 comparison. Active timings overlap.
+Dense motion matches rc.55 exactly; 372 bodies remain active after 80
+simulated seconds. The four-player storage test passes replay and cleanup,
+but peak raw JS physics buffers remain 216.55 MiB. Native retained
+high-water is now 25.99 MiB. This is a partial internal improvement for
+request 5, not a complete history/memory budget solution.
+
+Add request 8: fix stale latest() after installed-runtime checkpoint restore.
+The public createPhysicsInstalledRuntimeAdapter3D path reproduces it:
+1. Capture frame 0.
+2. Advance the runtime to frame 1.
+3. Call world.latest().
+4. Call runtime.restore(savedFrame0).
+5. Call world.latest() again.
+
+rc.55 returns runtime/native/latest frames 0/0/0.
+rc.56 returns 0/0/1 and reuses the old latest object.
+Both versions release owned native resources. This is a new regression.
+
+Run from games/wreck-yard:
+node scripts/repro-syncplay-latest-restore.mjs --sdk <package> --out <new.json>
+
+The strict repro exits 0 on rc.55 and 1 on rc.56. Invalidate or version the
+facade cache when attached controllers restore native state. Add coverage
+for restored outputs, contacts, materials, portal outputs, detach, and
+disposal as applicable. Preserve safe reuse when no mutation occurs.
+
+The current app uses a different restore path. Its rc.56 build passes;
+538/539 tests pass with the same pre-existing cage fixture failure.
+The engine regression requires a separate API test.
+
+Prior request and rc.55 evidence
+===============================
+
+Please investigate and fix these Wreck Yard findings against published
+@series-inc/rundot-syncplay 6.0.0-rc.55, git cf8edf558cc565edbef81cfab9dd64f7e7a71432.
+The game currently uses Game SDK 5.28.0. Keep 30 Hz simulation and display-rate
+interpolation. Use public APIs and real WASM, authority, and browser tests.
+Report the minimum matching Syncplay, Game SDK, and server versions.
+
+We tested official rc.54/rc.55 archives in an isolated checkout of run-workshop
+8593239561ac9b6e144919718e70ba3feb27893b. Local solver experiments were disabled.
+The build passed. 538/539 existing tests passed; the one cage fixture fails
+identically on both releases because its ray starts inside a portal. Do not
+treat that fixture as an rc.55 regression. Small-stack stability improved,
+but the following gaps remain. Desktop tests do not prove phone performance.
+
+1. Scene-size-dependent stack stability: confirmed SDK behavior.
+
+A ten-box column passes with 16 total bodies: max displacement 0.007931 m.
+Adding one distant static body with collisions disabled makes 17 bodies and
+causes 12.289766 m displacement. Colliding IDs, order, capacity, and physical
+settings stay fixed. Five or six distant static boxes supply the 16/17 totals.
+The floor and dynamic column are created first. The extra body is not a
+physical disturbance. Both worlds replay exactly and dispose cleanly.
+
+Fixture: 30 Hz, six substeps, six velocity iterations, gravity Y = -13.5 m/s^2,
+ten touching 0.96 m cubes, mass 1 kg, friction 0.72, restitution 0.12, linear/angular
+damping 0.98/0.945, sleep threshold 0.05, diagonal inertia 0.1536 kg*m^2.
+The floor top is Y = -0.86 m; center Y = -1.36 m and half-height 0.5 m. Wake once at frame 121.
+Run through 480; checkpoint at 120 and require exact replay. Current gates are
+max shift < 0.05 m and sleep by 480.
+
+Source guards select new contact behavior only when bodyCount <= 16 and
+proxyHook == nullptr. See packages/syncplay/core/native/physics/physics.cpp near
+5157, 10024, 10098, 10279. Our 400-box 8 x 5 x 10 case has identical rc.54/rc.55 traces:
+372 bodies remain active at frame 2520 after 2400 neutral ticks; max shift 13.263 m.
+Please make the stability repair work at real scene size. Cover distant
+noncolliding bodies and portal-enabled worlds. Preserve force response,
+capacity guards, exact replay, and cleanup.
+
+The app touch-driven torch route also shows sustained activity and cost.
+This run does not isolate the cause. Idle was
+59.97 FPS with 2 active bodies. HeldCut fell to 35.38 FPS, pump p95 61.56 ms, native
+step plus readback p95 29.60 ms. After 50-60 s settling it was 48.68 FPS, native
+p95 23.63 ms, 507 active bodies. Torch cuts stayed 19 after release; fractures
+grew 3->35. No page/shader/session error occurred. Fix convergence and recovery;
+functional success alone does not establish restored performance.
+
+2. Topology edit allocation forecast: confirmed SDK error.
+
+Create 400 boxes plus floor, capacity 512, with the same settings. Wake at 121.
+At frame 240 replace top box 399, changing X half-size 0.48->0.47 m while keeping
+current pose, velocities, mass, and inertia. It fails on both releases:
+physics.edit-failed: KINETIX_NATIVE_WORLD_OPERATION_FAILED: apply topology batch:
+status -8: topology edit peak bound was below the allocation
+
+The failure occurs with and without a retained frame 120 checkpoint. Releasing
+it does not make retry succeed. This is not evidence of exhausting the 160 MiB
+checkpoint limit. world.cpp near 4593/4618 computes then checks the reservation;
+the incorrect forecast term is not yet isolated. Fix the reservation/accounting.
+Preserve current failure atomicity: digest, motion, frame, count, and shape stay
+unchanged. Verify successful edits, checkpoint restore/replay, and zero owned
+native resources after disposal.
+
+Portable Wreck Yard repros, from games/wreck-yard, with fresh output paths:
+node scripts/repro-syncplay-body-count.mjs --sdk <rc55-package> --out <new.json> --require-stable
+node scripts/repro-syncplay-topology-bound.mjs --sdk <rc55-package> --out <new.json> --require-success
+Both strict checks currently return exit 1. Keep the existing gates.
+
+3. Slow-client recovery sends stale input: confirmed fresh rc.55 wire evidence.
+
+Run two real local peers. Apply CDP 6x CPU slowdown to one peer for 6 s, then reset
+to normal. Keep focus active and the menu closed. At one aligned wall-second,
+the authority was tick 1439 while the client sent inputs for 432-533. All 105
+confirmations it processed that second substituted its own input. Public ready
+was true while about 900 frames behind. It accumulated 30.5 s of rollback work.
+
+A short reverse-path control showed zero movement on both peers after slowdown
+ended. The frame gap recovered only after 27.671 s. Movement worked afterward.
+That run recorded 24.1 s resimulation and 1398 own-input substitutions. The game's
+pacing already uses targetLeadTicks 2/maxStepsPerPump 2 and input delay 1-3 ticks.
+
+Ensure current input reaches the authority while old frames catch up. Bound
+confirmation/rollback/catch-up work without changing canonical results. Add a
+regression test for input delivery, neutral release, eventual checksum parity,
+and recovery latency under controlled stalls. Expose authority frontier,
+catch-up phase/backlog, snapshot selection, and relevant work timings through
+supported diagnostics. RTT, rollback durations, applied/predicted frames, and
+ownInputSubstitutions already exist; extend those instead of duplicating them.
+
+4. Snapshot target contract: source-confirmed, still unchanged in rc.55.
+
+authority-room.js requires snapshot.tick === pendingTransfer.targetTick.
+networked-client.js treats requested minFrame as a lower bound, skips an
+unavailable exact checkpoint, and can offer a later tick. The authority then
+rejects it as snapshot-target-tick-mismatch. Both modules match rc.54 bytes.
+Earlier local rc.54 logs showed these rejections and transfer timeouts.
+
+The fresh rc.55 aged-room case successfully transferred snapshot 3600 with
+sessionFrame 3601. That success does not test the missing-exact-checkpoint path.
+Use one request/donor/authority contract with bounded refusal, rotation, or
+retargeting. Test one donor missing the exact checkpoint while retaining a
+later one, another donor able to satisfy the target, and a late client joining
+from the validated snapshot plus contiguous input tail. Preserve checksum quorum.
+
+5. Supported history and memory budget: measured capability gap, not a leak.
+
+The four-player 600-frame storage drive retained 256 logical saves with 32 native
+captures and older byte saves. Peak raw JS physics buffers were 227070676 bytes
+(216.55 MiB); native retained high-water 28634472 bytes (27.31 MiB). Process RSS
+high-water was 807321600 bytes. These metrics overlap and must not be added.
+Native ownership released to zero; exact old-state replay passed. Tick including
+capture p50/p90 was 24.078/28.740 ms on an M5 Max. This is not a phone budget.
+
+Provide supported runner-level history/memory controls and public telemetry.
+The lower-level client already has snapshotBufferSize; the runner does not
+forward it. Validate bounded retention, rollback, snapshot donation, and late
+join together. State the supported mobile budget and measure it on a phone.
+
+6. Ordered seat ownership context: previous request still open.
+
+The custom runtime still receives step(inputs, commands). Latest presence
+cannot supply frame-ordered owner/claim/controlEpoch changes. Provide a public
+contract preserved through prediction, rollback, snapshots, and replay. Cover
+join, leave, same-tick owner replacement, retained-owner reconnect, and input
+substitution. Games need it to release grabs/vehicles and reset canonical
+player state without invisible empty-player collision bodies.
+
+7. Intentional leave: previous request still open with our platform SDK.
+
+Game SDK 5.28 room.leave() closes the socket; peers retain membership during
+reconnect grace. We measured 30.6-35.4 s previously and 30.578 s in this aged run.
+Provide or identify the matching public SDK/server intentional-leave path.
+Remove intentional membership promptly while retaining grace for unexpected
+disconnects. Verify seat policy and cleanup on both local and hosted paths.
+
+Please return each item's fixed/remaining status, public API adoption steps,
+regression-test results, exact package/server versions, and measured limits.
+Wreck Yard evidence is under games/wreck-yard/test-results/rc55-stress/.
+The durable record is games/wreck-yard/docs/rc55-stress-results.txt.
