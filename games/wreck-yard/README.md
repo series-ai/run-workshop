@@ -94,9 +94,13 @@ The repro returns exit 0 on official rc.55 and exit 1 on official rc.56.
 
 The [rc.57 validation record](docs/rc57-validation-results.txt) records the
 restore and topology repairs, new APIs, and remaining failures. Use the
-[rc.57 team prompt](docs/syncplay-rc57-team-prompt.txt) for the current findings.
+[rc.57 team prompt](docs/syncplay-rc57-team-prompt.txt) for that release's findings.
 The body-count repro also tests the 360/361 boundary with
 `--large-scene-boundary`. Keep `--require-stable` to enforce the same gates.
+
+The [rc.59 validation record](docs/rc59-validation-results.txt) checks the
+dynamic-body stability repair, explicit leave, and remaining limits. Use the
+[rc.59 team prompt](docs/syncplay-rc59-team-prompt.txt) for the latest findings.
 
 The standard browser tests use this separate local server entry point:
 
