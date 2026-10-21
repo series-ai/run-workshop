@@ -7,6 +7,7 @@ const options = {};
 for (let i = 2; i < process.argv.length; i++) {
   const flag = process.argv[i];
   if (flag === '--require-stable') { options.strict = true; continue; }
+  if (flag === '--large-scene-boundary') { options.largeScene = true; continue; }
   assert.ok(['--sdk', '--out'].includes(flag), `Unknown option: ${flag}`);
   const value = process.argv[++i];
   assert.ok(value && !value.startsWith('--'), `${flag} requires a path`);
@@ -21,19 +22,21 @@ const { nativePhysicsInstanceMemory } = await import(pathToFileURL(join(sdkRoot,
 const json = value => JSON.stringify(value, (_key, item) => typeof item === 'bigint' ? item.toString() : item);
 const memory = () => JSON.parse(json(nativePhysicsInstanceMemory()));
 const edge = .96, floorY = -.86, inertia = edge * edge / 6;
+const capacity = options.largeScene ? 512 : 32;
+const totals = options.largeScene ? [360, 361] : [16, 17];
 const definition = { tickRate: 30, initialGravity: { x: 0, y: -13.5, z: 0 }, substeps: 6, velocityIterations: 6,
   restitutionThreshold: .5, contactSpeed: 0, maximumLinearSpeed: 0, contactHertz: 0, contactDampingRatio: 1,
-  capacity: { bodies: 32, joints: 1, fluids: 0, fluidInteractions: 0, checkpoints: 2 }, portalProxyCapacity: 1 };
+  capacity: { bodies: capacity, joints: 1, fluids: 0, fluidInteractions: 0, checkpoints: 2 }, portalProxyCapacity: 1 };
 const floor = { kind: 'static', key: 'floor', shape: { type: 'box', halfX: 32, halfY: .5, halfZ: 32 },
   position: { x: 0, y: floorY - .5, z: 0 }, friction: .82, restitution: .08, rollingResistance: 0, layer: 1, mask: 0xffffffff };
 const report = { schema: 'small-stack-global-body-count-boundary-v1', sdkRoot,
   version: JSON.parse(await readFile(join(sdkRoot, 'package.json'))).version, definition,
-  fixture: 'Ten touching boxes and floor. Add five or six distant noncolliding static boxes. Wake the ten boxes once at frame121. Preserve .05m shift and sleep-by480 gates. Replay from frame120.', cases: [] };
-for (const totalBodies of [16, 17]) {
+  fixture: 'Ten touching boxes and floor. Add distant noncolliding static boxes to reach each total. Wake the ten boxes once at frame121. Preserve .05m shift and sleep-by480 gates. Replay from frame120.', cases: [] };
+for (const totalBodies of totals) {
   const row = { totalBodies, distantStaticBodies: totalBodies - 11, maximumShift: 0, samples: [] }; report.cases.push(row);
   const world = sdk.createPhysicsWorld3D(definition); let checkpoint;
   let boxes = [];
-  const arrays = [new Float64Array(32 * 7), new Float64Array(32 * 6), new BigUint64Array(32), new Uint8Array(32), new Uint32Array(32)];
+  const arrays = [new Float64Array(capacity * 7), new Float64Array(capacity * 6), new BigUint64Array(capacity), new Uint8Array(capacity), new Uint32Array(capacity)];
   try {
     boxes = world.edit(ops => {
       ops.createBody(floor);

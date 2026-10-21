@@ -1,0 +1,151 @@
+Wreck Yard follow-up after published Syncplay 6.0.0-rc.57
+=======================================================
+
+Package git: 1c1917567118c46254139c475aedcad0e0ca09fd.
+Game SDK: 5.28.0. Keep 30 Hz and display-rate interpolation.
+Use matching authority and client releases.
+
+Confirmed repairs
+-----------------
+
+The topology edit repro passes with and without a retained checkpoint.
+The full dense 400-box wake and shallow-edit cases now pass displacement,
+return-to-sleep, exact replay, and disposal gates through frame 2520.
+The public installed-runtime restore no longer returns stale latest output.
+Please keep those tests as regressions. These repairs need no new game API.
+
+The build passes. The app suite passes 537/539 tests. One failure is the
+known cage sky-ray fixture. The second is a new settling delay described
+below. Do not count it as the same existing fixture failure.
+
+Delivered APIs
+--------------
+
+rc.57 adds ordered seat context, runner history controls, recovery
+diagnostics, and source repairs for authority-based input scheduling and
+exact-target snapshot donation. Wreck Yard still needs to adopt seat context
+and explicit retention settings. These are no longer requests for missing
+public APIs. Please provide supported adoption guidance and tested limits.
+
+Remaining engine and platform work
+----------------------------------
+
+1. Remove scene-size-dependent stability behavior.
+
+The ten-box column still fails with 17 total bodies: maximum shift
+12.289766 m. Sixteen bodies pass at 0.007931 m.
+
+A fixed-capacity 512 control confirms another boundary:
+- rc.57 at 360 bodies: maximum shift 0.424567 m; ten boxes active at 480.
+- rc.57 at 361 bodies: maximum shift 0.006261 m; zero active at 480.
+- rc.56 fails both totals at 0.424567 m.
+
+The floor and colliding bodies keep the same IDs, order, and physics.
+Only one distant static body with mask 0 is added. Exact replay and cleanup
+pass. This is not a physical contact disturbance. The source selects the
+new path above 360 bodies, with multiple substeps and no active proxy hook.
+
+Run from games/wreck-yard with fresh output paths:
+node scripts/repro-syncplay-body-count.mjs --sdk <package> --out <new.json> --require-stable
+node scripts/repro-syncplay-body-count.mjs --sdk <package> --out <new.json> --large-scene-boundary --require-stable
+
+Both strict rc.57 commands currently exit 1. Generalize the repair across
+scene sizes and active portal proxies. Preserve forces, contacts, capacity
+guards, replay, and native cleanup. The 0.05 m limit is our fixture gate,
+not a claimed SDK guarantee for all arrangements.
+
+2. Explain or repair the new cylinder-stack settling delay.
+
+The app props test fails at frame 90. Five loose-tire cylinders are awake
+on rc.57. An identical compiled game drive on official rc.56 shows zero
+awake tires at frames 60, 90, and 120. rc.57 still has five at those samples.
+All five sleep by 180 and stay asleep through 900. No fractures occur.
+
+The test is src/sim/props.test.ts, "lets every other body sleep once settled".
+Do not bypass its gate without explaining the changed physical behavior.
+This is a settling delay, not proof of permanently active bodies.
+
+3. Validate bounded slow-client recovery.
+
+The new source schedules inputs against the latest observed authority tick
+and processes each confirmation batch with one restore/replay sequence.
+The loop still has no per-call work or time limit. Confirm current input
+delivery, neutral release, eventual checksum parity, and recovery latency
+under controlled stalls. Measure worst-case confirmation work too.
+
+The fresh six-second 6x stall case passed. Reverse movement reached about
+9.1 m on both peers. By the first neutral check requested two seconds after
+CPU clear, the client reported live with backlog 0. This is a sampled
+observation, not an exact recovery latency. The aged-room
+case also passed. This confirms recovery for that workload. It does not
+establish a worst-case work limit.
+
+The prior rc.55 run needed 27.671 s after a 6x CPU stall cleared. Its wire
+inputs were hundreds of ticks stale. Do not treat that old trace as a new
+rc.57 result. Fresh rc.57 browser results are in the validation record.
+
+4. Prove the missing-target donor path through the real protocol.
+
+The source now returns unavailable when the exact checkpoint is absent.
+The authority rotates untried tick/donor pairs. The old source mismatch
+is repaired. Test a donor that retains a later checkpoint but lacks the
+exact target, a second donor that can satisfy it, and a late client that
+uses the validated snapshot with its contiguous tail. Preserve checksum
+quorum. An ordinary successful aged-room transfer does not cover this path.
+
+5. Supply tested mobile retention settings and memory limits.
+
+The new runner controls exist. Default history remains 256. Our unchanged
+four-player storage test still peaks at 174.94 MiB of raw JS physics
+buffers, plus overlapping native/process metrics. Native retained
+high-water is 22.55 MiB. Old-state replay and disposal pass. This is not
+a leak finding or a phone budget.
+
+Provide a supported combination of snapshotBufferSize, maxInputRetentionFrames,
+checksumCadenceTicks, maxSnapshotBytes, and minimumSnapshotWitnesses. Verify
+rollback, donation, late join, and input-history retention together. State
+how pruning affects full replay export. Check that absolute-tick-indexed
+arrays remain bounded over long sessions. Measure the result on a phone.
+
+6. Validate ordered seats and guide game adoption.
+
+Seat context is now present. Test join, leave, same-tick owner replacement,
+retained-owner reconnect, substitution, rollback, snapshot hydration, and
+replay. State client/server compatibility requirements. Wreck Yard must
+store the ownership/epoch state used for canonical cleanup and consume
+step(inputs, commands, context). It currently ignores context.
+
+7. Identify the matching intentional-leave SDK/server path.
+
+Our Game SDK 5.28.0 room.leave() path still has reconnect grace. Syncplay
+rc.57 does not introduce a new intentional-leave call in the transport.
+Give exact companion versions and public API steps for prompt intentional
+membership removal while retaining grace for unexpected disconnects.
+The fresh rc.57 aged-room case still took 30552 ms to remove membership;
+rejoin then took 4848 ms.
+
+Performance and scope
+---------------------
+
+The rc.56/57/57/56 contact comparison improves resting cost. The shove
+fixture is more expensive in this sample: rc.57 p50 16.301-17.611 ms versus
+rc.56 14.730-16.261 ms. Physics paths and motion differ, so this is an
+end-to-end fixture cost, not an isolated solver regression.
+
+One fresh rc.57 touch-driven torch route passes all functional checks.
+Idle/held/final-settle display rates are 60.07/55.92/58.28 Hz. Final native
+step-plus-output p95 remains 21.00 ms versus idle 3.03 ms, with 414 active
+bodies versus idle 2. Cuts stay at 15 after release; fractures grow 3 to 4.
+Display improves, but native cost remains elevated after 60 seconds.
+Investigate persistent activity. This trace does not isolate its cause.
+
+The old rc.55 route ended with 19 cuts and 35 fractures. Physical outcomes
+differ, so this is not a controlled per-cut solver comparison. Neither run
+proves physical-phone performance. Test the new APIs and torch settling
+on the target device.
+
+Return each remaining item's status, exact package/server versions, public
+adoption steps, regression results, and measured limits.
+
+Durable record: games/wreck-yard/docs/rc57-validation-results.txt.
+Raw evidence: games/wreck-yard/test-results/rc57-validation/.

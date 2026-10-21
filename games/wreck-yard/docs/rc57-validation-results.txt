@@ -1,0 +1,235 @@
+rc.57 validation
+================
+
+Date: 20 October 2026, Pacific time.
+Game source: 55d43a77.
+SDK: published 6.0.0-rc.57.
+SDK git: 1c1917567118c46254139c475aedcad0e0ca09fd.
+Control: published 6.0.0-rc.56.
+Game SDK: 5.28.0.
+
+The checks used a separate checkout and an actual copy of the published
+package. They did not use local solver experiments. The main dependency
+stayed unchanged. The runtime identity used rc.57 and 30 Hz.
+
+Package and API changes
+-----------------------
+
+Thirty of 584 package files changed. Physics, runtime adapters, network
+protocol, authority, snapshots, replay, and runner code changed.
+
+Ordered seat state now reaches step(inputs, commands, context). Context
+contains frame and seats, including owner, claimId, controlEpoch, kind,
+connection, and substitution. Propagation paths cover confirmed inputs,
+prediction, rollback, snapshots, replay, and match verification. The existing
+Wreck Yard callback ignores context. Canonical seat cleanup still needs
+application changes. Seat types are exported from the package root and
+core runtime, not /browser. Use matching clients and authority. Old session
+snapshot decoders reject the new confirmedSeats field.
+
+Runner options now forward snapshotBufferSize, maxInputRetentionFrames,
+checksumCadenceTicks, maxSnapshotBytes, and minimumSnapshotWitnesses.
+Defaults still retain 256 snapshots. These options need explicit game
+configuration and combined rollback/donation tests. They do not define a
+phone memory budget. Input history pruning also prevents full replay export
+after the retained prefix is removed.
+
+New netStats fields expose authority frontier, recovery phase and backlog,
+selected snapshot tick, confirmation duration, snapshot count/capacity,
+and retained input frames. A live phase uses the latest received authority
+boundary. It does not establish current server time.
+
+Build and app tests
+-------------------
+
+Build, identity validation, and TypeScript passed. The suite passed 537 of
+539 tests across 74 files. One failure is the existing cage sky-ray fixture.
+It fails on official rc.54, rc.55, and rc.56 as well.
+
+The other failure is new: props.test.ts expects all non-floating props
+to sleep by frame 90. Five loose-tire cylinders remain awake on rc.57.
+An identical compiled app drive tested both official versions:
+
+  Version   Awake tires at 60/90/120/180/300/600/900
+  rc.56     0 / 0 / 0 / 0 / 0 / 0 / 0
+  rc.57     5 / 5 / 5 / 0 / 0 / 0 / 0
+
+Both runs have zero fractures. This is a new settling delay and an app
+acceptance failure. It is not permanent activity. The exact changed native
+operation that causes the delay was not isolated. The initial diagnostic
+record kept body IDs only because its pose property names were wrong.
+A corrected version records public position/velocity fields and confirms
+the same sleep counts. Both source versions and runs are preserved.
+
+Confirmed native repairs
+------------------------
+
+The public installed-runtime restore repro passes. After restore, runtime,
+native world, and latest output all report frame 0. rc.56 returned cached
+frame 1. No game API change is needed for this repair.
+
+The 400-box topology edit now succeeds with and without a retained
+checkpoint. Count stays 401 and the top box X half-size changes from 0.48
+to 0.47 m. Owned native resources return to zero.
+
+The full 400-box stress cases now pass: wake once and shallow edit. They
+reach frame 2520, replay every motion frame exactly from checkpoint 120,
+and have no active boxes from frame 480 onward. Maximum displacement is
+0.006261 m for wake once and 0.017132 m for shallow edit. Finite-state,
+shift, recovery, and resource cleanup gates pass.
+
+Scene-size boundaries remain
+----------------------------
+
+The default ten-box column repro still passes with 16 bodies and fails
+with 17. Maximum shifts are 0.007931 and 12.289766 m.
+
+A new option tests total body counts 360 and 361 with fixed capacity 512.
+The floor and ten colliding boxes have identical IDs and order. Distant
+static bodies have collisions disabled. Add one such body:
+
+  SDK      Total bodies   Max shift m   Active boxes at 480
+  rc.56    360            0.424567      10
+  rc.56    361            0.424567      10
+  rc.57    360            0.424567      10
+  rc.57    361            0.006261       0
+
+Both versions replay exactly and release native resources. rc.57 source
+selects the new large-stack path only above 360 bodies, with more than one
+substep and no active proxy hook. The small-world path remains at 16 or
+fewer bodies. These checks establish a boundary effect. They do not prove
+stability for other body arrangements or active portal proxies.
+
+Run from games/wreck-yard with fresh output paths:
+
+  node scripts/repro-syncplay-body-count.mjs --sdk /path/to/package --out test-results/boundary-new.json --require-stable
+  node scripts/repro-syncplay-body-count.mjs --sdk /path/to/package --out test-results/boundary-large-new.json --large-scene-boundary --require-stable
+
+Both strict rc.57 commands return exit 1 because one case fails.
+The default workload and gates are unchanged. The optional workload shares
+the same fixture with a larger capacity and the 360/361 totals.
+
+Checkpoint retention
+--------------------
+
+The four-player storage drive reached 600 frames. It retained 256 logical
+saves and at most 32 retained native captures. Checksum import briefly
+uses a 33rd native slot. Old-state decode, replay, checksum, and encoded
+output match exactly. Native ownership returns to zero after disposal.
+Stable and busy runner drives each reach 600 frames and release all saves.
+
+Peak raw JS physics buffers: 183433538 bytes, 174.94 MiB.
+Native retained high-water: 23641060 bytes, 22.55 MiB.
+Tick including capture p50/p90: 25.573/28.640 ms.
+Capture/conversion p50/p90: 1.699/1.920 ms.
+
+Raw JS physics buffers fell from the prior rc.56 sample of 216.55 MiB.
+These timing samples are not an ABBA storage comparison. Memory metrics
+overlap and must not be added. There is no leak or phone budget claim.
+
+Contact performance
+-------------------
+
+The unchanged contact probe ran in rc.56, rc.57, rc.57, rc.56 order.
+Separate processes ran in sequence with the same Node version.
+Public step plus latest output times, in milliseconds:
+
+  Version/run   Rest p50/p95     Shove p50/p95
+  rc.56 A       1.711 / 2.126    16.261 / 18.394
+  rc.57 B       1.101 / 1.394    17.611 / 20.168
+  rc.57 B       1.021 / 1.318    16.301 / 18.406
+  rc.56 A       1.518 / 1.955    14.730 / 16.555
+
+Rest cost improves. Shove cost is higher in this sample. The versions have
+different physics paths and motion, so these are end-to-end fixture costs,
+not an isolated solver regression. Sampled motion/contact records agree
+within each version. They need not agree across physics versions.
+
+Network source repairs and limits
+---------------------------------
+
+Input scheduling now uses the latest observed authority tick. Confirmation
+batches restore once, process confirmed frames, then restore prediction
+lead. Paced prediction stops while behind. The confirmation loop still
+drains contiguous frames without a per-call time or work limit.
+
+The snapshot donor now exports only the requested tick or sends unavailable.
+The authority selects an untried tick/donor pair after refusal. Exact target
+validation remains. This repairs the previous source mismatch. Aged-room
+snapshots 3480/sessionFrame 3481 and 3600/sessionFrame 3601 transferred
+successfully. No unavailable response, refusal, transfer rejection, or
+retry rotation after a failure was observed.
+The missing
+exact-checkpoint and donor-rotation branch still needs a focused real
+protocol test. A successful ordinary aged-room transfer does not cover it.
+
+The intentional leave path is unchanged with Game SDK 5.28.0. A matching
+SDK/server contract is still needed for prompt membership removal.
+
+Browser checks
+--------------
+
+All six serial headless browser cases passed. They cover the three
+existing local multiplayer flows, the six-second 6x CPU stall plus aged
+room, Chrome touch movement/release, and WebKit startup/taps. Tests use
+the actual rc.57 runtime identity and normal npm run dev.
+
+After the stall cleared, reverse movement reached about 9.1 m on both
+peers. By the first neutral check requested two seconds after CPU clear,
+the client reported recoveryPhase live and backlog 0. This is an observed
+sample, not an exact recovery latency or worst-case guarantee. New public
+netStats fields appeared in actual runner snapshots. The aged-room
+departure took 30552 ms and rejoin took 4848 ms. Intentional leave still
+waits for reconnect grace with Game SDK 5.28.0.
+
+The first movement flow measured 60 rendered Hz on both peers and about
+29.3 confirmed Hz. Interpolation changed positions between discrete
+confirmed frames. These are browser frame observations, not native solver
+timings or phone performance proof.
+
+Touch-driven torch test
+-----------------------
+
+One existing storage-torch drive passed all six functional checks and ten
+segments. It uses real CDP touch input, a real route to the storage stack,
+ten seconds of held Cut, release, and six ten-second settling samples.
+The existing aim hook changes aim only. It does not set canonical physics.
+
+  Phase           Display Hz   Pump p95 ms   Native step+read p95 ms   Active p50
+  Idle            60.07        5.40          3.03                      2
+  Held Cut        55.92        23.42         21.38                     402
+  Final 50-60s    58.28        23.19         21.00                     414
+
+Cuts stayed at 15 after release. Fractures rose from 3 to 4. Native body
+count increased from 697 to 709. Render bodies rose from 553 after cutting
+to 556 at the final sample. No page, shader, or session errors occurred.
+
+Display performance improves over the prior rc.55 route, but native cost
+stays high after release. The old run produced 19 cuts and 35 fractures
+by the end; this run produces 15 cuts and 4 fractures. Thus these are
+end-to-end route observations with different physical outcomes, not a
+controlled per-cut solver comparison. Persistent activity still needs
+investigation. This trace does not isolate its cause.
+
+Native timings include step and output work. Trace rings did not overwrite
+records. WASM memory was not reported. JS heap includes profiler retention.
+This run uses desktop Chrome 155 with touch emulation. It is not a phone
+performance result or a leak finding.
+
+Final test state
+----------------
+
+All owned browsers and servers closed. Ports 4537 and 4538 have no listener.
+The temporary browser TypeScript config initially failed to resolve Node
+types because it was outside the project. The final config uses explicit
+clean-project typeRoots. Test-inclusive TypeScript passed. Both attempts
+are preserved. No app, dependency, or test behavior was changed for that fix.
+
+Evidence and scope
+------------------
+
+Raw records are under test-results/rc57-validation/.
+The official package and checkout are under /private/tmp/wreck-yard-rc57-audit/.
+Existing native workload source hashes are recorded. The body-count probe
+adds only an optional large-boundary workload. No game source was changed.
+No deployment was made.

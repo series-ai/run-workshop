@@ -92,6 +92,12 @@ node scripts/repro-syncplay-latest-restore.mjs --sdk /path/to/package --out test
 
 The repro returns exit 0 on official rc.55 and exit 1 on official rc.56.
 
+The [rc.57 validation record](docs/rc57-validation-results.txt) records the
+restore and topology repairs, new APIs, and remaining failures. Use the
+[rc.57 team prompt](docs/syncplay-rc57-team-prompt.txt) for the current findings.
+The body-count repro also tests the 360/361 boundary with
+`--large-scene-boundary`. Keep `--require-stable` to enforce the same gates.
+
 The standard browser tests use this separate local server entry point:
 
 ```bash
