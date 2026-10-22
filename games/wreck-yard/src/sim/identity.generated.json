@@ -5,7 +5,7 @@
     "tickRate": 30,
     "inputSchemaId": "345106daf692f7b46b579d422c1552238acf759aa3b943c2d9cc029f3e338664",
     "stateSchemaId": "5e02b315d955d10831012bcf648424b349a5491ea460f2fd9d13df3ecb76aa17",
-    "deterministicVersion": "wreck-yard@1+syncplay@6.0.0-rc.54",
-    "engineIdentityHash": "e3b515692377f8e63190c9873f1bb83b7ae622d1c41818565ee6eac0ce27fcbb"
+    "deterministicVersion": "wreck-yard@1+syncplay@6.0.0-rc.60",
+    "engineIdentityHash": "76c257defdbef2fa64e43abd925caed501280a54491b3598677dbe25c0e38fc9"
   }
 }

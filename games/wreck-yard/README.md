@@ -100,7 +100,26 @@ The body-count repro also tests the 360/361 boundary with
 
 The [rc.59 validation record](docs/rc59-validation-results.txt) checks the
 dynamic-body stability repair, explicit leave, and remaining limits. Use the
-[rc.59 team prompt](docs/syncplay-rc59-team-prompt.txt) for the latest findings.
+[rc.59 team prompt](docs/syncplay-rc59-team-prompt.txt) for that release's findings.
+
+The main game now uses official Syncplay `6.0.0-rc.60` at 30 Hz.
+The [rc.60 validation record](docs/rc60-validation-results.txt) records the
+actual update and new stability finding. Use the
+[rc.60 team prompt](docs/syncplay-rc60-team-prompt.txt) for the latest requests.
+
+```bash
+node scripts/repro-syncplay-dynamic-kind-boundary.mjs --sdk /path/to/package --out test-results/dynamic-kind-new.json
+node scripts/repro-syncplay-rc60-physics-edge.mjs --sdk /path/to/package --out test-results/physics-edge-new.json
+node scripts/repro-syncplay-rc60-canonical-edge.mjs --sdk /path/to/rc60/package --control /path/to/rc59/package --out test-results/canonical-edge-new.json
+RC60_AUDIT_DIR=test-results/rc60-browser-new npx playwright test --config playwright.rc60.config.ts
+```
+
+The dynamic-kind probe returns exit 1 on rc.60. One distant body changes
+from static to sleeping dynamic at a fixed total of 270 bodies. The column
+then fails the same 0.05 m stability gate. The checkpoint and canonical
+edge probes pass. Use fresh output paths. The browser campaign uses the
+main installation, ports 4577/4578, and serial Chrome/WebKit cases.
+Disable `SYNCPLAY_SOURCE_OVERRIDE` when you verify a published package.
 
 The standard browser tests use this separate local server entry point:
 
