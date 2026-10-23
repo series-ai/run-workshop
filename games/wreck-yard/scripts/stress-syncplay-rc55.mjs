@@ -37,9 +37,12 @@ async function runWorker() {
   const sdk = await import(pathToFileURL(join(sdkRoot, 'dist/physics/3d.js')).href);
   await sdk.initPhysics3D({ artifact: 'production' });
   const { nativePhysicsInstanceMemory } = await import(pathToFileURL(join(sdkRoot, 'core/src/physics/world.mjs')).href);
-  const { physicsWasmMetadata, physicsWasmModuleBase64 } = await import(pathToFileURL(join(sdkRoot, 'core/src/physics/physics-wasm-module.generated.mjs')).href);
+  const { physicsWasmMetadata, physicsWasmModuleBase64, physicsWasmUrl } = await import(pathToFileURL(join(sdkRoot, 'core/src/physics/physics-wasm-module.generated.mjs')).href);
   const memory = () => JSON.parse(json(nativePhysicsInstanceMemory()));
-  const wasmSha256 = sha(Buffer.from(physicsWasmModuleBase64, 'base64'));
+  const wasmBytes = typeof physicsWasmUrl === 'function'
+    ? await readFile(physicsWasmUrl())
+    : Buffer.from(physicsWasmModuleBase64, 'base64');
+  const wasmSha256 = sha(wasmBytes);
   assert.equal(wasmSha256, physicsWasmMetadata.wasmSha256);
   const edge = .96, floorY = -.86, inertia = edge * edge / 6;
   const positions = Array.from({ length: 400 }, (_, i) => ({

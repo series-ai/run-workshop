@@ -10,6 +10,7 @@ import { perfRecorder, type PerfReport } from '../src/perf/recorder';
 import type { YardState } from '../src/sim/state';
 
 const busy = process.argv.includes('--busy');
+const windowHistory = process.argv.includes('--window');
 const room = yardRoomOptions(1);
 const logicalCheckpoints = new Set<unknown>();
 let lastFrame = 0;
@@ -23,6 +24,7 @@ const liveCount = (report: PerfReport) => {
 perfRecorder.start({ capacity: 65536, maxDurationMs: 60000 });
 const runner = createSyncplayRunner<YardState, YardInput, unknown, YardState, YardState>({
   inputOwnership: room.inputOwnership,
+  ...(windowHistory ? { snapshotRetention: 'window' as const } : {}),
   runtimeFactory: (identity, sessionConfigBytes) => {
     const lease = createYardRuntime(identity, sessionConfigBytes);
     const runtime = lease.runtime;
@@ -79,12 +81,12 @@ try {
   await runner.dispose();
   const afterDispose = liveCount(perfRecorder.export());
   const peak = report.counterSummary['checkpoint.peak']?.max ?? 0;
-  console.log(JSON.stringify({ busy, completed, lastFrame, peak, retained, logicalRetained, afterDispose, logicalAfterDispose: logicalCheckpoints.size }));
+  console.log(JSON.stringify({ busy, retention: windowHistory ? 'window' : 'default-required', completed, lastFrame, peak, retained, logicalRetained, afterDispose, logicalAfterDispose: logicalCheckpoints.size }));
   assert.equal(afterDispose, 0, 'Runner did not release every checkpoint.');
   assert.equal(logicalCheckpoints.size, 0, 'Runner did not release every logical checkpoint.');
   if (completed) {
-    assert.equal(logicalRetained, 256, 'Logical checkpoint history did not settle at 256.');
-    assert.equal(retained, 32, 'Native checkpoint count did not settle at 32.');
+    assert.equal(logicalRetained, windowHistory ? 256 : 1, 'Logical checkpoint count does not match the retention policy.');
+    assert.equal(retained, windowHistory ? 32 : 1, 'Native checkpoint count does not match the retention policy.');
     assert.ok(peak <= 32, `Native checkpoint peak was ${peak}.`);
   }
 }

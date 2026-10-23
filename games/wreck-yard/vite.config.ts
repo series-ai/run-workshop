@@ -39,7 +39,8 @@ export default defineConfig(({ mode, command }) => {
     esbuild: { target: 'es2022' },
     optimizeDeps: {
       esbuildOptions: { target: 'es2022' },
-      exclude: ['@series-inc/rundot-game-sdk'],
+      // Keep the external Syncplay WASM next to its module.
+      exclude: ['@series-inc/rundot-game-sdk', '@series-inc/rundot-syncplay'],
     },
     build: { target: 'es2022' }, // Support top-level await for embedded libraries
     // fs.allow: the voxel-kit file: dependency symlinks outside this

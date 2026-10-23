@@ -1,0 +1,236 @@
+Syncplay rc.66 review and validation
+===================================
+
+Date: 23 October 2026, Pacific time.
+Current base: a1e4def0. Other AI target: ed829a69cc39f6559eec04db8067ccb5d7f097d4.
+Target branch: ph/wreck-yard-syncplay-rc62.
+SDK: official 6.0.0-rc.66, git 4ad5cd255e7e384b711512e6c3430f3a9a012c56.
+Game SDK: 5.28.0. Simulation: 30 Hz with display interpolation.
+
+The other AI update was on a separate branch. The selected workspace and
+private release 1.8.2 still used rc.60 at the start of this review. The target
+branch descends from the selected HEAD and changes ten game files. This
+review integrates those changes with the existing working-tree edits.
+
+Package and build
+-----------------
+
+The registry archive SHA-512 matches. All 597 files in the clean installed
+SDK match the extracted official archive. Local solver and source overrides
+are off. The new runtime identity uses engine hash
+66ed4ee786f7a1e0ca6bc6f532d2409ff99cc7278a93c884135d20ca494a96b0.
+A separate source copy receives a fresh npm ci from the target lockfile.
+Identity checking, TypeScript and Vite build pass.
+
+rc.66 ships external WASM. The production build emits physics-BQxTZ2JW.wasm
+at 4437267 bytes, with a JavaScript entry of about 1.91 MB. The rc.60 entry
+was about 7.66 MB with embedded WASM. These sizes describe packaging, not
+a measured startup speed gain. Vite must exclude Syncplay from dependency
+prebundling so the WASM URL remains beside its module. That target exclusion
+is preserved with the existing conditional source-override configuration.
+
+App source review
+-----------------
+
+Two independent session agents review the app delta and official SDK.
+No P0/P1 production API flaw is found. No new public physics call is needed.
+The stack-crate material has friction 0.85 and a registered native name.
+Storage and returns crates keep wood appearance, hit sounds and break rules.
+Their fragments retain storageBay and therefore keep the contact material.
+The fuel-drum fixture now places the player relative to the drum's actual
+resting position. Its blast assertions remain. The vehicle test covers 24
+small pose offsets and retains travel greater than 3 m and scrap speed below
+12 m/s. The final full suite passes all 539 tests.
+
+One review issue needed a test correction. The target reduced the storage
+motion gates from 0.24/0.096 m to 0.06/0.01 m for bottom/top layers, but still
+counted vertical movement. The corrected test first runs a no-shove control
+from a settled checkpoint. It then restores that checkpoint and applies the
+same shove. Both layer checks require horizontal movement beyond the initial
+and control positions. Vertical settling cannot satisfy the gates.
+
+The first correction incorrectly required positive Z motion. That full run
+passed 538/539. A three-arm diagnostic resolves the failure: neutral bodies
+stay still; wake-only top bodies settle about 2.4 mm; with the shove, median
+bottom Z moves +87.96 mm and top Z moves -15.75 mm, with about +5 mm top Y.
+The top response is real horizontal motion in the opposite direction.
+The final check uses horizontal magnitude and keeps the target distance gates.
+The full final suite passes 539/539. The first failure is a test assumption,
+not an observed SDK regression. All diagnostic inputs and results remain.
+
+Existing unrelated cage and checkpoint test corrections remain separate.
+The cage ray correction is present in the tested working-tree source. This
+report does not attribute that old fixture correction to rc.66.
+
+Native physics and checkpoints
+------------------------------
+
+The prior dynamic-kind defect is repaired in this fixture. At fixed 270 total
+bodies and capacity 512, the 16/17-dynamic variants both reach maximum column
+shift 0.003025 m. Their colliding motion traces match exactly. All distant
+mask-zero bodies stay motionless. All column boxes sleep at frame 480. Both
+variants replay exactly and release owned native resources.
+
+The existing small and large body-count boundaries pass their strict gates.
+Latest-after-runtime-restore, topology edits with/without a retained save,
+discarded-future checkpoint independence and all 30 canonical/wire edge checks
+pass. The controls use the official rc.60 package where applicable. No result
+claims cross-version deterministic continuation.
+
+The 400-box wake and shallow-edit drives pass through frame 2520. Maximum
+shifts are 0.003025/0.012668 m. Finite state, exact replay, sleep recovery by
+480, final sleep and zero-owned-resource cleanup pass in both cases.
+
+The old dense harness initially failed before simulation because it assumed
+base64-embedded WASM. The harness now reads either published artifact format
+and verifies the same metadata SHA-256. No physical limit is changed. The
+failed setup log and successful corrected run are retained separately.
+
+Memory and changed retention policy
+-----------------------------------
+
+The runner default is now snapshotRetention 'required'. Offline retains the
+current save. Networked clients retain prediction/rollback frames and checksum
+or donation frames. The app has no arbitrary old confirmed-frame reads.
+The README now identifies rc.66 and the actual default policy.
+
+The profiler previously required 256 logical/32 native saves for every run.
+It now tests the default separately from explicit --window full history:
+
+  Policy             Drive     Logical/native retained   Native peak
+  default-required   stable    1 / 1                     2
+  default-required   busy      1 / 1                     2
+  window             stable    256 / 32                  32
+  window             busy      256 / 32                  32
+
+All four drives reach frame 600 and dispose to zero. This is an offline
+runner test. It does not prove networked retention or donation by itself.
+
+The separate manual 256-save four-player storage drive also reaches frame
+600. Old-state decode, replay, checksum and encoded output match. Raw JS
+physics history peaks at 173293530 bytes, 165.27 MiB. Native retained
+high-water is 19437128 bytes. These metrics overlap and must not be added.
+The manual fixture deliberately keeps old saves; it does not measure the
+new default runner policy. Tick including capture p50/p90 is 3.243/7.748 ms;
+capture/conversion is 0.837/0.962 ms. This is one sample, not an ABBA claim
+or a phone budget. Native ownership returns to zero.
+
+Browser, production artifact and torch
+--------------------------------------
+
+The first serial suite has five passes and one failure. The normal URL-join
+case fails its unchanged frame-gap gate: the difference does not fall below
+9 within 30 seconds; the last observed gap is 88. Startup peers share frame
+58 and room CQR6Z7. Final host is frame 923 in new room YMVKBE; guest is frame
+1011 in original room CQR6Z7. Both continue advancing, but each has crew 1/4.
+Tickets show duplicate create and join actions before any test room switch.
+The case has no early runner/wire subscription, so those details are absent.
+
+A source write contaminated that case. Root copied a shortened materials.ts
+comment into the running isolated source at 20:15:12.269688 UTC. The case ran
+20:15:08.308 through about 20:15:42.633 UTC. Vite watches that dependency and
+can reload the application. This is a concrete setup fault that matches the
+automatic room restart. The first reporter JSON and six decoded reports are
+preserved. At that point, a single focused repetition with frozen source and earlier
+read-only observations was pending. The first failure is not erased or
+counted as a pass. Deployment was held until that result was classified.
+
+The other five cases pass, including the aged-room, touch-cancel and WebKit
+checks. Aged recovery movement is 9.626 m on both peers, with live/backlog 0
+by the first neutral check requested two seconds after CPU clear. Aged leave
+and rejoin take 120/1133 ms. This is sampled recovery, not a work-time bound.
+
+The cold production-compiled client test passes with a static server and the
+same public local-authority bridge configuration used by the SDK plugin.
+The built entry response hash matches disk. The WASM response has MIME
+application/wasm, a valid binary signature and 4437267 bytes. SHA-256 is
+3de0319cd6f7b69eaa1b12fb7989f3c79b8b4ca9e49da74e4b93b5d3b6aff064,
+matching both dist and official rc.66. Frames advance 8 to 18 with rc.66/30 Hz
+wire identity. No source app entry or profiling WASM is loaded. These are
+unmodified production bytes with a local platform bridge, not a hosted test.
+
+The single fresh focused repetition passes in 25.3 seconds with the
+original assertions and 30-second/9-frame gate unchanged. Added observers
+are read-only and start before the gate. All source hashes and modification
+times match before and after. No Vite update or full-reload event occurs.
+Early subscribed frames match direct render reads. Both peers use rc.66.
+Display rates are about 60 Hz; confirmed rates are 29.83/29.92 Hz. The initial
+failure is consistent with source-write/HMR contamination. The first run did
+not directly record HMR, so this remains the likely setup cause, not a proven
+SDK regression. Five uncontaminated initial cases and the focused case pass.
+The failed first attempt remains in the record.
+
+The single unchanged touch torch route passes all six checks and ten
+segments. Input is neutral after release. Cuts stop at 10. There are no
+fractures. Native/render body counts stay 697/544 through the final sample.
+
+  Phase           Display Hz   Pump p95 ms   Native step+latest p95 ms   Active p50
+  Idle            59.97        3.60          2.60                         2
+  Held Cut        53.06        6.60          33.60                        2
+  Final 50-60s    59.97        4.21          3.11                         2
+
+The final phase returns near idle cost and activity. The prior rc.60 route
+ended near 58 Hz with 14 cuts, three fractures and active median 411. Cut
+outcomes differ, so this is an end-to-end route result, not an isolated
+solver comparison. Pump and native p95 values use different sample groups.
+They must not be added or treated as nested percentiles. Desktop touch
+emulation does not establish physical-iPhone performance.
+
+All owned browsers and servers close. Ports 4597, 4598 and 4599 have no
+listener. The final typed check and evidence integration are recorded in
+the browser matrix. No further browser workload is planned.
+
+API and coverage limits
+-----------------------
+
+Source inspection shows no <=16-dynamic solver cutoff. Supported contacts
+have a minimum of 16 iterations and cylinder contacts 24. The snapshot
+versions, physics ABI and 160 MiB native ceiling remain. Contact chunks can
+share unchanged checkpoint data. Wheel support and portal tracking change.
+The real-WASM app suite covers the existing vehicle and portal fixtures;
+that suite is not proof for every wheel, portal or shape arrangement.
+
+maxConfirmedFramesPerTurn is available but opt-in. This integration keeps
+the other AI runner settings. It does not claim a bounded confirmation-work
+budget. A successful stall test cannot establish a worst-case scheduling
+bound. Missing-target donor refusal/rotation and hosted account behavior
+remain separate coverage limits. Local desktop tests are not iPhone proof.
+
+Evidence and completion
+------------------------
+
+Raw source hashes, exact commands, package proof, first failures and final
+results are under test-results/rc66-validation. The original working copy and
+other AI commit remain available. No test gate is skipped or disabled.
+The integrated main installation also passes fresh npm ci. All 597 installed
+SDK files match the official package. The final identity check, TypeScript
+and production build pass. Application output files match the cold-tested
+artifact exactly. The SDK library manifest differs only in buildTime.
+Generated Finder metadata is removed from dist. Runtime assets are unchanged.
+
+The main build first rejected a comment-only source change with
+WRECK_YARD_IDENTITY_DRIFT. Identity hashes raw simulation modules, including
+comments. Root restored the exact reviewed target material source and kept
+the valid target identity. One restore attempt used an incorrect relative
+path and repeated that error. The corrected absolute-path restore and final
+build pass. No identity guard was bypassed. The tested cold artifact and
+final application bytes match.
+
+RUN preflight reports zero critical errors and five warnings: Game SDK
+5.28.0 is below the recommended bridge patch, thumbnail/audio remain bundled,
+and source/dist viewport tags produce two warnings. No check is suppressed.
+
+Independent source review finds no P0/P1 issue in the integration, horizontal
+control test, retention contracts or external-WASM hash handling. The required
+smart-route review command runs in an isolated gate copy. Its generic worker
+guard refuses the authorized package, lockfile and Vite changes before a model
+runs. The available independent session reviewers provide the fallback. No
+external reviewer model is claimed. The initial browser setup failure and
+successful unchanged frozen retry remain explicit review limitations.
+
+All unrelated tracked source hashes match the initial record. The Vite change
+is staged separately from the existing source-override work. Evidence includes
+both original browser reporter files, the native harness setup failure, the
+first test assumption failure, successful final checks and source-write event.
+Implementation verification is complete. The user separately authorizes the
+release operation if stable. Its result is recorded in deployment.json.

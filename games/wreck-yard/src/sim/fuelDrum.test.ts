@@ -176,7 +176,9 @@ describe('fuel drums', () => {
   it('the blast throws a nearby player away from it', () => {
     const sim = testSim();
     const id = placeDrum(sim);
-    patchPlayer(sim, { x: OPEN[0] - 2, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: OPEN[1], vx: 0, vy: 0, vz: 0 });
+    // The drum can roll after it lands. Put the player 2 m from where the drum stopped, not from OPEN.
+    const drum = physicsStateBodyById(sim.state.world, id)!;
+    patchPlayer(sim, { x: drum.x - 2, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: drum.z, vx: 0, vy: 0, vz: 0 });
     steps(sim, 3);
     lightNow(sim, id);
     const before = sim.state.players[0]!;

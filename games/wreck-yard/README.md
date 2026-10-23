@@ -102,10 +102,17 @@ The [rc.59 validation record](docs/rc59-validation-results.txt) checks the
 dynamic-body stability repair, explicit leave, and remaining limits. Use the
 [rc.59 team prompt](docs/syncplay-rc59-team-prompt.txt) for that release's findings.
 
-The main game now uses official Syncplay `6.0.0-rc.60` at 30 Hz.
+The main game uses official Syncplay `6.0.0-rc.66` at 30 Hz.
+Storage and returns crates use the `stack-crate` contact material
+(friction 0.85). They retain the wood appearance, hit sounds and break rules.
+Syncplay now defaults to `snapshotRetention: 'required'`. The game does not
+read arbitrary old confirmed frames. The offline retention probe tests this
+one-save default and the full history policy with `--window` separately.
+Both dynamic-kind variants now pass the unchanged stability gates.
+See the [rc.66 review and validation record](docs/rc66-validation-results.txt).
 The [rc.60 validation record](docs/rc60-validation-results.txt) records the
 actual update and new stability finding. Use the
-[rc.60 team prompt](docs/syncplay-rc60-team-prompt.txt) for the latest requests.
+[rc.60 team prompt](docs/syncplay-rc60-team-prompt.txt) for that release's requests.
 
 ```bash
 node scripts/repro-syncplay-dynamic-kind-boundary.mjs --sdk /path/to/package --out test-results/dynamic-kind-new.json

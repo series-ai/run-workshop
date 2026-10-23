@@ -9,8 +9,18 @@ export type YardMaterial = (typeof YARD_MATERIALS)[number];
  * no bounce. No yard body or box uses it. Its hits sound like steel.
  */
 export const LIFT_DECK_MATERIAL = 'lift-deck';
-/** Every world material name: the yard materials and the lift deck. */
-export type PhysicsMaterialName = YardMaterial | typeof LIFT_DECK_MATERIAL;
+/**
+ * The storage and returns crates. They look, sound, and break like wood. Their
+ * friction is higher than the concrete floor's friction. Thus a crate grips the
+ * crate below it more than the floor grips the bottom crate. When a hit stops
+ * the bottom layer, friction also stops the crates above it, so they do not
+ * slide off and fall seconds later. Syncplay 6.0.0-rc.62 does not hold stacked
+ * crates together, so this rule applies to the crates themselves. Fragments of
+ * a cut crate keep it.
+ */
+export const STACK_CRATE_MATERIAL = 'stack-crate';
+/** Every world material name: the yard materials, the lift deck, and the stack crates. */
+export type PhysicsMaterialName = YardMaterial | typeof LIFT_DECK_MATERIAL | typeof STACK_CRATE_MATERIAL;
 
 /**
  * Contact values of each material. Concrete keeps the values that every surface
@@ -24,6 +34,7 @@ export const MATERIAL_COEFFICIENTS: Readonly<Record<PhysicsMaterialName, { reado
   rubber: { friction: 0.95, restitution: 0.55 },
   glass: { friction: 0.45, restitution: 0.05 },
   [LIFT_DECK_MATERIAL]: { friction: 0.9, restitution: 0 },
+  [STACK_CRATE_MATERIAL]: { friction: 0.85, restitution: 0.12 },
 };
 
 /**
@@ -52,5 +63,6 @@ export function isYardMaterial(value: unknown): value is YardMaterial {
 export function hitMaterialOf(name: string): YardMaterial {
   if (isYardMaterial(name)) return name;
   if (name === LIFT_DECK_MATERIAL) return 'steel';
+  if (name === STACK_CRATE_MATERIAL) return 'wood';
   throw new Error(`WRECK_YARD_MATERIAL_UNKNOWN: ${name}`);
 }

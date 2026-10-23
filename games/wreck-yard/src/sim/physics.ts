@@ -41,7 +41,7 @@ import {
   VOXEL_SIZE,
 } from './constants';
 import { CAGE_LAYER, CAGE_PANELS, WORLD_LAYER } from './cage';
-import { LIFT_DECK_MATERIAL, PHYSICS_MATERIALS, type PhysicsMaterialName } from './materials';
+import { LIFT_DECK_MATERIAL, PHYSICS_MATERIALS, STACK_CRATE_MATERIAL, type PhysicsMaterialName } from './materials';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import type { ShellBox } from './setPieces';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
@@ -264,7 +264,8 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
       // A whole loose tire keeps rolling: it has less damping than other bodies.
       linearDamping: bodyLinearDamping(body),
       angularDamping: body.collider === 'cylinder' ? TIRE_DAMPING.angular : ANGULAR_DAMPING,
-      material: body.material,
+      // Storage and returns crates and their fragments grip each other harder than wood (sim/materials.ts).
+      material: body.storageBay ? STACK_CRATE_MATERIAL : body.material,
       layer: WORLD_LAYER,
       mask: 0xffffffff,
     },

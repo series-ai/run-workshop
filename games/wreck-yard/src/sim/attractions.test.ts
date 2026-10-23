@@ -53,18 +53,30 @@ describe('native storage attraction', () => {
     const layerSize = STORAGE.columns * STORAGE.rows;
     const bottom = spawns.slice(0, layerSize).map((spawn) => physicsStateBodyById(sim.state.world, spawn.body.id)!);
     const top = spawns.slice(-layerSize).map((spawn) => physicsStateBodyById(sim.state.world, spawn.body.id)!);
-    sim.edit((physics) => {
-      // Below CRATE_BREAK.speed (8 m/s): a harder shove breaks FRAGILE crates (crateBreak.test.ts).
-      for (const spawn of spawns.slice(0, STORAGE.columns * STORAGE.rows)) setPhysicsBodyVelocity(physics, spawn.body.id, [0, 0, 6 / TICK_RATE]);
-    });
-    step(sim, 180);
-    const moved = (before: typeof bottom[number], distance: number) => {
-      const after = physicsStateBodyById(sim.state.world, before.id)!;
-      return Math.hypot(after.x - before.x, after.y - before.y, after.z - before.z) > distance;
-    };
-    expect(bottom.filter((body) => moved(body, STORAGE.size / 4)).length).toBeGreaterThan(20);
-    expect(top.filter((body) => moved(body, STORAGE.size / 10)).length).toBeGreaterThan(20);
-    expect(sim.state.bodies.filter((b) => b.storageBay === 'storage')).toHaveLength(400);
+    const settled = sim.save();
+    try {
+      step(sim, 180);
+      const neutral = new Map(spawns.map(({ body }) => [body.id, physicsStateBodyById(sim.state.world, body.id)!]));
+      expect(top.filter((body) => Math.hypot(neutral.get(body.id)!.x - body.x, neutral.get(body.id)!.z - body.z) > STORAGE.size / 96)).toHaveLength(0);
+      sim.restore(settled);
+      sim.edit((physics) => {
+        // Keep the shove below the crate break speed of 8 m/s.
+        for (const spawn of spawns.slice(0, layerSize)) setPhysicsBodyVelocity(physics, spawn.body.id, [0, 0, 6 / TICK_RATE]);
+      });
+      step(sim, 180);
+      const movedHorizontally = (before: typeof bottom[number], distance: number) => {
+        const after = physicsStateBodyById(sim.state.world, before.id)!;
+        const control = neutral.get(before.id)!;
+        return Math.hypot(after.x - before.x, after.z - before.z) > distance
+          && Math.hypot(after.x - control.x, after.z - control.z) > distance;
+      };
+      // Check horizontal response against the same settled state with no shove.
+      expect(bottom.filter((body) => movedHorizontally(body, STORAGE.size / 16)).length).toBeGreaterThan(20);
+      expect(top.filter((body) => movedHorizontally(body, STORAGE.size / 96)).length).toBeGreaterThan(20);
+      expect(sim.state.bodies.filter((b) => b.storageBay === 'storage')).toHaveLength(400);
+    } finally {
+      sim.release(settled);
+    }
   });
 
   it('carries a rider and a loose crate to every floor in both directions', () => {
