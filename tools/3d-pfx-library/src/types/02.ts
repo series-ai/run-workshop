@@ -2,6 +2,7 @@ import { PfxSpriteName } from '../particleSprites'
 import { ReactElement } from 'react'
 import * as THREE from 'three'
 import type { ArtStyleCluster, BlendMode, EffectSpace, EffectType, LoopMode, MobileSafety, PfxMarketSourceFamily, PfxPreset, PfxPresetOverrides, PfxRenderSurfaceKind } from './01'
+import type { PfxMaterialTuning } from '../materials/types'
 
 export interface PfxSurfaceTuning {
   /** Explicit atlas sprite; overrides the effect-family mapping. */
@@ -138,7 +139,7 @@ export interface PfxSurfaceTuning {
   /** Cross-section multiplier for beam/column mesh volumes. */
   widthScale?: number
   /** Dedicated merged geometry variant for a semantic mesh surface. */
-  meshGeometry?: 'screen-space-analytic-quad' | 'target-spawn-acquisition-quad' | 'target-spawn-confirmation-pin-quad' | 'curse-binding-seal' | 'curse-twisted-spire' | 'spawn-screen-reticle' | 'spawn-telegraph-volumetric-reticle' | 'spawn-telegraph-arrival-footprint' | 'spawn-telegraph-arrival-cage' | 'spawn-telegraph-arrival-avatar' | 'jump-pickup-launch-cradle' | 'jump-pickup-reward-gem' | 'target-break-lock-shell' | 'target-break-honeycomb-fragments' | 'target-break-ground-reticle' | 'exhaust-hit-mechanical-nozzle' | 'debris-miss-rock-fragments' | 'debris-release-rock-fragments' | 'spark-cone-streak-prisms' | 'shard-break-crystal-fragments' | 'shard-break-ignition-core' | 'ice-impact-grounded-splinters' | 'frost-aura-crystal-crown' | 'frost-aura-crystal-glint' | 'water-column-churning-body' | 'water-column-foam-spray' | 'snow-idle-flurry-field' | 'snow-idle-depth-granules' | 'wind-beam-pressure-ribbons' | 'wind-beam-debris-leaves' | 'petal-ambient-drifting-blossoms' | 'sand-burst-sculpted-fan' | 'mud-charge-sculpted-clods' | 'slime-ring-viscous-annulus' | 'acid-spawn-corrosive-aperture' | 'healing-loop-renewal-helix' | 'holy-release-radiant-mandorla' | 'curse-cone-twisted-thorn-fan' | 'glyph-trail-rune-chain' | 'glyph-trail-lead-sigil' | 'beam-telegraph-warning-lane' | 'beam-telegraph-source-aperture' | 'exhaust-telegraph-warning-lane' | 'exhaust-telegraph-source-vent' | 'flame-burst-folded-tongues' | 'meteor-burst-impact-diorama' | 'laser-spray-volumetric-nozzle' | 'laser-spray-bolt-rack' | 'plasma-hit-contact-bloom' | 'plasma-hit-broken-flux-arcs' | 'electric-critical-voltage-cage' | 'electric-critical-faceted-nexus' | 'electric-critical-impact-starburst' | 'electric-critical-diagonal-discharge' | 'plasma-ambient-contained-core' | 'plasma-ambient-broken-orbits' | 'snow-spawn-frost-cradle' | 'ghost-critical-spectral-talons' | 'barrier-low-health-fractured-shell' | 'barrier-low-health-breach-ribs' | 'flame-charge-trefoil-crucible' | 'flame-charge-convergence-tendrils' | 'meteor-ring-impact-crater' | 'meteor-ring-heat-front' | 'shockwave-spawn-arrival-flare' | 'shockwave-spawn-pressure-front' | 'shield-aura-fractured-shell' | 'mud-burst-reference-splash-crown' | 'mud-burst-reference-clod-eruption' | 'mud-burst-reference-earth-crown' | 'mud-burst-reference-wet-clot-splash' | 'healing-burst-reference-helix' | 'healing-burst-reference-bloom' | 'holy-burst-reference-sacred-flame' | 'holy-burst-reference-sanctity-sun' | 'holy-burst-reference-mandorla' | 'shadow-burst-reference-claw' | 'shadow-burst-reference-fracture' | 'shield-aura-defensive-envelope'
+  meshGeometry?: 'screen-space-analytic-quad' | 'target-spawn-acquisition-quad' | 'target-spawn-confirmation-pin-quad' | 'curse-binding-seal' | 'curse-twisted-spire' | 'spawn-screen-reticle' | 'spawn-telegraph-volumetric-reticle' | 'spawn-telegraph-arrival-footprint' | 'spawn-telegraph-arrival-cage' | 'spawn-telegraph-arrival-avatar' | 'jump-pickup-launch-cradle' | 'jump-pickup-reward-gem' | 'target-break-lock-shell' | 'target-break-honeycomb-fragments' | 'target-break-ground-reticle' | 'exhaust-hit-mechanical-nozzle' | 'debris-miss-rock-fragments' | 'debris-release-rock-fragments' | 'spark-cone-streak-prisms' | 'shard-break-crystal-fragments' | 'shard-break-ignition-core' | 'ice-impact-grounded-splinters' | 'frost-aura-crystal-crown' | 'frost-aura-crystal-glint' | 'water-column-churning-body' | 'water-column-foam-spray' | 'snow-idle-flurry-field' | 'snow-idle-depth-granules' | 'wind-beam-pressure-ribbons' | 'wind-beam-debris-leaves' | 'petal-ambient-drifting-blossoms' | 'sand-burst-sculpted-fan' | 'mud-charge-sculpted-clods' | 'slime-ring-viscous-annulus' | 'acid-spawn-corrosive-aperture' | 'healing-loop-renewal-helix' | 'holy-release-radiant-mandorla' | 'curse-cone-twisted-thorn-fan' | 'glyph-trail-rune-chain' | 'glyph-trail-lead-sigil' | 'beam-telegraph-warning-lane' | 'beam-telegraph-source-aperture' | 'exhaust-telegraph-warning-lane' | 'exhaust-telegraph-source-vent' | 'flame-burst-folded-tongues' | 'meteor-burst-impact-diorama' | 'laser-spray-volumetric-nozzle' | 'laser-spray-bolt-rack' | 'plasma-hit-contact-bloom' | 'plasma-hit-broken-flux-arcs' | 'electric-critical-voltage-cage' | 'electric-critical-faceted-nexus' | 'electric-critical-impact-starburst' | 'electric-critical-diagonal-discharge' | 'plasma-ambient-contained-core' | 'plasma-ambient-broken-orbits' | 'snow-spawn-frost-cradle' | 'ghost-critical-spectral-talons' | 'barrier-low-health-fractured-shell' | 'barrier-low-health-breach-ribs' | 'flame-charge-trefoil-crucible' | 'flame-charge-convergence-tendrils' | 'meteor-ring-impact-crater' | 'meteor-ring-heat-front' | 'shockwave-spawn-arrival-flare' | 'shockwave-spawn-pressure-front' | 'shield-aura-fractured-shell' | 'mud-burst-reference-splash-crown' | 'mud-burst-reference-clod-eruption' | 'mud-burst-reference-earth-crown' | 'mud-burst-reference-wet-clot-splash' | 'healing-burst-reference-helix' | 'healing-burst-reference-bloom' | 'holy-burst-reference-sacred-flame' | 'holy-burst-reference-sanctity-sun' | 'holy-burst-reference-mandorla' | 'shadow-burst-reference-claw' | 'shadow-burst-reference-fracture' | 'shield-aura-defensive-envelope' | 'blood-death-pigment-rupture' | 'debris-burst-fractured-mass' | 'despawn-impact-absence-cage' | 'dust-burst-grounded-crown' | 'footstep-ambient-cadence-wake' | 'ghost-trail-spectral-procession' | 'hologram-break-figure-quad' | 'hologram-break-projector-quad' | 'leaf-burst-sculpted-canopy' | 'leaf-burst-vein-seed-curls' | 'marker-release-badge-quad' | 'marker-release-ground-quad' | 'petal-burst-sculpted-corolla' | 'petal-burst-stamen-pollen-calyx' | 'portal-telegraph-countdown-aperture' | 'scan-cone-ground-quad' | 'scan-cone-volume-sector' | 'screen-space-pickup-receipt-quad' | 'shadow-break-rupture-cluster' | 'shockwave-burst-broken-pressure-dome' | 'snow-burst-crystal-bloom' | 'snow-burst-powder-drift' | 'thruster-trail-closed-plume' | 'thruster-trail-nozzle-disc' | 'warp-spray-displaced-facets'
   /** Clip-space UI treatment that renders independently of camera framing. */
   screenShader?: 'danger-vignette'
   /** Preset color slot for this layer — keeps rings in the effect's dominant hue. */
@@ -147,14 +148,22 @@ export interface PfxSurfaceTuning {
   ringPurpose?: 'shockwave' | 'boundary' | 'reticle' | 'glyph'
   /** Burst-synced animation for mesh layers (flash pop, expanding shockwave, aura pulse, one-shot volume bloom, shatter dissolve). */
   meshMotion?: 'flash' | 'shockwave' | 'pulse' | 'bloom' | 'break' | 'charge' | 'countdown' | 'pickup' | 'travel' | 'glow' | 'drift' | 'breathe'
-  lifecycle?: 'held-projectile-ignition' | 'impact-core-flash' | 'impact-afterglow' | 'impact-shard-burst' | 'debris-release-ballistic' | 'spark-cone-burst' | 'shard-break-fracture' | 'ice-impact-contact' | 'frost-aura-breathing-loop' | 'water-column-eruption' | 'snow-idle-weather-loop' | 'petal-ambient-breeze-loop' | 'sand-burst-ballistic' | 'rain-burst-impact' | 'rain-burst-particle-impact' | 'wind-burst-particle-release' | 'exhaust-hit-particle-backfire' | 'teleport-hit-particle-arrival' | 'holy-release-particle-cleansing' | 'beam-telegraph-particle-countdown' | 'barrier-column-particle-sentinel' | 'jump-beam-particle-lift' | 'curse-column-particle-binding' | 'laser-spray-particle-salvo' | 'water-column-particle-eruption' | 'target-spawn-particle-acquire' | 'shard-break-particle-fracture' | 'dash-idle-particle-readiness' | 'healing-loop-particle-renewal' | 'spark-loop-particle-contact' | 'warning-loop-particle-alert' | 'spawn-screen-particle-transition' | 'mud-charge-convergence' | 'mud-burst-reference-eruption' | 'slime-ring-adhesion' | 'acid-spawn-eruption' | 'healing-loop-renewal' | 'healing-burst-reference-renewal' | 'holy-release-cleansing' | 'shadow-break-rupture' | 'shadow-burst-detonation' | 'blood-death-ballistic-collapse' | 'curse-cone-propagation' | 'curse-cone-particle-propagation' | 'curse-burst-particle-malediction' | 'critical-hit-burst-particle-confirm' | 'electric-critical-particle-discharge' | 'embers-burst-particle-breakup' | 'flame-burst-particle-ignite' | 'ice-burst-particle-impact' | 'ghost-critical-particle-haunt' | 'jump-burst-particle-launch' | 'landing-burst-particle-impact' | 'meteor-burst-particle-collision' | 'slime-burst-particle-elasticity' | 'spark-cone-particle-release' | 'hit-spark-particle-confirm' | 'acid-charge-particle-convergence' | 'blood-charge-particle-convergence' | 'glyph-trail-inscription' | 'beam-telegraph-countdown' | 'exhaust-telegraph-arm-countdown-vent' | 'flame-burst-ignite-blossom-peel' | 'meteor-burst-descent-collision-cool' | 'laser-spray-salvo' | 'plasma-hit-discharge' | 'meteor-impact-settle' | 'shockwave-spawn-arrival' | 'shockwave-spawn-pressure-release' | 'dust-loop-breathing' | 'coin-pickup-reward-burst' | 'level-up-surge' | 'spark-gap-loop' | 'electric-trail-propagation' | 'wind-impact-shear' | 'wind-beam-surge' | 'acid-idle-boil' | 'portal-charge-aperture' | 'reward-telegraph-beacon' | 'hologram-aura-loop' | 'blast-beam-sustain' | 'blast-burst-particle-rupture' | 'glyph-ring-inscription' | 'water-cone-surge' | 'sand-spray-burst' | 'curse-column-binding' | 'spawn-screen-transition' | 'spawn-telegraph-assembly' | 'jump-pickup-launch' | 'plasma-ambient-breathing-loop' | 'snow-spawn-transition' | 'barrier-low-health-failure-loop' | 'barrier-burst-particle-ward' | 'flame-charge-compress' | 'combo-ring-confirm-hold-decay' | 'pickup-burst-particle-receipt' | 'ui-pickup-collect-rise-deposit' | 'target-spawn-acquire-confirm-release' | 'poison-burst-particle-rupture' | 'acid-burst-particle-eruption' | 'healing-burst-restoration-release' | 'holy-burst-consecration-release' | 'mud-burst-grounded-eruption' | 'reward-charge-gather-release'
+  lifecycle?: 'held-projectile-ignition' | 'impact-core-flash' | 'impact-afterglow' | 'impact-shard-burst' | 'debris-release-ballistic' | 'spark-cone-burst' | 'shard-break-fracture' | 'ice-impact-contact' | 'frost-aura-breathing-loop' | 'water-column-eruption' | 'snow-idle-weather-loop' | 'petal-ambient-breeze-loop' | 'sand-burst-ballistic' | 'rain-burst-impact' | 'rain-burst-particle-impact' | 'wind-burst-particle-release' | 'exhaust-hit-particle-backfire' | 'teleport-hit-particle-arrival' | 'holy-release-particle-cleansing' | 'beam-telegraph-particle-countdown' | 'barrier-column-particle-sentinel' | 'jump-beam-particle-lift' | 'curse-column-particle-binding' | 'laser-spray-particle-salvo' | 'water-column-particle-eruption' | 'target-spawn-particle-acquire' | 'shard-break-particle-fracture' | 'dash-idle-particle-readiness' | 'healing-loop-particle-renewal' | 'spark-loop-particle-contact' | 'warning-loop-particle-alert' | 'spawn-screen-particle-transition' | 'mud-charge-convergence' | 'mud-burst-reference-eruption' | 'slime-ring-adhesion' | 'acid-spawn-eruption' | 'healing-loop-renewal' | 'healing-burst-reference-renewal' | 'holy-release-cleansing' | 'shadow-break-rupture' | 'shadow-burst-detonation' | 'blood-death-ballistic-collapse' | 'curse-cone-propagation' | 'curse-cone-particle-propagation' | 'curse-burst-particle-malediction' | 'critical-hit-burst-particle-confirm' | 'electric-critical-particle-discharge' | 'embers-burst-particle-breakup' | 'flame-burst-particle-ignite' | 'ice-burst-particle-impact' | 'ghost-critical-particle-haunt' | 'jump-burst-particle-launch' | 'landing-burst-particle-impact' | 'meteor-burst-particle-collision' | 'slime-burst-particle-elasticity' | 'spark-cone-particle-release' | 'hit-spark-particle-confirm' | 'acid-charge-particle-convergence' | 'blood-charge-particle-convergence' | 'glyph-trail-inscription' | 'beam-telegraph-countdown' | 'exhaust-telegraph-arm-countdown-vent' | 'flame-burst-ignite-blossom-peel' | 'meteor-burst-descent-collision-cool' | 'laser-spray-salvo' | 'plasma-hit-discharge' | 'meteor-impact-settle' | 'shockwave-spawn-arrival' | 'shockwave-spawn-pressure-release' | 'dust-loop-breathing' | 'coin-pickup-reward-burst' | 'level-up-surge' | 'spark-gap-loop' | 'electric-trail-propagation' | 'wind-impact-shear' | 'wind-beam-surge' | 'acid-idle-boil' | 'portal-charge-aperture' | 'reward-telegraph-beacon' | 'hologram-aura-loop' | 'blast-beam-sustain' | 'blast-burst-particle-rupture' | 'glyph-ring-inscription' | 'water-cone-surge' | 'sand-spray-burst' | 'curse-column-binding' | 'spawn-screen-transition' | 'spawn-telegraph-assembly' | 'jump-pickup-launch' | 'plasma-ambient-breathing-loop' | 'snow-spawn-transition' | 'barrier-low-health-failure-loop' | 'barrier-burst-particle-ward' | 'flame-charge-compress' | 'combo-ring-confirm-hold-decay' | 'pickup-burst-particle-receipt' | 'ui-pickup-collect-rise-deposit' | 'target-spawn-acquire-confirm-release' | 'poison-burst-particle-rupture' | 'acid-burst-particle-eruption' | 'healing-burst-restoration-release' | 'holy-burst-consecration-release' | 'mud-burst-grounded-eruption' | 'reward-charge-gather-release' | 'debris-burst-fracture-eject-fall' | 'despawn-impact-collapse' | 'dust-burst-compress-roll-settle' | 'footstep-ambient-cadence-loop' | 'ghost-trail-procession' | 'hologram-break-stabilize-fracture-collapse' | 'leaf-burst-botanical-release' | 'marker-release-clamp-confirm-lift-settle' | 'petal-burst-botanical-bloom' | 'portal-telegraph-countdown' | 'scan-cone-acquire-sweep-resolve' | 'shockwave-burst-compress-expand-attenuate' | 'snow-burst-impact' | 'thruster-trail-ignite-sustain-cutoff'
   /**
    * Dedicated GLSL mesh surface — real geometry + shader instead of a
    * textured plane. 'fresnel-shell' = view-angle rim sphere (shield bubbles;
    * pair with meshMotion 'break' for shatter). 'vortex-swirl' = polar-UV
-   * spiral disc (portals). 'portal-throat' = fresnel-lit aperture depth.
+   * spiral disc (portals). 'portal-aperture' = dark spiral opening. 'portal-throat' = fresnel-lit aperture depth.
    * 'arc-sweep' = burst-clocked crescent with leading
-   * edge + tail erosion (melee slashes).
+   * edge + tail erosion (melee slashes). 'hologram-burst-projection' and
+   * 'hologram-burst-emitter' = scanned bust and its projector.
+   * 'dissolve-eroding-prop' and 'dissolve-front-fragments' = solid urn and
+   * the flakes its erosion front releases. 'ghost-burst-apparition' and
+   * 'ghost-burst-wisps' = hooded spectral mask and its torn curling wisps.
+   * 'poison-cloud-gas-bank' and 'poison-cloud-spores' = looping low gas
+   * bank and its spores and bubbles. 'warp-burst-fold-sheet' and
+   * 'warp-burst-shear-traces' = folding space lattice and the traces its
+   * shear releases. These ten own their geometry.
    */
   meshShader?:
     | 'fire-body'
@@ -166,6 +175,7 @@ export interface PfxSurfaceTuning {
     | 'force-field-shell'
     | 'heal-wave'
     | 'vortex-swirl'
+    | 'portal-aperture'
     | 'portal-throat'
     | 'arc-sweep'
     | 'energy-column'
@@ -197,6 +207,56 @@ export interface PfxSurfaceTuning {
     | 'exhaust-telegraph-vent'
     | 'flame-burst-blossom'
     | 'meteor-burst-collision'
+    | 'debris-burst-ballistic-breakup'
+    | 'dust-burst-pigment-roll'
+    | 'shockwave-burst-pressure-front'
+    | 'hologram-burst-projection'
+    | 'hologram-burst-emitter'
+    | 'dissolve-eroding-prop'
+    | 'dissolve-front-fragments'
+    | 'ghost-burst-apparition'
+    | 'ghost-burst-wisps'
+    | 'poison-cloud-gas-bank'
+    | 'poison-cloud-spores'
+    | 'warp-burst-fold-sheet'
+    | 'warp-burst-shear-traces'
+    | 'frost-burst-crystal-fan'
+    | 'frost-burst-freezing-mist'
+    | 'electric-burst-branch-network'
+    | 'electric-burst-corona'
+    | 'plasma-burst-magnetic-core'
+    | 'plasma-burst-ion-filaments'
+    | 'water-burst-splash-crown'
+    | 'water-burst-ballistic-droplets'
+    | 'bubble-burst-thin-film'
+    | 'bubble-burst-pop-fragments'
+    | 'rune-burst-inscription'
+    | 'rune-burst-glyph-fragments'
+    | 'healing-burst-restoration-weave'
+    | 'healing-burst-renewal-motes'
+    | 'holy-burst-consecration-rays'
+    | 'holy-burst-sanctity-feathers'
+    | 'acid-burst-corrosive-splash'
+    | 'acid-burst-caustic-spray'
+    | 'slime-burst-elastic-splat'
+    | 'slime-burst-sticky-drops'
+    | 'teleport-burst-spatial-slices'
+    | 'teleport-burst-arrival-traces'
+    | 'spawn-burst-materialize-weave'
+    | 'spawn-burst-rising-motes'
+    | 'despawn-burst-unmake-slices'
+    | 'despawn-burst-exit-fragments'
+    | 'dash-burst-shear-ribbons'
+    | 'dash-burst-speed-traces'
+    | 'reflect-burst-parry-fan'
+    | 'reflect-burst-return-streaks'
+  /**
+   * Shared material settings. Absent = the existing renderer. Present, even
+   * as an empty object, opts the layer into the shared material path. Only
+   * `frameAnimation` replaces the legacy pulse. Validate authored input with
+   * parsePfxAuthoredRecipeJson.
+   */
+  material?: PfxMaterialTuning
 }
 
 export interface PfxRenderSurface {
@@ -294,13 +354,14 @@ export interface PfxSurfaceMaterialProps {
   edgeHardness: number
 }
 
+/** Read-only result: getPfxFlipbookFrameProps can return one shared frozen value. */
 export interface PfxFlipbookFrameProps {
-  frameCount: number
-  frameIndex: number
-  uvOffset: [number, number]
-  uvScale: [number, number]
-  opacityMultiplier: number
-  sizeMultiplier: number
+  readonly frameCount: number
+  readonly frameIndex: number
+  readonly uvOffset: readonly [number, number]
+  readonly uvScale: readonly [number, number]
+  readonly opacityMultiplier: number
+  readonly sizeMultiplier: number
 }
 
 export interface PfxSurfaceAnimationProps {
@@ -348,6 +409,7 @@ export interface PfxRenderPlanOptions {
   /**
    * Render from an explicit recipe instead of the registry — lets a frozen
    * baseline snapshot play beside the current recipe for before/after review.
+   * Its effectId must equal the preset effectId (PfxRecipeOverrideMismatchError).
    */
   recipeOverride?: PfxAuthoredRecipe
 }
