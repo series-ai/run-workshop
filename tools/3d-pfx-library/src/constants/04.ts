@@ -1632,6 +1632,9 @@ varying float vBrightness;
 varying float vFlicker;
 varying float vVariant;
 varying float vChargeEnvelope;
+#ifdef PFX_MAT_FRAME_ANIMATION
+  varying float vPfxAge;
+#endif
 
 void main() {
   float progress;
@@ -1697,6 +1700,11 @@ void main() {
   // between cameras, so shape variation reads as authored volume rather than
   // texture swimming.
   vVariant = aLife.x;
+  #ifdef PFX_MAT_FRAME_ANIMATION
+    // Explicit frame animation plays at the descriptor rate in actual age
+    // (effect seconds), not normalized progress times the base lifetime.
+    vPfxAge = max(age, 0.0);
+  #endif
 
   float wobbleT = uTime * uTiming * aWobble.y + aWobble.x;
   vec3 wobble = vec3(sin(wobbleT), cos(wobbleT * 0.83) * 0.7, sin(wobbleT * 0.6) * 0.3) * uTurbulence * uTurbulenceScale * 0.055;

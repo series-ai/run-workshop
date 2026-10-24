@@ -8,7 +8,13 @@ import {
   EFFECT_TYPE_FILTERS,
   GamePfx,
   PFX_CONTROL_DEFINITIONS,
+  PFX_DEFAULT_ATLAS_REGISTRY,
+  PFX_LEGACY_PULSE_LABEL,
   PFX_MOBILE_RUNTIME_POLICY,
+  PfxMaterialProvider,
+  PfxRecipeParseError,
+  parsePfxAuthoredRecipe,
+  parsePfxAuthoredRecipeJson,
   createPfxStructuralQualityAudit,
   createPfxProductionReadinessReport,
   createPfxStressScenario,
@@ -31,8 +37,19 @@ import {
   type PfxControls,
   type PfxPresetOverrides,
   type PfxAuthoredRecipe,
+  type PfxMaterialQuality,
   type PfxProductionReadinessEffect,
 } from '@pfx'
+import {
+  MaterialInspector,
+  MaterialQualitySelector,
+  applyPfxMaterialLayerEdit,
+  readPfxMaterialQualityQuery,
+  removePfxMaterialFeature,
+  setPfxMaterialFeature,
+  type PfxMaterialLayerEdit,
+} from './MaterialInspector'
+import { PfxMaterialRuntimeProbe, describePfxMaterialRuntime, usePfxMaterialPreview, type PfxMaterialRuntimeStatus } from './materialRuntimeStatus'
 import {
   PFX_TRANSPORT_SPEEDS,
   PFX_TRANSPORT_STEP_SECONDS,
@@ -476,7 +493,42 @@ const PFX_DOD_QUICK_SEARCHES = [
 interface PfxEmitterEdit {
   opacity?: number
   scale?: number
+  /** Non-material tuning fields. The `material` key never appears here. */
   tuning: Record<string, unknown>
+  /** Feature-level material edits; see MaterialInspector. */
+  material?: PfxMaterialLayerEdit
+}
+
+/** Drops an edit entry that no longer changes anything. */
+function prunePfxEmitterEdit(edit: PfxEmitterEdit): PfxEmitterEdit | undefined {
+  const empty =
+    edit.opacity === undefined &&
+    edit.scale === undefined &&
+    Object.keys(edit.tuning).length === 0 &&
+    edit.material === undefined
+  return empty ? undefined : edit
+}
+
+type PfxWorkingRecipeCheck =
+  | { ok: true; recipe: PfxAuthoredRecipe }
+  | { ok: false; error: PfxRecipeParseError }
+
+/** The one validation boundary for edits. Other exceptions stay loud. */
+function checkPfxWorkingRecipe(recipe: PfxAuthoredRecipe): PfxWorkingRecipeCheck {
+  try {
+    return { ok: true, recipe: parsePfxAuthoredRecipe(recipe) }
+  } catch (error) {
+    if (error instanceof PfxRecipeParseError) return { ok: false, error }
+    throw error
+  }
+}
+
+function isPfxMaterialError(error: PfxRecipeParseError, phase: string): boolean {
+  return error.location.layer === phase && error.field.includes('.tuning.material')
+}
+
+function pfxLayerKey(surface: PfxAuthoredRecipe['surfaces'][number]): string {
+  return surface.phase ?? surface.kind
 }
 
 const EMITTER_NUMERIC_FIELDS: Array<{ key: string; label: string; step: number }> = [
@@ -510,19 +562,45 @@ function PfxEmitterPanel({
   recipe,
   edits,
   disabled,
+  editError,
+  layerError,
+  materialQuality,
+  reducedMotion,
+  materialRevision,
+  materialRuntime,
   onToggle,
   onEdit,
+  onMaterialEdit,
+  onMaterialReset,
+  onMaterialRetry,
   onReset,
 }: {
   recipe: PfxAuthoredRecipe
   edits: Record<string, PfxEmitterEdit>
   disabled: ReadonlySet<string>
+  /** Parser error of the working recipe. The preview keeps the last valid recipe. */
+  editError: PfxRecipeParseError | null
+  /** A rejected edit request, for example an unknown layer phase. */
+  layerError: string | null
+  materialQuality: PfxMaterialQuality
+  reducedMotion: boolean
+  materialRevision: number
+  /** Measured by PfxMaterialRuntimeProbe for the preview. */
+  materialRuntime: PfxMaterialRuntimeStatus
   onToggle: (phase: string) => void
   onEdit: (phase: string, field: string, value: unknown, level: 'surface' | 'tuning') => void
+  onMaterialEdit: (
+    phase: string,
+    update: (edit: PfxMaterialLayerEdit | undefined, base: PfxAuthoredRecipe['surfaces'][number]) => PfxMaterialLayerEdit | undefined,
+  ) => void
+  onMaterialReset: (phase: string) => void
+  onMaterialRetry: () => void
   onReset: () => void
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copy, setCopy] = useState<{ state: 'idle' } | { state: 'copied' } | { state: 'error'; message: string }>({ state: 'idle' })
+  useEffect(() => setCopy({ state: 'idle' }), [recipe, edits, disabled])
   const hasChanges = Object.keys(edits).length > 0 || disabled.size > 0
+  const panelError = editError && !recipe.surfaces.some((surface) => isPfxMaterialError(editError, pfxLayerKey(surface))) ? editError : null
   return (
     <section className="pfx-emitters" data-testid="pfx-emitter-panel" aria-label="Emitters">
       <div className="pfx-emitters-header">
@@ -533,19 +611,33 @@ function PfxEmitterPanel({
             data-testid="pfx-emitter-copy"
             onClick={(event) => {
               event.preventDefault()
+              // Copy the working recipe minus disabled layers, and only after
+              // the public recipe parser accepts the exact copied text.
               const working = {
                 ...recipe,
                 surfaces: recipe.surfaces
-                  .filter((surface) => !disabled.has(surface.phase ?? surface.kind))
-                  .map((surface) => applyEmitterEdit(surface, edits[surface.phase ?? surface.kind])),
+                  .filter((surface) => !disabled.has(pfxLayerKey(surface)))
+                  .map((surface) => applyEmitterEdit(surface, edits[pfxLayerKey(surface)])),
               }
-              navigator.clipboard?.writeText(JSON.stringify(working, null, 2)).then(
-                () => setCopied(true),
-                () => setCopied(false),
+              const text = JSON.stringify(working, null, 2)
+              try {
+                parsePfxAuthoredRecipeJson(text)
+              } catch (error) {
+                if (!(error instanceof PfxRecipeParseError)) throw error
+                setCopy({ state: 'error', message: error.message })
+                return
+              }
+              if (!navigator.clipboard) {
+                setCopy({ state: 'error', message: 'The clipboard is not available in this page.' })
+                return
+              }
+              navigator.clipboard.writeText(text).then(
+                () => setCopy({ state: 'copied' }),
+                (error: unknown) => setCopy({ state: 'error', message: `The clipboard write failed: ${String(error)}` }),
               )
             }}
           >
-            {copied ? 'Copied ✓' : 'Copy recipe JSON'}
+            {copy.state === 'copied' ? 'Copied ✓' : 'Copy recipe JSON'}
           </button>
           {hasChanges ? (
             <button type="button" data-testid="pfx-emitter-reset" onClick={onReset}>
@@ -554,8 +646,23 @@ function PfxEmitterPanel({
           ) : null}
         </div>
       </div>
+      {copy.state === 'error' ? (
+        <p role="alert" className="pfx-material-error-text" data-testid="pfx-emitter-copy-error">
+          Recipe JSON was not copied. {copy.message}
+        </p>
+      ) : null}
+      {panelError ? (
+        <p role="alert" className="pfx-material-error-text" data-testid="pfx-emitter-edit-error">
+          This edit is not valid: {panelError.message}. The preview uses the last valid recipe. Your edits are saved.
+        </p>
+      ) : null}
+      {layerError ? (
+        <p role="alert" className="pfx-material-error-text" data-testid="pfx-emitter-layer-error">
+          {layerError}
+        </p>
+      ) : null}
       {recipe.surfaces.map((surface) => {
-        const phase = surface.phase ?? surface.kind
+        const phase = pfxLayerKey(surface)
         const edit = edits[phase]
         const effective = applyEmitterEdit(surface, edit)
         const off = disabled.has(phase)
@@ -700,6 +807,24 @@ function PfxEmitterPanel({
                 )
               })}
             </div>
+            <MaterialInspector
+              phase={phase}
+              surface={effective}
+              baseMaterial={surface.tuning?.material}
+              edited={edit?.material !== undefined}
+              quality={materialQuality}
+              reducedMotion={reducedMotion}
+              atlasRegistry={PFX_DEFAULT_ATLAS_REGISTRY}
+              editError={editError && isPfxMaterialError(editError, phase) ? editError : null}
+              runtime={materialRuntime}
+              revision={materialRevision}
+              onSetFeature={(feature, value) => onMaterialEdit(phase, (current) => setPfxMaterialFeature(current, feature, value))}
+              onRemoveFeature={(feature) =>
+                onMaterialEdit(phase, (current, base) => removePfxMaterialFeature(current, feature, base.tuning?.material))
+              }
+              onReset={() => onMaterialReset(phase)}
+              onRetry={onMaterialRetry}
+            />
           </details>
         )
       })}
@@ -716,11 +841,15 @@ function applyEmitterEdit(
   edit: PfxEmitterEdit | undefined,
 ): PfxAuthoredRecipe['surfaces'][number] {
   if (!edit) return surface
+  const tuning: Record<string, unknown> = { ...surface.tuning, ...edit.tuning }
+  const material = applyPfxMaterialLayerEdit(surface.tuning?.material, edit.material)
+  if (material) tuning.material = material
+  else delete tuning.material
   return {
     ...surface,
     opacity: edit.opacity ?? surface.opacity,
     scale: edit.scale ?? surface.scale,
-    tuning: { ...surface.tuning, ...edit.tuning } as typeof surface.tuning,
+    tuning: tuning as typeof surface.tuning,
   }
 }
 
@@ -999,25 +1128,80 @@ export function PfxBrowserApp() {
   const transportPreviewSeconds = pfxTransportPreviewSeconds(transport)
   const [emitterEdits, setEmitterEdits] = useState<Record<string, PfxEmitterEdit>>({})
   const [disabledEmitters, setDisabledEmitters] = useState<ReadonlySet<string>>(new Set())
+  const [layerEditError, setLayerEditError] = useState<string | null>(null)
+  // Material preview state. Quality is never written into recipe JSON.
+  const materialQualityQuery = useMemo(
+    () => readPfxMaterialQualityQuery(typeof window === 'undefined' ? '' : window.location.search),
+    [],
+  )
+  const [materialQuality, setMaterialQuality] = useState<PfxMaterialQuality>(materialQualityQuery.quality)
   useEffect(() => {
     setEmitterEdits({})
     setDisabledEmitters(new Set())
+    setLayerEditError(null)
   }, [selectedId])
   const authoredRecipe = selected ? (AUTHORED_EFFECT_RECIPES[selected.effect.id] ?? null) : null
-  // The working recipe the live render actually plays: authored layers minus
-  // toggled-off emitters, with inspector edits applied on top.
-  const editedRecipe = useMemo(
+  // Every authored layer with its inspector edits. Disabled layers stay in
+  // this check so a toggle never turns into a validation error.
+  const workingRecipe = useMemo(
     () =>
       authoredRecipe
         ? {
             ...authoredRecipe,
-            surfaces: authoredRecipe.surfaces
-              .filter((surface) => !disabledEmitters.has(surface.phase ?? surface.kind))
-              .map((surface) => applyEmitterEdit(surface, emitterEdits[surface.phase ?? surface.kind])),
+            surfaces: authoredRecipe.surfaces.map((surface) => applyEmitterEdit(surface, emitterEdits[pfxLayerKey(surface)])),
           }
-        : undefined,
-    [authoredRecipe, disabledEmitters, emitterEdits],
+        : null,
+    [authoredRecipe, emitterEdits],
   )
+  const workingRecipeCheck = useMemo(() => (workingRecipe ? checkPfxWorkingRecipe(workingRecipe) : null), [workingRecipe])
+  const lastValidRecipeRef = useRef<PfxAuthoredRecipe | null>(null)
+  useEffect(() => {
+    if (workingRecipeCheck?.ok) lastValidRecipeRef.current = workingRecipeCheck.recipe
+  }, [workingRecipeCheck])
+  const lastValidRecipe = lastValidRecipeRef.current
+  const previewRecipe = workingRecipeCheck?.ok
+    ? workingRecipeCheck.recipe
+    : lastValidRecipe && lastValidRecipe.effectId === authoredRecipe?.effectId
+      ? lastValidRecipe
+      : authoredRecipe
+  // The recipe the live render actually plays: the last valid working
+  // recipe minus toggled-off emitters.
+  const editedRecipe = useMemo(
+    () =>
+      previewRecipe
+        ? { ...previewRecipe, surfaces: previewRecipe.surfaces.filter((surface) => !disabledEmitters.has(pfxLayerKey(surface))) }
+        : undefined,
+    [previewRecipe, disabledEmitters],
+  )
+  // Every layer edit goes through this phase check. An unknown phase is a
+  // rejected edit, not a silent no-op.
+  const updateLayerEdit = (
+    phase: string,
+    update: (entry: PfxEmitterEdit | undefined, surface: PfxAuthoredRecipe['surfaces'][number]) => PfxEmitterEdit | undefined,
+  ) => {
+    const surface = authoredRecipe?.surfaces.find((candidate) => pfxLayerKey(candidate) === phase)
+    if (!surface) {
+      setLayerEditError(`The edit was not applied: layer '${phase}' is not in ${authoredRecipe?.effectId ?? 'this effect'}.`)
+      return
+    }
+    setLayerEditError(null)
+    setEmitterEdits((current) => {
+      const next = { ...current }
+      const entry = update(current[phase], surface)
+      if (entry) next[phase] = entry
+      else delete next[phase]
+      return next
+    })
+  }
+  const updateMaterialEdit = (
+    phase: string,
+    update: (edit: PfxMaterialLayerEdit | undefined, surface: PfxAuthoredRecipe['surfaces'][number]) => PfxMaterialLayerEdit | undefined,
+  ) => {
+    updateLayerEdit(phase, (entry, surface) => {
+      const material = update(entry?.material, surface)
+      return prunePfxEmitterEdit({ ...(entry ?? { tuning: {} }), material })
+    })
+  }
   // Emitter toggles mute the SAME-named layer on both sides of the compare
   // so a layer can be isolated before vs after. Value edits stay AFTER-only:
   // they are proposed changes, and the baseline must keep rendering the
@@ -1088,6 +1272,14 @@ export function PfxBrowserApp() {
       ...controlOverrides,
     })
   }, [controlOverrides, selected])
+  // Measured material status of the single preview. A runtime error shows
+  // the last ready recipe and keeps the edits (materialRuntimeStatus.tsx).
+  const materialPreview = usePfxMaterialPreview(
+    selected?.effect.id ?? '',
+    editedRecipe,
+    [preset, materialQuality, reducedMotion],
+    Boolean(selected && !isInspectPackId(selected.effect.id)) && previewMode === 'single',
+  )
   // A single play covers exactly ONE burst cycle — from first spawn to the
   // last particle gone — so the timeline window follows the selected
   // effect's real cycle duration instead of a fixed 2s.
@@ -1458,6 +1650,10 @@ export function PfxBrowserApp() {
         <div
           className="pfx-stage"
           ref={stageRef}
+          data-material-quality={materialQuality}
+          data-material-preview={materialPreview.display.kind}
+          data-material-runtime={describePfxMaterialRuntime(materialPreview.runtime)}
+          data-material-revision={materialPreview.revision}
           data-testid="pfx-3d-stage"
           role="application"
           tabIndex={0}
@@ -1484,6 +1680,9 @@ export function PfxBrowserApp() {
               preserveDrawingBuffer: Boolean(realDeviceCapture || reviewCapture),
             }}
           >
+            {/* The detail viewer authors at high quality. Hosts and the feed
+                keep the provider default (low). */}
+            <PfxMaterialProvider quality={materialQuality}>
             <PfxStageEnvironment effectId={selected?.effect.id} reviewFraming={reviewFraming} />
             {reviewFraming !== 'isolated' ? <PfxGameplayContext effectId={selected?.effect.id} /> : null}
             <OrbitCameraRig orbit={orbitRef} autoRotate={!reducedMotion && !reviewCameraLocked && orbitDragRef.current == null} />
@@ -1491,13 +1690,19 @@ export function PfxBrowserApp() {
               <group position={createPfxReviewEffectPosition(selected?.effect.id, reviewFraming)}>
                 {selected && isInspectPackId(selected.effect.id) ? (
                   <InspectPackEffect id={selected.effect.id} />
-                ) : (
-                  <GamePfx
-                    preset={preset}
-                    reducedMotion={reducedMotion}
-                    previewTimeSeconds={reviewTimeSeconds ?? transportPreviewSeconds}
-                    recipeOverride={editedRecipe}
-                  />
+                ) : materialPreview.display.kind === 'none' ? null : (
+                  <PfxMaterialRuntimeProbe
+                    revision={materialPreview.revision}
+                    active={materialPreview.probeActive}
+                    onReport={materialPreview.report}
+                  >
+                    <GamePfx
+                      preset={preset}
+                      reducedMotion={reducedMotion}
+                      previewTimeSeconds={reviewTimeSeconds ?? transportPreviewSeconds}
+                      recipeOverride={materialPreview.display.value}
+                    />
+                  </PfxMaterialRuntimeProbe>
                 )}
               </group>
             ) : null}
@@ -1514,6 +1719,7 @@ export function PfxBrowserApp() {
                 ))
               : null}
             {reviewCaptureToken ? <PfxReviewCaptureHandshake token={reviewCaptureToken} /> : null}
+            </PfxMaterialProvider>
           </Canvas>
           {!reviewCameraLocked ? <span className="pfx-stage-hint">Drag to orbit · Wheel to zoom · Human reference = 1.8m</span> : null}
         </div>
@@ -1556,7 +1762,18 @@ export function PfxBrowserApp() {
                 </button>
               </div>
             </div>
-            {authoredRecipe ? (
+            <MaterialQualitySelector quality={materialQuality} query={materialQualityQuery} onChange={setMaterialQuality} />
+            {isInspectPackId(selected.effect.id) ? (
+              <p className="pfx-material-note" data-testid="pfx-material-pack-unavailable">
+                Material controls are not available for pack effects. Pack effects use their own renderer.
+              </p>
+            ) : null}
+            {authoredRecipe && previewMode === 'stress' ? (
+              <p className="pfx-material-note" data-testid="pfx-material-stress-notice">
+                Layer edits are available in Single effect mode. Saved edits are kept.
+              </p>
+            ) : null}
+            {authoredRecipe && previewMode === 'single' ? (
               <PfxEmitterPanel
                 recipe={authoredRecipe}
                 edits={emitterEdits}
@@ -1570,18 +1787,26 @@ export function PfxBrowserApp() {
                   })
                 }
                 onEdit={(phase, field, value, level) =>
-                  setEmitterEdits((current) => {
-                    const entry = current[phase] ?? { tuning: {} }
-                    const next: PfxEmitterEdit =
-                      level === 'surface'
-                        ? { ...entry, [field]: value }
-                        : { ...entry, tuning: { ...entry.tuning, [field]: value } }
-                    return { ...current, [phase]: next }
+                  updateLayerEdit(phase, (current) => {
+                    const entry = current ?? { tuning: {} }
+                    return level === 'surface'
+                      ? { ...entry, [field]: value }
+                      : { ...entry, tuning: { ...entry.tuning, [field]: value } }
                   })
                 }
+                editError={workingRecipeCheck && 'error' in workingRecipeCheck ? workingRecipeCheck.error : null}
+                layerError={layerEditError}
+                materialQuality={materialQuality}
+                reducedMotion={reducedMotion}
+                materialRevision={materialPreview.revision}
+                materialRuntime={materialPreview.runtime}
+                onMaterialEdit={updateMaterialEdit}
+                onMaterialReset={(phase) => updateMaterialEdit(phase, () => undefined)}
+                onMaterialRetry={materialPreview.retry}
                 onReset={() => {
                   setEmitterEdits({})
                   setDisabledEmitters(new Set())
+                  setLayerEditError(null)
                 }}
               />
             ) : null}
@@ -1589,6 +1814,7 @@ export function PfxBrowserApp() {
               <label>
                 <span>Preview mode</span>
                 <select
+                  aria-label="Preview mode"
                   value={previewMode}
                   onChange={(event) => setPreviewMode(event.target.value as 'single' | 'stress')}
                 >
@@ -1625,8 +1851,8 @@ export function PfxBrowserApp() {
                     <button
                       type="button"
                       className="pfx-control-reset"
-                      aria-label={`Reset ${definition.label}`}
-                      title={`Reset ${definition.label} to the preset default`}
+                      aria-label={`Reset ${pfxControlLabel(definition)}`}
+                      title={`Reset ${pfxControlLabel(definition)} to the preset default`}
                       onClick={() =>
                         setControlOverrides((current) => {
                           const next = { ...current }
@@ -3327,6 +3553,13 @@ function usePrefersReducedMotion(): boolean {
 }
 
 
+const PFX_LEGACY_PULSE_NOTE = 'Changes brightness and size over life. It plays no image frames.'
+
+// The four old `flipbook` values are legacy pulse inputs, not frame sheets.
+function pfxControlLabel(definition: (typeof PFX_CONTROL_DEFINITIONS)[number]): string {
+  return definition.key === 'flipbook' ? PFX_LEGACY_PULSE_LABEL : definition.label
+}
+
 function ControlEditor({
   definition,
   value,
@@ -3366,11 +3599,13 @@ function ControlEditor({
   }
 
   if (definition.kind === 'select') {
+    const legacyPulse = definition.key === 'flipbook'
     return (
       <label>
-        <span>{definition.label}</span>
+        <span>{pfxControlLabel(definition)}</span>
         <select
           value={String(value)}
+          aria-description={legacyPulse ? PFX_LEGACY_PULSE_NOTE : undefined}
           onChange={(event) => onChange(event.currentTarget.value as PfxControls[typeof definition.key])}
         >
           {definition.options?.map((option) => (
@@ -3379,6 +3614,7 @@ function ControlEditor({
             </option>
           ))}
         </select>
+        {legacyPulse ? <small className="pfx-control-note">{PFX_LEGACY_PULSE_NOTE}</small> : null}
       </label>
     )
   }

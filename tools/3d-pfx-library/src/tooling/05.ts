@@ -374,7 +374,7 @@ export function getPfxSurfaceAnimationProps(
     const period = Math.max(0.3, Math.max(0.25, controls.lifetime)) * PFX_BURST_CYCLE_MULTIPLIER
     const cycle = ((elapsedSeconds * timeScale) % (period * Math.max(1, cycleScale))) / period
     const lifecycle = createPfxPortalChargeLifecycle(cycle)
-    const isFace = surface.tuning?.meshShader === 'vortex-swirl'
+    const isFace = surface.tuning?.meshShader === 'vortex-swirl' || surface.tuning?.meshShader === 'portal-aperture'
     return {
       rotationZ: 0,
       xOffset: 0,

@@ -282,6 +282,39 @@ huge, stacked, low-alpha quads costs more than a hundred small sparks.
 - Pool and reuse particle buffers; per-effect allocation churn shows up as
   frame hitches long before raw draw cost does.
 
+## 11. Material controls on the pilot effects
+
+The two pilot recipes use the shared material path. Keep their existing
+emission, particle counts, life, palette, and layer order.
+
+- `flame-burst`: only the upward flame layer uses local UV scroll, noise
+  distortion, and a dissolve curve. Use local-cell repeat for scrolling.
+  Apply dissolve after the existing death erosion. The edge must not restore
+  removed pixels. Keep the CC0 flame sprite. The cinders and smoke keep their
+  existing settings.
+- `portal-idle-loop`: the swirl uses a small local UV transform and flow-map
+  distortion. The throat uses an explicit rim. Its colour still comes from
+  the original shader. The particle layer keeps its existing settings.
+
+Distortion runs only at high material quality. Low quality keeps UV motion,
+dissolve, and rim settings. Reduced motion stops decorative scroll and
+texture distortion. It keeps authored dissolve and mask coverage.
+
+For the vortex, keep UV scale at or above 1. A smaller value can enlarge the
+pattern beyond its card. Keep distortion small enough to preserve the outer
+edge. Shell mask and dissolve coordinates meet at the poles. Check these
+areas from each camera angle. A hex-shell rim colour also changes its lattice
+colour because they use the same existing hot-colour mix.
+
+The old animation names still select a Legacy pulse. Only explicit frame
+animation removes this opacity and size pulse. Do not remove it when you add
+UV, dissolve, distortion, mask, rim, or depth controls.
+
+Use the same camera, seed, and paused times for before and after captures.
+Compare both quality levels. Confirm that draw calls and particle counts do
+not increase. Local Chromium output does not close the independent review
+or physical-device gates.
+
 ## Quick diagnostic table
 
 The quality workflow records canonical defect keys. Treat evidence defects as

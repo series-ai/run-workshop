@@ -1,7 +1,10 @@
 import { authoredRecipe } from '../constants/01'
 
-export default authoredRecipe('ghost-burst', "Ghost burst", "Spectral burst with wisps and a soft haunted contact ring.", [
-  { kind: 'cloud-volume', role: 'volume', opacity: 0.42, scale: 0.58, phase: 'ghost-burst-wisp-body', tuning: { meshMotion: 'bloom', blend: 'alpha' } },
-  { kind: 'particles', role: 'volume', opacity: 0.5, scale: 0.54, phase: 'ghost-burst-echo-motes', tuning: { delay: 0.12, window: 0.14, lifeScale: 0.9, ease: 'snap', turbulenceScale: 0.4, sprite: 'glow', gravity: 0.9, flicker: 1.0 } },
-  { kind: 'ring-field', role: 'aura', opacity: 0.5, scale: 0.6, phase: 'ghost-burst-haunt-ring', tuning: { meshMotion: 'shockwave', ringPurpose: 'shockwave' } },
-], 2, 0.9)
+// Torn wisps spiral into one point and a hooded spectral mask condenses
+// from its face outward. It shrieks, then drifts up and away while its
+// tattered shroud curls behind it. The shroud tears from the tails up and
+// the face goes last. Tempo keeps the earlier 1.62 s cycle.
+export default authoredRecipe('ghost-burst', 'Ghost burst', 'Torn wisps spiral into a hooded spectral mask. It shrieks, drifts away, and its shroud tears from the tails to the face.', [
+  { kind: 'mesh-fragments', role: 'trail', opacity: 0.9, scale: 0.92, phase: 'ghost-burst-torn-wisps', tuning: { meshShader: 'ghost-burst-wisps', colorIndex: 0, turbulenceScale: 0 } },
+  { kind: 'shield-shell', role: 'body', opacity: 0.95, scale: 0.92, phase: 'ghost-burst-spectral-apparition', tuning: { meshShader: 'ghost-burst-apparition', colorIndex: 0, turbulenceScale: 0 } },
+], 2, 0.80698)
