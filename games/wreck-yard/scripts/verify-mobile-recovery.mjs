@@ -20,6 +20,7 @@ const result = { started: new Date().toISOString(), base, phase, landscape, only
     'Input correctness runs may overlap native correctness tests. Their timings are observations only.',
     'CPU phases can be inclusive. Do not add sim.nativeStep to its step/latest subphases. Public native API time is not pure solver time.',
     'Touch owners and raw keyboard state are read from React refs. This is read-only harness inspection, not a public app diagnostic.',
+    'The harness reads the controller runner handle. Network records use public SDK snapshot fields.',
     'A lost-capture case calls the DOM capture-release API on a real active touch. It does not dispatch a fake pointer event.'] };
 let browser, page, cdp, activeSegment;
 const fingers = new Map();
@@ -64,8 +65,10 @@ async function install() {
     const state = () => {
       const controller = window.__WRECK_YARD_CONTROLLER__, render = controller?.getRender();
       const player = render?.players.find(entry => entry.slot === render.localSlot), camera = window.__DEBUG_THREE__?.camera;
-      const viewport = visualViewport;
+      const viewport = visualViewport, runner = controller?.runner;
       return { atMs: performance.now(), timeOrigin: performance.timeOrigin, frame: render?.frame, status: controller?.snapshot().status, paused: controller?.isPaused(),
+        netcode: runner ? { status: runner.status, lifecycle: runner.lifecycle.state, connection: runner.lifecycle.connection ?? null,
+          ready: runner.ready, appliedThrough: runner.appliedThrough, predictedThrough: runner.predictedThrough, netStats: runner.netStats } : null,
         input: controller ? { ...controller.input } : null, player: player ? { position: player.position, yaw: player.yaw, pitch: player.pitch,
           grabbing: player.grabbing, portalTeleports: player.portalTeleports, activeTool: player.activeTool, feedback: player.feedback } : null,
         stats: render?.stats, bodyCount: render?.bodies.length,
@@ -78,6 +81,16 @@ async function install() {
     };
     const audit = { events: [], samples: [], heap: [], state, beginMs: performance.now(), focus: { blur: 0, hidden: 0 } };
     window.__MOBILE_RECOVERY__ = audit;
+    let previousRunnerStatus;
+    window.__WRECK_YARD_CONTROLLER__?.runner?.subscribe(snapshot => {
+      const signature = `${snapshot.status}:${snapshot.connection}:${snapshot.ready}:${snapshot.netStats?.recoveryPhase}`;
+      if (signature === previousRunnerStatus) return;
+      previousRunnerStatus = signature;
+      audit.events.push({ type: 'syncplay-status', atMs: performance.now(), status: snapshot.status, connection: snapshot.connection,
+        ready: snapshot.ready, appliedThrough: snapshot.appliedThrough, predictedThrough: snapshot.predictedThrough,
+        rollbackCount: snapshot.rollbackCount, netStats: snapshot.netStats ? structuredClone(snapshot.netStats) : null,
+        error: snapshot.error ? { message: snapshot.error.message, code: snapshot.error.code } : null });
+    });
     for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'gotpointercapture', 'lostpointercapture', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'mousedown', 'mouseup', 'click', 'dblclick', 'keydown', 'keyup']) {
       document.addEventListener(type, event => {
         const entry = { atMs: performance.now(), type, target: label(event.target), pointerId: event.pointerId, pointerType: event.pointerType,

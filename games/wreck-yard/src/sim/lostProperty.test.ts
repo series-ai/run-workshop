@@ -131,7 +131,17 @@ describe('Lost Property belt', () => {
       const released = readProbe(sim, probeId);
       expect(contactTypes.has('exit')).toBe(true);
       expect(released.position.x).toBeGreaterThan(BELT.center[0] + BELT.size[0] / 2 + 0.25);
-      expect(released.position.y).toBeLessThan(BELT.center[1] + BELT.size[1] / 2 - 0.1);
+      const rotation: Quat = [released.orientation.x, released.orientation.y, released.orientation.z, released.orientation.w];
+      const halfHeight = [
+        rotate([0.25, 0, 0], rotation),
+        rotate([0, 0.25, 0], rotation),
+        rotate([0, 0, 0.25], rotation),
+      ].reduce((sum, axis) => sum + Math.abs(axis[1]), 0);
+      expect(Math.abs(released.position.y - halfHeight - FLOOR_Y)).toBeLessThan(0.02);
+      const support = sim.physics.world.latest().contacts.filter((contact) => contact.type !== 'exit'
+        && (contact.bodyKeyA === probeId || contact.bodyKeyB === probeId));
+      expect(support.some((contact) => contact.bodyKeyA === 'shell:floor' || contact.bodyKeyB === 'shell:floor')).toBe(true);
+      expect(support.some((contact) => contact.bodyKeyA === BELT.key || contact.bodyKeyB === BELT.key)).toBe(false);
       expect(Math.abs(readProbe(sim, controlId).position.x - startX)).toBeLessThan(0.05);
     } finally {
       sim.release(save);
