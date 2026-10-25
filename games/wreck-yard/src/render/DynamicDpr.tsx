@@ -1,4 +1,4 @@
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 
 /**
@@ -50,7 +50,6 @@ export function DynamicDpr({
   const resolvedMinDpr = minDpr ?? (isMobile ? 0.75 : 1.0);
   const resolvedMaxDpr = maxDpr ?? (isMobile ? 1.25 : 1.5);
 
-  const { viewport } = useThree();
   const frameCount = useRef(0);
   const frameTimeSum = useRef(0);
   const goodIntervals = useRef(0);
@@ -101,18 +100,6 @@ export function DynamicDpr({
       } else {
         // Keep the resolution and reset the count.
         goodIntervals.current = 0;
-      }
-
-      // Record the frame time and resolution.
-      if (typeof window !== 'undefined') {
-        (window as unknown as { __PERF_METRICS__?: unknown }).__PERF_METRICS__ = {
-          dpr,
-          avgFrameMs: avgMs,
-          fps: Math.round(1000 / avgMs),
-          isMobile,
-          viewportWidth: viewport.width,
-          viewportHeight: viewport.height,
-        };
       }
     }
   });

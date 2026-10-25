@@ -28,14 +28,11 @@ export class YardAudio {
   private ambience: GainNode | null = null;
   private effects: GainNode | null = null;
   private limiter: DynamicsCompressorNode | null = null;
-  private meter: AnalyserNode | null = null;
-  private readonly meterSamples = new Float32Array(1024);
   private readonly buffers = new Map<SoundId, AudioBuffer>();
   private readonly voices = new Set<Voice>();
   private readonly loops = new Map<string, Voice>();
   private readonly tracker = new YardCueTracker();
   private readonly abort = new AbortController();
-  private readonly played: { id: string; sound: SoundId }[] = [];
   private loading: Promise<void> | null = null;
   private disposed = false;
   private needsSeed = true;
@@ -67,12 +64,7 @@ export class YardAudio {
         this.ambience.connect(this.master);
         this.effects.connect(this.master);
         this.master.connect(this.limiter);
-        if (import.meta.env.DEV) {
-          this.meter = ctx.createAnalyser();
-          this.meter.fftSize = 1024;
-          this.limiter.connect(this.meter);
-          this.meter.connect(ctx.destination);
-        } else this.limiter.connect(ctx.destination);
+        this.limiter.connect(ctx.destination);
         this.applySettings(this.settings);
         this.registerOutput?.(this.limiter);
       }
@@ -238,10 +230,6 @@ export class YardAudio {
     const voice = this.start(cue.sound, false);
     if (!voice) return;
     this.place(voice, cue, 0.003);
-    if (import.meta.env.DEV) {
-      this.played.push({ id: cue.id, sound: cue.sound });
-      if (this.played.length > 100) this.played.shift();
-    }
     if (cue.sound === 'explosion') {
       const now = this.context!.currentTime;
       this.ambience!.gain.cancelScheduledValues(now);
@@ -277,18 +265,12 @@ export class YardAudio {
     this.suspendTimer = null;
   }
 
-  inspect() {
-    this.meter?.getFloatTimeDomainData(this.meterSamples);
-    const outputRms = Math.sqrt(this.meterSamples.reduce((sum, value) => sum + value * value, 0) / this.meterSamples.length);
-    return { outputRms, status: this.status, contextState: this.context?.state ?? 'uncreated', active: this.active, voices: this.voices.size, loops: [...this.loops.keys()], played: [...this.played], settings: this.settings };
-  }
-
   dispose(): void {
     this.disposed = true;
     this.abort.abort();
     this.cancelSuspend();
     this.stopAll();
-    this.master?.disconnect(); this.ambience?.disconnect(); this.effects?.disconnect(); this.limiter?.disconnect(); this.meter?.disconnect();
+    this.master?.disconnect(); this.ambience?.disconnect(); this.effects?.disconnect(); this.limiter?.disconnect();
     void this.context?.close().catch(() => {});
   }
 }

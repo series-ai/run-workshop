@@ -5,7 +5,6 @@ import { isShell } from '../sim/physics';
 import type { BuggyWheelState, ContraptionState, Impact, YardBody, YardState, YardStats, ToolFeedback } from '../sim/state';
 import { TANK_SPEC } from '../sim/constants';
 import type { SoundMotion } from '../audio/cues';
-import { beginPhase, endPhase, perfActive, perfCount } from '../perf/recorder';
 
 export interface RenderPose {
   readonly teleportCounter?: number;
@@ -49,7 +48,6 @@ export interface YardRender {
 }
 
 export function projectYard(state: YardState, context: { readonly localSlot: number; readonly status: SyncplayRunnerStatus }): YardRender {
-  const phaseStart = beginPhase('render.project');
   const poses = new Map<string, RenderPose>();
   const soundMotions = new Map<string, SoundMotion>();
   const submergedBodyIds = new Set<string>();
@@ -115,13 +113,10 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     attractions: state.attractions,
     floating,
   };
-  endPhase('render.project', phaseStart);
   return render;
 }
 
 export function interpolateYard(previous: YardRender, current: YardRender, alpha: number): YardRender {
-  const phaseStart = beginPhase('render.interpolate');
-  if (perfActive()) perfCount('render.interpolations', 1);
   const poses = new Map<string, RenderPose>();
   for (const [id, pose] of current.poses) {
     const before = previous.poses.get(id);
@@ -166,6 +161,5 @@ export function interpolateYard(previous: YardRender, current: YardRender, alpha
     } : wheel;
   });
   const render = { ...current, poses, players, buggyWheels };
-  endPhase('render.interpolate', phaseStart);
   return render;
 }

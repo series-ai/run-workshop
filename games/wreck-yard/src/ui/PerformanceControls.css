@@ -1,5 +1,0 @@
-.yard-plate--paused > .yard-performance { grid-column:1 / -1; text-align:left; border-top:1px solid #efe4cc40; padding-top:8px; min-width:0; }
-.yard-performance summary { cursor:pointer; min-height:44px; display:list-item; align-content:center; font:400 16px var(--yard-display); }
-.yard-performance p { font:400 12px/1.4 var(--yard-display); margin:6px 0; }
-.yard-performance__actions { display:flex; flex-wrap:wrap; gap:8px; }
-.yard-performance__actions .yard-button { flex:1 1 120px; min-height:44px; font-size:14px; }

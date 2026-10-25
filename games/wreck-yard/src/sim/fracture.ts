@@ -1,4 +1,3 @@
-import { beginPhase, endPhase } from '../perf/recorder';
 import {
   carveVoxelChunk,
   splitVoxelComponents,
@@ -109,7 +108,6 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
     || contact.through[1] !== contact.start[1]
     || contact.through[2] !== contact.start[2];
 
-  const carveStart = beginPhase('fracture.carve');
   const heated = cutsThrough
     ? scorchParallelogramShell(
       source.voxels,
@@ -143,14 +141,11 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
       contact.radius,
     )
     : carveContactCapsule(heated, source.dims, contact);
-  endPhase('fracture.carve', carveStart);
-  const splitStart = beginPhase('fracture.split');
   const parts = [...splitVoxelComponents(toChunk(carved, source.dims), {
     anchorFacesMask: anchorFacesMask(source.anchorFaces),
   }).subChunks]
     .filter((part) => part.occupiedCount >= MIN_FRAGMENT_VOXELS)
     .sort(orderSubChunks);
-  endPhase('fracture.split', splitStart);
   const entries = source.motion === 'fixed' ? parts : parts.slice(0, MAX_TORCH_FRAGMENTS);
   if (entries.length === 0) return { fragments: [], nextSerial: serial };
 
@@ -212,9 +207,7 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
     };
     // A crate fragment keeps its bay and its faces. Any other body has neither.
     const body: YardBody = source.crateFaces ? { ...shared, storageBay: source.storageBay, crateFaces: source.crateFaces } : shared;
-    const cookStart = beginPhase('fracture.cook');
     const physics = makePhysicsBody(body, { position, rotation: pose.rotation, linearVelocity, angularVelocity });
-    endPhase('fracture.cook', cookStart);
     return { body, physics };
   });
 

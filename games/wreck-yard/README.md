@@ -1,381 +1,86 @@
 # Wreck Yard
 
-A multiplayer voxel destruction yard on RUN syncplay. Grab and throw voxel
-bodies with the hand, carve them with the torch until pieces fall off, and
-watch them float or sink in the tank. Only the torch and fuel drum blasts
-change a voxel shape: a hit moves a body but does not chip it. A torch cut or
-a blast break glows red with heat, then turns brown, then burnt black. Every client runs the same deterministic
-simulation; only inputs cross the wire, and rollback plus late join keep
-everyone in sync.
+Wreck Yard is a multiplayer physics game on RUN. Grab and throw objects, cut
+voxel shapes with the torch, drive the buggy, and move through the portals.
+Each yard department has an activity and a safety claim of doubtful value.
 
-> New to run-workshop? Start with [Getting Started](../../GETTING_STARTED.md).
+## Local play
 
-## Yard departments
-
-The yard is an industrial test site. Each department has a short task and a
-questionable safety claim. Use the directory and floor numbers to find storage,
-balance tests, cutting, floating, impact tests, driving, and delivery.
-
-The southwest **Lost Property** belt moves loose parts through native contact
-surface motion. Put a part on the belt and collect it at the other end.
-Collection is not guaranteed. The belt uses the normal grab and throw controls.
-
-See [the department guide](docs/departments.txt) for the activities and their
-Syncplay features.
-
-## Local setup
-
-```bash
+```sh
 npm install
-cp .env.example .env   # optional for local play
 npm run dev
 ```
 
-Open the printed URL. The app creates a multiplayer room on launch.
-To join at startup, open a second tab with `?room=CODE`. Use the first tab's
-room code. The game removes spaces and converts the code to uppercase.
-An invalid code shows the existing connection error and recovery controls.
-Open **Pause** to see **Your room code**. Use **Copy code** to share it.
-Paste another code into **Join another room**, then select **Join** to move
-to that room. The game does not offer offline play. A room server must be
-available. Server failures offer **Retry** and **New room**.
+Open the printed URL. Each tab creates a multiplayer room. Open **Pause** to
+copy its room code. Enter that code in another tab to join the same room.
+You can also open the game with `?room=CODE`. Rooms support four players.
 
-`rundot/realtime.config.json` declares the four-seat deterministic room type.
-The multiplayer build plugin copies it to `dist/rooms.config.json`. RUN needs
-that build artifact to start hosted rooms. Keep it in each deployment.
-Ordinary `npm run dev` uses the local SDK WebSocket authority on port 4399.
-Set `WRECK_YARD_ROOM_PORT` to use another room port. The local path does not
-start the remote playground or upload server configuration.
+The local room authority uses port 4399. Set `WRECK_YARD_ROOM_PORT` to change
+that port. Local play needs no RUN account or API key.
 
-`npm run dev -- --mode playground` selects the remote playground. That mode
-can upload its server configuration. The SDK `?rundotPlayer=player2` option
-selects a playground identity. Plain local play uses a separate identity per
-tab. Use `?room=CODE` to join a room in either mode.
+To use the RUN playground, copy `.env.example` to `.env`, set the local
+credentials, and run `npm run dev -- --mode playground`. Playground mode can
+upload its server configuration.
 
-To test the normal dev path with two local players in installed Chrome:
+The optional separate local server starts with
+`node scripts/serve-local-multiplayer.mjs`. It uses game port 4398 and room
+port 4399. Stop the server with Ctrl+C.
 
-```bash
-npx playwright test --config playwright.dev.config.ts
-```
+## Controls
 
-This check uses ports 4497 and 4498. Set `PLAYWRIGHT_CHANNEL=chromium` to
-compare the bundled browser. It tests URL joining, movement, interpolation,
-leaving, rejoining, retry, and room switching with the real SDK authority.
-See [the local verification record](docs/local-multiplayer-verification.md)
-for measured rates and open failures.
+On desktop, use WASD to move and the mouse to look. The game shows the tool
+and interaction controls in the HUD. Press O for orbit view. Escape opens
+Pause and releases mouse capture. Resume captures the mouse again. Use
+**Play in a window** if mouse capture is unavailable.
 
-The rc.55 stress checks use extracted official package directories. They keep
-the main project dependency unchanged:
+On touch screens, use the left stick to move and drag the right side to
+look. Hold **Cut** to use the torch. Tap **Grab** to hold an object. Use
+**Throw** or **Drop** to release it. **Jet** provides thrust. **Use** appears
+near a machine or the buggy. The game targets landscape orientation.
 
-```bash
-node scripts/repro-syncplay-body-count.mjs --sdk /path/to/rc55/package --out test-results/body-count-new.json --require-stable
-node scripts/repro-syncplay-topology-bound.mjs --sdk /path/to/rc55/package --out test-results/topology-new.json --require-success
-node scripts/stress-syncplay-rc55.mjs --rc54 /path/to/rc54/package --rc55 /path/to/rc55/package --outdir test-results/native-stress-new
-RC55_GAME_DIR=/path/to/isolated/wreck-yard npx playwright test --config playwright.rc55.config.ts
-```
+Controllers use the RUN Gamepad API. LS moves and RS looks. RT uses the tool.
+LT punts. A uses the jetpack. X interacts. B drops an object. LB selects
+gravity and RB selects the torch. Select toggles orbit view. Start opens
+Pause. Use the Dpad or LS in menus, A to select, and B to return.
 
-Use new output paths for each run. Strict native checks return exit 1 when a
-gate fails. The full native campaign also records expected rc.54 control
-failures. Read its per-run results and `rc55Pass` separately from the combined
-exit code. The browser checks require an isolated rc.55 installation and its
-generated runtime identity. They use ports 4517 and 4518. The main project
-remains on its current dependency. See [the stress test record](docs/rc55-stress-results.txt)
-and [the team prompt](docs/syncplay-rc55-team-prompt.txt).
+Pause contains the room controls, graphics settings, sound settings, and
+fullscreen controls. Multiplayer rooms continue while a player pauses.
 
-The [rc.56 validation record](docs/rc56-validation-results.txt) includes a new
-installed-runtime restore regression. The [updated team prompt](docs/syncplay-rc56-team-prompt.txt)
-keeps the prior findings and adds this repro:
+## Build and deploy
 
-```bash
-node scripts/repro-syncplay-latest-restore.mjs --sdk /path/to/package --out test-results/latest-restore-new.json
-```
-
-The repro returns exit 0 on official rc.55 and exit 1 on official rc.56.
-
-The [rc.57 validation record](docs/rc57-validation-results.txt) records the
-restore and topology repairs, new APIs, and remaining failures. Use the
-[rc.57 team prompt](docs/syncplay-rc57-team-prompt.txt) for that release's findings.
-The body-count repro also tests the 360/361 boundary with
-`--large-scene-boundary`. Keep `--require-stable` to enforce the same gates.
-
-The [rc.59 validation record](docs/rc59-validation-results.txt) checks the
-dynamic-body stability repair, explicit leave, and remaining limits. Use the
-[rc.59 team prompt](docs/syncplay-rc59-team-prompt.txt) for that release's findings.
-
-The main game uses official Syncplay `6.0.0-rc.66` at 30 Hz.
-Storage and returns crates use the `stack-crate` contact material
-(friction 0.85). They retain the wood appearance, hit sounds and break rules.
-Syncplay now defaults to `snapshotRetention: 'required'`. The game does not
-read arbitrary old confirmed frames. The offline retention probe tests this
-one-save default and the full history policy with `--window` separately.
-Both dynamic-kind variants now pass the unchanged stability gates.
-See the [rc.66 review and validation record](docs/rc66-validation-results.txt).
-The [rc.60 validation record](docs/rc60-validation-results.txt) records the
-actual update and new stability finding. Use the
-[rc.60 team prompt](docs/syncplay-rc60-team-prompt.txt) for that release's requests.
-
-```bash
-node scripts/repro-syncplay-dynamic-kind-boundary.mjs --sdk /path/to/package --out test-results/dynamic-kind-new.json
-node scripts/repro-syncplay-rc60-physics-edge.mjs --sdk /path/to/package --out test-results/physics-edge-new.json
-node scripts/repro-syncplay-rc60-canonical-edge.mjs --sdk /path/to/rc60/package --control /path/to/rc59/package --out test-results/canonical-edge-new.json
-RC60_AUDIT_DIR=test-results/rc60-browser-new npx playwright test --config playwright.rc60.config.ts
-```
-
-The dynamic-kind probe returns exit 1 on rc.60. One distant body changes
-from static to sleeping dynamic at a fixed total of 270 bodies. The column
-then fails the same 0.05 m stability gate. The checkpoint and canonical
-edge probes pass. Use fresh output paths. The browser campaign uses the
-main installation, ports 4577/4578, and serial Chrome/WebKit cases.
-Disable `SYNCPLAY_SOURCE_OVERRIDE` when you verify a published package.
-
-The standard browser tests use this separate local server entry point:
-
-```bash
-node scripts/serve-local-multiplayer.mjs
-```
-
-Open `http://127.0.0.1:4398` in two tabs. Each tab gets a local player identity.
-Copy one room code, then join it from the other tab. The local room server uses
-port 4399. Stop both servers with Ctrl+C. The room and capture checks also
-start this local server when it is not already running:
-
-```bash
-npx playwright test e2e/controller.spec.ts e2e/smoke.spec.ts e2e/play-gate.spec.ts --workers=1
-```
-
-## Rundot initialization and deployment
-
-The release thumbnail is `public/thumbnail.jpg`. It is a custom 512 × 512 JPEG.
-Vite copies it to `dist/thumbnail.jpg`. Rundot uploads it with the build and
-sets the thumbnail URL. Keep the source images in `art/thumbnail/` so they do
-not increase the game download.
-
-Production deployments use `game.config.prod.json`. The playground config
-has a separate game ID. If this folder has no production config, initialize
-a new production game:
-
-```bash
-rundot init --name "Wreck Yard" --build-path ./dist --orientation Landscape \
-  --description "Torch, throw, and sink voxel bodies with friends in one multiplayer yard." \
-  --keywords "multiplayer,physics,sandbox,voxel,destruction,driving"
-```
-
-After initialization, build and deploy with:
-
-```bash
+```sh
+npm run build
 npm run deploy
 ```
 
-The deploy script includes `--orientation Landscape`. It does not request
-public visibility. To check the built files without an upload, run
-`rundot game preflight --phase dist --dist-dir ./dist`.
+The build checks the runtime identity, checks TypeScript, and creates `dist`.
+The deploy command builds first and selects landscape orientation. It does
+not request public visibility. Initialize a RUN game with `rundot init` if
+its local production game binding is absent. Keep account bindings and
+credentials out of Git.
 
-To check the deployed multiplayer flow, use two dedicated Chrome test profiles
-that are signed in to different RUN accounts. Close those profiles first.
-Set `AUDIT_URL` to the private web player URL. It must keep `tag=private` and
-the share key. The short link can redirect to the public catalog on desktop.
+`rundot/realtime.config.json` defines the room. The build copies it to
+`dist/rooms.config.json`. Keep that file and `dist/thumbnail.jpg` in deployments.
 
-```bash
-AUDIT_PROFILE_A=/path/to/test-player-a AUDIT_PROFILE_B=/path/to/test-player-b \
-  AUDIT_URL="$AUDIT_URL" AUDIT_CHANNEL=chrome \
-  node scripts/verify-hosted-multiplayer.mjs
-```
+After a change to simulation sources or `tools/voxel-kit/src`, run
+`npm run identity:generate`. Commit the updated identity with the source
+change. Clients and the room authority must use matching identities.
 
-The check covers room creation, copy and join, remote movement, leaving,
-rejoining, invalid-code recovery, and room switching. It records access blocks
-separately from game failures. Local artifact checks do not prove hosted play.
+## Project files
 
-See the [Rundot init docs](https://github.com/series-ai/venus-sdk-docs/blob/main/rundot-developer-platform/initializing-your-game.md)
-and [deploy docs](https://github.com/series-ai/venus-sdk-docs/blob/main/rundot-developer-platform/deploying-your-game.md).
+- `src/sim`: deterministic game state, physics, carving, and checkpoints.
+- `src/game`: multiplayer sessions, input, and capture rules.
+- `src/render`: scene, shaders, portals, interpolation, and player robots.
+- `src/ui`: HUD, menus, and touch controls.
+- `src/audio`: sound playback and settings.
+- `public`: shipped sounds and thumbnail.
+- `art`: source assets and generation records.
 
-## Controls and fullscreen
+Syncplay runs at 30 Hz. Rendering follows the display animation loop and
+interpolates poses between simulation ticks. The game uses the official
+`6.0.0-rc.66` package.
 
-Controllers use the RUN SDK Gamepad API. Use LS to move, RS to look, RT for
-the tool, LT to punt, A for the jetpack, X to use, and B to drop. LB selects
-gravity. RB selects the torch. Select toggles Orbit. Start pauses or resumes.
-In Orbit, RS rotates and LS changes distance.
-
-Menus support Dpad or LS navigation, A to select, and B to return. Pause has
-an **Enter code** keypad for joining with a controller. Left and right adjust
-a selected sound slider. Controller play does not need pointer capture.
-See [controller controls and verification](docs/controllers.txt).
-
-On a surface that can capture the mouse (desktop web, Steam), the yard runs
-behind a start plate. One click on **Click to play** enters fullscreen and
-captures the mouse. When the cursor comes free (Escape, the RUN toolbar,
-alt-tab), the pause menu opens. The room keeps running while your input stops.
-The desktop **Pause** button and the mobile pause button open the same menu.
-**Resume** captures the mouse again, and enters fullscreen again if
-you left it. A second Escape, or **Exit fullscreen** in the pause menu, leaves
-fullscreen. The orbit tool (`O`) frees the cursor without the menu; click the
-yard to look again. If the browser keeps refusing the capture, **Play in a
-window** switches to drag-to-look, and **Capture mouse** switches back. Phones
-and other surfaces without pointer lock skip the gate and use drag-to-look.
-
-On phones and tablets, the movement stick starts under the left thumb. In the
-buggy, it controls steering, forward drive, and reverse. Drag the right side
-to look. Hold the large **Cut** button to use the torch. Drag from **Cut** to
-aim while cutting. Tap **Grab** to hold a body after the thumb lifts. The
-large button then becomes **Throw**. Tap it to throw, or
-press it, drag to aim, and release to throw. A canceled Throw keeps the body.
-**Drop** replaces Push while holding a body and releases it without a throw
-boost. Each gesture keeps the action it had when it started.
-
-Tap the other tool's icon to equip it. Drag outside that icon before release
-to cancel. Tool changes and input resets release a held body safely. Drag
-from **Jet** to aim while using thrust. The look hint disappears after the
-first aim drag.
-
-In landscape, the small **Use** button appears low between the two control
-groups near a machine or the buggy. It replaces the fuel widget until the
-interaction is unavailable. The large action becomes **Exit** while driving.
-
-The Jet fuel widget stays hidden at full fuel. It appears when fuel is used.
-Each full recharge gives one pulse, then the widget fades out.
-
-The **Ⅱ** button opens the pause menu. Graphics and fullscreen stay in that
-menu. Solo play stops there. Room play continues. Orbit is available on desktop.
-
-Touch controls use the dependency-free joystick logic from game-bot. They
-appear for touch input and hide when a real mouse is used. To test the phone
-layout on desktop, open `?controls=touch` with browser touch emulation.
-Run `AUDIT_URL=http://127.0.0.1:4429 node scripts/verify-touch-controls.mjs`
-for the real Chrome touch check. Browser emulation does not measure phone
-hardware performance.
-
-Wreck Yard targets landscape on RUN. The local playground config sets
-`orientation` to `landscape`. The deploy script also passes
-`--orientation Landscape` to Rundot. The host applies this setting on the
-next deployment. The local Playground does not force screen rotation.
-
-Inside RUN.world the game is a frame, so only the host may go fullscreen or
-lock the pointer: `src/game/capturePort.ts` uses the RUN SDK System API there,
-and the browser's own APIs at top level (local dev). `src/game/playGate.ts`
-holds the rules. While a host error modal is open in fullscreen, one Escape
-both closes the modal and leaves fullscreen (the SDK handles that key too).
-
-For tests, `?capture=off` turns capture off (drag-to-look, no gate) and
-`?capture=fake` uses a fake port on `window.__CAPTURE_FAKE__`. Both work in dev
-and preview builds. The design is in
-[.plans/wreck-yard-fullscreen-play-gate.html](../../.plans/wreck-yard-fullscreen-play-gate.html).
-
-## Returns and storage
-
-DELIVERY and RETURNS connect opposite sides of the yard. Look through either
-door. Walk through it, throw a prop through it, or drive the buggy through it.
-The receiving bay has shipping crates marked FRAGILE and THIS SIDE UP.
-
-PERFECTLY SAFE STORAGE has 400 movable crates in ten levels. The sign says
-STACK LIMIT: 4. Take the freight lift to ground, floor 1, floor 2, or floor 3.
-Floor buttons appear near the car and each landing. Select a button on touch.
-Use G, 1, 2, or 3 on desktop. The lift also carries loose objects.
-
-Pull out a box or cut a support to collapse the stack. RESTACK appears near
-the storage reset stand. Clear players and unrelated objects from the bay
-before reset. The reset replaces only storage crates and their fragments.
-
-To check both attractions, start the dev server and run:
-
-```bash
-AUDIT_URL=http://127.0.0.1:4481 node scripts/verify-attractions.mjs
-npx vitest run src/sim/attractions.test.ts
-npx esbuild scripts/profile-attractions.ts --bundle --platform=node --format=esm \
-  --external:@series-inc/* --outfile=test-results/profile-attractions.mjs
-node test-results/profile-attractions.mjs
-```
-
-Browser evidence is saved in `test-results/attractions/`. The profiler includes
-step, checkpoint capture, and checksum cost with four players. Phone browser
-emulation checks controls and layout. It does not measure phone hardware.
-
-## Player robots
-
-Player 1 uses Scrapper in orange. Player 2 uses Drum-Bot in teal.
-Player 3 uses Tread-Bot in yellow. Player 4 uses Hover-Welder in red.
-The player slot sets the design, paint, and number. Press `O` to see your
-robot in orbit view. The chase camera also shows your robot while driving.
-
-Run `node scripts/verify-player-robots.mjs` to check all four slots in a
-browser. The script starts its own local server and closes it after the
-check. It saves desktop and phone-width images in `test-results/player-robots/`.
-
-## Commands
-
-- `npm run dev` — game and local multiplayer authority
-- `npm run build` — identity check, typecheck, production build
-- `npm test` — unit, codec, and determinism tests
-- `npm run test:e2e` — Playwright smoke test against the preview build
-- `npm run verify:live` — browser checks against a running dev server
-  (`npm run dev -- --host 127.0.0.1 --port 4400 --strictPort`, or set
-  `AUDIT_URL`): collision coverage, controls, click feedback, contraptions,
-  solid scenery, and live frame time. Results go to `test-results/`.
-- `npm run profile:sim` — per-tick simulation and rollback cost, for SDK comparisons
-- `npm run identity:generate` — regenerate `src/sim/identity.generated.json`
-  after any change under `src/sim` or `tools/voxel-kit/src`
-- `npm run deploy` — build and deploy with the `rundot` CLI
-
-## Where things live
-
-- `src/sim/` — the deterministic simulation: `state.ts`, `input.ts`, `step.ts`,
-  `fracture.ts`, `physics.ts`, `presets.ts`, `codec.ts`, `session.ts`. Nothing
-  here reads a clock. Trig runs through the Syncplay deterministic math shim
-  (`src/deterministicMath.ts`), which loads before any sim module. The identity generator
-  hashes every file in this folder plus the kit.
-- `src/game/match.ts` — the Syncplay room controller. Offline mode remains for physics tools and tests.
-- `src/net/rooms.ts` — room transports through the RUN SDK realtime API.
-- `src/render/` — presentation: projection and interpolation, the raymarched
-  voxel renderer, yard shell, water, occlusion, pointer input.
-- `src/ui/Hud.tsx` — tools, stats, lobby, status.
-- `src/game/playGate.ts`, `src/game/capturePort.ts`, `src/ui/usePlayGate.ts`,
-  `src/ui/PlayGate.tsx` — fullscreen, mouse capture, the start plate, and the pause menu.
-- Voxel operations come from [tools/voxel-kit](../../tools/voxel-kit/).
-
-## Units
-
-Syncplay and the room authority run at 30 Hz. Rendering uses the display
-animation loop and interpolates body, player, and wheel poses between ticks.
-The client simulation and rendering share the main thread. A slow simulation
-tick can still delay drawing.
-
-The syncplay solver integrates per tick. Positions are meters, velocities are
-meters per tick, and gravity is meters per tick². `src/sim/constants.ts` holds
-the conversions; the buoyancy boundary converts to and from per-second units.
-
-## Rendering style
-
-Wreck Yard uses a custom retro-futuristic cel-shaded graphic novel aesthetic targeting visual parity with the production concept art.
-
-### Pipeline architecture
-
-1. **Stepped shading:** World surfaces use `<Toon>` materials (`toonMaterial.tsx`) and the voxel volume shader (`toonGlsl.ts`). `ART_STYLE.ramp` sets the light bands. Department signs use unlit materials to keep text clear.
-2. **Ink Edge Post-Process:** `InkComposer.tsx` runs a single composite pass executing a 4-sample screen-space depth + normal Sobel kernel (`inkShader.ts`), drawing dark ink line contours (`ART_STYLE.ink`) around voxel bodies, props, and architectural silhouettes while excluding uninked background elements (such as the stepped sky dome).
-3. **Multi-layer Industrial Skyline:** Procedural silhouettes (`skylineShapes.ts`, `Skyline.tsx`) populate the distant yard horizon across quantized atmospheric depth steps.
-4. **Department dressing:** `src/scene/departments.ts` supplies the signs, floor numbers, and directory. `YardDepartments.tsx` uses one atlas and three merged meshes. `LostPropertyBelt.tsx` adds three meshes. The belt drawing uses the same dimensions and speed as its native collider.
-
-### Single tuning point
-
-All aesthetic constants (palette colors, ramp thresholds, edge detection weights, sky gradients, fog colors) are centralized in:
-`src/render/style/artStyle.ts` (`ART_STYLE`).
-
-To tune or restyle the game, modify `ART_STYLE`. No shader code or component logic needs manual adjustments.
-
-### Style metrics verification
-
-To inspect and verify visual style parity metrics (luma, dark/bright fractions, ink line density, draw call budget):
-
-```bash
-# Run Playwright E2E vista capture and metric assertions
-npx playwright test e2e/style-vista.spec.ts
-
-# Run standalone metrics analysis on any captured screenshot
-node scripts/style-metrics.mjs test-results/style-vista.png
-```
-
-### Sound
-
-The game has quiet ambient music and sounds for tools, movement, the buggy,
-water, props, and contraptions. Sound starts after player input.
-The pause menu has mute, music, and effects controls.
-The processed sound bank is 426 KB.
-See [sound coverage and checks](docs/audio.md).
-Use `/audio/index.html` on the dev server to hear the bank.
+To rebuild the sound bank, run `node scripts/prepare-audio.mjs`. This command
+needs FFmpeg with libmp3lame. Set `FFMPEG_BIN` to select its path. Source
+recordings and receipts stay in `art/audio/raw`; processed MP3 files go in
+`public/audio`. The asset manifest records the source and output files.

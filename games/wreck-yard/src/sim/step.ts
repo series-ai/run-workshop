@@ -60,7 +60,7 @@ import type { ShellBox } from './setPieces';
 import { stepBuggy } from './vehicle';
 import { movePlayer } from './movement';
 import { toolPortalBlock } from './returns';
-import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
+import { ANGLE_SCALE, TOOL, type YardInput } from './input';
 import { advanceHoldPoint, grabServo } from './grab';
 import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
 import {
@@ -100,7 +100,6 @@ import {
   type ToolFeedback,
   type ToolResult,
 } from './state';
-import { beginPhase, endPhase, perfActive, perfCount } from '../perf/recorder';
 
 interface Hit {
   readonly bodyId: string;
@@ -183,10 +182,7 @@ function findBody(bodies: readonly YardBody[], id: string): YardBody | undefined
   return bodies.find((body) => body.id === id);
 }
 
-function getPlayerRay(player: PlayerState, input: YardInput): { origin: Vec3; direction: Vec3 } {
-  const legacyRay = decodeRay(input);
-  if (legacyRay) return legacyRay;
-
+function getPlayerRay(player: PlayerState): { origin: Vec3; direction: Vec3 } {
   const eye: Vec3 = [player.x, player.y + PLAYER_EYE_OFFSET, player.z];
   const sinY = Math.sin(player.yaw);
   const cosY = Math.cos(player.yaw);
@@ -614,7 +610,7 @@ function stepPlayerActions(w: Working, slot: number, input: YardInput): PlayerSt
       wasSecondaryPressed: input.secondary,
     };
   }
-  const ray = getPlayerRay(moved, input);
+  const ray = getPlayerRay(moved);
 
   switch (input.tool) {
     case TOOL.hand:
@@ -845,9 +841,6 @@ function applyFractures(w: Working, frame: number): void {
       w.bodies = w.bodies.map((entry) => (entry.id === pending.bodyId ? { ...entry, heat: { frame, at } } : entry));
       continue;
     }
-    perfCount('fracture.removedVoxels', sourceCount - remaining);
-    perfCount('fracture.fragments', result.fragments.length);
-    const editStart = beginPhase('fracture.edit');
     w.nextSerial = result.nextSerial;
     const index = w.bodies.findIndex((entry) => entry.id === pending.bodyId);
     w.bodies = [...w.bodies.slice(0, index), ...result.fragments.map((fragment) => fragment.body), ...w.bodies.slice(index + 1)];
@@ -856,7 +849,6 @@ function applyFractures(w: Working, frame: number): void {
     if (replacing) replacePhysicsBody(w.physics, replacing.physics);
     else removePhysicsBody(w.physics, pending.bodyId);
     addPhysicsBodies(w.physics, added.map((fragment) => fragment.physics));
-    endPhase('fracture.edit', editStart);
     w.stats = pending.countsAsCut
       ? { ...w.stats, torchCuts: w.stats.torchCuts + 1 }
       : { ...w.stats, fractures: w.stats.fractures + 1 };
@@ -1087,7 +1079,6 @@ function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
  * steps it in place and returns the next state.
  */
 export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs: readonly YardInput[]): YardState {
-  let phaseStart = beginPhase('sim.gameBefore');
   const worldFrame = Number(physics.world.info().frame);
   if (worldFrame !== state.world.frame) {
     throw new Error(`WRECK_YARD_WORLD_FRAME_MISMATCH: world ${worldFrame}, state ${state.world.frame}`);
@@ -1111,34 +1102,21 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   w.bodies = requested.bodies;
   w.attractions = requested.attractions;
 
-  const playersStart = beginPhase('sim.players');
   for (let slot = 0; slot < w.players.length; slot += 1) {
     const input = inputs[slot];
     if (!input) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
     w.players[slot] = stepPlayer(w, slot, input);
   }
 
-  endPhase('sim.players', playersStart);
-  const wakeStart = beginPhase('sim.stackWake');
   for (const bay of ['storage', 'returns']) {
     const movingCrate = state.world.bodies.find((body) => body.id.startsWith(`shipping-${bay}-`) && Math.hypot(body.vx, body.vy, body.vz) > 0.0003);
     if (movingCrate) wakeShippingStack(w.physics, movingCrate.id);
   }
-  endPhase('sim.stackWake', wakeStart);
   const driver = w.players.find((player) => player.ridingVehicle);
   const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.attractions = startElevatorStep(w.physics, w.attractions, w.players);
-  endPhase('sim.gameBefore', phaseStart);
-  phaseStart = beginPhase('sim.nativeStep');
-  const stepStart = beginPhase('sim.physicsStep');
   w.physics.world.step();
-  endPhase('sim.physicsStep', stepStart);
-  const latestStart = beginPhase('sim.physicsLatest');
   const latest = w.physics.world.latest();
-  endPhase('sim.physicsLatest', latestStart);
-  perfCount('sim.contacts', latest.contacts.length);
-  endPhase('sim.nativeStep', phaseStart);
-  phaseStart = beginPhase('sim.gameAfter');
   w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
   stepContraptions(w, state.world);
 
@@ -1173,29 +1151,14 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   }
 
   // Impacts name the bodies as the contacts saw them, before any of them breaks this tick.
-  const impactsStart = beginPhase('sim.impacts');
   const impacts = collectImpacts(latest.contacts, (key) => (key === undefined ? undefined : findBody(w.bodies, key)), state.frame);
   queueDrumHits(w, latest.contacts, state.frame);
   hitFloodlights(w, latest.contacts, state.frame);
   relightFloodlights(w, state.frame);
-  endPhase('sim.impacts', impactsStart);
-  perfCount('sim.impacts', impacts.length);
-  let workStart = beginPhase('sim.crateBreak');
   breakCrates(w, latest.contacts, state.frame);
-  endPhase('sim.crateBreak', workStart);
-  if (perfActive()) perfCount('torch.pendingCuts', w.fractures.reduce((sum, entry) => sum + Number(entry.countsAsCut), 0));
-  const cutsBefore = w.stats.torchCuts;
-  workStart = beginPhase('sim.fractures');
   applyFractures(w, state.frame);
-  endPhase('sim.fractures', workStart);
-  perfCount('torch.cuts', w.stats.torchCuts - cutsBefore);
-  workStart = beginPhase('sim.cooling');
   coolBodies(w);
-  endPhase('sim.cooling', workStart);
-  if (perfActive()) perfCount('sim.hotBodies', w.bodies.reduce((sum, body) => sum + Number(body.heat !== null), 0));
-  const readStart = beginPhase('sim.worldRead');
   const world = readWorldState(w.physics, latest.fluidInteractions, latest);
-  endPhase('sim.worldRead', readStart);
 
   const nextState: YardState = {
     frame: state.frame + 1,
@@ -1210,6 +1173,5 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
     attractions: w.attractions,
     nextSerial: w.nextSerial,
   };
-  endPhase('sim.gameAfter', phaseStart);
   return nextState;
 }

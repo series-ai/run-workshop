@@ -30,7 +30,7 @@ const server = await createServer({
     }),
   ],
   esbuild: { target: 'es2022' },
-  optimizeDeps: { esbuildOptions: { target: 'es2022' }, exclude: ['@series-inc/rundot-game-sdk'] },
+  optimizeDeps: { esbuildOptions: { target: 'es2022' }, exclude: ['@series-inc/rundot-game-sdk', '@series-inc/rundot-syncplay'] },
   server: { host: '127.0.0.1', port: httpPort, strictPort: true, fs: { allow: [root, fileURLToPath(new URL('../../../tools/voxel-kit', import.meta.url))] } },
 });
 await server.listen();

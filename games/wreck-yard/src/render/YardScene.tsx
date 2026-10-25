@@ -1,4 +1,3 @@
-import { PerfFrame } from '../perf/render';
 import type { AttractionRequest } from '../sim/attractions';
 import { ShippingCrates } from './ShippingCrates';
 import { StorageAttraction } from './StorageAttraction';
@@ -83,7 +82,6 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
   const worldOcclusion = useWorldOcclusion();
   return (
     <>
-      <PerfFrame renderRef={renderRef} />
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} gate={gate} touchInput={touchInput} attractionInput={attractionInput} controllerInput={controllerInput} />
       {onAudioFrame ? <AudioFrame controller={controller} renderRef={renderRef} onFrame={onAudioFrame} /> : null}
       <YardShell renderRef={renderRef} />
@@ -155,15 +153,13 @@ export function YardScene({ onAudioFrame, controller, tool, quality, onQualityFa
         alpha: false,
         powerPreference: 'high-performance',
         precision: isMobile ? 'mediump' : 'highp',
-        preserveDrawingBuffer: typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('record'),
         stencil: true,
         depth: true,
       }}
-      onCreated={({ gl, scene, camera, advance }) => {
+      onCreated={({ gl }) => {
         gl.toneMapping = THREE.NoToneMapping;
         gl.toneMappingExposure = 1.0;
         gl.shadowMap.type = THREE.PCFSoftShadowMap;
-        (window as unknown as { __DEBUG_THREE__: unknown }).__DEBUG_THREE__ = { gl, scene, camera, advance };
         onCanvas(gl.domElement);
       }}
       style={{ position: 'absolute', inset: 0, touchAction: 'none' }}

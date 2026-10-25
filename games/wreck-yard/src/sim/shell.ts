@@ -13,8 +13,7 @@ const TANK_WALL_CENTER_Y = TANK.bottomY + TANK_WALL_HEIGHT * 0.5;
 
 /**
  * Static boxes: center, full size, and optional rotation. Used for physics shell
- * bodies and occlusion. Every solid-looking static mesh needs an entry; see
- * scripts/audit-collision.mjs.
+ * bodies and occlusion. Each solid static mesh needs an entry.
  */
 export const SHELL_BOXES: readonly ShellBox[] = [
   ...ofMaterial('concrete', [

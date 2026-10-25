@@ -87,9 +87,7 @@ const at = (origin: Vec3Tuple, offset: Vec3Tuple): Vec3Tuple => [origin[0] + off
 /**
  * Collision for the static set pieces drawn in render/YardShell.tsx. The
  * numbers mirror the drawn geometry. Movable props are dynamic bodies
- * (sim/props.ts), not set pieces. scripts/audit-collision.mjs fails when a
- * solid-looking mesh has no collider, so a new or moved set piece must update
- * this list.
+ * (sim/props.ts). Update this list when a static set piece moves or changes.
  */
 export const SET_PIECE_COLLIDERS: readonly ShellBox[] = [
   // West loading deck and its divider bays. Props on it are dynamic (sim/props.ts).

@@ -1,4 +1,3 @@
-import { beginPhase, endPhase, perfCount } from '../perf/recorder';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
@@ -389,10 +388,8 @@ function CrateBatch({ crates, renderRef, bodyGeometry, frameGeometry, bodyMateri
     const frameInstances = frameMesh.current;
     if (!bodyInstances || !frameInstances) return;
 
-    const timing = beginPhase('crates.upload');
     bodyInstances.count = crates.length;
     frameInstances.count = crates.length;
-    let writes = 0;
     let firstChanged = crates.length;
     let lastChanged = -1;
     for (let index = 0; index < crates.length; index += 1) {
@@ -430,7 +427,6 @@ function CrateBatch({ crates, renderRef, bodyGeometry, frameGeometry, bodyMateri
       frameInstances.setMatrixAt(index, transform.matrix);
       firstChanged = Math.min(firstChanged, index);
       lastChanged = index;
-      writes += 2;
     }
     if (lastChanged >= 0) {
       for (const mesh of [bodyInstances, frameInstances]) {
@@ -444,8 +440,6 @@ function CrateBatch({ crates, renderRef, bodyGeometry, frameGeometry, bodyMateri
         mesh.instanceMatrix.needsUpdate = true;
       }
     }
-    perfCount('crates.instanceWrites', writes);
-    endPhase('crates.upload', timing);
   });
 
   return (

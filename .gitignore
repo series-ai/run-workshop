@@ -175,3 +175,6 @@ playwright-report/
 .pi/
 .plans/
 **/.fakehome/
+
+# Local SDK working copies
+/.worktrees/

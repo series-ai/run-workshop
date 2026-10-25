@@ -4,7 +4,6 @@
   "encoderVersion": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
   "codec": "MPEG Layer III",
   "totalBytes": 462720,
-  "verification": "FFmpeg decoded output checks. No listening check was done.",
   "retiredSources": [
     {
       "path": "art/audio/raw/yard-ambient.mp3",

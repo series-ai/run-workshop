@@ -168,9 +168,6 @@ function mapStatus(status: SyncplayRunnerStatus): MatchStatus {
   }
 }
 
-import { beginPhase, endPhase } from '../perf/recorder';
-import { recordSampledInput, resetPerfInput } from '../perf/localInput';
-
 export class MatchController {
   private readonly runner: SyncplayRunner<YardInput, YardRender, never>;
   private input: YardInput = NEUTRAL_INPUT;
@@ -202,13 +199,13 @@ export class MatchController {
       defaultInput: NEUTRAL_INPUT,
       encodeInput: encodeYardInput,
       decodeInput: decodeYardInput,
-      localInputForTick: (slot, frame) => {
+      localInputForTick: (_slot, frame) => {
         this.sampled = { input: this.input, frame };
-        recordSampledInput(this.input, frame, slot);
         return this.input;
       },
       presentation: { project: projectYard, interpolate: interpolateYard },
       maxOfflineStepsPerUpdate: 2,
+      maxConfirmedFramesPerTurn: 2,
       pacing: { targetLeadTicks: 2, maxStepsPerPump: 2 },
       inputDelay: { minTicks: 1, maxTicks: 3 },
     });
@@ -271,7 +268,6 @@ export class MatchController {
   }
 
   async start(request: MatchRequest): Promise<void> {
-    resetPerfInput();
     const generation = ++this.startGeneration;
     this.starting = true;
     this.runner.stop();
@@ -364,9 +360,7 @@ export class MatchController {
     this.lastPumpMs = nowMs;
     // A throwing step halts the runner, which publishes its "error" status
     // to the subscriber above, then rethrows here.
-    const timing = beginPhase('frame.pump');
-    try { this.runner.update(deltaMs); }
-    finally { endPhase('frame.pump', timing); }
+    this.runner.update(deltaMs);
     return (this.render?.frame ?? -1) > before;
   }
 
@@ -393,7 +387,6 @@ export class MatchController {
   }
 
   stop(): void {
-    resetPerfInput();
     this.startGeneration += 1;
     this.starting = true;
     this.runner.stop();

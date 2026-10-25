@@ -57,9 +57,6 @@ export function useYardAudio(playing: boolean, sdkReady: boolean): YardAudioCont
       RundotAPI.lifecycles.onSleep(sleep), RundotAPI.lifecycles.onPause(sleep),
       RundotAPI.lifecycles.onAwake(awake), RundotAPI.lifecycles.onResume(awake),
     ] : [];
-    if (import.meta.env.DEV) {
-      (window as unknown as { __DEBUG_AUDIO__?: () => ReturnType<YardAudio['inspect']> }).__DEBUG_AUDIO__ = () => sound.inspect();
-    }
     update();
     return () => {
       syncActive.current = () => {};
@@ -71,7 +68,6 @@ export function useYardAudio(playing: boolean, sdkReady: boolean): YardAudioCont
       for (const subscription of subscriptions) subscription.unsubscribe();
       sound.dispose();
       if (engine.current === sound) engine.current = null;
-      if (import.meta.env.DEV) delete (window as unknown as { __DEBUG_AUDIO__?: unknown }).__DEBUG_AUDIO__;
     };
   }, [sdkReady]);
 

@@ -337,7 +337,7 @@ const SCRAP_SPOTS: readonly (readonly [number, number])[] = [
 ];
 const SCRAP_KINDS: readonly ScrapKind[] = ['beam', 'pipe', 'plate', 'engine'];
 
-/** Every prop in the yard. props.test.ts checks that none overlaps at spawn. */
+/** All movable props in the yard. */
 export function yardProps(): PropSpawn[] {
   const bale0 = balePreset(60);
   const workBeam = scrapPreset('beam', 70);

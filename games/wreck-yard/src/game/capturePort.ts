@@ -16,7 +16,7 @@ export type PortPointerInput =
 export type CaptureResult = SurfaceState & { readonly reason?: CaptureFailure };
 
 export interface CapturePort {
-  readonly kind: 'host' | 'browser' | 'none' | 'fake';
+  readonly kind: 'host' | 'browser' | 'none';
   readonly caps: SurfaceCaps;
   getState(): Promise<SurfaceState>;
   /** Needs a gesture: await it FIRST in a click handler. */
@@ -189,9 +189,6 @@ export function browserPort(lockTarget: () => HTMLElement | null, doc: Document 
   };
 }
 
-// ---------------------------------------------------------------------------
-// No capture, and the fake for tests
-
 export function noCapturePort(): CapturePort {
   return {
     kind: 'none',
@@ -202,59 +199,6 @@ export function noCapturePort(): CapturePort {
     exitFullscreen: async () => WINDOWED,
     onState: () => () => {},
     onPointer: null,
-  };
-}
-
-export interface FakeCapturePort extends CapturePort {
-  /** The host changed state (Escape, toolbar, focus loss). */
-  emit(state: SurfaceState): void;
-  /** The result of the next request; without one, a request captures. */
-  respond(result: CaptureResult): void;
-  readonly calls: readonly string[];
-}
-
-/** For tests and ?capture=fake. Every request captures unless respond() set another result. */
-export function fakePort(caps: SurfaceCaps = { fullscreen: 'toggleable', pointerLock: true }): FakeCapturePort {
-  let state: SurfaceState = WINDOWED;
-  let next: CaptureResult | null = null;
-  const calls: string[] = [];
-  const listeners = new Set<(state: SurfaceState) => void>();
-  const set = (value: SurfaceState) => {
-    state = surface(value);
-    for (const listener of listeners) listener(state);
-  };
-  const answer = (fallback: CaptureResult): CaptureResult => {
-    const result = next ?? fallback;
-    next = null;
-    set(result);
-    return result.reason ? { ...state, reason: result.reason } : state;
-  };
-  return {
-    kind: 'fake',
-    caps,
-    calls,
-    getState: async () => state,
-    async requestFullscreen(options) {
-      calls.push(`requestFullscreen:${options.pointerLock}`);
-      return answer({ active: true, pointerLocked: options.pointerLock });
-    },
-    async setPointerLock(locked) {
-      calls.push(`setPointerLock:${locked}`);
-      if (!locked) return answer({ ...state, pointerLocked: false });
-      return answer({ ...state, pointerLocked: true });
-    },
-    async exitFullscreen() {
-      calls.push('exitFullscreen');
-      set(WINDOWED);
-      return state;
-    },
-    onState(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    onPointer: null,
-    emit: set,
-    respond(result) { next = result; },
   };
 }
 
@@ -271,23 +215,9 @@ export interface CapturePortContext {
   readonly lockTarget: () => HTMLElement | null;
 }
 
-/**
- * 1. ?capture=off or ?capture=fake (every build; it can only reduce capability).
- * 2. A working RUN host → host port.
- * 3. Any sign of a host without a working SDK (React Native WebView, the _pid
- *    mount parameter, or a frame) → no capture: never DOM fullscreen in a frame.
- * 4. Top level, standalone or mock → browser port.
- */
 export function selectCapturePort(context: CapturePortContext): CapturePort {
   const { win } = context;
   const params = new URLSearchParams(win.location.search);
-  const override = params.get('capture');
-  if (override === 'off') return noCapturePort();
-  if (override === 'fake') {
-    const port = fakePort();
-    (win as unknown as { __CAPTURE_FAKE__?: FakeCapturePort }).__CAPTURE_FAKE__ = port;
-    return port;
-  }
   if (context.sdkReady && !context.isMock && context.system) return hostPort(context.system);
   const framed = (() => {
     try {

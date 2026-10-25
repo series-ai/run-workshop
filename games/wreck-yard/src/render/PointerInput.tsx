@@ -1,5 +1,3 @@
-import { perfActive, perfCount } from '../perf/recorder';
-import { recordInputEvent } from '../perf/localInput';
 import { elevatorPanelWithinReach, restackWithinReach, type AttractionRequest, type AttractionCommand } from '../sim/attractions';
 import { queueAttraction } from '../ui/AttractionControls';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -81,7 +79,6 @@ export function PointerInput({
   const keys = useRef<Set<string>>(new Set());
   const lastPlayTool = useRef<PlayTool>(tool === 'orbit' ? 'hand' : tool);
   if (tool !== 'orbit') lastPlayTool.current = tool;
-  const cameraOverride = useRef<{ pos: [number, number, number]; lookAt: [number, number, number] } | null>(null);
 
   const controls = useMemo(() => {
     const next = new OrbitControlsImpl(camera, gl.domElement);
@@ -136,62 +133,7 @@ export function PointerInput({
     let lastX = 0;
     let lastY = 0;
 
-    if (import.meta.env.DEV) {
-      (window as unknown as {
-        __SET_LOOK_ANGLES__?: (y: number, p: number) => void;
-        __SET_CAMERA_OVERRIDE__?: (pos: [number, number, number] | null, lookAt?: [number, number, number] | null) => void;
-        __THREE_RENDERER__?: unknown;
-      }).__SET_CAMERA_OVERRIDE__ = (pos, lookAt) => {
-        if (pos && lookAt) {
-          cameraOverride.current = { pos, lookAt };
-        } else {
-          cameraOverride.current = null;
-        }
-      };
-      (window as unknown as { __THREE_RENDERER__?: unknown }).__THREE_RENDERER__ = gl;
-
-      (window as unknown as { __SET_LOOK_ANGLES__?: (y: number, p: number) => void }).__SET_LOOK_ANGLES__ = (y, p) => {
-        yaw.current = y;
-        pitch.current = THREE.MathUtils.clamp(p, -1.45, 1.45);
-        lastLookMs.current = performance.now();
-      };
-
-      (window as unknown as {
-        __SIMULATE_INPUT__?: (action: {
-          pressed?: boolean;
-          secondary?: boolean;
-          use?: boolean;
-          tool?: UiTool;
-          moveX?: number;
-          moveZ?: number;
-          jetpack?: boolean;
-        }) => void;
-      }).__SIMULATE_INPUT__ = (action) => {
-        if (action.pressed !== undefined) buttons.current = pressButton(buttons.current, 0, action.pressed);
-        if (action.secondary !== undefined) buttons.current = pressButton(buttons.current, 2, action.secondary);
-        if (action.use !== undefined) keyUse.current = action.use;
-        if (action.tool !== undefined) onToolChange?.(action.tool);
-        if (action.jetpack !== undefined) {
-          if (action.jetpack) keys.current.add('Space');
-          else keys.current.delete('Space');
-        }
-        if (action.moveZ !== undefined) {
-          if (action.moveZ > 0) keys.current.add('KeyW');
-          else keys.current.delete('KeyW');
-          if (action.moveZ < 0) keys.current.add('KeyS');
-          else keys.current.delete('KeyS');
-        }
-        if (action.moveX !== undefined) {
-          if (action.moveX > 0) keys.current.add('KeyD');
-          else keys.current.delete('KeyD');
-          if (action.moveX < 0) keys.current.add('KeyA');
-          else keys.current.delete('KeyA');
-        }
-      };
-    }
-
     const onPointerDown = (event: MouseEvent) => {
-      recordInputEvent();
       const current = gateRef.current;
       if (tool !== 'orbit' && current.state.view === 'free-cursor' && engageCall(current.state) !== 'none') {
         // "Click to look" after orbit: this click captures; it must not also fire the tool.
@@ -208,13 +150,11 @@ export function PointerInput({
     };
 
     const onPointerUp = (event: MouseEvent) => {
-      recordInputEvent();
       isDragging = false;
       buttons.current = pressButton(buttons.current, event.button, false);
     };
 
     const onMouseMove = (event: MouseEvent) => {
-      recordInputEvent();
       if (tool === 'orbit') return;
       if (document.pointerLockElement === dom) {
         if (event.movementX !== 0 || event.movementY !== 0) lastLookMs.current = performance.now();
@@ -238,7 +178,6 @@ export function PointerInput({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
-      recordInputEvent();
       if (event.code === 'Escape' && !event.repeat && gateRef.current.state.look === 'drag') {
         gateRef.current.pause();
         return;
@@ -272,7 +211,6 @@ export function PointerInput({
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
-      recordInputEvent();
       keys.current.delete(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
         keyUse.current = false;
@@ -310,10 +248,6 @@ export function PointerInput({
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('mouseup', onPointerUp);
       document.removeEventListener('mousemove', onMouseMove);
-      if (import.meta.env.DEV) {
-        const debug = window as unknown as Record<string, unknown>;
-        for (const key of ['__SET_LOOK_ANGLES__', '__SET_CAMERA_OVERRIDE__', '__SIMULATE_INPUT__', '__THREE_RENDERER__']) delete debug[key];
-      }
       dom.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
@@ -391,10 +325,7 @@ export function PointerInput({
     if (!Number.isFinite(pitch.current)) pitch.current = 0;
     yaw.current = wrapYaw(yaw.current);
 
-    if (cameraOverride.current) {
-      camera.position.set(cameraOverride.current.pos[0], cameraOverride.current.pos[1], cameraOverride.current.pos[2]);
-      camera.lookAt(cameraOverride.current.lookAt[0], cameraOverride.current.lookAt[1], cameraOverride.current.lookAt[2]);
-    } else if (tool === 'orbit') {
+    if (tool === 'orbit') {
       controls.update();
     } else {
       if (localPlayer) {
@@ -482,17 +413,10 @@ export function PointerInput({
       moveZ: frameTool !== 'orbit' ? moveZ : 0,
       yaw: Math.round(wrapYaw(aim.yaw) * 1000),
       pitch: Math.round(aim.pitch * 1000) || 0,
-      ox: 0, oy: 0, oz: 0,
-      dx: 0, dy: 0, dz: 0,
     };
 
     // Behind the gate or the pause menu: keep the view and tool, stop the rest.
     const input = inputLive(gateRef.current.state) ? playInput : pausedInput(playInput);
-    if (perfActive()) {
-      perfCount('input.primary', Number(input.pressed));
-      perfCount('input.moveX', Math.abs(input.moveX));
-      perfCount('input.moveZ', Math.abs(input.moveZ));
-    }
     controller.setInput(input);
     controller.pump(performance.now());
     const nextRender = controller.getRender();

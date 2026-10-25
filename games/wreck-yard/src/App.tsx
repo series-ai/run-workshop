@@ -52,7 +52,7 @@ export default function App({ capture }: { capture: CaptureSurface }) {
   }, []);
   const [lastRequest, setLastRequest] = useState<RoomRequest>(initialRequest);
 
-  // One port for the app's life: the host SDK, the browser, none, or the test fake.
+  // One capture port for the app.
   const attractionInput = useRef<AttractionRequest>({ command: 0, sequence: 0 });
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const port = useMemo(
@@ -78,7 +78,6 @@ export default function App({ capture }: { capture: CaptureSurface }) {
 
   useEffect(() => {
     let cancelled = false;
-    (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__ = controller;
     const unsubscribe = controller.subscribe(() => setSnapshot(controller.snapshot()));
     // StrictMode cancels its probe before the initial room request starts.
     queueMicrotask(() => { if (!cancelled) void controller.start(initialRequest); });
@@ -86,7 +85,6 @@ export default function App({ capture }: { capture: CaptureSurface }) {
       cancelled = true;
       unsubscribe();
       controller.stop();
-      delete (window as unknown as { __WRECK_YARD_CONTROLLER__?: MatchController }).__WRECK_YARD_CONTROLLER__;
     };
   }, [controller, initialRequest]);
 

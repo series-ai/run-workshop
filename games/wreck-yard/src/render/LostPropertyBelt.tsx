@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useEffect, useMemo, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { LOST_PROPERTY_BELT } from '../sim/lostProperty';
@@ -104,17 +104,11 @@ function createBeltAssets() {
 
 export function LostPropertyBelt({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {
   const assets = useMemo(createBeltAssets, []);
-  const group = useRef<THREE.Group>(null);
   useFrame(() => {
     const frame = renderRef.current?.frame ?? 0;
     const distance = frame / TICK_RATE * LOST_PROPERTY_BELT.surfaceVelocity[0];
     const phase = distance % PATTERN_REPEAT_METERS;
     assets.topMaterial.uniforms.travel!.value = phase;
-    if (group.current) {
-      group.current.userData.frame = frame;
-      group.current.userData.phase = phase;
-      group.current.userData.distance = distance;
-    }
   });
   useEffect(() => () => {
     assets.shell.dispose();
@@ -127,10 +121,9 @@ export function LostPropertyBelt({ renderRef }: { renderRef: MutableRefObject<Ya
 
   return (
     <group
-      ref={group}
       name="lost-property-belt"
       position={[...LOST_PROPERTY_BELT.center]}
-      userData={{ departmentId: 'lost-property', center: LOST_PROPERTY_BELT.center, size: LOST_PROPERTY_BELT.size, topY: LOST_PROPERTY_BELT.center[1] + LOST_PROPERTY_BELT.size[1] / 2, surfaceVelocity: LOST_PROPERTY_BELT.surfaceVelocity, patternPeriod: PATTERN_REPEAT_METERS, phase: 0, distance: 0, frame: 0 }}
+      userData={{ departmentId: 'lost-property', center: LOST_PROPERTY_BELT.center, size: LOST_PROPERTY_BELT.size, topY: LOST_PROPERTY_BELT.center[1] + LOST_PROPERTY_BELT.size[1] / 2, surfaceVelocity: LOST_PROPERTY_BELT.surfaceVelocity }}
     >
       <mesh name="lost-property-belt-shell" geometry={assets.shell} material={assets.shellMaterial} raycast={noRaycast} />
       <mesh name="lost-property-belt-trim" geometry={assets.trim} material={assets.trimMaterial} raycast={noRaycast} userData={{ containedDecoration: true }} />

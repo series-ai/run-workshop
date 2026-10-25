@@ -7,9 +7,8 @@ import { getToonGradientMap, Toon } from '../style/toonMaterial';
 import { ROBOT_SLOTS, robotBodyTilt, type RobotId } from './robotSlots';
 
 /**
- * Player avatars: four salvage robots, one per player slot. Used in the game
- * and in the avatar lab (avatar-lab.html). Each is about
- * 1.5 m tall, faces +Z, and stands on y = 0.
+ * Player avatars: four salvage robots, one per player slot.
+ * Each is about 1.5 m tall, faces +Z, and stands on y = 0.
  *
  * Shared design language, so the four read as one crew: the player color on
  * the main panels, ink joints, steel hardware, one hazard-stripe element, a
