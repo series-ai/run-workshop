@@ -1,3 +1,5 @@
+import { perfActive, perfCount } from '../perf/recorder';
+import { recordInputEvent } from '../perf/localInput';
 import { elevatorPanelWithinReach, restackWithinReach, type AttractionRequest, type AttractionCommand } from '../sim/attractions';
 import { queueAttraction } from '../ui/AttractionControls';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -134,6 +136,7 @@ export function PointerInput({
     let lastY = 0;
 
     const onPointerDown = (event: MouseEvent) => {
+      recordInputEvent();
       const current = gateRef.current;
       if (tool !== 'orbit' && current.state.view === 'free-cursor' && engageCall(current.state) !== 'none') {
         // "Click to look" after orbit: this click captures; it must not also fire the tool.
@@ -150,11 +153,13 @@ export function PointerInput({
     };
 
     const onPointerUp = (event: MouseEvent) => {
+      recordInputEvent();
       isDragging = false;
       buttons.current = pressButton(buttons.current, event.button, false);
     };
 
     const onMouseMove = (event: MouseEvent) => {
+      recordInputEvent();
       if (tool === 'orbit') return;
       if (document.pointerLockElement === dom) {
         if (event.movementX !== 0 || event.movementY !== 0) lastLookMs.current = performance.now();
@@ -178,6 +183,7 @@ export function PointerInput({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      recordInputEvent();
       if (event.code === 'Escape' && !event.repeat && gateRef.current.state.look === 'drag') {
         gateRef.current.pause();
         return;
@@ -211,6 +217,7 @@ export function PointerInput({
     };
 
     const onKeyUp = (event: KeyboardEvent) => {
+      recordInputEvent();
       keys.current.delete(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
         keyUse.current = false;
@@ -413,10 +420,17 @@ export function PointerInput({
       moveZ: frameTool !== 'orbit' ? moveZ : 0,
       yaw: Math.round(wrapYaw(aim.yaw) * 1000),
       pitch: Math.round(aim.pitch * 1000) || 0,
+      ox: 0, oy: 0, oz: 0,
+      dx: 0, dy: 0, dz: 0,
     };
 
     // Behind the gate or the pause menu: keep the view and tool, stop the rest.
     const input = inputLive(gateRef.current.state) ? playInput : pausedInput(playInput);
+    if (perfActive()) {
+      perfCount('input.primary', Number(input.pressed));
+      perfCount('input.moveX', Math.abs(input.moveX));
+      perfCount('input.moveZ', Math.abs(input.moveZ));
+    }
     controller.setInput(input);
     controller.pump(performance.now());
     const nextRender = controller.getRender();

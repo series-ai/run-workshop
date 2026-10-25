@@ -1,3 +1,4 @@
+import { beginPhase, endPhase, perfCount } from '../perf/recorder';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
@@ -135,6 +136,7 @@ export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: Mut
     const relevant = occlusionBodiesWithinVolume(render.bodies, render.poses, worldOcclusion.spec);
     if (!poseCache.current.hasChanges(relevant, render.poses)) return;
 
+    const timing = beginPhase('occlusion.build');
     const bodies: WorldOcclusionBody[] = relevant.map((body) => {
       const pose = render.poses.get(body.id)!;
       return {
@@ -149,6 +151,8 @@ export function OcclusionUpdater({ renderRef, worldOcclusion }: { renderRef: Mut
     worldOcclusion.texture.needsUpdate = true;
     lastUpdate.current = now;
     poseCache.current.update(relevant, render.poses);
+    perfCount('occlusion.rebuilds', 1);
+    endPhase('occlusion.build', timing);
   });
 
   return null;

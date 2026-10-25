@@ -6,3 +6,5 @@ game.config.playground.json
 .rundot-docs
 
 .env.local
+test-results
+playwright-report

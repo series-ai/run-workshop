@@ -45,6 +45,20 @@ Pause. Use the Dpad or LS in menus, A to select, and B to return.
 
 Pause contains the room controls, graphics settings, sound settings, and
 fullscreen controls. Multiplayer rooms continue while a player pauses.
+Use **Performance capture** to record up to 60 seconds and save a local report.
+Recording is off until you start it. The game does not upload the report.
+
+## Regression checks
+
+```sh
+npm test
+npm run test:e2e
+```
+
+The regression tests use the native physics engine and the game functions.
+The browser tests need Chrome. They start the local game and check
+multiplayer and controls.
+Generated test results stay out of Git.
 
 ## Build and deploy
 

@@ -47,6 +47,7 @@ import type { ShellBox } from './setPieces';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 import { WATER_BOUNDS } from './water';
+import { perfActive, perfCount } from '../perf/recorder';
 
 void setVoxelCell;
 await initPhysics3D();
@@ -441,6 +442,15 @@ export function readWorldState(
     if (bodyId) portalStraddlers.push({ bodyId, pairId: entry.pairId, end: entry.end });
     else if (!stepOutputs) throw new Error('WRECK_YARD_PORTAL_BODY_MISSING');
   }
+  if (perfActive()) {
+    let active = 0, sleeping = 0;
+    for (let row = 0; row < count; row += 1) {
+      if ((MOTION_BATCH.status[row]! & 0b11) !== 1) continue;
+      if (MOTION_BATCH.status[row]! & 0x10) sleeping += 1; else active += 1;
+    }
+    perfCount('sim.activeBodies', active);
+    perfCount('sim.sleepingBodies', sleeping);
+  }
   const bodies = names.map((name) => batchBodyView(name, batchRow(open.bodyIds.get(name)!, count)));
   const interactions: YardFluidInteraction[] = [];
   if (fluidInteractions) {
@@ -503,12 +513,17 @@ export function addPhysicsBodies(open: OpenYardPhysicsWorld, bodies: readonly Ya
 export function wakeShippingStack(open: OpenYardPhysicsWorld, id: string): void {
   const bay = id.startsWith('shipping-storage-') ? 'storage' : id.startsWith('shipping-returns-') ? 'returns' : null;
   if (!bay) return;
+  perfCount('wake.requests', 1);
   const { count } = open.world.writeBodyMotionInto(MOTION_BATCH.poses, MOTION_BATCH.velocities, MOTION_BATCH.ids, MOTION_BATCH.status, MOTION_BATCH.teleports);
+  perfCount('wake.motionRows', count);
+  let actualWakes = 0;
   for (const [name, nativeId] of open.bodyIds) {
     if (name.startsWith(`shipping-${bay}-`) && (MOTION_BATCH.status[batchRow(nativeId, count)]! & 0x10)) {
+      actualWakes += 1;
       open.world.wakeBody(open.world.resolveBody(nativeId));
     }
   }
+  perfCount('wake.actualBodies', actualWakes);
 }
 
 export function removePhysicsBodies(open: OpenYardPhysicsWorld, ids: readonly string[]): void {

@@ -54,5 +54,6 @@ describe('determinism audit', () => {
     const firstImport = main.split('\n').find((line) => line.startsWith('import '));
     expect(firstImport).toBe("import './deterministicMath';");
     expect(readFileSync(join(WRECK_YARD, 'src/deterministicMath.ts'), 'utf8')).toMatch(/^installDeterministicMath\(\);$/m);
+    expect(readFileSync(join(WRECK_YARD, 'vitest.config.ts'), 'utf8')).toContain("setupFiles: ['src/deterministicMath.ts']");
   });
 });

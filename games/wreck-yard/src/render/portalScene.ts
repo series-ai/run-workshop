@@ -1,3 +1,5 @@
+import { beginPhase, endPhase, perfCount } from '../perf/recorder';
+import { beginGpu, endGpu } from '../perf/render';
 import {
   createThreePortalStencilHooks3D,
   portalExitClipPlane3D,
@@ -265,20 +267,29 @@ export function createReturnsPortalHooks({
         if (draw.view) {
           renderer.shadowMap.autoUpdate = false;
           renderer.shadowMap.needsUpdate = false;
+          const cullTiming = beginPhase('portal.cull');
           restoreCulling = cullPortalMeshes(draw);
+          endPhase('portal.cull', cullTiming);
+          perfCount('portal.views', 1);
         }
         camera.layers.mask = eyeCamera.layers.mask;
         renderer.localClippingEnabled = true;
         renderer.clippingPlanes = viewPlane ? [asThreePlane(viewPlane)] : [];
         setPortalViewClipOnScene(scene, viewPlane);
+        const phase = draw.view ? 'portal.render' : 'render.main';
+        const timing = beginPhase(phase);
+        const gpu = beginGpu(renderer, phase);
         // The SDK locks the scene depth mask. Let each material keep its own
         // depthWrite value so transparent effects do not fill the depth buffer.
         scene.onBeforeRender = (...args) => {
           previousBeforeRender.apply(scene, args);
           renderer.state.buffers.depth.setLocked(false);
         };
-        base.drawScene(draw);
-        if (draw.view) afterView(draw);
+        try {
+          base.drawScene(draw);
+          if (draw.view) afterView(draw);
+        }
+        finally { endGpu(renderer, gpu); endPhase(phase, timing); }
       } finally {
         setPortalViewClipOnScene(scene, null);
         renderer.shadowMap.autoUpdate = shadowAutoUpdate;
@@ -325,7 +336,9 @@ export function renderReturnsPortalViews({
   const previousClippingPlanes = renderer.clippingPlanes;
   const previousLocalClippingEnabled = renderer.localClippingEnabled;
   try {
-    return renderPortalViews3D(options);
+    const timing = beginPhase('portal.plan');
+    try { return renderPortalViews3D(options); }
+    finally { endPhase('portal.plan', timing); }
   } finally {
     setPortalViewClipOnScene(scene, null);
     renderer.setRenderTarget(previousTarget);

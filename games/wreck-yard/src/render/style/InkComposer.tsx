@@ -1,3 +1,5 @@
+import { beginPhase, endPhase, perfCount } from '../../perf/recorder';
+import { beginGpu, endGpu, finishPerfFrame } from '../../perf/render';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
@@ -49,6 +51,7 @@ function passMaterial(shader: { uniforms: Record<string, THREE.IUniform>; vertex
 }
 
 interface Pipeline {
+  readonly targetBytesEstimate: number;
   readonly scene: THREE.WebGLRenderTarget;
   readonly depth: THREE.DepthTexture;
   /** Low: one 1/4 target. High: extract + 4 downsample levels, then 4 upsample levels. */
@@ -149,6 +152,9 @@ function createPipeline(width: number, height: number, samples: number, quality:
   passScene.add(quad);
   const materials = [extract, down, up, aoMaterial, composite, portalPost, copyPortal];
   return {
+    targetBytesEstimate: width * height * (12 * (1 + samples) + 8)
+      + [...bloomDown, ...bloomUp].reduce((bytes, target) => bytes + target.width * target.height * 8, 0)
+      + (ao ? ao.width * ao.height * 4 : 0),
     scene, depth, bloomDown, bloomUp, ao, white, passScene, passCamera: new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quad,
     extract, down, up, aoMaterial, composite, portalPost, portalScratch, copyPortal,
     dispose() {
@@ -244,6 +250,8 @@ export function InkComposer({ enableInk = false, samples, quality, renderRef }: 
     : null, [camera, enableInk, gl, height, inverseViewProjection, pipeline, portalCamera, portalRects, portalSurfaces, scene, width]);
 
   useFrame(({ gl, camera, clock }) => {
+    try {
+    perfCount('webgl.postTargetBytesEstimate', pipeline.targetBytesEstimate);
     const perspective = camera as THREE.PerspectiveCamera;
     const pass = (material: THREE.ShaderMaterial, target: THREE.WebGLRenderTarget | null) => {
       pipeline.quad.material = material;
@@ -260,7 +268,10 @@ export function InkComposer({ enableInk = false, samples, quality, renderRef }: 
         renderReturnsPortalViews({ renderer: gl, scene, eyeCamera: camera, hooks: portalHooks });
       } else {
         gl.clear(true, true, true);
-        gl.render(scene, camera);
+        const timing = beginPhase('render.main');
+        const gpu = beginGpu(gl, 'render.main');
+        try { gl.render(scene, camera); }
+        finally { endGpu(gl, gpu); endPhase('render.main', timing); }
       }
     } finally {
       gl.autoClear = previousAutoClear;
@@ -274,10 +285,16 @@ export function InkComposer({ enableInk = false, samples, quality, renderRef }: 
       u.uProjScale!.value = camera.projectionMatrix.elements[5]! * 0.5 * pipeline.ao.height;
       u.uCameraNear!.value = perspective.near;
       u.uCameraFar!.value = perspective.far;
-      pass(pipeline.aoMaterial, pipeline.ao);
+      const timing = beginPhase('post.ao');
+      const gpu = beginGpu(gl, 'post.ao');
+      try { pass(pipeline.aoMaterial, pipeline.ao); }
+      finally { endGpu(gl, gpu); endPhase('post.ao', timing); }
     }
 
     // Bloom: bright-pass extract into the first level, then (high) down and back up.
+    const bloomTiming = beginPhase('post.bloom');
+    const bloomGpu = beginGpu(gl, 'post.bloom');
+    try {
     const [first, ...rest] = pipeline.bloomDown;
     pipeline.extract.uniforms.tDiffuse!.value = pipeline.scene.texture;
     (pipeline.extract.uniforms.uResolution!.value as THREE.Vector2).set(first!.width, first!.height);
@@ -297,6 +314,7 @@ export function InkComposer({ enableInk = false, samples, quality, renderRef }: 
       source = pipeline.bloomUp[level]!;
     }
 
+    } finally { endGpu(gl, bloomGpu); endPhase('post.bloom', bloomTiming); }
     const u = pipeline.composite.uniforms;
     const render = renderRef?.current;
     const player = render?.players.find((entry) => entry.slot === render.localSlot);
@@ -320,7 +338,11 @@ export function InkComposer({ enableInk = false, samples, quality, renderRef }: 
     (u.uInverseProjection!.value as THREE.Matrix4).copy(camera.projectionMatrixInverse);
     (u.uCameraWorld!.value as THREE.Matrix4).copy(camera.matrixWorld);
     u.uEnableInk!.value = enableInk ? 1.0 : 0.0;
-    pass(pipeline.composite, null);
+    const compositeTiming = beginPhase('post.composite');
+    const compositeGpu = beginGpu(gl, 'post.composite');
+    try { pass(pipeline.composite, null); }
+    finally { endGpu(gl, compositeGpu); endPhase('post.composite', compositeTiming); }
+    } finally { finishPerfFrame(gl, renderRef?.current?.frame ?? -1); }
   }, 1);
 
   return null;

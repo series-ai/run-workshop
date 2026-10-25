@@ -14,7 +14,9 @@
     "preview": "vite preview --port 4398 --strictPort --host 127.0.0.1",
     "identity:generate": "node scripts/generate-identity.mjs",
     "identity:check": "node scripts/generate-identity.mjs --check",
-    "deploy": "npm run build && rundot deploy --orientation Landscape"
+    "deploy": "npm run build && rundot deploy --orientation Landscape",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
@@ -27,12 +29,14 @@
     "voxel-kit": "file:../../tools/voxel-kit"
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.0",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
     "@types/three": "~0.170.0",
     "@vitejs/plugin-react": "^4.7.0",
     "firebase": "^12.18.0",
     "typescript": "^5.7.3",
-    "vite": "^6.4.2"
+    "vite": "^6.4.2",
+    "vitest": "^4.1.10"
   }
 }
