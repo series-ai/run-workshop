@@ -94,6 +94,29 @@ test('a desktop room accepts a touch peer, releases Jet, and supports leave and 
   } finally { await context.close(); }
 });
 
+test('a touch peer can join a room after its first minute', async ({ page: host, browser, baseURL }) => {
+  test.setTimeout(150_000);
+  const errors: string[] = [];
+  watch(host, errors);
+  await host.goto('/?quality=low');
+  await expect(host.locator('[data-match-status="live"]')).toBeVisible({ timeout: 45_000 });
+  const code = (await host.locator('.yard-tape').innerText()).trim();
+  expect(code).toMatch(/^[A-Z0-9]{6}$/);
+  await host.waitForTimeout(65_000);
+
+  const context = await browser.newContext({ ...touchOptions, baseURL });
+  try {
+    const guest = await context.newPage();
+    watch(guest, errors);
+    await guest.goto(`/?room=${code}&controls=touch&quality=low`);
+    await touchLive(guest);
+    await expect(host.locator('.yard-crew')).toHaveText('Crew 2/4', { timeout: 30_000 });
+    await pause(guest);
+    expect(await roomCode(guest)).toBe(code);
+    expect(errors).toEqual([]);
+  } finally { await context.close(); }
+});
+
 test('an invalid URL join retries and recovers to a new room', async ({ browser, baseURL }) => {
   const context = await browser.newContext({ ...touchOptions, baseURL });
   const errors: string[] = [];
