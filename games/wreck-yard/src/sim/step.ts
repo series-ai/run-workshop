@@ -1,4 +1,6 @@
 import type { AttractionState } from './attractions';
+import type { KinetixSeatState } from '@series-inc/rundot-syncplay/core/runtime';
+import { applyPlayerSeats } from './playerSeats';
 import { applyAttractionRequests, startElevatorStep, finishElevatorStep } from './storageRuntime';
 import { meters, type PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
 import {
@@ -218,7 +220,7 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
 
   if (buggy) {
     const inRange = withinBuggyMountRange([player.x, player.y, player.z], [buggy.x, buggy.y, buggy.z]);
-    const occupied = w.players.some((other) => other.slot !== player.slot && other.ridingVehicle);
+    const occupied = w.players.some((other) => other.active && other.slot !== player.slot && other.ridingVehicle);
     const useEdge = input.use && !player.wasUsePressed;
     if (!ridingVehicle && !occupied && inRange && useEdge) {
       ridingVehicle = true;
@@ -991,7 +993,7 @@ function explodeDrum(w: Working, id: string): void {
   }
 
   w.players = w.players.map((player) => {
-    if (player.ridingVehicle) return player;
+    if (!player.active || player.ridingVehicle) return player;
     const center: Vec3 = [player.x, player.y + 0.5, player.z];
     const falloff = blastFalloff(Math.hypot(center[0] - at[0], center[1] - at[1], center[2] - at[2]));
     if (falloff <= 0) return player;
@@ -1086,7 +1088,7 @@ function stepContraptions(w: Working, before: YardPhysicsWorldState): void {
  * Advances one tick. `physics` is the live world at `state` (see sim.ts); this
  * steps it in place and returns the next state.
  */
-export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs: readonly YardInput[]): YardState {
+export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs: readonly YardInput[], seats: readonly KinetixSeatState[] = []): YardState {
   let phaseStart = beginPhase('sim.gameBefore');
   const worldFrame = Number(physics.world.info().frame);
   if (worldFrame !== state.world.frame) {
@@ -1095,7 +1097,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   const w: Working = {
     physics,
     bodies: [...state.bodies],
-    players: [...state.players],
+    players: [...applyPlayerSeats(state.players, seats)],
     stats: state.stats,
     contraptions: state.contraptions,
     attractions: state.attractions,
@@ -1113,6 +1115,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
 
   const playersStart = beginPhase('sim.players');
   for (let slot = 0; slot < w.players.length; slot += 1) {
+    if (!w.players[slot]!.active) continue;
     const input = inputs[slot];
     if (!input) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
     w.players[slot] = stepPlayer(w, slot, input);
@@ -1120,12 +1123,8 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
 
   endPhase('sim.players', playersStart);
   const wakeStart = beginPhase('sim.stackWake');
-  for (const bay of ['storage', 'returns']) {
-    const movingCrate = state.world.bodies.find((body) => body.id.startsWith(`shipping-${bay}-`) && Math.hypot(body.vx, body.vy, body.vz) > 0.0003);
-    if (movingCrate) wakeShippingStack(w.physics, movingCrate.id);
-  }
   endPhase('sim.stackWake', wakeStart);
-  const driver = w.players.find((player) => player.ridingVehicle);
+  const driver = w.players.find((player) => player.active && player.ridingVehicle);
   const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.attractions = startElevatorStep(w.physics, w.attractions, w.players);
   endPhase('sim.gameBefore', phaseStart);
@@ -1145,6 +1144,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   // Release teleported holds and move riders to the post-step chassis position.
   for (let slot = 0; slot < w.players.length; slot += 1) {
     const p = w.players[slot];
+    if (!p?.active) continue;
     if (p?.grab) {
       const heldId = w.physics.bodyIds.get(p.grab.bodyId);
       const crossing = latest.portalCrossings?.find((entry) => entry.bodyId === heldId);
