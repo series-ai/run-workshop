@@ -80,7 +80,6 @@ import {
   replacePhysicsBody,
   setPhysicsBodyMotion,
   shellBody,
-  wakeShippingStack,
   setPhysicsBodyLinearDamping,
   bodyLinearDamping,
   setPhysicsBodyVelocity,
@@ -451,7 +450,6 @@ function stepHand(
         // Release a body that stays too far from the hold point.
         grab = null;
       } else {
-        wakeShippingStack(w.physics, grab.bodyId);
         const applied = grabServo(w.physics.world, physicsBodyHandle(w.physics, grab.bodyId), hold);
         grab = applied ? { ...grab, target: hold.point, targetVelocity: hold.velocity } : null;
       }

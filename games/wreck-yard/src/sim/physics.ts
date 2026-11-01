@@ -505,26 +505,7 @@ export function addPhysicsBodies(open: OpenYardPhysicsWorld, bodies: readonly Ya
   for (const entry of created) open.bodyIds.set(entry.id, entry.body.id);
 }
 
-/** Wake the connected crate assembly when a support or a tool changes it. */
-export function wakeShippingStack(open: OpenYardPhysicsWorld, id: string): void {
-  const bay = id.startsWith('shipping-storage-') ? 'storage' : id.startsWith('shipping-returns-') ? 'returns' : null;
-  if (!bay) return;
-  perfCount('wake.requests', 1);
-  let actualWakes = 0;
-  for (const [name, nativeId] of open.bodyIds) {
-    if (name.startsWith(`shipping-${bay}-`)) {
-      actualWakes += 1;
-      open.world.wakeBody(open.world.resolveBody(nativeId));
-    }
-  }
-  perfCount('wake.actualBodies', actualWakes);
-}
-
 export function removePhysicsBodies(open: OpenYardPhysicsWorld, ids: readonly string[]): void {
-  for (const bay of ['storage', 'returns']) {
-    const first = ids.find((id) => id.startsWith(`shipping-${bay}-`));
-    if (first) wakeShippingStack(open, first);
-  }
   open.world.edit((edit) => { for (const id of ids) edit.removeBody(physicsBodyHandle(open, id)); });
   bodyTopologies.delete(open);
   for (const id of ids) open.bodyIds.delete(id);
@@ -541,19 +522,16 @@ export function removePhysicsBody(open: OpenYardPhysicsWorld, id: string): void 
  * ships, the yard removes the body and adds it again with the same id and key.
  */
 export function replacePhysicsBody(open: OpenYardPhysicsWorld, body: YardPhysicsBodyInput3D): void {
-  removePhysicsBodies(open, [body.id]);
-  addPhysicsBodies(open, [body]);
+  open.world.edit((edit) => edit.replaceBody(physicsBodyHandle(open, body.id), body.body));
 }
 
 /** Sets linear velocity (m/tick) and wakes the body. The SDK setter is ~8x cheaper than a replaceBody edit. */
 export function setPhysicsBodyVelocity(open: OpenYardPhysicsWorld, id: string, velocity: Vec3): void {
-  wakeShippingStack(open, id);
   open.world.setLinearVelocity(physicsBodyHandle(open, id), vec3(metersPerSecond, velocity, TICK_RATE));
 }
 
 /** Sets linear (m/tick) and angular (rad/tick) velocity and wakes the body. */
 export function setPhysicsBodyMotion(open: OpenYardPhysicsWorld, id: string, linear: Vec3, angular: Vec3): void {
-  wakeShippingStack(open, id);
   const handle = physicsBodyHandle(open, id);
   open.world.setLinearVelocity(handle, vec3(metersPerSecond, linear, TICK_RATE));
   open.world.setAngularVelocity(handle, vec3(radiansPerSecond, angular, TICK_RATE));
@@ -625,7 +603,6 @@ export function applyPhysicsForce(
   force: Vec3,
   torque: Vec3 = [0, 0, 0],
 ): void {
-  wakeShippingStack(open, id);
   const handle = physicsBodyHandle(open, id);
   open.world.applyForce(
     handle,
@@ -640,7 +617,6 @@ export function applyPhysicsForceAtPoint(
   force: Vec3,
   point: Vec3,
 ): void {
-  wakeShippingStack(open, id);
   const handle = physicsBodyHandle(open, id);
   open.world.applyForceAtPoint(
     handle,
