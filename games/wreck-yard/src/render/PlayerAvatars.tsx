@@ -59,7 +59,7 @@ function PlayerAvatar({ player, renderRef, tool }: { player: PlayerRenderPose; r
   });
 
   return (
-    <group ref={root} position={player.position} name={`player-robot-${player.slot}`} userData={{ slot: player.slot, robot: design.id }}>
+    <group ref={root} visible={false} position={player.position} name={`player-robot-${player.slot}`} userData={{ slot: player.slot, robot: design.id }}>
       <group ref={seat} name="robot-seat">
         <design.Component colors={design.colors} pose={pose} number={player.slot + 1} />
       </group>
@@ -70,5 +70,5 @@ function PlayerAvatar({ player, renderRef, tool }: { player: PlayerRenderPose; r
 export function PlayerAvatars({ renderRef, tool }: { renderRef: MutableRefObject<YardRender | null>; tool: UiTool }) {
   const render = renderRef.current;
   if (!render) return null;
-  return <>{render.players.map(player => <PlayerAvatar key={player.slot} player={player} renderRef={renderRef} tool={tool} />)}</>;
+  return <>{render.players.map(player => <PlayerAvatar key={`${player.slot}:${player.controlEpoch ?? 'solo'}`} player={player} renderRef={renderRef} tool={tool} />)}</>;
 }

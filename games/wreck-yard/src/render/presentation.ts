@@ -14,6 +14,7 @@ export interface RenderPose {
 }
 
 export interface PlayerRenderPose {
+  readonly controlEpoch?: number | null;
   readonly portalTeleports?: number;
   readonly slot: number;
   readonly position: Vec3;
@@ -83,8 +84,9 @@ export function projectYard(state: YardState, context: { readonly localSlot: num
     }
   }
 
-  const players: PlayerRenderPose[] = state.players.map((p, idx) => ({
-    slot: p.slot ?? idx,
+  const players: PlayerRenderPose[] = state.players.filter((p) => p.active).map((p) => ({
+    slot: p.slot,
+    controlEpoch: p.controlEpoch,
     portalTeleports: p.portalTeleports,
     position: [p.x, p.y, p.z],
     soundPosition: [p.x, p.y, p.z],
@@ -143,7 +145,7 @@ export function interpolateYard(previous: YardRender, current: YardRender, alpha
   }
   const players = current.players.map((curr) => {
     const prev = previous.players?.find((p) => p.slot === curr.slot);
-    if (!prev || prev.portalTeleports !== curr.portalTeleports) return curr;
+    if (!prev || prev.controlEpoch !== curr.controlEpoch || prev.portalTeleports !== curr.portalTeleports) return curr;
     return {
       ...curr,
       position: [

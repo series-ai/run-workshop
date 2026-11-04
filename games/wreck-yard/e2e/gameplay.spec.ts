@@ -20,6 +20,23 @@ async function touchLive(page: Page) {
   await expect(page.getByLabel('Move pad', { exact: true })).toBeVisible({ timeout: 45_000 });
 }
 
+async function playerAvatarSlots(page: Page, visibleOnly = false): Promise<number[]> {
+  return page.evaluate(async (visibleOnly) => {
+    const moduleUrl = performance.getEntriesByType('resource')
+      .find((entry) => entry.name.includes('/@react-three_fiber.js'))?.name;
+    if (!moduleUrl) throw new Error('The scene module is not loaded.');
+    const { _roots } = await import(/* @vite-ignore */ moduleUrl);
+    const scene = _roots.get(document.querySelector('canvas'))?.store.getState().scene;
+    if (!scene) throw new Error('The game scene is not mounted.');
+    const slots: number[] = [];
+    scene.traverse((object: { name: string; visible: boolean; userData: { slot?: number } }) => {
+      if (/^player-robot-\d+$/.test(object.name) && typeof object.userData.slot === 'number'
+        && (!visibleOnly || object.visible)) slots.push(object.userData.slot);
+    });
+    return slots.sort((a, b) => a - b);
+  }, visibleOnly);
+}
+
 async function pause(page: Page) {
   await page.getByRole('button', { name: 'Pause', exact: true }).tap();
   await expect(page.getByRole('region', { name: 'Paused', exact: true })).toBeVisible();
@@ -56,6 +73,9 @@ test('a desktop room accepts a touch peer, releases Jet, and supports leave and 
   await host.goto('/?quality=low');
   await expect(host.locator('[data-match-status="live"]')).toBeVisible({ timeout: 45_000 });
   await expect(host.getByRole('button', { name: 'Click to play', exact: true })).toBeVisible();
+  await expect.poll(() => playerAvatarSlots(host)).toHaveLength(1);
+  await expect.poll(() => playerAvatarSlots(host, true)).toEqual([]);
+  const hostSlot = (await playerAvatarSlots(host))[0]!;
   const code = (await host.locator('.yard-tape').innerText()).trim();
   expect(code).toMatch(/^[A-Z0-9]{6}$/);
   const context = await browser.newContext({ ...touchOptions, baseURL, permissions: ['clipboard-read', 'clipboard-write'] });
@@ -66,6 +86,11 @@ test('a desktop room accepts a touch peer, releases Jet, and supports leave and 
     await guest.goto(url);
     await touchLive(guest);
     await expect(host.locator('.yard-crew')).toHaveText('Crew 2/4', { timeout: 30_000 });
+    await expect.poll(() => playerAvatarSlots(host)).toHaveLength(2);
+    await expect.poll(() => playerAvatarSlots(guest)).toEqual(await playerAvatarSlots(host));
+    const guestSlot = (await playerAvatarSlots(host)).find((slot) => slot !== hostSlot)!;
+    await expect.poll(() => playerAvatarSlots(host, true)).toEqual([guestSlot]);
+    await expect.poll(() => playerAvatarSlots(guest, true)).toEqual([hostSlot]);
     await guest.bringToFront();
     await holdTouch(guest, context, 'Jet', 1200);
     const fuel = guest.locator('[aria-label^="Jet fuel "]');
@@ -86,8 +111,11 @@ test('a desktop room accepts a touch peer, releases Jet, and supports leave and 
     await guest.getByRole('button', { name: 'Leave match', exact: true }).tap();
     await expect(guest.getByRole('button', { name: 'New room', exact: true })).toBeVisible();
     await expect(host.locator('.yard-crew')).toHaveText('Crew 1/4', { timeout: 45_000 });
+    await expect.poll(() => playerAvatarSlots(host)).toEqual([hostSlot]);
+    await expect.poll(() => playerAvatarSlots(host, true)).toEqual([]);
     await join(guest, code);
     await expect(host.locator('.yard-crew')).toHaveText('Crew 2/4', { timeout: 30_000 });
+    await expect.poll(() => playerAvatarSlots(host)).toHaveLength(2);
     await pause(guest);
     expect(await roomCode(guest)).toBe(code);
     expect(errors).toEqual([]);

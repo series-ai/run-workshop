@@ -48,14 +48,12 @@ function paintDepartment(context: CanvasRenderingContext2D, department: Departme
   context.restore();
   context.textAlign = 'left';
   context.fillStyle = BONE;
-  fitText(context, department.headline[0], 125, 66, 40, 360);
-  fitText(context, department.headline[1], 125, 112, 40, 360);
+  fitText(context, department.headline[0], 125, department.headline[1] ? 66 : 90, 40, 360);
+  if (department.headline[1]) fitText(context, department.headline[1], 125, 112, 40, 360);
   context.fillStyle = accent;
   context.fillRect(126, 151, 355, 3);
   context.fillStyle = BONE;
   fitText(context, department.action, 126, 186, 21, 358);
-  context.fillStyle = '#c9bca4';
-  fitText(context, department.joke, 126, 224, 18, 358);
   context.fillStyle = '#7d8c96';
   for (const [x, y] of [[17, 17], [495, 17], [17, 239], [495, 239]]) {
     context.beginPath();
@@ -96,9 +94,7 @@ function paintDirectory(context: CanvasRenderingContext2D) {
     context.fillStyle = '#39444b';
     context.fillRect(x, y + 58, 451, 2);
   });
-  context.fillStyle = BONE;
   context.font = `900 23px ${FONT}`;
-  context.fillText('FIND A NUMBER. TEST THE CLAIM.', 42, 718);
   context.textAlign = 'right';
   context.fillStyle = ART_STYLE.palette.signalOrange;
   context.fillText('NORTH  ↑', 977, 718);
@@ -260,7 +256,7 @@ export function YardDepartments({ renderRef: _renderRef }: { renderRef: MutableR
       <mesh name="yard-department-floor-labels" geometry={assets.floor} material={assets.material} raycast={noRaycast} userData={{ departmentIds: DEPARTMENTS.map((entry) => entry.id), nonSolidDecoration: true }} />
       <mesh name="yard-department-paint" geometry={assets.paint} material={assets.paintMaterial} raycast={noRaycast} userData={{ nonSolidDecoration: true }} />
       <group name="yard-department-directory" position={[DEPARTMENT_DIRECTORY.center[0], FLOOR_Y + 0.012, DEPARTMENT_DIRECTORY.center[1]]} userData={{ text: DEPARTMENT_DIRECTORY.title, entries: DEPARTMENTS, size: DEPARTMENT_DIRECTORY.size, nonSolidDecoration: true }} />
-      {DEPARTMENTS.map((department) => <group key={department.id} name={`yard-department-${department.id}`} position={[...department.sign.center]} userData={{ departmentId: department.id, text: [department.title, department.action, department.joke], department }} />)}
+      {DEPARTMENTS.map((department) => <group key={department.id} name={`yard-department-${department.id}`} position={[...department.sign.center]} userData={{ departmentId: department.id, text: [department.title, department.action], department }} />)}
     </group>
   );
 }

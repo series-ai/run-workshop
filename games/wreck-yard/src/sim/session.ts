@@ -53,8 +53,8 @@ export function createYardRuntime(identity: KinetixRuntimeIdentity, sessionConfi
     lease = createInstalledRuntimeAdapter<YardState, YardInput, never, YardState, YardSave>({
       identity,
       sessionConfigBytes,
-      step: (inputs) => {
-        sim.step(inputs);
+      step: (inputs, _commands, context) => {
+        sim.step(inputs, context.seats);
       },
       stateStorage: {
         kind: 'owned',

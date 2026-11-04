@@ -127,7 +127,7 @@ export function LostPropertyBelt({ renderRef }: { renderRef: MutableRefObject<Ya
     >
       <mesh name="lost-property-belt-shell" geometry={assets.shell} material={assets.shellMaterial} raycast={noRaycast} />
       <mesh name="lost-property-belt-trim" geometry={assets.trim} material={assets.trimMaterial} raycast={noRaycast} userData={{ containedDecoration: true }} />
-      <mesh name="lost-property-belt-surface" geometry={assets.top} material={assets.topMaterial} raycast={noRaycast} userData={{ text: 'LOST PROPERTY / COLLECTION IS NOT GUARANTEED', direction: '+X', simulationClock: true }} />
+      <mesh name="lost-property-belt-surface" geometry={assets.top} material={assets.topMaterial} raycast={noRaycast} userData={{ text: 'LOST PROPERTY', direction: '+X', simulationClock: true }} />
     </group>
   );
 }

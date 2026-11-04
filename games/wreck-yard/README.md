@@ -2,7 +2,7 @@
 
 Wreck Yard is a multiplayer physics game on RUN. Grab and throw objects, cut
 voxel shapes with the torch, drive the buggy, and move through the portals.
-Each yard department has an activity and a safety claim of doubtful value.
+Each station shows a physics interaction.
 
 ## Local play
 
@@ -14,6 +14,7 @@ npm run dev
 Open the printed URL. Each tab creates a multiplayer room. Open **Pause** to
 copy its room code. Enter that code in another tab to join the same room.
 You can also open the game with `?room=CODE`. Rooms support four players.
+Each player gets a robot avatar when they join. The avatar leaves with them.
 
 The local room authority uses port 4399. Set `WRECK_YARD_ROOM_PORT` to change
 that port. Local play needs no RUN account or API key.
@@ -92,7 +93,7 @@ change. Clients and the room authority must use matching identities.
 
 Syncplay runs at 30 Hz. Rendering follows the display animation loop and
 interpolates poses between simulation ticks. The game uses the official
-`6.0.0-rc.76` package.
+`6.0.0-rc.77` package.
 
 To rebuild the sound bank, run `node scripts/prepare-audio.mjs`. This command
 needs FFmpeg with libmp3lame. Set `FFMPEG_BIN` to select its path. Source

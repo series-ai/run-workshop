@@ -157,9 +157,6 @@ function drawCrateCell(context: CanvasRenderingContext2D, { boards, marking }: C
   context.fillStyle = CRATE_APPEARANCE.ink;
   context.font = 'bold 36px Arial, sans-serif';
   context.fillText(marking.caption, 256, 388, 420);
-  context.font = 'bold 24px Arial, sans-serif';
-  context.fillText('PLEASE HANDLE', 256, 416, 420);
-  context.fillText('RESPONSIBLY', 256, 444, 420);
   for (let index = 0; index < 15; index += 1) {
     const width = index % 3 === 0 ? 5 : 2;
     context.fillRect(106 + index * 20, 466, width, 10);

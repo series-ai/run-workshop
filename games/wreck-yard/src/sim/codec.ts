@@ -2,6 +2,7 @@ import { deflateSync, inflateSync } from 'fflate';
 import { canonicalParse, canonicalStringify } from '@series-inc/rundot-syncplay/browser';
 import type { YardPhysicsWorldState } from './physics';
 import { FLOODLIGHT_LENSES } from './floodlights';
+import { MAX_PLAYERS } from './constants';
 import { isYardMaterial } from './materials';
 import { CRATE_ARROWS, type CrateFace, type CrateFaces, type YardBody, type YardState } from './state';
 
@@ -273,6 +274,16 @@ export function assertImpacts(impacts: unknown): void {
   }
 }
 
+function assertPlayerSeatFields(players: unknown): void {
+  if (!Array.isArray(players) || players.length < 1 || players.length > MAX_PLAYERS
+    || !players.every((player: unknown, slot: number) => typeof player === 'object' && player !== null
+      && 'slot' in player && player.slot === slot && 'active' in player && typeof player.active === 'boolean'
+      && 'controlEpoch' in player && (player.controlEpoch === null
+        || (typeof player.controlEpoch === 'number' && Number.isSafeInteger(player.controlEpoch) && player.controlEpoch >= 0)))) {
+    throw new Error('WRECK_YARD_STATE_BYTES_INVALID: player seats');
+  }
+}
+
 function decodeRawState(bytes: Uint8Array): EncodedYard {
   if (bytes.byteLength < 8) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: too short');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -281,6 +292,7 @@ function decodeRawState(bytes: Uint8Array): EncodedYard {
   if (8 + headerLength > bytes.byteLength) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: header overflow');
   // canonicalParse restores what canonicalStringify tags, such as -0.
   const header = canonicalParse<Header>(decoder.decode(bytes.subarray(8, 8 + headerLength)));
+  assertPlayerSeatFields(header.players);
   assertLampFields(header.contraptions);
   assertImpacts(header.impacts);
   let offset = 8 + headerLength;

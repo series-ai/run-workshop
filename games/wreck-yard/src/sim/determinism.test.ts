@@ -1,4 +1,4 @@
-import { canonicalStringify, createSyncplayRunner, type NetworkedSyncplayClient } from '@series-inc/rundot-syncplay/browser';
+import { canonicalStringify, createSyncplayRunner, type ConfirmedInputFrame, type NetworkedSyncplayClient } from '@series-inc/rundot-syncplay/browser';
 import { assertDeterministicAsync, assertLateJoinHydrationAsync, createSimulatedSyncplayMatch } from '@series-inc/rundot-syncplay/testing';
 import { describe, expect, it } from 'vitest';
 import { decodeYardInput, encodeYardInput, NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
@@ -38,9 +38,27 @@ describe('wreck yard determinism', () => {
   it('presents the same frames offline and through the authority room', async () => {
     const frames = 20;
     const offlineProjections = new Map<number, string>();
+    const authorityFrames = new Map<number, ConfirmedInputFrame>();
     const offline = createSyncplayRunner<YardState, YardInput, unknown, YardState, YardRender>({
       inputOwnership: room.inputOwnership,
-      runtimeFactory: createYardRuntime,
+      runtimeFactory: (identity, sessionConfigBytes) => {
+        const lease = createYardRuntime(identity, sessionConfigBytes);
+        const advance = lease.runtime.advance.bind(lease.runtime);
+        return {
+          ...lease,
+          runtime: {
+            ...lease.runtime,
+            get currentFrame() { return lease.runtime.currentFrame; },
+            advance: (requests: Parameters<typeof advance>[0]) => advance(requests.map((request) => {
+              const authority = authorityFrames.get(request.frame);
+              if (authority?.seats === undefined) throw new Error(`Missing authority seats for frame ${request.frame}`);
+              expect(request.inputs, `inputs for frame ${request.frame}`).toEqual(authority.inputs.map(decodeYardInput));
+              // The offline runner has no authority seat context.
+              return { ...request, seats: authority.seats };
+            })),
+          },
+        };
+      },
       defaultInput: NEUTRAL_INPUT,
       encodeInput: encodeYardInput,
       decodeInput: decodeYardInput,
@@ -65,13 +83,6 @@ describe('wreck yard determinism', () => {
     });
     const clients: NetworkedSyncplayClient<YardState>[] = [];
     try {
-      await offline.start({ mode: 'offline', identity: room.runtimeIdentity, sessionConfigBytes: room.sessionConfigBytes,
-        playerCount: PLAYERS, localSlot: 0, botInputForTick: scriptedInput });
-      for (let frame = 1; frame <= frames; frame += 1) {
-        offline.applyInput(scriptedInput(0, frame));
-        offline.update(1000 / 30);
-        expect(offlineProjections.has(frame)).toBe(true);
-      }
       for (let slot = 0; slot < PLAYERS; slot += 1) {
         const peer = match.connect(`parity-${slot}`, {
           inputOwnership: room.inputOwnership,
@@ -87,12 +98,23 @@ describe('wreck yard determinism', () => {
       }
       await match.advanceAsync(frames + 8);
       await match.settleAsync();
+      for (const authority of match.room.confirmedTail()) {
+        authorityFrames.set(authority.tick + 1, authority);
+      }
+      await offline.start({ mode: 'offline', identity: room.runtimeIdentity, sessionConfigBytes: room.sessionConfigBytes,
+        playerCount: PLAYERS, localSlot: 0, botInputForTick: scriptedInput });
+      for (let frame = 1; frame <= frames; frame += 1) {
+        offline.applyInput(scriptedInput(0, frame));
+        offline.update(1000 / 30);
+        expect(offlineProjections.has(frame)).toBe(true);
+      }
       for (const client of clients) {
         let comparedFrames = 0;
         for (const entry of client.drainConfirmedPresentationFrames()) {
           const expected = offlineProjections.get(entry.frame);
           if (expected === undefined) continue;
-          expect(canonicalStringify(entry.projection), `state frame ${entry.frame}`).toBe(expected);
+          const actual = canonicalStringify(entry.projection);
+          expect(actual === expected, `full state frame ${entry.frame}`).toBe(true);
           comparedFrames += 1;
         }
         expect(comparedFrames).toBeGreaterThanOrEqual(5);

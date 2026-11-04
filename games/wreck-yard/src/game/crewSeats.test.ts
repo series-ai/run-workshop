@@ -73,6 +73,7 @@ function observation(client: Client) {
   return {
     crew: snapshot.crew, status: snapshot.status, localSlot: snapshot.localSlot,
     frame: render?.frame ?? null, avatarSlots: render?.players.length ?? null,
+    visibleSlots: render?.players.map(player => player.slot) ?? [],
     poseHash: createHash('sha256').update(JSON.stringify(poses)).digest('hex'),
   };
 }
@@ -95,8 +96,10 @@ describe('crew seats with the real SDK authority and Yard runtime', () => {
       const confirmed = observation(owner);
       await evidence('fallback', { unknownPresence, confirmed, authority: match.room.netcodeStats() });
       expect(unknownPresence.crew).toEqual({ occupied: 1, capacity: 4 });
+      expect(unknownPresence.visibleSlots).toEqual([unknownPresence.localSlot]);
       expect(confirmed.crew).toEqual({ occupied: 1, capacity: 4 });
-      expect(confirmed.avatarSlots).toBe(4);
+      expect(confirmed.avatarSlots).toBe(1);
+      expect(confirmed.visibleSlots).toEqual([confirmed.localSlot]);
       expect(confirmed.frame).toBeGreaterThan(0);
     } finally { owner.controller.stop(); }
   });
@@ -113,6 +116,7 @@ describe('crew seats with the real SDK authority and Yard runtime', () => {
       const confirmed = observation(owner);
       await evidence('unknown', { unknownPresence, confirmed, authority: match.room.netcodeStats() });
       expect(unknownPresence.crew).toEqual({ occupied: null, capacity: 4 });
+      expect(unknownPresence.visibleSlots).toEqual([unknownPresence.localSlot]);
       expect(confirmed.crew).toEqual({ occupied: 1, capacity: 4 });
     } finally { owner.controller.stop(); }
   });
@@ -158,14 +162,19 @@ describe('crew seats with the real SDK authority and Yard runtime', () => {
         limits: ['Local simulated authority. This does not prove deployed backend seat policy.'],
       });
       expect(alone.crew).toEqual({ occupied: 1, capacity: 4 });
+      expect(alone.visibleSlots).toEqual([0]);
       expect(joined.crew).toEqual({ occupied: 2, capacity: 4 });
+      expect(joined.visibleSlots).toEqual([0, guestSlot]);
       expect(left.crew).toEqual({ occupied: 1, capacity: 4 });
+      expect(left.visibleSlots).toEqual([0]);
       expect(newSlot).toBe(guestSlot);
       expect(reused.crew).toEqual({ occupied: 2, capacity: 4 });
+      expect(reused.visibleSlots).toEqual([0, newSlot]);
       expect(afterLoss).toBeGreaterThan(beforeLoss);
       expect(stats.occupiedSlots).toEqual([0, newSlot]);
       expect(tail.at(-1)?.substitutedSlots).toContain(newSlot);
       expect(substituted.crew).toEqual({ occupied: 2, capacity: 4 });
+      expect(substituted.visibleSlots).toEqual([0, newSlot]);
       expect(publications.some((entry) => entry.status === 'live' && entry.crew?.occupied === 2)).toBe(true);
       const occupiedSequence = publications.filter((entry) => entry.status === 'live').map((entry) => entry.crew?.occupied);
       const firstTwo = occupiedSequence.indexOf(2);
@@ -174,6 +183,45 @@ describe('crew seats with the real SDK authority and Yard runtime', () => {
     } finally {
       unsubscribe();
       for (const client of [newcomer, guest, owner]) client.controller.stop();
+    }
+  });
+
+  it('publishes a sparse roster change with equal occupancy and preserves a nonzero local slot', async () => {
+    const match = room();
+    const owner = fixture(match, 'owner');
+    const first = fixture(match, 'first', 2);
+    const second = fixture(match, 'second', 2);
+    const drive = driver(match, [owner, first, second]);
+    const publications: { occupied: number | null; slots: readonly number[] }[] = [];
+    const unsubscribe = owner.controller.subscribe(() => {
+      publications.push({ occupied: owner.controller.snapshot().crew.occupied,
+        slots: owner.controller.getRender()?.players.map(player => player.slot) ?? [] });
+    });
+    try {
+      await drive.start(owner);
+      await drive.start(first);
+      await drive.pump(14);
+      expect(first.controller.snapshot().localSlot).toBe(1);
+      expect(observation(owner).visibleSlots).toEqual([0, 1]);
+      publications.length = 0;
+      // Join slot 2 without advancing authority time or pumping the observer.
+      await driver(match, [second]).start(second, false);
+      expect(second.controller.snapshot().localSlot).toBe(2);
+      first.controller.stop();
+      await drive.pump(20);
+      expect(observation(owner).crew).toEqual({ occupied: 2, capacity: 4 });
+      expect(observation(owner).visibleSlots).toEqual([0, 2]);
+      expect(observation(second).visibleSlots).toEqual([0, 2]);
+      expect(publications.some(entry => entry.occupied === 2 && entry.slots.join(',') === '0,2')).toBe(true);
+      owner.controller.stop();
+      await drive.pump(16);
+      const alone = observation(second);
+      expect(alone.localSlot).toBe(2);
+      expect(alone.crew).toEqual({ occupied: 1, capacity: 4 });
+      expect(alone.visibleSlots).toEqual([2]);
+    } finally {
+      unsubscribe();
+      for (const client of [second, first, owner]) client.controller.stop();
     }
   });
 
@@ -192,7 +240,7 @@ describe('crew seats with the real SDK authority and Yard runtime', () => {
         limit: 'This reproduces the local acknowledgement metadata gap. It does not change SDK or room capacity.',
       });
       expect(match.room.playerCount).toBe(4);
-      expect(confirmed.avatarSlots).toBe(4);
+      expect(confirmed.avatarSlots).toBe(1);
       expect(confirmed.status).toBe('live');
       expect(confirmed.crew).toEqual({ occupied: 1, capacity: 4 });
     } finally { owner.controller.stop(); }

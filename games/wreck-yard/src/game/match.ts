@@ -71,6 +71,24 @@ function crewPresence(snapshot: SyncplayRunnerSnapshot<YardRender>): CrewPresenc
   return { occupied, capacity };
 }
 
+function crewRender(render: YardRender, snapshot: SyncplayRunnerSnapshot<YardRender>): YardRender {
+  if (snapshot.status === 'offline') return render;
+  const players = render.players.filter((player) => {
+    const presence = snapshot.presence?.[player.slot];
+    return presence === 'human' || presence === 'substituted'
+      || ((presence === undefined || presence === 'unknown') && snapshot.ready && player.slot === snapshot.localSlot);
+  });
+  return players.length === render.players.length ? render : { ...render, players };
+}
+
+function rosterChanged(previous: YardRender | null, current: YardRender | null): boolean {
+  if (!previous || !current) return previous !== current;
+  return previous.players.length !== current.players.length || previous.players.some((player, index) => {
+    const next = current.players[index];
+    return player.slot !== next?.slot || player.controlEpoch !== next.controlEpoch;
+  });
+}
+
 export interface MatchDeps {
   readonly createRoomTransport: () => Promise<SyncplayRoomTransport>;
   readonly quickMatchTransport: () => Promise<SyncplayRoomTransport>;
@@ -214,11 +232,10 @@ export class MatchController {
       inputDelay: { minTicks: 1, maxTicks: 3 },
     });
     this.runner.subscribe((snapshot) => {
-      if (snapshot.interpolatedRenderState) {
-        this.render = snapshot.interpolatedRenderState;
-      } else if (snapshot.renderState) {
-        this.render = snapshot.renderState;
-      }
+      const previous = this.render;
+      const selected = snapshot.interpolatedRenderState ?? snapshot.renderState;
+      if (selected) this.render = crewRender(selected, snapshot);
+      const changedRoster = rosterChanged(previous, this.render);
       if (this.starting) return;
       // Offline start reports stopped while it acquires the runtime.
       // The controller remains connecting until the runtime is ready or fails.
@@ -232,7 +249,7 @@ export class MatchController {
             ? null
             : this.error;
       if (next !== this.status || nextError !== this.error
-        || nextCrew.occupied !== this.crew.occupied || nextCrew.capacity !== this.crew.capacity) {
+        || nextCrew.occupied !== this.crew.occupied || nextCrew.capacity !== this.crew.capacity || changedRoster) {
         this.status = next;
         this.crew = nextCrew;
         this.error = nextError;

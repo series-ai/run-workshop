@@ -134,6 +134,7 @@ export function YardScene({ onAudioFrame, controller, tool, quality, onQualityFa
 
   useEffect(() => {
     return controller.subscribe(() => {
+      renderRef.current = controller.getRender();
       if (controller.snapshot().status === 'idle') {
         renderRef.current = null;
         setBodies([]);

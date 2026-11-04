@@ -1,4 +1,5 @@
 import type { PhysicsCheckpoint3D } from '@series-inc/rundot-syncplay/physics/3d';
+import type { KinetixSeatState } from '@series-inc/rundot-syncplay/core/runtime';
 import { decodeState, encodeState, encodeChecksumState } from './codec';
 import type { YardInput } from './input';
 import { readWorldState, setBodyNames, type OpenYardPhysicsWorld } from './physics';
@@ -69,10 +70,10 @@ export class YardSim {
     return this.#revision;
   }
 
-  step(inputs: readonly YardInput[]): YardState {
+  step(inputs: readonly YardInput[], seats: readonly KinetixSeatState[] = []): YardState {
     this.#assertLive();
     const phaseStart = beginPhase('sim.total');
-    this.#state = stepYard(this.physics, this.#state, inputs);
+    this.#state = stepYard(this.physics, this.#state, inputs, seats);
     recordAppliedInputs(inputs, this.#state.frame);
     this.#revision += 1n;
     if (perfActive()) {

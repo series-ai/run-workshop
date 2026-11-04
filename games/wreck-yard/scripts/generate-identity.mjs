@@ -25,7 +25,7 @@ const modules = [
 const runtimeIdentity = deriveCustomRuntimeIdentity({
   tickRate: 30,
   inputSchema: { id: 'wreck-yard.input.v1' },
-  stateSchema: { id: 'wreck-yard.state.v2' },
+  stateSchema: { id: 'wreck-yard.state.v3' },
   runtimeModules: kinetixRuntimeModuleManifest(repoRoot, modules),
   deterministicVersion: `wreck-yard@1+syncplay@${syncplayVersion}`,
   sessionConfigSchema: {

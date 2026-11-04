@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ELEVATOR, STORAGE, STORAGE_BOUNDS, type AttractionCommand, type ElevatorFloor } from './attractions';
 import { DT, FLOOR_Y, PLAYER_HEIGHT, PLAYER_MOVE_SPEED, PLAYER_RADIUS, TICK_RATE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
-import { makePhysicsBody, physicsStateBodyById, removePhysicsBody, replacePhysicsBody, replacePhysicsPose, setPhysicsBodyLinearDamping, setPhysicsBodyVelocity } from './physics';
+import { makePhysicsBody, physicsStateBodyById, removePhysicsBody, replacePhysicsBody, replacePhysicsPose, setPhysicsBodyLinearDamping, setPhysicsBodyVelocity, voxelStats } from './physics';
 import { YardSim } from './sim';
 import { RETURNS_PAIR } from './returns';
 import { createCrateSpawns } from './storage';
@@ -105,7 +105,15 @@ describe('native storage attraction', () => {
     patchState(sim, (state) => ({ ...state, bodies: state.bodies.filter((body) => !removed.has(body.id)) }));
     step(sim, 120);
     expect(top.filter(({ id, y }) => physicsStateBodyById(sim.state.world, id)!.y < y - 0.5).length).toBeGreaterThan(20);
-    expect(sim.state.bodies.filter((body) => body.storageBay === 'storage')).toHaveLength(360);
+    const remaining = sim.state.bodies.filter((body) => body.storageBay === 'storage');
+    const sources = spawns.filter((spawn) => !removed.has(spawn.body.id));
+    expect(new Set(remaining.map((body) => body.id.replace(/-p\d+$/, ''))))
+      .toEqual(new Set(sources.map((spawn) => spawn.body.id)));
+    for (const { body: source } of sources) {
+      const pieces = remaining.filter((body) => body.id === source.id || body.id.startsWith(`${source.id}-p`));
+      expect(pieces.reduce((sum, body) => sum + voxelStats(body.voxels).occupiedCount, 0), source.id)
+        .toBe(voxelStats(source.voxels).occupiedCount);
+    }
   });
 
   it('releases the rider when the jetpack starts', () => {

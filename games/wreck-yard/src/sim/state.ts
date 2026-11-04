@@ -105,6 +105,8 @@ export interface ToolFeedback {
 }
 
 export interface PlayerState {
+  readonly active: boolean;
+  readonly controlEpoch: number | null;
   readonly portalTeleports: number;
   readonly lastAttractionRequest: number;
   readonly slot: number;
@@ -274,6 +276,8 @@ export function createInitialPlayer(slot = 0): PlayerState {
   const spawn = PLAYER_SPAWN_POINTS[slot % PLAYER_SPAWN_POINTS.length] ?? [0, 0.2, 10];
   return {
     slot,
+    active: true,
+    controlEpoch: null,
     portalTeleports: 0,
     lastAttractionRequest: 0,
     x: spawn[0],

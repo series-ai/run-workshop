@@ -94,7 +94,7 @@ function paintPanelFrame(context: CanvasRenderingContext2D, title: string) {
 
 function paintStorageInfo(context: CanvasRenderingContext2D, actual: number) {
   const { width, height } = context.canvas;
-  paintPanelFrame(context, 'RETURNS DEPARTMENT');
+  paintPanelFrame(context, 'STORAGE');
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillStyle = '#f0d7a5';
@@ -103,9 +103,6 @@ function paintStorageInfo(context: CanvasRenderingContext2D, actual: number) {
   context.fillStyle = '#f6a64f';
   context.font = `bold ${Math.round(height * 0.14)}px Arial, sans-serif`;
   context.fillText(`ACTUAL: ${actual}`, width / 2, height * 0.56, width * 0.9);
-  context.fillStyle = '#d8dfd4';
-  context.font = `bold ${Math.round(height * 0.078)}px Arial, sans-serif`;
-  context.fillText('PERFECTLY SAFE STORAGE', width / 2, height * 0.79, width * 0.9);
 }
 
 function StorageInfoSign({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {

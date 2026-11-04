@@ -1120,8 +1120,6 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   }
 
   endPhase('sim.players', playersStart);
-  const wakeStart = beginPhase('sim.stackWake');
-  endPhase('sim.stackWake', wakeStart);
   const driver = w.players.find((player) => player.active && player.ridingVehicle);
   const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.attractions = startElevatorStep(w.physics, w.attractions, w.players);

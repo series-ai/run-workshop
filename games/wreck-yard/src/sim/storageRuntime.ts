@@ -10,7 +10,7 @@ function intersectsBay(at: readonly [number, number, number], half: readonly [nu
   return at.every((value, axis) => value + half[axis]! > STORAGE_BOUNDS.min[axis]! && value - half[axis]! < STORAGE_BOUNDS.max[axis]!);
 }
 export function storageBayOccupied(physics: OpenYardPhysicsWorld, bodies: readonly YardBody[], players: readonly PlayerState[]): boolean {
-  if (players.some((p) => intersectsBay([p.x, p.y + PLAYER_HEIGHT / 2 - PLAYER_RADIUS, p.z], [PLAYER_RADIUS, PLAYER_HEIGHT / 2, PLAYER_RADIUS]))) return true;
+  if (players.some((p) => p.active && intersectsBay([p.x, p.y + PLAYER_HEIGHT / 2 - PLAYER_RADIUS, p.z], [PLAYER_RADIUS, PLAYER_HEIGHT / 2, PLAYER_RADIUS]))) return true;
   return bodies.some((body) => {
     if (body.storageBay === 'storage' || body.motion === 'fixed') return false;
     const pose = physicsBodyById(physics, body.id);
@@ -24,6 +24,7 @@ export function applyAttractionRequests(physics: OpenYardPhysicsWorld, attractio
   let nextBodies = bodies;
   for (let slot = 0; slot < players.length; slot++) {
     const player = players[slot]!;
+    if (!player.active) continue;
     const input = inputs[slot]!;
     if (input.attraction === 0 || player.lastAttractionRequest === input.attractionRequest) continue;
     players[slot] = { ...player, lastAttractionRequest: input.attractionRequest };
@@ -57,6 +58,7 @@ export function startElevatorStep(physics: OpenYardPhysicsWorld, state: Attracti
   const delta = elevator.velocity * DT;
   const handle = physicsBodyHandle(physics, ELEVATOR.id);
   const blocked = players.some((p) => {
+    if (!p.active) return false;
     if (delta > 0 && standingOnElevator(p, elevator.y)) {
       return physics.world.shapeCast({ shape: { type: 'capsule', radius: meters(PLAYER_RADIUS), halfHeight: meters(PLAYER_HEIGHT / 2 - PLAYER_RADIUS) },
         x: meters(p.x), y: meters(p.y + PLAYER_HEIGHT / 2 - PLAYER_RADIUS), z: meters(p.z), dx: 0, dy: 1, dz: 0,
@@ -76,6 +78,7 @@ export function finishElevatorStep(physics: OpenYardPhysicsWorld, state: Attract
   const delta = y - state.elevator.y;
   for (let slot = 0; slot < players.length; slot++) {
     const p = players[slot]!;
+    if (!p.active) continue;
     if (standingOnElevator(p, state.elevator.y)) players[slot] = { ...p, y: p.y + delta, vy: 0, grounded: true };
   }
   return { ...state, elevator: { ...state.elevator, y } };

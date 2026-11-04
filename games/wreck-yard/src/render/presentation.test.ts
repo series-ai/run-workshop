@@ -29,6 +29,14 @@ describe('presentation', () => {
     expect(new TextDecoder().decode(sim.encode(save))).not.toContain('hover');
     sim.release(save);
   });
+
+  it('shows a new seat controller at its spawn without interpolating from the previous player', () => {
+    const state = initialState(1);
+    const player = state.players[0]!;
+    const before = projectYard({ ...state, players: [{ ...player, controlEpoch: 1, x: 12 }] }, context);
+    const after = projectYard({ ...state, players: [{ ...player, controlEpoch: 2, x: -12 }] }, context);
+    expect(interpolateYard(before, after, 0.5).players[0]!.position).toEqual(after.players[0]!.position);
+  });
   it('interpolates the suspension and continuous wheel rotation', () => {
     const state = initialState(1);
     const before = projectYard({ ...state, buggyWheels: [{ compression: 0.02, steerAngleTurns: 0, spinTurns: 0.95, grounded: true }] }, context);
