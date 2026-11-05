@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TANK, TICK_RATE } from './constants';
+import { TANK, TICK_RATE, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
 import { physicsStateBodyById, replacePhysicsPose, setPhysicsBodyVelocity } from './physics';
 import type { YardSim } from './sim';
@@ -142,6 +142,19 @@ describe('stepYard', () => {
     expect(peak - settled).toBeLessThan(0.08);
     // m/s: a carried body moves no faster than a hard throw.
     expect(fastest).toBeLessThan(6.4);
+  });
+
+  it('pulls a front-face crate of the top storage tier out of the stack face', () => {
+    // Tier 9, centre column, front row. The lower tiers hold this crate with real friction, so the gun pulls it from above.
+    const id = 'shipping-storage-396';
+    const sim = testSim(1);
+    const start = physicsStateBodyById(run(sim, [NEUTRAL_INPUT], 60).world, id)!;
+    const pull: YardInput = { ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...quantizeRay([start.x, start.y, start.z + 9], [0, 0, -1]) };
+    const state = run(sim, [pull], 150);
+    expect(state.players[0]!.grab?.bodyId).toBe(id);
+    const end = physicsStateBodyById(state.world, id)!;
+    // One crate depth is 12 voxels. The crate must move more than that toward the gun.
+    expect(end.z - start.z).toBeGreaterThan(12 * VOXEL_SIZE);
   });
 
   it('drops a still-held box on release and lands it without a bounce', () => {
