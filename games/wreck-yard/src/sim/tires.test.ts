@@ -1,6 +1,6 @@
-import { meters, metersPerSecond, radiansPerSecond, vec3 } from '@series-inc/rundot-syncplay/physics/3d';
+import { meters, metersPerSecond, perSecond, radiansPerSecond, vec3 } from '@series-inc/rundot-syncplay/physics/3d';
 import { describe, expect, it } from 'vitest';
-import { FLOOR_Y } from './constants';
+import { FLOOR_Y, LINEAR_DAMPING } from './constants';
 import { fractureBody } from './fracture';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
 import { bodyLinearDamping, physicsBodyHandle, readBodyInput, physicsStateBodyById, replacePhysicsPose } from './physics';
@@ -86,13 +86,15 @@ describe('loose tires', () => {
     // A catapult flight sets linear damping to 0 until `until`, then the sim gives the body its damping back.
     sim.edit((physics) => {
       const handle = physicsBodyHandle(physics, 'loose-tire-4');
-      physics.world.edit((edit) => edit.replaceBody(handle, { ...readBodyInput(physics, handle), linearDamping: 0 }));
+      physics.world.edit((edit) => edit.replaceBody(handle, { ...readBodyInput(physics, handle), linearDamping: perSecond(0) }));
     });
     patchState(sim, (state) => ({ ...state, contraptions: { ...state.contraptions, ballistic: [{ bodyId: 'loose-tire-4', until: state.frame }] } }));
     runTicks(sim, 2);
     let damping = 0;
     sim.edit((physics) => { damping = physics.world.readBody(physicsBodyHandle(physics, 'loose-tire-4')).linearDamping; });
     expect(damping).toBe(bodyLinearDamping(sim.state.bodies.find((body) => body.id === 'loose-tire-4')!));
-    expect(damping).toBeGreaterThan(0.99);
+    // A damping rate (1/s, Syncplay rc.78): a tire has a lower rate than other bodies, and more than 0 (none).
+    expect(damping).toBeGreaterThan(0);
+    expect(damping).toBeLessThan(LINEAR_DAMPING);
   });
 });

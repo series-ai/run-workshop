@@ -1,10 +1,12 @@
-import { CAGE_PANELS } from './cage';
+import { CAGE_CATEGORY, CAGE_PANELS, WORLD_CATEGORY } from './cage';
+import { STORAGE } from './attractions';
+import { createCrateSpawns } from './storage';
 import { SHELL_BOXES } from './shell';
 import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
-import { VOXEL_SIZE } from './constants';
+import { ANGULAR_DAMPING, LINEAR_DAMPING, PHYSICS_SUBSTEPS, TICK_RATE, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
-import { bodyMass, cookCenteredCollider, makePhysicsBody, physicsBodyById, readWorldState, removePhysicsBody, voxelStats } from './physics';
+import { bodyMass, cookCenteredCollider, createWorld, makePhysicsBody, physicsBodyById, physicsBodyHandle, readWorldState, removePhysicsBody, shellBodies, TIRE_DAMPING, voxelStats } from './physics';
 import type { YardBody } from './state';
 import { YardSim } from './sim';
 import { initialState, testSim } from './testSim';
@@ -94,5 +96,62 @@ describe('body keys', () => {
     const restored = testSim(1);
     restored.restore(YardSim.decode(bytes));
     expect(unkeyed(restored)).toEqual([]);
+  });
+});
+
+describe('Syncplay rc.78 conversions', () => {
+  const pose = (position: readonly [number, number, number], linear: readonly [number, number, number] = [0, 0, 0], angular: readonly [number, number, number] = [0, 0, 0]) => ({
+    position: [...position] as [number, number, number], rotation: [0, 0, 0, 1] as [number, number, number, number],
+    linearVelocity: [...linear] as [number, number, number], angularVelocity: [...angular] as [number, number, number],
+  });
+
+  it('gives damping rates that keep the rc.77 fraction of velocity each tick', () => {
+    // rate = substeps * tickRate * (keep^(-1 / substeps) - 1); the literals are rounded to 6 decimals.
+    const rate = (keep: number) => PHYSICS_SUBSTEPS * TICK_RATE * (keep ** (-1 / PHYSICS_SUBSTEPS) - 1);
+    expect(LINEAR_DAMPING).toBeCloseTo(rate(0.98), 6);
+    expect(ANGULAR_DAMPING).toBeCloseTo(rate(0.945), 6);
+    expect(TIRE_DAMPING.linear).toBeCloseTo(rate(0.995), 6);
+    expect(TIRE_DAMPING.angular).toBeCloseTo(rate(0.99), 6);
+  });
+
+  it('keeps 0.98 of the speed and 0.945 of the spin of a crate in free flight after one tick', () => {
+    const [{ body }] = createCrateSpawns('storage');
+    const open = createWorld([makePhysicsBody(body!, pose([0, 30, 0], [0.3, 0, 0], [0, 0.1, 0]))]);
+    try {
+      open.world.step();
+      const after = physicsBodyById(open, body!.id)!;
+      expect(after.vx / 0.3).toBeCloseTo(0.98, 6);
+      expect(after.angularVel.y / 0.1).toBeCloseTo(0.945, 6);
+    } finally {
+      open.world.dispose();
+    }
+  });
+
+  it('wakes a sleeping crate when the crate under it is removed (no game wake is necessary)', () => {
+    const spawns = createCrateSpawns('storage');
+    const lower = spawns[0]!;
+    const upper = spawns[STORAGE.columns * STORAGE.rows]!;
+    expect(upper.position[1]).toBeGreaterThan(lower.position[1]);
+    const run = (remove: boolean) => {
+      const open = createWorld([lower, upper].map((spawn) => makePhysicsBody(spawn.body, pose(spawn.position))));
+      try {
+        for (let tick = 0; tick < 30; tick += 1) open.world.step();
+        expect(open.world.readBody(physicsBodyHandle(open, upper.body.id)).sleeping).toBe(true);
+        if (remove) removePhysicsBody(open, lower.body.id);
+        for (let tick = 0; tick < 15; tick += 1) open.world.step();
+        return physicsBodyById(open, upper.body.id)!.y;
+      } finally {
+        open.world.dispose();
+      }
+    };
+    expect(run(false)).toBeCloseTo(upper.position[1], 3);
+    expect(run(true)).toBeLessThan(upper.position[1] - 0.5);
+  });
+
+  it('keeps the cage out of aim rays and in the collision of every body', () => {
+    const shell = shellBodies();
+    const panel = shell.find((entry) => entry.id.endsWith(CAGE_PANELS[0]!.id))!;
+    expect(panel.body.filter).toEqual({ categoryBits: CAGE_CATEGORY });
+    expect(shell.find((entry) => entry.id === `shell:${SHELL_BOXES[0]!.id}`)!.body.filter).toEqual({ categoryBits: WORLD_CATEGORY });
   });
 });

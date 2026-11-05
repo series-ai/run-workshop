@@ -8,13 +8,19 @@ export const FLOOR_Y = -0.86;
 export const GRAVITY = 13.5;
 export const GRAVITY_PER_TICK2 = -GRAVITY * DT2;
 /**
- * Syncplay damping is the fraction of velocity a body keeps each tick (v=10
- * becomes 9.8 after one step at 0.98; 0 stops the body; 1 keeps it all;
- * documented in 6.0.0-rc.13). Since rc.14 every voxel body in the yard sleeps
- * at rest with these values (https://github.com/series-ai/venus/issues/4861).
+ * Physics substeps in one tick. It is the Box3D default (Syncplay 6.0.0-rc.78), and
+ * physics.ts makeWorld sets it. The damping rates and the catapult arc use it.
  */
-export const LINEAR_DAMPING = 0.98;
-export const ANGULAR_DAMPING = 0.945;
+export const PHYSICS_SUBSTEPS = 4;
+/**
+ * Syncplay rc.78 damping is a Box3D rate in 1/s: each substep of length h multiplies the
+ * velocity by 1 / (1 + h * rate), and 0 is no damping. Up to rc.77 the yard set the fraction
+ * of velocity that a body keeps each tick (0.98 linear, 0.945 angular). The rate that keeps
+ * the same fraction k each tick is PHYSICS_SUBSTEPS * TICK_RATE * (k^(-1 / PHYSICS_SUBSTEPS) - 1).
+ * The values are literals, so every peer has the same bits (physics.test.ts checks them).
+ */
+export const LINEAR_DAMPING = 0.607614; // keeps 0.98 per tick
+export const ANGULAR_DAMPING = 1.709168; // keeps 0.945 per tick
 export const MAX_RAY_DISTANCE = 40;
 /** The torch flame reaches this far from the eye (m). Past it, the torch only fizzles at the nozzle. */
 export const TORCH_RANGE = 3.5;

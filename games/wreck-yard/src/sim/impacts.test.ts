@@ -1,8 +1,8 @@
-import type { PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
+import type { PhysicsBodyId3D, PhysicsContactData3D } from '@series-inc/rundot-syncplay/physics/3d';
 import { describe, expect, it } from 'vitest';
 import { assertImpacts } from './codec';
 import { FLOOR_Y, SHELL_PREFIX, TICK_RATE } from './constants';
-import { collectImpacts, IMPACT_SHOW_TICKS, keepImpacts, MAX_IMPACTS_PER_TICK } from './impacts';
+import { collectImpacts, IMPACT_SHOW_TICKS, keepImpacts, MAX_IMPACTS_PER_TICK, onePerBodyPair, stepContacts } from './impacts';
 import { NEUTRAL_INPUT } from './input';
 import { replacePhysicsPose } from './physics';
 import type { Impact } from './state';
@@ -26,12 +26,12 @@ function snapshot(key: string | undefined) {
 }
 
 /**
- * A contact as the engine reports it. Only the fields that collectImpacts reads
- * matter. The material output names both sides, as Syncplay rc.49 does.
+ * A contact event as the engine reports it. Only the fields that collectImpacts and
+ * onePerBodyPair read matter. The material output names both sides, as Syncplay rc.49 does.
  */
-function contact(a: string | undefined, b: string | undefined, closingSpeed: number, type: PhysicsContactEvent3D['type'] = 'enter', response: 'resolved' | 'suppressed' = 'resolved'): PhysicsContactEvent3D {
+function contact(a: string | undefined, b: string | undefined, approachSpeed: number, response: 'resolved' | 'suppressed' = 'resolved', ids: readonly [number, number] = [1, 2]): PhysicsContactData3D {
   const material = { kind: response, materialA: snapshot(a), materialB: snapshot(b) };
-  return { type, bodyKeyA: a, bodyKeyB: b, closingSpeed, trigger: false, sensor: false, point: { x: 1, y: 2, z: 3 }, material } as unknown as PhysicsContactEvent3D;
+  return { bodyA: BigInt(ids[0]) as PhysicsBodyId3D, bodyB: BigInt(ids[1]) as PhysicsBodyId3D, bodyKeyA: a, bodyKeyB: b, approachSpeed, point: { x: 1, y: 2, z: 3 }, material } as unknown as PhysicsContactData3D;
 }
 
 describe('impacts from contacts', () => {
@@ -41,19 +41,37 @@ describe('impacts from contacts', () => {
     expect(collectImpacts([contact(`${SHELL_PREFIX}tank-west`, pallet.id, 3)], bodyOf, 9)[0]!.materials).toEqual(['glass', 'wood']);
   });
 
-  it('skips slow contacts, contacts that do not begin this tick, and contacts with no yard body', () => {
+  it('skips slow contacts and contacts with no yard body', () => {
     expect(collectImpacts([contact(drum.id, `${SHELL_PREFIX}floor`, 1)], bodyOf, 0)).toEqual([]);
-    expect(collectImpacts([contact(drum.id, `${SHELL_PREFIX}floor`, 5, 'stay')], bodyOf, 0)).toEqual([]);
     expect(collectImpacts([contact(`${SHELL_PREFIX}floor`, `${SHELL_PREFIX}wall-north`, 5)], bodyOf, 0)).toEqual([]);
     // A suppressed contact (no collision response) makes no hit.
-    expect(collectImpacts([contact(drum.id, `${SHELL_PREFIX}floor`, 5, 'enter', 'suppressed')], bodyOf, 0)).toEqual([]);
+    expect(collectImpacts([contact(drum.id, `${SHELL_PREFIX}floor`, 5, 'suppressed')], bodyOf, 0)).toEqual([]);
+  });
+
+  it('keeps one event per body pair: the fastest shape pair, and the first one on a tie', () => {
+    const slow = contact(drum.id, `${SHELL_PREFIX}floor`, 2, 'resolved', [1, 2]);
+    const fast = contact(drum.id, `${SHELL_PREFIX}floor`, 6, 'resolved', [1, 2]);
+    const tie = contact(drum.id, `${SHELL_PREFIX}floor`, 6, 'resolved', [1, 2]);
+    const other = contact(pallet.id, `${SHELL_PREFIX}floor`, 3, 'resolved', [1, 3]);
+    const kept = onePerBodyPair([slow, fast, tie, other]);
+    expect(kept).toHaveLength(2);
+    expect(kept[0]).toBe(fast);
+    expect(kept[1]).toBe(other);
+  });
+
+  it('begins only with begin events, and touches with begin and hit events', () => {
+    const began = contact(drum.id, `${SHELL_PREFIX}floor`, 4, 'resolved', [1, 2]);
+    const hit = contact(pallet.id, `${SHELL_PREFIX}floor`, 9, 'resolved', [1, 3]);
+    const contacts = stepContacts({ begin: [began], end: [], hit: [hit] });
+    expect(contacts.began).toEqual([began]);
+    expect(contacts.touching).toEqual([began, hit]);
   });
 
   it('sounds the lift deck as steel, and fails loudly when a side of a contact has no named material', () => {
     expect(collectImpacts([contact(drum.id, 'storage-elevator', 4)], bodyOf, 0)[0]!.materials).toEqual(['steel', 'steel']);
-    const unnamed = { ...contact(drum.id, `${SHELL_PREFIX}floor`, 4), material: { kind: 'resolved', materialA: snapshot(drum.id), materialB: { source: { kind: 'inline' } } } } as unknown as PhysicsContactEvent3D;
+    const unnamed = { ...contact(drum.id, `${SHELL_PREFIX}floor`, 4), material: { kind: 'resolved', materialA: snapshot(drum.id), materialB: { source: { kind: 'inline' } } } } as unknown as PhysicsContactData3D;
     expect(() => collectImpacts([unnamed], bodyOf, 0)).toThrow('WRECK_YARD_CONTACT_MATERIAL_NOT_NAMED');
-    const missing = { ...contact(drum.id, `${SHELL_PREFIX}floor`, 4), material: undefined } as unknown as PhysicsContactEvent3D;
+    const missing = { ...contact(drum.id, `${SHELL_PREFIX}floor`, 4), material: undefined } as unknown as PhysicsContactData3D;
     expect(() => collectImpacts([missing], bodyOf, 0)).toThrow('WRECK_YARD_CONTACT_MATERIAL_MISSING');
   });
 

@@ -66,7 +66,7 @@ describe('buggy on a fallen barrel', () => {
     try {
       for (let tick = 0; tick < 90; tick++) advance(NEUTRAL_INPUT);
       expect(airborneTicks).toBeGreaterThan(0);
-      expect(world.latest().contacts.some(contact =>
+      expect(world.contactData().some(contact =>
         (contact.bodyKeyA === barrelId && contact.bodyKeyB === chassisId)
         || (contact.bodyKeyA === chassisId && contact.bodyKeyB === barrelId),
       )).toBe(true);

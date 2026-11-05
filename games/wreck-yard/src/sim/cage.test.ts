@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { meters } from '@series-inc/rundot-syncplay/physics/3d';
-import { CAGE_LAYER, CAGE_TOP } from './cage';
+import { CAGE_CATEGORY, CAGE_TOP } from './cage';
 import { ARENA_EXTENT } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
 import { physicsStateBodyById, replacePhysicsPose } from './physics';
@@ -47,7 +47,7 @@ describe('arena cage', () => {
     const eye: [number, number, number] = [-3, CAGE_TOP - 2, 20];
     const cageHits = sim.physics.world.raycast({
       x: meters(eye[0]), y: meters(eye[1]), z: meters(eye[2]),
-      dx: 0, dy: 0, dz: 1, maxDistance: meters(40), layerMask: CAGE_LAYER, maxPortalDepth: 0,
+      dx: 0, dy: 0, dz: 1, maxDistance: meters(40), filter: { maskBits: CAGE_CATEGORY }, maxPortalDepth: 0,
     });
     expect(cageHits.length).toBeGreaterThan(0);
     const state = sim.step([{ ...NEUTRAL_INPUT, tool: TOOL.hand, pressed: true, ...quantizeRay(eye, [0, 0, 1]) }]);

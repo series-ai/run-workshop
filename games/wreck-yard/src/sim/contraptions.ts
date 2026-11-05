@@ -1,4 +1,4 @@
-import { DT, FLOOR_Y, GRAVITY } from './constants';
+import { DT, FLOOR_Y, GRAVITY, PHYSICS_SUBSTEPS } from './constants';
 import type { Vec3 } from './math';
 import { ofMaterial, type ShellBox, type ShellShape } from './setPieces';
 import type { ContraptionState } from './state';
@@ -113,13 +113,13 @@ export const CATAPULT_TARGET: Vec3 = HOOP.center;
 /**
  * Launch velocity (m/s) that carries a body from `from` to the hoop in
  * CATAPULT_FLIGHT_TICKS ticks with no damping. The solver integrates
- * semi-implicitly (velocity first), so after n ticks
- * y = y0 + n·dt·vy - g·dt²·n(n+1)/2; this solves that for vy exactly.
+ * semi-implicitly (velocity first) on each of S = PHYSICS_SUBSTEPS substeps, so after
+ * n ticks y = y0 + n·dt·vy - g·dt²·n(n+1/S)/2; this solves that for vy exactly.
  */
 export function catapultLaunchVelocity(from: Vec3): Vec3 {
   const n = CATAPULT_FLIGHT_TICKS;
   const time = n * DT;
-  const fall = GRAVITY * DT * DT * n * (n + 1) * 0.5;
+  const fall = GRAVITY * DT * DT * n * (n + 1 / PHYSICS_SUBSTEPS) * 0.5;
   return [
     (CATAPULT_TARGET[0] - from[0]) / time,
     (CATAPULT_TARGET[1] - from[1] + fall) / time,
@@ -129,8 +129,8 @@ export function catapultLaunchVelocity(from: Vec3): Vec3 {
 
 /** Launched bodies fly undamped this long, then get normal damping back. */
 export const BALLISTIC_TICKS = CATAPULT_FLIGHT_TICKS + 45;
-/** Linear damping during the flight: Syncplay damping is the velocity kept per tick, so 1 is none. */
-export const BALLISTIC_DAMPING = 1;
+/** Linear damping rate (1/s) during the flight. Syncplay rc.78 damping is a Box3D rate, so 0 is none. */
+export const BALLISTIC_DAMPING = 0;
 
 // ---------------------------------------------------------------------------
 // Buttons: press E within reach, or click one with the gravity gun.

@@ -1,4 +1,4 @@
-import { carveVoxelChunk, createPhysicsWorld3D, createVoxelChunk, kilograms, meters, metersPerSecond, radiansPerSecond, vec3, type PhysicsBody3D } from '@series-inc/rundot-syncplay/physics/3d';
+import { carveVoxelChunk, createPhysicsWorld3D, createVoxelChunk, kilograms, meters, metersPerSecond, perSecond, radiansPerSecond, vec3, type PhysicsBody3D } from '@series-inc/rundot-syncplay/physics/3d';
 import { describe, expect, it } from 'vitest';
 import { TICK_RATE } from './constants';
 import { PHYSICS_MATERIALS } from './materials';
@@ -22,7 +22,7 @@ function fixture(sleeping = false): OpenYardPhysicsWorld {
       orientation: { x: 0, y: 0.6, z: 0, w: 0.8 },
       linearVelocity: vec3(metersPerSecond, sleeping ? [0, 0, 0] : [1, 2, 3]),
       angularVelocity: vec3(radiansPerSecond, sleeping ? [0, 0, 0] : [0.1, 0.2, 0.3]),
-      linearDamping: 0.94,
+      linearDamping: perSecond(0.94),
       sleeping,
     },
   }]);

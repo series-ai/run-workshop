@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { kilograms, meters, vec3 } from '@series-inc/rundot-syncplay/physics/3d';
-import { FLOOR_Y, PLAYER_RADIUS, VOXEL_SIZE } from './constants';
+import { kilograms, meters, perSecond, vec3 } from '@series-inc/rundot-syncplay/physics/3d';
+import { ANGULAR_DAMPING, FLOOR_Y, PLAYER_RADIUS, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT } from './input';
 import { rotate, type Quat, type Vec3 } from './math';
 import { addPhysicsBodies, physicsBodyHandle } from './physics';
@@ -20,7 +20,7 @@ function addProbe(sim: YardSim, id: string, position: Vec3): void {
     body: {
       kind: 'dynamic', material: 'steel', mass: kilograms(1),
       shape: { type: 'box', halfX: meters(0.25), halfY: meters(0.25), halfZ: meters(0.25) },
-      position: vec3(meters, position), linearDamping: 1, angularDamping: 0.945,
+      position: vec3(meters, position), angularDamping: perSecond(ANGULAR_DAMPING), enableContactEvents: true,
     },
   }]));
 }
@@ -102,21 +102,23 @@ describe('Lost Property belt', () => {
     addProbe(sim, probeId, [startX, BELT.center[1] + BELT.size[1] / 2 + 0.28, BELT.center[2]]);
     addProbe(sim, controlId, [startX, FLOOR_Y + 0.28, BELT.center[2] - 2.5]);
     const contactTypes = new Set<string>();
+    const isBeltPair = (contact: { readonly bodyKeyA?: string; readonly bodyKeyB?: string }) => (contact.bodyKeyA === BELT.key && contact.bodyKeyB === probeId)
+      || (contact.bodyKeyB === BELT.key && contact.bodyKeyA === probeId);
     const advance = (ticks: number) => {
       const trace = [];
       for (let frame = 0; frame < ticks; frame++) {
         sim.step([NEUTRAL_INPUT]);
-        for (const contact of sim.physics.world.latest().contacts) {
-          if ((contact.bodyKeyA === BELT.key && contact.bodyKeyB === probeId)
-            || (contact.bodyKeyB === BELT.key && contact.bodyKeyA === probeId)) contactTypes.add(contact.type);
-        }
+        const { begin, end } = sim.physics.world.latest().contactEvents;
+        if (begin.some(isBeltPair)) contactTypes.add('begin');
+        if (end.some(isBeltPair)) contactTypes.add('end');
+        if (sim.physics.world.contactData().some(isBeltPair)) contactTypes.add('touching');
         trace.push({ body: readProbe(sim, probeId), digest: sim.physics.world.digest() });
       }
       return trace;
     };
     advance(15);
-    expect(contactTypes.has('enter')).toBe(true);
-    expect(contactTypes.has('stay')).toBe(true);
+    expect(contactTypes.has('begin')).toBe(true);
+    expect(contactTypes.has('touching')).toBe(true);
     const save = sim.save();
     try {
       const bytes = sim.encode(save);
@@ -129,7 +131,7 @@ describe('Lost Property belt', () => {
       expect(advance(30)).toEqual(expected);
       advance(75);
       const released = readProbe(sim, probeId);
-      expect(contactTypes.has('exit')).toBe(true);
+      expect(contactTypes.has('end')).toBe(true);
       expect(released.position.x).toBeGreaterThan(BELT.center[0] + BELT.size[0] / 2 + 0.25);
       const rotation: Quat = [released.orientation.x, released.orientation.y, released.orientation.z, released.orientation.w];
       const halfHeight = [
@@ -138,8 +140,7 @@ describe('Lost Property belt', () => {
         rotate([0, 0, 0.25], rotation),
       ].reduce((sum, axis) => sum + Math.abs(axis[1]), 0);
       expect(Math.abs(released.position.y - halfHeight - FLOOR_Y)).toBeLessThan(0.02);
-      const support = sim.physics.world.latest().contacts.filter((contact) => contact.type !== 'exit'
-        && (contact.bodyKeyA === probeId || contact.bodyKeyB === probeId));
+      const support = sim.physics.world.contactData().filter((contact) => contact.bodyKeyA === probeId || contact.bodyKeyB === probeId);
       expect(support.some((contact) => contact.bodyKeyA === 'shell:floor' || contact.bodyKeyB === 'shell:floor')).toBe(true);
       expect(support.some((contact) => contact.bodyKeyA === BELT.key || contact.bodyKeyB === BELT.key)).toBe(false);
       expect(Math.abs(readProbe(sim, controlId).position.x - startX)).toBeLessThan(0.05);

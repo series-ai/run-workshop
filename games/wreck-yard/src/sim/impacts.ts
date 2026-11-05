@@ -1,4 +1,4 @@
-import type { PhysicsContactEvent3D, PhysicsMaterialSnapshot3D } from '@series-inc/rundot-syncplay/physics/3d';
+import type { PhysicsContactData3D, PhysicsContactEvents3D, PhysicsMaterialSnapshot3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { Vec3 } from './math';
 import { hitMaterialOf, type YardMaterial } from './materials';
 import type { Impact, YardBody } from './state';
@@ -23,15 +23,51 @@ function sideMaterial(snapshot: PhysicsMaterialSnapshot3D, key: string | undefin
 }
 
 /**
+ * One contact for each body pair, as up to Syncplay rc.77. Syncplay rc.78 (Box3D) has one
+ * event for each touching shape pair, so a voxel body with many child shapes would give
+ * many events for one hit. The lists come in body pair order, so equal pairs are next to
+ * each other. The event with the highest approach speed stands for the pair; a tie keeps
+ * the first, so every client keeps the same event.
+ */
+export function onePerBodyPair(events: readonly PhysicsContactData3D[]): PhysicsContactData3D[] {
+  const out: PhysicsContactData3D[] = [];
+  for (const event of events) {
+    const last = out[out.length - 1];
+    if (last && last.bodyA === event.bodyA && last.bodyB === event.bodyB) {
+      if (event.approachSpeed > last.approachSpeed) out[out.length - 1] = event;
+      continue;
+    }
+    out.push(event);
+  }
+  return out;
+}
+
+/**
+ * The contacts of one step, one per body pair. `began` replaces the rc.77 'enter' contacts.
+ * `touching` replaces 'enter' and 'stay': the pairs that began, and the pairs that touch with
+ * a hit event (approach speed above the world hit threshold, 1 m/s). Yard bodies enable both
+ * events (physics.ts makePhysicsBody). A sensor pair never has contact events.
+ */
+export interface StepContacts {
+  readonly began: readonly PhysicsContactData3D[];
+  readonly touching: readonly PhysicsContactData3D[];
+}
+
+export function stepContacts(events: PhysicsContactEvents3D): StepContacts {
+  const began = onePerBodyPair(events.begin);
+  return { began, touching: [...began, ...onePerBodyPair(events.hit)] };
+}
+
+/**
  * The hard contacts that began this tick, strongest first and at most
  * MAX_IMPACTS_PER_TICK. Each one has a yard body. Syncplay reports the material
- * of both sides on the contact (rc.49 contact materials). A contact with no
- * response (a sensor or a trigger) is left out.
+ * of both sides on the contact (rc.49 contact materials). A sensor pair has no
+ * contact event, so it is never here.
  */
-export function collectImpacts(contacts: readonly PhysicsContactEvent3D[], bodyOf: (key: string | undefined) => YardBody | undefined, frame: number): Impact[] {
+export function collectImpacts(contacts: readonly PhysicsContactData3D[], bodyOf: (key: string | undefined) => YardBody | undefined, frame: number): Impact[] {
   const found: Impact[] = [];
   for (const contact of contacts) {
-    if (contact.type !== 'enter' || contact.closingSpeed < IMPACT_MIN_SPEED || contact.trigger || contact.sensor) continue;
+    if (contact.approachSpeed < IMPACT_MIN_SPEED) continue;
     const yard = bodyOf(contact.bodyKeyA) ?? bodyOf(contact.bodyKeyB);
     if (!yard) continue;
     const material = contact.material;
@@ -39,7 +75,7 @@ export function collectImpacts(contacts: readonly PhysicsContactEvent3D[], bodyO
     if (material.kind === 'suppressed') continue;
     const at: Vec3 = [contact.point.x, contact.point.y, contact.point.z];
     const materials = [sideMaterial(material.materialA, contact.bodyKeyA), sideMaterial(material.materialB, contact.bodyKeyB)] as const;
-    found.push({ bodyId: yard.id, materials, at, speed: contact.closingSpeed, frame });
+    found.push({ bodyId: yard.id, materials, at, speed: contact.approachSpeed, frame });
   }
   // Ties keep the engine order, so every client keeps the same hits.
   return found.map((impact, index) => ({ impact, index }))

@@ -12,9 +12,14 @@ type Vec3Tuple = [number, number, number];
 
 /** Top of the cage: above the catapult's arc (~16 m) and the floodlight masts (~11 m). */
 export const CAGE_TOP = FLOOR_Y + 25;
-/** Physics layers (bit values). Aim rays hit only WORLD_LAYER, so the cage never blocks a tool. */
+/**
+ * Collision categories (Box3D filter bits, Syncplay rc.78). Aim rays hit only WORLD_CATEGORY,
+ * so the cage never blocks a tool. Every body collides with every category.
+ */
+export const WORLD_CATEGORY = 1n;
+export const CAGE_CATEGORY = 2n;
+/** The fluid layer of the water tank (fluids keep a 32-bit layer and mask). */
 export const WORLD_LAYER = 1;
-export const CAGE_LAYER = 2;
 const THICKNESS = 1;
 
 export interface CagePanel {

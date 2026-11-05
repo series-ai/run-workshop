@@ -2,7 +2,7 @@ import type { AttractionState } from './attractions';
 import type { KinetixSeatState } from '@series-inc/rundot-syncplay/core/runtime';
 import { applyPlayerSeats } from './playerSeats';
 import { applyAttractionRequests, startElevatorStep, finishElevatorStep } from './storageRuntime';
-import { meters, type PhysicsContactEvent3D } from '@series-inc/rundot-syncplay/physics/3d';
+import { meters, type PhysicsContactData3D } from '@series-inc/rundot-syncplay/physics/3d';
 import {
   DT,
   FLOOR_Y,
@@ -31,7 +31,7 @@ import {
   TORCH_MAX_STROKE,
   VOXEL_SIZE,
 } from './constants';
-import { WORLD_LAYER } from './cage';
+import { WORLD_CATEGORY } from './cage';
 import { fractureBody, type FractureContact } from './fracture';
 import {
   BALLISTIC_DAMPING,
@@ -56,7 +56,7 @@ import { BLAST, blastDirection, blastFalloff, damageDrum, dentVoxels, EXPLOSION_
 import { fuelDrumPreset } from './props';
 import { damageLamp, FLOODLIGHT, FLOODLIGHT_LENSES, floodlightLensByKey, lampHitDamage, lampsToRelight, LAMP_SHOW_TICKS, LIGHTS_OUT_TICKS, REPAIR_TICKS, wholeLamp } from './floodlights';
 import { breakCrate, CRATE_BREAK, CRATE_BREAK_SHOW_TICKS, isBreakableCrate } from './crateBreak';
-import { collectImpacts, keepImpacts } from './impacts';
+import { collectImpacts, keepImpacts, stepContacts } from './impacts';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import type { ShellBox } from './setPieces';
 import { stepBuggy } from './vehicle';
@@ -145,7 +145,7 @@ function aimRay(w: Working, origin: Vec3, direction: Vec3, maxDistance = MAX_RAY
     dx: direction[0], dy: direction[1], dz: direction[2],
     maxDistance: meters(portal?.distance ?? maxDistance),
     maxPortalDepth: 0,
-    layerMask: WORLD_LAYER,
+    filter: { maskBits: WORLD_CATEGORY },
   });
   const first = hits[0];
   if (portal && (!first || first.distance >= portal.distance)) return { kind: 'portal', point: portal.point };
@@ -642,7 +642,7 @@ function stepPlayerActions(w: Working, slot: number, input: YardInput): PlayerSt
  * point is shared by both bodies and can sit a few cm off this body's surface;
  * then it is projected onto this body along the contact normal.
  */
-function contactOnBody(w: Working, body: YardBody, numericId: PhysicsContactEvent3D['bodyA'], contact: PhysicsContactEvent3D): { local: Vec3; worldPoint: Vec3 } | null {
+function contactOnBody(w: Working, body: YardBody, numericId: PhysicsContactData3D['bodyA'], contact: PhysicsContactData3D): { local: Vec3; worldPoint: Vec3 } | null {
   const physics = physicsBodyById(w.physics, body.id)!;
   let worldPoint: Vec3 = [contact.point.x, contact.point.y, contact.point.z];
   let local = worldToVoxel(body, physics, worldPoint);
@@ -668,10 +668,9 @@ function contactOnBody(w: Working, body: YardBody, numericId: PhysicsContactEven
  * Hits damage fuel drums (a dent and damage) and nothing else: only the torch
  * and blasts change a voxel shape.
  */
-function queueDrumHits(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
+function queueDrumHits(w: Working, contacts: readonly PhysicsContactData3D[], frame: number): void {
   for (const contact of contacts) {
-    if (contact.type !== 'enter') continue;
-    const speed = contact.closingSpeed;
+    const speed = contact.approachSpeed;
     if (speed < FUEL_DRUM.minHitSpeed) continue;
     for (const [numericId, key] of [[contact.bodyA, contact.bodyKeyA], [contact.bodyB, contact.bodyKeyB]] as const) {
       const id = bodyNameOf(key);
@@ -691,15 +690,15 @@ function queueDrumHits(w: Working, contacts: readonly PhysicsContactEvent3D[], f
  * flickers. A lens at full damage breaks: it leaves the physics world, and the
  * state records the smash for the render and the sound.
  */
-function hitFloodlights(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
+function hitFloodlights(w: Working, contacts: readonly PhysicsContactData3D[], frame: number): void {
   for (const contact of contacts) {
-    if (contact.type !== 'enter' || contact.closingSpeed < FLOODLIGHT.minHitSpeed) continue;
+    if (contact.approachSpeed < FLOODLIGHT.minHitSpeed) continue;
     const keys = [contact.bodyKeyA, contact.bodyKeyB];
     const lensKey = keys.find((key) => floodlightLensByKey(key) !== undefined);
     const lens = floodlightLensByKey(lensKey);
     if (!lens) continue;
     const hitter = keys.some((key) => key !== undefined && key !== lensKey && findBody(w.bodies, bodyNameOf(key)) !== undefined);
-    if (hitter) hurtLamp(w, lens.lampId, lampHitDamage(contact.closingSpeed), frame);
+    if (hitter) hurtLamp(w, lens.lampId, lampHitDamage(contact.approachSpeed), frame);
   }
 }
 
@@ -770,11 +769,11 @@ function relightFloodlights(w: Working, frame: number): void {
  * (sim/crateBreak.ts). At most CRATE_BREAK.maxPerTick crates break in one tick,
  * and none break while the world is near its body budget.
  */
-function breakCrates(w: Working, contacts: readonly PhysicsContactEvent3D[], frame: number): void {
+function breakCrates(w: Working, contacts: readonly PhysicsContactData3D[], frame: number): void {
   let broken = 0;
   for (const contact of contacts) {
     if (broken >= CRATE_BREAK.maxPerTick) return;
-    if (contact.type === 'exit' || contact.closingSpeed < CRATE_BREAK.speed) continue;
+    if (contact.approachSpeed < CRATE_BREAK.speed) continue;
     for (const key of [contact.bodyKeyA, contact.bodyKeyB]) {
       if (broken >= CRATE_BREAK.maxPerTick || w.physics.bodyIds.size >= CRATE_BREAK.bodyBudget) return;
       const body = key === undefined ? undefined : findBody(w.bodies, bodyNameOf(key));
@@ -1131,7 +1130,8 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   const latestStart = beginPhase('sim.physicsLatest');
   const latest = w.physics.world.latest();
   endPhase('sim.physicsLatest', latestStart);
-  perfCount('sim.contacts', latest.contacts.length);
+  const contacts = stepContacts(latest.contactEvents);
+  perfCount('sim.contacts', contacts.touching.length);
   endPhase('sim.nativeStep', phaseStart);
   phaseStart = beginPhase('sim.gameAfter');
   w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
@@ -1170,14 +1170,14 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
 
   // Impacts name the bodies as the contacts saw them, before any of them breaks this tick.
   const impactsStart = beginPhase('sim.impacts');
-  const impacts = collectImpacts(latest.contacts, (key) => (key === undefined ? undefined : findBody(w.bodies, key)), state.frame);
-  queueDrumHits(w, latest.contacts, state.frame);
-  hitFloodlights(w, latest.contacts, state.frame);
+  const impacts = collectImpacts(contacts.began, (key) => (key === undefined ? undefined : findBody(w.bodies, key)), state.frame);
+  queueDrumHits(w, contacts.began, state.frame);
+  hitFloodlights(w, contacts.began, state.frame);
   relightFloodlights(w, state.frame);
   endPhase('sim.impacts', impactsStart);
   perfCount('sim.impacts', impacts.length);
   let workStart = beginPhase('sim.crateBreak');
-  breakCrates(w, latest.contacts, state.frame);
+  breakCrates(w, contacts.touching, state.frame);
   endPhase('sim.crateBreak', workStart);
   if (perfActive()) perfCount('torch.pendingCuts', w.fractures.reduce((sum, entry) => sum + Number(entry.countsAsCut), 0));
   const cutsBefore = w.stats.torchCuts;

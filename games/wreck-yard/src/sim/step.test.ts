@@ -104,8 +104,7 @@ describe('stepYard', () => {
       const dropped = sim.step([{ ...hold, pressed: false, drop: true }]);
       expect(dropped.players[0]!.grab).toBeNull();
       const unboosted = physicsStateBodyById(dropped.world, 'ballast-box')!;
-      const contact = sim.physics.world.latest().contacts.some((entry) => entry.type !== 'exit'
-        && [entry.bodyKeyA, entry.bodyKeyB].includes('ballast-box'));
+      const contact = sim.physics.world.contactData().some((entry) => [entry.bodyKeyA, entry.bodyKeyB].includes('ballast-box'));
       expect(contact).toBe(location === 'ground');
       sim.restore({ ...save, state: { ...save.state, players: save.state.players.map((p) => ({ ...p, grab: null })) } });
       const free = sim.step([NEUTRAL_INPUT]);

@@ -35,12 +35,13 @@ import {
   ANGULAR_DAMPING,
   GRAVITY,
   LINEAR_DAMPING,
+  PHYSICS_SUBSTEPS,
   SHELL_PREFIX,
   TANK,
   TICK_RATE,
   VOXEL_SIZE,
 } from './constants';
-import { CAGE_LAYER, CAGE_PANELS, WORLD_LAYER } from './cage';
+import { CAGE_CATEGORY, CAGE_PANELS, WORLD_CATEGORY, WORLD_LAYER } from './cage';
 import { LIFT_DECK_MATERIAL, PHYSICS_MATERIALS, STACK_CRATE_MATERIAL, type PhysicsMaterialName } from './materials';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import type { ShellBox } from './setPieces';
@@ -213,15 +214,24 @@ export function bodyMass(body: YardBody): number {
 }
 
 /**
- * Damping of a whole loose tire: the part of its speed that it keeps each tick. Other
- * bodies keep less (LINEAR_DAMPING and ANGULAR_DAMPING), so a tire rolls farther.
+ * Damping rates (1/s) of a whole loose tire. It keeps 0.995 of its speed and 0.99 of its
+ * spin each tick (constants.ts gives the rule). Other bodies keep less (LINEAR_DAMPING and
+ * ANGULAR_DAMPING), so a tire rolls farther.
  */
-const TIRE_DAMPING = { linear: 0.995, angular: 0.99 } as const;
+export const TIRE_DAMPING = { linear: 0.150471, angular: 0.301889 } as const;
 
-/** The linear damping that a body has when nothing (a catapult launch) changes it. */
+/** The linear damping rate (1/s) that a body has when nothing (a catapult launch) changes it. */
 export function bodyLinearDamping(body: YardBody): number {
   return body.collider === 'cylinder' ? TIRE_DAMPING.linear : LINEAR_DAMPING;
 }
+
+/** The angular damping rate (1/s) of a body. */
+export function bodyAngularDamping(body: YardBody): number {
+  return body.collider === 'cylinder' ? TIRE_DAMPING.angular : ANGULAR_DAMPING;
+}
+
+/** The collision filter of a yard body: it collides with every body. Aim rays see its category. */
+export const WORLD_FILTER = { categoryBits: WORLD_CATEGORY } as const;
 
 /** Hole radius (m) of a loose tire (props.ts looseTirePreset). Its inertia is a thick ring, not a solid disc. */
 const TIRE_HOLE_RADIUS = 0.2;
@@ -262,12 +272,15 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
       centerOfMass: cooked.body.centerOfMass,
       sleeping: fullCrate && pose.linearVelocity.every((v) => v === 0) && pose.angularVelocity.every((v) => v === 0),
       // A whole loose tire keeps rolling: it has less damping than other bodies.
-      linearDamping: bodyLinearDamping(body),
-      angularDamping: body.collider === 'cylinder' ? TIRE_DAMPING.angular : ANGULAR_DAMPING,
+      linearDamping: perSecond(bodyLinearDamping(body)),
+      angularDamping: perSecond(bodyAngularDamping(body)),
       // Storage and returns crates and their fragments grip each other harder than wood (sim/materials.ts).
       material: body.storageBay ? STACK_CRATE_MATERIAL : body.material,
-      layer: WORLD_LAYER,
-      mask: 0xffffffff,
+      filter: WORLD_FILTER,
+      // Syncplay rc.78 publishes contact events only for bodies that enable them. Impacts, drum
+      // dents, lamp hits and crate breaks read them (step.ts).
+      enableContactEvents: true,
+      enableHitEvents: true,
     },
   };
 }
@@ -282,15 +295,14 @@ export function shellBody(box: ShellBox): YardPhysicsBodyInput3D {
       shape: { type: 'box' as const, halfX: meters(box.size[0] * 0.5), halfY: meters(box.size[1] * 0.5), halfZ: meters(box.size[2] * 0.5) },
       orientation: (([x, y, z, w]) => ({ x, y, z, w }))(shellBoxQuaternion(box)),
       material: box.material,
-      layer: WORLD_LAYER,
-      mask: 0xffffffff,
+      filter: WORLD_FILTER,
     },
   };
 }
 
 export function shellBodies(): YardPhysicsBodyInput3D[] {
   const boxes = SHELL_BOXES.map(shellBody);
-  // The cage is a steel mesh. It sits on its own layer, so aim rays (layerMask WORLD_LAYER) pass through it.
+  // The cage is a steel mesh. It has its own category, so aim rays (query mask WORLD_CATEGORY) pass through it.
   const cage = CAGE_PANELS.map((panel): YardPhysicsBodyInput3D => ({
     id: `${SHELL_PREFIX}${panel.id}`,
     body: {
@@ -298,8 +310,7 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
       position: vec3(meters, panel.center),
       shape: { type: 'box' as const, halfX: meters(panel.size[0] * 0.5), halfY: meters(panel.size[1] * 0.5), halfZ: meters(panel.size[2] * 0.5) },
       material: 'steel',
-      layer: CAGE_LAYER,
-      mask: 0xffffffff,
+      filter: { categoryBits: CAGE_CATEGORY },
     },
   }));
   return [...boxes, ...cage];
@@ -308,7 +319,9 @@ export function shellBodies(): YardPhysicsBodyInput3D[] {
 export function makeWorld(): PhysicsWorld3D {
   return createPhysicsWorld3D({
     tickRate: TICK_RATE,
+    // The yard sets its own gravity (13.5 m/s^2), so the Box3D default (-10) does not apply.
     initialGravity: vec3(metersPerSecondSquared, 0, -GRAVITY, 0),
+    substeps: PHYSICS_SUBSTEPS,
     capacity: PHYSICS_CAPACITY,
     portalProxyCapacity: 256,
     // Named contact materials (Syncplay rc.49). Every body names one (sim/materials.ts).
@@ -400,7 +413,7 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYard
   let built = false;
   try {
     // The lift car is the one surface outside the yard materials: high friction and no bounce, so crates ride it.
-    addPhysicsBodies(open, [...shellBodies(), ...bodies, { id: ELEVATOR.id, body: { kind: 'kinematic', position: vec3(meters, ELEVATOR.x, ELEVATOR.floors[0] - ELEVATOR.size[1] / 2, ELEVATOR.z), shape: { type: 'compound', children: [{ shape: { type: 'box', halfX: meters(ELEVATOR.size[0] / 2), halfY: meters(ELEVATOR.size[1] / 2), halfZ: meters(ELEVATOR.size[2] / 2) }, offset: vec3(meters, 0, 0, 0) }, { shape: { type: 'box', halfX: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[0] / 2), halfY: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[1] / 2), halfZ: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[2] / 2) }, offset: vec3(meters, STORAGE_ELEVATOR_CAR_FIXTURE.center) }] }, material: LIFT_DECK_MATERIAL, layer: WORLD_LAYER, mask: 0xffffffff } }]);
+    addPhysicsBodies(open, [...shellBodies(), ...bodies, { id: ELEVATOR.id, body: { kind: 'kinematic', position: vec3(meters, ELEVATOR.x, ELEVATOR.floors[0] - ELEVATOR.size[1] / 2, ELEVATOR.z), shape: { type: 'compound', children: [{ shape: { type: 'box', halfX: meters(ELEVATOR.size[0] / 2), halfY: meters(ELEVATOR.size[1] / 2), halfZ: meters(ELEVATOR.size[2] / 2) }, offset: vec3(meters, 0, 0, 0) }, { shape: { type: 'box', halfX: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[0] / 2), halfY: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[1] / 2), halfZ: meters(STORAGE_ELEVATOR_CAR_FIXTURE.size[2] / 2) }, offset: vec3(meters, STORAGE_ELEVATOR_CAR_FIXTURE.center) }] }, material: LIFT_DECK_MATERIAL, filter: WORLD_FILTER } }]);
     createReturnsPair(open.world);
     // Conveyor belts. The surface velocity is part of the checkpoint (6.0.0-rc.13), so once is enough.
     for (const box of SHELL_BOXES) {
@@ -538,7 +551,7 @@ export function setPhysicsBodyMotion(open: OpenYardPhysicsWorld, id: string, lin
 }
 
 /**
- * Moves a body and sets its velocity (m/s), spin (rad/s), and linear damping.
+ * Moves a body and sets its velocity (m/s), spin (rad/s), and linear damping rate (1/s).
  * The catapult uses it to launch a body without damping.
  */
 export function launchPhysicsBody(open: OpenYardPhysicsWorld, id: string, position: Vec3, velocity: Vec3, spin: Vec3, linearDamping: number): void {
@@ -550,13 +563,13 @@ export function launchPhysicsBody(open: OpenYardPhysicsWorld, id: string, positi
   });
   open.world.setLinearVelocity(handle, vec3(metersPerSecond, velocity));
   open.world.setAngularVelocity(handle, vec3(radiansPerSecond, spin));
-  open.world.setBodyLinearDamping(handle, linearDamping);
+  open.world.setBodyLinearDamping(handle, perSecond(linearDamping));
   open.world.wakeBody(handle);
 }
 
 export function setPhysicsBodyLinearDamping(open: OpenYardPhysicsWorld, id: string, linearDamping: number): void {
   const handle = physicsBodyHandle(open, id);
-  open.world.setBodyLinearDamping(handle, linearDamping);
+  open.world.setBodyLinearDamping(handle, perSecond(linearDamping));
 }
 
 export function setPhysicsBodyAngularVelocity(open: OpenYardPhysicsWorld, id: string, angularVelocity: Vec3): void {
