@@ -79,6 +79,11 @@ describe('blast rules', () => {
     expect(damageDrum(lit, 50, 140, FUEL_DRUM.chainFuseTicks).detonateAt).toBe(100 + FUEL_DRUM.fuseTicks);
     expect(hitDamage(FUEL_DRUM.minHitSpeed - 0.1)).toBe(0);
   });
+
+  it('a drum that lands at 3.3 m/s takes no damage, and 3.5 m/s is the first damaging hit', () => {
+    expect(hitDamage(3.3)).toBe(0);
+    expect(hitDamage(3.5)).toBeGreaterThan(0);
+  });
 });
 
 describe('fuel drums', () => {

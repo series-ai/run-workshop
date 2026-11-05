@@ -20,7 +20,7 @@ export const FUEL_DRUM = {
   /** A drum that another blast lights goes off sooner. */
   chainFuseTicks: 8,
   /** Closing speed (m/s) from which a hit damages a drum. Lower than IMPACT_MIN_SPEED: drums are fragile. */
-  minHitSpeed: 3,
+  minHitSpeed: 3.5,
   hitDamagePerSpeed: 5,
   maxHitDamage: 45,
   /** Three punts light a drum. */
