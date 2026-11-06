@@ -193,6 +193,15 @@ export function toChunk(voxels: Uint8Array, dims: VoxelDims) {
   return chunk;
 }
 
+/**
+ * Each side of a storage crate's box collider, in x and z, is this much shorter than the drawn crate
+ * (0.025 m, so a 0.05 m gap between columns). Storage crates stand edge to edge. Box3D wakes a whole
+ * island of touching bodies, so with no gap one torch cut wakes all 400 crates. A 0.02 m inset left
+ * 140 crates awake after the torch. 0.025 m lets the bay sleep again. The y extent is not inset, so the
+ * tiers still rest on each other. The render mesh keeps its full size.
+ */
+export const STORAGE_COLLIDER_SIDE_INSET = 0.025;
+
 function originOffset(dims: VoxelDims) {
   return vec3(meters, -(dims.x - 1) * 0.5 * VOXEL_SIZE, -(dims.y - 1) * 0.5 * VOXEL_SIZE, -(dims.z - 1) * 0.5 * VOXEL_SIZE);
 }
@@ -252,8 +261,9 @@ export function makePhysicsBody(body: YardBody, pose: BodyPose): YardPhysicsBody
   const fullCrate = body.renderModel === 'shipping-crate' && voxelStats(body.voxels).occupiedCount === body.voxels.length;
   const [sx, sy, sz] = [body.dims.x * VOXEL_SIZE, body.dims.y * VOXEL_SIZE, body.dims.z * VOXEL_SIZE];
   // An intact solid crate has the same surface as a primitive box. Cuts use voxel colliders.
+  const inset = body.storageBay === 'storage' ? STORAGE_COLLIDER_SIDE_INSET : 0;
   const cooked = fullCrate ? { status: 0, body: {
-    shape: { type: 'box' as const, halfX: meters(sx / 2), halfY: meters(sy / 2), halfZ: meters(sz / 2) },
+    shape: { type: 'box' as const, halfX: meters(sx / 2 - inset), halfY: meters(sy / 2), halfZ: meters(sz / 2 - inset) },
     mass: kilograms(mass), inertia: { xx: kilogramMetersSquared(mass * (sy * sy + sz * sz) / 12), yy: kilogramMetersSquared(mass * (sx * sx + sz * sz) / 12), zz: kilogramMetersSquared(mass * (sx * sx + sy * sy) / 12) },
     centerOfMass: vec3(meters, 0, 0, 0),
   } } : body.collider === 'cylinder' ? tireCollider(mass, sx / 2, sy) : cookVoxelBody(toChunk(body.voxels, body.dims), kilograms(mass), { originOffset: originOffset(body.dims) });
