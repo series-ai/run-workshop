@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
 import { ANGULAR_DAMPING, LINEAR_DAMPING, PHYSICS_SUBSTEPS, TICK_RATE, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
-import { bodyMass, cookCenteredCollider, createWorld, makePhysicsBody, physicsBodyById, physicsBodyHandle, readWorldState, removePhysicsBody, shellBodies, TIRE_DAMPING, voxelStats } from './physics';
+import { bodyMass, cookCenteredCollider, createWorld, makePhysicsBody, physicsBodyById, physicsBodyHandle, readWorldState, removePhysicsBody, shellBodies, STORAGE_COLLIDER_SIDE_INSET, TIRE_DAMPING, voxelStats } from './physics';
+import { meters } from '@series-inc/rundot-syncplay/physics/3d';
 import type { YardBody } from './state';
 import { YardSim } from './sim';
 import { initialState, testSim } from './testSim';
@@ -125,6 +126,20 @@ describe('Syncplay rc.78 conversions', () => {
     } finally {
       open.world.dispose();
     }
+  });
+
+  it('insets only the x and z collider of a storage crate, so neighbours do not touch', () => {
+    const [{ body }] = createCrateSpawns('storage');
+    const pose0 = pose([0, 0, 0], [0, 0, 0], [0, 0, 0]);
+    const shape = makePhysicsBody(body!, pose0).body.shape as { halfX: number; halfY: number; halfZ: number };
+    const full = 12 * VOXEL_SIZE / 2;
+    // The inset is pinned to the measured value (see STORAGE_COLLIDER_SIDE_INSET): 0.02 m left 140 crates awake.
+    const inset = 0.025;
+    expect(STORAGE_COLLIDER_SIDE_INSET).toBe(inset);
+    expect(shape.halfX).toBeCloseTo(meters(full - inset), 6);
+    expect(shape.halfZ).toBeCloseTo(meters(full - inset), 6);
+    expect(shape.halfY).toBeCloseTo(meters(full), 6);
+    expect(STORAGE.size).toBeCloseTo(12 * VOXEL_SIZE, 9);
   });
 
   it('wakes a sleeping crate when the crate under it is removed (no game wake is necessary)', () => {
