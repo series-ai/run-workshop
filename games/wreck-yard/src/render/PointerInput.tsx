@@ -74,6 +74,7 @@ export function PointerInput({
   const buttons = useRef(BUTTONS_UP);
   /** E or F held: use (buttons, the buggy). The right mouse button is the punt. */
   const keyUse = useRef(false);
+  const keyUseQueued = useRef(false);
   const lastPortalCounter = useRef<number | undefined>(undefined);
   const lastBuggyYaw = useRef<number | null>(null);
   /** performance.now() of the last mouse look, so the chase camera does not fight the player. */
@@ -194,6 +195,7 @@ export function PointerInput({
       keys.current.add(event.code);
       if (event.code === 'KeyE' || event.code === 'KeyF') {
         keyUse.current = true;
+        if (!event.repeat && inputLive(gateRef.current.state)) keyUseQueued.current = true;
       }
       // Behind the gate or the pause menu the tool does not change (no "resume with orbit on").
       if (event.repeat || !inputLive(gateRef.current.state)) return;
@@ -228,6 +230,7 @@ export function PointerInput({
       keys.current.clear();
       buttons.current = BUTTONS_UP;
       keyUse.current = false;
+      keyUseQueued.current = false;
       if (attractionInput) attractionInput.current.command = 0;
       isDragging = false;
       if (touchInput) clearTouchInput(touchInput.current);
@@ -414,7 +417,7 @@ export function PointerInput({
       pressed: frameTool !== 'orbit' && (buttons.current.primary || Boolean(pad?.primary) || Boolean(touch && touchPrimary(touch, toSimTool(frameTool)))),
       secondary: frameTool !== 'orbit' && (buttons.current.punt || Boolean(pad?.secondary) || Boolean(shot)),
       drop: Boolean(touch?.dropQueued || pad?.drop),
-      use: keyUse.current || Boolean(touch?.use || touch?.useQueued) || controllerUse,
+      use: keyUse.current || keyUseQueued.current || Boolean(touch?.use || touch?.useQueued) || controllerUse,
       jetpack: frameTool !== 'orbit' && jetpack,
       moveX: frameTool !== 'orbit' ? moveX : 0,
       moveZ: frameTool !== 'orbit' ? moveZ : 0,
@@ -436,7 +439,10 @@ export function PointerInput({
     const nextRender = controller.getRender();
     // A network pump can schedule input without advancing the render frame.
     const sampled = controller.sampledInput;
-    if (sampled?.input === input) controllerInput?.state.consume();
+    if (sampled?.input === input) {
+      keyUseQueued.current = false;
+      controllerInput?.state.consume();
+    }
     if (touch && sampled?.input === input) consumeTouchSample(touch, input, sampled.frame);
     if (touch && nextRender) syncTouchWeapon(touch, nextRender.frame,
       nextRender.players.find((player) => player.slot === nextRender.localSlot));

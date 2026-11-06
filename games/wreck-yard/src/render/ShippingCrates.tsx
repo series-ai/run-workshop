@@ -40,8 +40,8 @@ export interface CrateSkin {
 type SkinShape = Pick<CrateSkin, 'east' | 'south' | 'rest'>;
 
 interface BoardColors { readonly wood: string; readonly grain: string; readonly seam: string; readonly frame: string }
-/** The label and arrow. `turn` is in radians, clockwise on screen, from an arrow that points up. */
-interface CrateMarking { readonly turn: number; readonly caption: string }
+/** Arrow rotation in radians, clockwise from up. */
+interface CrateMarking { readonly turn: number }
 interface CellStyle { readonly boards: BoardColors; readonly marking?: CrateMarking }
 
 const LIGHT_BOARDS: BoardColors = {
@@ -54,9 +54,9 @@ const DARK_BOARDS: BoardColors = {
 const CELL_STYLE: Record<CrateCell, CellStyle> = {
   'plain-light': { boards: LIGHT_BOARDS },
   dark: { boards: DARK_BOARDS },
-  'light-up': { boards: LIGHT_BOARDS, marking: { turn: 0, caption: 'THIS SIDE UP' } },
-  'light-left': { boards: LIGHT_BOARDS, marking: { turn: -Math.PI / 2, caption: 'THIS WAY' } },
-  'light-right': { boards: LIGHT_BOARDS, marking: { turn: Math.PI / 2, caption: 'THIS WAY' } },
+  'light-up': { boards: LIGHT_BOARDS, marking: { turn: 0 } },
+  'light-left': { boards: LIGHT_BOARDS, marking: { turn: -Math.PI / 2 } },
+  'light-right': { boards: LIGHT_BOARDS, marking: { turn: Math.PI / 2 } },
 };
 /** The atlas order. The position of a cell here is its place in the texture. */
 const CRATE_CELLS = ['plain-light', 'dark', 'light-up', 'light-left', 'light-right'] as const;
@@ -155,8 +155,6 @@ function drawCrateCell(context: CanvasRenderingContext2D, { boards, marking }: C
   context.restore();
 
   context.fillStyle = CRATE_APPEARANCE.ink;
-  context.font = 'bold 36px Arial, sans-serif';
-  context.fillText(marking.caption, 256, 388, 420);
   for (let index = 0; index < 15; index += 1) {
     const width = index % 3 === 0 ? 5 : 2;
     context.fillRect(106 + index * 20, 466, width, 10);

@@ -1,14 +1,12 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import { ELEVATOR, STORAGE, STORAGE_SOLIDS, type AttractionState, type ElevatorFloor } from '../sim/attractions';
+import { ELEVATOR, STORAGE_SOLIDS, type AttractionState, type ElevatorFloor } from '../sim/attractions';
 import { FLOOR_Y } from '../sim/constants';
-import { STORAGE_ELEVATOR_CAR_FIXTURE, STORAGE_FIXTURE_SOLIDS, STORAGE_LANDING_SIGN_X, STORAGE_SHAFT_TOP_Y } from '../sim/storageFixtures';
-import type { YardBody } from '../sim/state';
+import { STORAGE_ELEVATOR_CAR_FIXTURE, STORAGE_FIXTURE_SOLIDS, STORAGE_INFO_SIGN, STORAGE_LANDING_SIGN_X, STORAGE_SHAFT_TOP_Y } from '../sim/storageFixtures';
 import type { YardRender } from './presentation';
 import { ART_STYLE } from './style/artStyle';
 import { Toon } from './style/toonMaterial';
-import { isIntactShippingCrate } from './ShippingCrates';
 
 type V3 = readonly [number, number, number];
 const noRaycast = () => null;
@@ -76,62 +74,34 @@ function useCanvasPanel(width: number, height: number): CanvasPanel {
   return panel;
 }
 
-function paintPanelFrame(context: CanvasRenderingContext2D, title: string) {
+function paintStorageInfo(context: CanvasRenderingContext2D) {
   const { width, height } = context.canvas;
   context.fillStyle = '#1c282f';
   context.fillRect(0, 0, width, height);
   context.strokeStyle = '#121a1f';
   context.lineWidth = Math.max(8, width * 0.018);
   context.strokeRect(7, 7, width - 14, height - 14);
-  context.fillStyle = '#c87536';
-  context.fillRect(width * 0.035, height * 0.035, width * 0.93, height * 0.11);
-  context.fillStyle = '#18212b';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.font = `bold ${Math.round(height * 0.065)}px Arial, sans-serif`;
-  context.fillText(title, width / 2, height * 0.09, width * 0.88);
-}
-
-function paintStorageInfo(context: CanvasRenderingContext2D, actual: number) {
-  const { width, height } = context.canvas;
-  paintPanelFrame(context, 'STORAGE');
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillStyle = '#f0d7a5';
-  context.font = `bold ${Math.round(height * 0.15)}px Arial, sans-serif`;
-  context.fillText('STACK LIMIT: 4', width / 2, height * 0.36, width * 0.9);
-  context.fillStyle = '#f6a64f';
-  context.font = `bold ${Math.round(height * 0.14)}px Arial, sans-serif`;
-  context.fillText(`ACTUAL: ${actual}`, width / 2, height * 0.56, width * 0.9);
+  context.font = `bold ${Math.round(height * 0.24)}px Arial, sans-serif`;
+  context.fillText('STACK LIMIT: 4', width / 2, height * 0.5, width * 0.9);
 }
 
-function StorageInfoSign({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {
-  const panel = useCanvasPanel(900, 420);
-  const bodiesSeen = useRef<readonly YardBody[] | null>(null);
-  const shownCount = useRef<number>(STORAGE.count);
-
-  useFrame(() => {
-    const bodies = renderRef.current?.bodies;
-    if (!bodies || bodiesSeen.current === bodies) return;
-    bodiesSeen.current = bodies;
-    const actual = bodies.reduce((count, body) => count + (body.storageBay === 'storage' && isIntactShippingCrate(body) ? 1 : 0), 0);
-    if (actual === shownCount.current) return;
-    shownCount.current = actual;
-    paintStorageInfo(panel.context, actual);
-    panel.texture.needsUpdate = true;
-  });
+function StorageInfoSign() {
+  const panel = useCanvasPanel(900, 240);
 
   useEffect(() => {
-    paintStorageInfo(panel.context, STORAGE.count);
+    paintStorageInfo(panel.context);
     panel.texture.needsUpdate = true;
   }, [panel]);
 
-  const frontZ = STORAGE.center[2] + STORAGE.rows * STORAGE.spacing * 0.5 + 0.42;
-  const center: V3 = [STORAGE.center[0], FLOOR_Y + 1.28, frontZ];
+  const [x, y, z] = STORAGE_INFO_SIGN.center;
+  const [width, height, depth] = STORAGE_INFO_SIGN.size;
   return (
     <group name="StorageInfoSign">
-      <mesh position={[center[0], center[1], center[2] + 0.006]} material={panel.material} raycast={noRaycast}>
-        <planeGeometry args={[4.7, 1.62]} />
+      <mesh position={[x, y, z + depth / 2 + 0.006]} material={panel.material} raycast={noRaycast}>
+        <planeGeometry args={[width - 0.2, height - 0.2]} />
       </mesh>
     </group>
   );
@@ -154,7 +124,7 @@ function paintLanding(context: CanvasRenderingContext2D, floor: ElevatorFloor) {
 }
 
 function LandingSign({ floor }: { floor: ElevatorFloor }) {
-  const panel = useCanvasPanel(256, 192);
+  const panel = useCanvasPanel(256, 159);
   useEffect(() => {
     paintLanding(panel.context, floor);
     panel.texture.needsUpdate = true;
@@ -195,7 +165,7 @@ function paintElevatorControl(context: CanvasRenderingContext2D, state: Attracti
   context.textBaseline = 'middle';
   context.fillStyle = '#19232a';
   context.font = 'bold 30px Arial, sans-serif';
-  context.fillText('FLOOR SELECT', width / 2, 60);
+  context.fillText('FLOORS', width / 2, 60);
 
   const floor = nearestFloor(state.y);
   context.fillStyle = state.status === 'blocked' ? '#ee684d' : '#f0d7a5';
@@ -220,7 +190,7 @@ function paintElevatorControl(context: CanvasRenderingContext2D, state: Attracti
 }
 
 function ElevatorControl({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {
-  const panel = useCanvasPanel(320, 700);
+  const panel = useCanvasPanel(250, 700);
   const buttonMaterials = useRef<(THREE.MeshBasicMaterial | null)[]>([]);
   const lastState = useRef('');
   const position: V3 = [
@@ -295,7 +265,7 @@ function paintRestackPanel(context: CanvasRenderingContext2D, status: Attraction
 }
 
 function RestackControl({ renderRef }: { renderRef: MutableRefObject<YardRender | null> }) {
-  const panel = useCanvasPanel(360, 180);
+  const panel = useCanvasPanel(360, 176);
   const lastStatus = useRef<AttractionState['resetStatus'] | null>(null);
   const [x, , z] = ELEVATOR.resetButton;
 
@@ -403,7 +373,7 @@ export function StorageAttraction({ renderRef }: { renderRef: MutableRefObject<Y
             : DARK_STEEL;
         return <Block key={solid.id} center={solid.center} size={solid.size} color={color} />;
       })}
-      <StorageInfoSign renderRef={renderRef} />
+      <StorageInfoSign />
       <RestackControl renderRef={renderRef} />
       <ElevatorShaft renderRef={renderRef} />
     </group>

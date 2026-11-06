@@ -1,4 +1,5 @@
 import type { AttractionState } from './attractions';
+import { INITIAL_ROAD_COURSE, type RoadCourseState } from './roadCourse';
 import type { DeterministicVehicleState3D } from '@series-inc/rundot-syncplay/physics/3d';
 import type { VoxelDims } from 'voxel-kit';
 import type { Vec3 } from './math';
@@ -206,6 +207,7 @@ export interface LampSmash {
 }
 
 export interface ContraptionState {
+  readonly roadCourse: RoadCourseState;
   /** Frame of the last drum drop; -Infinity is not JSON, so "never" is a large negative frame. */
   readonly lastDropFrame: number;
   /** Drums the conveyor dropped that still exist, oldest first. */
@@ -229,8 +231,9 @@ export interface ContraptionState {
 export const NEVER_FRAME = -1_000_000;
 
 export const INITIAL_CONTRAPTIONS: ContraptionState = {
+  roadCourse: INITIAL_ROAD_COURSE,
   lastDropFrame: NEVER_FRAME,
-  drums: [],
+  drums: INITIAL_ROAD_COURSE.slots.map((bodyId) => ({ bodyId: bodyId!, damage: 0, detonateAt: null })),
   explosions: [],
   lastLaunchFrame: NEVER_FRAME,
   ballistic: [],

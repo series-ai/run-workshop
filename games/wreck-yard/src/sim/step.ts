@@ -32,7 +32,9 @@ import {
   VOXEL_SIZE,
 } from './constants';
 import { WORLD_CATEGORY } from './cage';
-import { fractureBody, type FractureContact } from './fracture';
+import { fractureBody, fragmentVoxelBody, type FractureContact } from './fracture';
+import { nextLavaErosion } from './lava';
+import { LAVA } from './liquidAssets';
 import {
   BALLISTIC_DAMPING,
   BALLISTIC_TICKS,
@@ -60,11 +62,13 @@ import { collectImpacts, keepImpacts, stepContacts } from './impacts';
 import { SHELL_BOXES, shellBoxQuaternion } from './shell';
 import type { ShellBox } from './setPieces';
 import { stepBuggy } from './vehicle';
+import { isRoadBarrel, resetRoadCar, stepRoadCourse, wreckRoadCar } from './roadRuntime';
+import { ROAD } from './roadCourse';
 import { movePlayer } from './movement';
 import { toolPortalBlock } from './returns';
 import { ANGLE_SCALE, decodeRay, TOOL, type YardInput } from './input';
 import { advanceHoldPoint, grabServo } from './grab';
-import { add, clamp, lerp, rotateInverse, scale, sub, type Vec3 } from './math';
+import { add, clamp, lerp, rotate, rotateInverse, scale, sub, type Vec3 } from './math';
 import {
   addPhysicsBodies,
   halfExtents,
@@ -221,7 +225,8 @@ function stepPlayerMovement(player: PlayerState, input: YardInput, w: Working): 
     const inRange = withinBuggyMountRange([player.x, player.y, player.z], [buggy.x, buggy.y, buggy.z]);
     const occupied = w.players.some((other) => other.active && other.slot !== player.slot && other.ridingVehicle);
     const useEdge = input.use && !player.wasUsePressed;
-    if (!ridingVehicle && !occupied && inRange && useEdge) {
+    const carInTransit = w.frame - w.contraptions.roadCourse.resetFrame < ROAD.releaseTick;
+    if (!ridingVehicle && !occupied && inRange && useEdge && !carInTransit) {
       ridingVehicle = true;
     } else if (ridingVehicle && (input.jetpack || useEdge)) {
       ridingVehicle = false;
@@ -590,7 +595,16 @@ function stepTorch(
 }
 
 function stepPlayer(w: Working, slot: number, input: YardInput): PlayerState {
-  return { ...stepPlayerActions(w, slot, input), wasUsePressed: input.use };
+  const before = w.players[slot]!;
+  const grabbedId = before.grab ? w.physics.bodyIds.get(before.grab.bodyId) : undefined;
+  const torchedId = before.torch ? w.physics.bodyIds.get(before.torch.bodyId) : undefined;
+  const player = stepPlayerActions(w, slot, input);
+  // Tool references must not transfer to a replacement with the same key.
+  return {
+    ...player, wasUsePressed: input.use,
+    grab: player.grab && player.grab.bodyId === before.grab?.bodyId && w.physics.bodyIds.get(player.grab.bodyId) !== grabbedId ? null : player.grab,
+    torch: player.torch && player.torch.bodyId === before.torch?.bodyId && w.physics.bodyIds.get(player.torch.bodyId) !== torchedId ? null : player.torch,
+  };
 }
 
 /** Use (E) works buttons and the buggy; the right mouse button punts. They never share a press. */
@@ -677,9 +691,11 @@ function queueDrumHits(w: Working, contacts: readonly PhysicsContactData3D[], fr
       if (!drumOf(w, id)) continue;
       const body = findBody(w.bodies, id);
       if (!body || frame < body.impactCooldownUntil) continue;
-      const damage = hitDamage(speed);
+      const carCrash = isRoadBarrel(id) && speed >= ROAD.crashSpeed
+        && (contact.bodyKeyA === 'vehicle-chassis' || contact.bodyKeyB === 'vehicle-chassis');
+      const damage = carCrash ? FUEL_DRUM.maxDamage : hitDamage(speed);
       if (damage <= 0) continue;
-      hurtDrum(w, id, damage, contactOnBody(w, body, numericId, contact)?.local ?? null);
+      hurtDrum(w, id, damage, contactOnBody(w, body, numericId, contact)?.local ?? null, carCrash ? ROAD.crashFuseTicks : FUEL_DRUM.fuseTicks);
       setImpactCooldown(w, id, frame);
     }
   }
@@ -868,6 +884,40 @@ function applyFractures(w: Working, frame: number): void {
   w.fractures = [];
 }
 
+function applyLava(w: Working): void {
+  const erosion = nextLavaErosion(w.physics, w.bodies, w.frame);
+  perfCount('lava.edits', erosion ? 1 : 0);
+  if (!erosion) return;
+  const { body, pose, voxels, at } = erosion;
+  if (drumOf(w, body.id)) {
+    hurtDrum(w, body.id, FUEL_DRUM.torchDamagePerTick * LAVA.pulseTicks, null);
+    w.bodies = w.bodies.map((entry) => entry.id === body.id
+      ? { ...entry, voxels: scorchVoxels(entry.dims, entry.voxels, at), heat: { frame: w.frame, at } }
+      : entry);
+    return;
+  }
+  const local: Vec3 = [
+    (at[0] - (body.dims.x - 1) / 2) * VOXEL_SIZE,
+    (at[1] - (body.dims.y - 1) / 2) * VOXEL_SIZE,
+    (at[2] - (body.dims.z - 1) / 2) * VOXEL_SIZE,
+  ];
+  const result = fragmentVoxelBody(body, pose, voxels, { start: at, end: at, worldPoint: add(pose.position, rotate(local, pose.rotation)), impulseBoost: 0 }, w.nextSerial, w.frame);
+  perfCount('lava.removedVoxels', erosion.removed);
+  const index = w.bodies.findIndex((entry) => entry.id === body.id);
+  w.bodies = [...w.bodies.slice(0, index), ...result.fragments.map((fragment) => fragment.body), ...w.bodies.slice(index + 1)];
+  w.nextSerial = result.nextSerial;
+  const replacing = result.fragments.find((fragment) => fragment.body.id === body.id);
+  if (replacing) replacePhysicsBody(w.physics, replacing.physics);
+  else removePhysicsBody(w.physics, body.id);
+  addPhysicsBodies(w.physics, result.fragments.filter((fragment) => fragment.body.id !== body.id).map((fragment) => fragment.physics));
+  if (result.fragments.length > 1) w.stats = { ...w.stats, fractures: w.stats.fractures + 1 };
+  w.players = w.players.map((player) => ({
+    ...player,
+    grab: !replacing && player.grab?.bodyId === body.id ? null : player.grab,
+    torch: player.torch?.bodyId === body.id ? null : player.torch,
+  }));
+}
+
 /** Removes a body from the yard and lets go of it in every player's tools. */
 function removeYardBody(w: Working, id: string): void {
   w.bodies = w.bodies.filter((body) => body.id !== id);
@@ -911,9 +961,9 @@ function dropDrum(w: Working): void {
   const c = w.contraptions;
   if (buttonResetLeft('dropper', c, w.frame) > 0) return;
   let drums = c.drums.filter((drum) => findBody(w.bodies, drum.bodyId));
-  while (drums.length >= MAX_DROPPED_DRUMS) {
+  while (drums.filter((drum) => !isRoadBarrel(drum.bodyId)).length >= MAX_DROPPED_DRUMS) {
     // The oldest drum that is not lit goes. A yard full of lit drums gets no more.
-    const oldest = drums.find((drum) => drum.detonateAt === null);
+    const oldest = drums.find((drum) => !isRoadBarrel(drum.bodyId) && drum.detonateAt === null);
     if (!oldest) return;
     removeYardBody(w, oldest.bodyId);
     drums = drums.filter((drum) => drum !== oldest);
@@ -961,6 +1011,11 @@ function explodeDrum(w: Working, id: string): void {
     explosions: [...w.contraptions.explosions, { at, radius: BLAST.radius, frame: w.frame }],
   };
   w.stats = { ...w.stats, explosions: w.stats.explosions + 1 };
+
+  const car = w.bodies.find((body) => body.id === 'vehicle-chassis');
+  const chassis = physicsBodyById(w.physics, 'vehicle-chassis');
+  if (car && chassis && Math.hypot(chassis.x - at[0], chassis.y - at[1], chassis.z - at[2])
+    - Math.hypot(...halfExtents(car.dims)) * 0.5 < BLAST.radius * BLAST.shatterShare) wreckRoadCar(w, at);
 
   // The blast reaches the lamps too: a close one breaks a lens, and a far one makes it flicker.
   // Lamp frames use the frame that the step starts from, as hits do (w.frame is the next frame).
@@ -1052,6 +1107,7 @@ function pressButton(w: Working, button: ButtonId): ToolFeedback {
   switch (button) {
     case 'dropper': dropDrum(w); break;
     case 'catapult': fireCatapult(w); break;
+    case 'reset-car': resetRoadCar(w); break;
     default: {
       const unreachable: never = button;
       throw new Error(`WRECK_YARD_BUTTON_INVALID: ${String(unreachable)}`);
@@ -1110,17 +1166,26 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   w.bodies = requested.bodies;
   w.attractions = requested.attractions;
 
+  // Apply erosion before the solver processes the edited bodies.
+  const lavaStart = beginPhase('sim.lava');
+  applyLava(w);
+  endPhase('sim.lava', lavaStart);
+  const roadStart = beginPhase('sim.roadCourse');
+  stepRoadCourse(w);
+  endPhase('sim.roadCourse', roadStart);
   const playersStart = beginPhase('sim.players');
   for (let slot = 0; slot < w.players.length; slot += 1) {
     if (!w.players[slot]!.active) continue;
     const input = inputs[slot];
     if (!input) throw new Error(`WRECK_YARD_INPUT_MISSING: slot ${slot}`);
-    w.players[slot] = stepPlayer(w, slot, input);
+    const player = stepPlayer(w, slot, input);
+    w.players[slot] = player;
   }
 
   endPhase('sim.players', playersStart);
   const driver = w.players.find((player) => player.active && player.ridingVehicle);
-  const buggy = stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
+  const carInTransit = w.frame - w.contraptions.roadCourse.resetFrame < ROAD.releaseTick;
+  const buggy = carInTransit ? undefined : stepBuggy(w.physics, driver ? inputs[driver.slot]! : undefined, state.buggyVehicle);
   w.attractions = startElevatorStep(w.physics, w.attractions, w.players);
   endPhase('sim.gameBefore', phaseStart);
   phaseStart = beginPhase('sim.nativeStep');
@@ -1132,6 +1197,13 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   endPhase('sim.physicsLatest', latestStart);
   const contacts = stepContacts(latest.contactEvents);
   perfCount('sim.contacts', contacts.touching.length);
+  if (perfActive()) {
+    const profile = w.physics.world.readStepProfile();
+    perfCount('sim.broadphasePairs', profile.pairCount);
+    perfCount('sim.contactPoints', profile.contactPointCount);
+    perfCount('sim.awakeIslands', profile.awakeIslandCount);
+    perfCount('sim.ccdSweeps', profile.continuousSweepCount);
+  }
   endPhase('sim.nativeStep', phaseStart);
   phaseStart = beginPhase('sim.gameAfter');
   w.attractions = finishElevatorStep(w.physics, w.attractions, w.players);
@@ -1171,7 +1243,7 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
   // Impacts name the bodies as the contacts saw them, before any of them breaks this tick.
   const impactsStart = beginPhase('sim.impacts');
   const impacts = collectImpacts(contacts.began, (key) => (key === undefined ? undefined : findBody(w.bodies, key)), state.frame);
-  queueDrumHits(w, contacts.began, state.frame);
+  queueDrumHits(w, contacts.touching, state.frame);
   hitFloodlights(w, contacts.began, state.frame);
   relightFloodlights(w, state.frame);
   endPhase('sim.impacts', impactsStart);
@@ -1195,8 +1267,8 @@ export function stepYard(physics: OpenYardPhysicsWorld, state: YardState, inputs
 
   const nextState: YardState = {
     frame: state.frame + 1,
-    buggyWheels: buggy?.wheels ?? [],
-    buggyVehicle: buggy?.vehicle,
+    buggyWheels: w.physics.bodyIds.has('vehicle-chassis') ? buggy?.wheels ?? [] : [],
+    buggyVehicle: w.physics.bodyIds.has('vehicle-chassis') ? buggy?.vehicle : undefined,
     bodies: w.bodies,
     world,
     players: w.players,

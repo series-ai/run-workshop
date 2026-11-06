@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FLOOR_Y, PLAYER_RADIUS, SCORCH_MATERIAL, TICK_RATE } from './constants';
+import { FLOOR_Y, PLAYER_RADIUS, SCORCH_MATERIAL, TICK_RATE, TORCH_RANGE } from './constants';
 import { BUTTONS } from './contraptions';
 import { BLAST, blastDirection, blastFalloff, damageDrum, EXPLOSION_SHOW_TICKS, FUEL_DRUM, hitDamage } from './fuelDrum';
 import { NEUTRAL_INPUT, quantizeRay, TOOL, type YardInput } from './input';
@@ -115,12 +115,19 @@ describe('fuel drums', () => {
     const bodies = sim.state.bodies.length;
     const drum = physicsStateBodyById(sim.state.world, id)!;
     const origin = [drum.x, drum.y + 2, drum.z + 0.001] as const;
-    const torch = { ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay(origin, [0, -1, -0.0005]) };
-    steps(sim, 10, torch);
+    const heat = (ticks: number) => {
+      for (let tick = 0; tick < ticks; tick++) {
+        const target = physicsStateBodyById(sim.state.world, id)!;
+        const direction = [target.x - origin[0], target.y - origin[1], target.z - origin[2]] as const;
+        expect(Math.hypot(...direction)).toBeLessThan(TORCH_RANGE);
+        sim.step([{ ...NEUTRAL_INPUT, tool: TOOL.torch, pressed: true, ...quantizeRay(origin, direction) }]);
+      }
+    };
+    heat(10);
     expect(drumState(sim, id)!.damage).toBeGreaterThan(0);
     expect(drumState(sim, id)!.detonateAt).toBeNull();
     expect(sim.state.bodies.length).toBe(bodies);
-    steps(sim, 40, torch);
+    heat(40);
     expect(drumState(sim, id)!.detonateAt).not.toBeNull();
   });
 
@@ -141,8 +148,12 @@ describe('fuel drums', () => {
     expect(drumState(sim, id)).toBeUndefined();
     expect(sim.state.contraptions.explosions.at(-1)).toMatchObject({ radius: BLAST.radius, frame: lit.detonateAt });
     expect(sim.state.stats.explosions).toBe(1);
-    steps(sim, EXPLOSION_SHOW_TICKS + 1);
-    expect(sim.state.contraptions.explosions).toHaveLength(0);
+    const sourceExplosion = sim.state.contraptions.explosions[0]!;
+    steps(sim, EXPLOSION_SHOW_TICKS);
+    expect(sim.state.contraptions.explosions).toContainEqual(sourceExplosion);
+    steps(sim, 1);
+    expect(sim.state.contraptions.explosions).not.toContainEqual(sourceExplosion);
+    expect(sim.state.contraptions.explosions.every((explosion) => sim.state.frame - explosion.frame <= EXPLOSION_SHOW_TICKS)).toBe(true);
   });
 
   it('the blast pushes bodies harder the closer they are, and not past its radius', () => {

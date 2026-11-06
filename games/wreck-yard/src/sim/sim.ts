@@ -2,7 +2,7 @@ import type { PhysicsCheckpoint3D } from '@series-inc/rundot-syncplay/physics/3d
 import type { KinetixSeatState } from '@series-inc/rundot-syncplay/core/runtime';
 import { decodeState, encodeState, encodeChecksumState } from './codec';
 import type { YardInput } from './input';
-import { readWorldState, setBodyNames, type OpenYardPhysicsWorld } from './physics';
+import { NATIVE_CHECKPOINT_WINDOW, readWorldState, setBodyNames, type OpenYardPhysicsWorld } from './physics';
 import { createInitialYard } from './presets';
 import type { YardState } from './state';
 import { stepYard } from './step';
@@ -28,8 +28,6 @@ interface OwnedYardSave {
   readonly state: YardState;
   physics: YardPhysicsSave;
 }
-
-const MAX_NATIVE_CHECKPOINTS = 32;
 
 /**
  * The live yard: one physics world that each tick steps in place, and the
@@ -190,7 +188,7 @@ export class YardSim {
   }
 
   #makeCheckpointRoom(): void {
-    if (this.#nativeSaves.size < MAX_NATIVE_CHECKPOINTS) return;
+    if (this.#nativeSaves.size < NATIVE_CHECKPOINT_WINDOW) return;
     // Set order follows capture order, including captures after a rollback.
     const oldest = this.#nativeSaves.values().next().value;
     if (!oldest || oldest.physics.kind !== 'checkpoint') throw new Error('WRECK_YARD_NATIVE_SAVE_INVALID');

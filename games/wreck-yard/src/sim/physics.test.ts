@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { makeEmptyVoxelField, stampBox } from 'voxel-kit';
 import { ANGULAR_DAMPING, LINEAR_DAMPING, PHYSICS_SUBSTEPS, TICK_RATE, VOXEL_SIZE } from './constants';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
+import { ROAD } from './roadCourse';
 import { bodyMass, cookCenteredCollider, createWorld, makePhysicsBody, physicsBodyById, physicsBodyHandle, readWorldState, removePhysicsBody, shellBodies, STORAGE_COLLIDER_SIDE_INSET, TIRE_DAMPING, voxelStats } from './physics';
 import { meters } from '@series-inc/rundot-syncplay/physics/3d';
 import type { YardBody } from './state';
@@ -45,7 +46,8 @@ describe('createInitialYard', () => {
       const physics = state.world.bodies.find((p) => p.id === body.id);
       expect(physics?.kind).toBe(body.motion === 'fixed' ? 'static' : 'dynamic');
     }
-    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:'))).toHaveLength(SHELL_BOXES.length + CAGE_PANELS.length);
+    expect(state.world.bodies.filter((b) => b.id.startsWith('shell:') && b.kind === 'static')).toHaveLength(SHELL_BOXES.length + CAGE_PANELS.length);
+    expect(state.world.bodies.find((b) => b.id === ROAD.magnetId)?.kind).toBe('kinematic');
     expect(state.world.bodies.some((b) => b.id === 'shell:floor')).toBe(true);
   });
 

@@ -85,7 +85,7 @@ describe('Lost Property belt', () => {
       looseBodies: sim.state.bodies.length,
       dynamicBodies: sim.state.world.bodies.filter((body) => body.kind === 'dynamic').length,
       joints: sim.physics.world.info().jointCount,
-    }).toEqual({ looseBodies: 544, dynamicBodies: 543, joints: 0 });
+    }).toEqual({ looseBodies: 543, dynamicBodies: 542, joints: 0 });
     const before = sim.physics.world.info();
     for (let frame = 0; frame < 10; frame++) sim.step([NEUTRAL_INPUT]);
     const after = sim.physics.world.info();

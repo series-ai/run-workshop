@@ -14,7 +14,6 @@ export interface Department {
   readonly number: string;
   readonly title: string;
   readonly headline: readonly [string, string];
-  readonly action: string;
   readonly accent: DepartmentAccent;
   readonly zone: string;
   readonly target: DepartmentPoint;
@@ -31,70 +30,70 @@ const WALL_PANEL_FACE = 25.61;
 export const DEPARTMENTS = [
   {
     id: 'storage', number: '01', title: 'Storage', headline: ['STORAGE', ''],
-    action: 'Use the lift. Remove a lower crate.', accent: 'signalOrange', zone: 'NORTHWEST', target: [-13, -21],
+    accent: 'signalOrange', zone: 'NORTHWEST', target: [-13, -21],
     sign: { mount: 'wall-west', center: [-WALL_PANEL_FACE, FLOOR_Y + 2.05, -18.9], size: [4.7, 2.3], yaw: Math.PI / 2 },
     paint: { center: [-10.8, -12.9], size: [2.4, 2.4], yaw: 0 },
   },
   {
-    id: 'incoming', number: '02', title: 'Drum Conveyor', headline: ['DRUM', 'CONVEYOR'],
-    action: 'Press DRUMS. Watch the belt.', accent: 'rust', zone: 'NORTH', target: [0.2, -15],
+    id: 'incoming', number: '02', title: 'Incoming', headline: ['INCOMING', ''],
+    accent: 'rust', zone: 'NORTH', target: [0.2, -15],
     sign: { mount: 'wall-north', center: [-1.8, FLOOR_Y + 1.02, -WALL_PANEL_FACE], size: [4.3, 1.8], yaw: 0 },
     paint: { center: [2.9, -8.3], size: [2.6, 2.6], yaw: 0 },
   },
   {
     id: 'claims', number: '03', title: 'Hoop Test', headline: ['HOOP', 'TEST'],
-    action: 'Put a loose part through the hoop.', accent: 'mustard', zone: 'NORTHEAST', target: [13, -22.6],
+    accent: 'mustard', zone: 'NORTHEAST', target: [13, -22.6],
     sign: { mount: 'wall-east', center: [WALL_PANEL_FACE, FLOOR_Y + 2.02, -21.2], size: [4.4, 2.2], yaw: -Math.PI / 2 },
     paint: { center: [13, -18.8], size: [2.6, 2.6], yaw: 0 },
   },
   {
-    id: 'roadworthy', number: '04', title: 'Buggy Ramp', headline: ['BUGGY', 'RAMP'],
-    action: 'Drive the buggy over the ramp.', accent: 'signalOrange', zone: 'EAST CIRCUIT', target: [14, 0],
+    id: 'roadworthy', number: '04', title: 'Road Test', headline: ['ROAD TEST', ''],
+    accent: 'signalOrange', zone: 'EAST CIRCUIT', target: [14, 0],
     sign: { mount: 'wall-east', center: [WALL_PANEL_FACE, FLOOR_Y + 2, -0.5], size: [5.2, 2.3], yaw: -Math.PI / 2 },
     paint: { center: [10.4, -4.3], size: [2.5, 2.5], yaw: Math.PI },
   },
   {
-    id: 'express', number: '05', title: 'Catapult', headline: ['CATAPULT', ''],
-    action: 'Load the bucket. Press LAUNCH.', accent: 'rust', zone: 'SOUTHEAST', target: [8.5, 24.1],
+    id: 'express', number: '05', title: 'Dispatch', headline: ['DISPATCH', ''],
+    accent: 'rust', zone: 'SOUTHEAST', target: [8.5, 24.1],
     sign: { mount: 'wall-south', center: [8.5, FLOOR_Y + 2.55, WALL_PANEL_FACE], size: [4.2, 1.8], yaw: Math.PI },
     paint: { center: [8.4, 18.3], size: [2.5, 2.5], yaw: Math.PI },
   },
   {
     id: 'lost-property', number: '06', title: 'Lost Property', headline: ['LOST', 'PROPERTY'],
-    action: 'Put a loose part on the belt.', accent: 'teal', zone: 'SOUTHWEST', target: [-8.5, 20.8],
+    accent: 'teal', zone: 'SOUTHWEST', target: [-8.5, 20.8],
     sign: { mount: 'wall-south', center: [-8.4, FLOOR_Y + 2.7, WALL_PANEL_FACE], size: [4.4, 1.8], yaw: Math.PI },
     paint: { center: [-8.5, 18.2], size: [2.5, 2.5], yaw: Math.PI },
   },
   {
-    id: 'impact', number: '07', title: 'Impact Inspection', headline: ['IMPACT', 'INSPECTION'],
-    action: 'Use a heavy ball on the pins.', accent: 'mustard', zone: 'SOUTHWEST', target: [-6, 13.6],
+    id: 'impact', number: '07', title: 'Inspection', headline: ['INSPECTION', ''],
+    accent: 'mustard', zone: 'SOUTHWEST', target: [-6, 13.6],
     sign: { mount: 'ball-drop-platform', center: [-9.988, FLOOR_Y + 2.05, 12], size: [3.5, 1.8], yaw: Math.PI / 2 },
     paint: { center: [-7.3, 10.1], size: [2.4, 2.4], yaw: Math.PI },
   },
   {
     id: 'assembly', number: '08', title: 'Some Assembly Required', headline: ['SOME ASSEMBLY', 'REQUIRED'],
-    action: 'Cut a loose container into parts.', accent: 'teal', zone: 'WEST DECK', target: [-21.5, 6],
+    accent: 'teal', zone: 'WEST DECK', target: [-21.5, 6],
     sign: westPanel(6.8), paint: { center: [-15.4, 5.3], size: [2.4, 2.4], yaw: Math.PI / 2 },
   },
   {
-    id: 'balance', number: '09', title: 'Balance Plank', headline: ['BALANCE', 'PLANK'],
-    action: 'Put scrap on one end of the plank.', accent: 'mustard', zone: 'WEST INNER', target: [-14, -6],
+    id: 'balance', number: '09', title: 'Balance', headline: ['BALANCE', ''],
+    accent: 'mustard', zone: 'WEST INNER', target: [-14, -6],
     sign: westPanel(-6), paint: { center: [-11.5, -5.2], size: [2.4, 2.4], yaw: Math.PI / 2 },
   },
   {
     id: 'warranty', number: '10', title: 'Cut Tower', headline: ['CUT', 'TOWER'],
-    action: 'Cut one lower tower support.', accent: 'rust', zone: 'WEST CENTER', target: [-16, 0],
+    accent: 'rust', zone: 'WEST CENTER', target: [-16, 0],
     sign: westPanel(0), paint: { center: [-14.5, 2.2], size: [2.4, 2.4], yaw: Math.PI / 2 },
   },
   {
-    id: 'float', number: '11', title: 'Float Test', headline: ['FLOAT', 'TEST'],
-    action: 'Compare a crate and heavy ballast.', accent: 'teal', zone: 'CENTER', target: [2.95, 0.55],
+    id: 'float', number: '11', title: 'Liquid Assets', headline: ['LIQUID', 'ASSETS'],
+    accent: 'teal', zone: 'CENTER', target: [2.95, 0.55],
     sign: { mount: 'tank-south', center: [2.95, -0.14, 2.194], size: [3.6, 0.87], yaw: 0 },
     paint: { center: [3, 4], size: [2.2, 2.2], yaw: 0 },
   },
   {
     id: 'returns', number: '12', title: 'Delivery / Returns', headline: ['DELIVERY /', 'RETURNS'],
-    action: 'Walk through the opening.', accent: 'signalOrange', zone: 'PORTAL BAYS', target: [-2, 20],
+    accent: 'signalOrange', zone: 'PORTAL BAYS', target: [-2, 20],
     sign: { mount: 'wall-south', center: [-2.3, FLOOR_Y + 2.55, WALL_PANEL_FACE], size: [4.3, 1.8], yaw: Math.PI },
     paint: { center: [-2, 16.7], size: [2.3, 2.3], yaw: Math.PI },
   },

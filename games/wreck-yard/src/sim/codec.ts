@@ -3,6 +3,7 @@ import { canonicalParse, canonicalStringify } from '@series-inc/rundot-syncplay/
 import type { YardPhysicsWorldState } from './physics';
 import { FLOODLIGHT_LENSES } from './floodlights';
 import { MAX_PLAYERS } from './constants';
+import { ROAD, ROAD_WORKER_FSM } from './roadCourse';
 import { isYardMaterial } from './materials';
 import { CRATE_ARROWS, type CrateFace, type CrateFaces, type YardBody, type YardState } from './state';
 
@@ -284,6 +285,34 @@ function assertPlayerSeatFields(players: unknown): void {
   }
 }
 
+/** Check the saved equipment state before it enters the simulation. */
+function assertRoadFields(contraptions: unknown): void {
+  const road = typeof contraptions === 'object' && contraptions !== null && 'roadCourse' in contraptions ? contraptions.roadCourse : undefined;
+  if (typeof road !== 'object' || road === null || !hasKeys(road, ['slots', 'worker', 'resetFrame'])
+    || !('slots' in road) || !Array.isArray(road.slots) || road.slots.length !== ROAD.slots.length
+    || !road.slots.every((id: unknown) => id === null || typeof id === 'string')
+    || !('resetFrame' in road) || !Number.isSafeInteger(road.resetFrame)
+    || !('worker' in road) || typeof road.worker !== 'object' || road.worker === null) {
+    throw new Error('WRECK_YARD_STATE_BYTES_INVALID: road course');
+  }
+  const worker = road.worker;
+  if (!hasKeys(worker, ['agent', 'job']) || !('agent' in worker) || typeof worker.agent !== 'object' || worker.agent === null
+    || !('job' in worker)) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: road worker');
+  const agent = worker.agent;
+  if (!('state' in agent) || !ROAD_WORKER_FSM.states.some((state) => state.id === agent.state)
+    || !('transitionsTaken' in agent) || !Number.isSafeInteger(agent.transitionsTaken)
+    || Number(agent.transitionsTaken) < 0 || !('actionLog' in agent) || !Array.isArray(agent.actionLog)
+    || agent.actionLog.length !== 0) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: road worker');
+  const job = worker.job;
+  if (job !== null && (typeof job !== 'object' || !hasKeys(job, ['slot', 'bodyId', 'leg'])
+    || !('slot' in job) || typeof job.slot !== 'number' || !Number.isInteger(job.slot) || job.slot < 0 || job.slot >= ROAD.slots.length
+    || !('bodyId' in job) || typeof job.bodyId !== 'string' || !('leg' in job) || (job.leg !== 'lane' && job.leg !== 'slot'))) {
+    throw new Error('WRECK_YARD_STATE_BYTES_INVALID: road delivery');
+  }
+  const delivering = agent.state === 'collect' || agent.state === 'deliver';
+  if (delivering !== (job !== null)) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: road worker phase');
+}
+
 function decodeRawState(bytes: Uint8Array): EncodedYard {
   if (bytes.byteLength < 8) throw new Error('WRECK_YARD_STATE_BYTES_INVALID: too short');
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -293,6 +322,7 @@ function decodeRawState(bytes: Uint8Array): EncodedYard {
   // canonicalParse restores what canonicalStringify tags, such as -0.
   const header = canonicalParse<Header>(decoder.decode(bytes.subarray(8, 8 + headerLength)));
   assertPlayerSeatFields(header.players);
+  assertRoadFields(header.contraptions);
   assertLampFields(header.contraptions);
   assertImpacts(header.impacts);
   let offset = 8 + headerLength;

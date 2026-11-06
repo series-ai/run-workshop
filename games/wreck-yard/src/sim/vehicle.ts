@@ -12,10 +12,18 @@ import {
 import type { BuggyWheelState } from './state';
 import { type YardInput } from './input';
 import { physicsBodyHandle, type OpenYardPhysicsWorld } from './physics';
+import { clamp } from './math';
 
 /** Tuned at chassis mass 3.614: stiffness 220, damping 24. */
 const SUSPENSION_STIFFNESS_PER_MASS = 220 / 3.614;
 const SUSPENSION_DAMPING_PER_MASS = 24 / 3.614;
+const STEERING = {
+  maximumAngleTurns: turns(0.12),
+  lowSpeedGrip: 2.45,
+  highSpeedGrip: 1.8,
+  lowSpeed: 8,
+  highSpeed: 13,
+} as const;
 
 export const BUGGY_WHEELS: readonly DeterministicVehicleWheelDefinition3D[] = [-0.84, 0.84].flatMap((x) =>
   [-0.68, 0.84].map((z) => ({
@@ -29,8 +37,8 @@ export const BUGGY_WHEELS: readonly DeterministicVehicleWheelDefinition3D[] = [-
     // damping do not change when the chassis design changes its mass.
     stiffness: newtonsPerMeter(SUSPENSION_STIFFNESS_PER_MASS),
     damping: newtonSecondsPerMeter(SUSPENSION_DAMPING_PER_MASS),
-    grip: 1.8,
-    maximumSteerAngleTurns: turns(0.08),
+    grip: STEERING.highSpeedGrip,
+    maximumSteerAngleTurns: STEERING.maximumAngleTurns,
     steered: z < 0,
     driven: true,
   })),
@@ -53,9 +61,15 @@ export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, prev
   // Motion has mass and kind; a full read would decode the voxel shape every tick.
   const body = physics.world.readMotion(physicsBodyHandle(physics, 'vehicle-chassis'));
   if (body.kind !== 'dynamic') return undefined;
+  const steer = vehicleAxis(input?.moveX ?? 0);
+  const speed = Math.hypot(body.linearVelocity.x, body.linearVelocity.z);
+  const gripBlend = steer === 0 ? 0 : clamp((STEERING.highSpeed - speed) / (STEERING.highSpeed - STEERING.lowSpeed), 0, 1);
+  // Add front grip while steering. Reduce the aid at high speed to keep sharp turns stable.
+  const frontGrip = STEERING.highSpeedGrip + (STEERING.lowSpeedGrip - STEERING.highSpeedGrip) * gripBlend;
   const definition = {
     wheels: BUGGY_WHEELS.map((wheel) => ({
       ...wheel,
+      grip: wheel.steered ? frontGrip : wheel.grip,
       stiffness: newtonsPerMeter(wheel.stiffness * body.mass),
       damping: newtonSecondsPerMeter(wheel.damping * body.mass),
     })),
@@ -66,7 +80,7 @@ export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, prev
   const state = previous?.chassisId === chassisId ? previous : createDeterministicVehicleState3D(definition, chassisId);
   const result = stepDeterministicVehicleState3D(definition, state, {
     throttle: vehicleAxis(input?.moveZ ?? 0),
-    steer: vehicleAxis(input?.moveX ?? 0),
+    steer,
     brake: input?.moveZ ? 0 : 5,
   }, physics.world, { checksumMode: 'disabled', apply: true });
   return {
@@ -80,6 +94,6 @@ export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, prev
 
 /** A stick axis as Syncplay's integer vehicle input in [-10, 10]. Never -0, which canonical JSON must tag. */
 function vehicleAxis(value: number): number {
-  const axis = Math.round(-value * 10);
+  const axis = -Math.sign(value) * Math.round(Math.abs(value) * 10);
   return axis === 0 ? 0 : axis;
 }

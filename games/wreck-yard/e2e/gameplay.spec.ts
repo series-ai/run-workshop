@@ -37,6 +37,42 @@ async function playerAvatarSlots(page: Page, visibleOnly = false): Promise<numbe
   }, visibleOnly);
 }
 
+async function liquidAssetsScene(page: Page) {
+  return page.evaluate(async () => {
+    const moduleUrl = performance.getEntriesByType('resource')
+      .find((entry) => entry.name.includes('/@react-three_fiber.js'))?.name;
+    if (!moduleUrl) throw new Error('The scene module is not loaded.');
+    const { _roots } = await import(/* @vite-ignore */ moduleUrl);
+    const scene = _roots.get(document.querySelector('canvas'))?.store.getState().scene;
+    if (!scene) throw new Error('The game scene is not mounted.');
+    const basin = scene.getObjectByName('liquid-assets-lava');
+    const hand = scene.getObjectByName('voxel-body-lava-hand');
+    const geometryIds: string[] = [];
+    hand?.traverse((object: { isMesh?: boolean; geometry?: { uuid: string } }) => {
+      if (object.isMesh && object.geometry) geometryIds.push(object.geometry.uuid);
+    });
+    return {
+      basin: Boolean(basin),
+      surface: Boolean(basin?.getObjectByName('lava-surface')),
+      hand: Boolean(hand),
+      geometryIds: geometryIds.sort(),
+    };
+  });
+}
+
+async function roadScene(page: Page) {
+  return page.evaluate(async () => {
+    const moduleUrl = performance.getEntriesByType('resource').find((entry) => entry.name.includes('/@react-three_fiber.js'))?.name;
+    if (!moduleUrl) throw new Error('The scene module is not loaded.');
+    const { _roots } = await import(/* @vite-ignore */ moduleUrl);
+    const scene = _roots.get(document.querySelector('canvas'))?.store.getState().scene;
+    const position = (name: string): number[] | null => scene?.getObjectByName(name)?.position.toArray() ?? null;
+    const button = scene?.getObjectByName('Button-reset-car')?.children[0]?.position.toArray() ?? null;
+    return { player: position('player-robot-0'), car: position('voxel-body-vehicle-chassis'), magnet: position('road-magnetic-claw'),
+      worker: Boolean(scene?.getObjectByName('voxel-body-road-worker')), belt: Boolean(scene?.getObjectByName('road-supply-belt-surface')), button };
+  });
+}
+
 async function pause(page: Page) {
   await page.getByRole('button', { name: 'Pause', exact: true }).tap();
   await expect(page.getByRole('region', { name: 'Paused', exact: true })).toBeVisible();
@@ -66,6 +102,96 @@ async function holdTouch(page: Page, context: BrowserContext, label: string, dur
     finally { await cdp.detach(); }
   }
 }
+
+test('Liquid Assets renders lava and updates the surviving hand during erosion', async ({ page }) => {
+  const errors: string[] = [];
+  watch(page, errors);
+  await page.goto('/?quality=low');
+  await expect(page.locator('[data-match-status="live"]')).toBeVisible({ timeout: 45_000 });
+  await expect.poll(async () => {
+    const scene = await liquidAssetsScene(page);
+    return { basin: scene.basin, surface: scene.surface, hand: scene.hand, mesh: scene.geometryIds.length > 0 };
+  }).toEqual({ basin: true, surface: true, hand: true, mesh: true });
+  const initial = await liquidAssetsScene(page);
+  await expect.poll(async () => {
+    const scene = await liquidAssetsScene(page);
+    return scene.hand && scene.geometryIds.length > 0
+      && scene.geometryIds.join(',') !== initial.geometryIds.join(',');
+  }, { timeout: 15_000, intervals: [100, 250, 500] }).toBe(true);
+  const surviving = await liquidAssetsScene(page);
+  expect(surviving.hand).toBe(true);
+  expect(surviving.geometryIds.length).toBeGreaterThan(0);
+  expect(errors).toEqual([]);
+});
+
+test('a short reset key tap calls the claw and delivers a car', async ({ page }) => {
+  const errors: string[] = [];
+  watch(page, errors);
+  await page.goto('/?controls=touch&quality=low');
+  await touchLive(page);
+  const initial = await roadScene(page);
+  expect(initial.worker && initial.belt && initial.button && initial.magnet && initial.car).toBeTruthy();
+  const target = initial.button!;
+  await page.keyboard.down('Space');
+  await page.waitForTimeout(1800);
+  await page.keyboard.up('Space');
+  try {
+    for (const [axis, key, reached] of [
+      [0, 'KeyD', (value: number) => value > target[0]! - 0.3],
+      [2, 'KeyW', (value: number) => value < target[2]! + 0.4],
+    ] as const) {
+      await page.keyboard.down(key);
+      for (let step = 0; step < 80; step++) {
+        const position = (await roadScene(page)).player!;
+        if (reached(position[axis]!)) break;
+        if (position[1]! < 8) await page.keyboard.down('Space');
+        else if (position[1]! > 12) await page.keyboard.up('Space');
+        await page.waitForTimeout(100);
+      }
+      await page.keyboard.up(key);
+      await page.keyboard.up('Space');
+    }
+  } finally {
+    for (const key of ['Space', 'KeyD', 'KeyW']) await page.keyboard.up(key);
+  }
+  await page.waitForTimeout(2500);
+  for (let pass = 0; pass < 4; pass++) {
+    for (const axis of [0, 2] as const) {
+      const start = (await roadScene(page)).player!;
+      const error = target[axis]! - start[axis]!;
+      if (Math.abs(error) < 0.7) continue;
+      const direction = Math.sign(error);
+      const key = axis === 0 ? (direction > 0 ? 'KeyD' : 'KeyA') : (direction > 0 ? 'KeyS' : 'KeyW');
+      await page.keyboard.down(key);
+      try {
+        for (let step = 0; step < 50; step++) {
+          const position = (await roadScene(page)).player!;
+          if ((target[axis]! - position[axis]!) * direction < 0.8) break;
+          await page.waitForTimeout(100);
+        }
+      } finally { await page.keyboard.up(key); }
+      await page.waitForTimeout(650);
+    }
+    const position = (await roadScene(page)).player!;
+    if (Math.hypot(position[0]! - target[0]!, position[2]! - target[2]!) < 1.6 && position[1]! - target[1]! < 1) break;
+  }
+  const atButton = (await roadScene(page)).player!;
+  expect(Math.hypot(atButton[0]! - target[0]!, atButton[2]! - target[2]!)).toBeLessThan(2.5);
+  // Both events occur before the browser can sample another frame.
+  await page.evaluate(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE', bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyE', bubbles: true }));
+  });
+  await expect.poll(async () => (await roadScene(page)).car![0]!, { timeout: 5000 }).toBeGreaterThan(initial.car![0]! + 3);
+  await expect.poll(async () => (await roadScene(page)).magnet![0]!, { timeout: 5000 }).toBeLessThan(initial.magnet![0]! - 2);
+  await expect.poll(async () => {
+    const scene = await roadScene(page);
+    return Math.hypot(scene.car![0]! - initial.car![0]!, scene.car![2]! - initial.car![2]!) < 0.8
+      && scene.car![1]! < initial.car![1]! + 0.5
+      && Math.hypot(...scene.magnet!.map((value, axis) => value - initial.magnet![axis]!)) < 0.1;
+  }, { timeout: 8000 }).toBe(true);
+  expect(errors).toEqual([]);
+});
 
 test('a desktop room accepts a touch peer, releases Jet, and supports leave and rejoin', async ({ page: host, browser, baseURL }) => {
   const errors: string[] = [];

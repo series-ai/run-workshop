@@ -36,6 +36,8 @@ export const CPU_PHASES = [
   'fracture.split',
   'fracture.cook',
   'fracture.edit',
+  'sim.lava',
+  'sim.roadCourse',
 ] as const;
 
 export const COUNTER_LABELS = [
@@ -62,6 +64,10 @@ export const COUNTER_LABELS = [
   'memory.wasmBytes',
   'webgl.postTargetBytesEstimate',
   'sim.contacts',
+  'sim.broadphasePairs',
+  'sim.contactPoints',
+  'sim.awakeIslands',
+  'sim.ccdSweeps',
   'sim.impacts',
   'torch.pendingCuts',
   'torch.cuts',
@@ -76,6 +82,8 @@ export const COUNTER_LABELS = [
   'memory.jsHeapUsedBytes',
   'sim.hotBodies',
   'render.voxelBodies',
+  'lava.edits',
+  'lava.removedVoxels',
 ] as const;
 
 export const INPUT_STAGES = ['event', 'sample', 'apply', 'renderSubmission'] as const;

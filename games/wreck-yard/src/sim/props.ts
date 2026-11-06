@@ -374,20 +374,20 @@ export function yardProps(): PropSpawn[] {
 
     // Containers on the yard floor.
     container('container-east', 22, -7.5, 0.28, 'rust'),
-    container('container-iso-east', 21.5, -15, -0.3, 'teal', 0, true),
+    container('container-iso-east', 22.8, -16.8, 0, 'teal', 0, true),
     container('container-sw', -21, 17.6, -0.22, 'white'),
-    container('container-se', 21.5, 15.4, 0.14, 'mustard'),
+    container('container-se', 23.6, 14, QUARTER, 'mustard'),
 
     // Concrete: slabs, jersey barriers, and tire walls on the east circuit.
     slab('block-bay', 38, -14, 8, 0),
     slab('block-hopper', 25, -15.4, 12, 0.2),
-    slab('block-east', 38, 20, 9.4, 0),
+    slab('block-east', 38, 23.5, 9.4, 0),
     slab('block-north', 19, 19, -20, -0.3),
     jersey('jersey-east-a', 20.5, 6.0, 0),
     jersey('jersey-east-b', 20.5, 11.9, 0),
     jersey('jersey-tank', -11, -3.45, QUARTER),
-    ...tireWall('tires-a', 20, 8.2),
-    ...tireWall('tires-b', 20, 18.8),
+    ...tireWall('tires-a', 23.5, 8.2),
+    ...tireWall('tires-b', 23.7, 18.8),
 
     // Scrap bales west of the yard centre, off the walk to the lift front: two on the floor, one on top.
     bale('bale-0', 60, -10.4, -0.6, 0),

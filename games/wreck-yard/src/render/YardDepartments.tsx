@@ -8,7 +8,7 @@ import { ART_STYLE } from './style/artStyle';
 
 const INK = ART_STYLE.palette.ink;
 const BONE = '#efe4cc';
-const FONT = '"Bahnschrift", "DIN Alternate", "Arial Narrow", Arial, sans-serif';
+const FONT = 'Arial, Helvetica, sans-serif';
 const ATLAS_SIZE = DEPARTMENT_RENDER_BUDGET.atlasSize;
 const noRaycast = () => null;
 type Tile = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
@@ -16,48 +16,46 @@ const DIRECTORY_TILE: Tile = { x: 0, y: 768, width: 1024, height: 768 };
 const signTile = (index: number): Tile => ({ x: index % 4 * 512, y: Math.floor(index / 4) * 256, width: 512, height: 256 });
 const numberTile = (index: number): Tile => ({ x: 1024 + index % 4 * 256, y: 768 + Math.floor(index / 4) * 256, width: 256, height: 256 });
 
-function fitText(context: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, width: number) {
+function fitText(context: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, width: number, horizontalScale = 1) {
   context.font = `900 ${size}px ${FONT}`;
-  while (context.measureText(text).width > width && size > 12) {
+  while (context.measureText(text).width * horizontalScale > width && size > 12) {
     size -= 1;
     context.font = `900 ${size}px ${FONT}`;
   }
-  context.fillText(text, x, y);
+  context.save();
+  context.translate(x, y);
+  context.scale(horizontalScale, 1);
+  context.fillText(text, 0, 0);
+  context.restore();
 }
 
 function paintDepartment(context: CanvasRenderingContext2D, department: Department, tile: Tile) {
   context.save();
   context.translate(tile.x, tile.y);
   const accent = ART_STYLE.palette[department.accent];
+  const aspect = department.sign.size[0] / department.sign.size[1];
+  const textScale = (tile.width / tile.height) / aspect;
+  const numberWidth = 98 * textScale;
+  const titleX = numberWidth + 28;
+  const lines = aspect >= 3 ? [department.title.toUpperCase()] : department.headline.filter(Boolean);
   context.fillStyle = INK;
   context.fillRect(2, 2, 508, 252);
   context.fillStyle = accent;
-  context.fillRect(10, 10, 98, 236);
-  context.fillRect(108, 10, 394, 8);
+  context.fillRect(10, 10, numberWidth, 236);
+  context.fillRect(10 + numberWidth, 10, 492 - numberWidth, 8);
   context.fillStyle = INK;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.font = `900 86px ${FONT}`;
-  context.fillText(department.number, 59, 99);
-  context.font = `900 14px ${FONT}`;
-  context.fillText('DEPT.', 59, 160);
-  context.save();
-  context.translate(57, 206);
-  context.rotate(-Math.PI / 4);
-  context.fillRect(-14, -14, 28, 28);
-  context.restore();
+  fitText(context, department.number, 10 + numberWidth / 2, 128, 86, numberWidth - 16 * textScale, textScale);
   context.textAlign = 'left';
   context.fillStyle = BONE;
-  fitText(context, department.headline[0], 125, department.headline[1] ? 66 : 90, 40, 360);
-  if (department.headline[1]) fitText(context, department.headline[1], 125, 112, 40, 360);
-  context.fillStyle = accent;
-  context.fillRect(126, 151, 355, 3);
-  context.fillStyle = BONE;
-  fitText(context, department.action, 126, 186, 21, 358);
+  lines.forEach((line, index) => {
+    fitText(context, line, titleX, lines.length === 1 ? 128 : 104 + index * 48, aspect >= 3 ? 72 : 40, 484 - titleX, textScale);
+  });
   context.fillStyle = '#7d8c96';
   for (const [x, y] of [[17, 17], [495, 17], [17, 239], [495, 239]]) {
     context.beginPath();
-    context.arc(x!, y!, 3, 0, Math.PI * 2);
+    context.ellipse(x!, y!, 3 * textScale, 3, 0, 0, Math.PI * 2);
     context.fill();
   }
   context.restore();
@@ -76,10 +74,8 @@ function paintDirectory(context: CanvasRenderingContext2D) {
   context.fillStyle = INK;
   context.textBaseline = 'middle';
   context.textAlign = 'left';
-  context.font = `900 23px ${FONT}`;
-  context.fillText('WRECK YARD / PUBLIC WORKS', 42, 52);
   context.font = `900 63px ${FONT}`;
-  context.fillText(DEPARTMENT_DIRECTORY.title, 40, 105);
+  context.fillText(DEPARTMENT_DIRECTORY.title, 40, 83);
   DEPARTMENTS.forEach((department, index) => {
     const x = 42 + Math.floor(index / 6) * 494;
     const y = 188 + index % 6 * 85;
@@ -232,7 +228,6 @@ function createDepartmentAssets() {
   const floor = mergeParts([
     ...DEPARTMENTS.map((department, index) => floorPlane(department.paint.center, [1.65, 1.65], department.paint.yaw, numberTile(index))),
     floorPlane(DEPARTMENT_DIRECTORY.center, DEPARTMENT_DIRECTORY.size, DEPARTMENT_DIRECTORY.yaw, DIRECTORY_TILE),
-    floorPlane([-0.2, -11], [3.4, 1.7], 0, signTile(1)),
   ], 'yard-department-floor-stencils-and-directory-geometry');
   const paint = paintGeometry();
   const paintMaterial = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
@@ -256,7 +251,7 @@ export function YardDepartments({ renderRef: _renderRef }: { renderRef: MutableR
       <mesh name="yard-department-floor-labels" geometry={assets.floor} material={assets.material} raycast={noRaycast} userData={{ departmentIds: DEPARTMENTS.map((entry) => entry.id), nonSolidDecoration: true }} />
       <mesh name="yard-department-paint" geometry={assets.paint} material={assets.paintMaterial} raycast={noRaycast} userData={{ nonSolidDecoration: true }} />
       <group name="yard-department-directory" position={[DEPARTMENT_DIRECTORY.center[0], FLOOR_Y + 0.012, DEPARTMENT_DIRECTORY.center[1]]} userData={{ text: DEPARTMENT_DIRECTORY.title, entries: DEPARTMENTS, size: DEPARTMENT_DIRECTORY.size, nonSolidDecoration: true }} />
-      {DEPARTMENTS.map((department) => <group key={department.id} name={`yard-department-${department.id}`} position={[...department.sign.center]} userData={{ departmentId: department.id, text: [department.title, department.action], department }} />)}
+      {DEPARTMENTS.map((department) => <group key={department.id} name={`yard-department-${department.id}`} position={[...department.sign.center]} userData={{ departmentId: department.id, text: department.title, department }} />)}
     </group>
   );
 }

@@ -144,8 +144,20 @@ export function fractureBody(source: YardBody, pose: BodyPose, contact: Fracture
     )
     : carveContactCapsule(heated, source.dims, contact);
   endPhase('fracture.carve', carveStart);
+  return fragmentVoxelBody(source, pose, carved, contact, serial, frame);
+}
+
+/** Rebuild the connected parts after a voxel edit. */
+export function fragmentVoxelBody(
+  source: YardBody,
+  pose: BodyPose,
+  voxels: Uint8Array,
+  contact: Pick<FractureContact, 'start' | 'end' | 'worldPoint' | 'impulseBoost'>,
+  serial: number,
+  frame: number,
+): FractureResult {
   const splitStart = beginPhase('fracture.split');
-  const parts = [...splitVoxelComponents(toChunk(carved, source.dims), {
+  const parts = [...splitVoxelComponents(toChunk(voxels, source.dims), {
     anchorFacesMask: anchorFacesMask(source.anchorFaces),
   }).subChunks]
     .filter((part) => part.occupiedCount >= MIN_FRAGMENT_VOXELS)

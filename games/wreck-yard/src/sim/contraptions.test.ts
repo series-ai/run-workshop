@@ -53,6 +53,7 @@ describe('hoop scoring', () => {
 describe('sky conveyor', () => {
   it('drops a fuel drum when a player presses E at the button, and the drum lands whole', () => {
     const sim = testSim(1);
+    const initialDrums = sim.state.contraptions.drums;
     let state = pressWithE(sim, 'dropper');
     expect(drums(state)).toHaveLength(1);
     expect(state.players[0]!.feedback?.result).toBe('press');
@@ -63,7 +64,7 @@ describe('sky conveyor', () => {
     expect(drum!.z).toBeGreaterThan(CONVEYOR.zEnd);
     expect(drum!.y).toBeLessThan(FLOOR_Y + 1.5);
     expect(state.stats.fractures).toBe(0);
-    expect(state.contraptions.drums).toEqual([{ bodyId: id, damage: 0, detonateAt: null }]);
+    expect(state.contraptions.drums).toEqual([...initialDrums, { bodyId: id, damage: 0, detonateAt: null }]);
   });
 
   it('drops at most one drum per cooldown and keeps at most MAX_DROPPED_DRUMS', () => {
@@ -81,7 +82,7 @@ describe('sky conveyor', () => {
       state = pressWithE(sim, 'dropper');
     }
     expect(drums(state)).toHaveLength(MAX_DROPPED_DRUMS);
-    expect(state.contraptions.drums.map((drum) => drum.bodyId)).toEqual(drums(state).map((body) => body.id));
+    expect(state.contraptions.drums.filter((drum) => drum.bodyId.startsWith(FUEL_DRUM.idPrefix)).map((drum) => drum.bodyId)).toEqual(drums(state).map((body) => body.id));
   });
 
   it('presses the button when the gravity gun clicks it, from across the yard', () => {

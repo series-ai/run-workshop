@@ -1,6 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { NEUTRAL_INPUT } from './input';
+import { CHECKPOINT_BUDGET, NATIVE_CHECKPOINT_WINDOW } from './physics';
 import { createYardRuntime, yardRoomOptions } from './session';
 import { YardSim, type YardSave } from './sim';
 
@@ -25,7 +26,7 @@ function expectEmptyNativeMemory(): void {
 }
 
 describe('checkpoint storage against the native engine', () => {
-  it('keeps 256 stable save handles and exact old-state replay across the 32-save native window', () => {
+  it('keeps 256 native save handles and replays old state without spilling the history', () => {
     const sim = YardSim.create(1);
     const saves: YardSave[] = [];
     try {
@@ -45,10 +46,10 @@ describe('checkpoint storage against the native engine', () => {
       expect(saves[0]).toBe(oldest);
       expect(oldest.state).toBe(originalState);
       expect(oldest.state.frame).toBe(1);
-      expect(oldest.physics.kind).toBe('bytes');
-      expect(saves.filter((save) => save.physics.kind === 'checkpoint')).toHaveLength(32);
-      expect(saves.filter((save) => save.physics.kind === 'bytes')).toHaveLength(224);
-      expect(nativePhysicsInstanceMemory().liveSlots).toBe(32n);
+      expect(oldest.physics.kind).toBe('checkpoint');
+      expect(saves.filter((save) => save.physics.kind === 'checkpoint')).toHaveLength(256);
+      expect(saves.filter((save) => save.physics.kind === 'bytes')).toHaveLength(0);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(256n);
       expect(sim.checksumBytes(oldest)).toEqual(originalChecksum);
       expect(sim.encode(oldest)).toEqual(originalLateJoin);
 
@@ -62,7 +63,7 @@ describe('checkpoint storage against the native engine', () => {
       saves.push(replay);
       expect(sim.checksumBytes(replay)).toEqual(expectedChecksum);
       expect(sim.encode(replay)).toEqual(expectedLateJoin);
-      expect(nativePhysicsInstanceMemory().liveSlots).toBe(32n);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(257n);
     } finally {
       for (const save of saves) sim.release(save);
       sim.dispose();
@@ -75,12 +76,13 @@ describe('checkpoint storage against the native engine', () => {
     const saves: YardSave[] = [];
     try {
       saves.push(sim.save());
-      for (let frame = 1; frame < 32; frame++) {
-        sim.step([NEUTRAL_INPUT]);
+      sim.step([NEUTRAL_INPUT]);
+      for (let capture = 1; capture < NATIVE_CHECKPOINT_WINDOW; capture++) {
         saves.push(sim.save());
       }
       const first = saves[0]!;
       const second = saves[1]!;
+      const originalChecksum = sim.checksumBytes(first);
       sim.restore(first);
       const revision = sim.revision;
       const rewound = sim.save();
@@ -90,10 +92,16 @@ describe('checkpoint storage against the native engine', () => {
       expect(rewound.state.frame).toBe(0);
       expect(rewound.physics.kind).toBe('checkpoint');
       expect(sim.revision).toBe(revision);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(BigInt(NATIVE_CHECKPOINT_WINDOW));
+      expect(sim.checksumBytes(first)).toEqual(originalChecksum);
+      expect(sim.revision).toBe(revision);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(BigInt(NATIVE_CHECKPOINT_WINDOW));
+      expect(nativePhysicsInstanceMemory().highWaterSlots)
+        .toBeLessThanOrEqual(BigInt(NATIVE_CHECKPOINT_WINDOW + CHECKPOINT_BUDGET.importScratch));
       saves.push(sim.save());
       expect(second.physics.kind).toBe('bytes');
       expect(rewound.physics.kind).toBe('checkpoint');
-      expect(nativePhysicsInstanceMemory().liveSlots).toBe(32n);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(BigInt(NATIVE_CHECKPOINT_WINDOW));
     } finally {
       for (const save of saves) sim.release(save);
       sim.dispose();
@@ -117,14 +125,15 @@ describe('checkpoint storage against the native engine', () => {
       expect(results).toHaveLength(240);
       expect(runtime.currentFrame).toBe(240);
       expect(runtime.serializeCheckpoint(initial)).toEqual(initialBytes);
-      expect(nativePhysicsInstanceMemory().liveSlots).toBe(32n);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(241n);
       for (const [index, result] of results.entries()) expect(runtime.inspect(result.checkpoint).frame).toBe(index + 1);
       runtime.restore(initial);
       const replay = runtime.advance([{ frame: 1, inputs: [NEUTRAL_INPUT], commands: [], checksum: true }]);
       checkpoints.push(replay[0]!.checkpoint);
       expect(replay[0]!.checksum).toBe(results[0]!.checksum);
-      expect(nativePhysicsInstanceMemory().liveSlots).toBe(32n);
-      expect(nativePhysicsInstanceMemory().highWaterSlots).toBeLessThanOrEqual(34n);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(242n);
+      expect(nativePhysicsInstanceMemory().highWaterSlots)
+        .toBeLessThanOrEqual(BigInt(NATIVE_CHECKPOINT_WINDOW + CHECKPOINT_BUDGET.importScratch));
     } finally {
       for (const checkpoint of checkpoints) runtime.release(checkpoint);
       await lease.dispose();
@@ -135,7 +144,7 @@ describe('checkpoint storage against the native engine', () => {
   it('releases native and byte saves once and disposes outstanding native saves', () => {
     const sim = YardSim.create(1);
     try {
-      const saves = Array.from({ length: 33 }, () => sim.save());
+      const saves = Array.from({ length: NATIVE_CHECKPOINT_WINDOW + 1 }, () => sim.save());
       const spilled = saves[0]!;
       const native = saves.at(-1)!;
       expect(spilled.physics.kind).toBe('bytes');
@@ -145,7 +154,7 @@ describe('checkpoint storage against the native engine', () => {
       expect(() => sim.restore(spilled)).toThrow('WRECK_YARD_SAVE_RELEASED');
       sim.release(native);
       expect(() => sim.release(native)).toThrow('WRECK_YARD_SAVE_RELEASED');
-      expect(nativePhysicsInstanceMemory().liveSlots).toBe(31n);
+      expect(nativePhysicsInstanceMemory().liveSlots).toBe(BigInt(NATIVE_CHECKPOINT_WINDOW - 1));
       sim.dispose();
       sim.dispose();
       expect(() => sim.save()).toThrow('WRECK_YARD_SIM_DISPOSED');

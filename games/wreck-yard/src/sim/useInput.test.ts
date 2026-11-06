@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FLOOR_Y, PLAYER_RADIUS } from './constants';
 import { BUTTONS } from './contraptions';
+import { FUEL_DRUM } from './fuelDrum';
 import { NEUTRAL_INPUT, quantizeRay, TOOL } from './input';
 import { physicsStateBodyById } from './physics';
 import { patchPlayer, testSim } from './testSim';
@@ -18,13 +19,13 @@ describe('use and punt are separate', () => {
     const sim = atDropButton();
     const state = sim.step([{ ...NEUTRAL_INPUT, use: true }]);
     expect(state.players[0]!.feedback?.result).toBe('press');
-    expect(state.contraptions.drums).toHaveLength(1);
+    expect(state.contraptions.drums.filter((drum) => drum.bodyId.startsWith(FUEL_DRUM.idPrefix))).toHaveLength(1);
   });
 
   it('a right click at a button does not press it', () => {
     const sim = atDropButton();
     const state = sim.step([{ ...NEUTRAL_INPUT, secondary: true }]);
-    expect(state.contraptions.drums).toHaveLength(0);
+    expect(state.contraptions.drums.filter((drum) => drum.bodyId.startsWith(FUEL_DRUM.idPrefix))).toHaveLength(0);
   });
 
   it('use does not punt what the gravity gun aims at', () => {

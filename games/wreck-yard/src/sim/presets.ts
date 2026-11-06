@@ -1,4 +1,6 @@
 import { INITIAL_ATTRACTIONS } from './attractions';
+import { lavaHandSpawn } from './lavaHand';
+import { ROAD, roadSpawns } from './roadCourse';
 import { createCrateSpawns, spawnInAttractionZone } from './storage';
 import { isDeterministicMathInstalled } from '@series-inc/rundot-syncplay/core/deterministic-math';
 import { makeEmptyVoxelField, stampBox, stampSphere, type VoxelDims } from 'voxel-kit';
@@ -314,13 +316,14 @@ export function createSpawns(): Spawn[] {
   const flatPallet = makeFlatPallet();
   const ball = makeBowlingBall();
   const pin = makeBowlingPin();
-  const buggy = makeBuggyChassis();
   const tower = makeDestructibleTower();
   const hazard = makeHazardBarrel();
   const floatDrum = makeBuoyantFloatDrum();
   const looseTire = looseTirePreset();
 
   return [
+    lavaHandSpawn(),
+    ...roadSpawns(),
     // Original core set
     spawn('steel-case', 'Steel Case', 'steel', steel, [-2.35, steelY + 0.4, -1.4], 0.1),
     spawn('timber-pallet', 'Timber Pallet', 'wood', timber, [-2.35, timberY + 0.4, -1.4], 0.28, YAW_POS_008),
@@ -346,14 +349,8 @@ export function createSpawns(): Spawn[] {
     spawn('bowling-pin-5', 'Bowling Pin 5', 'wood', pin, [-6.0, restY(pin.dims), 15.2], 0.3),
     spawn('bowling-pin-6', 'Bowling Pin 6', 'wood', pin, [-7.6, restY(pin.dims), 15.2], 0.3),
 
-    // Astro Bot High-Speed Driving Runway: Teardown-Style Unified Buggy at [14, -12] facing South
-    spawn('vehicle-chassis', 'Sandbox Buggy', 'steel', buggy, [14.0, FLOOR_Y + getTerrainHeightAt(14, -12) + 1.45, -12.0], 0.25, [0, 1, 0, 0]),
-
-    // Astro Bot Domino Crash Wall (Directly at the Stunt Jump landing zone)
-    spawn('domino-crate-1', 'Domino Crate 1', 'steel', steel, [12.6, steelY, 13.0], 0.1),
-    spawn('domino-crate-2', 'Domino Crate 2', 'wood', timber, [14.0, steelY, 13.0], 0.28),
-    spawn('domino-crate-3', 'Domino Crate 3', 'steel', steel, [15.4, steelY, 13.0], 0.1),
-    spawn('hazard-drum-jump', 'Jump Hazard Drum', 'steel', hazard, [14.0, restY(hazard.dims) + 0.8, 13.0], 0.35),
+    // The buggy starts facing the ramp.
+    buggySpawn(),
 
     // Loose props on the west loading deck (top 1.0 m above the floor) and by the east barriers.
     spawn('deck-drum-1', 'Oil Drum', 'steel', hazard, [-22.6, restY(hazard.dims) + DECK_HEIGHT, 9.0], 0.35),
@@ -361,13 +358,8 @@ export function createSpawns(): Spawn[] {
     spawn('deck-drum-3', 'Oil Drum', 'steel', hazard, [-21.75, restY(hazard.dims) + DECK_HEIGHT, 9.45], 0.35),
     spawn('deck-pallet-1', 'Pallet', 'wood', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT, 9.5], 0.3, YAW_POS_008),
     spawn('deck-pallet-2', 'Pallet', 'wood', flatPallet, [-19.9, restY(flatPallet.dims) + DECK_HEIGHT + 0.25, 9.5], 0.3),
-    spawn('yard-drum-1', 'Oil Drum', 'steel', hazard, [18.9, restY(hazard.dims), 4.0], 0.35),
-    spawn('yard-pallet-1', 'Pallet', 'wood', flatPallet, [20.4, restY(flatPallet.dims), 3.5], 0.3, YAW_NEG_014),
-
-    // Astro Bot Drift Slalom Cones (Guiding the sweeping southern hairpin curve)
-    spawn('slalom-drum-1', 'Slalom Drum 1', 'steel', hazard, [10.0, restY(hazard.dims), 18.0], 0.35),
-    spawn('slalom-drum-2', 'Slalom Drum 2', 'steel', hazard, [2.0, restY(hazard.dims), 19.0], 0.35),
-    spawn('slalom-drum-3', 'Slalom Drum 3', 'steel', hazard, [-6.0, restY(hazard.dims), 18.0], 0.35),
+    spawn('yard-drum-1', 'Oil Drum', 'steel', hazard, [23.8, restY(hazard.dims), 2.4], 0.35),
+    spawn('yard-pallet-1', 'Pallet', 'wood', flatPallet, [23.8, restY(flatPallet.dims), 4], 0.3, YAW_NEG_014),
 
     // Destructible tower sector (North-West playground edge)
     spawn('destructible-tower', 'Destructible Tower', 'concrete', tower, [-16, restY(tower.dims), 0], 0.15),
@@ -381,6 +373,11 @@ export function createSpawns(): Spawn[] {
     // Yard props: wrecks, containers, concrete, tires, bales, and loose scrap.
     ...yardProps().map((prop) => spawn(prop.id, prop.label, prop.material, prop.preset, prop.position, prop.buoyancy, prop.rotation)),
   ];
+}
+
+export function buggySpawn(): Spawn {
+  return spawn('vehicle-chassis', 'Sandbox Buggy', 'steel', makeBuggyChassis(),
+    [ROAD.carStart[0], ROAD.carStart[1] + getTerrainHeightAt(ROAD.carStart[0], ROAD.carStart[2]), ROAD.carStart[2]], 0.25, [0, 1, 0, 0]);
 }
 
 /** The live world and the state at frame 0. The caller owns the world (see sim.ts). */

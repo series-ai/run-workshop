@@ -24,6 +24,8 @@ import { CRATE_APPEARANCE } from './crateAppearance';
 import { crateTone } from '../sim/crateArt';
 import { instancedShippingCrateIds } from './ShippingCrates';
 import { useReducedMotionRef } from './reducedMotion';
+import { ROAD_WORKER_LABEL, ROAD_WORKER_PARTS } from '../sim/roadWorker';
+import { RoadWorkerBot, ROAD_WORKER_COLORS, roadWorkerLook } from './avatars/RoadWorkerBot';
 
 /** Heat lights: a fixed pool, so a new scorch never changes the light count (and recompiles shaders). */
 const HEAT_LIGHTS = 3;
@@ -44,6 +46,11 @@ for (const [name, code] of Object.entries(PROP_COLOR) as [PropColor, number][]) 
   // Only the lens colors (spark, glow) emit light. Ink stays matte.
   const emissive = name === 'spark' || name === 'glow' ? 60 : 0;
   materialParams.set([190, name === 'ink' ? 20 : 70, emissive, 40], offset);
+}
+for (const part of ROAD_WORKER_PARTS) {
+  const color = new THREE.Color(ROAD_WORKER_COLORS[part.finish]).convertLinearToSRGB();
+  palette.set([Math.round(color.r * 255), Math.round(color.g * 255), Math.round(color.b * 255), 255], part.code * 4);
+  materialParams.set([190, part.finish === 'ink' ? 20 : 70, 0, 40], part.code * 4);
 }
 /** The palette with the crate wood slot set to one stain. */
 function cratePaletteWith(stain: string): typeof palette {
@@ -73,6 +80,8 @@ function VoxelBody({ body, renderRef, worldOcclusion, reducedMotion }: {
   const portalClipRef = useRef<PortalPlane4 | null>(null);
   const wheelCopyClipRef = useRef<PortalPlane4 | null>(null);
   const portalCopyRef = useRef<VoxelPortalCopy | null>(null);
+  const workerLook = useMemo(() => body.label === ROAD_WORKER_LABEL ? roadWorkerLook(body) : null,
+    [body.label, body.voxels, body.dims.x, body.dims.y, body.dims.z]);
   const portalPieces = useMemo(() => {
     const ends = ['A', 'B'] as const;
     const entryClip: Record<(typeof ends)[number], PortalPlane4> = {
@@ -132,9 +141,10 @@ function VoxelBody({ body, renderRef, worldOcclusion, reducedMotion }: {
           <BuggyWheels renderRef={renderRef} clipPlaneRef={wheelCopyClipRef} />
         </group>
       )}
-      <VoxelVolumeRenderer
+      {workerLook && <RoadWorkerBot parts={workerLook.parts} gravityRef={gravityRef} portalClipRef={portalClipRef} portalCopyRef={portalCopyRef} />}
+      {(!workerLook || workerLook.hasVoxels) && <VoxelVolumeRenderer
         dims={body.dims}
-        voxels={body.voxels}
+        voxels={workerLook?.voxels ?? body.voxels}
         palette={bodyPalette(body)}
         materialParams={materialParams}
         voxelSize={VOXEL_SIZE}
@@ -143,7 +153,7 @@ function VoxelBody({ body, renderRef, worldOcclusion, reducedMotion }: {
         worldOcclusion={worldOcclusion}
         portalClipRef={portalClipRef}
         portalCopyRef={portalCopyRef}
-      />
+      />}
     </group>
   );
 }

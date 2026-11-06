@@ -46,11 +46,13 @@ const STEEL_DARK = '#3d4650';
 const BONE = '#e9dcc0';
 const HAZARD = '#e8b54a';
 
+export const ROBOT_KIT = { ink: INK, steel: STEEL, steelDark: STEEL_DARK, bone: BONE, hazard: HAZARD } as const;
+
 // ---------------------------------------------------------------------------
 // Kit
 
 const roundedCache = new Map<string, RoundedBoxGeometry>();
-function roundedBox(size: V3, radius: number): RoundedBoxGeometry {
+export function roundedBox(size: V3, radius: number): RoundedBoxGeometry {
   const key = `${size.join(',')}:${radius}`;
   let geometry = roundedCache.get(key);
   if (!geometry) {
@@ -84,7 +86,7 @@ function Glow({ color }: { color: string }) {
 
 let hazardMaterial: THREE.MeshToonMaterial | null = null;
 /** Yellow and ink diagonal stripes, toon lit like the rest of the robot. */
-function getHazardMaterial(): THREE.MeshToonMaterial {
+export function getHazardMaterial(): THREE.MeshToonMaterial {
   if (hazardMaterial) return hazardMaterial;
   const canvas = document.createElement('canvas');
   canvas.width = 64;

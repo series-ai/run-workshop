@@ -5,8 +5,8 @@ import { ART_STYLE } from './style/artStyle';
 
 function signTexture(label: string): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 112;
+  canvas.width = 650;
+  canvas.height = 104;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('WRECK_YARD_RETURNS_SIGN_CANVAS_FAILED');
   context.fillStyle = '#18212b';

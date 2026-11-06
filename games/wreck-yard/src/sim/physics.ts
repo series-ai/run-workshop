@@ -48,6 +48,8 @@ import type { ShellBox } from './setPieces';
 import { clamp, lerp, type Quat, type Vec3 } from './math';
 import type { YardBody } from './state';
 import { WATER_BOUNDS } from './water';
+import { LAVA, LAVA_BOUNDS } from './liquidAssets';
+import { ROAD } from './roadCourse';
 import { perfActive, perfCount } from '../perf/recorder';
 
 void setVoxelCell;
@@ -138,13 +140,15 @@ function bodyTopology(open: OpenYardPhysicsWorld): BodyTopology {
 /**
  * Logical checkpoint capacity for the runner. Keep its 256 saves and a
  * catch-up batch of up to 240 ticks, plus two import scratch slots.
- * YardSim keeps 32 recent saves in native storage. Older saves use bytes.
+ * Native COW storage holds the history and catch-up batch. Two slots remain for imports.
  */
 export const CHECKPOINT_BUDGET = {
   maxLiveCheckpoints: 256 + 240 + 2,
   maxAdvanceBatch: 240,
   importScratch: 2,
 } as const;
+
+export const NATIVE_CHECKPOINT_WINDOW = CHECKPOINT_BUDGET.maxLiveCheckpoints - CHECKPOINT_BUDGET.importScratch;
 
 export const PHYSICS_CAPACITY = {
   bodies: 2048,
@@ -173,6 +177,18 @@ export const WATER_FLUID_CONFIG: PhysicsFluidInput3D = {
   flowVelocity: vec3(metersPerSecond, 0, 0, 0),
   layer: WORLD_LAYER,
   mask: 0xffffffff,
+};
+
+export const LAVA_FLUID_CONFIG: PhysicsFluidInput3D = {
+  ...WATER_FLUID_CONFIG,
+  bounds: {
+    minX: meters(LAVA_BOUNDS.min[0]), minY: meters(LAVA_BOUNDS.min[1]), minZ: meters(LAVA_BOUNDS.min[2]),
+    maxX: meters(LAVA_BOUNDS.max[0]), maxY: meters(LAVA_BOUNDS.max[1]), maxZ: meters(LAVA_BOUNDS.max[2]),
+  },
+  surfacePlane: { normal: { x: 0, y: 1, z: 0 }, offset: meters(LAVA.surfaceY) },
+  density: kilogramsPerCubicMeter(1.15),
+  linearDragPerSecond: perSecond(8),
+  angularDragPerSecond: perSecond(6),
 };
 
 const STATS_CACHE = new WeakMap<Uint8Array, VoxelStats>();
@@ -432,7 +448,13 @@ export function createWorld(bodies: readonly YardPhysicsBodyInput3D[]): OpenYard
     }
     open.world.edit((edit) => {
       edit.createFluid(WATER_FLUID_CONFIG);
+      edit.createFluid(LAVA_FLUID_CONFIG);
     });
+    addPhysicsBodies(open, [{ id: ROAD.magnetId, body: {
+      kind: 'kinematic', material: 'steel', position: vec3(meters, ROAD.magnetPark),
+      shape: { type: 'box', halfX: meters(ROAD.magnetSize[0] / 2), halfY: meters(ROAD.magnetSize[1] / 2), halfZ: meters(ROAD.magnetSize[2] / 2) },
+      filter: WORLD_FILTER,
+    } }]);
     built = true;
     return open;
   } finally {
@@ -473,7 +495,16 @@ export function readWorldState(
   const bodies = names.map((name) => batchBodyView(name, batchRow(open.bodyIds.get(name)!, count)));
   const interactions: YardFluidInteraction[] = [];
   if (fluidInteractions) {
+    const waterFluids = new Map<bigint, boolean>();
     for (const item of fluidInteractions) {
+      let water = waterFluids.get(item.fluidId);
+      if (water === undefined) {
+        const { bounds } = open.world.readFluid(open.world.resolveFluid(item.fluidId));
+        water = bounds.minX === WATER_BOUNDS.min[0] && bounds.minY === WATER_BOUNDS.min[1] && bounds.minZ === WATER_BOUNDS.min[2]
+          && bounds.maxX === WATER_BOUNDS.max[0] && bounds.maxY === WATER_BOUNDS.max[1] && bounds.maxZ === WATER_BOUNDS.max[2];
+        waterFluids.set(item.fluidId, water);
+      }
+      if (!water) continue;
       const name = bodyNameOf(item.bodyKey);
       if (!isShell(name)) {
         interactions.push({

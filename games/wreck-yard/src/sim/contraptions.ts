@@ -1,4 +1,5 @@
 import { DT, FLOOR_Y, GRAVITY, PHYSICS_SUBSTEPS } from './constants';
+import { ROAD } from './roadCourse';
 import type { Vec3 } from './math';
 import { ofMaterial, type ShellBox, type ShellShape } from './setPieces';
 import type { ContraptionState } from './state';
@@ -129,13 +130,13 @@ export function catapultLaunchVelocity(from: Vec3): Vec3 {
 
 /** Launched bodies fly undamped this long, then get normal damping back. */
 export const BALLISTIC_TICKS = CATAPULT_FLIGHT_TICKS + 45;
-/** Linear damping rate (1/s) during the flight. Syncplay rc.78 damping is a Box3D rate, so 0 is none. */
+/** Flight has no linear damping. */
 export const BALLISTIC_DAMPING = 0;
 
 // ---------------------------------------------------------------------------
 // Buttons: press E within reach, or click one with the gravity gun.
 
-export type ButtonId = 'dropper' | 'catapult';
+export type ButtonId = 'dropper' | 'catapult' | 'reset-car';
 
 export interface ButtonSpec {
   readonly id: ButtonId;
@@ -147,6 +148,7 @@ export interface ButtonSpec {
 export const BUTTONS: readonly ButtonSpec[] = [
   { id: 'dropper', label: 'DRUMS', base: [3.2, FLOOR_Y, -11] },
   { id: 'catapult', label: 'LAUNCH', base: [11.2, FLOOR_Y, 21.8] },
+  { id: 'reset-car', label: 'RESET CAR', base: [18.5, FLOOR_Y, -14.5] },
 ];
 
 export const BUTTON_PEDESTAL = { size: [0.7, 1.0, 0.7] as Vec3Tuple, capRadius: 0.26, capHeight: 0.14 } as const;
@@ -154,7 +156,7 @@ export const BUTTON_PEDESTAL = { size: [0.7, 1.0, 0.7] as Vec3Tuple, capRadius: 
 export const BUTTON_REACH = 2.6;
 
 /** Ticks a button stays down after a press: its contraption's reset time. */
-export const BUTTON_RESET_TICKS: Readonly<Record<ButtonId, number>> = { dropper: DROP_COOLDOWN_TICKS, catapult: CATAPULT.cooldownTicks };
+export const BUTTON_RESET_TICKS: Readonly<Record<ButtonId, number>> = { dropper: DROP_COOLDOWN_TICKS, catapult: CATAPULT.cooldownTicks, 'reset-car': ROAD.resetTicks };
 
 /**
  * Share of a button's reset time still to run: 1 on the press, 0 when it can
@@ -162,7 +164,7 @@ export const BUTTON_RESET_TICKS: Readonly<Record<ButtonId, number>> = { dropper:
  * button stays down while it runs.
  */
 export function buttonResetLeft(id: ButtonId, contraptions: ContraptionState, frame: number): number {
-  const pressed = id === 'dropper' ? contraptions.lastDropFrame : contraptions.lastLaunchFrame;
+  const pressed = id === 'dropper' ? contraptions.lastDropFrame : id === 'catapult' ? contraptions.lastLaunchFrame : contraptions.roadCourse.resetFrame;
   return Math.max(0, 1 - (frame - pressed) / BUTTON_RESET_TICKS[id]);
 }
 

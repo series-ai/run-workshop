@@ -150,7 +150,8 @@ describe('audio cues from native simulation', () => {
   it('emits the same cues at 30, 60, and 120 render frames per second', () => {
     const sim = testSim();
     steps(sim, 40);
-    patchPlayer(sim, { x: 10, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: 18, vx: 0, vy: 0, vz: 0 });
+    // Use the clear center aisle. Road barrels block the old walking path.
+    patchPlayer(sim, { x: -5, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: 8, vx: 0, vy: 0, vz: 0 });
     const trace = [project(sim)];
     for (let i = 0; i < 90; i++) {
       sim.step([{ ...NEUTRAL_INPUT, tool: i < 45 ? TOOL.hand : TOOL.torch, moveX: 1 }]);
@@ -216,11 +217,12 @@ describe('audio cues from native simulation', () => {
     sim.step([{ ...NEUTRAL_INPUT, use: true }]);
     steps(sim, DROP_COOLDOWN_TICKS + 1);
     sim.step([{ ...NEUTRAL_INPUT, use: true }]);
-    const ids = sim.state.contraptions.drums.map(d => d.bodyId);
+    const ids = sim.state.contraptions.drums.filter(d => d.bodyId.startsWith(FUEL_DRUM.idPrefix)).map(d => d.bodyId);
     expect(ids).toHaveLength(2);
     sim.edit(physics => ids.forEach((id, i) => replacePhysicsPose(physics, id, { x: -3 + i * 4, y: 3, z: 10, vx: 0, vy: 0, vz: 0 })));
     patchPlayer(sim, { x: -3, y: FLOOR_Y + PLAYER_RADIUS + 0.01, z: 14 });
-    patchState(sim, state => ({ ...state, contraptions: { ...state.contraptions, drums: state.contraptions.drums.map(d => ({ ...d, damage: FUEL_DRUM.maxDamage, detonateAt: state.frame + 1 })) } }));
+    patchState(sim, state => ({ ...state, contraptions: { ...state.contraptions, drums: state.contraptions.drums.map(d => ids.includes(d.bodyId)
+      ? { ...d, damage: FUEL_DRUM.maxDamage, detonateAt: state.frame + 1 } : d) } }));
     const tracker = new YardCueTracker();
     tracker.seed(project(sim), 1);
     sim.step([NEUTRAL_INPUT]);

@@ -6,6 +6,8 @@ import { ReturnsDepartment } from './ReturnsDepartment';
 import { PortalEffects } from './PortalEffects';
 import { YardDepartments } from './YardDepartments';
 import { LostPropertyBelt } from './LostPropertyBelt';
+import { LavaPool } from './LavaPool';
+import { RoadCourse } from './RoadCourse';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -87,6 +89,8 @@ function SceneRoot({ onAudioFrame, controller, tool, quality, onQualityFallback,
       <PointerInput controller={controller} tool={tool} onToolChange={onToolChange} renderRef={renderRef} onBodiesChange={onBodiesChange} gate={gate} touchInput={touchInput} attractionInput={attractionInput} controllerInput={controllerInput} />
       {onAudioFrame ? <AudioFrame controller={controller} renderRef={renderRef} onFrame={onAudioFrame} /> : null}
       <YardShell renderRef={renderRef} />
+      <LavaPool />
+      <RoadCourse renderRef={renderRef} />
       <Contraptions renderRef={renderRef} />
       <StorageAttraction renderRef={renderRef} />
       <ShippingCrates bodies={bodies} renderRef={renderRef} />

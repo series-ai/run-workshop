@@ -44,6 +44,8 @@ LT punts. A uses the jetpack. X interacts. B drops an object. LB selects
 gravity and RB selects the torch. Select toggles orbit view. Start opens
 Pause. Use the Dpad or LS in menus, A to select, and B to return.
 
+Short E/F taps remain queued until the simulation reads them.
+
 Pause contains the room controls, graphics settings, sound settings, and
 fullscreen controls. Multiplayer rooms continue while a player pauses.
 Use **Performance capture** to record up to 60 seconds and save a local report.
@@ -81,6 +83,60 @@ After a change to simulation sources or `tools/voxel-kit/src`, run
 `npm run identity:generate`. Commit the updated identity with the source
 change. Clients and the room authority must use matching identities.
 
+## Liquid Assets
+
+The water tank and the lava basin share station 11. Water supports floating
+props. Lava heats and removes exposed voxels from props in contact with it.
+Lift a prop clear to stop erosion. Its remaining scorch then cools.
+
+The steel hand in the lava is a movable voxel prop. It melts under the same
+rules as other props. Fuel drums retain their existing heat, fuse, and blast
+behavior.
+
+Erosion uses saved simulation frames. Every 15 ticks, it edits at most one
+source body and removes at most six selected surface cells. The existing
+fragment rules can also discard small detached debris. Contact uses cell
+centers, so an overlap below half a voxel may not erode yet. The performance
+panel records `sim.lava`, `lava.edits`, and `lava.removedVoxels`.
+
+## Road Test
+
+Small stick movements register in both directions. Steering
+uses more front tire grip for tighter turns at low speed. This aid decreases
+as speed increases.
+
+Four fuel barrels mark the road course. A car impact above 4 m/s lights a
+short fuse. A close explosion breaks the buggy into movable voxel debris
+and releases its driver.
+
+One worker receives barrels from the short east conveyor. It carries each
+replacement to an empty road position. You can take its load or move the
+worker. It abandons a lost or lit load and returns for another delivery.
+Its small loader body uses the same panel and material kit as the player
+robots. Cut parts show their remaining steel voxels.
+The worker uses the Syncplay deterministic state machine. Its motor,
+carried barrels, and upright control act through native physics forces.
+The road has at most eight barrels and one active delivery.
+
+Use **RESET CAR** beside the start bay to call a fresh buggy. The magnetic
+claw carries it to the bay, lowers it, releases it, and returns to its parked
+position. Reset removes the previous buggy and its fragments. The parked
+magnet attracts up to four nearby steel props. Gravity-gun grabs take priority.
+The performance panel records `sim.roadCourse`.
+
+Syncplay contact and hit events drive impact sound, drum damage, floodlight hits,
+and crate breaks (`stepContacts` deduplicates per-shape events to one per body
+pair). The physics adapter uses 64-bit collision categories (`WORLD_CATEGORY`
+and `CAGE_CATEGORY`), per-second damping rates, and a 2.5 cm horizontal collider
+inset on intact storage bay crates (`STORAGE_COLLIDER_SIDE_INSET`) so columns
+can sleep independently after a torch cut. Performance captures include native
+broadphase pairs, contact points, awake islands, and continuous sweeps.
+
+Rollback uses the engine's native copy-on-write checkpoints. The 496-save
+native window covers the 256-frame history and 240-frame catch-up batch.
+Two additional slots remain available for imports. Older standalone saves
+can spill to bytes after that window.
+
 ## Project files
 
 - `src/sim`: deterministic game state, physics, carving, and checkpoints.
@@ -91,9 +147,9 @@ change. Clients and the room authority must use matching identities.
 - `public`: shipped sounds and thumbnail.
 - `art`: source assets and generation records.
 
-Syncplay runs at 30 Hz. Rendering follows the display animation loop and
-interpolates poses between simulation ticks. The game uses the official
-`6.0.0-rc.77` package.
+Syncplay runs at 30 Hz with four Box3D substeps per tick. Rendering
+follows the display animation loop and interpolates poses between simulation ticks. The game uses the official
+`6.0.0-rc.79` package.
 
 To rebuild the sound bank, run `node scripts/prepare-audio.mjs`. This command
 needs FFmpeg with libmp3lame. Set `FFMPEG_BIN` to select its path. Source

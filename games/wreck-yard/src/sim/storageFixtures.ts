@@ -7,6 +7,9 @@ const box = (id: string, center: [number, number, number], size: [number, number
 /** The fixed roof height leaves 3 m above the highest platform stop. */
 export const STORAGE_SHAFT_TOP_Y = ELEVATOR.floors[3] + 3;
 export const STORAGE_LANDING_SIGN_X = -8.83;
+export const STORAGE_INFO_SIGN = box('storage-info-sign',
+  [STORAGE.center[0], FLOOR_Y + 2.2, STORAGE.center[2] + STORAGE.rows * STORAGE.spacing * 0.5 + 0.33],
+  [3.2, 1, 0.18]);
 
 /** Fixed storage parts that need static physics boxes. STORAGE_SOLIDS stays in attractions.ts. */
 export const STORAGE_FIXTURE_SOLIDS: readonly ShellBox[] = ofMaterial('steel', [
@@ -16,7 +19,7 @@ export const STORAGE_FIXTURE_SOLIDS: readonly ShellBox[] = ofMaterial('steel', [
     [STORAGE_LANDING_SIGN_X, ELEVATOR.floors[floor] + 0.92, ELEVATOR.z + 1.82],
     [0.86, 0.58, 0.12],
   )),
-  box('storage-info-sign', [STORAGE.center[0], FLOOR_Y + 1.28, STORAGE.center[2] + STORAGE.rows * STORAGE.spacing * 0.5 + 0.33], [4.9, 1.82, 0.18]),
+  STORAGE_INFO_SIGN,
   box('storage-restack-pedestal', [ELEVATOR.resetButton[0], FLOOR_Y + 0.35, ELEVATOR.resetButton[2]], [0.62, 0.7, 0.62]),
   box('storage-restack-top', [ELEVATOR.resetButton[0], FLOOR_Y + 0.78, ELEVATOR.resetButton[2]], [0.74, 0.16, 0.74]),
   box('storage-restack-button', [ELEVATOR.resetButton[0], FLOOR_Y + 0.91, ELEVATOR.resetButton[2]], [0.5, 0.12, 0.5]),

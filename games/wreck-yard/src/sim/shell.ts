@@ -6,6 +6,8 @@ import { STORAGE_SOLIDS } from './attractions';
 import { STORAGE_FIXTURE_SOLIDS } from './storageFixtures';
 import { CONTRAPTION_COLLIDERS } from './contraptions';
 import { LOST_PROPERTY_SOLIDS } from './lostProperty';
+import { LAVA_SOLIDS } from './liquidAssets';
+import { ROAD_SOLIDS } from './roadCourse';
 import { ofMaterial, SET_PIECE_COLLIDERS, VEHICLE_RAMP, type ShellBox } from './setPieces';
 
 const TANK_WALL_HEIGHT = TANK.surfaceY - TANK.bottomY;
@@ -44,6 +46,8 @@ export const SHELL_BOXES: readonly ShellBox[] = [
   ...SET_PIECE_COLLIDERS,
   ...CONTRAPTION_COLLIDERS,
   ...LOST_PROPERTY_SOLIDS,
+  ...LAVA_SOLIDS,
+  ...ROAD_SOLIDS,
 ];
 
 /** Quaternion for a shell box's XYZ Euler rotation (three.js order). */
