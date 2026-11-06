@@ -21,7 +21,7 @@
   "dependencies": {
     "@react-three/fiber": "^8.18.0",
     "@series-inc/rundot-game-sdk": "5.28.0",
-    "@series-inc/rundot-syncplay": "file:../../../../.t3/worktrees/venus/t3-7cac3046/packages/syncplay",
+    "@series-inc/rundot-syncplay": "6.0.0-rc.79",
     "fflate": "0.8.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
