@@ -78,22 +78,23 @@ function driveWorker(w: RoadContext, target: Vec3, facingYaw?: number): void {
   const dx = target[0] - motion.position.x;
   const dz = target[2] - motion.position.z;
   const distance = Math.hypot(dx, dz);
-  const speed = Math.min(ROAD.workerSpeed, distance * 5);
-  const force = [dx, dz].map((value, axis) => {
-    const desired = distance > 0.12 ? value / distance * speed : 0;
-    const current = axis === 0 ? motion.linearVelocity.x : motion.linearVelocity.z;
-    return Math.max(-12, Math.min(12, (desired - current) / 0.08)) * motion.mass;
-  });
   const yaw = facingYaw ?? (distance > 0.15 ? Math.atan2(dx, dz) : Math.PI / 2);
   const q = motion.orientation;
   const currentYaw = Math.atan2(2 * (q.w * q.y + q.x * q.z), 1 - 2 * (q.y * q.y + q.z * q.z));
   const yawError = Math.atan2(Math.sin(yaw - currentYaw), Math.cos(yaw - currentYaw));
-  const targetYaw = currentYaw + clamp(yawError, -0.2, 0.2);
+  const aligned = Math.abs(yawError) < 0.14;
+  const speed = aligned ? Math.min(ROAD.workerSpeed, distance * 5) : 0;
+  const force = [dx, dz].map((value, axis) => {
+    const desired = distance > 0.12 ? value / distance * speed : 0;
+    const current = axis === 0 ? motion.linearVelocity.x : motion.linearVelocity.z;
+    return Math.max(-14, Math.min(14, (desired - current) / 0.07)) * motion.mass;
+  });
+  const targetYaw = currentYaw + clamp(yawError, -0.35, 0.35);
   // Scale torque gains to the remaining native body after a cut or blast.
   const inertia = Math.min(motion.inertia.xx, motion.inertia.yy, motion.inertia.zz);
   const hold = orientationHoldTorque3D(motion.orientation, motion.angularVelocity,
     { x: 0, y: Math.sin(targetYaw / 2), z: 0, w: Math.cos(targetYaw / 2) },
-    { stiffness: inertia * 512, damping: perSecond(inertia * 32), maxTorque: newtonMeters(inertia * 160) });
+    { stiffness: inertia * 1024, damping: perSecond(inertia * 48), maxTorque: newtonMeters(inertia * 320) });
   if (distance < 0.12 && Math.hypot(motion.linearVelocity.x, motion.linearVelocity.z) < 0.05 && hold.angle < 0.05 && Math.abs(yawError) < 0.05) return;
   w.physics.world.applyForce(handle, vec3(newtons, force[0]!, 0, force[1]!), hold.torque);
 }
@@ -141,8 +142,10 @@ function stepWorker(w: RoadContext): void {
   w.contraptions = { ...w.contraptions, roadCourse: road };
   if (workerHeld) return;
   let target = ROAD.workerHome;
+  let facingYaw: number | undefined;
   if (agent.state === 'collect' && barrel) {
     target = [Math.min(ROAD.workerHome[0], barrel.x - 0.9), worker.y, barrel.z];
+    facingYaw = Math.PI / 2;
   } else if (agent.state === 'deliver' && job) {
     const [x, z] = ROAD.slots[job.slot]!;
     if (job.leg === 'lane' && Math.hypot(worker.x - ROAD.laneX, worker.z - z) < 0.3) {
@@ -152,12 +155,14 @@ function stepWorker(w: RoadContext): void {
     target = job.leg === 'lane'
       ? [ROAD.laneX, worker.y, Math.abs(worker.x - ROAD.laneX) > 0.18 ? worker.z : z]
       : [x + 0.95, worker.y, z];
+    facingYaw = job.leg === 'slot' ? -Math.PI / 2 : undefined;
     const carry = add([worker.x, worker.y, worker.z], rotate([0, 0.2, 1], [worker.orientation.x, worker.orientation.y, worker.orientation.z, worker.orientation.w]));
     grabServo(w.physics.world, physicsBodyHandle(w.physics, job.bodyId), { point: carry, velocity: [worker.vx, worker.vy, worker.vz] });
   } else if (agent.state === 'return' && worker.x < ROAD.laneX - 0.3) {
     target = [ROAD.laneX, worker.y, worker.z];
+    facingYaw = -Math.PI / 2;
   }
-  driveWorker(w, target, agent.state === 'deliver' && job?.leg === 'slot' ? -Math.PI / 2 : undefined);
+  driveWorker(w, target, facingYaw);
 }
 
 /** Update physical equipment before the native step. */

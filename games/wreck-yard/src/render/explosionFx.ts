@@ -8,12 +8,12 @@
 /** Seconds for the shock to reach the blast radius. */
 export const SHOCK_SECONDS = 0.35;
 /** The floor ring stays at the full radius this long, then fades. */
-const RING_HOLD_SECONDS = 0.5;
-const FLASH_SECONDS = 0.3;
-const FIREBALL_GROW_SECONDS = 0.15;
-const FIREBALL_SECONDS = 0.75;
+const RING_HOLD_SECONDS = 0.7;
+const FLASH_SECONDS = 0.45;
+const FIREBALL_GROW_SECONDS = 0.14;
+const FIREBALL_SECONDS = 1.05;
 /** Fireball size at its largest, as a part of the blast radius. */
-export const FIREBALL_SHARE = 0.55;
+export const FIREBALL_SHARE = 0.85;
 const SMOKE_SECONDS = 4;
 const SCORCH_SECONDS = 6;
 /** Seconds until the effect is over and its slot is free. */
@@ -43,19 +43,19 @@ export function explosionFrame(seconds: number, radius: number): ExplosionFrame 
   const fade = clamp01((seconds - FIREBALL_GROW_SECONDS) / (FIREBALL_SECONDS - FIREBALL_GROW_SECONDS));
   return {
     shockRadius,
-    shockOpacity: shock >= 1 ? 0 : 0.9 * (1 - shock) ** 0.6,
+    shockOpacity: shock >= 1 ? 0 : 0.95 * (1 - shock) ** 0.45,
     ringRadius: shockRadius,
-    ringOpacity: 0.85 * (1 - ringFade),
-    flash: (1 - clamp01(seconds / FLASH_SECONDS)) ** 2,
+    ringOpacity: 0.95 * (1 - ringFade),
+    flash: (1 - clamp01(seconds / FLASH_SECONDS)) ** 1.6,
     // Grows fast, then keeps swelling a little as it burns out.
     fireballRadius: radius * FIREBALL_SHARE * (0.8 * grow + 0.2 * fade),
     fireballOpacity: seconds >= FIREBALL_SECONDS ? 0 : 1 - fade ** 1.5,
     smoke: seconds < SMOKE_SECONDS ? seconds / SMOKE_SECONDS : null,
-    scorchOpacity: 0.6 * (1 - clamp01((seconds - (SCORCH_SECONDS - 2)) / 2)),
+    scorchOpacity: 0.75 * (1 - clamp01((seconds - (SCORCH_SECONDS - 2)) / 2)),
   };
 }
 
 /** A spark's launch speed so that, with drag, it ends its life near the blast radius. */
 export function sparkSpeed(radius: number, lifeSeconds: number): number {
-  return radius / (lifeSeconds * 0.8);
+  return radius / (lifeSeconds * 0.45);
 }

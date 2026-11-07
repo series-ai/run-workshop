@@ -9,13 +9,13 @@ import { glowTexture, smokeTexture } from './style/glowTexture';
 
 /** Explosions drawn at once; a newer blast takes the oldest slot. */
 const SLOTS = 4;
-const FIREBALL_PUFFS = 9;
-const SMOKE_PUFFS = 8;
-const SPARKS = 360;
-const SPARKS_PER_BLAST = 90;
+const FIREBALL_PUFFS = 14;
+const SMOKE_PUFFS = 10;
+const SPARKS = 480;
+const SPARKS_PER_BLAST = 120;
 
 /** Blasts this far above the floor leave no scorch mark or floor ring. */
-const GROUND_REACH = 1.6;
+const GROUND_REACH = 2.6;
 
 const shellVertex = /* glsl */ `
   varying vec3 vNormalView;
@@ -33,8 +33,9 @@ const shellFragment = /* glsl */ `
   varying vec3 vNormalView;
   varying vec3 vViewDir;
   void main() {
-    // Bright at the rim, clear in the middle: a shell you see the yard through.
-    float rim = pow(1.0 - abs(dot(vNormalView, vViewDir)), 3.5);
+    // Bright at the rim with a warm core glow so the full blast sphere reads clearly.
+    float ndotv = abs(dot(vNormalView, vViewDir));
+    float rim = pow(1.0 - ndotv, 2.0) + 0.22 * (1.0 - ndotv);
     gl_FragColor = vec4(uColor * rim * uOpacity, 1.0);
   }
 `;
@@ -72,12 +73,12 @@ interface Spark {
   maxLife: number;
 }
 
-const HOT = new THREE.Color(2.0, 1.6, 1.0);
-const FIRE = new THREE.Color(1.6, 0.62, 0.14);
-const EMBER = new THREE.Color(0.85, 0.16, 0.04);
+const HOT = new THREE.Color(2.6, 2.0, 1.2);
+const FIRE = new THREE.Color(2.0, 0.78, 0.18);
+const EMBER = new THREE.Color(1.1, 0.22, 0.05);
 /** Light grey, so the smoke reads against the dark yard; warm while the fire lights it. */
 const SMOKE = new THREE.Color('#948b83');
-const SMOKE_LIT = new THREE.Color('#c48a5f');
+const SMOKE_LIT = new THREE.Color('#d9935e');
 
 /**
  * Fuel drum explosions (sim/fuelDrum.ts): a flash, a fireball, a shock shell
@@ -92,7 +93,7 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
 
   const slots = useMemo<Slot[]>(() => {
     const shellGeometry = new THREE.SphereGeometry(1, 40, 20);
-    const ringGeometry = new THREE.RingGeometry(0.93, 1, 96);
+    const ringGeometry = new THREE.RingGeometry(0.82, 1, 96);
     const scorchGeometry = new THREE.CircleGeometry(1, 48);
     return Array.from({ length: SLOTS }, () => {
       const group = new THREE.Group();
@@ -100,14 +101,14 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
       const shell = new THREE.Mesh(shellGeometry, new THREE.ShaderMaterial({
         vertexShader: shellVertex,
         fragmentShader: shellFragment,
-        uniforms: { uColor: { value: new THREE.Color(1.8, 1.2, 0.6) }, uOpacity: { value: 0 } },
+        uniforms: { uColor: { value: new THREE.Color(2.2, 1.35, 0.55) }, uOpacity: { value: 0 } },
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }));
       shell.renderOrder = 11;
       const ring = new THREE.Mesh(ringGeometry, new THREE.MeshBasicMaterial({
-        color: new THREE.Color(2.4, 1.3, 0.5), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide,
+        color: new THREE.Color(2.8, 1.5, 0.55), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, side: THREE.DoubleSide,
       }));
       ring.rotation.x = -Math.PI / 2;
       ring.renderOrder = 11;
@@ -160,8 +161,8 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
     slot.startedAt = now;
     slot.radius = explosion.radius;
     slot.at.set(explosion.at[0], explosion.at[1], explosion.at[2]);
-    slot.offsets = Array.from({ length: FIREBALL_PUFFS }, () => new THREE.Vector3(random() - 0.5, random() - 0.3, random() - 0.5).multiplyScalar(0.45));
-    slot.smokeOffsets = Array.from({ length: SMOKE_PUFFS }, () => new THREE.Vector3(random() - 0.5, random() * 0.4, random() - 0.5).multiplyScalar(0.7));
+    slot.offsets = Array.from({ length: FIREBALL_PUFFS }, () => new THREE.Vector3(random() - 0.5, random() * 0.8 - 0.25, random() - 0.5).multiplyScalar(0.65));
+    slot.smokeOffsets = Array.from({ length: SMOKE_PUFFS }, () => new THREE.Vector3(random() - 0.5, random() * 0.5, random() - 0.5).multiplyScalar(0.85));
     slot.group.position.copy(slot.at);
     slot.group.visible = true;
     // Sparks out of the free pool, in every direction, biased up.
@@ -170,11 +171,11 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
       if (launched >= SPARKS_PER_BLAST) break;
       if (spark.life > 0) continue;
       launched += 1;
-      spark.maxLife = 0.5 + random() * 0.45;
+      spark.maxLife = 0.55 + random() * 0.5;
       spark.life = spark.maxLife;
       spark.position.copy(slot.at);
-      const direction = new THREE.Vector3(random() * 2 - 1, random() * 1.4 - 0.2, random() * 2 - 1).normalize();
-      spark.velocity.copy(direction).multiplyScalar(sparkSpeed(explosion.radius, spark.maxLife) * (0.65 + random() * 0.35));
+      const direction = new THREE.Vector3(random() * 2 - 1, random() * 1.4 - 0.15, random() * 2 - 1).normalize();
+      spark.velocity.copy(direction).multiplyScalar(sparkSpeed(explosion.radius, spark.maxLife) * (0.75 + random() * 0.35));
     }
   }
 
@@ -209,7 +210,7 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
         flashAt.copy(slot.at);
       }
       slot.shell.scale.setScalar(Math.max(0.001, frame.shockRadius));
-      slot.shell.material.uniforms.uOpacity!.value = frame.shockOpacity * 0.5;
+      slot.shell.material.uniforms.uOpacity!.value = frame.shockOpacity * 0.85;
       slot.shell.visible = frame.shockOpacity > 0;
 
       const groundY = FLOOR_Y + 0.03 - slot.at.y;
@@ -220,37 +221,37 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
       slot.ring.material.opacity = frame.ringOpacity;
       slot.scorch.visible = onGround && frame.scorchOpacity > 0;
       slot.scorch.position.y = groundY - 0.005;
-      slot.scorch.scale.setScalar(slot.radius * 0.42);
-      slot.scorch.material.opacity = frame.scorchOpacity * Math.min(1, seconds / 0.2);
+      slot.scorch.scale.setScalar(slot.radius * 0.72);
+      slot.scorch.material.opacity = frame.scorchOpacity * Math.min(1, seconds / 0.15);
 
       // White hot for a moment at the core; the outer puffs burn red.
-      const hot = Math.max(0, 1 - seconds / 0.12);
+      const hot = Math.max(0, 1 - seconds / 0.18);
       slot.fireball.forEach((sprite, index) => {
         const offset = slot.offsets[index]!;
-        const outer = index >= 5;
-        const size = frame.fireballRadius * (outer ? 0.7 : 0.55 + (index % 3) * 0.12);
+        const outer = index >= 6;
+        const size = frame.fireballRadius * (outer ? 0.95 : 0.8 + (index % 3) * 0.16);
         sprite.visible = frame.fireballOpacity > 0;
-        sprite.position.copy(offset).multiplyScalar(frame.fireballRadius * (outer ? 1.3 : 0.8)).add(new THREE.Vector3(0, seconds * 1.4, 0));
-        sprite.scale.setScalar(size * 1.8);
-        sprite.material.color.copy(outer ? EMBER : FIRE).lerp(HOT, outer ? 0 : hot).lerp(EMBER, Math.min(1, Math.max(0, seconds - 0.25) * 2));
-        sprite.material.opacity = frame.fireballOpacity * (outer ? 0.55 : 0.8);
+        sprite.position.copy(offset).multiplyScalar(frame.fireballRadius * (outer ? 1.45 : 0.95)).add(new THREE.Vector3(0, seconds * 1.8, 0));
+        sprite.scale.setScalar(size * 2.2);
+        sprite.material.color.copy(outer ? EMBER : FIRE).lerp(HOT, outer ? 0.25 * hot : hot).lerp(EMBER, Math.min(1, Math.max(0, seconds - 0.3) * 1.8));
+        sprite.material.opacity = frame.fireballOpacity * (outer ? 0.72 : 0.95);
       });
 
       slot.smoke.forEach((sprite, index) => {
         const life = frame.smoke;
-        sprite.visible = life !== null && seconds > 0.08;
+        sprite.visible = life !== null && seconds > 0.06;
         if (life === null) return;
         const offset = slot.smokeOffsets[index]!;
-        const rise = 2.2 + (index % 4) * 0.5;
-        sprite.position.set(offset.x * slot.radius * 0.5, 0.3 + life * rise + offset.y * slot.radius * 0.3, offset.z * slot.radius * 0.5);
-        sprite.scale.setScalar(slot.radius * (0.3 + life * 0.6));
-        sprite.material.color.copy(SMOKE_LIT).lerp(SMOKE, Math.min(1, seconds / 0.8));
-        sprite.material.opacity = 0.8 * Math.min(1, (seconds - 0.08) / 0.35) * (1 - life) ** 1.1;
+        const rise = 2.6 + (index % 4) * 0.6;
+        sprite.position.set(offset.x * slot.radius * 0.65, 0.35 + life * rise + offset.y * slot.radius * 0.35, offset.z * slot.radius * 0.65);
+        sprite.scale.setScalar(slot.radius * (0.45 + life * 0.75));
+        sprite.material.color.copy(SMOKE_LIT).lerp(SMOKE, Math.min(1, seconds / 0.9));
+        sprite.material.opacity = 0.88 * Math.min(1, (seconds - 0.06) / 0.3) * (1 - life) ** 1.1;
       });
     }
 
     if (light.current) {
-      light.current.intensity = 60 * flash;
+      light.current.intensity = 110 * flash;
       light.current.position.copy(flashAt);
     }
 
@@ -268,10 +269,10 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
           spark.velocity.y *= -0.35;
         }
         const t = Math.max(0, spark.life / spark.maxLife);
-        const size = 0.08 * (0.4 + t * 0.6);
+        const size = 0.12 * (0.45 + t * 0.65);
         dummy.position.copy(spark.position);
         dummy.quaternion.setFromUnitVectors(up, spark.velocity.lengthSq() > 1e-6 ? spark.velocity.clone().normalize() : up);
-        dummy.scale.set(size, size * (1 + spark.velocity.length() * 0.12), size);
+        dummy.scale.set(size, size * (1 + spark.velocity.length() * 0.16), size);
         mesh.setColorAt(index, t > 0.65 ? HOT : t > 0.3 ? FIRE : EMBER);
       } else {
         dummy.position.set(0, -100, 0);
@@ -286,7 +287,7 @@ export function Explosions({ renderRef }: { renderRef: MutableRefObject<YardRend
 
   return (
     <group ref={root}>
-      <pointLight ref={light} intensity={0} distance={16} decay={1.6} color="#ffad5c" />
+      <pointLight ref={light} intensity={0} distance={24} decay={1.4} color="#ffad5c" />
       <instancedMesh ref={sparkMesh} args={[undefined, undefined, SPARKS]} frustumCulled={false}>
         <coneGeometry args={[0.3, 1.2, 4]} />
         <meshBasicMaterial toneMapped={false} depthWrite={false} />
