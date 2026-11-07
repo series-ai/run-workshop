@@ -19,10 +19,10 @@ const SUSPENSION_STIFFNESS_PER_MASS = 220 / 3.614;
 const SUSPENSION_DAMPING_PER_MASS = 24 / 3.614;
 const STEERING = {
   maximumAngleTurns: turns(0.12),
-  lowSpeedGrip: 2.45,
-  highSpeedGrip: 1.8,
-  lowSpeed: 8,
-  highSpeed: 13,
+  lowSpeedGrip: 2.4,
+  highSpeedGrip: 1.4,
+  lowSpeed: 5,
+  highSpeed: 9,
 } as const;
 
 export const BUGGY_WHEELS: readonly DeterministicVehicleWheelDefinition3D[] = [-0.84, 0.84].flatMap((x) =>
@@ -63,8 +63,9 @@ export function stepBuggy(physics: OpenYardPhysicsWorld, input?: YardInput, prev
   if (body.kind !== 'dynamic') return undefined;
   const steer = vehicleAxis(input?.moveX ?? 0);
   const speed = Math.hypot(body.linearVelocity.x, body.linearVelocity.z);
-  const gripBlend = steer === 0 ? 0 : clamp((STEERING.highSpeed - speed) / (STEERING.highSpeed - STEERING.lowSpeed), 0, 1);
-  // Add front grip while steering. Reduce the aid at high speed to keep sharp turns stable.
+  const yawFade = clamp(1 - Math.abs(body.angularVelocity.y) / 1.5, 0, 1);
+  const gripBlend = steer === 0 ? 0 : clamp((STEERING.highSpeed - speed) / (STEERING.highSpeed - STEERING.lowSpeed), 0, 1) * yawFade;
+  // Add front grip while initiating a turn. Reduce the aid at high speed or once turning fast to keep sharp turns stable.
   const frontGrip = STEERING.highSpeedGrip + (STEERING.lowSpeedGrip - STEERING.highSpeedGrip) * gripBlend;
   const definition = {
     wheels: BUGGY_WHEELS.map((wheel) => ({

@@ -149,7 +149,7 @@ can spill to bytes after that window.
 
 Syncplay runs at 30 Hz with four Box3D substeps per tick. Rendering
 follows the display animation loop and interpolates poses between simulation ticks. The game uses the official
-`6.0.0-rc.79` package.
+`6.0.0-rc.80` package.
 
 To rebuild the sound bank, run `node scripts/prepare-audio.mjs`. This command
 needs FFmpeg with libmp3lame. Set `FFMPEG_BIN` to select its path. Source
