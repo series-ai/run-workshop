@@ -35,6 +35,11 @@ from voxgrid import C, Clip, Grid, Socket
 Z3 = (0.0, 0.0, 0.0)
 
 
+def fr(n: float) -> float:
+    """Seconds of frame `n` at 30 fps: attack keys sit on whole frames."""
+    return n / 30.0
+
+
 # ------------------------------------------------------------------ painters
 
 
@@ -119,8 +124,8 @@ def loose(slug: str, parts: dict[str, Grid]) -> None:
             raise ValueError(f"{slug}: part {name!r} has no voxels")
 
 
-def clips(idle, attack, hit, death) -> list[Clip]:
-    return [Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+def clips(idle, attack, hit, death, impact: float | None = None) -> list[Clip]:
+    return [Clip("idle", idle), Clip("attack", attack, loop=False, impact=impact), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
 
 
 def rel(p, root) -> tuple[float, float, float]:
@@ -248,13 +253,25 @@ def _imp():
             "wing-l": {"rot": keys((0, Z3), (0.3, (0, 0, -14)), (0.6, Z3), (0.9, (0, 0, -14)), (1.2, Z3))},
             "wing-r": {"rot": keys((0, Z3), (0.3, (0, 0, 14)), (0.6, Z3), (0.9, (0, 0, 14)), (1.2, Z3))},
             "tail": {"rot": keys((0, (0, -12, 0)), (0.6, (0, 12, 0)), (1.2, (0, -12, 0)))}}
-    attack = {"body": {"rot": keys((0, Z3), (0.24, (6, 18, -14)), (0.45, (-12, -18, 16)), (0.62, (-4, 8, -8)), (0.9, Z3)),
-                       "loc": keys((0, Z3), (0.24, (-2, 2.5, 2)), (0.45, (3, 1.5, -5)), (0.62, (-1, 2, -3)), (0.9, Z3))},
-              "arm-l": {"rot": keys((0, Z3), (0.24, (55, 0, -18)), (0.45, (90, 0, -25)), (0.62, (35, 0, 12)), (0.9, Z3))},
-              "arm-r": {"rot": keys((0, Z3), (0.24, (110, 0, 18)), (0.45, (45, 0, -12)), (0.62, (15, 0, 0)), (0.9, Z3))},
-              "wing-l": {"rot": keys((0, Z3), (0.24, (0, 0, -38)), (0.45, (0, 0, 18)), (0.62, (0, 0, -20)), (0.9, Z3))},
-              "wing-r": {"rot": keys((0, Z3), (0.24, (0, 0, 22)), (0.45, (0, 0, -32)), (0.62, (0, 0, 16)), (0.9, Z3))},
-              "head": {"rot": keys((0, Z3), (0.24, (0, -12, 8)), (0.45, (-10, 12, -8)), (0.9, Z3))}}
+    # Hex throw: it rears back with both arms swept behind and the wings
+    # flared (frames 0-10), hops 7 voxels forward and flings both hands out
+    # on frame 13 (the curse cloud), holds the cast, settles by frame 30.
+    attack = {"body": {"rot": keys((0, Z3), (fr(10), (14, 16, 0)), (fr(13), (-16, -6, 0)), (fr(15), (-19, -8, 0)),
+                                   (fr(20), (-13, -4, 0)), (fr(30), Z3)),
+                       "loc": keys((0, Z3), (fr(10), (0, 1.0, 3)), (fr(13), (0, 2.5, -7)), (fr(15), (0, 2.0, -8)),
+                                   (fr(20), (0, 1.5, -7)), (fr(30), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(10), (-45, 0, -28)), (fr(13), (95, 0, 8)), (fr(15), (108, 0, 10)),
+                                    (fr(20), (85, 0, 6)), (fr(30), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(10), (-45, 0, 28)), (fr(13), (95, 0, -8)), (fr(15), (108, 0, -10)),
+                                    (fr(20), (85, 0, -6)), (fr(30), Z3))},
+              "wing-l": {"rot": keys((0, Z3), (fr(11), (0, 0, -42)), (fr(14), (0, 0, 24)), (fr(17), (0, 0, 30)),
+                                     (fr(23), (0, 0, -8)), (fr(30), Z3))},
+              "wing-r": {"rot": keys((0, Z3), (fr(11), (0, 0, 42)), (fr(14), (0, 0, -24)), (fr(17), (0, 0, -30)),
+                                     (fr(23), (0, 0, 8)), (fr(30), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(10), (14, -10, 0)), (fr(13), (-8, 6, 0)), (fr(16), (-16, 8, 0)),
+                                   (fr(22), (-6, 2, 0)), (fr(30), Z3))},
+              "tail": {"rot": keys((0, Z3), (fr(11), (-30, 0, 0)), (fr(14), (-8, 0, 0)), (fr(17), (20, 0, 10)),
+                                   (fr(23), (4, 0, -6)), (fr(30), Z3))}}
     hit = {"body": {"rot": keys((0, Z3), (0.1, (12, 0, 8)), (0.45, Z3)), "loc": keys((0, Z3), (0.1, (0, 1.2, 1.5)), (0.45, Z3))},
            "head": {"rot": keys((0, Z3), (0.1, (-14, 8, 0)), (0.45, Z3))}}
     death = {"body": {"rot": keys((0, Z3), (0.35, (10, 0, 0)), (0.8, (-84, 0, 0)), (1.0, (-82, 0, 0))),
@@ -264,8 +281,8 @@ def _imp():
     sockets = [Socket("socket-chest", at=rel((CX, 12.5, CZ - 5.0), HIP), parent="body"),
                Socket("socket-mouth", at=rel((CX, 17.0, CZ - 7.0), HIP), parent="head"),
                Socket("socket-hands", at=rel((CX, 8.5, CZ - 10.0), HIP), parent="body")]
-    return world("imp", "creatures", "Imp", root, clips=clips(idle, attack, hit, death), sockets=sockets,
-                 pfx=[pfx("rvx-monster-curse-cloud", "socket-hands", "clip:attack", size=24, at=0.45)])
+    return world("imp", "creatures", "Imp", root, clips=clips(idle, attack, hit, death, impact=fr(13)), sockets=sockets,
+                 pfx=[pfx("rvx-monster-curse-cloud", "socket-hands", "clip:attack", size=24, at=fr(13))])
 
 
 # ------------------------------------------------------------------ lich
@@ -380,11 +397,19 @@ def _lich():
     idle = {"body": {"loc": keys((0, Z3), (1.2, (0, 1.0, 0)), (2.4, Z3))},
             "head": {"rot": keys((0, Z3), (0.6, (0, 8, 0)), (1.8, (0, -8, 0)), (2.4, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.2, (10, 0, -6)), (2.4, Z3))}}
-    attack = {"arm-l": {"rot": keys((0, Z3), (0.3, (-115, -12, -20)), (0.5, (-90, 18, -30)), (0.68, (-85, 8, -18)), (1.05, Z3))},
-              "arm-r": {"rot": keys((0, Z3), (0.3, (-4, 0, 10)), (0.5, (2, 0, -8)), (1.05, Z3))},
-              "body": {"rot": keys((0, Z3), (0.3, (0, -14, 0)), (0.5, (-7, 18, 0)), (1.05, Z3)),
-                       "loc": keys((0, Z3), (0.5, (0, 3.0, -2)), (0.68, (0, 3.0, -2)), (1.05, Z3))},
-              "head": {"rot": keys((0, Z3), (0.3, (0, -14, 0)), (0.5, (-8, 18, 0)), (1.05, Z3))}}
+    # Curse strike: it rears back and twists with the bony hand raised high
+    # and the staff cocked back (frames 0-11), then lunges 6 voxels and drives
+    # the hand down and forward on frame 14, holds, and floats back by 32.
+    attack = {"arm-l": {"rot": keys((0, Z3), (fr(5), (70, 0, -12)), (fr(11), (145, 0, -14)), (fr(14), (80, 0, 8)),
+                                    (fr(16), (68, 0, 10)), (fr(21), (78, 0, 6)), (fr(32), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(11), (12, 0, 6)), (fr(14), (-18, 0, -4)), (fr(16), (-22, 0, -5)),
+                                    (fr(21), (-14, 0, -3)), (fr(32), Z3))},
+              "body": {"rot": keys((0, Z3), (fr(11), (12, 18, 0)), (fr(14), (-14, -12, 0)), (fr(16), (-17, -14, 0)),
+                                   (fr(21), (-11, -9, 0)), (fr(32), Z3)),
+                       "loc": keys((0, Z3), (fr(11), (0, 1.5, 3)), (fr(14), (0, 2.5, -6)), (fr(16), (0, 2.8, -7)),
+                                   (fr(21), (0, 2.2, -6)), (fr(32), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(12), (14, 12, 0)), (fr(15), (-10, -10, 0)), (fr(18), (-18, -12, 0)),
+                                   (fr(24), (-8, -4, 0)), (fr(32), Z3))}}
     hit = {"body": {"rot": keys((0, Z3), (0.1, (10, 0, -6)), (0.45, Z3)), "loc": keys((0, Z3), (0.1, (0, 0.6, 1)), (0.45, Z3))},
            "head": {"rot": keys((0, Z3), (0.1, (-16, 10, 0)), (0.45, Z3))}}
     death = {"body": {"rot": keys((0, Z3), (0.4, (-12, 0, 0)), (0.9, (-82, 0, 0))),
@@ -394,7 +419,7 @@ def _lich():
     sockets = [Socket("socket-chest", at=rel((CX, 23.0, CZ - 4.5), BODY), parent="body"),
                Socket("socket-mouth", at=rel((CX, 32.5, CZ - 4.2), BODY), parent="head"),
                Socket("socket-hands", at=rel((CX - 9.5, 14.0, CZ - 2.0), BODY), parent="body")]
-    return world("lich", "creatures", "Lich", root, clips=clips(idle, attack, hit, death), sockets=sockets,
+    return world("lich", "creatures", "Lich", root, clips=clips(idle, attack, hit, death, impact=fr(14)), sockets=sockets,
                  pfx=[pfx("rvx-monster-soul-burst", "socket-chest", "clip:death", size=54, at=0.85)])
 
 
@@ -539,11 +564,23 @@ def _phantom_knight():
             "head": {"rot": keys((0, Z3), (0.6, (0, 8, 0)), (1.8, (0, -8, 0)), (2.4, Z3))},
             "cape": {"rot": keys((0, Z3), (1.2, (-6, 0, 0)), (2.4, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.2, (4, 0, 0)), (2.4, Z3))}}
-    attack = {"arm-r": {"rot": keys((0, Z3), (0.26, (-115, -12, 24)), (0.42, (-50, 8, 8)), (0.54, (28, 18, -28)), (0.68, (20, 10, -20)), (1.05, Z3))},
-              "arm-l": {"rot": keys((0, Z3), (0.26, (-12, 0, -16)), (0.54, (-28, 0, 16)), (1.05, Z3))},
-              "torso": {"rot": keys((0, Z3), (0.26, (5, -18, 0)), (0.54, (-15, 18, 0)), (1.05, Z3))},
-              "cape": {"rot": keys((0, Z3), (0.54, (-18, -12, 0)), (1.05, Z3))},
-              "head": {"rot": keys((0, Z3), (0.26, (0, -12, 0)), (0.54, (-8, 10, 0)), (1.05, Z3))}}
+    # Overhead chop: it rears back and twists with the blade cocked over the
+    # shoulder (frames 0-11), steps in 6 voxels and brings the blade down in
+    # 3 frames to the blow on frame 14, follows through, holds, recovers by 32.
+    attack = {"arm-r": {"rot": keys((0, Z3), (fr(11), (45, 0, 15)), (fr(14), (-95, 0, -10)), (fr(16), (-108, 0, -12)),
+                                    (fr(21), (-98, 0, -8)), (fr(32), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(11), (30, 0, -18)), (fr(14), (-30, 0, -10)), (fr(17), (-38, 0, -12)),
+                                    (fr(23), (-20, 0, -6)), (fr(32), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(11), (12, -22, 0)), (fr(14), (-18, 16, 0)), (fr(16), (-22, 19, 0)),
+                                    (fr(21), (-16, 13, 0)), (fr(32), Z3))},
+              "hips": {"loc": keys((0, Z3), (fr(11), (0, 1.0, 3)), (fr(14), (0, 0.8, -6)), (fr(16), (0, 0.8, -7)),
+                                   (fr(21), (0, 0.7, -6)), (fr(32), Z3))},
+              "leg-l": {"rot": keys((0, Z3), (fr(11), (-8, 0, 0)), (fr(14), (24, 0, 0)), (fr(21), (22, 0, 0)), (fr(32), Z3))},
+              "leg-r": {"rot": keys((0, Z3), (fr(11), (6, 0, 0)), (fr(14), (-16, 0, 0)), (fr(21), (-14, 0, 0)), (fr(32), Z3))},
+              "cape": {"rot": keys((0, Z3), (fr(12), (10, 0, 0)), (fr(15), (-8, 0, 0)), (fr(18), (-20, -6, 0)),
+                                   (fr(25), (-10, 0, 0)), (fr(32), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(12), (10, -10, 0)), (fr(15), (-12, 8, 0)), (fr(18), (-18, 10, 0)),
+                                   (fr(24), (-6, 4, 0)), (fr(32), Z3))}}
     hit = {"torso": {"rot": keys((0, Z3), (0.1, (12, 6, 0)), (0.45, Z3))},
            "head": {"rot": keys((0, Z3), (0.1, (-14, -10, 0)), (0.45, Z3))},
            "cape": {"rot": keys((0, Z3), (0.1, (-12, 0, 0)), (0.45, Z3))}}
@@ -555,8 +592,8 @@ def _phantom_knight():
     sockets = [Socket("socket-chest", at=rel((CX, 27.0, CZ - 5.0), HIP), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 36.0, CZ - 5.2), HIP), parent="head"),
                Socket("socket-hands", at=rel((SX, 33.0, SZ), HIP), parent="arm-r")]
-    return world("phantom-knight", "creatures", "Phantom Knight", root, clips=clips(idle, attack, hit, death), sockets=sockets,
-                 pfx=[pfx("rvx-monster-silver-slash", "socket-hands", "clip:attack", size=40, at=0.4)])
+    return world("phantom-knight", "creatures", "Phantom Knight", root, clips=clips(idle, attack, hit, death, impact=fr(14)), sockets=sockets,
+                 pfx=[pfx("rvx-monster-silver-slash", "socket-hands", "clip:attack", size=40, at=fr(12))])
 
 
 # ------------------------------------------------------------------ scarecrow fiend
@@ -669,10 +706,21 @@ def _scarecrow_fiend():
             "head": {"rot": keys((0, (0, 0, 10)), (1.2, (0, 0, -6)), (2.4, (0, 0, 10)))},
             "arm-l": {"rot": keys((0, Z3), (1.2, (6, 0, 0)), (2.4, Z3))},
             "arm-r": {"rot": keys((0, Z3), (1.2, (-6, 0, 0)), (2.4, Z3))}}
-    attack = {"torso": {"rot": keys((0, Z3), (0.24, (0, -20, -18)), (0.5, (-12, 30, 18)), (0.7, (-5, 14, 8)), (1.0, Z3))},
-              "arm-l": {"rot": keys((0, Z3), (0.24, (35, 0, -42)), (0.5, (85, 0, 18)), (0.7, (40, 0, 8)), (1.0, Z3))},
-              "arm-r": {"rot": keys((0, Z3), (0.24, (60, 0, -12)), (0.5, (30, 0, 38)), (0.7, (15, 0, 18)), (1.0, Z3))},
-              "head": {"rot": keys((0, Z3), (0.24, (0, -25, 18)), (0.5, (-20, 15, -20)), (1.0, Z3))}}
+    # Claw clap: it leans back and swings both crossbar arms back and up
+    # (frames 0-11), hops 7 voxels in and claps the twig claws shut in front
+    # on frame 14, follows through, holds, and settles by frame 32.
+    attack = {"body": {"rot": keys((0, Z3), (fr(11), (6, 0, 0)), (fr(14), (-8, 0, 0)), (fr(16), (-10, 0, 0)),
+                                   (fr(21), (-7, 0, 0)), (fr(32), Z3)),
+                       "loc": keys((0, Z3), (fr(11), (0, 1.0, 3)), (fr(14), (0, 2.0, -7)), (fr(16), (0, 1.8, -8)),
+                                   (fr(21), (0, 1.3, -7)), (fr(32), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(11), (14, 0, 0)), (fr(14), (-22, 0, 0)), (fr(16), (-26, 0, 0)),
+                                    (fr(21), (-19, 0, 0)), (fr(32), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(11), (0, 40, -22)), (fr(14), (0, -75, 14)), (fr(16), (0, -85, 18)),
+                                    (fr(21), (0, -76, 12)), (fr(32), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(11), (0, -40, 22)), (fr(14), (0, 75, -14)), (fr(16), (0, 85, -18)),
+                                    (fr(21), (0, 76, -12)), (fr(32), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(12), (16, 0, 8)), (fr(15), (-10, 0, -6)), (fr(18), (-22, 0, -12)),
+                                   (fr(24), (-8, 0, 4)), (fr(32), Z3))}}
     hit = {"torso": {"rot": keys((0, Z3), (0.1, (6, 0, 10)), (0.45, Z3))},
            "head": {"rot": keys((0, Z3), (0.1, (-10, 0, -20)), (0.45, Z3))}}
     death = {"torso": {"rot": keys((0, Z3), (0.5, (-25, 0, 8)), (1.0, (-40, 0, 12)))},
@@ -683,7 +731,7 @@ def _scarecrow_fiend():
     sockets = [Socket("socket-chest", at=rel((CX, 24.0, CZ - 4.2), BASE), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 32.0, CZ - 5.6), BASE), parent="head"),
                Socket("socket-hands", at=rel((CX, 24.0, CZ - 10.0), BASE), parent="torso")]
-    return world("scarecrow-fiend", "creatures", "Scarecrow Fiend", root, clips=clips(idle, attack, hit, death), sockets=sockets,
+    return world("scarecrow-fiend", "creatures", "Scarecrow Fiend", root, clips=clips(idle, attack, hit, death, impact=fr(14)), sockets=sockets,
                  pfx=[pfx("rvx-monster-rot-poof", "socket-chest", "clip:death", size=40, at=0.85)])
 
 
@@ -806,11 +854,22 @@ def _swamp_creature():
             "head": {"rot": keys((0, Z3), (0.65, (0, -8, 0)), (1.95, (0, 8, 0)), (2.6, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.3, (6, 0, 0)), (2.6, Z3))},
             "arm-r": {"rot": keys((0, (6, 0, 0)), (1.3, Z3), (2.6, (6, 0, 0)))}}
-    attack = {"torso": {"rot": keys((0, Z3), (0.25, (10, 16, 0)), (0.45, (-20, -15, 0)), (0.65, (-8, -8, 0)), (1.0, Z3)),
-                        "loc": keys((0, Z3), (0.25, (0, 1, 2)), (0.45, (0, 1, -5)), (0.65, (0, 1, -4)), (1.0, Z3))},
-              "head": {"rot": keys((0, Z3), (0.25, (14, -10, 0)), (0.45, (-28, 6, 0)), (0.65, (-15, 0, 0)), (1.0, Z3))},
-              "arm-l": {"rot": keys((0, Z3), (0.25, (35, 0, -30)), (0.45, (65, 0, -18)), (1.0, Z3))},
-              "arm-r": {"rot": keys((0, Z3), (0.25, (28, 0, 25)), (0.45, (55, 0, 10)), (1.0, Z3))}}
+    # Venom spit: it rears up with the head thrown back and the arms swung
+    # behind (frames 0-10), then snaps the body and head forward and spits on
+    # frame 13 with the arms slammed down in front, the head kicks back once
+    # (recoil), holds, and settles by frame 30.
+    attack = {"hips": {"loc": keys((0, Z3), (fr(10), (0, 0, 2)), (fr(13), (0, 0.5, -5)), (fr(15), (0, 0.5, -5.5)),
+                                   (fr(20), (0, 0.4, -5)), (fr(30), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(10), (18, 8, 0)), (fr(13), (-16, -4, 0)), (fr(15), (-19, -5, 0)),
+                                    (fr(20), (-13, -3, 0)), (fr(30), Z3)),
+                        "loc": keys((0, Z3), (fr(10), (0, 1.5, 3)), (fr(13), (0, 1.0, -5)), (fr(15), (0, 1.0, -6)),
+                                    (fr(20), (0, 1.0, -5)), (fr(30), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(10), (28, -8, 0)), (fr(13), (-30, 4, 0)), (fr(14), (-18, 2, 0)),
+                                   (fr(16), (-26, 0, 0)), (fr(21), (-16, 0, 0)), (fr(30), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(10), (-28, 0, -16)), (fr(13), (32, 0, -6)), (fr(16), (38, 0, -4)),
+                                    (fr(21), (26, 0, -4)), (fr(30), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(10), (-28, 0, 16)), (fr(13), (32, 0, 6)), (fr(16), (38, 0, 4)),
+                                    (fr(21), (26, 0, 4)), (fr(30), Z3))}}
     hit = {"torso": {"rot": keys((0, Z3), (0.1, (12, 8, 0)), (0.5, Z3))},
            "head": {"rot": keys((0, Z3), (0.1, (14, -12, 0)), (0.5, Z3))}}
     death = {"hips": {"rot": keys((0, Z3), (0.4, (6, 0, 0)), (1.2, (-80, 0, 0))),
@@ -820,8 +879,8 @@ def _swamp_creature():
     sockets = [Socket("socket-chest", at=rel((CX, 30.0, CZ - 11.0), HIP), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 28.0, CZ - 18.4), HIP), parent="head"),
                Socket("socket-hands", at=rel((CX, 10.0, CZ - 12.0), HIP), parent="hips")]
-    return world("swamp-creature", "creatures", "Swamp Creature", root, clips=clips(idle, attack, hit, death), sockets=sockets,
-                 pfx=[pfx("rvx-monster-venom-spit", "socket-mouth", "clip:attack", size=44, at=0.45)])
+    return world("swamp-creature", "creatures", "Swamp Creature", root, clips=clips(idle, attack, hit, death, impact=fr(13)), sockets=sockets,
+                 pfx=[pfx("rvx-monster-venom-spit", "socket-mouth", "clip:attack", size=44, at=fr(13))])
 
 
 # ------------------------------------------------------------------ patchwork giant
@@ -961,10 +1020,21 @@ def _patchwork_giant():
             "head": {"rot": keys((0, Z3), (0.7, (0, 10, -4)), (2.1, (0, -10, 4)), (2.8, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.4, (-5, 0, 0)), (2.8, Z3))},
             "arm-r": {"rot": keys((0, Z3), (1.4, (5, 0, 0)), (2.8, Z3))}}
-    attack = {"arm-l": {"rot": keys((0, Z3), (0.18, (65, 0, 8)), (0.35, (125, 0, 10)), (0.6, (35, 0, 0)), (1.1, Z3))},
-              "arm-r": {"rot": keys((0, Z3), (0.35, (45, 0, -10)), (0.6, (20, 0, 0)), (1.1, Z3))},
-              "torso": {"rot": keys((0, Z3), (0.35, (8, 0, 0)), (0.6, (-14, 0, 0)), (1.1, Z3))},
-              "head": {"rot": keys((0, Z3), (0.35, (10, 0, 0)), (0.6, (-10, 0, 0)), (1.1, Z3))}}
+    # Hammer-fist slam: it leans back and heaves the heavy left arm overhead
+    # (frames 0-12), steps in 9 voxels and brings the fist down in 4 frames
+    # to the blow on frame 16, sags into it, holds, recovers by frame 35.
+    attack = {"arm-l": {"rot": keys((0, Z3), (fr(6), (75, 0, -10)), (fr(12), (165, 0, -12)), (fr(16), (48, 0, 6)),
+                                    (fr(18), (40, 0, 8)), (fr(24), (46, 0, 4)), (fr(35), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(12), (30, 0, 22)), (fr(16), (-22, 0, 8)), (fr(19), (-28, 0, 10)),
+                                    (fr(25), (-14, 0, 5)), (fr(35), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(12), (14, -14, 0)), (fr(16), (-20, 12, 0)), (fr(18), (-23, 14, 0)),
+                                    (fr(24), (-18, 10, 0)), (fr(35), Z3))},
+              "hips": {"loc": keys((0, Z3), (fr(12), (0, 0.3, 4)), (fr(16), (0, 1.6, -9)), (fr(18), (0, 1.6, -10)),
+                                   (fr(24), (0, 1.5, -9)), (fr(35), Z3))},
+              "leg-l": {"rot": keys((0, Z3), (fr(12), (-6, 0, 0)), (fr(16), (20, 0, 0)), (fr(24), (18, 0, 0)), (fr(35), Z3))},
+              "leg-r": {"rot": keys((0, Z3), (fr(12), (4, 0, 0)), (fr(16), (-16, 0, 0)), (fr(24), (-14, 0, 0)), (fr(35), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(13), (14, 6, 0)), (fr(17), (-12, -6, 0)), (fr(20), (-20, -8, 0)),
+                                   (fr(27), (-8, -2, 0)), (fr(35), Z3))}}
     hit = {"torso": {"rot": keys((0, Z3), (0.12, (10, -8, 0)), (0.5, Z3))},
            "head": {"rot": keys((0, Z3), (0.12, (-16, 12, 0)), (0.5, Z3))}}
     death = {"hips": {"rot": keys((0, Z3), (0.5, (-8, 0, 0)), (1.4, (-84, 0, 0))),
@@ -974,7 +1044,7 @@ def _patchwork_giant():
     sockets = [Socket("socket-chest", at=rel((CX, 46.0, CZ - 10.0), HIP), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 61.0, CZ - 8.8), HIP), parent="head"),
                Socket("socket-hands", at=rel((CX, 30.0, CZ - 16.0), HIP), parent="hips")]
-    return world("patchwork-giant", "creatures", "Patchwork Giant", root, clips=clips(idle, attack, hit, death), sockets=sockets,
+    return world("patchwork-giant", "creatures", "Patchwork Giant", root, clips=clips(idle, attack, hit, death, impact=fr(16)), sockets=sockets,
                  pfx=[pfx("rvx-monster-blood-splat", "socket-chest", "clip:hit", size=48)])
 
 
@@ -1121,12 +1191,25 @@ def _bone_hound():
             "tail": {"rot": keys((0, (0, -12, 0)), (0.35, (0, 12, 0)), (0.7, (0, -12, 0)), (1.05, (0, 12, 0)), (1.4, (0, -12, 0)))},
             "jaw": {"rot": keys((0, Z3), (0.35, (8, 0, 0)), (0.7, Z3), (1.05, (8, 0, 0)), (1.4, Z3))},
             "head": {"rot": keys((0, Z3), (0.7, (-6, 6, 0)), (1.4, Z3))}}
-    attack = {"head": {"loc": keys((0, Z3), (0.25, (0, 0.5, -5)), (0.5, (0, 0, 1)), (0.8, Z3)),
-                       "rot": keys((0, Z3), (0.25, (6, 0, 0)), (0.5, Z3))},
-              "jaw": {"rot": keys((0, Z3), (0.15, (-14, 0, 0)), (0.35, (22, 0, 0)), (0.6, Z3))},
-              "body": {"loc": keys((0, Z3), (0.25, (0, 0.5, -3)), (0.8, Z3))},
-              "leg-fl": {"rot": keys((0, Z3), (0.25, (25, 0, 0)), (0.6, Z3))},
-              "leg-fr": {"rot": keys((0, Z3), (0.25, (25, 0, 0)), (0.6, Z3))}}
+    # Lunging bite: it rears back with the jaw wide (frames 0-10), springs
+    # 11 voxels forward in 3 frames and snaps the jaw shut on frame 13,
+    # overshoots, holds the bite, then backs off to rest by frame 30.
+    attack = {"body": {"loc": keys((0, Z3), (fr(10), (0, 2.2, 4.5)), (fr(13), (0, 2.4, -11)), (fr(15), (0, 2.6, -12.5)),
+                                   (fr(19), (0, 2.0, -11.5)), (fr(30), Z3)),
+                       "rot": keys((0, Z3), (fr(10), (9, 0, 0)), (fr(13), (-10, 0, 0)), (fr(15), (-12, 0, 0)),
+                                   (fr(19), (-8, 0, 0)), (fr(30), Z3))},
+              "head": {"loc": keys((0, Z3), (fr(10), (0, 0.5, 2)), (fr(13), (0, -0.5, -3)), (fr(16), (0, -0.5, -3.5)),
+                                   (fr(20), (0, 0, -2.5)), (fr(30), Z3)),
+                       "rot": keys((0, Z3), (fr(10), (24, 0, 0)), (fr(13), (-18, 0, 0)), (fr(16), (-26, 0, 0)),
+                                   (fr(21), (-14, 0, 0)), (fr(30), Z3))},
+              "jaw": {"rot": keys((0, Z3), (fr(10), (-32, 0, 0)), (fr(13), (22, 0, 0)), (fr(15), (20, 0, 0)),
+                                  (fr(20), (18, 0, 0)), (fr(30), Z3))},
+              "leg-fl": {"rot": keys((0, Z3), (fr(10), (-12, 0, 0)), (fr(13), (34, 0, 0)), (fr(16), (30, 0, 0)), (fr(30), Z3))},
+              "leg-fr": {"rot": keys((0, Z3), (fr(10), (-12, 0, 0)), (fr(13), (38, 0, 0)), (fr(16), (32, 0, 0)), (fr(30), Z3))},
+              "leg-bl": {"rot": keys((0, Z3), (fr(10), (-6, 0, 0)), (fr(13), (-26, 0, 0)), (fr(17), (-18, 0, 0)), (fr(30), Z3))},
+              "leg-br": {"rot": keys((0, Z3), (fr(10), (-6, 0, 0)), (fr(13), (-24, 0, 0)), (fr(17), (-16, 0, 0)), (fr(30), Z3))},
+              "tail": {"rot": keys((0, Z3), (fr(11), (-28, 0, 0)), (fr(14), (-6, 0, 0)), (fr(17), (22, 0, 8)),
+                                   (fr(22), (6, 0, -4)), (fr(30), Z3))}}
     hit = {"body": {"loc": keys((0, Z3), (0.1, (0, 1.0, 2)), (0.5, Z3))},
            "head": {"rot": keys((0, Z3), (0.1, (-14, 10, 0)), (0.5, Z3))}}
     death = {"body": {"loc": keys((0, Z3), (0.4, (0, 1.0, 0)), (1.2, (0, -7.0, 0))),
@@ -1136,8 +1219,8 @@ def _bone_hound():
              "head": {"rot": keys((0, Z3), (1.2, (10, 0, 20)))}, "jaw": {"rot": keys((0, Z3), (1.2, (-10, 0, 0)))},
              "tail": {"rot": keys((0, Z3), (1.2, (-20, 0, 0)))}}
     sockets = [Socket("socket-fangs", at=rel((CX, 21.5, 2.5), BODY), parent="head")]
-    return world("bone-hound", "creatures", "Bone Hound", root, clips=clips(idle, attack, hit, death), sockets=sockets,
-                 pfx=[pfx("rvx-monster-claw-slash", "socket-fangs", "clip:attack", size=30, at=0.35)])
+    return world("bone-hound", "creatures", "Bone Hound", root, clips=clips(idle, attack, hit, death, impact=fr(13)), sockets=sockets,
+                 pfx=[pfx("rvx-monster-claw-slash", "socket-fangs", "clip:attack", size=30, at=fr(11))])
 
 
 BUILDERS = {

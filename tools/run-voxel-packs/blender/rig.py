@@ -151,6 +151,10 @@ def build_clips(arm, asset: Asset) -> None:
                         pb.location = world_offset(arm, bone, value)
                         pb.keyframe_insert("location", frame=frame)
             pb.location, pb.rotation_quaternion = Vector(), Quaternion()
+        if clip.loop:
+            export.seamless_loop(action, first, last)
+        if clip.impact is not None:
+            export.snap_impact(action, round(clip.impact * fps))
         slot = anim.action_slot
         track = anim.nla_tracks.new()
         track.name = clip.name

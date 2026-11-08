@@ -1,0 +1,155 @@
+{
+ "_doc": "Facet Fauna: Cats - the kit's parts and colours, read by the viewer (index.html), scripts/build_breeds.py and catkit.js. breeds.csv names entries from these tables.",
+ "builds": [
+  "domestic",
+  "cobby",
+  "large",
+  "wild",
+  "munchkin",
+  "kitten"
+ ],
+ "heads": [
+  "domestic",
+  "round",
+  "wedge",
+  "flat",
+  "pixie",
+  "lynx"
+ ],
+ "headForBuild": {
+  "cobby": "round",
+  "wild": "wedge",
+  "large": "lynx",
+  "kitten": "round"
+ },
+ "ears": [
+  "standard",
+  "round",
+  "large",
+  "small",
+  "fold",
+  "curl",
+  "tufted"
+ ],
+ "tails": [
+  "long",
+  "thin",
+  "plume",
+  "thick",
+  "curl",
+  "bob",
+  "stub"
+ ],
+ "furs": [
+  "none",
+  "ruff",
+  "fluffy",
+  "semilong",
+  "long",
+  "rex"
+ ],
+ "coatShell": {
+  "ruff": "ruff",
+  "fluffy": "fluffy",
+  "semilong": "semilong",
+  "long": "long",
+  "rex": "rex"
+ },
+ "patterns": {
+  "points": {
+   "region": "points"
+  },
+  "cream": {
+   "region": "cream"
+  },
+  "bicolor": {
+   "region": "bicolor"
+  },
+  "van": {
+   "region": "van"
+  },
+  "mitted": {
+   "region": "mitted"
+  },
+  "locket": {
+   "region": "locket"
+  },
+  "harlequin": {
+   "region": "harlequin"
+  },
+  "mackerel": {
+   "region": "mackerel"
+  },
+  "classic": {
+   "region": "classic"
+  },
+  "shaded": {
+   "region": "shaded"
+  },
+  "spots": {
+   "tile": "spots"
+  },
+  "rosettes": {
+   "tile": "rosettes"
+  },
+  "ticking": {
+   "tile": "ticking"
+  },
+  "tortie": {
+   "tile": "tortie"
+  }
+ },
+ "colours": {
+  "black": "#1e1b1a",
+  "charcoal": "#3d3c3f",
+  "blue": "#7f8a96",
+  "chocolate": "#5a3a26",
+  "lilac": "#b8a9a6",
+  "cinnamon": "#8a5a3a",
+  "fawn": "#c9ad94",
+  "red": "#eba15f",
+  "darkred": "#c26f35",
+  "cream": "#f5e6c8",
+  "white": "#f4f1ea",
+  "silver": "#c9cbcd",
+  "seal": "#3d2c22",
+  "golden": "#d8a65e",
+  "brown": "#9a7048",
+  "ruddy": "#b5652f",
+  "sepia": "#a8875f",
+  "sable": "#5e4030",
+  "orange": "#e09040",
+  "pinkskin": "#e8bfae",
+  "greyskin": "#a39b98"
+ },
+ "noseColours": {
+  "pink": "#e59a96",
+  "brick": "#b5614e",
+  "black": "#2a2224",
+  "blue": "#6c7480",
+  "brown": "#6a4232",
+  "lilac": "#bfa3a3",
+  "grey": "#8d8486"
+ },
+ "eyeColours": {
+  "blue": "#4a86cc",
+  "green": "#6a9a45",
+  "gold": "#b37a35",
+  "copper": "#9a5424",
+  "hazel": "#8a7232",
+  "odd": "#3f7cc4"
+ },
+ "fixedColours": {
+  "eye": "#151313",
+  "ink": "#554b50",
+  "innerEar": "#f7d4d4",
+  "shine": "#ffffff"
+ },
+ "sizes": {
+  "XS": 0.3,
+  "S": 0.45,
+  "M": 0.55,
+  "L": 0.66,
+  "XL": 0.8
+ }
+}

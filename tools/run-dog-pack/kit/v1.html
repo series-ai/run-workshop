@@ -1,0 +1,274 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RUN Dog Pack — recolour kit</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e9e9ec; font-family: system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #panel { position: fixed; left: 12px; top: 12px; width: 230px; background: #fff; border-radius: 10px; padding: 12px 14px; box-shadow: 0 2px 10px #0002; font-size: 13px; }
+  #panel h2 { margin: 0 0 8px; font-size: 15px; }
+  #panel label { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; }
+  #panel select { width: 120px; }
+  #panel input[type=color] { width: 60px; height: 24px; border: none; padding: 0; background: none; }
+  #stats { margin-top: 10px; color: #777; font-size: 11px; line-height: 1.5; }
+  #hint { position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; color: #888; font-size: 12px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h2 id="name">—</h2>
+  <label>Body <select id="body"></select></label>
+  <label>Pattern <select id="pattern"></select></label>
+  <label>Colour A <input type="color" id="a"></label>
+  <label>Colour B <input type="color" id="b"></label>
+  <label>Faceted regions <input type="checkbox" id="facet" checked></label>
+  <label>Spots <select id="spotmode"><option value="uv">UV texture</option><option value="facet">per facet (old)</option></select></label>
+  <div id="stats"></div>
+</div>
+<div id="hint">Click a dog to edit it · drag to orbit · scroll to zoom</div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const BODIES = ['corgi', 'shepherd', 'pug', 'dalmatian'];
+// Bodies are authored at length 1; this is each build's real-world size.
+const BODY_SCALE = { corgi: 0.62, shepherd: 1.0, pug: 0.5, dalmatian: 0.95 };
+// region = side-projected mask, tile = triplanar surface mask.
+const PATTERNS = {
+  solid: {},
+  saddle: { region: 'saddle' },
+  tuxedo: { region: 'tuxedo' },
+  'face mask': { region: 'mask' },
+  'tan points': { region: 'points' },
+  piebald: { region: 'piebald' },
+  spots: { tile: 'spots' },
+  merle: { tile: 'merle' },
+  brindle: { tile: 'brindle' },
+};
+// Every breed is just: body + pattern + colour A + colour B.
+const BREEDS = [
+  ['Pembroke corgi', 'corgi', 'tuxedo', '#d98a3d', '#f6f1e7'],
+  ['Black & white corgi', 'corgi', 'tuxedo', '#25211f', '#f6f1e7'],
+  ['Jack Russell', 'corgi', 'piebald', '#f4efe6', '#a8662e'],
+  ['Brindle corgi', 'corgi', 'brindle', '#b8742f', '#3a2a20'],
+  ['German shepherd', 'shepherd', 'saddle', '#c48a4f', '#2a2420'],
+  ['Border collie', 'shepherd', 'tuxedo', '#211e1c', '#f4f1ea'],
+  ['Husky', 'shepherd', 'tuxedo', '#7d8590', '#f2f2f2'],
+  ['Blue merle aussie', 'shepherd', 'merle', '#9aa3ab', '#2a2b30'],
+  ['Fawn pug', 'pug', 'face mask', '#dcc49a', '#3a2f2a'],
+  ['Black pug', 'pug', 'solid', '#2a2724', '#2a2724'],
+  ['Brindle frenchie', 'pug', 'brindle', '#8a6a4a', '#2c2420'],
+  ['Boston terrier', 'pug', 'tuxedo', '#242022', '#f4f1ea'],
+  ['Dalmatian', 'dalmatian', 'spots', '#f4f2ee', '#1f1d1c'],
+  ['Liver dalmatian', 'dalmatian', 'spots', '#f4f2ee', '#6a3a22'],
+  ['Doberman', 'dalmatian', 'tan points', '#1e1a19', '#a5562a'],
+  ['Yellow lab', 'dalmatian', 'solid', '#e2c48c', '#e2c48c'],
+];
+
+const vert = /* glsl */`
+  attribute vec3 faceCenter;
+  attribute vec4 color;
+  uniform float facet;
+  varying vec3 vPos;
+  varying vec3 vFace;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying float vNose;
+  void main() {
+    vPos = mix(position, faceCenter, facet);
+    vFace = faceCenter;
+    vUv = uv;
+    vNormal = normalize(mat3(modelMatrix) * normal);
+    vNose = color.r;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }`;
+const frag = /* glsl */`
+  uniform vec3 colorA, colorB, noseColor;
+  uniform sampler2D regionTex, tileTex;
+  uniform float useRegion, useTile, height, tileScale, spotsOnUv;
+  varying vec3 vPos;
+  varying vec3 vFace;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying float vNose;
+  void main() {
+    // Region masks: side view of dog space (x: tail -0.5 .. nose 0.5, y: floor .. top).
+    float m = useRegion * texture2D(regionTex, vec2(vPos.x + 0.5, vPos.y / height)).r;
+    // Tile masks (spots, merle, brindle) wrap over the body's UVs. The texture
+    // has soft edges; thresholding with fwidth gives crisp, anti-aliased outlines.
+    float t = texture2D(tileTex, vUv).r;
+    float aa = fwidth(t);
+    t = smoothstep(0.5 - aa, 0.5 + aa, t);
+    // Old approach for comparison: one triplanar sample per facet.
+    vec3 w = abs(vNormal); w /= (w.x + w.y + w.z);
+    vec3 p = vFace * tileScale;
+    float f = texture2D(tileTex, p.zy).r * w.x + texture2D(tileTex, p.xz).r * w.y + texture2D(tileTex, p.xy).r * w.z;
+    t = mix(step(0.5, f), t, spotsOnUv);
+    vec3 base = mix(colorA, colorB, step(0.5, m));
+    base = mix(base, colorB, useTile * t);
+    base = mix(base, noseColor, step(0.5, vNose));
+    // Cheap mobile lighting: one sun + sky/ground ambient.
+    vec3 n = normalize(vNormal);
+    float sun = max(dot(n, normalize(vec3(0.5, 0.9, 0.6))), 0.0);
+    float sky = 0.5 + 0.5 * n.y;
+    gl_FragColor = vec4(base * (0.42 + 0.22 * sky + 0.55 * sun), 1.0);
+    #include <colorspace_fragment>
+  }`;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeeeef1);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 100);
+camera.position.set(0.8, 4.2, 8.6);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.2, 0);
+controls.enableDamping = true;
+
+const floor = new THREE.Mesh(new THREE.CircleGeometry(4.2, 48), new THREE.MeshBasicMaterial({ color: 0xe2e2e7 }));
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.38, 0.42, 40), new THREE.MeshBasicMaterial({ color: 0x4a7cff }));
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = 0.002;
+scene.add(ring);
+
+const texLoader = new THREE.TextureLoader();
+const tex = {};
+function loadTex(file, repeat) {
+  const t = texLoader.load(`patterns/${file}.png`);
+  t.magFilter = THREE.NearestFilter;
+  if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+for (const p of Object.values(PATTERNS)) {
+  if (p.region && !tex[p.region]) tex[p.region] = loadTex(`region-${p.region}`, false);
+  if (p.tile && !tex[p.tile]) tex[p.tile] = loadTex(`tile-${p.tile}`, true);
+}
+const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+blank.needsUpdate = true;
+
+// Load each body once; every dog shares its body's geometry.
+const bodies = {};
+const gltf = new GLTFLoader();
+await Promise.all(BODIES.map(name => gltf.loadAsync(`bodies/${name}.glb`).then(g => {
+  let mesh;
+  g.scene.traverse(o => { if (o.isMesh && !mesh) mesh = o; });
+  const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
+  geo.applyMatrix4(mesh.matrixWorld);
+  // Per-face centroid so a facet takes one pattern colour (crisp low-poly look).
+  const pos = geo.attributes.position;
+  const cen = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i += 3) {
+    for (let k = 0; k < 3; k++) {
+      const c = (pos.getComponent(i, k) + pos.getComponent(i + 1, k) + pos.getComponent(i + 2, k)) / 3;
+      cen[i * 3 + k] = cen[(i + 1) * 3 + k] = cen[(i + 2) * 3 + k] = c;
+    }
+  }
+  geo.setAttribute('faceCenter', new THREE.BufferAttribute(cen, 3));
+  geo.computeBoundingBox();
+  bodies[name] = geo;
+})));
+
+function makeMaterial() {
+  return new THREE.ShaderMaterial({
+    vertexShader: vert, fragmentShader: frag,
+    uniforms: {
+      colorA: { value: new THREE.Color() }, colorB: { value: new THREE.Color() },
+      noseColor: { value: new THREE.Color('#1c1a1a') },
+      regionTex: { value: blank }, tileTex: { value: blank },
+      useRegion: { value: 0 }, useTile: { value: 0 },
+      height: { value: 1 }, tileScale: { value: 2.2 }, facet: { value: 1 }, spotsOnUv: { value: 1 },
+    },
+  });
+}
+
+const dogs = [];
+const cols = 4;
+// Big builds at the back, small ones up front.
+const ROW = { shepherd: 0, dalmatian: 1, corgi: 2, pug: 3 };
+const inRow = {};
+BREEDS.forEach(([name, body, pattern, a, b]) => {
+  const row = ROW[body], col = inRow[row] = (inRow[row] ?? -1) + 1;
+  const mesh = new THREE.Mesh(bodies[body], makeMaterial());
+  const dog = { name, body, pattern, a, b, mesh };
+  mesh.userData.dog = dog;
+  mesh.rotation.y = -0.5;
+  mesh.position.set((col - (cols - 1) / 2) * 1.4, 0, (row - 1.5) * 1.3);
+  scene.add(mesh);
+  dogs.push(dog);
+  apply(dog);
+});
+
+function apply(dog) {
+  const geo = bodies[dog.body];
+  dog.mesh.geometry = geo;
+  dog.mesh.scale.setScalar(BODY_SCALE[dog.body]);
+  const u = dog.mesh.material.uniforms;
+  const p = PATTERNS[dog.pattern];
+  u.colorA.value.set(dog.a);
+  u.colorB.value.set(dog.b);
+  u.regionTex.value = p.region ? tex[p.region] : blank;
+  u.tileTex.value = p.tile ? tex[p.tile] : blank;
+  u.useRegion.value = p.region ? 1 : 0;
+  u.useTile.value = p.tile ? 1 : 0;
+  u.height.value = geo.boundingBox.max.y;
+  u.facet.value = document.getElementById('facet').checked ? 1 : 0;
+  u.spotsOnUv.value = document.getElementById('spotmode').value === 'uv' ? 1 : 0;
+}
+
+// Editor panel.
+const $ = id => document.getElementById(id);
+$('body').innerHTML = BODIES.map(b => `<option>${b}</option>`).join('');
+$('pattern').innerHTML = Object.keys(PATTERNS).map(p => `<option>${p}</option>`).join('');
+let selected;
+function select(dog) {
+  selected = dog;
+  $('name').textContent = dog.name;
+  $('body').value = dog.body; $('pattern').value = dog.pattern;
+  $('a').value = dog.a; $('b').value = dog.b;
+  ring.position.x = dog.mesh.position.x;
+  ring.position.z = dog.mesh.position.z;
+}
+for (const id of ['body', 'pattern', 'a', 'b']) {
+  $(id).addEventListener('input', e => { selected[id] = e.target.value; apply(selected); });
+}
+$('facet').addEventListener('change', () => dogs.forEach(apply));
+$('spotmode').addEventListener('change', () => dogs.forEach(apply));
+select(dogs[0]);
+
+const sizes = { bodies: '4 × ~32 KB', patterns: '8 masks, 56 KB total' };
+$('stats').innerHTML = `${dogs.length} breeds · 4 body meshes · 300 tris each<br>${sizes.patterns}<br>one shader, no per-breed textures`;
+
+// Click to select.
+const ray = new THREE.Raycaster();
+let down;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
+  ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  const hit = ray.intersectObjects(dogs.map(d => d.mesh))[0];
+  if (hit) select(hit.object.userData.dog);
+});
+
+function frame() {
+  if (renderer.domElement.width !== innerWidth * devicePixelRatio) {
+    renderer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

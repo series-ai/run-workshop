@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RUN Dog Pack — style models</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e9e9ec; font-family: system-ui, sans-serif; overflow: hidden; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #grid { position: fixed; inset: 0; display: grid; grid-template-columns: 140px repeat(4, 1fr); grid-template-rows: 36px repeat(var(--rows, 4), 1fr); pointer-events: none; }
+  .hdr, .row { display: flex; align-items: center; justify-content: center; font-weight: 600; color: #333; font-size: 14px; }
+  .row { justify-content: flex-start; padding-left: 14px; font-size: 15px; }
+  .cell { position: relative; border: 1px solid #d6d6db; pointer-events: auto; cursor: grab; }
+  .cell span { position: absolute; left: 8px; bottom: 6px; font-size: 11px; color: #777; }
+  #bar { position: fixed; right: 12px; bottom: 10px; display: flex; gap: 8px; font-size: 13px; z-index: 2; }
+  #bar label { background: #fff; border-radius: 6px; padding: 4px 8px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="grid"></div>
+<div id="bar">
+  <label><input type="checkbox" id="spin" checked> Turntable</label>
+  <label>Version <select id="mode">
+    <option value="vc-300/" selected>Vertex colour · 300 tris</option>
+    <option value="vc-150/">Vertex colour · 150 tris</option>
+    <option value="vc-500/">Vertex colour · 500 tris</option>
+    <option value="vertexcolor/">Vertex colour · 1,500 tris</option>
+    <option value="lowpoly/">Textured low-poly</option>
+    <option value="">Raw AI mesh (50k)</option>
+  </select></label>
+</div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// ?style=4-papercraft shows one row; ?mode=raw|lowpoly|vc-300... picks the version.
+const params = new URLSearchParams(location.search);
+const ALL_STYLES = [['1-faceted', 'Faceted'], ['2-chunky-toy', 'Chunky toy'], ['4-papercraft', 'Papercraft'], ['6-primitive', 'Primitive']];
+const STYLES = ALL_STYLES.filter(([k]) => !params.get('style') || k === params.get('style'));
+document.getElementById('grid').style.setProperty('--rows', STYLES.length);
+const MODES = { raw: '', lowpoly: 'lowpoly/', vc: 'vertexcolor/' };
+if (params.get('mode')) document.getElementById('mode').value = MODES[params.get('mode')] ?? `${params.get('mode')}/`;
+const DOGS = [['corgi', 'Corgi'], ['shepherd', 'German shepherd'], ['pug', 'Pug'], ['dalmatian', 'Dalmatian']];
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setScissorTest(true);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const grid = document.getElementById('grid');
+grid.insertAdjacentHTML('beforeend', '<div></div>' + DOGS.map(d => `<div class="hdr">${d[1]}</div>`).join(''));
+
+const loader = new GLTFLoader();
+const views = [];
+for (const [sKey, sName] of STYLES) {
+  grid.insertAdjacentHTML('beforeend', `<div class="row">${sName}</div>`);
+  for (const [dKey] of DOGS) {
+    const el = document.createElement('div');
+    el.className = 'cell';
+    el.innerHTML = '<span>loading…</span>';
+    grid.appendChild(el);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf4f4f6);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9aa6, 1.6));
+    const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+    sun.position.set(3, 5, 4);
+    scene.add(sun);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+    const pivot = new THREE.Group();
+    scene.add(pivot);
+    const view = { el, scene, camera, pivot, angle: -0.6, key: `${sKey}-${dKey}` };
+    views.push(view);
+
+    // Drag to rotate an individual cell.
+    let drag = null;
+    el.addEventListener('pointerdown', e => { drag = e.clientX; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove', e => { if (drag !== null) { view.angle += (e.clientX - drag) * 0.01; drag = e.clientX; dirty = true; } });
+    el.addEventListener('pointerup', () => { drag = null; });
+
+    load(view);
+  }
+}
+
+function load(view) {
+  const span = view.el.querySelector('span');
+  span.textContent = 'loading…';
+  loader.load(`../models/${document.getElementById('mode').value}${view.key}.glb`, gltf => {
+    const obj = gltf.scene;
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = box.getSize(new THREE.Vector3());
+    obj.position.sub(box.getCenter(new THREE.Vector3()));
+    view.pivot.clear();
+    view.pivot.add(obj);
+    const r = size.length() * 0.5;
+    view.camera.position.set(0, r * 0.55, r * 3.4);
+    view.camera.lookAt(0, 0, 0);
+    let tris = 0;
+    obj.traverse(o => {
+      if (o.isMesh) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
+    });
+    span.textContent = `${Math.round(tris).toLocaleString()} tris`;
+  }, undefined, () => { view.pivot.clear(); span.textContent = 'missing'; });
+}
+
+document.getElementById('mode').addEventListener('change', () => views.forEach(load));
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  if (canvas.width !== w * devicePixelRatio || canvas.height !== h * devicePixelRatio) renderer.setSize(w, h, false);
+}
+
+// Redraw only while spinning or after a change, so an idle tab costs almost no battery.
+let dirty = true;
+const markDirty = () => { dirty = true; };
+THREE.DefaultLoadingManager.onLoad = markDirty;
+addEventListener('resize', markDirty);
+for (const id of ['spin', 'mode']) document.getElementById(id).addEventListener('change', markDirty);
+let last = performance.now();
+function frame(now) {
+  const spinning = document.getElementById('spin').checked;
+  if (!spinning && !dirty) { last = now; requestAnimationFrame(frame); return; }
+  dirty = false;
+  const dt = (now - last) / 1000; last = now;
+  resize();
+  const spin = document.getElementById('spin').checked;
+  const H = innerHeight;
+  for (const v of views) {
+    if (spin) v.angle += dt * 0.6;
+    v.pivot.rotation.y = v.angle;
+    const r = v.el.getBoundingClientRect();
+    v.camera.aspect = r.width / r.height;
+    v.camera.zoom = Math.min(1, v.camera.aspect * 1.1);   // tall cells: widen the view so the dog fits
+    v.camera.updateProjectionMatrix();
+    renderer.setViewport(r.left, H - r.bottom, r.width, r.height);
+    renderer.setScissor(r.left, H - r.bottom, r.width, r.height);
+    renderer.render(v.scene, v.camera);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

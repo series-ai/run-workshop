@@ -7,7 +7,8 @@ with orange shoulder pads and a gold star badge; stubby legs in steel
 boots. The left arm ends in a big three-finger hand; the right forearm is
 a fused plasma blaster with copper coils and a teal muzzle. Limbs, fins,
 pads and skull are true-slope prisms; the face and armour are painted.
-Clips: idle (breathe, glance), attack (raise and fire), hit, death.
+Clips: idle (breathe, glance), attack (brace, raise and fire with a
+recoil kick), hit, death.
 Faces -Z.
 """
 import numpy as np
@@ -145,9 +146,20 @@ def build():
     idle = {"body": {"rot": wave(2.4, "x", 3)},
             "head": {"rot": keys((0, z), (0.6, (0, 14, 0)), (1.2, z), (1.8, (0, -14, 0)), (2.4, z))},
             "arm-l": {"rot": wave(2.4, "x", 5, phase=1.0)}, "arm-r": {"rot": wave(2.4, "x", 3, phase=2.0)}}
-    attack = {"arm-r": {"rot": keys((0, z), (0.2, (18, 0, 0)), (0.35, (18, 0, 0)), (0.42, (30, 0, 0)), (0.6, (18, 0, 0)), (1.0, z))},
-              "body": {"rot": keys((0, z), (0.2, (0, 10, 0)), (0.42, (6, 10, 0)), (1.0, z))},
-              "head": {"rot": keys((0, z), (0.2, (-6, 8, 0)), (1.0, z))}}
+    # Raise, brace and fire: the grunt hunches into a brace, swings the
+    # blaster up level and draws it back (0-0.37 s), fires at 0.4 s with a
+    # short forward punch, and the recoil kicks the blaster up and rocks the
+    # whole trooper back in one frame before it settles on aim and lowers.
+    F = 1 / 30
+    fire_t = 12 * F
+    attack = {"arm-r": {"rot": keys((0, z), (6 * F, (8, 0, 0)), (10 * F, (10, 0, 0)), (11 * F, (8, 0, 0)), (fire_t, (12, 0, 0)),
+                                    (13 * F, (54, 0, 0)), (15 * F, (46, 0, 0)), (19 * F, (16, 0, 0)), (30 * F, z)),
+                        "loc": keys((0, z), (10 * F, (0, 0, 1.5)), (fire_t, (0, 0, -1.5)), (13 * F, (0, 0.5, 3.5)), (16 * F, (0, 0, 2.0)), (21 * F, z), (30 * F, z))},
+              "body": {"rot": keys((0, z), (8 * F, (-8, 12, 0)), (fire_t, (-8, 12, 0)), (13 * F, (12, 8, 0)), (16 * F, (14, 8, 0)), (21 * F, (3, 6, 0)), (30 * F, z)),
+                       "loc": keys((0, z), (8 * F, (0, -1.0, 0)), (fire_t, (0, -1.0, 0)), (14 * F, z), (30 * F, z))},
+              "grunt": {"loc": keys((0, z), (fire_t, z), (13 * F, (0, 0, 2.5)), (16 * F, (0, 0, 3.0)), (22 * F, (0, 0, 1.0)), (30 * F, z))},
+              "head": {"rot": keys((0, z), (8 * F, (6, 8, 0)), (13 * F, (4, 8, 0)), (14 * F, (18, 4, 0)), (18 * F, (4, 6, 0)), (30 * F, z))},
+              "arm-l": {"rot": keys((0, z), (8 * F, (-12, 0, 0)), (14 * F, (-28, 0, 0)), (18 * F, (-16, 0, 0)), (30 * F, z))}}
     hit = {"body": {"rot": keys((0, z), (0.1, (16, 0, 6)), (0.45, z))},
            "head": {"rot": keys((0, z), (0.1, (14, -12, 0)), (0.45, z))},
            "arm-l": {"rot": keys((0, z), (0.1, (0, 0, 30)), (0.45, z))}}
@@ -156,5 +168,5 @@ def build():
              "head": {"rot": keys((0, z), (0.5, (20, 0, 0)), (1.2, (10, 25, 0)))},
              "arm-l": {"rot": keys((0, z), (1.0, (-40, 0, 50)))}, "arm-r": {"rot": keys((0, z), (1.0, (-30, 0, -45)))}}
     return asset("creatures", "alien-grunt", "Alien Grunt", rig.root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
-                 sockets=[muzzle], pfx=[{"effectId": "rvx-space-laser-bolt", "socket": "socket-muzzle", "trigger": "clip:attack", "size": 14, "aim": [0.0, 0.0, -1.0], "at": 0.4}])
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=fire_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 sockets=[muzzle], pfx=[{"effectId": "rvx-space-laser-bolt", "socket": "socket-muzzle", "trigger": "clip:attack", "size": 14, "aim": [0.0, 0.0, -1.0], "at": round(fire_t, 3)}])

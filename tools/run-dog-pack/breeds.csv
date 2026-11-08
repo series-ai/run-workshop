@@ -1,0 +1,416 @@
+breed,build,size,ears,tail,coat,base,layers,nose,notes
+Greyhound,sighthound,L,rose,whip,smooth,grey,,black,
+Whippet,sighthound,M,rose,whip,smooth,fawn,tuxedo:white,black,
+Italian Greyhound,sighthound,XS,rose,whip,smooth,slate,tuxedo:white,black,
+Saluki,sighthound,L,feathered,whip,feathered,cream,,black,feathered ears
+Afghan Hound,sighthound,L,feathered,curl,long,gold,mask:black,black,ring-tip tail; topknot
+Borzoi,sighthound,XL,rose,plume,long,white,piebald:gold,black,
+Scottish Deerhound,sighthound,XL,rose,whip,wire,slate,,black,
+Irish Wolfhound,sighthound,XL,rose,whip,wire,grey,,black,
+Sloughi,sighthound,L,drop,whip,smooth,sable,mask:black,black,
+Azawakh,sighthound,L,drop,whip,smooth,fawn,tuxedo:white,black,
+Galgo Español,sighthound,L,rose,whip,smooth,brown,brindle:black,black,
+Magyar Agár,sighthound,L,rose,whip,smooth,fawn,,black,
+Chart Polski,sighthound,L,rose,whip,smooth,sable,,black,
+Silken Windhound,sighthound,M,rose,plume,feathered,cream,piebald:sable,black,
+Lurcher,sighthound,L,rose,whip,wire,wheaten,brindle:brown,black,type not breed
+Rampur Greyhound,sighthound,L,rose,whip,smooth,grey,,black,
+Mudhol Hound,sighthound,L,drop,whip,smooth,fawn,,black,
+Chippiparai,sighthound,M,rose,whip,smooth,fawn,,black,
+Rajapalayam,sighthound,L,drop,whip,smooth,white,,pink,
+Taigan,sighthound,L,drop,curl,feathered,cream,,black,
+Tazy,sighthound,L,drop,curl,feathered,red,,black,
+Hortaya Borzaya,sighthound,L,rose,whip,smooth,white,piebald:fawn,black,
+Doberman Pinscher,lean,L,drop,sabre,smooth,black,points:rust,black,natural ears and tail
+Miniature Pinscher,lean,XS,prick,carrot,smooth,black,points:rust,black,tiny Doberman
+German Pinscher,lean,M,button,sabre,smooth,black,points:rust,black,
+Austrian Pinscher,lean,M,button,curl,smooth,gold,tuxedo:white,black,
+Manchester Terrier,lean,S,button,whip,smooth,black,points:rust,black,
+English Toy Terrier,lean,XS,prick,whip,smooth,black,points:rust,black,
+Dalmatian,lean,L,drop,sabre,smooth,white,spots:black,black,
+English Pointer,lean,L,drop,whip,smooth,white,piebald:liver,liver,
+German Shorthaired Pointer,lean,L,drop,sabre,smooth,white,ticking:liver|piebald:liver,liver,ticked
+German Wirehaired Pointer,lean,L,drop,sabre,wire,white,ticking:liver|piebald:liver,liver,beard
+Pudelpointer,lean,L,drop,sabre,wire,chocolate,,liver,
+Wirehaired Pointing Griffon,lean,M,drop,sabre,wire,silver,ticking:brown|piebald:brown,liver,
+Cesky Fousek,lean,L,drop,sabre,wire,white,ticking:brown|piebald:brown,liver,
+Slovakian Wirehaired Pointer,lean,L,drop,sabre,wire,silver,ticking:slate,liver,
+Spinone Italiano,lean,L,drop,sabre,wire,white,piebald:orange,pink,
+Bracco Italiano,lean,L,long,sabre,smooth,white,piebald:orange,pink,jowls
+Weimaraner,lean,L,drop,sabre,smooth,silver,,isabella,
+Vizsla,lean,L,drop,sabre,smooth,red,,liver,
+Wirehaired Vizsla,lean,L,drop,sabre,wire,red,,liver,
+Rhodesian Ridgeback,lean,L,drop,sabre,smooth,wheaten,mask:brown,black,ridge
+Braque Français,lean,L,drop,sabre,smooth,white,ticking:brown|piebald:brown,liver,
+Braque d'Auvergne,lean,L,drop,sabre,smooth,white,ticking:black|piebald:black,black,
+Braque du Bourbonnais,lean,M,drop,bob,smooth,white,ticking:liver,liver,
+Braque Saint-Germain,lean,L,drop,sabre,smooth,white,piebald:orange,pink,
+Old Danish Pointer,lean,L,drop,sabre,smooth,white,piebald:liver,liver,jowls
+Portuguese Pointer,lean,M,drop,sabre,smooth,gold,tuxedo:white,liver,
+Burgos Pointer,lean,L,drop,sabre,smooth,white,ticking:liver|piebald:liver,liver,jowls
+Great Dane,lean,XL,drop,whip,smooth,fawn,mask:black,black,natural ears; harlequin
+Pharaoh Hound,lean,L,bat,whip,smooth,red,,pink,
+Ibizan Hound,lean,L,bat,whip,smooth,white,piebald:red,pink,
+Cirneco dell'Etna,lean,M,prick,whip,smooth,tan,,pink,
+Basenji,lean,M,prick,curl,smooth,red,tuxedo:white,black,
+Xoloitzcuintli,lean,M,bat,whip,hairless,charcoal,,black,toy/mini/standard sizes
+Peruvian Inca Orchid,lean,M,prick,whip,hairless,slate,piebald:pink,black,
+Thai Ridgeback,lean,M,prick,sabre,smooth,blue,,black,ridge
+Canaan Dog,lean,M,prick,curl,smooth,cream,,black,
+Carolina Dog,lean,M,prick,sickle,smooth,gold,tuxedo:cream,black,
+Portuguese Podengo,lean,M,prick,sickle,smooth,gold,tuxedo:white,black,small/medium/large; wire variant
+Podenco Canario,lean,M,prick,sickle,smooth,red,tuxedo:white,pink,
+Podenco Andaluz,lean,M,prick,sickle,smooth,gold,tuxedo:white,pink,
+Taiwan Dog,lean,M,prick,sickle,smooth,black,,black,
+Dingo,lean,M,prick,sabre,smooth,gold,tuxedo:cream,black,wild
+New Guinea Singing Dog,lean,S,prick,sickle,smooth,red,tuxedo:cream,black,wild
+Labrador Retriever,gundog,L,drop,otter,smooth,yellow,,black,
+Golden Retriever,gundog,L,drop,plume,feathered,gold,,black,
+Flat-Coated Retriever,gundog,L,drop,plume,feathered,black,,black,
+Chesapeake Bay Retriever,gundog,L,drop,otter,smooth,brown,,liver,wavy
+Curly-Coated Retriever,gundog,L,drop,otter,curly,black,,black,
+Nova Scotia Duck Tolling Retriever,gundog,M,drop,plume,feathered,orange,tuxedo:white,liver,
+Irish Setter,gundog,L,feathered,plume,feathered,mahogany,,liver,
+English Setter,gundog,L,feathered,plume,feathered,white,ticking:black|piebald:black,black,belton/roan
+Gordon Setter,gundog,L,feathered,plume,feathered,black,points:rust,black,
+Irish Red and White Setter,gundog,L,feathered,plume,feathered,white,piebald:red,liver,
+Large Münsterländer,gundog,L,feathered,plume,feathered,white,ticking:black|piebald:black,black,
+Small Münsterländer,gundog,M,feathered,plume,feathered,white,ticking:liver|piebald:liver,liver,
+German Longhaired Pointer,gundog,L,feathered,plume,feathered,brown,tuxedo:white,liver,
+Drentsche Patrijshond,gundog,M,drop,plume,feathered,white,piebald:orange,liver,
+Stabyhoun,gundog,M,drop,plume,feathered,white,piebald:black,black,
+Hovawart,gundog,L,drop,plume,feathered,black,points:gold,black,
+French Spaniel,gundog,L,feathered,plume,feathered,white,piebald:liver,liver,
+Picardy Spaniel,gundog,L,feathered,sabre,feathered,silver,ticking:brown|piebald:brown,liver,
+Blue Picardy Spaniel,gundog,L,feathered,sabre,feathered,slate,ticking:black|piebald:black,black,
+American Cocker Spaniel,spaniel,M,feathered,bob,feathered,gold,,black,
+English Cocker Spaniel,spaniel,M,feathered,bob,feathered,orange,tuxedo:white,black,
+English Springer Spaniel,spaniel,M,feathered,bob,feathered,white,piebald:liver,liver,
+Welsh Springer Spaniel,spaniel,M,feathered,bob,feathered,white,piebald:red,liver,
+Cavalier King Charles Spaniel,spaniel,S,feathered,plume,feathered,white,piebald:orange,black,Blenheim
+Field Spaniel,spaniel,M,feathered,bob,feathered,black,,black,
+Sussex Spaniel,spaniel,M,feathered,bob,feathered,gold,,liver,low and long
+Clumber Spaniel,spaniel,L,feathered,bob,feathered,white,mask:lemon,pink,heavy; jowls
+Boykin Spaniel,spaniel,M,feathered,bob,feathered,chocolate,,liver,
+American Water Spaniel,spaniel,M,feathered,otter,curly,chocolate,,liver,
+Brittany,spaniel,M,drop,bob,feathered,white,piebald:orange,pink,
+Kooikerhondje,spaniel,S,drop,plume,feathered,white,piebald:orange,black,
+German Spaniel,spaniel,M,feathered,sabre,feathered,brown,ticking:white,liver,Wachtelhund
+Russian Spaniel,spaniel,M,feathered,bob,feathered,white,piebald:black,black,
+Pont-Audemer Spaniel,spaniel,M,feathered,sabre,curly,brown,ticking:white,liver,
+Beagle,scenthound,S,long,carrot,smooth,tan,saddle:black|tuxedo:white,black,
+Harrier,scenthound,M,long,carrot,smooth,tan,saddle:black|tuxedo:white,black,
+English Foxhound,scenthound,L,long,carrot,smooth,tan,saddle:black|tuxedo:white,black,
+American Foxhound,scenthound,L,long,carrot,smooth,tan,saddle:black|tuxedo:white,black,
+Beagle-Harrier,scenthound,M,long,carrot,smooth,tan,saddle:black|tuxedo:white,black,
+Bloodhound,scenthound,L,long,sabre,smooth,tan,saddle:black,black,jowls and wrinkles
+Black and Tan Coonhound,scenthound,L,long,sabre,smooth,black,points:rust,black,
+Bluetick Coonhound,scenthound,L,long,sabre,smooth,white,ticking:black|piebald:black|points:rust,black,ticked
+Redbone Coonhound,scenthound,L,long,sabre,smooth,mahogany,,black,
+Treeing Walker Coonhound,scenthound,L,long,sabre,smooth,white,saddle:black|mask:tan,black,
+American English Coonhound,scenthound,L,long,sabre,smooth,white,ticking:red|piebald:red,black,
+Plott Hound,scenthound,L,drop,sabre,smooth,brown,brindle:black,black,brindle
+Treeing Tennessee Brindle,scenthound,M,drop,sabre,smooth,brown,brindle:black,black,
+Mountain Cur,scenthound,M,drop,bob,smooth,gold,mask:black,black,
+Black Mouth Cur,scenthound,L,drop,sabre,smooth,yellow,mask:black,black,
+Catahoula Leopard Dog,scenthound,L,drop,sabre,smooth,silver,merle:black|piebald:white,black,merle
+Otterhound,scenthound,L,long,sabre,wire,grey,saddle:black,black,
+Hamiltonstövare,scenthound,L,drop,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Schillerstövare,scenthound,L,drop,sabre,smooth,tan,saddle:black,black,
+Smålandsstövare,scenthound,M,drop,bob,smooth,black,points:rust,black,
+Finnish Hound,scenthound,L,drop,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Dunker,scenthound,L,drop,sabre,smooth,silver,merle:black|tuxedo:white,black,
+Haldenstøver,scenthound,L,drop,sabre,smooth,white,saddle:black|mask:tan,black,
+Hygen Hound,scenthound,M,drop,sabre,smooth,red,tuxedo:white,black,
+Estonian Hound,scenthound,M,drop,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Russian Hound,scenthound,L,drop,sabre,smooth,tan,saddle:black,black,
+Russian Harlequin Hound,scenthound,L,drop,sabre,smooth,white,merle:black|points:tan,black,
+Polish Hound,scenthound,L,drop,sabre,smooth,black,points:rust,black,
+Polish Hunting Dog,scenthound,L,drop,sabre,smooth,black,points:rust,black,
+Slovakian Hound,scenthound,M,drop,sabre,smooth,black,points:rust,black,
+Transylvanian Hound,scenthound,L,drop,sabre,smooth,black,points:rust|tuxedo:white,black,
+Serbian Hound,scenthound,M,drop,sabre,smooth,red,saddle:black,black,
+Serbian Tricolour Hound,scenthound,M,drop,sabre,smooth,red,saddle:black|tuxedo:white,black,
+Montenegrin Mountain Hound,scenthound,M,drop,sabre,smooth,black,points:rust,black,
+Bosnian Coarse-haired Hound,scenthound,M,drop,sabre,wire,wheaten,piebald:white,black,
+Istrian Shorthaired Hound,scenthound,M,drop,sabre,smooth,white,piebald:orange,black,
+Istrian Coarse-haired Hound,scenthound,M,drop,sabre,wire,white,piebald:orange,black,
+Posavac Hound,scenthound,M,drop,sabre,smooth,red,tuxedo:white,black,
+Hellenic Hound,scenthound,M,drop,sabre,smooth,tan,saddle:black,black,
+Segugio Italiano,scenthound,L,long,sabre,smooth,fawn,,black,
+Spanish Hound,scenthound,L,long,sabre,smooth,white,piebald:orange,black,
+Bavarian Mountain Scent Hound,scenthound,M,drop,sabre,smooth,red,mask:black,black,
+Hanoverian Scent Hound,scenthound,L,drop,sabre,smooth,red,mask:black,black,
+Austrian Black and Tan Hound,scenthound,M,drop,sabre,smooth,black,points:rust,black,
+Styrian Coarse-haired Hound,scenthound,M,drop,sabre,wire,red,,black,
+Tyrolean Hound,scenthound,M,drop,sabre,smooth,red,saddle:black,black,
+Swiss Hound,scenthound,L,long,sabre,smooth,white,piebald:black|points:tan,black,Bernese/Jura/Lucerne/Schwyz variants
+Small Swiss Hound,scenthound,M,long,sabre,smooth,white,piebald:orange,black,
+Grand Bleu de Gascogne,scenthound,L,long,sabre,smooth,white,ticking:black|piebald:black|points:tan,black,ticked
+Petit Bleu de Gascogne,scenthound,M,long,sabre,smooth,white,ticking:black|piebald:black|points:tan,black,ticked
+Gascon Saintongeois,scenthound,L,long,sabre,smooth,white,piebald:black|points:tan,black,
+Ariégeois,scenthound,M,long,sabre,smooth,white,piebald:black|points:tan,black,
+Poitevin,scenthound,L,drop,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Billy,scenthound,L,drop,sabre,smooth,white,piebald:lemon,black,
+Porcelaine,scenthound,M,long,sabre,smooth,white,piebald:orange,black,
+Français Tricolore,scenthound,L,long,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Français Blanc et Noir,scenthound,L,long,sabre,smooth,white,ticking:black|saddle:black,black,
+Français Blanc et Orange,scenthound,L,long,sabre,smooth,white,piebald:orange,black,
+Grand Anglo-Français,scenthound,L,long,sabre,smooth,tan,saddle:black|tuxedo:white,black,three colour variants
+Anglo-Français de Petite Vénerie,scenthound,M,long,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Artois Hound,scenthound,M,long,sabre,smooth,white,piebald:tan|saddle:black,black,
+Grand Griffon Vendéen,scenthound,L,long,sabre,wire,white,piebald:orange,black,
+Briquet Griffon Vendéen,scenthound,M,long,sabre,wire,fawn,,black,
+Griffon Nivernais,scenthound,L,drop,sabre,wire,slate,,black,
+Griffon Fauve de Bretagne,scenthound,M,drop,sabre,wire,red,,black,
+Griffon Bleu de Gascogne,scenthound,M,long,sabre,wire,slate,ticking:black|points:tan,black,
+Kerry Beagle,scenthound,L,long,sabre,smooth,black,points:rust,black,
+German Shepherd,shepherd,L,prick,sabre,smooth,tan,saddle:black|mask:black,black,double coat
+Belgian Malinois,shepherd,L,prick,sabre,smooth,fawn,mask:black,black,
+Belgian Tervuren,shepherd,L,prick,sabre,feathered,sable,mask:black,black,
+Belgian Groenendael,shepherd,L,prick,sabre,feathered,black,,black,
+Belgian Laekenois,shepherd,L,prick,sabre,wire,fawn,,black,
+Dutch Shepherd,shepherd,L,prick,sabre,smooth,gold,brindle:black,black,brindle
+White Swiss Shepherd,shepherd,L,prick,sabre,feathered,white,,black,
+East European Shepherd,shepherd,L,prick,sabre,smooth,tan,saddle:black|mask:black,black,
+Czechoslovakian Wolfdog,shepherd,L,prick,sabre,smooth,grey,tuxedo:cream,black,
+Saarloos Wolfdog,shepherd,L,prick,sabre,smooth,grey,tuxedo:cream,black,
+Kunming Wolfdog,shepherd,L,prick,sabre,smooth,tan,saddle:black,black,
+Beauceron,shepherd,L,prick,sabre,smooth,black,points:rust,black,
+Picardy Sheepdog,shepherd,L,prick,sabre,wire,fawn,,black,
+Bohemian Shepherd,shepherd,M,prick,sabre,feathered,black,points:tan,black,
+Border Collie,shepherd,M,tipped,sabre,feathered,black,tuxedo:white,black,
+Rough Collie,shepherd,L,tipped,sabre,ruff,sable,tuxedo:white,black,
+Smooth Collie,shepherd,L,tipped,sabre,smooth,sable,tuxedo:white,black,
+Shetland Sheepdog,shepherd,S,tipped,sabre,ruff,sable,tuxedo:white,black,tiny Collie
+Welsh Sheepdog,shepherd,M,tipped,sabre,feathered,black,points:tan|tuxedo:white,black,
+English Shepherd,shepherd,M,tipped,sabre,feathered,black,points:tan|tuxedo:white,black,
+Australian Shepherd,shepherd,M,tipped,bob,feathered,silver,merle:black|points:tan|tuxedo:white,black,
+Miniature American Shepherd,shepherd,S,tipped,bob,feathered,red,merle:liver|tuxedo:white,liver,
+Australian Cattle Dog,shepherd,M,prick,sabre,smooth,blue,ticking:black|points:tan,black,speckled
+Australian Stumpy Tail Cattle Dog,shepherd,M,prick,bob,smooth,red,ticking:white,black,
+Australian Kelpie,shepherd,M,prick,sabre,smooth,black,points:tan,black,
+Koolie,shepherd,M,prick,sabre,smooth,silver,merle:black|tuxedo:white,black,merle
+McNab,shepherd,M,prick,sabre,smooth,black,tuxedo:white,black,
+Croatian Sheepdog,shepherd,M,prick,bob,curly,black,,black,
+Mudi,shepherd,M,prick,sabre,curly,silver,merle:black,black,
+Pumi,shepherd,S,tipped,curl,curly,grey,,black,
+Chinook,shepherd,L,drop,sabre,smooth,gold,mask:brown,black,
+Labrador Husky,shepherd,L,prick,sickle,smooth,grey,tuxedo:white,black,
+Siberian Husky,spitz,M,prick,sickle,ruff,grey,tuxedo:white,black,
+Alaskan Malamute,spitz,L,prick,curl,ruff,grey,tuxedo:white,black,
+Alaskan Klee Kai,spitz,S,prick,sickle,ruff,grey,tuxedo:white,black,tiny Husky
+Samoyed,spitz,M,prick,curl,ruff,white,,black,
+Akita,spitz,L,prick,curl,ruff,red,tuxedo:white,black,
+American Akita,spitz,L,prick,curl,ruff,white,piebald:brown|mask:black,black,
+Shiba Inu,spitz,S,prick,curl,ruff,orange,tuxedo:cream,black,
+Kai Ken,spitz,M,prick,sickle,smooth,brown,brindle:black,black,brindle
+Kishu Ken,spitz,M,prick,curl,smooth,white,,black,
+Shikoku Ken,spitz,M,prick,curl,ruff,sable,tuxedo:cream,black,
+Hokkaido Ken,spitz,M,prick,curl,ruff,white,,black,
+Korean Jindo,spitz,M,prick,curl,ruff,fawn,tuxedo:cream,black,
+Pungsan Dog,spitz,L,prick,curl,ruff,white,,black,
+Chow Chow,spitz,M,prick,curl,ruff,red,,black,lion mane; blue tongue
+Eurasier,spitz,M,prick,curl,ruff,fawn,mask:black,black,
+Keeshond,spitz,M,prick,curl,ruff,silver,saddle:charcoal|mask:charcoal,black,spectacles
+German Spitz,spitz,S,prick,curl,ruff,orange,,black,klein/mittel/gross
+Pomeranian,spitz,XS,prick,curl,puff,orange,,black,tiny spitz
+Japanese Spitz,spitz,S,prick,curl,ruff,white,,black,
+American Eskimo Dog,spitz,S,prick,curl,ruff,white,,black,toy/mini/standard
+Volpino Italiano,spitz,XS,prick,curl,ruff,white,,black,
+Finnish Spitz,spitz,M,prick,curl,ruff,red,,black,
+Norwegian Elkhound,spitz,M,prick,curl,ruff,silver,saddle:charcoal|mask:charcoal,black,
+Black Norwegian Elkhound,spitz,M,prick,curl,ruff,black,,black,
+Swedish Elkhound,spitz,L,prick,curl,ruff,grey,tuxedo:cream,black,Jämthund
+Norwegian Buhund,spitz,M,prick,curl,smooth,wheaten,,black,
+Norwegian Lundehund,spitz,S,prick,curl,smooth,fawn,piebald:white,black,
+Icelandic Sheepdog,spitz,M,prick,curl,ruff,tan,tuxedo:white,black,
+Finnish Lapphund,spitz,M,prick,curl,ruff,black,points:tan,black,
+Swedish Lapphund,spitz,M,prick,curl,ruff,black,,black,
+Lapponian Herder,spitz,M,prick,sickle,ruff,black,points:tan,black,
+Karelian Bear Dog,spitz,M,prick,curl,ruff,black,piebald:white,black,
+West Siberian Laika,spitz,M,prick,curl,ruff,white,,black,
+East Siberian Laika,spitz,M,prick,curl,ruff,black,tuxedo:white,black,
+Russo-European Laika,spitz,M,prick,curl,ruff,black,tuxedo:white,black,
+Yakutian Laika,spitz,M,prick,curl,ruff,white,piebald:black,black,
+Greenland Dog,spitz,L,prick,curl,ruff,grey,piebald:white,black,
+Canadian Eskimo Dog,spitz,L,prick,curl,ruff,white,piebald:grey,black,
+Thai Bangkaew,spitz,M,prick,plume,ruff,white,piebald:brown,black,
+Schipperke,spitz,S,prick,bob,ruff,black,,black,
+Jack Russell Terrier,terrier,S,button,carrot,smooth,white,piebald:tan,black,
+Parson Russell Terrier,terrier,S,button,carrot,smooth,white,piebald:tan,black,
+Smooth Fox Terrier,terrier,S,button,carrot,smooth,white,saddle:black|mask:tan,black,
+Wire Fox Terrier,terrier,S,button,carrot,wire,white,saddle:black|mask:tan,black,
+Toy Fox Terrier,terrier,XS,prick,carrot,smooth,white,mask:black|points:tan,black,
+Rat Terrier,terrier,S,prick,carrot,smooth,white,piebald:black|points:tan,black,
+Teddy Roosevelt Terrier,terrier,S,prick,carrot,smooth,white,piebald:black|points:tan,black,
+Mountain Feist,terrier,S,prick,carrot,smooth,tan,tuxedo:white,black,
+American Hairless Terrier,terrier,S,prick,carrot,hairless,pink,piebald:slate,black,
+Patterdale Terrier,terrier,S,button,carrot,smooth,black,,black,
+Fell Terrier,terrier,S,button,carrot,smooth,black,points:tan,black,
+Plummer Terrier,terrier,S,button,carrot,smooth,red,tuxedo:white,black,
+Brazilian Terrier,terrier,S,button,carrot,smooth,white,piebald:black|points:tan,black,
+Chilean Fox Terrier,terrier,S,prick,carrot,smooth,white,piebald:black|points:tan,black,
+Japanese Terrier,terrier,XS,button,carrot,smooth,white,mask:black,black,
+Tenterfield Terrier,terrier,S,prick,carrot,smooth,white,piebald:black|points:tan,black,
+Danish-Swedish Farmdog,terrier,S,button,carrot,smooth,white,piebald:black,black,
+German Hunting Terrier,terrier,S,button,carrot,wire,black,points:tan,black,
+Kromfohrländer,terrier,M,drop,carrot,wire,white,piebald:tan,black,
+Border Terrier,terrier,S,button,carrot,wire,wheaten,mask:brown,black,otter head
+Lakeland Terrier,terrier,S,button,carrot,wire,tan,saddle:black,black,
+Welsh Terrier,terrier,M,button,carrot,wire,tan,saddle:black,black,
+Irish Terrier,terrier,M,button,carrot,wire,red,,black,
+Airedale Terrier,terrier,L,button,carrot,wire,tan,saddle:black,black,
+Kerry Blue Terrier,terrier,M,button,carrot,curly,slate,,black,
+Soft Coated Wheaten Terrier,terrier,M,button,carrot,long,wheaten,,black,
+Miniature Schnauzer,terrier,S,button,carrot,wire,grey,tuxedo:silver,black,beard and brows
+Standard Schnauzer,terrier,M,button,carrot,wire,grey,tuxedo:silver,black,beard and brows
+Giant Schnauzer,terrier,L,button,carrot,wire,black,,black,beard and brows
+Scottish Terrier,lowterrier,S,prick,carrot,wire,black,,black,beard
+West Highland White Terrier,lowterrier,S,prick,carrot,wire,white,,black,
+Cairn Terrier,lowterrier,S,prick,carrot,wire,wheaten,mask:brown,black,
+Norwich Terrier,lowterrier,S,prick,carrot,wire,red,,black,
+Norfolk Terrier,lowterrier,S,button,carrot,wire,red,,black,
+Sealyham Terrier,lowterrier,S,button,carrot,wire,white,,black,beard
+Skye Terrier,lowterrier,S,prick,sabre,long,silver,mask:charcoal,black,
+Dandie Dinmont Terrier,lowterrier,S,long,sabre,wire,slate,tuxedo:silver,black,topknot
+Glen of Imaal Terrier,lowterrier,S,rose,carrot,wire,wheaten,,black,
+Cesky Terrier,lowterrier,S,button,sabre,wire,silver,,black,
+Australian Terrier,lowterrier,S,prick,carrot,wire,blue,points:tan,black,
+Dachshund,longlow,S,drop,sabre,smooth,red,,black,smooth/long/wire + miniature
+Basset Hound,longlow,M,long,sabre,smooth,tan,saddle:black|tuxedo:white,black,jowls
+Petit Basset Griffon Vendéen,longlow,S,long,sabre,wire,white,piebald:orange,black,
+Grand Basset Griffon Vendéen,longlow,M,long,sabre,wire,white,piebald:black|points:tan,black,
+Basset Fauve de Bretagne,longlow,S,drop,sabre,wire,red,,black,
+Basset Artésien Normand,longlow,M,long,sabre,smooth,white,piebald:tan|saddle:black,black,
+Basset Bleu de Gascogne,longlow,M,long,sabre,smooth,white,ticking:black|piebald:black|points:tan,black,ticked
+Westphalian Dachsbracke,longlow,M,drop,sabre,smooth,tan,saddle:black|tuxedo:white,black,
+Alpine Dachsbracke,longlow,M,drop,sabre,smooth,red,mask:black,black,
+Drever,longlow,M,drop,sabre,smooth,tan,tuxedo:white,black,
+Pembroke Welsh Corgi,corgi,S,prick,bob,smooth,orange,tuxedo:white,black,
+Cardigan Welsh Corgi,corgi,S,prick,plume,smooth,silver,merle:black|tuxedo:white,black,
+Swedish Vallhund,corgi,S,prick,bob,smooth,grey,saddle:charcoal|tuxedo:cream,black,
+Lancashire Heeler,corgi,S,prick,sabre,smooth,black,points:tan,black,
+American Pit Bull Terrier,bully,M,rose,whip,smooth,blue,tuxedo:white,blue,
+American Staffordshire Terrier,bully,M,rose,whip,smooth,fawn,tuxedo:white,black,
+Staffordshire Bull Terrier,bully,M,rose,whip,smooth,brown,brindle:black|tuxedo:white,black,
+American Bully,bully,M,rose,whip,smooth,slate,tuxedo:white,blue,
+American Bulldog,bully,L,rose,whip,smooth,white,piebald:brown,black,
+Olde English Bulldogge,bully,M,rose,whip,smooth,fawn,brindle:black|tuxedo:white,black,
+Continental Bulldog,bully,M,rose,whip,smooth,fawn,mask:black|tuxedo:white,black,
+Alapaha Blue Blood Bulldog,bully,L,drop,whip,smooth,white,piebald:slate,black,
+Ca de Bou,bully,M,rose,whip,smooth,brown,brindle:black,black,
+Boxer,bully,L,drop,sabre,smooth,fawn,mask:black|tuxedo:white,black,short muzzle
+Dogo Argentino,bully,L,drop,whip,smooth,white,,black,
+English Bulldog,bulldog,M,rose,screw,smooth,white,piebald:brown|brindle:black,black,signature build
+Pug,brachy,S,rose,screw,smooth,fawn,mask:black,black,
+French Bulldog,brachy,S,bat,screw,smooth,brown,brindle:black|tuxedo:white,black,
+Boston Terrier,brachy,S,bat,screw,smooth,black,tuxedo:white,black,
+Brussels Griffon,brachy,XS,tipped,bob,wire,red,mask:black,black,beard
+Petit Brabançon,brachy,XS,tipped,bob,smooth,red,mask:black,black,
+Affenpinscher,brachy,XS,prick,carrot,wire,black,,black,monkey face
+Japanese Chin,brachy,XS,drop,curl,long,white,piebald:black,black,
+King Charles Spaniel,brachy,S,feathered,plume,feathered,black,points:tan,black,
+English Mastiff,mastiff,XL,drop,sabre,smooth,fawn,mask:black,black,jowls
+Bullmastiff,mastiff,XL,drop,sabre,smooth,red,mask:black,black,
+Neapolitan Mastiff,mastiff,XL,drop,sabre,smooth,slate,,blue,heavy wrinkles
+Dogue de Bordeaux,mastiff,L,drop,sabre,smooth,mahogany,,liver,wrinkles
+Boerboel,mastiff,XL,drop,sabre,smooth,fawn,mask:black,black,
+Cane Corso,mastiff,L,drop,sabre,smooth,charcoal,,black,
+Presa Canario,mastiff,L,drop,sabre,smooth,brown,brindle:black|mask:black,black,
+Fila Brasileiro,mastiff,XL,drop,sabre,smooth,fawn,mask:black,black,jowls
+Tosa,mastiff,XL,drop,sabre,smooth,red,,black,
+Korean Mastiff,mastiff,XL,drop,sabre,smooth,mahogany,,liver,heavy wrinkles
+Broholmer,mastiff,XL,drop,sabre,smooth,gold,mask:black,black,
+Spanish Mastiff,mastiff,XL,drop,sabre,smooth,fawn,brindle:brown,black,jowls
+Bully Kutta,mastiff,XL,drop,sabre,smooth,white,piebald:fawn,black,
+Saint Bernard,mastiff,XL,drop,sabre,feathered,white,piebald:mahogany|mask:charcoal,black,smooth and rough variants
+Shar-Pei,mastiff,M,rose,curl,smooth,fawn,,black,wrinkles; hippo muzzle
+Bernese Mountain Dog,mountain,XL,drop,sabre,feathered,black,points:rust|tuxedo:white,black,
+Greater Swiss Mountain Dog,mountain,XL,drop,sabre,smooth,black,points:rust|tuxedo:white,black,
+Appenzeller Sennenhund,mountain,M,drop,curl,smooth,black,points:rust|tuxedo:white,black,
+Entlebucher Mountain Dog,mountain,M,drop,bob,smooth,black,points:rust|tuxedo:white,black,
+Rottweiler,mountain,L,drop,bob,smooth,black,points:rust,black,
+Newfoundland,mountain,XL,drop,sabre,feathered,black,,black,
+Landseer,mountain,XL,drop,sabre,feathered,white,piebald:black,black,
+Great Pyrenees,mountain,XL,drop,plume,ruff,white,,black,
+Leonberger,mountain,XL,drop,sabre,ruff,gold,mask:black,black,
+Tibetan Mastiff,mountain,XL,drop,curl,ruff,black,points:tan,black,lion mane
+Kuvasz,mountain,XL,drop,sabre,feathered,white,,black,
+Anatolian Shepherd,mountain,XL,drop,sabre,smooth,fawn,mask:black,black,
+Kangal,mountain,XL,drop,curl,smooth,wheaten,mask:black,black,black mask
+Akbash,mountain,XL,drop,curl,feathered,white,,black,
+Maremma Sheepdog,mountain,XL,drop,sabre,feathered,white,,black,
+Polish Tatra Sheepdog,mountain,XL,drop,sabre,feathered,white,,black,
+Slovak Cuvac,mountain,XL,drop,sabre,feathered,white,,black,
+Caucasian Shepherd,mountain,XL,drop,sabre,ruff,grey,saddle:charcoal,black,
+Central Asian Shepherd,mountain,XL,drop,sabre,smooth,cream,piebald:fawn,black,
+South Russian Ovcharka,mountain,XL,drop,sabre,shaggy,white,,black,
+Sarplaninac,mountain,XL,drop,sabre,feathered,grey,saddle:charcoal,black,
+Karst Shepherd,mountain,L,drop,sabre,feathered,slate,,black,
+Tornjak,mountain,L,drop,plume,feathered,white,piebald:black,black,
+Pyrenean Mastiff,mountain,XL,drop,sabre,ruff,white,piebald:grey,black,
+Estrela Mountain Dog,mountain,XL,drop,sabre,feathered,fawn,mask:black,black,
+Cão de Castro Laboreiro,mountain,L,drop,sabre,smooth,grey,brindle:black,black,
+Rafeiro do Alentejo,mountain,XL,drop,sabre,smooth,white,piebald:fawn,black,
+Cão Fila de São Miguel,mountain,L,drop,bob,smooth,brown,brindle:black,black,
+Romanian Carpathian Shepherd,mountain,L,drop,sabre,feathered,fawn,saddle:charcoal,black,
+Bucovina Shepherd,mountain,XL,drop,sabre,feathered,white,piebald:black,black,
+Moscow Watchdog,mountain,XL,drop,sabre,feathered,white,piebald:red|mask:charcoal,black,
+Aidi,mountain,L,drop,plume,feathered,white,,black,Atlas Mountain Dog
+Chihuahua,toy,XS,bat,sickle,smooth,fawn,,black,long-coat variant
+Russian Toy,toy,XS,prick,sickle,smooth,black,points:tan,black,long-coat variant
+Prague Ratter,toy,XS,prick,sickle,smooth,black,points:tan,black,
+Papillon,toy,XS,butterfly,plume,feathered,white,piebald:sable,black,
+Phalène,toy,XS,feathered,plume,feathered,white,piebald:black,black,drop-eared Papillon
+Chinese Crested,toy,XS,bat,whip,hairless,pink,piebald:slate,black,crest tufts; powderpuff variant
+Shih Tzu,toylong,S,drop,curl,long,white,piebald:gold,black,topknot
+Lhasa Apso,toylong,S,drop,curl,long,gold,mask:charcoal,black,
+Maltese,toylong,XS,drop,curl,long,white,,black,
+Yorkshire Terrier,toylong,XS,prick,sabre,long,gold,saddle:blue,black,
+Silky Terrier,toylong,XS,prick,carrot,long,gold,saddle:blue,black,
+Biewer Terrier,toylong,XS,prick,sabre,long,white,saddle:blue|mask:gold,black,
+Havanese,toylong,S,drop,curl,long,cream,,black,
+Coton de Tulear,toylong,S,drop,curl,long,white,,black,
+Bolognese,toylong,XS,drop,curl,puff,white,,black,
+Bichon Frisé,toylong,S,drop,curl,puff,white,,black,
+Russian Tsvetnaya Bolonka,toylong,XS,drop,curl,puff,apricot,,black,
+Löwchen,toylong,S,drop,curl,poodleclip,cream,,black,lion clip
+Pekingese,toylong,S,drop,curl,long,red,mask:black,black,flat face
+Tibetan Spaniel,toylong,S,drop,curl,feathered,gold,,black,
+Old English Sheepdog,shaggy,L,drop,bob,shaggy,grey,tuxedo:white,black,
+Bearded Collie,shaggy,M,drop,sabre,shaggy,grey,tuxedo:white,black,
+Briard,shaggy,L,drop,sabre,shaggy,fawn,,black,
+Polish Lowland Sheepdog,shaggy,M,drop,bob,shaggy,white,piebald:grey,black,
+Catalan Sheepdog,shaggy,M,drop,sabre,shaggy,fawn,ticking:charcoal,black,
+Pyrenean Shepherd,shaggy,S,tipped,sabre,shaggy,fawn,,black,
+Schapendoes,shaggy,M,drop,plume,shaggy,grey,,black,
+Portuguese Sheepdog,shaggy,M,drop,sabre,shaggy,fawn,,black,
+Romanian Mioritic Shepherd,shaggy,XL,drop,sabre,shaggy,white,piebald:grey,black,
+Bouvier des Flandres,shaggy,L,button,bob,shaggy,charcoal,,black,beard
+Black Russian Terrier,shaggy,L,drop,bob,shaggy,black,,black,beard
+Tibetan Terrier,shaggy,M,drop,curl,shaggy,cream,piebald:charcoal,black,
+Puli,shaggy,M,drop,curl,corded,black,,black,
+Komondor,shaggy,XL,drop,sabre,corded,white,,black,
+Bergamasco Shepherd,shaggy,L,drop,sabre,corded,grey,merle:charcoal,black,flocked
+Standard Poodle,poodle,L,bell,pompom,poodleclip,white,,black,
+Miniature Poodle,poodle,S,bell,pompom,curly,apricot,,liver,
+Toy Poodle,poodle,XS,bell,pompom,curly,black,,black,
+Portuguese Water Dog,poodle,M,bell,plume,curly,black,tuxedo:white,black,lion clip option
+Spanish Water Dog,poodle,M,bell,bob,curly,brown,piebald:white,liver,
+Lagotto Romagnolo,poodle,M,bell,sabre,curly,cream,piebald:brown,liver,
+Barbet,poodle,M,bell,sabre,curly,brown,,liver,
+Irish Water Spaniel,poodle,L,bell,whip,curly,mahogany,,liver,rat tail; topknot
+Wetterhoun,poodle,M,bell,curl,curly,black,piebald:white,black,
+Bedlington Terrier,poodle,M,long,whip,curly,silver,,black,lamb look; candidate signature build
+Labradoodle,poodle,L,bell,plume,curly,apricot,,black,designer
+Goldendoodle,poodle,L,bell,plume,curly,gold,,black,designer
+Bernedoodle,poodle,L,bell,plume,curly,black,points:rust|tuxedo:white,black,designer
+Aussiedoodle,poodle,M,bell,bob,curly,silver,merle:black|tuxedo:white,black,designer
+Sheepadoodle,poodle,L,bell,bob,curly,white,piebald:black,black,designer
+Cockapoo,poodle,S,bell,plume,curly,apricot,,black,designer
+Cavapoo,poodle,S,bell,plume,curly,red,tuxedo:white,black,designer
+Maltipoo,poodle,XS,bell,curl,curly,cream,,black,designer
+Bull Terrier,bullterrier,M,prick,whip,smooth,white,piebald:brindle,black,signature egg head
+Miniature Bull Terrier,bullterrier,S,prick,whip,smooth,white,piebald:red,black,
+Mixed Breed,any,M,any,any,any,any,,any,mutt: random build + parts + colours

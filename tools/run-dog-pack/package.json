@@ -1,0 +1,14 @@
+{
+  "name": "run-dog-pack-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "package": "node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "meshoptimizer": "1.3.0"
+  }
+}

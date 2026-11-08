@@ -1,0 +1,288 @@
+{
+ "shared": [],
+ "fenestrated": [
+  {
+   "label": "first notches",
+   "style": "fen4",
+   "g": {
+    "nsplit": 1,
+    "depth": 0.3,
+    "split_w": 0.45,
+    "mid": 0,
+    "small": false,
+    "lobe": null,
+    "smooth": 0.1
+   }
+  },
+  {
+   "label": "two notches + holes",
+   "style": "fen4",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.26,
+    "split_w": 0.6,
+    "mid": 1,
+    "big": 0.7,
+    "small": false,
+    "lobe": null,
+    "smooth": 0.08
+   }
+  },
+  {
+   "label": "first splits",
+   "style": "fen4",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.22,
+    "mid": 2,
+    "big": 0.95,
+    "small": false,
+    "lobe": null
+   }
+  },
+  {
+   "label": "small holes",
+   "style": "fen4",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.2,
+    "mid": 2,
+    "big": 1.0,
+    "small": true,
+    "lobe": null
+   }
+  },
+  {
+   "label": "final",
+   "style": "fen4",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.165,
+    "mid": 2,
+    "big": 1.0,
+    "small": true,
+    "lobe": null
+   }
+  }
+ ],
+ "heavy": [
+  {
+   "label": "notch + tiny holes",
+   "style": "fenfull",
+   "g": {
+    "nsplit": 1,
+    "depth": 0.28,
+    "split_w": 0.45,
+    "mid": 1,
+    "big": 0.5,
+    "small": false,
+    "lobe": null,
+    "smooth": 0.1
+   }
+  },
+  {
+   "label": "two notches, two pairs",
+   "style": "fenfull",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.24,
+    "split_w": 0.6,
+    "mid": 2,
+    "midgap": 0.18,
+    "big": 0.62,
+    "small": false,
+    "lobe": null,
+    "smooth": 0.08
+   }
+  },
+  {
+   "label": "first splits",
+   "style": "fenfull",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.2,
+    "mid": 3,
+    "big": 1.0,
+    "small": false,
+    "lobe": null
+   }
+  },
+  {
+   "label": "more holes",
+   "style": "fenfull",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.17,
+    "mid": 4,
+    "midgap": 0.13,
+    "big": 1.0,
+    "small": true,
+    "lobe": null
+   }
+  },
+  {
+   "label": "final",
+   "style": "fenfull",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.145,
+    "mid": 6,
+    "midgap": 0.12,
+    "small": true,
+    "tip": true,
+    "lobe": [
+     0.3,
+     0.2
+    ]
+   }
+  }
+ ],
+ "heavy-big": [
+  {
+   "label": "wide notch",
+   "style": "fenbig",
+   "g": {
+    "nsplit": 1,
+    "depth": 0.24,
+    "split_w": 0.65,
+    "mid": 0,
+    "small": false,
+    "lobe": null,
+    "smooth": 0.1
+   }
+  },
+  {
+   "label": "deeper notch + big pair",
+   "style": "fenbig",
+   "g": {
+    "nsplit": 1,
+    "depth": 0.2,
+    "split_w": 0.8,
+    "mid": 1,
+    "big": 0.95,
+    "small": false,
+    "lobe": null,
+    "smooth": 0.08
+   }
+  },
+  {
+   "label": "first splits",
+   "style": "fenbig",
+   "g": {
+    "nsplit": 1,
+    "depth": 0.15,
+    "mid": 2,
+    "big": 1.15,
+    "small": false,
+    "lobe": null
+   }
+  },
+  {
+   "label": "bigger holes",
+   "style": "fenbig",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.12,
+    "mid": 3,
+    "midgap": 0.18,
+    "big": 1.25,
+    "small": false,
+    "lobe": null
+   }
+  },
+  {
+   "label": "final",
+   "style": "fenbig",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.09,
+    "mid": 3,
+    "midgap": 0.18,
+    "big": 1.35,
+    "small": false,
+    "lobe": [
+     0.38,
+     0.26
+    ]
+   }
+  }
+ ],
+ "skeleton": [
+  {
+   "label": "two tiny notches",
+   "style": "skelbig",
+   "g": {
+    "nsplit": 2,
+    "depth": 0.32,
+    "split_w": 0.4,
+    "mid": 0,
+    "small": false,
+    "lobe": null,
+    "lattice": false,
+    "smooth": 0.1
+   }
+  },
+  {
+   "label": "three notches + pair",
+   "style": "skelbig",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.27,
+    "split_w": 0.5,
+    "mid": 1,
+    "big": 0.7,
+    "small": false,
+    "lobe": null,
+    "lattice": false,
+    "smooth": 0.08
+   }
+  },
+  {
+   "label": "first splits",
+   "style": "skelbig",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.14,
+    "mid": 3,
+    "big": 1.05,
+    "small": false,
+    "lobe": null,
+    "lattice": false
+   }
+  },
+  {
+   "label": "lobe windows",
+   "style": "skelbig",
+   "g": {
+    "nsplit": 3,
+    "depth": 0.1,
+    "mid": 4,
+    "midgap": 0.13,
+    "big": 1.1,
+    "small": false,
+    "lobe": [
+     0.36,
+     0.17
+    ],
+    "lobe_top": true,
+    "lattice": false
+   }
+  },
+  {
+   "label": "final",
+   "style": "skelbig",
+   "g": {
+    "nsplit": 4,
+    "depth": 0.09,
+    "mid": 4,
+    "midgap": 0.13,
+    "lobe": [
+     0.42,
+     0.17
+    ],
+    "lobe_top": true,
+    "lattice": true
+   }
+  }
+ ]
+}

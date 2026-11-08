@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Critter Cubes promo</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d1f24; display: grid; place-items: center; overflow: hidden; }
+  canvas#out { height: 100vh; aspect-ratio: 9 / 16; display: block; }
+  #gl { display: none; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&display=block" rel="stylesheet">
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="module">
+// The promo, choreographed shot by shot with the real GLBs and their clips.
+// Live: plays in real time and loops. ?record=1: steps exactly 1/30 s per frame
+// and posts every frame (and a list of sound cues) to promo/server.py.
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const Q = new URLSearchParams(location.search);
+const COVER = Q.get("cover");  // ?cover=animals|blocks|puzzle: a 4:3 catalog cover, no text (posted to promo/server.py)
+const W = COVER ? 1600 : 1080, H = COVER ? 1200 : 1920, FPS = 30;
+const RECORD = Q.has("record");
+const TITLE = Q.get("title") || "CRITTER CUBES";
+const FONT = `"Titan One", "Arial Rounded MT Bold", Arial, sans-serif`;
+const BPM = 120, BEAT = 60 / BPM;  // the music: every cut and pop lands on the beat
+
+// ------------------------------------------------------------------ renderer and scene
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const out = document.getElementById("out");
+const ctx = out.getContext("2d");
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#bfe4f2");
+scene.fog = new THREE.Fog("#bfe4f2", 26, 60);
+const camera = new THREE.PerspectiveCamera(56, W / H, 0.1, 200);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9cbf7a, 1.7));
+const sun = new THREE.DirectionalLight(0xfff4e2, 2.3);
+sun.position.set(6, 14, 9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 50 });
+sun.shadow.bias = -0.0004;
+scene.add(sun, sun.target);
+
+// a seeded random, so a recording is the same every time
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+// ------------------------------------------------------------------ assets
+const loader = new GLTFLoader();
+const cache = {};
+const load = name => (cache[name] ||= loader.loadAsync(`../models/${name}.glb`));
+const ALL = ["bear", "bear_black", "bear_polar", "bear_sun", "bear_teddy", "bunny", "cat", "cat_black", "cat_calico", "cat_grey",
+  "cat_siamese", "cat_tuxedo", "chick", "chicken", "cow", "crocodile", "dog", "donkey", "duck", "elephant", "fox", "frog", "giraffe",
+  "goat", "goose", "hedgehog", "hen", "hippo", "horse", "koala", "lion", "monkey", "moose", "mouse", "owl", "owl_barn", "panda",
+  "penguin", "pig", "raccoon", "rooster", "sheep", "skunk", "tiger", "turkey", "turtle", "zebra",
+  "die_white", "die_red", "die_wood", "cube", "grass", "dirt", "rock", "sand", "snow", "ice", "water", "crate", "hay", "brick", "bush",
+  "button", "fan", "conveyor", "spring", "gate", "goal_flag", "turntable", "portal", "ramp"];
+const NEEDED = COVER ? ALL : ["sheep", "cow", "pig", "chick", "frog", "cat", "horse", "chicken", "duck", "bunny", "cat_calico", "dog", "fox",
+  "owl_barn", "bear", "panda", "lion", "elephant", "penguin", "mouse", "die_white", "die_red", "grass", "dirt", "sand", "crate",
+  "button", "gate", "goal_flag", "conveyor", "fan", "spring", "portal", "bush", "rock"];
+const G = {};
+
+// ------------------------------------------------------------------ actors
+let actors = [], things = [], tweens = [], T = 0, events = [];
+const sfx = (type, gain = 1) => events.push({ t: +T.toFixed(4), type, gain });
+
+class Actor {
+  constructor(name, x = 0, y = 0, z = 0, ry = 0) {
+    const g = G[name];
+    this.name = name;
+    this.group = new THREE.Group();
+    this.group.position.set(x, y, z);
+    this.group.rotation.y = ry;
+    this.model = g.scene.clone(true);
+    this.model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    this.group.add(this.model);
+    scene.add(this.group);
+    this.mixer = new THREE.AnimationMixer(this.model);
+    this.clips = Object.fromEntries(g.animations.map(c => [c.name, c]));
+    this.then = null;
+    actors.push(this);
+  }
+  play(name, { loop = false, then = null, ts = 1, at = 0 } = {}) {
+    const c = this.clips[name];
+    if (!c) return this;
+    this.mixer.stopAllAction();
+    const a = this.mixer.clipAction(c);
+    a.reset();
+    a.setLoop(loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+    a.clampWhenFinished = true;
+    a.timeScale = ts;
+    a.time = at;
+    a.play();
+    this.action = a;
+    this.then = then;
+    this.cur = name;
+    return this;
+  }
+  update(dt) {
+    this.mixer.update(dt);
+    const a = this.action;
+    if (a && a.loop === THREE.LoopOnce && a.time >= a.getClip().duration - 1e-4 && this.then) {
+      const f = this.then;
+      this.then = null;
+      f();
+    }
+  }
+}
+
+function place(name, x, y, z, ry = 0) {  // a static model (board tiles, crates, bushes)
+  const m = G[name].scene.clone(true);
+  m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  m.position.set(x, y, z);
+  m.rotation.y = ry;
+  scene.add(m);
+  things.push(m);
+  return m;
+}
+
+function board(cols, rows, z0 = 0, pick = () => "grass") {  // terrain cubes sunk so their tops are the floor
+  for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++) {
+      const x = (i - (cols - 1) / 2) * 2, z = z0 + (j - (rows - 1) / 2) * 2;
+      place(pick(i, j), x, -2, z);
+    }
+}
+
+function tween(t0, dur, fn, ease = e => e) { tweens.push({ t0, dur, fn, ease }); }
+const easeInOut = u => u * u * (3 - 2 * u);
+const easeOutBack = u => { const c = 1.7; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+const lerp = (a, b, u) => a + (b - a) * u;
+
+// hop an actor one cell: the hop clip's air time is frames 4-18 of 26
+function hop(a, dx, dz, dy = 0) {
+  const p0 = a.group.position.clone();
+  a.play("hop");
+  const t0 = T;
+  tween(t0 + 4 / FPS, 14 / FPS, u => {
+    a.group.position.set(p0.x + dx * u, p0.y + dy * u, p0.z + dz * u);
+  });
+}
+
+// ------------------------------------------------------------------ camera and shake
+let shake = 0, kick = 0, flash = 0;
+const rumble = amt => { shake = Math.max(shake, amt); };
+const punch = amt => { kick = Math.max(kick, amt); };
+const pops = (n, stagger, delay = 0) => { for (let i = 0; i < n; i++) tweens.push({ t0: T + delay + i * stagger, dur: 0, fn: () => sfx("pop", 0.35) }); };
+function cam(px, py, pz, tx, ty, tz) {
+  camera.position.set(px, py, pz);
+  camera.lookAt(tx, ty, tz);
+}
+
+// ------------------------------------------------------------------ shots
+// each: { dur, keep (don't clear the previous set), setup(), update(lt), text(lt) }
+const ROLL_IN_CONTACTS = [12, 17, 22, 28, 37, 41, 46];  // frames where a thrown die hits a face (and its clatter)
+const shots = [];
+const fired = {};
+const at = (lt, t, key, fn) => { if (lt >= t && !fired[key]) { fired[key] = true; fn(); } };
+
+// 1. the throw
+shots.push({
+  dur: 4.0,
+  setup() {
+    board(5, 12, -8);
+    for (const [x, z] of [[-6, -4], [6, 2], [-6, 6]]) place("bush", x, 0, z);
+  },
+  update(lt) {
+    const throws = [["sheep", -2.4, 1.6, 0.15], ["cow", 0, 1.6, 0.27], ["pig", 2.4, 1.6, 0.39],
+                    ["chick", -2.4, -1.4, 0.85], ["frog", 0, -1.4, 0.95], ["cat", 2.4, -1.4, 1.05]];
+    for (const [n, x, z, t] of throws) at(lt, t, "throw" + n, () => {
+      const a = new Actor(n, x, 0, z);
+      a.play("roll_in", { then: () => a.play("idle", { loop: true }) });
+      for (const f of ROLL_IN_CONTACTS) tweens.push({ t0: T + f / FPS, dur: 0, fn: () => { sfx(f > 37 ? "tick" : "clack", f > 37 ? 0.5 : 1); rumble(f > 37 ? 0.03 : 0.12); } });
+    });
+    at(lt, 3.1, "wake", () => actors.forEach((a, i) => a.play("excited", { loop: true, at: i * 0.07 })));
+    const u = Math.min(1, lt / 4);
+    cam(0, lerp(10.5, 8.2, u), lerp(15.5, 13, u), 0, 0.4, -1.4);
+  },
+});
+
+// 2. title, same set
+shots.push({
+  dur: 2.0,
+  keep: true,
+  flash: true,
+  setup() { punch(1); pops(TITLE.replace(/ /g, "").length, 0.06); },
+  update(lt) { const u = Math.min(1, lt / 2); cam(0, lerp(8.2, 7.2, u), lerp(13, 11.8, u), 0, 1.6, -0.6); },
+  text(lt) {
+    balloon(TITLE_LINES, 0.19, 190, lt, { stagger: 0.06 });
+    pill("stackable dice animals", 0.335, 54, (lt - BEAT * 2) / 0.3);
+  },
+});
+
+// 3. meet the herd
+const HERD = [["horse", "idle"], ["cow", "waggle"], ["pig", "sleep"], ["sheep", "excited"], ["chicken", "walk"], ["duck", "hop"],
+  ["bunny", "waggle"], ["cat_calico", "sleep"], ["dog", "run"], ["fox", "sad"], ["owl_barn", "idle"], ["bear", "waggle"],
+  ["panda", "sleep"], ["lion", "excited"], ["elephant", "waggle"]];
+shots.push({
+  dur: 4.0,
+  setup() {
+    board(5, 10, -5, (i, j) => (i + j) % 5 === 0 ? "dirt" : "grass");
+    HERD.forEach(([n, clip], k) => {
+      const a = new Actor(n, (k % 3 - 1) * 2.7, 0, 4 - Math.floor(k / 3) * 3.1);
+      a.play(clip, { loop: true, at: k * 0.37 });
+    });
+  },
+  update(lt) {
+    const u = easeInOut(Math.min(1, lt / 4));
+    cam(lerp(-2, 2, u), lerp(11.5, 10.5, u), lerp(17.5, 13.5, u), 0, 0.5, lerp(1, -4, u));
+  },
+  text(lt) {
+    balloon("47 ANIMALS", 0.15, 132, lt - 0.0, { punch: true });
+    pill("farm · wild · cats · bears", 0.225, 48, (lt - 1.0) / 0.3);
+  },
+});
+
+// 4. faces: three close-ups
+shots.push({
+  dur: 2.0,
+  flash: true,
+  setup() {
+    board(3, 3);
+    const a = new Actor("sheep");
+    a.play("teeter_in", { then: () => a.play("teeter_loop", { loop: true }) });
+  },
+  update(lt) { cam(0.4, 2.6, 6.2, 0, 1.25, 0); },
+  text(lt) { tag("SCARED", lt / 0.25, "#ff9f68"); },
+});
+shots.push({
+  dur: 2.0,
+  setup() {
+    board(3, 3);
+    this.pig = new Actor("pig");
+    this.pig.play("idle", { loop: true });
+    this.die = new Actor("die_white", 0, 2.16, 0, 0.5);
+    this.die.play("drop");
+  },
+  update(lt) {
+    at(lt, 0.47, "hit", () => { this.pig.play("squish"); sfx("thud"); sfx("squish"); rumble(0.18); });
+    at(lt, 0.9, "clk1", () => sfx("tick", 0.6));
+    cam(0.5, 3.4, 7.6, 0, 1.9, 0);
+  },
+  text(lt) { tag("SQUISHED", (lt - 0.45) / 0.25, "#ff7aa2"); },
+});
+shots.push({
+  dur: 2.0,
+  setup() {
+    board(3, 3);
+    this.cat = new Actor("cat");
+    this.cat.play("spin_end", { at: 0.8 });
+    sfx("whir");
+  },
+  update(lt) {
+    at(lt, 1.0, "slam", () => { sfx("thud"); rumble(0.14); });
+    cam(-0.4, 2.8, 6.8, 0, 1.3, 0);
+  },
+  text(lt) { tag("DIZZY", (lt - 1.0) / 0.25, "#9d8cff"); },
+});
+
+// 4b. boop: a finger pokes three of them, on the beat, and they squish like jelly
+shots.push({
+  dur: 2.0,
+  flash: true,
+  setup() {
+    board(5, 3);
+    this.crew = [["sheep", -2.7], ["pig", 0], ["chick", 2.7]].map(([n, x]) => { const a = new Actor(n, x, 0, 0); a.play("idle", { loop: true }); return a; });
+  },
+  update(lt) {
+    this.crew.forEach((a, k) => at(lt, BEAT * (k + 1) - 0.08, "boop" + k, () => {
+      a.play("squish", { then: () => a.play("happy", { then: () => a.play("idle", { loop: true }) }) });
+      sfx("squish", 1.2); sfx("pop", 0.6);
+    }));
+    cam(0, 4.2, 9.5, 0, 1.1, 0);
+  },
+  text(lt) {
+    // the finger: travels to each animal in turn and presses on the beat
+    const k = Math.max(0, Math.min(2, Math.floor((lt + 0.25) / BEAT) - 1));
+    const a = this.crew[k];
+    const p = new THREE.Vector3(a.group.position.x, 2.6, a.group.position.z).project(camera);
+    const ph = ((lt + 0.25) % BEAT) / BEAT;  // 0..1 within its beat: press near 0.35
+    const press = Math.max(0, 1 - Math.abs(ph - 0.33) / 0.18);
+    const fx = (p.x * 0.5 + 0.5) * W + 40, fy = (-p.y * 0.5 + 0.5) * H - 150 + press * 70;
+    if (lt > BEAT * 0.6) finger(fx, fy, press);
+    for (let j = 0; j < 3; j++) {
+      const tb = BEAT * (j + 1) - 0.08;
+      if (lt > tb) {
+        const b = this.crew[j].group.position;
+        const q = new THREE.Vector3(b.x, 3.0, b.z).project(camera);
+        const bx = Math.min(W - 190, Math.max(190, (q.x * 0.5 + 0.5) * W));
+        balloonWord("BOOP!", bx, (-q.y * 0.5 + 0.5) * H - 60, 70, lt - tb, j);
+      }
+    }
+  },
+});
+
+// 5a. puzzles: button, gate, goal
+shots.push({
+  dur: 6.0,
+  flash: true,
+  setup() {
+    board(5, 7, -2, (i, j) => (i === 1 && j < 6) ? "dirt" : "grass");
+    this.btn = new Actor("button", 0, 0, 2);
+    this.btn.play("idle", { loop: true });
+    this.gate = new Actor("gate", -2, 0, -2);
+    this.gate.play("closed", { loop: true });
+    this.flag = new Actor("goal_flag", -2, 0, 2);
+    this.flag.play("wave", { loop: true });
+    this.sheep = new Actor("sheep", 4, 0, 2);
+    this.sheep.play("idle", { loop: true });
+    this.cow = new Actor("cow", -2, 0, -6);
+    this.cow.play("idle", { loop: true });
+    for (const [x, z] of [[4, -6], [2, -8], [4, 6]]) place("bush", x, 0, z);
+    this.moves = 0;
+  },
+  update(lt) {
+    at(lt, 0.3, "h1", () => { hop(this.sheep, -2, 0); this.moves++; });
+    at(lt, 0.9, "l1", () => sfx("tick", 0.7));
+    at(lt, 1.15, "h2", () => { hop(this.sheep, -2, 0, 0.31); this.moves++; });
+    at(lt, 1.75, "press", () => { this.btn.play("press", { then: () => this.btn.play("held", { loop: true }) }); sfx("click"); });
+    at(lt, 2.0, "open", () => { this.gate.play("open", { then: () => this.gate.play("opened", { loop: true }) }); sfx("gate"); });
+    at(lt, 2.4, "clank", () => { sfx("clank"); rumble(0.05); });
+    at(lt, 2.5, "roll", () => {
+      this.moves++;
+      this.cow.play("roll", { then: () => { this.cow.group.translateZ(8); this.cow.play("happy", { then: () => this.cow.play("excited", { loop: true }) }); sfx("chime"); } });
+      for (const f of [8 + 13, 8 + 13 + 6 + 11, 8 + 13 + 12 + 11 + 6, 8 + 13 + 12 + 11 + 12 + 12]) tweens.push({ t0: T + f / FPS, dur: 0, fn: () => { sfx("clack"); rumble(0.08); } });
+    });
+    const u = easeInOut(Math.min(1, lt / 6));
+    cam(lerp(5.5, 4.5, u), lerp(11, 10, u), lerp(11, 10, u), 0, 0, lerp(-0.5, 0, u));
+  },
+  text(lt) {
+    hud(Math.min(3, this.moves), lt > 5.5 ? 3 : 2);
+    balloon("PUZZLES!", 0.86, 110, lt - 0.2);
+    if (lt > 5.5) balloon("GOAL!", 0.47, 150, lt - 5.5, { stagger: 0.04 });
+  },
+});
+
+// 5b. puzzles: conveyor, fan, spring
+shots.push({
+  dur: 4.0,
+  setup() {
+    board(5, 7, -2, (i, j) => (i === 0 ? "sand" : "grass"));
+    this.belts = [-6, -4, -2].map(z => { const b = new Actor("conveyor", -2, 0, z); b.play("run", { loop: true, ts: 0.4 }); return b; });
+    this.pig = new Actor("pig", -2, 0.38, -6);
+    this.pig.play("idle", { loop: true });
+    this.fan = new Actor("fan", 2, 0, -4);
+    this.fan.play("on", { loop: true });
+    this.chick = new Actor("chick", 2, 2.2, -4);
+    this.chick.play("waggle", { loop: true });
+    this.spring = new Actor("spring", 2, 0, 2);
+    this.spring.play("idle", { loop: true });
+    this.frog = new Actor("frog", 2, 0.84, 2);
+    this.frog.play("idle", { loop: true });
+    place("crate", 0, 0, -6); place("crate", 0, 2, -6);
+    this.portals = [[-4, 2], [4, -8]].map(([x, z]) => { const p = new Actor("portal", x, 0, z); p.play("swirl", { loop: true }); return p; });
+    tween(T, 3.0, u => { this.pig.group.position.z = -6 + 6 * u; });
+    sfx("hum");
+  },
+  update(lt) {
+    this.chick.group.position.y = 2.2 + 0.18 * Math.sin(lt * 5.5);
+    at(lt, 3.05, "pigoff", () => { hop(this.pig, 0, 2, -0.38); });
+    at(lt, 1.3, "boing", () => {
+      this.spring.play("boing", { then: () => this.spring.play("idle", { loop: true }) });
+      sfx("boing");
+      this.frog.play("hop", { ts: 0.6 });
+      const t0 = T + 0.12;
+      tween(t0, 0.85, u => {
+        this.frog.group.position.set(lerp(2, 0, u), lerp(0.84, 4.0, u) + 3.2 * u * (1 - u) * 2, lerp(2, -6, u));
+      });
+      tweens.push({ t0: t0 + 0.85, dur: 0, fn: () => { this.frog.play("place", { then: () => this.frog.play("excited", { loop: true }) }); sfx("clack"); rumble(0.08); } });
+    });
+    const u = easeInOut(Math.min(1, lt / 4));
+    cam(lerp(-5, -4, u), lerp(10.5, 10, u), lerp(10, 9.5, u), 0, 0.6, -2);
+  },
+  text(lt) {
+    hud(5, 2);
+    balloon("PUZZLES!", 0.86, 110, 9);
+  },
+});
+
+// 6. stack 'em: they land on each other on the beat (no squish here), the top one teeters
+shots.push({
+  dur: 4.0,
+  flash: true,
+  setup() {
+    board(5, 5);
+    for (const [x, z] of [[-4, -2], [4, -4]]) place("bush", x, 0, z);
+  },
+  update(lt) {
+    const order = ["cow", "pig", "sheep", "chick"];
+    order.forEach((n, k) => at(lt, BEAT * (k + 1) - 0.43, "drop" + n, () => {  // the drop clip lands 0.43 s in
+      const a = new Actor(n, 0, 2.16 * k, 0);
+      const top = k === order.length - 1;
+      a.play("drop", { then: () => top ? a.play("teeter_in", { then: () => a.play("teeter_loop", { loop: true }) }) : a.play("idle", { loop: true }) });
+      tweens.push({ t0: T + 0.43, dur: 0, fn: () => { sfx("clack"); sfx("thud", 0.6); rumble(0.12); punch(0.4); } });
+    }));
+    const u = easeInOut(Math.min(1, lt / 4));
+    cam(lerp(-2, 2, u), lerp(3.5, 5.2, u), lerp(15, 14, u), 0, lerp(3, 4.2, u), 0);
+  },
+  text(lt) { balloon("STACK 'EM", 0.13, 140, lt - 0.1); },
+});
+
+// 7. dance party, then the end card on the same set
+const CREW = ["sheep", "cow", "pig", "chick", "frog", "cat", "bear", "panda", "lion"];
+const confetti = [];
+shots.push({
+  dur: 6.0,
+  flash: true,
+  setup() {
+    board(5, 5);
+    CREW.forEach((n, k) => {
+      const a = new Actor(n, (k % 3 - 1) * 2.8, 0, (Math.floor(k / 3) - 1) * 3);
+      a.play("excited", { loop: true, ts: (46 / 30) / (3 * BEAT) });  // three hops a bar and a half: one per beat
+    });
+    const COLS = [0xff7aa2, 0xffd166, 0x7bdff2, 0xb2f7a1, 0xcdb4ff, 0xff9f68];
+    for (let i = 0; i < 90; i++) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.02), new THREE.MeshStandardMaterial({ color: COLS[i % COLS.length] }));
+      m.position.set((rnd() - 0.5) * 12, 10 + rnd() * 10, (rnd() - 0.5) * 10);
+      m.userData = { v: 2 + rnd() * 2, s: rnd() * 6, r: rnd() * 4 };
+      scene.add(m);
+      things.push(m);
+      confetti.push(m);
+    }
+  },
+  update(lt) {
+    at(lt, 3.0, "spin", () => { actors.forEach(a => a.play("spin_start", { then: () => a.play("spin_loop", { loop: true }) })); sfx("whir"); punch(1); });
+    at(lt, 0.0, "beat0", () => sfx("pop", 0.5));
+    for (const m of confetti) {
+      m.position.y -= m.userData.v / FPS;
+      m.position.x += Math.sin(T * 2 + m.userData.s) * 0.01;
+      m.rotation.x += m.userData.r / FPS;
+      m.rotation.z += m.userData.r * 0.7 / FPS;
+    }
+    const u = easeInOut(Math.min(1, lt / 6));
+    cam(lerp(-3, 3, u), lerp(10, 9, u), lerp(16.5, 15.5, u), 0, 0.4, 0);
+  },
+  text(lt) { balloon("25 MOVES", 0.13, 150, lt - 0.1); pill("in every animal", 0.21, 50, (lt - BEAT * 2) / 0.3); },
+});
+shots.push({
+  dur: 6.0,
+  keep: true,
+  setup() {
+    actors.forEach((a, k) => a.play("spin_end", { then: () => a.play("happy", { then: () => a.play("idle", { loop: true }) }) }));
+    tweens.push({ t0: T + 1.8, dur: 0, fn: () => { sfx("thud"); rumble(0.12); } });
+    pops(TITLE.replace(/ /g, "").length, 0.06, 1.0);
+  },
+  update(lt) {
+    for (const m of confetti) { m.position.y -= m.userData.v / FPS; m.rotation.x += m.userData.r / FPS; }
+    const u = easeInOut(Math.min(1, lt / 4));
+    cam(lerp(3, 0, u), lerp(9, 11, u), lerp(15.5, 18, u), 0, 0.6, 0);
+    at(lt, 4.0, "sting", () => { actors.forEach(a => a.play("happy")); punch(1); });
+  },
+  text(lt) {
+    balloon(TITLE_LINES, 0.16, 190, lt - 1.0, { stagger: 0.06 });
+    pill("47 animals · dice · terrain · puzzle pieces", 0.29, 40, (lt - 2.0) / 0.3);
+    pill("animated glTF / GLB", 0.335, 40, (lt - 2.5) / 0.3);
+  },
+});
+
+const STARTS = [];
+let acc = 0;
+for (const s of shots) { STARTS.push(acc); acc += s.dur; }
+const TOTAL = acc;
+
+// ------------------------------------------------------------------ overlays
+function strokeText(text, x, y, size, fill = "#fff", outline = "#4a3326") {
+  ctx.font = `${size}px ${FONT}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = size * 0.16;
+  ctx.strokeStyle = outline;
+  ctx.shadowColor = "rgba(0,0,0,0.25)";
+  ctx.shadowOffsetY = size * 0.06;
+  ctx.shadowBlur = 0;
+  ctx.strokeText(text, x, y);
+  ctx.shadowColor = "transparent";
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
+}
+const TITLE_LINES = TITLE.includes(" ") ? TITLE.replace(" ", "|") : TITLE;  // two lines in portrait
+// balloon letters: candy colours, a thick outline, a chunky extrusion and a glossy highlight;
+// each letter pops in on its own and bobs
+const CANDY = [["#ff7aa2", "#c94c76"], ["#ffd166", "#d69a2a"], ["#6fd6f5", "#3a9ec4"], ["#9be58a", "#5fae4f"], ["#c9a6ff", "#8f6ad6"], ["#ff9f68", "#d06a35"]];
+const glyph = document.createElement("canvas");
+const gctx = glyph.getContext("2d");
+function balloonLetter(ch, size, ci) {
+  const [fill, side] = CANDY[ci % CANDY.length];
+  const pad = size * 0.5;
+  gctx.font = `${size}px ${FONT}`;
+  const w = Math.ceil(gctx.measureText(ch).width + pad * 2), h = Math.ceil(size * 1.6 + pad);
+  glyph.width = w; glyph.height = h;
+  const g = gctx;
+  g.font = `${size}px ${FONT}`;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.lineJoin = "round";
+  const cx = w / 2, cy = h / 2 - size * 0.08, depth = size * 0.12;
+  for (let k = depth; k > 0; k -= 2) {  // the extrusion, and its outline
+    g.lineWidth = size * 0.2; g.strokeStyle = "#3b2418"; g.strokeText(ch, cx, cy + k);
+  }
+  for (let k = depth; k > 0; k -= 2) { g.fillStyle = side; g.fillText(ch, cx, cy + k); }
+  g.lineWidth = size * 0.2; g.strokeStyle = "#3b2418"; g.strokeText(ch, cx, cy);
+  g.fillStyle = fill; g.fillText(ch, cx, cy);
+  // the gloss: the letter in white, minus itself shifted down-right, leaves a highlight on the top-left
+  const hi = document.createElement("canvas"); hi.width = w; hi.height = h;
+  const hc = hi.getContext("2d");
+  hc.font = g.font; hc.textAlign = "center"; hc.textBaseline = "middle";
+  hc.fillStyle = "rgba(255,255,255,0.55)"; hc.fillText(ch, cx, cy);
+  hc.globalCompositeOperation = "destination-out";
+  hc.fillText(ch, cx + size * 0.05, cy + size * 0.07);
+  g.drawImage(hi, 0, 0);
+  return glyph;
+}
+function balloon(text, yFrac, size, lt, { stagger = 0.045, punch: doPunch = false } = {}) {
+  if (lt <= 0) return;
+  const lines = text.split("|");
+  ctx.font = `${size}px ${FONT}`;
+  let n = 0;
+  lines.forEach((line, li) => {
+    const widths = [...line].map(c => ctx.measureText(c).width + size * 0.07);  // a little tracking for the fat outlines
+    const total = widths.reduce((a, b) => a + b, 0);
+    let x = W / 2 - total / 2;
+    const y = H * yFrac + (li - (lines.length - 1) / 2) * size * 1.05;
+    [...line].forEach((c, i) => {
+      const u = (lt - n * stagger) / 0.35;
+      const cx = x + widths[i] / 2;
+      x += widths[i];
+      n++;
+      if (c === " " || u <= 0) return;
+      const s = easeOutBack(Math.min(1, u));
+      const bob = Math.sin(lt * 2 * Math.PI / (BEAT * 2) + n * 0.7) * size * 0.04;
+      const tilt = Math.sin(n * 2.3) * 0.08;
+      const gl = balloonLetter(c, size, n);
+      ctx.save();
+      ctx.translate(cx, y + bob);
+      ctx.rotate(tilt);
+      ctx.scale(s, s);
+      ctx.drawImage(gl, -gl.width / 2, -gl.height / 2);
+      ctx.restore();
+    });
+  });
+}
+function finger(x, y, press) {  // a cartoon pointing finger (a white glove), pointing down, squashing as it presses
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.28);
+  ctx.scale(1 + press * 0.08, 1 - press * 0.1);
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 12;
+  ctx.strokeStyle = "#3b2418";
+  ctx.fillStyle = "#ffffff";
+  const blob = (fn) => { ctx.beginPath(); fn(); ctx.fill(); ctx.stroke(); };
+  blob(() => roundRect(-62, -150, 124, 120, 48));            // the hand
+  blob(() => roundRect(-22, -60, 46, 120, 23));              // the pointing finger, down
+  blob(() => roundRect(-74, -128, 40, 70, 20));              // the thumb
+  blob(() => roundRect(-58, -186, 116, 52, 18));             // the cuff
+  ctx.strokeStyle = "rgba(59,36,24,0.35)"; ctx.lineWidth = 6;
+  for (const dx of [-28, 2, 30]) { ctx.beginPath(); ctx.moveTo(dx, -122); ctx.lineTo(dx, -88); ctx.stroke(); }
+  ctx.restore();
+}
+function balloonWord(text, x, y, size, lt, ci = 0) {  // a small popping word (BOOP!) at a point
+  if (lt <= 0 || lt > 1.4) return;
+  const s = easeOutBack(Math.min(1, lt / 0.25)) * (lt > 1.1 ? 1 - (lt - 1.1) / 0.3 : 1);
+  ctx.save();
+  ctx.translate(x, y - lt * 40);
+  ctx.rotate(-0.12 + ci * 0.1);
+  ctx.scale(s, s);
+  ctx.font = `${size}px ${FONT}`;
+  let off = -ctx.measureText(text).width / 2;
+  [...text].forEach((c, i) => {
+    const gl = balloonLetter(c, size, ci * 2 + i);
+    const w = ctx.measureText(c).width;
+    ctx.drawImage(gl, off + w / 2 - gl.width / 2, -gl.height / 2);
+    off += w;
+  });
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function pill(text, yFrac, size, u, bg = "rgba(74,51,38,0.82)") {
+  if (u <= 0) return;
+  const s = easeOutBack(Math.min(1, u));
+  ctx.save();
+  ctx.translate(W / 2, H * yFrac);
+  ctx.scale(s, s);
+  ctx.font = `${size}px ${FONT}`;
+  const w = ctx.measureText(text).width + size * 1.4, h = size * 1.6;
+  roundRect(-w / 2, -h / 2, w, h, h / 2);
+  ctx.fillStyle = bg;
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 0, 2);
+  ctx.restore();
+}
+function tag(text, u, col) {  // a sticker label, tilted, top left
+  if (u <= 0) return;
+  const s = easeOutBack(Math.min(1, u));
+  ctx.save();
+  ctx.translate(250, 300);
+  ctx.rotate(-0.12);
+  ctx.scale(s, s);
+  ctx.font = `92px ${FONT}`;
+  const w = ctx.measureText(text).width + 90, h = 150;
+  roundRect(-w / 2, -h / 2, w, h, 40);
+  ctx.fillStyle = "#fff";
+  ctx.fill();
+  roundRect(-w / 2 + 10, -h / 2 + 10, w - 20, h - 20, 32);
+  ctx.fillStyle = col;
+  ctx.fill();
+  strokeText(text, 0, 4, 92, "#fff");
+  ctx.restore();
+}
+function hud(moves, stars) {  // a little game UI, so it reads as gameplay
+  ctx.save();
+  roundRect(40, 60, 330, 110, 55);
+  ctx.fillStyle = "rgba(74,51,38,0.85)";
+  ctx.fill();
+  ctx.font = `56px ${FONT}`;
+  ctx.fillStyle = "#fff3c4";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("LEVEL 3", 80, 117);
+  roundRect(W - 400, 60, 360, 110, 55);
+  ctx.fillStyle = "rgba(74,51,38,0.85)";
+  ctx.fill();
+  ctx.font = `64px ${FONT}`;
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < stars ? "#ffd166" : "rgba(255,255,255,0.25)";
+    ctx.fillText("★", W - 370 + i * 80, 118);
+  }
+  roundRect(W / 2 - 150, 200, 300, 86, 43);
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fill();
+  ctx.font = `46px ${FONT}`;
+  ctx.fillStyle = "#4a3326";
+  ctx.textAlign = "center";
+  ctx.fillText(`MOVES ${moves}`, W / 2, 245);
+  ctx.restore();
+}
+
+// ------------------------------------------------------------------ catalog covers
+// Each poses a scene: every actor frozen at a chosen moment of a clip (pose(name, x, y, z, ry, clip, time)).
+function pose(name, x, y, z, ry, clip, t) {
+  const a = new Actor(name, x, y, z, ry);
+  a.play(clip, { at: t, ts: 0 });
+  a.mixer.update(0);
+  return a;
+}
+function tint(obj, hex) {
+  obj.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.color.set(hex); } });
+}
+const COVERS = {
+  animals() {  // a crowd on a meadow, each in its own mood, and a little stack
+    board(9, 7, 0, (i, j) => (i * 3 + j * 5) % 11 === 0 ? "dirt" : "grass");
+    pose("cow", 5.4, 0, -4.4, -0.3, "idle", 0);
+    pose("pig", 5.4, 2.16, -4.4, -0.45, "happy", 0.25);
+    pose("chick", 5.4, 4.32, -4.4, -0.2, "teeter_loop", 0.6);
+    pose("sheep", -3.4, 0, 3.4, 0.25, "excited", 0.62);
+    pose("cat_calico", 0, 0, 3.8, 0, "sleep", 1.2);
+    pose("frog", 3.4, 0, 3.4, -0.25, "waggle", 0.3);
+    pose("panda", 6.6, 0, 1.6, -0.45, "happy", 0.2);
+    pose("bunny", -6.4, 0, 1.2, 0.45, "waggle", 0.5);
+    pose("fox", -2.6, 0, -0.2, 0.2, "waggle", 0.5);
+    pose("lion", 1, 0, 0, -0.05, "idle", 0.4);
+    pose("elephant", 4.2, 0, -0.6, -0.35, "idle", 1.1);
+    pose("penguin", -5.6, 0, -3.6, 0.35, "idle", 0.9);
+    pose("owl_barn", -2.2, 0, -4.2, 0.15, "idle", 0.2);
+    pose("tiger", 1.4, 0, -4.4, -0.1, "idle", 0.5);
+    place("bush", -8, 0, -6); place("bush", 8, 0, 4);
+    cam(0, 15, 20, 0, 0.8, -0.8);
+  },
+  blocks() {  // a little terraced island of terrain cubes with dice and a tinted cube on it
+    const at = (n, i, k, j, ry = 0) => place(n, (i - 2) * 2, (k - 1) * 2, (j - 2) * 2, ry);
+    const grid = [["rock", "rock", "brick", "snow", "snow"],
+                  ["dirt", "grass", "grass", "grass", "ice"],
+                  ["sand", "grass", "grass", "grass", "water"],
+                  ["sand", "sand", "grass", "water", "water"],
+                  ["water", "sand", "sand", "water", "water"]];
+    grid.forEach((row, j) => row.forEach((n, i) => at(n, i, 0, j)));
+    at("rock", 0, 1, 0); at("rock", 1, 1, 0); at("brick", 2, 1, 0); at("snow", 3, 1, 0); at("snow", 4, 1, 0); at("snow", 4, 2, 0);
+    at("brick", 2, 2, 0); at("ice", 4, 1, 1);
+    at("crate", 0, 1, 1); at("hay", 0, 1, 2, 0.2); at("crate", 0, 2, 1, 0.1);
+    at("bush", 1, 1, 0); at("bush", 3, 1, 1);
+    const c = place("cube", 2 * (3 - 2), 2, 2 * (1 - 2) - 0.2, 0.25); tint(c, "#ff8fb1");
+    pose("die_white", -0.4, 0, 0.2, 0.5, "spin_loop", 0.31);
+    pose("die_red", 2.0, 0, 1.6, -0.35, "idle", 0).group.rotation.set(0, -0.35, 0);
+    place("die_wood", -2, 0, 2.6, 0.9);
+    cam(8.6, 11.8, 14.4, 0, 0.8, 0);
+  },
+  puzzle() {  // a little level: every puzzle piece in use
+    board(6, 5, 0, (i, j) => (i === 1 ? "dirt" : (j === 4 && i > 2) ? "sand" : "grass"));
+    pose("gate", -3, 0, -2, 0, "closed", 0);
+    pose("button", 1, 0, 2, 0, "idle", 0);
+    pose("goal_flag", -3, 0, -6, 0, "wave", 0.4);
+    pose("conveyor", 3, 0, -4, 0, "run", 0.2); pose("conveyor", 3, 0, -2, 0, "run", 0.2);
+    pose("fan", 5, 0, 0, 0, "on", 0.8);
+    pose("spring", 1, 0, -4, 0, "boing", 0.45);
+    pose("portal", -1, 0, -6, 0, "swirl", 0.6);
+    pose("turntable", 5, 0, 4, 0, "idle", 0);
+    pose("ramp", -5, 0, 1, 0, "idle", 0);  // runs from this cell to the one in front
+    pose("die_white", 3, 0.38, -3.3, 0.2, "idle", 0);
+    place("crate", 5, 0, -4); place("crate", 5, 2, -4); place("bush", -5, 0, -6);
+    cam(7.4, 12.6, 13.2, -0.2, 0, -0.2);
+  },
+};
+
+// ------------------------------------------------------------------ the frame step
+let shotIx = -1;
+function clearSet() {
+  for (const a of actors) scene.remove(a.group);
+  for (const t of things) scene.remove(t);
+  actors = []; things = []; tweens = []; confetti.length = 0;
+  for (const k in fired) delete fired[k];
+}
+function step(dt) {
+  T += dt;
+  let ix = 0;
+  while (ix + 1 < shots.length && T >= STARTS[ix + 1]) ix++;
+  if (ix !== shotIx) {
+    if (!shots[ix].keep) clearSet();
+    else for (const k in fired) delete fired[k];
+    shotIx = ix;
+    if (shots[ix].flash) flash = 1;
+    shots[ix].setup.call(shots[ix]);
+  }
+  const s = shots[ix], lt = T - STARTS[ix];
+  s.update.call(s, lt);
+  for (const tw of [...tweens]) {
+    if (T < tw.t0) continue;
+    const u = tw.dur ? Math.min(1, (T - tw.t0) / tw.dur) : 1;
+    tw.fn(tw.ease ? tw.ease(u) : u);
+    if (u >= 1) tweens.splice(tweens.indexOf(tw), 1);
+  }
+  for (const a of actors) a.update(dt);
+  // the rumble: a quick decaying shake
+  if (shake > 0.001) {
+    camera.position.x += (rnd() - 0.5) * shake;
+    camera.position.y += (rnd() - 0.5) * shake;
+    shake *= 0.82;
+  }
+  camera.fov = 56 - kick * 7;  // the punch: a quick push in that springs back
+  camera.updateProjectionMatrix();
+  kick *= 0.86;
+  renderer.render(scene, camera);
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  if (s.text) s.text.call(s, lt);
+  if (flash > 0.01) {  // a quick white flash on the cut
+    ctx.fillStyle = `rgba(255,255,255,${flash * 0.85})`;
+    ctx.fillRect(0, 0, W, H);
+    flash *= 0.6;
+  }
+}
+
+async function main() {
+  ctx.fillStyle = "#1d1f24"; ctx.fillRect(0, 0, W, H);
+  await document.fonts.load(`100px "Titan One"`);
+  await document.fonts.load(`100px "Apple Color Emoji"`).catch(() => {});
+  const gl = await Promise.all(NEEDED.map(load));
+  NEEDED.forEach((n, i) => (G[n] = gl[i]));
+  if (COVER) {
+    out.width = W; out.height = H; out.style.aspectRatio = `${W} / ${H}`;
+    COVERS[COVER]();
+    camera.aspect = W / H; camera.fov = 40; camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    ctx.drawImage(renderer.domElement, 0, 0, W, H);
+    if (Q.has("save")) await fetch(`/cover/${COVER}`, { method: "POST", body: await new Promise(r => out.toBlob(r, "image/png")) });
+    document.title = "COVER";
+    return;
+  }
+  if (RECORD) {
+    const N = Math.round(TOTAL * FPS);
+    for (let f = 0; f < N; f++) {
+      step(1 / FPS);
+      const blob = await new Promise(r => out.toBlob(r, "image/jpeg", 0.93));
+      await fetch(`/frame/${f}`, { method: "POST", body: blob });
+    }
+    await fetch("/events", { method: "POST", body: JSON.stringify({ fps: FPS, total: TOTAL, events }) });
+    document.title = "DONE";
+    return;
+  }
+  if (Q.has("sheet")) {  // a contact sheet of moments: ?sheet=1.2,4,8 (for checking the cut)
+    const ts = Q.get("sheet").split(",").map(Number);
+    const cols = 6, cw = W / cols, ch = H / cols;
+    const sheet = document.createElement("canvas");
+    sheet.width = W; sheet.height = ch * Math.ceil(ts.length / cols);
+    const sc = sheet.getContext("2d");
+    ts.forEach(() => {});
+    for (let i = 0; i < ts.length; i++) {
+      while (T + 1 / FPS <= ts[i]) step(1 / FPS);
+      sc.drawImage(out, (i % cols) * cw, Math.floor(i / cols) * ch, cw, ch);
+      sc.fillStyle = "#000"; sc.font = "20px sans-serif"; sc.fillText(ts[i].toFixed(1) + "s", (i % cols) * cw + 6, Math.floor(i / cols) * ch + 22);
+    }
+    out.width = sheet.width; out.height = sheet.height;
+    out.style.height = "auto"; out.style.width = "100vw"; out.style.aspectRatio = "auto";
+    ctx.drawImage(sheet, 0, 0);
+    document.title = "SHEET";
+    return;
+  }
+  if (Q.has("at")) {  // jump to a moment and hold it (for checking a shot)
+    const target = +Q.get("at");
+    while (T + 1 / FPS <= target) step(1 / FPS);
+    document.title = "AT " + T.toFixed(2);
+    return;
+  }
+  let last = performance.now();
+  const loop = now => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (T + dt >= TOTAL) { T = 0; shotIx = -1; events = []; seed = 7; }
+    step(dt);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+main();
+</script>
+</body>
+</html>

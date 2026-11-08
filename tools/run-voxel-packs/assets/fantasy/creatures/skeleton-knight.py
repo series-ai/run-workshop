@@ -258,11 +258,12 @@ def build():
     # from over the helm, across the front, to the left hip. The keys were solved for tip and fist
     # targets (the cut crosses the front, so it reads from the preview camera on the shield side);
     # each key step stays under 150 degrees, as the export takes the shortest way between keys.
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 0, -30, 66), (0.4, 69, -58, 61), (0.47, 77, 6, 40), (0.53, 46, 36, 12), (0.62, 46, 36, 12), (1.0, 0, 0, 0))},
-              "longsword": {"rot": keys((0, 0, 0, 0), (0.2, 21, -10, -53), (0.4, -20, -40, -53), (0.47, -71, -22, -29), (0.53, -91, -11, -20), (0.62, -91, -11, -20), (1.0, 0, 0, 0))},
-              "torso": {"rot": keys((0, 0, 0, 0), (0.2, 5, -7, 0), (0.4, 10, -14, 0), (0.47, -4, 0, 0), (0.53, -18, 12, 0), (1.0, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.4, 8, 0, 0), (0.53, -10, 0, 0), (1.0, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4, -20, 0, 0), (0.53, 15, 0, 0), (1.0, 0, 0, 0))}}
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 0, -30, 66), (0.3667, 66, -56, 61), (0.4333, 71, -60, 61), (0.5333, 46, 36, 12), (0.6, 40, 42, 6), (0.7333, 44, 38, 10), (1.0333, 0, 0, 0))},
+              "longsword": {"rot": keys((0, 0, 0, 0), (0.2, 21, -10, -53), (0.3667, -18, -38, -53), (0.4333, -22, -42, -54), (0.5333, -91, -11, -20), (0.6, -97, -6, -16), (0.7333, -92, -10, -19), (1.0333, 0, 0, 0))},
+              "torso": {"rot": keys((0, 0, 0, 0), (0.2, 5, -9, 0), (0.3667, 11, -20, 0), (0.4333, 12, -23, 0), (0.5333, -18, 18, 0), (0.6, -21, 22, 0), (0.7333, -17, 17, 0), (1.0333, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4333, 10, 6, 0), (0.5667, -11, -6, 0), (0.6333, -14, -8, 0), (0.7667, -9, -5, 0), (1.0333, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, -22, 0, 0), (0.5667, 18, 0, 0), (0.6667, 20, 0, 0), (1.0333, 0, 0, 0))},
+              "skeleton-knight": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 1.7), (0.4333, 0, 0, 2.0), (0.5333, 0, 0, -4.5), (0.6, 0, 0, -5.2), (0.7333, 0, 0, -4.5), (1.0333, 0, 0, 0))}}
     hit = {"torso": {"rot": keys((0, 0, 0, 0), (0.1, 15, 0, -8), (0.45, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.1, 25, 0, 10), (0.2, 18, 0, 12), (0.45, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.1, 25, 0, -10), (0.45, 0, 0, 0))}}
@@ -275,10 +276,10 @@ def build():
     # the longsword tip, as drawn in longsword(): blade x centre SWORD_X + 0.5, from (y 13, z CZ - 0.5) to (y 31, z CZ - 12.5)
     blade_tip = (SWORD_X + 0.5, 31.0, CZ - 12.5)
     return asset("creatures", "skeleton-knight", "Skeleton Knight", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5333), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-eyes", at=to_root(eyes), parent="head"), Socket("socket-blade", at=to_root(blade_tip), parent="longsword")],
                  # The slash spans the longsword: from the hilt (offset back from the tip socket) along the blade.
-                 # It starts just before the cut (0.4 s): the trail takes a frame or two to start, and the
+                 # It starts as the cut leaves the wind-up (0.43 s): the trail takes a frame or two to start, and the
                  # end of the wind-up is too slow to draw, so the wind-up leaves no trail.
                  fx=[pfx("rvx-fantasy-bone-poof", "socket-eyes", "clip:death", size=34, at=0.24),
-                     pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=21.6, aim=(0.0, 0.832, -0.555), offset=(0.0, -18.0, 12.0), at=0.37)])
+                     pfx("rvx-fantasy-slash-arc", "socket-blade", "clip:attack", size=21.6, aim=(0.0, 0.832, -0.555), offset=(0.0, -18.0, 12.0), at=0.4)])

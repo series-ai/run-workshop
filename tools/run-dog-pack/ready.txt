@@ -1,0 +1,107 @@
+# Breeds shipped as ready-made GLBs (scripts/build_breeds.py --ready). The kit
+# (dogkit.js) makes every breed in breeds.csv; these are the familiar ones, at
+# least one per body build, so the asset library leaf stays a sensible size.
+Labrador Retriever
+Golden Retriever
+German Shepherd
+French Bulldog
+English Bulldog
+Beagle
+Standard Poodle
+Miniature Poodle
+Toy Poodle
+Rottweiler
+German Shorthaired Pointer
+Dachshund
+Pembroke Welsh Corgi
+Cardigan Welsh Corgi
+Australian Shepherd
+Yorkshire Terrier
+Boxer
+Cavalier King Charles Spaniel
+Doberman Pinscher
+Great Dane
+Miniature Schnauzer
+Standard Schnauzer
+Giant Schnauzer
+Siberian Husky
+Bernese Mountain Dog
+Shih Tzu
+Boston Terrier
+Pomeranian
+Havanese
+Cane Corso
+English Springer Spaniel
+Brittany
+Shetland Sheepdog
+Border Collie
+Rough Collie
+Smooth Collie
+Belgian Malinois
+Basset Hound
+Bloodhound
+Black and Tan Coonhound
+Bluetick Coonhound
+Redbone Coonhound
+Treeing Walker Coonhound
+English Cocker Spaniel
+American Cocker Spaniel
+Vizsla
+Weimaraner
+Pug
+Chihuahua
+Papillon
+Chinese Crested
+Maltese
+Bichon Frisé
+Lhasa Apso
+Pekingese
+West Highland White Terrier
+Scottish Terrier
+Cairn Terrier
+Jack Russell Terrier
+Wire Fox Terrier
+Airedale Terrier
+Soft Coated Wheaten Terrier
+Border Terrier
+Staffordshire Bull Terrier
+American Staffordshire Terrier
+American Pit Bull Terrier
+American Bully
+Bull Terrier
+Miniature Bull Terrier
+Bullmastiff
+English Mastiff
+Saint Bernard
+Newfoundland
+Great Pyrenees
+Leonberger
+Shar-Pei
+Akita
+Shiba Inu
+Alaskan Malamute
+Samoyed
+Chow Chow
+Keeshond
+Old English Sheepdog
+Bearded Collie
+Komondor
+Puli
+Portuguese Water Dog
+Labradoodle
+Goldendoodle
+Bernedoodle
+Cockapoo
+Dalmatian
+Rhodesian Ridgeback
+Basenji
+Greyhound
+Whippet
+Italian Greyhound
+Afghan Hound
+Borzoi
+Irish Wolfhound
+Saluki
+Irish Setter
+Australian Cattle Dog
+Bedlington Terrier

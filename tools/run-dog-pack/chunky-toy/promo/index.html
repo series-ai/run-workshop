@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chonky Hounds: Doggo Dynasties — trailer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d1f24; display: grid; place-items: center; overflow: hidden; }
+  canvas#out { height: 100vh; aspect-ratio: 9 / 16; display: block; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Cinzel:wght@700;900&display=block" rel="stylesheet">
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="module">
+// The trailer, choreographed shot by shot with the real rigged dogs, shared clips, coats,
+// wearables and props. Live: plays in real time and loops. ?record=1: steps exactly 1/30 s
+// per frame and posts every frame (and the sound cues) to promo/server.py. ?at=12.5 jumps
+// to a moment; ?sheet=1,5,9 makes a contact sheet of moments.
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
+import { loadClipLibrary, setupDog, attachWear } from "../dogclips.js";
+import { loadCoats, breed, loadClothPatterns, tintCloth } from "../dogcoat.js";
+
+const Q = new URLSearchParams(location.search);
+const W = 1080, H = 1920, FPS = 30;
+const RECORD = Q.has("record");
+const FONT = `"Titan One", "Arial Rounded MT Bold", Arial, sans-serif`;
+const EPIC = `"Cinzel", "Trajan Pro", Georgia, serif`;   // the movie-trailer cards
+const BPM = 120, BEAT = 60 / BPM, BAR = 4 * BEAT;   // every cut and pop lands on the beat
+const ADULT = { toy: 0.45, small: 0.65, medium: 0.85, large: 1.1 }, PUPPY = 0.45;
+
+// ------------------------------------------------------------------ renderer and scene
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const out = document.getElementById("out");
+const ctx = out.getContext("2d");
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#bfe6f5");
+scene.fog = new THREE.Fog("#bfe6f5", 22, 48);
+const camera = new THREE.PerspectiveCamera(50, W / H, 0.05, 200);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8fc06a, 1.8);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2dc, 2.2);
+sun.position.set(5, 12, 8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 40 });
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+
+// the backyard: a lawn with mown stripes, a picket fence round the edge
+function lawnTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 512;
+  const x = c.getContext("2d");
+  for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? "#9fd47c" : "#93cb70"; x.fillRect(0, i * 64, 512, 64); }
+  for (let i = 0; i < 2600; i++) {
+    x.fillStyle = `rgba(${60 + Math.random() * 40},${120 + Math.random() * 50},${40 + Math.random() * 30},0.35)`;
+    x.fillRect(Math.random() * 512, Math.random() * 512, 2, 5);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(10, 10);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const lawn = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshLambertMaterial({ map: lawnTexture() }));
+lawn.rotation.x = -Math.PI / 2;
+lawn.receiveShadow = true;
+scene.add(lawn);
+const fence = new THREE.Group();
+{
+  const white = new THREE.MeshLambertMaterial({ color: 0xfbf7ef });
+  const post = new THREE.BoxGeometry(0.14, 0.9, 0.06), rail = new THREE.BoxGeometry(0.4, 0.07, 0.04);
+  const R = 13;
+  for (let i = 0; i < 300; i++) {
+    const a = i / 300 * Math.PI * 2;
+    const p = new THREE.Mesh(post, white);
+    p.position.set(Math.cos(a) * R, 0.45, Math.sin(a) * R);
+    p.rotation.y = -a + Math.PI / 2;
+    fence.add(p);
+    for (const y of [0.3, 0.65]) {
+      const r = new THREE.Mesh(rail, white);
+      r.position.set(Math.cos(a) * (R + 0.05), y, Math.sin(a) * (R + 0.05));
+      r.rotation.y = -a + Math.PI / 2;
+      fence.add(r);
+    }
+  }
+}
+scene.add(fence);
+
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+
+// ------------------------------------------------------------------ assets
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, "../rigged/clips.glb");
+const coats = await loadCoats("../coats.json", "../rigged/coats/");
+const BREEDS = (await (await fetch("../breeds.csv")).text()).trim().split("\n").slice(1)
+  .map(l => l.split(",")).map(([slug, name, size]) => ({ slug, name, size }));
+const SIZE = Object.fromEntries(BREEDS.map(b => [b.slug, b.size]));
+const NAME = Object.fromEntries(BREEDS.map(b => [b.slug, b.name]));
+const G = {}, WEAR = {}, PROP = {};
+await Promise.all(BREEDS.map(async b => { G[b.slug] = await loader.loadAsync(`../rigged/${b.slug}.glb`); }));
+await coats.preload(BREEDS.map(b => b.slug));
+const WEAR_DOGS = ["labrador-retriever", "pug", "pembroke-welsh-corgi", "dalmatian", "beagle", "shiba-inu", "boxer", "border-collie"];
+await Promise.all(WEAR_DOGS.flatMap(s => ["collar", "bandana"].map(async k => {
+  WEAR[`${s}--${k}`] = await loader.loadAsync(`../rigged/wear/${s}--${k}.glb`);
+})));
+const PROPS = ["tennis-ball", "towel", "cardboard-box", "donut-bed", "teepee", "sofa-bed", "rope-toy", "plush-fox", "squeaky-bone",
+  "floor-bowl--food", "water-fountain", "dog-house", "fire-hydrant", "frisbee"];
+await Promise.all(PROPS.map(async p => { PROP[p] = await loader.loadAsync(`../props/models/${p}.glb`); }));
+const cloth = await loadClothPatterns("../rigged/wear/cloth.png");
+const palette = (b, slug) => {
+  if (!slug) { const i = coats.index[b]; return { ...i.original, layers: i.layers.map(() => ["#000000", 0]) }; }
+  return coats.palette(b, slug);
+};
+
+// ------------------------------------------------------------------ actors
+let actors = [], things = [], tweens = [], T = 0, events = [];
+const sfx = (type, gain = 1) => events.push({ t: +T.toFixed(4), type, gain });
+
+class Dog {
+  constructor(slug, { x = 0, z = 0, ry = 0, scale = ADULT[SIZE[slug]], coat = null } = {}) {
+    this.slug = slug;
+    this.group = new THREE.Group();
+    this.group.position.set(x, 0, z);
+    this.group.rotation.y = ry;
+    this.model = SkeletonUtils.clone(G[slug].scene);
+    this.model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    this.group.add(this.model);
+    this.setScale(scale);
+    scene.add(this.group);
+    this.dog = setupDog(this.model, lib);
+    this.coat = coats.applyNow(this.model, slug);
+    if (coat) this.coat.set(typeof coat === "string" ? palette(slug, coat) : coat);
+    this.dog.onEvent = ev => {
+      if (ev.startsWith("bark")) sfx(this.scale < 0.6 ? "yip" : this.scale > 0.95 ? "bigwoof" : "woof", 0.9);
+    };
+    this.queue = [];
+    actors.push(this);
+  }
+  setScale(s) { this.scale = s; this.group.scale.setScalar(s); }
+  play(name, { at = 0, ts = 1, fade = 0.15, then = null } = {}) {
+    const a = this.dog.play(name, { fade, time: at });
+    a.timeScale = ts;
+    this.then = then;
+    return this;
+  }
+  // a list of clips, each starting when the one before finishes (the last one loops if it's a loop)
+  chain(...names) { this.queue = names.slice(1); this.play(names[0]); return this; }
+  gait(name, speed) {  // speed in world units / s; feet stay matched to the ground
+    if (this.dog.name !== name) this.play(name, { fade: 0.2 });
+    this.dog.setSpeed(speed, this.scale);
+  }
+  natural(name) { const m = lib.meta[name]; return m.stride * this.dog.leg * this.scale / m.duration; }
+  update(dt) {
+    this.dog.update(dt);
+    const a = this.dog.action, m = lib.meta[this.dog.name];
+    if (a && m && !m.loop && a.time >= m.duration - 1e-3) {
+      if (this.queue.length) this.play(this.queue.shift());
+      else if (this.then) { const f = this.then; this.then = null; f(); }
+    }
+  }
+  wear(kind, on, color = "#b8322a", pattern = "dots") {
+    this.worn ||= {};
+    if (!this.worn[kind]) {
+      const src = WEAR[`${this.slug}--${kind}`];
+      const sc = SkeletonUtils.clone(src.scene);
+      const meshes = attachWear(this.model, sc);
+      meshes.forEach(mm => { mm.material = Array.isArray(mm.material) ? mm.material.map(x => x.clone()) : mm.material.clone(); mm.castShadow = true; });
+      this.worn[kind] = meshes;
+    }
+    for (const mm of this.worn[kind]) {
+      mm.visible = on;
+      for (const mat of [mm.material].flat()) {
+        if (mat.name === "bandana") tintCloth(mat, cloth, color, "#f6f0e4", pattern);
+        if (mat.name === "collar") mat.color.set(color);
+      }
+    }
+  }
+  pos(bone = "head") {
+    const b = this.dog.root.getObjectByName(bone);
+    return b ? b.getWorldPosition(new THREE.Vector3()) : this.group.position.clone();
+  }
+}
+
+function place(name, x, z, ry = 0, s = 1) {
+  const m = SkeletonUtils.clone(PROP[name].scene);
+  m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  m.position.set(x, 0, z);
+  m.rotation.y = ry;
+  m.scale.setScalar(s);
+  scene.add(m);
+  things.push(m);
+  return m;
+}
+
+function tween(t0, dur, fn, ease = e => e) { tweens.push({ t0, dur, fn, ease }); }
+const easeInOut = u => u * u * (3 - 2 * u);
+const easeOut = u => 1 - (1 - u) ** 3;
+const easeOutBack = u => { const c = 1.7; return 1 + (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2); };
+const lerp = (a, b, u) => a + (b - a) * u;
+const clamp01 = u => Math.max(0, Math.min(1, u));
+
+// ------------------------------------------------------------------ camera
+let shake = 0, kick = 0, flash = 0;
+const rumble = a => { shake = Math.max(shake, a); };
+const punch = a => { kick = Math.max(kick, a); };
+function cam(px, py, pz, tx, ty, tz) { camera.position.set(px, py, pz); camera.lookAt(tx, ty, tz); }
+
+// ------------------------------------------------------------------ camera rule
+// These dogs look best from three-quarters above, a few at a time or a crowd: never closer
+// than a medium shot. orbit(target, distance, pitch down (deg), yaw (deg)).
+function orbit(tx, ty, tz, dist, pitch, yaw) {
+  const p = THREE.MathUtils.degToRad(pitch), y = THREE.MathUtils.degToRad(yaw);
+  cam(tx + Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, tz + Math.cos(y) * Math.cos(p) * dist, tx, ty, tz);
+}
+// dusk for the "in a world" open, day for everything after
+function light(mode) { lightMix(mode === "dusk" ? 0 : 1); }
+function lightMix(u) {   // 0 dusk .. 1 day
+  const mix = (a, b) => new THREE.Color(a).lerp(new THREE.Color(b), u);
+  hemi.intensity = lerp(0.55, 1.8, u);
+  hemi.color.copy(mix(0x8c84c8, 0xffffff));
+  sun.intensity = lerp(0.9, 2.2, u);
+  sun.color.copy(mix(0xffa86b, 0xfff2dc));
+  scene.background.copy(mix("#3b3566", "#bfe6f5"));
+  scene.fog.color.copy(scene.background);
+}
+// the opening is one continuous move over the same crowd: dusk, the cards, the scratch into day
+function introCam(t) {
+  const u = easeInOut(clamp01((t - BAR) / (4 * BAR)));
+  orbit(0, 0.3, -0.7, lerp(11, 9.0, u), lerp(36, 44, u), lerp(-14, 16, u));
+}
+
+// ------------------------------------------------------------------ the dognado
+// nose to tail and fast, a different gait in every ring: toys do the robot in the middle,
+// small dogs trot, mediums run, big dogs gallop round the outside
+function dognado() {
+  const by = s => { const l = BREEDS.filter(b => b.size === s); return [...l, ...l]; };   // every breed twice: nose to tail
+  const rings = [
+    { gait: "robot", r: 0.9, dogs: by("toy"), pace: 1.35 },
+    { gait: "trot", r: 2.3, dogs: by("small"), pace: 1.4 },
+    { gait: "run", r: 3.35, dogs: by("medium"), pace: 1.3 },
+    { gait: "gallop", r: 4.6, dogs: by("large"), pace: 1.25 },
+  ];
+  for (const ring of rings) {
+    ring.actors = ring.dogs.map((b, k) => { const d = new Dog(b.slug); d.slot = k / ring.dogs.length; return d; });
+    const nat = ring.actors.reduce((s, d) => s + d.natural(ring.gait), 0) / ring.actors.length;
+    ring.speed = nat * ring.pace;
+    ring.lap = rnd() * Math.PI * 2;
+    ring.dir = rings.indexOf(ring) % 2 ? -1 : 1;   // alternate rings run the other way round
+    ring.actors.forEach(d => { d.play(ring.gait, { at: rnd() * lib.meta[ring.gait].duration }); d.dog.setSpeed(ring.speed, d.scale); });
+  }
+  return rings;
+}
+function spinRings(rings, dt) {
+  for (const ring of rings) {
+    ring.lap += ring.dir * dt * ring.speed / ring.r;
+    for (const d of ring.actors) {
+      const a = d.slot * Math.PI * 2 + ring.lap;
+      d.group.position.set(Math.cos(a) * ring.r, 0, Math.sin(a) * ring.r);
+      d.group.rotation.y = -a + (ring.dir < 0 ? Math.PI : 0);
+    }
+  }
+}
+
+// a loose crowd of dogs, scattered on a jittered grid
+function crowd(slugs, cols, gap, { z0 = 0, ry = 0, jitter = 0.25 } = {}) {
+  return slugs.map((s, k) => {
+    const c = k % cols, r = Math.floor(k / cols);
+    const d = new Dog(s, { x: (c - (cols - 1) / 2) * gap + (rnd() - 0.5) * jitter + (r % 2) * gap * 0.3,
+      z: z0 - r * gap * 0.9 + (rnd() - 0.5) * jitter, ry: ry + (rnd() - 0.5) * 0.6 });
+    return d;
+  });
+}
+const ALL = BREEDS.map(b => b.slug);
+const shuffled = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+
+// ------------------------------------------------------------------ shots
+// each: { bars, music (one section name per bar, see music.py), keep, flash, setup(), update(lt, dt), text(lt) }
+const shots = [];
+const fired = {};
+const at = (lt, t, key, fn) => { if (lt >= t && !fired[key]) { fired[key] = true; fn(); } };
+
+// 1-4. the opening: one crowd, one continuous camera move, dusk to day
+shots.push({
+  bars: 2, music: ["drone", "braam"],
+  setup() {
+    light("dusk");
+    this.pack = crowd(shuffled(ALL), 6, 1.25, { z0: 2.4 });
+    this.pack.forEach(d => d.play("idle", { at: rnd() * 2 }));
+  },
+  update(lt) { introCam(T); at(lt, BAR, "braam", () => rumble(0.06)); },
+  text(lt) {
+    if (lt < BAR) { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); epic("IN A WORLD...", 0.48, 92, lt / 0.6); }
+    else epic("...OF CHONK.", 0.16, 110, (lt - BAR) / 0.4);
+  },
+});
+shots.push({
+  bars: 1, music: ["braam"], keep: true,
+  setup() { rumble(0.06); },
+  update() { introCam(T); },
+  text(lt) { epic("THIRTY GOOD BOYS.", 0.16, 96, lt / 0.4); },
+});
+shots.push({   // ONE RIG: all thirty spin together on the hit
+  bars: 1, music: ["braam"], keep: true,
+  setup() { rumble(0.06); actors.forEach((d, k) => tweens.push({ t0: T + 0.015 * (k % 6), dur: 0, fn: () => d.chain("spin", "idle") })); },
+  update() { introCam(T); },
+  text(lt) { epic("ONE RIG.", 0.16, 130, lt / 0.4); },
+});
+shots.push({   // record scratch: the light comes up, everyone play-bows, the title pops
+  bars: 1, music: ["title"], keep: true,
+  setup() {
+    for (let i = 0; i < "CHONKYHOUNDS".length; i++) tweens.push({ t0: T + BEAT * 2 + i * 0.04, dur: 0, fn: () => sfx("pop", 0.3) });
+  },
+  update(lt) {
+    lightMix(easeInOut(clamp01((lt - BEAT * 1.5) / (BEAT * 0.6))));
+    at(lt, BEAT * 2, "bow", () => { actors.forEach(d => d.play("play_bow", { at: rnd() * 0.2 })); punch(1); flash = 0.8; });
+    introCam(T);
+  },
+  text(lt) {
+    if (lt > BEAT * 2) {
+      balloon("CHONKY|HOUNDS", 0.15, 170, lt - BEAT * 2, { stagger: 0.04 });
+      balloon("DOGGO DYNASTIES", 0.31, 78, lt - BEAT * 3, { stagger: 0.02 });
+    }
+  },
+});
+// 5. the dognado: nose to tail, rings alternating, captions every two beats
+const NADO_CAPS = ["THEY TROT.", "THEY RUN.", "THEY GALLOP.", "THEY... ROBOT?"];
+shots.push({
+  bars: 2, music: ["theme", "theme"], flash: true,
+  setup() { this.rings = dognado(); place("fire-hydrant", 0, 0, 0, 1.2); },
+  update(lt, dt) {
+    spinRings(this.rings, dt);
+    NADO_CAPS.forEach((c, k) => at(lt, BEAT * k, "cap" + k, () => { sfx("pop", 0.6); punch(0.3); }));   // bam bam bam bam
+    const u = lt / (2 * BAR);
+    orbit(0, 0, 0, lerp(10.0, 8.6, easeInOut(u)), lerp(56, 44, easeInOut(u)), lerp(-25, 25, u));
+  },
+  text(lt) {
+    const k = Math.min(3, Math.floor(lt / BEAT));
+    balloon(NADO_CAPS[k], 0.13, k === 3 ? 108 : 130, lt - BEAT * k, { stagger: 0.012 });
+    if (lt > BAR) pill("(it's very soothing.)", 0.21, 52, (lt - BAR) / 0.25);
+  },
+});
+// 5b. the hydrant gag: a queue, one lifts a leg
+shots.push({
+  bars: 2, music: ["sneak", "theme"], flash: true,
+  setup() {
+    this.hyd = place("fire-hydrant", 0.3, 0.16, 0, 1.0);   // by the lifted hind leg
+    // the dog stands with its left side to the hydrant (it lifts its left leg)
+    this.boy = new Dog("jack-russell-terrier", { x: 0.05, z: -0.3, ry: -Math.PI / 2 });   // facing -x: its left side to the hydrant (+z)
+    this.boy.play("pee_male", { at: 1.0 });
+    this.queue = ["beagle", "pug", "dachshund", "great-dane"].map((s, k) => {
+      const d = new Dog(s, { x: 1.0 + k * 0.95 + (k === 3 ? 0.2 : 0), z: -0.35 + 0.05 * (k % 2), ry: -Math.PI / 2 + 0.15 * (k % 2 ? 1 : -1) });
+      d.play(k === 3 ? "sniff" : "idle", { at: rnd() * 2 });
+      return d;
+    });
+    this.stream = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 1, 6), new THREE.MeshLambertMaterial({ color: 0xf2d64b, transparent: true, opacity: 0.8 }));
+    this.puddle = new THREE.Mesh(new THREE.CircleGeometry(1, 20), this.stream.material);
+    this.puddle.rotation.x = -Math.PI / 2;
+    scene.add(this.stream, this.puddle);
+    things.push(this.stream, this.puddle);
+  },
+  update(lt) {
+    const m = lib.meta.pee_male, ev = m.events, time = this.boy.dog.action.time;
+    const on = time > ev.pee_start && time < ev.pee_end;
+    const grown = clamp01((time - ev.pee_start) / (ev.pee_end - ev.pee_start));
+    const src = this.boy.pos("shinL").lerp(this.boy.pos("hips"), 0.5);
+    const spot = new THREE.Vector3(src.x, 0.004, 0.05);
+    this.puddle.visible = grown > 0;
+    this.puddle.position.copy(spot);
+    this.puddle.scale.setScalar(0.02 + 0.13 * Math.sqrt(grown));
+    this.stream.visible = on;
+    if (on) {
+      const hit = new THREE.Vector3(0.3, 0.18, 0.08);
+      this.stream.position.lerpVectors(src, hit, 0.5);
+      this.stream.scale.y = src.distanceTo(hit);
+      this.stream.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), src.clone().sub(hit).normalize());
+    }
+    at(lt, BAR, "next", () => { this.queue[0].play("sniff"); sfx("squeak", 0.5); });
+    orbit(0.9, 0.2, -0.3, 5.0, 36, lerp(-66, -54, lt / (2 * BAR)));
+  },
+  text(lt) {
+    balloon("THEY STAY|HYDRATED.", 0.12, 118, lt - 0.2, { stagger: 0.03 });
+    if (lt > BAR) pill("(there's a queue.)", 0.23, 54, (lt - BAR) / 0.25);
+  },
+});
+// 6. tricks: the two that read from above (up on the hind legs and twirl, the leaping spin),
+// in waves across the crowd; one dog just barks at you
+shots.push({
+  bars: 2, music: ["theme", "theme"], flash: true,
+  setup() {
+    this.pack = crowd(shuffled(ALL).slice(0, 15), 4, 1.15, { z0: 0.9 });
+    this.pack.forEach(d => d.play("idle", { at: rnd() * 2 }));
+    this.lazy = this.pack[6];
+    this.lazy.dog.onEvent = null;
+  },
+  update(lt) {
+    this.pack.forEach((d, k) => {
+      if (d === this.lazy) return;
+      const col = Math.round((d.group.position.x + 1.8) / 1.15);   // a wave left to right
+      if (k % 2 === 0) at(lt, col * BEAT * 0.25, "d" + k, () => d.chain("dance_enter", "dance_loop"));
+      else {
+        at(lt, col * BEAT * 0.25, "s" + k, () => d.chain("spin", "idle"));
+        at(lt, BAR + col * BEAT * 0.25, "s2" + k, () => d.chain("spin", "idle"));
+      }
+    });
+    at(lt, BEAT * 1.5, "lazy", () => {
+      this.lazy.play("bark_rapid");
+      this.lazy.dog.onEvent = ev => { if (ev.startsWith("bark")) sfx("woof", 0.5); };
+    });
+    at(lt, BAR + BEAT * 2, "whoosh", () => sfx("whoosh", 0.6));
+    orbit(0, 0.3, -1.0, 9.0, 47, lerp(-10, 10, lt / (2 * BAR)));
+  },
+  text(lt) {
+    balloon("THEY DO TRICKS.", 0.13, 116, lt, { stagger: 0.03 });
+    if (lt > BAR) pill("(most of them.)", 0.21, 54, (lt - BAR) / 0.25);
+  },
+});
+// 7. BANG. everybody drops; the music dies; they're fine
+shots.push({
+  bars: 2, music: ["bang", "sad"], flash: true,
+  setup() {
+    this.pack = crowd(shuffled(ALL).slice(0, 14), 5, 1.2, { z0: 1.4 });
+    this.pack.forEach(d => d.play("idle", { at: rnd() * 2 }));
+  },
+  update(lt) {
+    // the slam lands 0.78 s into play_dead_enter: everyone on beat 3, a ripple either side
+    this.pack.forEach((d, k) => at(lt, BEAT * 2 - 0.78 + ((k % 5) - 2) * 0.04, "b" + k, () => d.chain("play_dead_enter", "play_dead_loop")));
+    at(lt, BEAT * 2, "slam", () => { sfx("thud", 1.3); rumble(0.12); punch(0.7); });
+    orbit(0, 0.2, -0.8, 7.4, 44, 8);
+  },
+  text(lt) {
+    if (lt > BEAT * 2 - 0.15) balloon("BANG.", 0.14, 190, lt - (BEAT * 2 - 0.15), { stagger: 0.05 });
+    if (lt > BAR + BEAT * 0.5) pill("(they're fine.)", 0.24, 58, (lt - BAR - BEAT * 0.5) / 0.25);
+  },
+});
+// 8. they grow up so fast (mostly)
+shots.push({
+  bars: 2, music: ["theme_up", "theme_up"], flash: true,
+  setup() {
+    this.walkers = ["german-shepherd", "chihuahua", "great-dane", "golden-retriever", "bernese-mountain-dog"].map((s, k) =>
+      new Dog(s, { x: (k - 2) * 1.0, z: -2.5, scale: PUPPY }));
+    this.walkers.forEach(d => d.gait("walk", 0.9));
+  },
+  update(lt, dt) {
+    const g = easeInOut(clamp01((lt - 0.4) / 2.4));
+    for (const d of this.walkers) {
+      if (d.slug !== "chihuahua") d.setScale(lerp(PUPPY, ADULT[SIZE[d.slug]], g));
+      d.dog.setSpeed(0.9, d.scale);
+      d.group.position.z += 0.9 * dt;
+    }
+    at(lt, 0.4, "grow", () => sfx("grow", 1));
+    at(lt, BAR + BEAT, "yip", () => { const c = this.walkers[1]; c.play("bark", { fade: 0.1 }); });
+    const z = this.walkers[2].group.position.z;
+    orbit(0, 0.35, z + 0.2, lerp(4.4, 5.8, g), 34, 0);
+  },
+  text(lt) {
+    balloon("THEY GROW UP|SO FAST.", 0.13, 112, lt - 0.1, { stagger: 0.03 });
+    if (lt > BAR + BEAT) pill("(mostly.)", 0.25, 58, (lt - BAR - BEAT) / 0.25);
+  },
+});
+// 9. 223 coats: a crowd, every dog re-rolls its coat on every beat
+shots.push({
+  bars: 3, music: ["theme_up", "theme_up", "theme_up"], flash: true,
+  setup() {
+    this.pack = crowd(shuffled(ALL).slice(0, 18), 6, 1.15, { z0: 1.8 });
+    this.pack.forEach(d => d.play("sit_loop", { at: rnd() * 2 }));
+    this.k = -1;
+  },
+  update(lt) {
+    const k = Math.floor(lt / BEAT);
+    if (k !== this.k) {
+      this.k = k;
+      const own = k >= 8;   // the last bar: bred ones, not from the list
+      this.pack.forEach(d => {
+        const list = coats.index[d.slug].colorways;
+        const a = list[Math.floor(rnd() * list.length)], b = list[Math.floor(rnd() * list.length)];
+        d.coat.set(own ? breed(a, b, rnd, { oddEyes: 0.3 }) : a);
+      });
+      if (k) { sfx("zip", 0.6); punch(0.12); }
+    }
+    orbit(0, 0.3, -0.5, 7.8, 42, lerp(-15, 15, lt / (3 * BAR)));
+  },
+  text(lt) {
+    balloon("223 COATS.", 0.13, 150, lt - 0.1, { stagger: 0.04 });
+    if (lt > BAR) pill("(yes, we counted.)", 0.21, 54, (lt - BAR) / 0.25);
+    if (lt > BAR * 2) pill("…or make your own", 0.27, 46, (lt - BAR * 2) / 0.25, "rgba(255,122,162,0.92)");
+  },
+});
+// 10. the breeding pitch: German Shepherd mom (her shape, brown eyes, black nose), red
+// Husky dad (copper and white, blue eyes, liver nose). The pups get mom's mesh and dad's
+// colouring: dad's copper and white over the Shepherd's coat areas, a mix of his white marks
+// (muzzle, bib, socks, blaze) and her saddle and mask, and eyes and noses from either parent
+// or one of each.
+const MOM_EYES = "#5b3416", DAD_EYES = "#3f88d6", MOM_NOSE = "#1a1919", DAD_NOSE = "#7a3b28";
+function pupGenes(r) {
+  const mix = (a, b, t) => "#" + new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString();
+  const mom = palette("german-shepherd", null), dad = palette("siberian-husky", "red-white");
+  const white = dad.src[1], copper = dad.src[0];
+  const pal = {
+    src: [mix(white, mom.src[0], 0.15 + 0.4 * r()), mix(copper, mom.src[1], 0.1 + 0.35 * r())],   // tan areas, saddle
+    layers: mom.layers.map((l, i) => (r() < 0.4 ? ["#2a211c", 0.5 + 0.4 * r()] : ["#000000", 0])),  // a bit of mom's sable / mask
+    marks: {},
+    nose: r() < 0.5 ? mix(MOM_NOSE, DAD_NOSE, r() * 0.4) : mix(DAD_NOSE, MOM_NOSE, r() * 0.4),
+  };
+  if (r() < 0.8) pal.marks.muzzle = [white, 0.45 + 0.4 * r()];
+  if (r() < 0.7) pal.marks.bib = [white, 0.6 + 0.4 * r()];
+  if (r() < 0.4) pal.marks.blaze = [white, 0.4 + 0.4 * r()];
+  for (const leg of ["fl", "fr", "hl", "hr"]) if (r() < 0.55) pal.marks["sock_" + leg] = [white, 0.12 + 0.3 * r()];
+  if (r() < 0.3) pal.marks.tail_tip = [white, 0.6 + 0.4 * r()];
+  const e = r();
+  pal.face = e < 0.35 ? { eye_l: DAD_EYES, eye_r: DAD_EYES } : e < 0.65 ? { eye_l: MOM_EYES, eye_r: MOM_EYES }
+    : e < 0.85 ? { eye_l: DAD_EYES, eye_r: MOM_EYES } : { eye_l: mix(DAD_EYES, MOM_EYES, 0.5), eye_r: mix(DAD_EYES, MOM_EYES, 0.5) };
+  return pal;
+}
+shots.push({
+  bars: 4, music: ["sweet", "sweet", "theme_up", "finale"], flash: true,
+  setup() {
+    place("dog-house", 0, -2.6, 0, 1);
+    this.mom = new Dog("german-shepherd", { x: -0.95, z: 0, ry: 0.5 });
+    this.mom.coat.setFace({ eyes: MOM_EYES });
+    this.dad = new Dog("siberian-husky", { x: 0.95, z: 0, ry: -0.5, coat: "red-white" });
+    this.dad.coat.setFace({ eyes: DAD_EYES });
+    this.mom.play("sit_loop"); this.dad.play("sit_loop", { at: 1.1 });
+    this.pups = [];
+    let sd = 41; this.r = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+  },
+  update(lt, dt) {
+    at(lt, BEAT * 2, "heart", () => sfx("chime", 1));
+    // the litter comes out single file between mom and dad, then each pup peels off to its spot
+    const SPOTS = [[-0.75, 1.05], [-0.38, 1.35], [0, 1.1], [0.38, 1.35], [0.75, 1.05]];
+    for (let i = 0; i < 5; i++) at(lt, BAR + i * BEAT * 0.55, "pup" + i, () => {
+      const p = new Dog("german-shepherd", { x: 0, z: -1.5, ry: 0, scale: PUPPY, coat: pupGenes(this.r) });
+      p.v = p.natural("trot") * 1.5;
+      p.gait("trot", p.v);
+      p.path = [new THREE.Vector2(0, 0.45), new THREE.Vector2(...SPOTS[[2, 0, 4, 1, 3][i]])];   // through the gap, then out
+      this.pups.push(p);
+      sfx("yip", 0.6);
+    });
+    for (const p of this.pups) {
+      if (p.path.length) {
+        const pos = new THREE.Vector2(p.group.position.x, p.group.position.z), to = p.path[0].clone().sub(pos);
+        const step = p.v * dt;
+        if (to.length() <= step) { p.group.position.x = p.path[0].x; p.group.position.z = p.path[0].y; p.path.shift(); }
+        else {
+          to.normalize();
+          p.group.position.x += to.x * step; p.group.position.z += to.y * step;
+          const want = Math.atan2(to.x, to.y);   // dogs face +Z: heading = atan2(x, z)
+          p.group.rotation.y += Math.atan2(Math.sin(want - p.group.rotation.y), Math.cos(want - p.group.rotation.y)) * Math.min(1, dt * 10);
+        }
+      } else if (!p.sat) {
+        p.sat = true;
+        p.chain("sit_enter", "sit_loop");
+        tween(T, 0.3, u => { p.group.rotation.y *= 1 - u; });   // turn to face the camera as it sits
+      }
+    }
+    // bar 3: the litter re-rolls on every beat (every pup a one-off), bar 4: they party
+    for (let b = 0; b < 4; b++) at(lt, BAR * 2 + b * BEAT, "roll" + b, () => {
+      this.pups.forEach(p => p.coat.set(pupGenes(this.r)));
+      sfx("zip", 0.7); punch(0.12);
+    });
+    at(lt, BAR * 3, "party", () => { this.pups.forEach((p, i) => tweens.push({ t0: T + i * 0.08, dur: 0, fn: () => p.chain("spin", "sit_loop") })); punch(0.6); });
+    orbit(0, 0.4, 0.3, 5.4, 34, 0);
+  },
+  text(lt) {
+    if (lt > BEAT * 2 && lt < BAR * 1.6) heart(lt - BEAT * 2);
+    label("MOM", this.mom.pos("head"), lt / 0.25, "#ffb347");
+    label("DAD", this.dad.pos("head"), (lt - BEAT) / 0.25, "#6fd6f5");
+    if (lt < BAR * 2) {
+      if (lt > BAR) balloon("MOM'S SHAPE.", 0.12, 120, lt - BAR, { stagger: 0.03 });
+      if (lt > BAR + BEAT * 2) balloon("DAD'S COLORS.", 0.2, 120, lt - BAR - BEAT * 2, { stagger: 0.03 });
+    } else if (lt < BAR * 3) {
+      balloon("SOCKS. SPOTS.|SPLOTCHES.", 0.13, 116, lt - BAR * 2, { stagger: 0.03 });
+      pill("eyes and noses from both", 0.24, 48, (lt - BAR * 2 - BEAT) / 0.25);
+    } else {
+      balloon("BREED 'EM.", 0.13, 150, lt - BAR * 3, { stagger: 0.04 });
+      pill("every pup's a one-off", 0.22, 50, (lt - BAR * 3 - BEAT) / 0.25, "rgba(255,122,162,0.92)");
+    }
+  },
+});
+// 11. accessorize, then beds (fancy ones, and a towel)
+const CLOTHES = [["#b8322a", "dots"], ["#24345e", "gingham"], ["#d9a42b", "plain"], ["#3f7d4f", "stripes"], ["#e58fa8", "dots"], ["#6b3fa0", "gingham"], ["#2a9d8f", "stripes"], ["#e2672b", "dots"]];
+shots.push({
+  bars: 1, music: ["theme_up"], flash: true,
+  setup() {
+    this.pack = crowd(WEAR_DOGS, 4, 1.2, { z0: 0.9 });
+    this.pack.forEach(d => d.play("sit_loop", { at: rnd() * 2 }));
+  },
+  update(lt) {
+    for (let b = 0; b < 4; b++) at(lt, BEAT * b, "w" + b, () => {
+      this.pack.forEach((d, i) => {
+        const c = CLOTHES[(i + b * 3) % CLOTHES.length];
+        d.wear("bandana", b % 2 === 0 || i % 2 === 0, ...c);
+        d.wear("collar", b % 2 === 1 || i % 3 === 0, CLOTHES[(i + b) % CLOTHES.length][0]);
+      });
+      sfx("zip", 0.7); punch(0.15);
+    });
+    orbit(0, 0.3, 0.2, 6.4, 38, lerp(-8, 8, lt / BAR));
+  },
+  text(lt) { balloon("ACCESSORIZE.", 0.13, 124, lt, { stagger: 0.03 }); },
+});
+shots.push({
+  bars: 1, music: ["theme_up"],
+  setup() {
+    // two rows, each spaced by the props' real widths, so nothing overlaps
+    this.beds = {};
+    for (const [row, z] of [[["donut-bed", "sofa-bed", "teepee"], -0.9], [["towel", "cardboard-box"], 0.55]]) {
+      let x = 0;
+      const ms = row.map(p => {
+        const m = place(p, 0, z, 0);
+        const box = new THREE.Box3().setFromObject(m), w = box.max.x - box.min.x;
+        m.position.x = x + w / 2 - (box.min.x + box.max.x) / 2;
+        x += w + 0.4;
+        this.beds[p] = m;
+        return m;
+      });
+      ms.forEach(m => { m.position.x -= (x - 0.4) / 2; });
+    }
+    const sad = new Dog("pug", { x: this.beds["towel"].position.x, z: 0.5, ry: 0.3, scale: 0.5 });
+    sad.play("down_loop");
+    const fancy = new Dog("pomeranian", { x: this.beds["sofa-bed"].position.x, z: -0.35, ry: -0.3, scale: 0.45 });
+    fancy.play("beg_loop");
+  },
+  update(lt) { orbit(0, 0.25, -0.2, 5.2, 40, lerp(-6, 6, lt / BAR)); },
+  text(lt) {
+    balloon("BEDS. FANCY ONES.", 0.13, 104, lt, { stagger: 0.03 });
+    if (lt > BEAT * 2) pill("(and a towel.)", 0.21, 54, (lt - BEAT * 2) / 0.25);
+  },
+});
+// 12. the end: the dognado again, the title, coming soon
+shots.push({
+  bars: 3, music: ["finale", "finale", "end"], flash: true,
+  setup() {
+    this.rings = dognado();
+    place("fire-hydrant", 0, 0, 0, 1.2);
+    for (let i = 0; i < "CHONKYHOUNDS".length; i++) tweens.push({ t0: T + 0.2 + i * 0.04, dur: 0, fn: () => sfx("pop", 0.3) });
+  },
+  update(lt, dt) {
+    spinRings(this.rings, dt);
+    at(lt, BAR * 2, "sting", () => { punch(1); rumble(0.08); });
+    at(lt, BAR * 3 - BEAT * 0.9, "squeak", () => sfx("squeak", 1));
+    const u = easeInOut(clamp01(lt / (3 * BAR)));
+    orbit(0, 0, 1.2, lerp(11, 14, u), lerp(48, 58, u), lerp(-20, 25, u));
+  },
+  text(lt) {
+    balloon("CHONKY|HOUNDS", 0.13, 165, lt - 0.2, { stagger: 0.04 });
+    balloon("DOGGO DYNASTIES", 0.28, 78, lt - 0.2 - BEAT * 2, { stagger: 0.02 });
+    pill("30 breeds · 40+ animations · 223 coats · wearables · 40 props", 0.83, 34, (lt - BAR) / 0.3);
+    if (lt > BAR * 2) epic("COMING SOON TO A GAME NEAR YOU", 0.89, 44, (lt - BAR * 2) / 0.3);
+  },
+});
+
+const STARTS = [];
+let acc = 0;
+for (const s of shots) { s.dur = s.bars * BAR; STARTS.push(acc); acc += s.dur; }
+const TOTAL = acc;
+const SECTIONS = shots.flatMap(s => s.music);   // what the score plays in every bar (music.py)
+
+// ------------------------------------------------------------------ overlays
+const CANDY = [["#ff7aa2", "#c94c76"], ["#ffd166", "#d69a2a"], ["#6fd6f5", "#3a9ec4"], ["#9be58a", "#5fae4f"], ["#c9a6ff", "#8f6ad6"], ["#ff9f68", "#d06a35"]];
+const glyphCache = {};
+function balloonLetter(ch, size, ci) {
+  const key = `${ch}|${size}|${ci % CANDY.length}`;
+  if (glyphCache[key]) return glyphCache[key];
+  const [fill, side] = CANDY[ci % CANDY.length];
+  const c = document.createElement("canvas"), g = c.getContext("2d");
+  const pad = size * 0.5;
+  g.font = `${size}px ${FONT}`;
+  const w = Math.ceil(g.measureText(ch).width + pad * 2), h = Math.ceil(size * 1.6 + pad);
+  c.width = w; c.height = h;
+  g.font = `${size}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+  const cx = w / 2, cy = h / 2 - size * 0.08, depth = size * 0.12;
+  for (let k = depth; k > 0; k -= 2) { g.lineWidth = size * 0.2; g.strokeStyle = "#3b2418"; g.strokeText(ch, cx, cy + k); }
+  for (let k = depth; k > 0; k -= 2) { g.fillStyle = side; g.fillText(ch, cx, cy + k); }
+  g.lineWidth = size * 0.2; g.strokeStyle = "#3b2418"; g.strokeText(ch, cx, cy);
+  g.fillStyle = fill; g.fillText(ch, cx, cy);
+  const hi = document.createElement("canvas"); hi.width = w; hi.height = h;
+  const hc = hi.getContext("2d");
+  hc.font = g.font; hc.textAlign = "center"; hc.textBaseline = "middle";
+  hc.fillStyle = "rgba(255,255,255,0.55)"; hc.fillText(ch, cx, cy);
+  hc.globalCompositeOperation = "destination-out";
+  hc.fillText(ch, cx + size * 0.05, cy + size * 0.07);
+  g.drawImage(hi, 0, 0);
+  return (glyphCache[key] = c);
+}
+function balloon(text, yFrac, size, lt, { stagger = 0.045 } = {}) {
+  if (lt <= 0) return;
+  const lines = text.split("|");
+  ctx.font = `${size}px ${FONT}`;
+  let n = 0;
+  lines.forEach((line, li) => {
+    const widths = [...line].map(c => ctx.measureText(c).width + size * 0.07);
+    const total = widths.reduce((a, b) => a + b, 0);
+    const fit = Math.min(1, (W - 60) / total);
+    let x = W / 2 - total * fit / 2;
+    const y = H * yFrac + (li - (lines.length - 1) / 2) * size * 1.05;
+    [...line].forEach((c, i) => {
+      const u = (lt - n * stagger) / 0.35;
+      const cx = x + widths[i] * fit / 2;
+      x += widths[i] * fit;
+      n++;
+      if (c === " " || u <= 0) return;
+      const s = easeOutBack(Math.min(1, u)) * fit;
+      const bob = Math.sin(lt * 2 * Math.PI / (BEAT * 2) + n * 0.7) * size * 0.04;
+      const gl = balloonLetter(c, size, n);
+      ctx.save();
+      ctx.translate(cx, y + bob);
+      ctx.rotate(Math.sin(n * 2.3) * 0.08);
+      ctx.scale(s, s);
+      ctx.drawImage(gl, -gl.width / 2, -gl.height / 2);
+      ctx.restore();
+    });
+  });
+}
+function balloonWord(text, x, y, size, lt, ci = 0) {
+  if (lt <= 0 || lt > 1.4) return;
+  const s = easeOutBack(Math.min(1, lt / 0.22)) * (lt > 1.1 ? 1 - (lt - 1.1) / 0.3 : 1);
+  ctx.save();
+  ctx.translate(x, y - lt * 30);
+  ctx.rotate(-0.12 + (ci % 3) * 0.1);
+  ctx.scale(s, s);
+  ctx.font = `${size}px ${FONT}`;
+  let off = -ctx.measureText(text).width / 2;
+  [...text].forEach((c, i) => {
+    const gl = balloonLetter(c, size, ci * 2 + i);
+    const w = ctx.measureText(c).width;
+    ctx.drawImage(gl, off + w / 2 - gl.width / 2, -gl.height / 2);
+    off += w;
+  });
+  ctx.restore();
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function pill(text, yFrac, size, u, bg = "rgba(74,51,38,0.84)") {
+  if (u <= 0 || !text) return;
+  const s = easeOutBack(Math.min(1, u));
+  ctx.save();
+  ctx.translate(W / 2, H * yFrac);
+  ctx.font = `${size}px ${FONT}`;
+  const w = Math.min(W - 40, ctx.measureText(text).width + size * 1.4), h = size * 1.6;
+  ctx.scale(s, s);
+  roundRect(-w / 2, -h / 2, w, h, h / 2);
+  ctx.fillStyle = bg;
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 0, 2, w - size);
+  ctx.restore();
+}
+function epic(text, yFrac, size, u) {  // trailer-card lettering: wide, serif, a slow fade and drift
+  if (u <= 0) return;
+  const a = Math.min(1, u);
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.font = `900 ${size}px ${EPIC}`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.letterSpacing = `${size * 0.08}px`;
+  const fit = Math.min(1, (W - 80) / (ctx.measureText(text).width + 1));
+  ctx.translate(W / 2, H * yFrac);
+  ctx.scale(fit * (1.04 - 0.04 * a), fit * (1.04 - 0.04 * a));
+  ctx.shadowColor = "rgba(0,0,0,0.6)"; ctx.shadowBlur = size * 0.25;
+  ctx.fillStyle = "#fff6e0";
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+}
+function strokeText(text, x, y, size, fill = "#fff", outline = "#4a3326") {
+  ctx.font = `${size}px ${FONT}`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+  ctx.lineWidth = size * 0.16; ctx.strokeStyle = outline;
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = fill; ctx.fillText(text, x, y);
+}
+function tag(text, u, col) {  // a sticker label, tilted, upper left
+  if (u <= 0) return;
+  const s = easeOutBack(Math.min(1, u));
+  ctx.save();
+  ctx.translate(W / 2, 330);
+  ctx.rotate(-0.08);
+  ctx.scale(s, s);
+  ctx.font = `110px ${FONT}`;
+  const w = ctx.measureText(text).width + 110, h = 180;
+  roundRect(-w / 2, -h / 2, w, h, 48);
+  ctx.fillStyle = "#fff"; ctx.fill();
+  roundRect(-w / 2 + 12, -h / 2 + 12, w - 24, h - 24, 38);
+  ctx.fillStyle = col; ctx.fill();
+  strokeText(text, 0, 6, 110, "#fff");
+  ctx.restore();
+}
+function label(text, world, u, col) {  // a little name tag floating over a dog
+  if (u <= 0) return;
+  const p = world.clone().add(new THREE.Vector3(0, 0.35, 0)).project(camera);
+  const x = (p.x * 0.5 + 0.5) * W, y = (-p.y * 0.5 + 0.5) * H;
+  const s = easeOutBack(Math.min(1, u));
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.font = `56px ${FONT}`;
+  const w = ctx.measureText(text).width + 60, h = 84;
+  roundRect(-w / 2, -h / 2, w, h, 42);
+  ctx.fillStyle = "#fff"; ctx.fill();
+  roundRect(-w / 2 + 7, -h / 2 + 7, w - 14, h - 14, 35);
+  ctx.fillStyle = col; ctx.fill();
+  strokeText(text, 0, 3, 56, "#fff");
+  ctx.restore();
+}
+function heart(lt) {  // a big pink heart that pops between the parents and beats
+  const s = easeOutBack(Math.min(1, lt / 0.3)) * (1 + 0.06 * Math.sin(lt * 2 * Math.PI / BEAT));
+  ctx.save();
+  ctx.translate(W / 2, H * 0.47 - Math.min(lt, 1) * 30);
+  ctx.scale(s * 2.2, s * 2.2);
+  ctx.beginPath();
+  ctx.moveTo(0, 30);
+  ctx.bezierCurveTo(-60, -10, -40, -55, 0, -28);
+  ctx.bezierCurveTo(40, -55, 60, -10, 0, 30);
+  ctx.closePath();
+  ctx.lineWidth = 7; ctx.strokeStyle = "#3b2418"; ctx.stroke();
+  ctx.fillStyle = "#ff7aa2"; ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath(); ctx.ellipse(-20, -22, 9, 5, -0.6, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+// ------------------------------------------------------------------ the frame step
+let shotIx = -1;
+function clearSet() {
+  for (const a of actors) scene.remove(a.group);
+  for (const t of things) scene.remove(t);
+  actors = []; things = []; tweens = [];
+  for (const k in fired) delete fired[k];
+}
+function step(dt) {
+  T += dt;
+  let ix = 0;
+  while (ix + 1 < shots.length && T >= STARTS[ix + 1] - 1e-6) ix++;
+  if (ix !== shotIx) {
+    if (!shots[ix].keep) clearSet();
+    else for (const k in fired) delete fired[k];
+    shotIx = ix;
+    if (shots[ix].flash) flash = 1;
+    shots[ix].setup.call(shots[ix]);
+  }
+  const s = shots[ix], lt = Math.max(0, T - STARTS[ix]);   // never a hair below 0 on a cut
+  s.update.call(s, lt, dt);
+  for (const tw of [...tweens]) {
+    if (T < tw.t0) continue;
+    const u = tw.dur ? Math.min(1, (T - tw.t0) / tw.dur) : 1;
+    tw.fn(tw.ease ? tw.ease(u) : u);
+    if (u >= 1) tweens.splice(tweens.indexOf(tw), 1);
+  }
+  for (const a of actors) a.update(dt);
+  if (shake > 0.001) {
+    camera.position.x += (rnd() - 0.5) * shake;
+    camera.position.y += (rnd() - 0.5) * shake;
+    shake *= 0.82;
+  }
+  camera.fov = 50 - kick * 6;
+  camera.updateProjectionMatrix();
+  kick *= 0.86;
+  renderer.render(scene, camera);
+  ctx.drawImage(renderer.domElement, 0, 0, W, H);
+  if (s.text) s.text.call(s, lt);
+  if (flash > 0.01) {
+    ctx.fillStyle = `rgba(255,255,255,${flash * 0.85})`;
+    ctx.fillRect(0, 0, W, H);
+    flash *= 0.6;
+  }
+}
+
+async function main() {
+  ctx.fillStyle = "#1d1f24"; ctx.fillRect(0, 0, W, H);
+  await document.fonts.load(`100px "Titan One"`);
+  await document.fonts.load(`700 100px "Cinzel"`);
+  if (RECORD) {
+    const N = Math.round(TOTAL * FPS);
+    for (let f = 0; f < N; f++) {
+      step(1 / FPS);
+      const blob = await new Promise(r => out.toBlob(r, "image/jpeg", 0.93));
+      await fetch(`/frame/${f}`, { method: "POST", body: blob });
+    }
+    await fetch("/events", { method: "POST", body: JSON.stringify({ fps: FPS, total: TOTAL, sections: SECTIONS, events }) });
+    document.title = "DONE";
+    return;
+  }
+  if (Q.has("sheet")) {
+    const ts = Q.get("sheet").split(",").map(Number);
+    const cols = 6, cw = W / cols, ch = H / cols;
+    const sheet = document.createElement("canvas");
+    sheet.width = W; sheet.height = ch * Math.ceil(ts.length / cols);
+    const sc = sheet.getContext("2d");
+    for (let i = 0; i < ts.length; i++) {
+      while (T + 1 / FPS <= ts[i]) step(1 / FPS);
+      sc.drawImage(out, (i % cols) * cw, Math.floor(i / cols) * ch, cw, ch);
+      sc.fillStyle = "#000"; sc.font = "20px sans-serif"; sc.fillText(ts[i].toFixed(1) + "s", (i % cols) * cw + 6, Math.floor(i / cols) * ch + 22);
+    }
+    out.width = sheet.width; out.height = sheet.height;
+    out.style.height = "auto"; out.style.width = "100vw"; out.style.aspectRatio = "auto";
+    ctx.drawImage(sheet, 0, 0);
+    window.sheetReady = true;
+    if (Q.has("save")) await fetch("/frame/99999", { method: "POST", body: await new Promise(r => out.toBlob(r, "image/jpeg", 0.9)) });
+    document.title = "SHEET";
+    return;
+  }
+  if (Q.has("audit")) {   // clipping audit: footprints (ovals along each dog's heading) and props, every 3rd frame
+    const N = Math.round(TOTAL * FPS), hits = {};
+    const foot = d => {   // half length / half width of a dog's footprint, from its bounding box at rest scale
+      d.fp ||= (() => { const b = new THREE.Box3().setFromObject(d.model); const s = d.group.scale.x;
+        return [Math.max(b.max.z - b.min.z, b.max.x - b.min.x) / 2 / s * 0.8, Math.min(b.max.z - b.min.z, b.max.x - b.min.x) / 2 / s * 0.8]; })();
+      return [d.fp[0] * d.scale, d.fp[1] * d.scale];
+    };
+    for (let f = 0; f < N; f++) {
+      step(1 / FPS);
+      if (f % 3) continue;
+      const shot = shotIx;
+      const list = actors.filter(a => a.group.parent);
+      for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        const pa = a.group.position, pb = b.group.position;
+        const d = Math.hypot(pa.x - pb.x, pa.z - pb.z);
+        const ra = (foot(a)[0] + foot(a)[1]) / 2, rb = (foot(b)[0] + foot(b)[1]) / 2;   // a round-ish footprint
+        const over = ra + rb - d;
+        if (over > 0.05) {
+          const k = `${shot}:${a.slug}~${b.slug}`;
+          if (!hits[k] || hits[k].over < over) hits[k] = { t: +T.toFixed(2), over: +over.toFixed(2), shot };
+        }
+      }
+      for (const m of things) {
+        if (!m.parent || !m.isObject3D || m.isMesh && !m.geometry) continue;
+        const bb = new THREE.Box3().setFromObject(m); if (bb.isEmpty()) continue;
+        const c = bb.getCenter(new THREE.Vector3()), rr = Math.min(bb.max.x - bb.min.x, bb.max.z - bb.min.z) / 2;
+        for (const a of list) {
+          const pa = a.group.position, d = Math.hypot(pa.x - c.x, pa.z - c.z);
+          const over = rr + (foot(a)[0] + foot(a)[1]) / 2 * 0.6 - d;
+          if (over > 0.05 && rr > 0.05) {
+            const k = `${shot}:${a.slug}~prop`;
+            if (!hits[k] || hits[k].over < over) hits[k] = { t: +T.toFixed(2), over: +over.toFixed(2), shot };
+          }
+        }
+      }
+    }
+    window.audit = Object.entries(hits).map(([k, v]) => ({ pair: k, ...v })).sort((a, b) => b.over - a.over);
+    document.title = "AUDIT";
+    return;
+  }
+  if (Q.has("at")) {
+    const target = +Q.get("at");
+    while (T + 1 / FPS <= target) step(1 / FPS);
+    document.title = "AT " + T.toFixed(2);
+    return;
+  }
+  let last = performance.now();
+  const loop = now => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (T + dt >= TOTAL) { T = 0; shotIx = -1; events = []; seed = 7; }
+    step(dt);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+window.TOTAL = TOTAL;
+window.STARTS = STARTS;
+main();
+</script>
+</body>
+</html>

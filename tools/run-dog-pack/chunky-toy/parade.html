@@ -1,0 +1,501 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Chonky Hounds: Doggo Dynasties — dog park</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e9e9ec; font-family: system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #bar { position: fixed; top: 10px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
+  #bar .group { display: flex; gap: 4px; align-items: center; padding-right: 8px; margin-right: 4px; border-right: 1px solid #ccc; }
+  #bar .group:last-child { border-right: 0; }
+  #bar .group span { color: #777; font-size: 12px; margin-right: 2px; }
+  button, label { font: inherit; padding: 5px 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  button.on { background: #333; color: #fff; border-color: #333; }
+  label { display: flex; align-items: center; gap: 6px; cursor: default; }
+  input[type=range] { width: 100px; }
+  #note { position: fixed; left: 14px; bottom: 12px; color: #666; font-size: 13px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="bar"></div>
+<div id="note"></div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { loadClipLibrary, setupDog, attachWear } from './dogclips.js';
+import { loadCoats, loadClothPatterns, tintCloth, makeLite } from './dogcoat.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+
+const BUILD = Date.now();  // always fetch the latest rigged models (no stale browser cache)
+// ?mobile: the dist/ build (KTX2 textures, stay compressed on the GPU) with cheap lit materials
+const MOBILE = new URLSearchParams(location.search).has('mobile');
+const BASE = MOBILE ? 'dist/' : '';
+
+// Scale for each adult size class (models are 1 unit tall). Every dog starts as a
+// puppy at PUPPY scale and grows to its class; proportions never change.
+const PUPPY = 0.45;
+const ADULT = { toy: 0.45, small: 0.65, medium: 0.85, large: 1.1 };
+const ORDER = ['large', 'medium', 'small', 'toy'];
+const R_OUT = 4.6, R_IN = 3.0;   // gaits: big dogs outside, little dogs inside
+
+const GROUPS = [
+  ['Gaits', [['walk', 'Walk'], ['trot', 'Trot'], ['run', 'Run'], ['gallop', 'Gallop'], ['robot', 'Robot']]],
+  ['Play', [['play_bow', 'Play bow'], ['catch', 'Catch'], ['drop_ball', 'Drop ball'], ['stretch', 'Stretch'], ['bark', 'Bark'], ['bark_rapid', 'Bark bark bark'], ['sniff', 'Sniff'], ['point', 'Point'], ['idle', 'Idle']]],
+  ['Potty', [['pee_male', 'Pee (leg lift)'], ['pee_female', 'Pee (squat)'], ['poop', 'Poop']]],
+];
+// Poses go through their enter/exit clips; tricks first get into the pose they start from.
+const POSES = [['stand', 'Stand'], ['sit', 'Sit'], ['down', 'Down'], ['comfy', 'Comfy'], ['sploot', 'Sploot'],
+  ['beg', 'Sit pretty'], ['dance', 'Dance'], ['dead', 'Play dead']];
+const TRICKS = [['paw', 'Paw'], ['roll_over', 'Roll over'], ['spin', 'Spin']];
+const NOTES = {
+  robot: 'Stiff, quick, even steps: a wind-up robot dog.', walk: 'Bouncy four-beat walk.',
+  trot: 'The tippy-tap: bouncy diagonal trot.', run: 'Canter: long rocking-horse strides.',
+  gallop: 'Big-dog gallop: spine stretches and gathers.',
+  play_bow: 'Bow, bum wiggle, pop up.', catch: 'Load, spring, snap the ball out of the air, land.',
+  drop_ball: 'Drop the ball and look up for the next throw.',
+  stretch: 'Downward dog: reach out, quiver and yawn, pop, back to neutral.',
+  bark: 'One forceful bark, on a loop.', sniff: 'Nose to the ground, quick sniffs.',
+  point: 'Pointer freeze: paw up, nose and tail in a line.', idle: 'Breathing, head tilt, tail wag.',
+  pee_male: 'Leg lift.', pee_female: 'Long squat.', poop: 'Hunch, strain, plop.',
+};
+
+const rows = (await (await fetch('breeds.csv')).text()).trim().split('\n').slice(1)
+  .map(l => l.split(',')).map(([slug, breed, size]) => ({ slug, breed, size }));
+rows.sort((a, b) => ORDER.indexOf(a.size) - ORDER.indexOf(b.size));
+
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe9e9ec);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b8, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-3, 6, 4);
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(9, 64), new THREE.MeshLambertMaterial({ color: 0xdcdce2 }));
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+camera.position.set(0, 8, 15.5);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.3, 0);
+controls.update();
+
+// ---------------------------------------------------------------- props
+const ballMat = new THREE.MeshLambertMaterial({ color: 0xc8e03a });
+const peeMat = new THREE.MeshLambertMaterial({ color: 0xf2d64b, transparent: true, opacity: 0.75 });
+const poopMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
+function poopMesh() {
+  const g = new THREE.Group();
+  [[0.05, 0.03], [0.038, 0.07], [0.024, 0.1]].forEach(([r, y]) => {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 6), poopMat);
+    m.scale.y = 0.75;
+    m.position.y = y;
+    g.add(m);
+  });
+  return g;
+}
+const woofTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.strokeStyle = '#333'; x.lineWidth = 6;
+  x.beginPath(); x.roundRect(8, 8, 240, 88, 40); x.fill(); x.stroke();
+  x.beginPath(); x.moveTo(70, 94); x.lineTo(50, 124); x.lineTo(100, 94); x.fill(); x.stroke();
+  x.fillStyle = '#333'; x.font = 'bold 54px system-ui'; x.textAlign = 'center'; x.fillText('Woof!', 128, 72);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+})();
+
+// ---------------------------------------------------------------- dogs
+const loader = new GLTFLoader();
+const ktx2 = MOBILE ? new KTX2Loader().setTranscoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/basis/').detectSupport(renderer) : null;
+if (ktx2) loader.setKTX2Loader(ktx2);
+loader.setMeshoptDecoder(MeshoptDecoder);   // dist/ geometry is meshopt-compressed
+if (MOBILE) renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+const lib = await loadClipLibrary(loader, `${BASE}rigged/clips.glb?v=${BUILD}`);
+const rand = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(11);
+const dogs = await Promise.all(rows.map(async row => {
+  const g = (await loader.loadAsync(`${BASE}rigged/${row.slug}.glb?v=${BUILD}`)).scene;
+  if (MOBILE) makeLite(g);
+  scene.add(g);
+  const dog = setupDog(g, lib);
+  const bones = {};
+  g.traverse(o => { if (o.isBone) bones[o.name] = o; });
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(dog.ballRadius, 14, 10), ballMat);
+  const puddle = new THREE.Mesh(new THREE.CircleGeometry(1, 20), peeMat);
+  puddle.rotation.x = -Math.PI / 2;
+  const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1, 6), peeMat);
+  const poop = poopMesh();
+  const woof = new THREE.Sprite(new THREE.SpriteMaterial({ map: woofTex }));
+  woof.scale.set(0.5, 0.25, 1);
+  [ball, puddle, stream, poop, woof].forEach(p => { p.visible = false; g.add(p); });
+  return { ...row, g, dog, bones, ball, puddle, stream, poop, woof, offset: rand() };
+}));
+const outer = dogs.filter(d => d.size === 'large' || d.size === 'medium');
+const inner = dogs.filter(d => d.size === 'small' || d.size === 'toy');
+outer.forEach((d, k) => Object.assign(d, { ring: R_OUT, slot: k / outer.length }));
+inner.forEach((d, k) => Object.assign(d, { ring: R_IN, slot: k / inner.length }));
+
+const lap = { [R_OUT]: 0, [R_IN]: 0 };
+let clipName = 'trot', paused = false, grow = 1, t = 0, growing = null, speedMul = 1;
+const scaleOf = d => PUPPY + (ADULT[d.size] - PUPPY) * grow;
+const meta = () => lib.meta[clipName];
+// Each ring travels at the natural pace of the dogs in it (big dogs outside cover more
+// ground per step); every dog's step rate is then matched to its ring.
+const RING_SIZE = { [R_OUT]: (ADULT.large + ADULT.medium) / 2, [R_IN]: (ADULT.small + ADULT.toy) / 2 };
+const ringSpeed = (ring = R_OUT) => speedMul * meta().stride * lib.leg * RING_SIZE[ring] / meta().duration;
+
+const v = new THREE.Vector3();
+function local(d, bone) { return d.g.worldToLocal(d.bones[bone].getWorldPosition(v.clone())); }
+
+function play(name) {
+  clipName = name;
+  for (const d of dogs) { d.queue = null; d.state = 'stand'; }
+  document.querySelectorAll('[data-pose],[data-trick]').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('[data-clip]').forEach(b => b.classList.toggle('on', b.dataset.clip === name));
+  document.getElementById('note').textContent = NOTES[name] || '';
+  const m = meta();
+  for (const d of dogs) {
+    d.dog.mixer.stopAllAction();
+    const a = d.dog.mixer.clipAction(d.dog.clips[name]);
+    a.reset();
+    a.setLoop(THREE.LoopRepeat);
+    a.time = d.offset * m.duration;
+    a.play();
+    d.dog.action = a;
+    d.dog.name = name;
+    [d.ball, d.puddle, d.stream, d.poop, d.woof].forEach(p => { p.visible = false; });
+    if (name === 'catch') {  // where the mouth will be when the ball arrives
+      a.time = m.events.catch;
+      d.dog.mixer.update(0);
+      d.g.updateMatrixWorld(true);
+      d.catchAt = local(d, 'mouth');
+      a.time = d.offset * m.duration;
+    }
+    if (m.gait) d.dog.setSpeed(ringSpeed(d.ring), scaleOf(d));
+  }
+}
+
+// ---------------------------------------------------------------- pose state machine
+// Clip metadata says which state each clip starts and ends in; loops hold a state.
+const LOOP_OF = { stand: 'idle' };
+const EDGES = {};
+for (const [name, m] of Object.entries(lib.meta)) {
+  if (!m.from) continue;
+  if (m.loop && m.from === m.to) { if (name !== 'idle') LOOP_OF[m.from] = name; }
+  else if (m.from !== m.to) (EDGES[m.from] ||= []).push([name, m.to]);
+}
+function route(from, to) {  // shortest list of transition clips
+  const seen = { [from]: [] }, todo = [from];
+  while (todo.length) {
+    const s0 = todo.shift();
+    if (s0 === to) return seen[s0];
+    for (const [clip, s1] of EDGES[s0] || []) if (!(s1 in seen)) { seen[s1] = [...seen[s0], clip]; todo.push(s1); }
+  }
+  return [];
+}
+function startClip(d, name) {
+  const m = lib.meta[name], prev = d.dog.action;
+  const a = d.dog.mixer.clipAction(d.dog.clips[name]);
+  a.reset();
+  a.setLoop(m.loop ? THREE.LoopRepeat : THREE.LoopOnce);
+  a.clampWhenFinished = true;
+  a.play();
+  if (prev && prev !== a) prev.crossFadeTo(a, 0.15, false);
+  d.dog.action = a;
+  d.dog.name = name;
+}
+function goTo(state, trick) {
+  clipName = 'idle';  // grid layout, no props
+  document.querySelectorAll('[data-clip],[data-pose],[data-trick]').forEach(b =>
+    b.classList.toggle('on', (!!state && b.dataset.pose === state) || (!!trick && b.dataset.trick === trick)));
+  document.getElementById('note').textContent = trick ? `Trick: ${trick.replace('_', ' ')}` : `Pose: ${state}`;
+  for (const d of dogs) {
+    [d.ball, d.puddle, d.stream, d.poop, d.woof].forEach(p => { p.visible = false; });
+    if (d.dog.name && !lib.meta[d.dog.name]?.from) { startClip(d, 'idle'); d.state = 'stand'; }
+    const busy = d.dog.name && !lib.meta[d.dog.name].loop;  // finish the current transition first
+    const at = busy ? lib.meta[d.dog.name].to : d.state || 'stand';
+    const t0 = trick ? lib.meta[trick].from : state;
+    const end = trick ? lib.meta[trick].to : state;
+    d.queue = [...route(at, t0), ...(trick ? [trick] : []), LOOP_OF[end]];
+    d.wait = rand() * 0.35;
+    if (!busy) d.next = true;
+  }
+}
+function advance(d, dt) {
+  if (!d.queue) return;
+  const m = lib.meta[d.dog.name];
+  const done = m && !m.loop && d.dog.action.time >= m.duration - 1e-3;
+  if (done) { d.state = m.to; d.next = true; }
+  if (d.next && (d.wait -= dt) <= 0 && d.queue.length) {
+    d.next = false;
+    const name = d.queue.shift();
+    if (name !== d.dog.name || !lib.meta[name].loop) startClip(d, name);
+    if (lib.meta[name].loop) d.state = lib.meta[name].from;
+  }
+}
+
+function setGrow(x) {
+  grow = x;
+  document.getElementById('grow').value = x;
+  for (const d of dogs) {
+    d.g.scale.setScalar(scaleOf(d));
+    if (meta().gait) d.dog.setSpeed(ringSpeed(d.ring), scaleOf(d));
+  }
+}
+
+function place(dt) {
+  const m = meta();
+  for (const [i, d] of dogs.entries()) {
+    if (m.gait) {
+      const a = d.slot * Math.PI * 2 + lap[d.ring];
+      d.g.position.set(Math.cos(a) * d.ring, 0, Math.sin(a) * d.ring);
+      d.g.rotation.y = -a;  // dogs face +Z; point them along the ring
+    } else {
+      const col = i % 6, row = Math.floor(i / 6);
+      d.g.position.set((col - 2.5) * 2.3, 0, (row - 2) * 2.1);
+      d.g.rotation.y = -1.0;  // three-quarter view, heads to the left
+    }
+  }
+}
+
+function props(d) {
+  const m = meta(), ev = m.events, time = d.dog.action.time;
+  const r = d.dog.ballRadius;
+  if (clipName === 'catch') {
+    d.ball.visible = true;
+    if (time < ev.catch) {  // thrown in from above and in front
+      const u = time / ev.catch;
+      const from = d.catchAt.clone().add(new THREE.Vector3(0, 0.6, 1.6));
+      d.ball.position.lerpVectors(from, d.catchAt, u);
+      d.ball.position.y += Math.sin(Math.PI * u) * 0.5;
+    } else d.ball.position.copy(local(d, 'mouth'));
+  } else if (clipName === 'drop_ball') {
+    d.ball.visible = true;
+    if (time < ev.release) d.ball.position.copy(d.dropFrom = local(d, 'mouth'));
+    else {  // falls, bounces twice, rolls forward
+      const s = time - ev.release, from = d.dropFrom || local(d, 'mouth');
+      const g = 6, h0 = Math.max(from.y - r, 0), t1 = Math.sqrt(2 * h0 / g);
+      let y;
+      if (s < t1) y = h0 - 0.5 * g * s * s;
+      else {
+        const vb = g * t1 * 0.45, sb = (s - t1) % (2 * vb / g || 1);
+        y = Math.max(0, vb * sb - 0.5 * g * sb * sb) * Math.exp(-(s - t1) * 2);
+      }
+      d.ball.position.set(from.x, r + y, from.z + 0.25 * s);
+    }
+  }
+  if (clipName === 'pee_male' || clipName === 'pee_female') {
+    const on = time > ev.pee_start && time < ev.pee_end;
+    const grown = Math.min(1, Math.max(0, (time - ev.pee_start) / (ev.pee_end - ev.pee_start)));
+    const src = clipName === 'pee_male' ? local(d, 'shinL').lerp(local(d, 'hips'), 0.5) : local(d, 'hips');
+    if (clipName === 'pee_female') src.y *= 0.55;
+    const spot = new THREE.Vector3(src.x + (clipName === 'pee_male' ? 0.1 : 0), 0.004, src.z);
+    d.puddle.visible = grown > 0;
+    d.puddle.position.copy(spot);
+    d.puddle.scale.setScalar(0.02 + 0.16 * Math.sqrt(grown));
+    d.stream.visible = on;
+    if (on) {
+      d.stream.position.lerpVectors(src, spot, 0.5);
+      d.stream.scale.y = src.distanceTo(spot);
+      d.stream.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), src.clone().sub(spot).normalize());
+    }
+  }
+  if (clipName === 'poop') {
+    const s = time - ev.poop;
+    d.poop.visible = s > 0;
+    if (s > 0) {  // drops from under the tail to just behind the back feet, squashes on landing
+      // Lands between the back feet and the tail base: behind the dog, not under it.
+      const tail = local(d, 'tail1'), feet = local(d, 'footL').lerp(local(d, 'footR'), 0.5);
+      const z = feet.z + (tail.z - feet.z) * 0.55, y0 = Math.max(0.05, tail.y * 0.55), fall = Math.sqrt(2 * y0 / 6);
+      const y = Math.max(0, y0 - 3 * s * s);
+      const squash = s > fall ? 1 - 0.35 * Math.exp(-(s - fall) * 12) * Math.cos((s - fall) * 30) : 1;
+      d.poop.position.set(0, y, s < fall ? tail.z + (z - tail.z) * (s / fall) : z);
+      d.poop.scale.set(2 - squash, squash, 2 - squash);
+    }
+  }
+  if (clipName.startsWith('bark')) {   // one woof per bark event (bark_rapid has several)
+    const s = Math.min(...Object.entries(ev).filter(([k]) => k.startsWith('bark'))
+      .map(([, at]) => (time - at + m.duration) % m.duration));
+    d.woof.visible = s < (clipName === 'bark_rapid' ? 0.15 : 0.35);
+    const head = local(d, 'head');
+    d.woof.position.set(head.x, head.y + 0.35, head.z + 0.1);
+  }
+}
+
+// ---------------------------------------------------------------- UI
+const bar = document.getElementById('bar');
+for (const [title, clips] of GROUPS) {
+  const g = document.createElement('div');
+  g.className = 'group';
+  g.innerHTML = `<span>${title}</span>` + clips.map(([k, n]) => `<button data-clip="${k}">${n}</button>`).join('');
+  bar.appendChild(g);
+}
+{
+  const g = document.createElement('div');
+  g.className = 'group';
+  g.innerHTML = '<span>Poses</span>' + POSES.map(([k, n]) => `<button data-pose="${k}">${n}</button>`).join('') +
+    '<span style="margin-left:6px">Tricks</span>' + TRICKS.map(([k, n]) => `<button data-trick="${k}">${n}</button>`).join('');
+  bar.appendChild(g);
+}
+bar.insertAdjacentHTML('beforeend', `<div class="group"><span>Coats</span>
+  <button id="coat-orig" class="on">Original</button><button id="coat-mix">Mix colorways</button>
+  <button id="props">Props</button></div>
+  <div class="group"><span>Wear</span><button id="wear-collar">Collars</button><button id="wear-bandana">Bandanas</button></div>
+  <div class="group"><span>Face</span>
+    <label>Eyes <input id="face-eyes" type="color" value="#141313"></label>
+    <label>Left eye <input id="face-eye_l" type="color" value="#141313"></label>
+    <label>Right eye <input id="face-eye_r" type="color" value="#141313"></label>
+    <label>Nose <input id="face-nose" type="color" value="#1a1919"></label>
+    <label title="seen when the mouth opens (bark, catch)">Inside mouth <input id="face-mouth" type="color" value="#6e1a22"></label>
+    <label>Tongue <input id="face-tongue" type="color" value="#ec9fad"></label>
+    <button id="face-reset">Reset</button></div>`);
+bar.insertAdjacentHTML('beforeend', `<div class="group">
+  <label>Puppy <input id="grow" type="range" min="0" max="1" step="0.01" value="1"> Adult</label>
+  <button id="growup">Grow up</button></div>
+  <div class="group"><label>Gait speed <input id="speed" type="range" min="0.5" max="2" step="0.05" value="1"> <b id="speedv">1.0×</b></label>
+  <button id="pause">Pause</button></div>`);
+document.querySelectorAll('[data-clip]').forEach(b => b.onclick = () => play(b.dataset.clip));
+document.querySelectorAll('[data-pose]').forEach(b => b.onclick = () => goTo(b.dataset.pose));
+document.querySelectorAll('[data-trick]').forEach(b => b.onclick = () => goTo(null, b.dataset.trick));
+document.getElementById('pause').onclick = e => { paused = !paused; e.target.textContent = paused ? 'Play' : 'Pause'; };
+document.getElementById('grow').oninput = e => { growing = null; setGrow(+e.target.value); };
+document.getElementById('speed').oninput = e => {  // faster ground speed = faster steps, feet stay matched
+  speedMul = +e.target.value;
+  document.getElementById('speedv').textContent = speedMul.toFixed(1) + '×';
+  setGrow(grow);
+};
+document.getElementById('growup').onclick = () => { growing = 0; setGrow(0); };
+const firstClip = new URLSearchParams(location.search).get('clip');
+play(lib.meta[firstClip] ? firstClip : 'trot');
+setGrow(1);
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.1);
+  if (paused || document.hidden) return;  // no work while paused or in a background tab
+  if (growing !== null) {  // Grow up: puppy to adult over 6 seconds
+    growing = Math.min(1, growing + dt / 6);
+    setGrow(growing);
+    if (growing === 1) growing = null;
+  }
+  t += dt;
+  if (meta().gait) for (const r of [R_OUT, R_IN]) lap[r] += dt * ringSpeed(r) / r;
+  for (const d of dogs) { advance(d, dt); d.dog.update(dt); }
+  place(dt);
+  for (const d of dogs) props(d);
+  renderer.render(scene, camera);
+});
+// ---------------------------------------------------------------- colorways and props
+// A colorway is a palette run through the breed's mask textures by a shader (dogcoat.js):
+// switching coats only changes a few uniforms, and every colorway of a breed shares its masks.
+const coats = await loadCoats(`${BASE}coats.json?v=${BUILD}`, `${BASE}rigged/coats/`, { ktx2Loader: ktx2 });
+async function coatOf(d) {   // one controller per dog, even when several controls ask at once
+  d.coatP ||= coats.apply(d.g, d.slug).then(c => (d.coat = c));
+  return d.coatP;
+}
+function setCoat(d, pal) { d.coat?.set(pal); }
+document.getElementById('coat-orig').onclick = () => {
+  dogs.forEach(d => setCoat(d, null));
+  document.getElementById('coat-orig').classList.add('on'); document.getElementById('coat-mix').classList.remove('on');
+};
+document.getElementById('coat-mix').onclick = async () => {
+  document.getElementById('coat-mix').classList.add('on'); document.getElementById('coat-orig').classList.remove('on');
+  await Promise.all(dogs.map(async d => {
+    const options = coats.index[d.slug]?.colorways || [];
+    if (!options.length) return;
+    (await coatOf(d)).set(options[Math.floor(Math.random() * options.length)]);
+  }));
+};
+
+// Face colors: eyes, nose and mouth on every dog (one shared face material per dog, dogcoat.js setFace).
+for (const part of ['eyes', 'eye_l', 'eye_r', 'nose', 'mouth', 'tongue']) {
+  document.getElementById('face-' + part).oninput = async e => {
+    await Promise.all(dogs.map(async d => (await coatOf(d)).setFace({ [part]: e.target.value })));
+  };
+}
+document.getElementById('face-reset').onclick = async () => {
+  await Promise.all(dogs.map(async d => (await coatOf(d)).setFace({ eyes: null, nose: null, mouth: null, tongue: null })));
+};
+
+// Wearables: a collar and a bandana fitted to each dog (rigged/wear/), bound to its skeleton.
+const CLOTH = [['#b8322a', 'dots'], ['#24345e', 'dots'], ['#d9a42b', 'plain'], ['#3f7d4f', 'gingham'],
+  ['#e58fa8', 'dots'], ['#4f78a8', 'gingham'], ['#6b3fa0', 'stripes'], ['#e2672b', 'stripes']];
+const clothPatterns = MOBILE
+  ? await ktx2.loadAsync(`${BASE}rigged/wear/cloth.ktx2`).then(t => { t.colorSpace = THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })
+  : await loadClothPatterns(`rigged/wear/cloth.png?v=${BUILD}`);
+async function wear(d, kind, on) {
+  d.wear ||= {};
+  if (!d.wear[kind]) {
+    const g = await loader.loadAsync(`${BASE}rigged/wear/${d.slug}--${kind}.glb?v=${BUILD}`).catch(() => null);
+    if (g && MOBILE) makeLite(g.scene);
+    d.wear[kind] = g ? attachWear(d.g, g.scene) : [];
+  }
+  const k = Math.floor(rand() * CLOTH.length);
+  for (const m of d.wear[kind]) {
+    m.visible = on;
+    if (!on) continue;
+    for (const mat of [m.material].flat()) {
+      if (mat.name === 'bandana') tintCloth(mat, clothPatterns, CLOTH[k][0], '#f4efe6', CLOTH[k][1]);
+      if (mat.name === 'collar') mat.color.set(CLOTH[k][0]);
+    }
+  }
+}
+// one piece of neckwear at a time: a collar or a bandana (both together don't fit)
+for (const kind of ['collar', 'bandana']) {
+  document.getElementById('wear-' + kind).onclick = async e => {
+    const on = e.target.classList.toggle('on');
+    const other = kind === 'collar' ? 'bandana' : 'collar';
+    if (on) document.getElementById('wear-' + other).classList.remove('on');
+    await Promise.all(dogs.map(async d => { if (on && d.wear?.[other]) await wear(d, other, false); await wear(d, kind, on); }));
+  };
+}
+
+// Props along the back of the park, at their real size next to the dogs.
+const propRows = (await (await fetch(`${BASE}props/props.csv?v=${BUILD}`)).text()).trim().split('\n').slice(1)
+  .map(l => l.match(/^([^,]+),([^,]+),([^,]+)/).slice(1))
+  .flatMap(r => r[0] === 'floor-bowl' ? ['empty', 'food', 'water'].map(s => [`floor-bowl--${s}`, r[1], r[2]]) : [r]);  // bowl states
+let propGroup = null;
+document.getElementById('props').onclick = async e => {
+  e.target.classList.toggle('on');
+  if (propGroup) { propGroup.visible = e.target.classList.contains('on'); return; }
+  propGroup = new THREE.Group();
+  scene.add(propGroup);
+  const loaded = await Promise.all(propRows.map(([slug]) => loader.loadAsync(`${BASE}props/models/${slug}.glb?v=${BUILD}`).then(g => { if (MOBILE) makeLite(g.scene); return g; }).catch(() => null)));
+  const rowZ = { toy: -5.6, care: -6.6, bed: -8.0 };
+  const cursor = { toy: -3.5, care: -5.5, bed: -6.5 };
+  loaded.forEach((g, i) => {
+    if (!g) return;
+    const [, , group] = propRows[i];
+    const box = new THREE.Box3().setFromObject(g.scene), w = box.max.x - box.min.x;
+    g.scene.position.set(cursor[group] + w / 2, 0, rowZ[group]);
+    g.scene.rotation.y = 0.35;
+    cursor[group] += w + 0.35;
+    propGroup.add(g.scene);
+  });
+};
+
+window.park = { dogs, play, lib, meta: () => meta(), ringSpeed, camera, renderer, scene, coatOf,  // for debugging
+  snap: () => { renderer.render(scene, camera); return new Promise(r => renderer.domElement.toBlob(r, 'image/jpeg', 0.85)); } };
+window.ready = true;
+</script>
+</body>
+</html>

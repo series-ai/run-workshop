@@ -1,0 +1,499 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RUN Dog Pack — props</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #efebe4; font-family: system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .label { font-size: 10px; color: #333; background: #ffffffcc; padding: 1px 4px; border-radius: 3px; white-space: nowrap; }
+  .section { font-size: 13px; font-weight: 700; color: #222; background: #fff; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  #top { z-index: 2; position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 8px; padding: 6px 10px; box-shadow: 0 2px 10px #0002; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+  #info { z-index: 2; position: fixed; left: 12px; bottom: 12px; background: #fff; border-radius: 8px; padding: 6px 10px; box-shadow: 0 2px 10px #0002; font-size: 12px; color: #555; min-width: 180px; }
+</style>
+</head>
+<body>
+<div id="top">Show <select id="view"></select> <label><input type="checkbox" id="showLabels" checked> labels</label></div>
+<div id="info">Click a prop for its details</div>
+<div id="labels"></div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+// Props from scripts/build_props.py: one GLB each plus props/props.json.
+// ?view=<category> | room | all. Renders on demand only (battery).
+const P = new URLSearchParams(location.search);
+const BUST = `?t=${Date.now()}`;
+const CATEGORIES = { garden: 'Bushes & trees', yard: 'Fences, gates & yard', toys: 'Toys', food: 'Food & water', beds: 'Dog beds', bedding: 'Blankets & towels',
+  home: 'Dog things', wear: 'Harness add-ons & tags', agility: 'Agility', furniture: 'Living room',
+  living: 'Living extras', plants: 'Plants', bedroom: 'Bedroom', kitchen: 'Kitchen', bathroom: 'Bathroom',
+  hall: 'Hall', house: 'Walls, doors & floors' };
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xefebe4);
+scene.add(new THREE.HemisphereLight(0xfffaf2, 0x9a948a, 1.7));
+const sun = new THREE.DirectionalLight(0xfff4e6, 2.0);
+sun.position.set(4, 8, 5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.bias = -0.0005;
+sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.02, 200);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+let needsRender = true;
+const redraw = () => { needsRender = true; };
+controls.addEventListener('change', redraw);
+addEventListener('resize', redraw);
+
+const loader = new GLTFLoader();
+const manifest = await (await fetch(`props/props.json${BUST}`)).json();
+const models = {};
+await Promise.all(manifest.map(p => loader.loadAsync(`props/${p.id}.glb${BUST}`).then(g => {
+  g.scene.traverse(o => {
+    if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.material.flatShading = true; }
+  });
+  models[p.id] = g.scene;
+})));
+
+// Grey stand-in dog: a build plus its classic head (and optionally a coat shell).
+const dogMat = new THREE.MeshLambertMaterial({ color: 0xc9b9a3, flatShading: true });
+async function standIn(build = 'shepherd', length = 0.95, coat = '') {
+  const [b, h] = await Promise.all([loader.loadAsync(`builds/${build}.glb${BUST}`),
+                                    loader.loadAsync(`heads/classic-${build}.glb${BUST}`)]);
+  const dog = SkeletonUtils.clone(b.scene);
+  dog.traverse(o => {
+    if (o.isMesh) { o.material = dogMat; o.castShadow = true; if (o.name.startsWith('coat_')) o.visible = o.name === `coat_${coat}`; }
+  });
+  const head = h.scene.getObjectByName('head').clone();
+  head.traverse(o => { if (o.isMesh) { o.material = dogMat; o.castShadow = true; } });
+  dog.getObjectByName('socket_head').add(head);
+  head.position.set(0, 0, 0);
+  const g = new THREE.Group();
+  g.add(dog);
+  g.scale.setScalar(length);
+  return g;
+}
+const scaleDog = length => standIn('shepherd', length);
+
+const items = [], sections = {};
+function addLabel(text, pos, cls = 'label') {
+  const el = document.createElement('div');
+  el.className = cls;
+  el.textContent = text;
+  const l = new CSS2DObject(el);
+  l.position.copy(pos);
+  scene.add(l);
+  return l;
+}
+function place(id, x, y, z, rotY = 0) {
+  const o = models[id].clone();
+  o.position.set(x, y, z);
+  o.rotation.y = rotY;
+  o.userData.prop = manifest.find(p => p.id === id);
+  scene.add(o);
+  return o;
+}
+
+// ---- shelves: each category is a block of rows (wrapped so it frames well), blocks stacked in z ----
+let blockZ = 0;
+const GAP = 0.25;
+for (const [cat, title] of Object.entries(CATEGORIES)) {
+  const list = manifest.filter(p => p.category === cat);
+  if (!list.length) continue;
+  // Props face +X; they're turned -90° about Y to face the camera (+Z), so width = size[1], depth = size[0].
+  const area = list.reduce((a, p) => a + (p.size[1] + GAP) * (p.size[0] + GAP * 2), 0);
+  const rowW = Math.max(Math.sqrt(area * 1.8), ...list.map(p => p.size[1]));
+  const members = [];
+  let x = 0, z = blockZ, rowDepth = 0;
+  for (const p of list) {
+    if (x > 0 && x + p.size[1] > rowW) { x = 0; z += rowDepth + 0.35; rowDepth = 0; }
+    const o = place(p.id, x + p.size[1] / 2, 0, z, -Math.PI / 2);
+    const lift = new THREE.Box3().setFromObject(o).min.y;
+    if (lift > 0.2) o.position.y -= lift;   // wall cabinets, prints, pendants: shown on the floor here
+    const lab = addLabel(p.label, new THREE.Vector3(x + p.size[1] / 2, 0, z + p.size[0] / 2 + 0.06));
+    members.push({ obj: o, label: lab });
+    x += p.size[1] + GAP;
+    rowDepth = Math.max(rowDepth, p.size[0]);
+  }
+  const head = addLabel(title, new THREE.Vector3(-0.3, 0, blockZ), 'section');
+  sections[cat] = { members, head, z: blockZ };
+  blockZ = z + rowDepth + 1.5;
+}
+// ?wear=shepherd,corgi&items=collar,harness&coat=ruff : wearables fitted to each build, at rest.
+const WEAR = P.get('wear');
+if (WEAR) {
+  const ITEMS = (P.get('items') || 'collar,bandana,harness,vest,sweater').split(',');
+  const coat = P.get('coat') || '';
+  const members = [];
+  const builds = WEAR.split(',');
+  for (const [i, build] of builds.entries()) {
+    const wg = await loader.loadAsync(`wearables/${build}.glb${BUST}`);
+    for (const [j, item] of ITEMS.entries()) {
+      const g = await standIn(build, 1, coat);
+      const w = SkeletonUtils.clone(wg.scene);
+      const want = coat && w.getObjectByName(`${item}@${coat}`) ? `${item}@${coat}` : item;
+      w.traverse(o => {
+        if (o.isMesh) { o.visible = o.name === want || o.parent?.name === want; o.castShadow = true; }
+        if (o.name.startsWith(`socket_${want}.`)) {
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.012), new THREE.MeshBasicMaterial({ color: 0xff2266 }));
+          o.add(dot);
+        }
+      });
+      g.children[0].add(w);
+      g.position.set(40 + j * 1.4, 0, i * 1.4);
+      g.rotation.y = +(P.get('rot') ?? -0.5);
+      scene.add(g);
+      members.push({ obj: g });
+      if (i === 0) addLabel(item, new THREE.Vector3(40 + j * 1.4, 1.1, -0.3), 'section');
+    }
+    addLabel(build, new THREE.Vector3(39.2, 0.2, i * 1.4), 'section');
+  }
+  sections.fit = { members, head: new THREE.Object3D() };
+}
+// ?id=<prop> : one prop on its own, close up.
+const ONE = P.get('id');
+if (ONE) {
+  const o = place(ONE, 30, 0, 0, -Math.PI / 2);
+  sections.one = { members: [{ obj: o }], head: new THREE.Object3D() };
+}
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshLambertMaterial({ color: 0xe6e0d6 }));
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// ---- house: a small one-storey Scandi house on a 1 m grid, off to the side ----
+// Grid x 0..9 (west to east), z 0..7 (back to front). Rooms: living (x0-5, z0-4),
+// kitchen/dining (x5-9, z0-4), bedroom (x0-4, z4-7), bathroom (x4-6, z4-7),
+// hall (x6-9, z4-7) with the front door on the east wall; garden to the east.
+// Front walls (z = 7) are cut away so you can see in; ?front=1 shows them.
+const H0 = new THREE.Vector3(-34, 0, -2);
+const house = [];
+const FACE = { E: 0, S: -Math.PI / 2, W: Math.PI, N: Math.PI / 2 };
+function put(id, x, z, face = 'E', y = 0) {
+  if (!models[id]) { console.warn('missing prop', id); return; }
+  const o = place(id, H0.x + x, y, H0.z + z, typeof face === 'number' ? face : FACE[face]);
+  house.push({ obj: o });
+  return o;
+}
+{
+  // Walls: [kind, x, z, axis] with the piece centred on the grid edge; axis 'x' runs west-east.
+  const W = [];
+  const run = (axis, fixed, from, to, special = {}) => {
+    for (let i = from; i < to; i++) {
+      const kind = special[i] ?? 'wall';
+      if (kind) W.push([kind, axis === 'x' ? i + 0.5 : fixed, axis === 'x' ? fixed : i + 0.5, axis]);
+    }
+  };
+  run('x', 0, 0, 9, { 1: 'wall_window', 3: 'wall_window', 7: 'wall_window' });   // back
+  run('z', 0, 0, 7, { 5: 'wall_window' });                                       // west
+  run('z', 9, 0, 7, { 1: 'wall_window', 5: 'wall_door' });                       // east, front door
+  run('x', 4, 0, 9, { 1: 'wall_door', 5: 'wall_door', 7: null, 8: null });       // bedroom / bath / hall to kitchen
+  run('z', 4, 4, 7);
+  run('z', 6, 4, 7);
+  const front = [];
+  for (let i = 0; i < 9; i++) front.push([[1, 5, 7].includes(i) ? 'wall_window' : 'wall', i + 0.5, 7, 'x']);
+  // Interior walls are cut at 1.1 m (dollhouse view) so the rooms behind them show; ?cut=0 keeps them full.
+  renderer.localClippingEnabled = true;
+  const cut = [new THREE.Plane(new THREE.Vector3(0, -1, 0), +(P.get('cut') ?? 1.1) || 99)];
+  const cutMats = new Map();
+  const WALL_H_JS = 2.6, capMat = new THREE.MeshLambertMaterial({ color: 0xe2dccf });
+  const interior = (x, z, axis) => (axis === 'x' ? z > 0 && z < 7 : x > 0 && x < 9);
+  for (const [kind, x, z, axis] of [...W, ...(P.get('front') ? front : [])]) {
+    const o = put(kind, x, z, axis === 'x' ? Math.PI / 2 : 0);
+    if (!interior(x, z, axis)) continue;
+    // Solid cap on the cut so the walls read as low walls, not hollow shells.
+    const cutH = cut[0].constant;
+    if (cutH < WALL_H_JS) for (const [c, len] of kind === 'wall_door' ? [[-0.455, 0.09], [0.455, 0.09]] : [[0, 1.0]]) {
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.014, len), capMat);
+      cap.position.set(0, cutH - 0.007, c);
+      cap.castShadow = cap.receiveShadow = true;
+      o.add(cap);
+    }
+    o.traverse(m => {
+      if (!m.isMesh) return;
+      if (!cutMats.has(m.material)) cutMats.set(m.material, Object.assign(m.material.clone(), { clippingPlanes: cut, side: THREE.DoubleSide }));
+      m.material = cutMats.get(m.material);
+    });
+  }
+  // Door leaves, swung open against the wall (hinge at the doorway's socket).
+  const leaf = (id, x, z, axis, swing) => {
+    const g = new THREE.Group();
+    g.position.set(H0.x + x, 0, H0.z + z);
+    g.rotation.y = axis === 'x' ? Math.PI / 2 : 0;
+    const d = models[id].clone();
+    d.position.set(0, 0, 0.41);
+    d.rotation.y = swing;
+    g.add(d);
+    scene.add(g);
+    house.push({ obj: g });
+  };
+  leaf('door', 1.5, 4, 'x', -Math.PI / 2 - 0.2);
+  leaf('door', 5.5, 4, 'x', Math.PI / 2 + 0.2);
+  leaf('front_door', 9, 5.5, 'z', Math.PI / 2 + 0.3);
+  // Floors.
+  for (let x = 0; x < 9; x++) for (let z = 0; z < 7; z++) {
+    put(x >= 4 && x < 6 && z >= 4 ? 'floor_tile' : 'floor_wood', x + 0.5, z + 0.5);
+  }
+  const yF = 0.02;   // furniture stands on the floor boards
+  // Living room: sofa on the back wall facing into the room, TV on the west wall.
+  put('rug_round', 2.6, 1.9, 'E', yF);
+  put('sofa', 2.6, 0.53, 'S', yF);
+  put('picture_frame', 2.6, 0.36, 'S', yF);
+  put('coffee_table', 2.6, 1.9, 'E', yF);
+  put('vase_flowers', 2.75, 1.75, 'E', yF + 0.44);
+  put('tv_stand', 0.27, 2.0, 'E', yF);
+  put('bookshelf', 0.21, 0.55, 'E', yF);
+  put('wall_shelf', 0.36, 3.4, 'E', 0);
+  put('toy_basket', 0.4, 3.5, 'E', yF);
+  put('armchair', 4.25, 2.1, 'W', yF);
+  put('side_table', 4.35, 0.6, 'E', yF);
+  put('floor_lamp', 1.0, 0.4, 'E', yF);
+  put('pendant_lamp', 2.6, 1.9, 'E', 0);
+  put('pouf', 1.5, 3.3, 'E', yF);
+  put('plant_monstera', 4.55, 3.5, 'E', yF);
+  put('bed_donut', 3.3, 3.3, 'E', yF);
+  put('ball_tennis', 2.1, 3.0, 'E', yF);
+  // Kitchen along the back wall, dining table in the middle.
+  [['fridge', 5.65], ['kitchen_drawers', 6.25], ['kitchen_stove', 6.85], ['kitchen_sink', 7.45],
+   ['kitchen_base', 8.05], ['kitchen_drawers', 8.65]].forEach(([id, x]) => put(id, x, 0.36, 'S', yF));
+  [['kitchen_wall_cabinet', 6.25], ['kitchen_shelf', 6.85], ['kitchen_wall_cabinet', 8.35]]
+    .forEach(([id, x]) => put(id, x, 0.36, 'S', yF));
+  put('kettle', 6.25, 0.3, 'S', yF + 0.9);
+  put('mugs', 8.0, 0.3, 'S', yF + 0.9);
+  put('plant_succulent', 8.6, 0.25, 'S', yF + 0.9);
+  put('dining_table', 7.3, 2.5, 'S', yF);
+  put('fruit_bowl', 7.3, 2.5, 'E', yF + 0.76);
+  put('pendant_lamp', 7.3, 2.5, 'E', 0);
+  for (const x of [6.9, 7.7]) { put('dining_chair', x, 1.92, 'S', yF); put(x < 7 ? 'dining_chair_sage' : 'dining_chair', x, 3.08, 'N', yF); }
+  put('feeder_raised', 8.8, 3.35, 'W', yF);
+  put('kibble_bag', 8.75, 2.75, 'W', yF);
+  put('plant_olive', 5.4, 3.5, 'E', yF);
+  // Bedroom.
+  put('rug_runner', 1.7, 5.6, 'E', yF);
+  put('bed_double', 1.13, 5.6, 'E', yF);
+  for (const z of [4.32, 6.75]) { put('nightstand', 0.25, z, 'E', yF); put('table_lamp', 0.22, z, 'E', yF + 0.53); }
+  put('wardrobe', 3.3, 4.35, 'S', yF);
+  put('dresser', 3.72, 5.9, 'W', yF);
+  put('vase_flowers', 3.75, 6.1, 'W', yF + 0.83);
+  put('mirror_floor', 3.82, 6.75, 'W', yF);
+  put('bed_basket', 2.75, 6.45, 'N', yF);
+  put('blanket_folded', 2.3, 6.6, 'N', yF);
+  put('plant_snake', 3.72, 5.05, 'E', yF);
+  // Bathroom.
+  put('bathtub', 5.0, 6.57, 'N', yF);
+  put('toilet', 4.34, 5.0, 'E', yF);
+  put('bath_vanity', 5.72, 5.25, 'W', yF);
+  put('mirror_round', 5.64, 5.25, 'W', 0);
+  put('bath_mat', 5.0, 5.9, 'N', yF);
+  put('towel_ladder', 5.86, 6.05, 'W', yF);
+  put('laundry_basket', 4.3, 4.35, 'E', yF);
+  // Hall.
+  put('door_mat', 8.6, 5.5, 'W', yF);
+  put('shoe_bench', 6.22, 5.4, 'E', yF);
+  put('plant_cactus', 6.2, 5.75, 'E', yF + 0.47);
+  put('coat_rack', 6.4, 6.6, 'E', yF);
+  put('leash_hook', 8.95, 6.5, 'W', 1.35);
+  put('bowl_water', 8.4, 4.4, 'E', yF);
+  // The dog yard: fenced off the hall's front door (x 9-19, z -1..9), a deck and
+  // path, a gate with an arch on the south side, an agility course, and bushes
+  // and trees round the edge (the good sniffing and peeing spots).
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(26, 20), new THREE.MeshLambertMaterial({ color: 0xa9b98f }));
+  grass.rotation.x = -Math.PI / 2;
+  grass.position.set(H0.x + 9.5, -0.002, H0.z + 4);
+  grass.receiveShadow = true;
+  scene.add(grass);
+  const posts = new Set();
+  const post = (x, z) => { const k = `${x},${z}`; if (!posts.has(k)) { posts.add(k); put('fence_post', x, z); } };
+  // Fence run along a grid line; pieces have their post at one end (x+1 / z+1).
+  const fence = (axis, fixed, from, to, kind = 'fence_picket', gates = {}) => {
+    post(axis === 'x' ? from : fixed, axis === 'x' ? fixed : from);
+    for (let i = from; i < to; i++) {
+      const x = axis === 'x' ? i + 0.5 : fixed, z = axis === 'x' ? fixed : i + 0.5;
+      const rot = axis === 'x' ? Math.PI / 2 : 0;
+      posts.add(axis === 'x' ? `${i + 1},${fixed}` : `${fixed},${i + 1}`);
+      if (!gates[i]) { put(kind, x, z, rot); continue; }
+      // Gate: hinge on this cell's start post, latch post at the end, leaf swung open.
+      const g = new THREE.Group();
+      g.position.set(H0.x + x, 0, H0.z + z);
+      g.rotation.y = rot;
+      const leafObj = models.fence_gate.clone();
+      leafObj.position.set(0, 0, axis === 'x' ? -0.45 : 0.45);
+      leafObj.rotation.y = axis === 'x' ? Math.PI - gates[i] : gates[i];
+      const latch = models.fence_post.clone();
+      latch.position.set(0, 0, axis === 'x' ? 0.5 : -0.5);
+      g.add(leafObj, latch);
+      if (gates.arch) { const a = models.gate_arch.clone(); g.add(a); }
+      scene.add(g);
+      house.push({ obj: g });
+    }
+  };
+  fence('x', -1, 9, 19, 'fence_slat');                 // back: tall slatted fence
+  fence('z', 19, -1, 9, 'fence_slat');                 // east
+  fence('x', 9, 9, 19, 'fence_picket', { 13: 0.9, arch: true });   // front, with the gate
+  fence('z', 9, -1, 0, 'fence_slat');                  // short runs either side of the house
+  fence('z', 9, 7, 9, 'fence_picket');
+  // Deck outside the front door, a stepping-stone path to the gate.
+  for (let x = 9; x < 11; x++) for (let z = 4; z < 7; z++) put('ground_deck', x + 0.5, z + 0.5);
+  for (const [x, z] of [[11.5, 5.5], [12.5, 5.5], [13.5, 5.5], [13.5, 6.5], [13.5, 7.5], [13.5, 8.5], [13.5, 9.5]])
+    put('ground_path', x, z);
+  put('garden_bench', 10.1, 6.7, 'N', 0.09);
+  put('bowl_water', 10.6, 4.3, 'E', 0.09);
+  put('bush_lavender', 11.3, 4.2);
+  put('bush_lavender', 11.3, 6.9);
+  put('garden_tap', 9.12, 3.3, 'E');
+  // Dog corner: house, pool, dig pit, a tree with a tug on it.
+  put('dog_house', 10.1, 0.05, 'S');
+  put('paddling_pool', 12.0, 2.5);
+  put('dig_pit', 10.4, 2.4);
+  put('tree_swing', 12.6, 0.2);
+  put('stump', 11.6, -0.4);
+  put('log', 12.0, 7.6, 1.2);
+  // Agility course on the east side.
+  put('agility_aframe', 16.2, 0.3, 'E');
+  put('agility_weave', 14.6, 2.0, 0);
+  put('agility_jump', 17.0, 2.6, 0);
+  put('agility_tire', 18.2, 3.6, 0);
+  put('agility_tunnel', 16.4, 4.6, 0.4);
+  put('agility_seesaw', 16.2, 7.4, 'E');
+  put('agility_table', 18.1, 6.0);
+  put('agility_cone', 14.3, 4.3);
+  put('agility_cone', 14.3, 6.9);
+  put('frisbee', 15.4, 5.6);
+  // Bushes and trees round the fence, the hydrant as the obvious pee spot.
+  put('tree_birch', 18.3, -0.4);
+  put('tree_pine', 18.3, 8.3);
+  put('tree_apple', 9.8, 8.2);
+  put('hedge', 14.0, -0.6, Math.PI / 2);
+  put('hedge', 15.0, -0.6, Math.PI / 2);
+  put('bush_round', 13.3, -0.4);
+  put('bush_flowering', 11.4, 8.4);
+  put('bush_round', 15.6, 8.5);
+  put('bush_small', 14.7, 8.6);
+  put('fire_hydrant', 12.6, 8.5, 'N');
+  put('shrub_cone', 18.5, 5.0);
+  put('bush_small', 18.6, 1.6);
+  put('rock_big', 17.6, 8.5);
+  put('rock_small', 12.9, 3.8);
+  for (const [x, z] of [[11.2, 3.4], [15.2, 3.2], [17.8, 1.0], [13.0, 6.6], [10.4, 8.6], [16.8, 8.7]]) put('grass_tuft', x, z);
+  for (const [x, z] of [[12.3, 8.6], [16.0, -0.5], [9.6, 7.6]]) put('flower_patch', x, z);
+  // Outside the gate.
+  put('leash_post', 14.6, 9.7);
+  put('tree_birch', 8.0, 9.6);
+  put('bush_round', 11.0, 9.8);
+  put('hedge', 0.5, -1.0, Math.PI / 2);
+  const d1 = await standIn('shepherd', 0.95);
+  d1.position.set(H0.x + 2.3, yF, H0.z + 2.95); d1.rotation.y = 2.0; scene.add(d1);
+  const d2 = await standIn('corgi', 0.6);
+  d2.position.set(H0.x + 8.3, yF, H0.z + 3.3); d2.rotation.y = 0; scene.add(d2);
+  const d3 = await standIn('lean', 0.9);
+  d3.position.set(H0.x + 15.4, 0, H0.z + 4.8); d3.rotation.y = -0.4; scene.add(d3);
+  sections.layout = { members: house, head: new THREE.Object3D(), room: true };
+}
+// Scale dog on the shelves too.
+const shelfDog = await scaleDog(0.95);
+shelfDog.position.set(-1.6, 0, sections.furniture.z + 0.8);
+shelfDog.rotation.y = Math.PI / 2 - 0.4;
+scene.add(shelfDog);
+
+// ---- view picker + framing ----
+const $ = id => document.getElementById(id);
+$('view').innerHTML = `<option value="all">all ${manifest.length} props</option><option value="layout">house</option>`
+  + Object.entries(CATEGORIES).filter(([c]) => sections[c])
+    .map(([c, t]) => `<option value="${c}">${t} (${sections[c].members.length})</option>`).join('');
+function frame(objs, top = !ONE && !WEAR) {
+  const box = new THREE.Box3();
+  objs.forEach(o => box.expandByObject(o));
+  const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+  // Fit the bounding sphere in the narrower of the two view angles.
+  const r = s.length() / 2, half = THREE.MathUtils.degToRad(camera.fov / 2);
+  const d = r / Math.sin(Math.min(half, Math.atan(Math.tan(half) * camera.aspect))) * 0.9;
+  controls.target.copy(c);
+  camera.position.set(c.x + (ONE ? d * 0.45 : 0), c.y + d * (top ? 0.9 : 0.45), c.z + d * (top ? 0.45 : 0.8));
+  sun.target.position.copy(c);
+  sun.position.copy(c).add(new THREE.Vector3(3, 7, 4));
+  const sr = Math.max(s.x, s.z) * 0.7 + 1;
+  Object.assign(sun.shadow.camera, { left: -sr, right: sr, top: sr, bottom: -sr, near: 0.1, far: 30 });
+  sun.shadow.camera.updateProjectionMatrix();
+  redraw();
+}
+function apply() {
+  const v = $('view').value;
+  const labels = $('showLabels').checked;
+  for (const [k, s] of Object.entries(sections)) {
+    const on = v === 'all' || v === k;
+    s.head.visible = on && labels;
+    for (const m of s.members) if (m.label) m.label.visible = on && labels;
+  }
+  if (v === 'layout') {
+    camera.fov = 32; camera.updateProjectionMatrix();
+    controls.target.set(H0.x + 9.6, 0.3, H0.z + 4.2);
+    camera.position.set(H0.x + 9.6, 21, H0.z + 20.5);
+    sun.target.position.set(H0.x + 9.5, 0, H0.z + 4);
+    sun.position.set(H0.x + 13, 14, H0.z + 11);
+    Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 0.1, far: 60 });
+    sun.shadow.camera.updateProjectionMatrix();
+    redraw();
+  } else {
+    camera.fov = 30; camera.updateProjectionMatrix();
+    frame(v === 'all' ? Object.values(sections).filter(s => !s.room).flatMap(s => s.members.map(m => m.obj))
+      : sections[v].members.map(m => m.obj));
+  }
+}
+if (ONE) $('view').innerHTML += '<option value="one">' + ONE + '</option>';
+if (WEAR) $('view').innerHTML += '<option value="fit">wearables</option>';
+$('view').value = WEAR ? 'fit' : ONE ? 'one' : P.get('view') || 'layout';
+$('view').addEventListener('input', apply);
+$('showLabels').addEventListener('input', apply);
+
+const ray = new THREE.Raycaster();
+let down;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
+  ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  const hit = ray.intersectObjects(scene.children, true).find(h => { let o = h.object; while (o && !o.userData.prop) o = o.parent; return o; });
+  if (!hit) return;
+  let o = hit.object;
+  while (!o.userData.prop) o = o.parent;
+  const p = o.userData.prop;
+  $('info').innerHTML = `<b>${p.label}</b> · ${p.id}.glb<br>${p.size.map(v => v.toFixed(2)).join(' × ')} m · ${p.tris} tris`
+    + `<br>${p.materials.join(', ')}${p.holdable ? '<br>carried in the mouth (socket_grip)' : ''}`
+    + (p.attach !== 'floor' ? `<br>attaches to ${p.attach}` : '');
+});
+
+function loop() {
+  if (renderer.domElement.width !== Math.floor(innerWidth * devicePixelRatio) || renderer.domElement.height !== Math.floor(innerHeight * devicePixelRatio)) {
+    renderer.setSize(innerWidth, innerHeight);
+    labelRenderer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    if (!loop.framed) { loop.framed = true; apply(); }
+  }
+  controls.update();
+  if (needsRender) {
+    needsRender = false;
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+  }
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>

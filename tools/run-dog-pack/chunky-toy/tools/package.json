@@ -1,0 +1,19 @@
+{
+  "name": "chunky-toy-tools",
+  "private": true,
+  "type": "module",
+  "description": "Mobile build: compressed textures (KTX2), quantized + meshopt geometry and resampled clips for the chunky-toy dogs",
+  "scripts": {
+    "mobile": "node ktx2.mjs",
+    "library": "node library.mjs"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.2.0",
+    "@gltf-transform/extensions": "^4.2.0",
+    "@gltf-transform/functions": "^4.5.1",
+    "jpeg-js": "^0.4.4",
+    "ktx2-encoder": "^0.6.0",
+    "meshoptimizer": "^0.22.0",
+    "pngjs": "^7.0.0"
+  }
+}

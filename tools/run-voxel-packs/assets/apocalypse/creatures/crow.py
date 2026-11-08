@@ -2,7 +2,8 @@
 scavenger with weathered steel plumage, zombie-teal wounds, a rusted beak,
 signal-red eyes, a torn feather patch and a tapered split tail. Gold feet
 read as hazard yellow. Feather rows and damage are paint. Clips: idle
-(peck and hop), move (flight, the wings flap), attack (dive and peck),
+(peck and hop), move (flight, the wings flap), attack (hops up with the wings
+flung open, dives into a driving peck),
 hit, death (falls on its back). Faces -Z.
 """
 import numpy as np
@@ -112,14 +113,20 @@ def build():
     move = {"wing-l": {"rot": wave(0.4, (0, 0, -55))}, "wing-r": {"rot": wave(0.4, (0, 0, 55))},
             "body": {"loc": wave(0.4, (0, 1.2, 0), phase=1.2, base=(0, 5, 0)), "rot": wave(0.4, (4, 0, 0), base=(-10, 0, 0))},
             "head": {"rot": wave(0.4, (4, 0, 0), phase=0.5, base=(8, 0, 0))}}
-    attack = {"body": {"rot": seq((0, 0, 0, 0), (0.2, 12, 0, 0), (0.4, -30, 0, 0), (0.7, 0, 0, 0)), "loc": seq((0, 0, 0, 0), (0.2, 0, 3, 1), (0.4, 0, 0, -4), (0.7, 0, 0, 0))},
-              "head": {"rot": seq((0, 0, 0, 0), (0.3, 10, 0, 0), (0.42, -40, 0, 0), (0.7, 0, 0, 0))},
-              "wing-l": {"rot": seq((0, 0, 0, 0), (0.2, 0, 0, -70), (0.4, 0, 0, -20), (0.7, 0, 0, 0))},
-              "wing-r": {"rot": seq((0, 0, 0, 0), (0.2, 0, 0, 70), (0.4, 0, 0, 20), (0.7, 0, 0, 0))}}
+    # attack: hop up and back with the wings flung open and the head cocked
+    # (f0-10), dive 2 frames into the peck (impact f12), drive the beak on,
+    # hold, then hop back to the spot with the wings settling last.
+    f = 1 / 30
+    imp = 12 * f
+    attack = {"body": {"rot": seq((0, 0, 0, 0), (8 * f, 16, 0, 0), (10 * f, 18, 0, 0), (imp, -28, 0, 0), (14 * f, -34, 0, 0), (19 * f, -28, 0, 0), (27 * f, 0, 0, 0)),
+                       "loc": seq((0, 0, 0, 0), (8 * f, 0, 4, 2.5), (10 * f, 0, 4.5, 3), (imp, 0, 1.5, -6), (14 * f, 0, 2.4, -7), (19 * f, 0, 1.8, -6), (27 * f, 0, 0, 0))},
+              "head": {"rot": seq((0, 0, 0, 0), (9 * f, 26, 0, 0), (11 * f, 30, 0, 0), (imp, -40, 0, 0), (14 * f, -50, 0, 0), (15 * f, -36, 0, 0), (16 * f, -48, 0, 0), (20 * f, -36, 0, 0), (27 * f, 0, 0, 0))},
+              "wing-l": {"rot": seq((0, 0, 0, 0), (8 * f, 20, 0, -85), (10 * f, 24, 0, -90), (13 * f, -30, 0, -15), (16 * f, -20, 0, -35), (21 * f, -10, 0, -20), (30 * f, 0, 0, 0))},
+              "wing-r": {"rot": seq((0, 0, 0, 0), (8 * f, 20, 0, 85), (10 * f, 24, 0, 90), (13 * f, -30, 0, 15), (16 * f, -20, 0, 35), (21 * f, -10, 0, 20), (30 * f, 0, 0, 0))}}
     hit = {"body": {"rot": seq((0, 0, 0, 0), (0.1, 20, 0, 10), (0.45, 0, 0, 0)), "loc": seq((0, 0, 0, 0), (0.1, 0, 1, 2), (0.45, 0, 0, 0))},
            "wing-l": {"rot": seq((0, 0, 0, 0), (0.1, 0, 0, -45), (0.45, 0, 0, 0))}, "wing-r": {"rot": seq((0, 0, 0, 0), (0.1, 0, 0, 45), (0.45, 0, 0, 0))}}
     death = {rig.root.name: {"rot": seq((0, 0, 0, 0), (0.2, 0, 0, 20), (0.6, 0, 0, 170), (0.8, 0, 0, 180)), "loc": seq((0, 0, 0, 0), (0.3, 0, 6, 0), (0.6, 0, 11, 0), (0.8, 0, 11, 0))},
              "wing-l": {"rot": seq((0, 0, 0, 0), (0.6, 0, 0, -60))}, "wing-r": {"rot": seq((0, 0, 0, 0), (0.6, 0, 0, 60))}}
     return make("creatures", "crow", "Carrion Crow", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-body", (CX, 7.0, 13.0), parent="body")])

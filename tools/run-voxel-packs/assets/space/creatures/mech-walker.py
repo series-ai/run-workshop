@@ -7,8 +7,9 @@ two orange rocket pods on the shoulders with painted warheads; two long
 arm cannons with copper coils. It stands on reverse-jointed legs: white
 thighs that angle forward, steel shins with copper pistons that angle
 back, and big clawed feet (all true-slope prisms). Clips: idle (hum),
-move (stomp), attack (both cannons fire, muzzle flash and explosion
-PFX), hit (rock), death (slump). Faces -Z.
+move (stomp), attack (brace, both cannons fire together and the
+recoil kicks the whole walker back; muzzle flash and explosion PFX),
+hit (rock), death (slump). Faces -Z.
 """
 import numpy as np
 
@@ -166,9 +167,21 @@ def build():
             "shin-r": {"rot": keys((0, (4, 0, 0)), (step / 2, (-8, 0, 0)), (step * 0.75, (14, 0, 0)), (step, (4, 0, 0)))},
             "mech-walker": {"loc": keys((0, z), (step / 4, (0, 1.5, 0)), (step / 2, z), (step * 0.75, (0, 1.5, 0)), (step, z))},
             "hull": {"rot": keys((0, (0, 0, -3)), (step / 2, (0, 0, 3)), (step, (0, 0, -3)))}}
-    attack = {"cannon-l": {"loc": keys((0, z), (0.1, (0, 0, 4)), (0.35, z), (0.5, (0, 0, 4)), (0.75, z), (1.0, z))},
-              "cannon-r": {"loc": keys((0, z), (0.25, z), (0.35, (0, 0, 4)), (0.6, z), (0.7, (0, 0, 4)), (0.95, z))},
-              "hull": {"rot": keys((0, z), (0.1, (5, 0, 0)), (0.5, (4, 0, 0)), (1.0, z))}}
+    # Double cannon blast: the hull dips and leans into a brace while both
+    # cannons draw back and level (0-0.37 s); both fire at 0.4 s and in one
+    # frame the barrels slam back, the muzzles flip up and the whole walker
+    # is kicked back nose-up; the pods rock a frame later, then it all
+    # settles forward.
+    F = 1 / 30
+    fire_t = 12 * F
+    gun = {"rot": keys((0, z), (10 * F, (-4, 0, 0)), (fire_t, (-3, 0, 0)), (13 * F, (16, 0, 0)), (16 * F, (11, 0, 0)), (22 * F, (3, 0, 0)), (30 * F, z)),
+           "loc": keys((0, z), (10 * F, (0, 0, 2.5)), (fire_t, (0, 0, -1.5)), (13 * F, (0, 0, 8.0)), (16 * F, (0, 0, 6.0)), (22 * F, (0, 0, 1.5)), (30 * F, z))}
+    attack = {"cannon-l": gun, "cannon-r": gun,
+              "hull": {"rot": keys((0, z), (10 * F, (-6, 0, 0)), (fire_t, (-6, 0, 0)), (13 * F, (9, 0, 0)), (16 * F, (11, 0, 0)), (22 * F, (2, 0, 0)), (30 * F, z)),
+                       "loc": keys((0, z), (10 * F, (0, -1.5, -1.0)), (fire_t, (0, -1.5, -1.5)), (13 * F, (0, 0.5, 2.5)), (16 * F, (0, 0.5, 3.0)), (24 * F, z), (30 * F, z))},
+              "mech-walker": {"loc": keys((0, z), (fire_t, z), (13 * F, (0, 0, 2.5)), (16 * F, (0, 0, 3.5)), (24 * F, (0, 0, 1.0)), (30 * F, z))},
+              "pod-l": {"rot": keys((0, z), (fire_t, z), (14 * F, (14, 0, 0)), (18 * F, (-4, 0, 0)), (24 * F, (2, 0, 0)), (30 * F, z))},
+              "pod-r": {"rot": keys((0, z), (fire_t, z), (14 * F, (14, 0, 0)), (18 * F, (-4, 0, 0)), (24 * F, (2, 0, 0)), (30 * F, z))}}
     hit = {"hull": {"rot": keys((0, z), (0.1, (8, 0, 6)), (0.3, (-3, 0, -3)), (0.5, z))},
            "mech-walker": {"loc": keys((0, z), (0.1, (0, 0, 2)), (0.5, z))}}
     death = {"mech-walker": {"loc": keys((0, z), (0.6, (0, -8, 0)), (1.2, (0, -14, 0)))},
@@ -177,7 +190,7 @@ def build():
              "hull": {"rot": keys((0, z), (0.6, (-10, 0, 8)), (1.2, (-24, 0, 12)))},
              "cannon-l": {"rot": keys((0, z), (1.2, (-30, 0, 0)))}, "cannon-r": {"rot": keys((0, z), (1.2, (-35, 0, 0)))}}
     return asset("creatures", "mech-walker", "Mech Walker", rig.root,
-                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=fire_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=socks,
-                 pfx=[{"effectId": "rvx-space-cannon-blast", "socket": "socket-cannon-l", "trigger": "clip:attack", "size": 24, "aim": [0.0, 0.0, -1.0], "at": 0.4},
-                      {"effectId": "rvx-space-cannon-blast", "socket": "socket-cannon-r", "trigger": "clip:attack", "size": 24, "aim": [0.0, 0.0, -1.0], "at": 0.4}])
+                 pfx=[{"effectId": "rvx-space-cannon-blast", "socket": "socket-cannon-l", "trigger": "clip:attack", "size": 24, "aim": [0.0, 0.0, -1.0], "at": round(fire_t, 3)},
+                      {"effectId": "rvx-space-cannon-blast", "socket": "socket-cannon-r", "trigger": "clip:attack", "size": 24, "aim": [0.0, 0.0, -1.0], "at": round(fire_t, 3)}])

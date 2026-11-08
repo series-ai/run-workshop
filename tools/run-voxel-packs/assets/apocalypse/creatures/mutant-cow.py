@@ -7,7 +7,8 @@ black cow patches, pink bald mange, bare ribs and hip bones. The mutation
 is the accent: a third eye that glows teal and a cluster of teal boils on
 the right flank. Body, head, horns and legs are true-slope frusta; spots,
 ribs and face are paint. Clips: idle (graze nod, tail swish), move (walk),
-attack (head-down horn butt), hit, death (falls on its side). Faces -Z.
+attack (rears the head and rocks
+back, then charges into a head-down horn butt), hit, death (falls on its side). Faces -Z.
 """
 import numpy as np
 
@@ -153,10 +154,17 @@ def _build():
     move = {"leg-front-l": {"rot": wave(walk, (16, 0, 0))}, "leg-back-r": {"rot": wave(walk, (16, 0, 0))},
             "leg-front-r": {"rot": wave(walk, (-16, 0, 0))}, "leg-back-l": {"rot": wave(walk, (-16, 0, 0))},
             "head": {"rot": wave(walk, (4, 0, 0), double=True)}, "tail": {"rot": wave(walk, (0, 0, 10))}}
-    attack = {"head": {"rot": seq((0, 0, 0, 0), (0.25, -16, 0, 0), (0.5, 18, 0, 0), (0.9, 0, 0, 0))},
-              "mutant-cow": {"loc": seq((0, 0, 0, 0), (0.25, 0, 0, 2), (0.5, 0, 0, -6), (0.9, 0, 0, 0))},
-              "leg-front-l": {"rot": seq((0, 0, 0, 0), (0.25, -10, 0, 0), (0.5, 12, 0, 0), (0.9, 0, 0, 0))},
-              "leg-front-r": {"rot": seq((0, 0, 0, 0), (0.25, -10, 0, 0), (0.5, 12, 0, 0), (0.9, 0, 0, 0))}}
+    # attack: rear the head up and rock back onto the hind legs (f0-11),
+    # charge 3 frames into a head-down horn butt (impact f14), drive on,
+    # hold, then back off to the spot; the tail lashes a beat behind.
+    f = 1 / 30
+    imp = 14 * f
+    attack = {"head": {"rot": seq((0, 0, 0, 0), (9 * f, 22, 0, 0), (12 * f, 26, 0, 0), (imp, -26, 0, 0), (16 * f, -34, 0, 4), (21 * f, -26, 0, 2), (32 * f, 0, 0, 0))},
+              "mutant-cow": {"loc": seq((0, 0, 0, 0), (9 * f, 0, 2.0, 5), (12 * f, 0, 2.2, 6), (imp, 0, 1.0, -13), (16 * f, 0, 1.6, -15), (21 * f, 0, 1.2, -13), (26 * f, 0, 0.8, -6), (32 * f, 0, 0, 0)),
+                             "rot": seq((0, 0, 0, 0), (9 * f, 5, 0, 0), (12 * f, 6, 0, 0), (imp, -4, 0, 0), (16 * f, -5, 0, 0), (21 * f, -3, 0, 0), (32 * f, 0, 0, 0))},
+              "tail": {"rot": seq((0, 0, 0, 0), (10 * f, -30, 0, 0), (15 * f, 35, 0, 10), (18 * f, 25, 0, -10), (24 * f, -10, 0, 4), (32 * f, 0, 0, 0))}}
+    for leg_name, wind, hit_ in (("leg-front-l", 18, -22), ("leg-front-r", 15, -18), ("leg-back-l", 10, -26), ("leg-back-r", 8, -22)):
+        attack[leg_name] = {"rot": seq((0, 0, 0, 0), (9 * f, wind, 0, 0), (imp, hit_, 0, 0), (16 * f, hit_ * 1.15, 0, 0), (21 * f, hit_ * 0.8, 0, 0), (32 * f, 0, 0, 0))}
     hit = {"head": {"rot": seq((0, 0, 0, 0), (0.1, 12, -10, 0), (0.55, 0, 0, 0))},
            "mutant-cow": {"loc": seq((0, 0, 0, 0), (0.1, 0, 0, 2.5), (0.55, 0, 0, 0))},
            "tail": {"rot": seq((0, 0, 0, 0), (0.1, 25, 0, 0), (0.55, 0, 0, 0))}}
@@ -164,9 +172,9 @@ def _build():
              "head": {"rot": seq((0, 0, 0, 0), (0.6, 0, 0, -20), (1.2, 0, 0, -40))},
              "leg-front-l": {"rot": seq((0, 0, 0, 0), (1.2, 18, 0, 0))}, "leg-back-l": {"rot": seq((0, 0, 0, 0), (1.2, -18, 0, 0))}}
     return make("creatures", "mutant-cow", "Mutant Cow", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-horns", (CX, 31, 4), parent="head")],
-                pfx=[fx("rvx-apocalypse-gore-burst", "socket-horns", "clip:attack", size=12)])
+                pfx=[fx("rvx-apocalypse-gore-burst", "socket-horns", "clip:attack", size=12, at=imp)])
 
 
 def build():

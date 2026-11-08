@@ -6,7 +6,8 @@ wedge head with a flat pink snout, up-curved bone tusks and short stout
 legs. Bristle-brown fur is paint. Scrap armour is two riveted rust plates
 strapped over the shoulders. The mutation is the accent: small teal eyes
 that glow and teal boils on the left haunch. Clips: idle (snuffle), move
-(trot), attack (head-down tusk rip), hit, death (falls on its side).
+(trot), attack (drops the head and sits back,
+charges into an upward tusk rip), hit, death (falls on its side).
 Faces -Z.
 """
 import numpy as np
@@ -117,17 +118,26 @@ def _build():
     move = {"front-l": {"rot": wave(trot, (20, 0, 0))}, "rear-r": {"rot": wave(trot, (20, 0, 0))},
             "front-r": {"rot": wave(trot, (-20, 0, 0))}, "rear-l": {"rot": wave(trot, (-20, 0, 0))},
             "head": {"rot": wave(trot, (3, 0, 0), double=True)}}
-    attack = {"head": {"rot": seq((0, 0, 0, 0), (0.25, -14, 0, 0), (0.5, 22, 0, -6), (0.9, 0, 0, 0))},
-              "mutant-boar": {"loc": seq((0, 0, 0, 0), (0.25, 0, 0, 1.5), (0.5, 0, 0, -5), (0.9, 0, 0, 0))},
-              "front-l": {"rot": seq((0, 0, 0, 0), (0.25, 14, 0, 0), (0.5, -7, 0, 0), (0.9, 0, 0, 0))}}
+    # attack: drop the head and sit back on the haunches (f0-10), charge 3
+    # frames into the tusk rip (impact f13) that hooks up and to the side,
+    # carry through, hold, then back off to the spot.
+    f = 1 / 30
+    imp = 13 * f
+    attack = {"head": {"rot": seq((0, 0, 0, 0), (9 * f, -30, 0, 0), (11 * f, -34, 0, 6), (imp, 34, 0, -16), (15 * f, 44, 0, -20), (20 * f, 34, 0, -14), (30 * f, 0, 0, 0))},
+              "mutant-boar": {"loc": seq((0, 0, 0, 0), (8 * f, 0, 1.2, 3.5), (10 * f, 0, 1.4, 4), (imp, 0, 1.2, -9), (15 * f, 0, 1.4, -10), (20 * f, 0, 1.0, -9), (30 * f, 0, 0, 0)),
+                              "rot": seq((0, 0, 0, 0), (8 * f, -5, 0, 0), (10 * f, -6, 0, 0), (imp, 5, 0, 0), (15 * f, 7, 0, 0), (20 * f, 4, 0, 0), (30 * f, 0, 0, 0))},
+              "front-l": {"rot": seq((0, 0, 0, 0), (8 * f, 18, 0, 0), (imp, -24, 0, 0), (15 * f, -28, 0, 0), (20 * f, -18, 0, 0), (30 * f, 0, 0, 0))},
+              "front-r": {"rot": seq((0, 0, 0, 0), (8 * f, 14, 0, 0), (imp, -20, 0, 0), (15 * f, -24, 0, 0), (20 * f, -15, 0, 0), (30 * f, 0, 0, 0))},
+              "rear-l": {"rot": seq((0, 0, 0, 0), (8 * f, 14, 0, 0), (imp, -28, 0, 0), (15 * f, -32, 0, 0), (20 * f, -20, 0, 0), (30 * f, 0, 0, 0))},
+              "rear-r": {"rot": seq((0, 0, 0, 0), (8 * f, 12, 0, 0), (imp, -24, 0, 0), (15 * f, -28, 0, 0), (20 * f, -18, 0, 0), (30 * f, 0, 0, 0))}}
     hit = {"head": {"rot": seq((0, 0, 0, 0), (0.12, 14, 8, 0), (0.55, 0, 0, 0))},
            "mutant-boar": {"loc": seq((0, 0, 0, 0), (0.12, 0, 0, 2), (0.55, 0, 0, 0))}}
     death = {"mutant-boar": {"rot": seq((0, 0, 0, 0), (0.45, 0, 0, 46), (1.0, 0, 0, 80))},
              "front-l": {"rot": seq((0, 0, 0, 0), (1.0, 20, 0, 0))}, "rear-l": {"rot": seq((0, 0, 0, 0), (1.0, -20, 0, 0))}}
     return make("creatures", "mutant-boar", "Mutant Boar", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-snout", (CX, 15.5, 0.5), parent="head")],
-                pfx=[fx("rvx-apocalypse-gore-burst", "socket-snout", "clip:attack", size=14)])
+                pfx=[fx("rvx-apocalypse-gore-burst", "socket-snout", "clip:attack", size=14, at=imp)])
 
 
 def build():

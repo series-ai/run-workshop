@@ -193,20 +193,30 @@ def _brute() -> object:
     move = {"leg-l": {"rot": wave(1.0, "x", 16)}, "leg-r": {"rot": wave(1.0, "x", -16)},
             "arm-l": {"rot": wave(1.0, "x", -16)}, "arm-r": {"rot": wave(1.0, "x", 16)},
             "body": {"rot": wave(1.0, "z", 4)}, "actor": {"loc": _lift(1.0, 2.6)}}
-    # Ground pound: both fists go up over the head and slam down.
+    # Ground pound: the brute rears back with both fists over its head
+    # (0-0.37 s), slams them down in 3 frames onto the ground in front
+    # (impact 0.467 s) while the whole body lunges and bows into the blow,
+    # holds the crouch, then straightens up.
+    F = 1 / 30
+    hit_t = 14 * F
     up = (150, 0, 0)
-    attack = {"arm-l": {"rot": keys((0, Z0), (0.2, (80, 0, -8)), (0.38, up), (0.5, (60, 0, 0)), (0.58, (24, 0, 0)), (1.0, Z0))},
-              "arm-r": {"rot": keys((0, Z0), (0.2, (80, 0, 8)), (0.38, up), (0.5, (60, 0, 0)), (0.58, (24, 0, 0)), (1.0, Z0))},
-              "body": {"rot": keys((0, Z0), (0.38, (-8, 0, 0)), (0.52, (14, 0, 0)), (1.0, Z0))}}
+    attack = {"arm-l": {"rot": keys((0, Z0), (3 * F, (70, 0, -10)), (9 * F, (148, 0, -14)), (11 * F, up), (hit_t, (40, 0, -4)),
+                                    (16 * F, (50, 0, -2)), (21 * F, (44, 0, -2)), (30 * F, Z0))},
+              "arm-r": {"rot": keys((0, Z0), (3 * F, (70, 0, 10)), (9 * F, (148, 0, 14)), (11 * F, up), (hit_t, (40, 0, 4)),
+                                    (16 * F, (50, 0, 2)), (21 * F, (44, 0, 2)), (30 * F, Z0))},
+              "body": {"rot": keys((0, Z0), (9 * F, (14, 0, 0)), (11 * F, (16, 0, 0)), (hit_t, (-28, 0, 0)),
+                                   (16 * F, (-33, 0, 0)), (21 * F, (-29, 0, 0)), (30 * F, Z0))},
+              "head": {"rot": keys((0, Z0), (10 * F, (-16, 0, 0)), (hit_t + F, (14, 0, 0)), (18 * F, (20, 0, 0)), (22 * F, (10, 0, 0)), (30 * F, Z0))},
+              "actor": {"loc": keys((0, Z0), (11 * F, (0, 0, 2.5)), (hit_t, (0, 0, -4.5)), (16 * F, (0, 0, -5)), (21 * F, (0, 0, -4.5)), (30 * F, Z0))}}
     hit = {"actor": _lean_back(7), "body": {"rot": keys((0, Z0), (0.1, (0, 0, 8)), (0.45, Z0))},
            "head": {"rot": keys((0, Z0), (0.1, (-12, 10, 0)), (0.45, Z0))}}
     death = _death("actor", {"head": {"rot": keys((0, Z0), (1.0, (-20, 15, 0)))},
                              "arm-l": {"rot": keys((0, Z0), (1.0, (0, 0, 40)))},
                              "arm-r": {"rot": keys((0, Z0), (1.0, (0, 0, -40)))}}, sink=SINK["alien-brute"])
     sock = rig.sock("socket-impact", (CX - 12, 4, CZ - 1), parent="arm-r")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "alien-brute", "Alien Brute", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-impact", "trigger": "clip:attack", "size": 18, "aim": [0, -1, 0], "at": 0.5}])
+                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-impact", "trigger": "clip:attack", "size": 18, "aim": [0, -1, 0], "at": round(hit_t, 3)}])
 
 
 # ---------------------------------------------------------------- scout
@@ -327,19 +337,31 @@ def _scout() -> object:
     move = {"leg-l": {"rot": wave(0.7, "x", 22)}, "leg-r": {"rot": wave(0.7, "x", -22)},
             "arm-l": {"rot": wave(0.7, "x", -22)}, "arm-r": {"rot": wave(0.7, "x", 6)},
             "body": {"rot": keys((0, (8, 0, 0)), (0.7, (8, 0, 0)))}, "actor": {"loc": _lift(0.7, 2.4)}}
-    attack = {"arm-r": {"rot": keys((0, Z0), (0.25, (-10, 0, 0)), (0.5, (-10, 0, 0)), (0.58, (-24, 0, 0)), (1.0, Z0)),
-                        "loc": keys((0, Z0), (0.5, Z0), (0.56, (0, 0, 1.5)), (1.0, Z0))},
-              "body": {"rot": keys((0, Z0), (0.25, (0, -12, 0)), (0.6, (0, -12, 0)), (1.0, Z0))},
-              "head": {"rot": keys((0, Z0), (0.25, (0, 10, 0)), (1.0, Z0))}}
+    # Ray pistol: the scout crouches, swings the gun up level and draws it
+    # back (0-0.37 s), fires at 0.4 s with a short forward thrust, and the
+    # recoil kicks the gun and the whole body back in one frame before it
+    # settles on aim and lowers the gun.
+    F = 1 / 30
+    fire_t = 12 * F
+    attack = {"arm-r": {"rot": keys((0, Z0), (6 * F, (22, 0, 0)), (10 * F, (30, 0, 0)), (11 * F, (28, 0, 0)), (fire_t, (32, 0, 0)),
+                                    (13 * F, (62, 0, 0)), (15 * F, (54, 0, 0)), (19 * F, (36, 0, 0)), (30 * F, Z0)),
+                        "loc": keys((0, Z0), (10 * F, (0, 0, 1.0)), (fire_t, (0, 0, -1.5)), (13 * F, (0, 0.5, 3.0)), (16 * F, (0, 0, 1.5)),
+                                    (20 * F, Z0), (30 * F, Z0))},
+              "body": {"rot": keys((0, Z0), (8 * F, (-6, -14, 0)), (fire_t, (-6, -16, 0)), (13 * F, (12, -14, 0)), (16 * F, (8, -14, 0)),
+                                   (20 * F, (0, -12, 0)), (30 * F, Z0)),
+                       "loc": keys((0, Z0), (8 * F, (0, -1.0, 0)), (fire_t, (0, -1.0, 0)), (14 * F, (0, -0.3, 0)), (30 * F, Z0))},
+              "actor": {"loc": keys((0, Z0), (fire_t, Z0), (13 * F, (0, 0, 2.0)), (16 * F, (0, 0, 2.2)), (22 * F, (0, 0, 1.0)), (30 * F, Z0))},
+              "head": {"rot": keys((0, Z0), (8 * F, (4, 12, 0)), (13 * F, (2, 12, 0)), (14 * F, (16, 8, 0)), (18 * F, (6, 10, 0)), (30 * F, Z0))},
+              "arm-l": {"rot": keys((0, Z0), (8 * F, (-10, 0, 8)), (14 * F, (-24, 0, 16)), (18 * F, (-14, 0, 10)), (30 * F, Z0))}}
     hit = {"actor": _lean_back(8), "body": {"rot": keys((0, Z0), (0.1, (0, 0, -8)), (0.45, Z0))},
            "head": {"rot": keys((0, Z0), (0.1, (-14, -10, 0)), (0.45, Z0))}}
     death = _death("actor", {"head": {"rot": keys((0, Z0), (1.0, (-15, 25, 0)))},
                              "arm-l": {"rot": keys((0, Z0), (1.0, (0, 0, 50)))},
                              "arm-r": {"rot": keys((0, Z0), (1.0, (0, 0, -40)))}}, sink=SINK["alien-scout"])
     sock = rig.sock("socket-ray", (CX - 8, 20, CZ - 13), parent="arm-r")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=fire_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "alien-scout", "Alien Scout", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-ray-zap", "socket": "socket-ray", "trigger": "clip:attack", "size": 10, "aim": [0, 0, -1], "at": 0.52}])
+                 pfx=[{"effectId": "rvx-space-ray-zap", "socket": "socket-ray", "trigger": "clip:attack", "size": 10, "aim": [0, 0, -1], "at": round(fire_t, 3)}])
 
 
 # ---------------------------------------------------------------- psionic
@@ -443,19 +465,31 @@ def _psionic() -> object:
     # The psionic glides: the robe bobs off the ground and the head leads.
     move = {"body": {"loc": wave(1.2, "y", 0.8, base=(0, 1.0, 0))}, "head": {"rot": wave(2.4, "z", 5)},
             "orb": {"loc": wave(1.2, "y", 1.2)}, "arm-l": {"rot": wave(2.4, "x", 8)}, "arm-r": {"rot": wave(2.4, "x", -8)}}
-    attack = {"arm-l": {"rot": keys((0, Z0), (0.3, (0, 0, 70)), (0.6, (0, 0, 70)), (1.0, Z0))},
-              "arm-r": {"rot": keys((0, Z0), (0.3, (0, 0, -70)), (0.6, (0, 0, -70)), (1.0, Z0))},
-              "head": {"rot": keys((0, Z0), (0.3, (-10, 0, 0)), (0.6, (-10, 0, 0)), (1.0, Z0))},
-              "orb": {"loc": keys((0, Z0), (0.3, (-6, 6, -2)), (0.5, (-8, 7, -6)), (0.7, (-6, 6, -2)), (1.0, Z0))}}
+    # Psionic hurl: arms spread and rise, the head tips back and the orb is
+    # drawn up behind the shoulder (0-0.37 s); in 3 frames the arms thrust
+    # forward and the orb is flung out in front (impact 0.4 s) while the
+    # alien glides into the throw, holds, then the orb floats home.
+    F = 1 / 30
+    hit_t = 12 * F
+    attack = {"arm-l": {"rot": keys((0, Z0), (8 * F, (-20, 0, 75)), (9 * F, (-24, 0, 80)), (hit_t, (82, 0, -12)), (14 * F, (92, 0, -16)),
+                                    (19 * F, (84, 0, -12)), (30 * F, Z0))},
+              "arm-r": {"rot": keys((0, Z0), (8 * F, (-20, 0, -75)), (9 * F, (-24, 0, -80)), (hit_t, (82, 0, 12)), (14 * F, (92, 0, 16)),
+                                    (19 * F, (84, 0, 12)), (30 * F, Z0))},
+              "body": {"rot": keys((0, Z0), (9 * F, (10, 0, 0)), (hit_t, (-14, 0, 0)), (14 * F, (-17, 0, 0)), (19 * F, (-14, 0, 0)), (30 * F, Z0))},
+              "head": {"rot": keys((0, Z0), (9 * F, (14, 0, 0)), (hit_t + F, (-14, 0, 0)), (15 * F, (-18, 0, 0)), (20 * F, (-10, 0, 0)), (30 * F, Z0))},
+              "actor": {"loc": keys((0, Z0), (9 * F, (0, 0, 2.0)), (hit_t, (0, 0, -3.5)), (14 * F, (0, 0, -4.0)), (19 * F, (0, 0, -3.5)), (30 * F, Z0))},
+              "orb": {"loc": keys((0, Z0), (9 * F, (-6, 9, 5)), (hit_t, (-9, 3, -14)), (14 * F, (-9, 2.5, -17)), (19 * F, (-9, 3, -15)),
+                                  (30 * F, Z0)),
+                      "rot": keys((0, Z0), (9 * F, (0, 90, 0)), (hit_t, (0, 200, 0)), (16 * F, (0, 280, 0)), (30 * F, (0, 360, 0)))}}
     hit = {"actor": _lean_back(8),
            "head": {"rot": keys((0, Z0), (0.1, (-14, -8, 0)), (0.45, Z0))},
            "orb": {"loc": keys((0, Z0), (0.1, (2, -2, 2)), (0.45, Z0))}}
     death = _death("actor", {"head": {"rot": keys((0, Z0), (1.0, (-10, 20, 0)))},
                              "orb": {"loc": keys((0, Z0), (0.6, (0, 2, 0)), (1.2, (0, -2, 6)))}}, sink=SINK["psionic-alien"])
     sock = rig.sock("socket-psionic", (CX + 14, 24, CZ - 6), parent="orb")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
     return asset("creatures", "psionic-alien", "Psionic Alien", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-teleport-beam", "socket": "socket-psionic", "trigger": "clip:attack", "size": 15, "aim": [0, 0, -1], "at": 0.5}])
+                 pfx=[{"effectId": "rvx-space-teleport-beam", "socket": "socket-psionic", "trigger": "clip:attack", "size": 15, "aim": [0, 0, -1], "at": round(hit_t, 3)}])
 
 
 # Measured end-of-death lowest points (rt.py poses) that the death clip removes.

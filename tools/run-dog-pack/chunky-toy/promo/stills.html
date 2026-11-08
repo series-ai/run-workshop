@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chonky Hounds: Doggo Dynasties — stills</title>
+<style>
+  html, body { margin: 0; background: #1d1f24; }
+  canvas#out { display: block; max-width: 100vw; max-height: 100vh; margin: auto; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&display=block" rel="stylesheet">
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="out"></canvas>
+<script type="module">
+// Catalog stills, rendered with the real rigged dogs, clips, coats, wearables and props.
+//   ?still=cover   square catalog cover (Studio's pack card is square, object-contain): no text
+//   ?still=title   square cover with the trailer's balloon logo, a crowd on a pale lawn
+//   ?still=dogs    lineup of the 30 breeds        ?still=coats  all 223 colourways
+//   ?still=props   lineup of the props
+// &save=1 posts the PNG to promo/server.py (promo/stills/<name>.png).
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
+import { loadClipLibrary, setupDog, attachWear } from "../dogclips.js";
+import { loadCoats, loadClothPatterns, tintCloth } from "../dogcoat.js";
+
+const Q = new URLSearchParams(location.search);
+const STILL = Q.get("still") || "cover";
+const FONT = `"Titan One", "Arial Rounded MT Bold", Arial, sans-serif`;
+const ADULT = { toy: 0.45, small: 0.65, medium: 0.85, large: 1.1 };
+const PAPER = "#ece5da", INK = "#4b4038", SOFT = "#8a7d70";
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const out = document.getElementById("out");
+const ctx = out.getContext("2d");
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 200);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8fc06a, 1.8));
+const sun = new THREE.DirectionalLight(0xfff2dc, 2.2);
+sun.position.set(5, 12, 8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+
+// ------------------------------------------------------------------ assets
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, "../rigged/clips.glb");
+const coats = await loadCoats("../coats.json", "../rigged/coats/");
+const csv = async f => (await (await fetch(f)).text()).trim().split("\n").slice(1).map(l => l.split(","));
+const BREEDS = (await csv("../breeds.csv")).map(([slug, name, size]) => ({ slug, name, size }));
+const SIZE = Object.fromEntries(BREEDS.map(b => [b.slug, b.size]));
+const PROPS = (await csv("../props/props.csv")).map(([slug, name]) => ({ slug, name }));
+const G = {};
+const glb = async url => (G[url] ||= await loader.loadAsync(url));
+const cloth = await loadClothPatterns("../rigged/wear/cloth.png");
+await document.fonts.load(`40px "Titan One"`);
+
+function dog(slug, { x = 0, z = 0, ry = 0, s = ADULT[SIZE[slug]], clip = "idle", t = 0, coat = null, wear = null } = {}) {
+  const model = SkeletonUtils.clone(G[`../rigged/${slug}.glb`].scene);
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  const g = new THREE.Group();
+  g.add(model);
+  g.position.set(x, 0, z);
+  g.rotation.y = ry;
+  g.scale.setScalar(s);
+  scene.add(g);
+  const d = setupDog(model, lib);
+  const c = coats.applyNow(model, slug);
+  if (coat) c.set(typeof coat === "string" ? coats.palette(slug, coat) : coat);
+  d.play(clip, { time: t * lib.meta[clip].duration, fade: 0 });   // t: a fraction of the clip
+  d.update(1e-4);
+  if (wear) {
+    const [kind, color, pattern = "dots"] = wear;
+    for (const m of attachWear(model, SkeletonUtils.clone(G[`../rigged/wear/${slug}--${kind}.glb`].scene))) {
+      m.castShadow = true;
+      for (const mat of [m.material].flat()) {
+        if (mat.name === "bandana") tintCloth(mat, cloth, color, "#f6f0e4", pattern);
+        if (mat.name === "collar") mat.color.set(color);
+      }
+    }
+  }
+  return { g, model, coat: c };
+}
+function prop(slug, x = 0, z = 0, ry = 0, s = 1) {
+  const m = SkeletonUtils.clone(G[`../props/models/${slug}.glb`].scene);
+  m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  m.position.set(x, 0, z);
+  m.rotation.y = ry;
+  m.scale.setScalar(s);
+  scene.add(m);
+  return m;
+}
+function orbit(tx, ty, tz, dist, pitch, yaw) {
+  const p = THREE.MathUtils.degToRad(pitch), y = THREE.MathUtils.degToRad(yaw);
+  camera.position.set(tx + Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, tz + Math.cos(y) * Math.cos(p) * dist);
+  camera.lookAt(tx, ty, tz);
+}
+function size(w, h) {
+  out.width = w; out.height = h;
+  out.style.aspectRatio = `${w} / ${h}`;
+}
+
+// ------------------------------------------------------------------ the cover
+// A backyard crowd from three-quarters above, every dog doing its own thing. It has to read
+// at Studio's ~150 px card, so a dozen big dogs, not all thirty.
+async function cover() {
+  const N = 2048;
+  size(N, N);
+  renderer.setSize(N, N, false);
+  scene.background = new THREE.Color("#bfe6f5");
+  scene.fog = new THREE.Fog("#bfe6f5", 24, 44);
+  const c = document.createElement("canvas");
+  c.width = c.height = 512;
+  const x = c.getContext("2d");
+  for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? "#9fd47c" : "#93cb70"; x.fillRect(0, i * 64, 512, 64); }
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 5200; i++) {
+    x.fillStyle = `rgba(${60 + rnd() * 40},${120 + rnd() * 50},${40 + rnd() * 30},0.35)`;
+    x.fillRect(rnd() * 512, rnd() * 512, 1.5, 3.5);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(14, 14);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  const lawn = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshLambertMaterial({ map: tex }));
+  lawn.rotation.x = -Math.PI / 2;
+  lawn.receiveShadow = true;
+  scene.add(lawn);
+  Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+
+  const CAST = [
+    // back row: the big dogs
+    ["great-dane", { x: -1.7, z: -2.4, ry: 0.3, clip: "idle", t: 0.3, wear: ["collar", "#2f6fb5"] }],
+    ["golden-retriever", { x: 0.1, z: -2.5, ry: 0.05, clip: "sit_loop", t: 0.3, wear: ["bandana", "#e0a21b", "gingham"] }],
+    ["siberian-husky", { x: 1.9, z: -2.3, ry: -0.4, clip: "bark", t: 0.35 }],
+    // second row
+    ["pembroke-welsh-corgi", { x: -2.2, z: -0.8, ry: 0.65, clip: "play_bow", t: 0.5, wear: ["bandana", "#b8322a"] }],
+    ["labrador-retriever", { x: -0.65, z: -0.95, ry: 0.15, clip: "beg_loop", t: 0.3 }],
+    ["dalmatian", { x: 0.85, z: -0.9, ry: -0.2, clip: "sit_loop", t: 0.6, wear: ["collar", "#b8322a"] }],
+    ["border-collie", { x: 2.3, z: -0.6, ry: -1.0, clip: "down_loop", t: 0.5, wear: ["collar", "#2c9a5a"] }],
+    // third row
+    ["pomeranian", { x: -2.0, z: 0.75, ry: 0.6, clip: "sit_loop", t: 0.5 }],
+    ["pug", { x: -0.9, z: 0.6, ry: 0.35, clip: "sploot_loop", t: 0.4 }],
+    ["french-bulldog", { x: 0.45, z: 0.55, ry: 0.1, clip: "sit_loop", t: 0.2, wear: ["bandana", "#e46a8c"] }],
+    ["shiba-inu", { x: 1.85, z: 0.75, ry: -0.6, clip: "idle", t: 0.6, wear: ["bandana", "#2f6fb5", "stripes"] }],
+    // front: the long one and the tiny one
+    ["dachshund", { x: -0.7, z: 2.0, ry: -1.3, clip: "trot", t: 0.15, wear: ["collar", "#e0a21b"] }],
+    ["chihuahua", { x: 1.2, z: 2.0, ry: -0.4, clip: "bark", t: 0.4 }],
+    ["beagle", { x: 2.25, z: 1.8, ry: -0.9, clip: "sniff", t: 0.4 }],
+  ];
+  await Promise.all(CAST.flatMap(([s, o]) => [glb(`../rigged/${s}.glb`), o.wear && glb(`../rigged/wear/${s}--${o.wear[0]}.glb`)].filter(Boolean)));
+  await Promise.all(["tennis-ball", "rope-toy", "fire-hydrant", "teepee", "squeaky-bone", "floor-bowl--food"].map(p => glb(`../props/models/${p}.glb`)));
+  await coats.preload(CAST.map(([s]) => s));
+  const K = 0.85;   // spacing: close enough to read as one crowd
+  for (const [s, o] of CAST) dog(s, { ...o, x: o.x * K, z: o.z * K });
+  prop("teepee", -2.9, -3.0, 0.6);
+  prop("fire-hydrant", 2.5, -2.4, -0.3);
+  prop("floor-bowl--food", 0.9, -3.0, 0);
+  prop("tennis-ball", -1.15, -0.15, 0);
+  prop("rope-toy", 0.25, 1.25, 0.8);
+  prop("squeaky-bone", -1.8, 1.6, -0.5);
+  const V = Q.get("v")?.split(",").map(Number) || [0.1, 0.3, -0.2, 8.3, 47, 8];
+  camera.fov = 34;
+  camera.aspect = 1;
+  camera.updateProjectionMatrix();
+  orbit(...V);
+  renderer.render(scene, camera);
+  ctx.drawImage(renderer.domElement, 0, 0);
+}
+
+// ------------------------------------------------------------------ the titled cover
+// The trailer's logo (balloon letters, promo/index.html) over a big crowd of dogs and props on
+// a flat pale-green lawn: no grass noise, so the dogs pop off it.
+const CANDY = [["#ff7aa2", "#c94c76"], ["#ffd166", "#d69a2a"], ["#6fd6f5", "#3a9ec4"], ["#9be58a", "#5fae4f"], ["#c9a6ff", "#8f6ad6"], ["#ff9f68", "#d06a35"]];
+function balloonLetter(ch, size, ci) {   // as promo/index.html
+  const [fill, side] = CANDY[ci % CANDY.length];
+  const c = document.createElement("canvas"), g = c.getContext("2d");
+  const pad = size * 0.5;
+  g.font = `${size}px ${FONT}`;
+  const w = Math.ceil(g.measureText(ch).width + pad * 2), h = Math.ceil(size * 1.6 + pad);
+  c.width = w; c.height = h;
+  g.font = `${size}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+  const cx = w / 2, cy = h / 2 - size * 0.08, depth = size * 0.12, step = Math.max(2, size / 85);
+  for (let k = depth; k > 0; k -= step) { g.lineWidth = size * 0.2; g.strokeStyle = "#3b2418"; g.strokeText(ch, cx, cy + k); }
+  for (let k = depth; k > 0; k -= step) { g.fillStyle = side; g.fillText(ch, cx, cy + k); }
+  g.lineWidth = size * 0.2; g.strokeStyle = "#3b2418"; g.strokeText(ch, cx, cy);
+  g.fillStyle = fill; g.fillText(ch, cx, cy);
+  const hi = document.createElement("canvas"); hi.width = w; hi.height = h;
+  const hc = hi.getContext("2d");
+  hc.font = g.font; hc.textAlign = "center"; hc.textBaseline = "middle";
+  hc.fillStyle = "rgba(255,255,255,0.55)"; hc.fillText(ch, cx, cy);
+  hc.globalCompositeOperation = "destination-out";
+  hc.fillText(ch, cx + size * 0.05, cy + size * 0.07);
+  g.drawImage(hi, 0, 0);
+  return c;
+}
+let letterN = 0;
+function balloon(line, cxAll, y, size) {   // one line, centred, each letter tilted a touch
+  ctx.font = `${size}px ${FONT}`;
+  const widths = [...line].map(c => ctx.measureText(c).width + size * 0.07);
+  let x = cxAll - widths.reduce((a, b) => a + b, 0) / 2;
+  [...line].forEach((c, i) => {
+    const cx = x + widths[i] / 2;
+    x += widths[i];
+    letterN++;
+    if (c === " ") return;
+    const gl = balloonLetter(c, size, letterN);
+    ctx.save();
+    ctx.translate(cx, y + Math.sin(letterN * 0.7) * size * 0.03);
+    ctx.rotate(Math.sin(letterN * 2.3) * 0.08);
+    ctx.drawImage(gl, -gl.width / 2, -gl.height / 2);
+    ctx.restore();
+  });
+}
+
+async function title() {
+  const N = 2048;
+  size(N, N);
+  renderer.setSize(N, N, false);
+  const LAWN = "#d3ecb4";
+  scene.background = new THREE.Color(LAWN);
+  // pale lawn, with mown stripes so faint they only read as grass
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const x = c.getContext("2d");
+  for (let i = 0; i < 4; i++) { x.fillStyle = i % 2 ? "#d3ecb4" : "#cde8ad"; x.fillRect(0, i * 64, 256, 64); }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(24, 24);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const lawn = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshBasicMaterial({ map: tex }));
+  lawn.rotation.x = -Math.PI / 2;
+  scene.add(lawn);
+  // the lawn is unlit (it stays pale), so its shadows come from a shadow-only layer
+  const shade = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.ShadowMaterial({ opacity: 0.2, color: "#2f5a1c" }));
+  shade.rotation.x = -Math.PI / 2;
+  shade.position.y = 0.002;
+  shade.receiveShadow = true;
+  scene.add(shade);
+  Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+
+  // the poses that read best from a low three-quarter view (found with ?still=poses): sit, down,
+  // comfy, sploot, play bow, stretch, bark / catch with the head up, point, paw. Every dog turned
+  // three-quarters, facing in towards the middle.
+  const CAST = [
+    ["great-dane", { x: -2.6, z: -1.5, ry: 0.75, clip: "sit_loop", t: 0.3, wear: ["collar", "#2f6fb5"] }],
+    ["golden-retriever", { x: -0.7, z: -1.85, ry: 0.7, clip: "play_bow", t: 0.5, wear: ["bandana", "#e0a21b", "gingham"] }],
+    ["bernese-mountain-dog", { x: 0.85, z: -1.55, ry: -0.6, clip: "down_loop", t: 0.5 }],
+    ["german-shepherd", { x: 2.6, z: -1.4, ry: -0.8, clip: "point", t: 0.35, wear: ["collar", "#b8322a"] }],
+    ["pembroke-welsh-corgi", { x: -3.25, z: -0.05, ry: 0.85, clip: "play_bow", t: 0.45, wear: ["bandana", "#b8322a"] }],
+    ["labrador-retriever", { x: -1.8, z: 0.2, ry: 0.6, clip: "paw", t: 0.35 }],
+    ["dalmatian", { x: 0.0, z: 0.0, ry: -0.45, clip: "sit_loop", t: 0.6, wear: ["collar", "#b8322a"] }],
+    ["siberian-husky", { x: 1.45, z: 0.05, ry: -0.7, clip: "bark", t: 0.2 }],
+    ["border-collie", { x: 3.0, z: 0.25, ry: -0.9, clip: "comfy_loop", t: 0.5, wear: ["collar", "#2c9a5a"] }],
+    ["pomeranian", { x: -2.95, z: 1.75, ry: 0.8, clip: "sit_loop", t: 0.5 }],
+    ["pug", { x: -1.95, z: 1.45, ry: 0.6, clip: "sploot_loop", t: 0.4 }],
+    ["french-bulldog", { x: -0.7, z: 1.4, ry: 0.5, clip: "sit_loop", t: 0.2, wear: ["bandana", "#e46a8c"] }],
+    ["boston-terrier", { x: 0.55, z: 1.45, ry: -0.5, clip: "catch", t: 0.35 }],
+    ["shiba-inu", { x: 1.85, z: 1.55, ry: -0.7, clip: "stretch", t: 0.5, wear: ["bandana", "#2f6fb5", "stripes"] }],
+    ["samoyed", { x: 3.1, z: 1.7, ry: -0.8, clip: "sit_loop", t: 0.4, wear: ["bandana", "#c9a6ff"] }],
+    ["dachshund", { x: -1.95, z: 2.95, ry: 1.15, clip: "down_loop", t: 0.5, wear: ["collar", "#e0a21b"] }],
+    ["chihuahua", { x: -0.35, z: 2.9, ry: 0.4, clip: "bark", t: 0.2 }],
+    ["jack-russell-terrier", { x: 0.95, z: 2.95, ry: -0.5, clip: "paw", t: 0.35, wear: ["collar", "#ff7aa2"] }],
+    ["beagle", { x: 2.45, z: 2.95, ry: -0.85, clip: "point", t: 0.35 }],
+  ];
+  const PROPS = [["teepee", 3.2, -2.9, -0.5], ["fire-hydrant", 3.75, -0.9, -0.3], ["dog-house", -3.9, -3.1, 0.5],
+    ["tennis-ball", -2.35, 0.75, 0], ["rope-toy", 0.3, 2.25, 0.8], ["squeaky-bone", -3.4, 2.9, -0.5], ["frisbee", 2.55, 0.95, 0],
+    ["plush-duck", -1.2, 2.3, 0.6], ["floor-bowl--food", 1.75, -2.6, 0]];
+  await Promise.all(CAST.flatMap(([s, o]) => [glb(`../rigged/${s}.glb`), o.wear && glb(`../rigged/wear/${s}--${o.wear[0]}.glb`)].filter(Boolean)));
+  await Promise.all(PROPS.map(([p]) => glb(`../props/models/${p}.glb`)));
+  await coats.preload(CAST.map(([s]) => s));
+  const K = 0.92;
+  for (const [s, o] of CAST) dog(s, { ...o, x: o.x * K, z: o.z * K });
+  for (const [p, px, pz, ry] of PROPS) prop(p, px * K, pz * K, ry);
+  const V = Q.get("v")?.split(",").map(Number) || [0.1, 0.45, 0.75, 12.8, 24, 0];   // a low three-quarter view flatters the dogs
+  camera.fov = 29;
+  camera.aspect = 1;
+  camera.setViewOffset(N, N, 0, -N * (+(Q.get("drop") || 0.11)), N, N);   // the crowd sits low, under the logo
+  camera.updateProjectionMatrix();
+  orbit(...V);
+  renderer.render(scene, camera);
+  ctx.drawImage(renderer.domElement, 0, 0);
+  balloon("CHONKY", N / 2, N * 0.105, 250);
+  balloon("HOUNDS", N / 2, N * 0.235, 250);
+  balloon("DOGGO DYNASTIES", N / 2, N * 0.345, 118);
+}
+
+// ------------------------------------------------------------------ lineups
+// One subject per cell on warm paper, three-quarter view from a little above, a soft contact
+// shadow, framed to fit, the name underneath.
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.16 }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+function lineupScene() {
+  scene.background = new THREE.Color(PAPER);
+  scene.add(ground);
+}
+function frame(obj, cell, { pitch = 18, yaw = 38, fill = 0.86 } = {}) {
+  obj.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(obj, true);
+  const sph = box.getBoundingSphere(new THREE.Sphere());
+  const r = sph.radius;
+  Object.assign(sun.shadow.camera, { left: -r * 2, right: r * 2, top: r * 2, bottom: -r * 2, near: 0.1, far: r * 40 });
+  sun.position.copy(sph.center).add(new THREE.Vector3(5, 12, 8).normalize().multiplyScalar(r * 15));
+  sun.target.position.copy(sph.center);
+  sun.shadow.camera.updateProjectionMatrix();
+  camera.aspect = 1;
+  camera.fov = 22;
+  camera.updateProjectionMatrix();
+  orbit(sph.center.x, sph.center.y, sph.center.z, r / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) / fill, pitch, yaw);
+  renderer.render(scene, camera);
+}
+function header(w, title, sub) {
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(0, 0, w, out.height);
+  ctx.fillStyle = INK;
+  ctx.font = `76px ${FONT}`;
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(title, 64, 112);
+  ctx.fillStyle = SOFT;
+  ctx.font = `40px ${FONT}`;
+  ctx.textAlign = "right";
+  ctx.fillText(sub, w - 64, 112);
+  ctx.textAlign = "left";
+}
+let cellW = 300;
+function label(text, cx, y, px, color = INK) {   // shrinks to fit the cell, then truncates
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  const max = cellW - 14;
+  let size = px, t = text;
+  for (; size > px * 0.72; size--) { ctx.font = `${size}px ${FONT}`; if (ctx.measureText(t).width <= max) break; }
+  while (ctx.measureText(t).width > max && t.length > 4) t = t.slice(0, -2) + "…";
+  ctx.fillText(t, cx, y);
+  ctx.textAlign = "left";
+}
+async function lineup(items, { cols, cell, labelH, title, sub, render, text }) {
+  const rows = Math.ceil(items.length / cols), top = 170, pad = 48;
+  cellW = cell;
+  size(cols * cell + pad * 2, top + rows * (cell + labelH) + pad);
+  renderer.setSize(cell, cell, false);
+  header(out.width, title, sub);
+  lineupScene();
+  for (let i = 0; i < items.length; i++) {
+    const x = pad + (i % cols) * cell, y = top + Math.floor(i / cols) * (cell + labelH);
+    const obj = await render(items[i]);
+    ctx.drawImage(renderer.domElement, x, y);
+    scene.remove(obj);
+    text(items[i], x + cell / 2, y + cell);
+  }
+}
+
+const breedName = Object.fromEntries(BREEDS.map(b => [b.slug, b.name]));
+const LINEUPS = {
+  async dogs() {
+    await Promise.all(BREEDS.map(b => glb(`../rigged/${b.slug}.glb`)));
+    await coats.preload(BREEDS.map(b => b.slug));
+    await lineup(BREEDS, {
+      cols: 10, cell: 340, labelH: 64, title: "Chonky Hounds: Doggo Dynasties", sub: "30 breeds · one rig",
+      render: b => { const d = dog(b.slug, { s: 1, clip: "idle", t: 0.3 }); frame(d.g, 340, { fill: 1.3 }); return d.g; },
+      text: (b, cx, y) => label(b.name, cx, y + 30, 27),
+    });
+  },
+  async coats() {
+    const all = BREEDS.flatMap(b => coats.index[b.slug].colorways.map(cw => ({ slug: b.slug, cw })));
+    await Promise.all(BREEDS.map(b => glb(`../rigged/${b.slug}.glb`)));
+    await coats.preload(BREEDS.map(b => b.slug));
+    await lineup(all, {
+      cols: 16, cell: 230, labelH: 70, title: "Chonky Hounds: 223 coats", sub: "every colourway in the box · or breed your own",
+      render: ({ slug, cw }) => { const d = dog(slug, { s: 1, clip: "idle", t: 0.3, coat: cw }); frame(d.g, 230, { fill: 1.3 }); return d.g; },
+      text: ({ slug, cw }, cx, y) => { label(cw.name, cx, y + 26, 21); label(breedName[slug], cx, y + 52, 17, SOFT); },
+    });
+  },
+  async poses() {   // pose explorer: every pose / trick clip at six moments, from the cover's low angle
+    const slug = Q.get("dog") || "labrador-retriever";
+    const CLIPS = ["idle", "sit_loop", "down_loop", "comfy_loop", "sploot_loop", "beg_loop", "play_bow", "dance_loop", "play_dead_loop",
+      "paw", "bark", "point", "sniff", "stretch", "catch", "roll_over", "spin", "sit_enter", "down_enter", "comfy_enter"];
+    const T = [0.05, 0.2, 0.35, 0.5, 0.65, 0.8];
+    const items = CLIPS.flatMap(clip => T.map(t => ({ clip, t })));
+    await glb(`../rigged/${slug}.glb`);
+    await coats.preload([slug]);
+    await lineup(items, {
+      cols: 6, cell: 260, labelH: 36, title: `Poses: ${breedName[slug]}`, sub: "low three-quarter view",
+      render: ({ clip, t }) => { const d = dog(slug, { s: 1, clip, t, ry: +(Q.get("ry") || 0.35) }); frame(d.g, 260, { pitch: 20, yaw: 0, fill: 1.15 }); return d.g; },
+      text: ({ clip, t }, cx, y) => label(`${clip} ${t}`, cx, y + 24, 19),
+    });
+  },
+  async props() {
+    await Promise.all(PROPS.map(p => glb(`../props/models/${p.slug}.glb`)));
+    await lineup(PROPS, {
+      cols: 11, cell: 300, labelH: 60, title: "Chonky Hounds: props", sub: `${PROPS.length} beds, toys and care items`,
+      render: p => { const m = prop(p.slug); frame(m, 300, { pitch: 28, yaw: 32, fill: 1.0 }); return m; },
+      text: (p, cx, y) => label(p.name, cx, y + 28, 25),
+    });
+  },
+};
+
+if (STILL === "cover") await cover();
+else if (STILL === "title") await title();
+else await LINEUPS[STILL]();
+if (Q.has("save")) await fetch(`/still/${STILL}`, { method: "POST", body: await new Promise(r => out.toBlob(r, "image/png")) });
+document.title = "DONE";
+</script>
+</body>
+</html>

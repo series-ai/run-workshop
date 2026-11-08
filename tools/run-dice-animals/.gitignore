@@ -1,0 +1,4 @@
+# review renders made by strip.py and reel.py
+review*.png
+reel*/
+__pycache__/

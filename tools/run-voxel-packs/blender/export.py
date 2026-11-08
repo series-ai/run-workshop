@@ -199,6 +199,72 @@ def build_sockets(asset: Asset, objects) -> None:
         empty.rotation_quaternion = gl_euler_to_bl_quat(socket.rot)
 
 
+def clip_frames(clip) -> tuple[int, int] | None:
+    fps = CLIPS["fps"]
+    frames = [round(t * fps) for chans in clip.keys.values() for keys in chans.values() for t, _ in keys]
+    return (min(frames), max(frames)) if frames else None
+
+
+def action_channels(action):
+    """F-curves grouped by animated property, per slot: a quaternion's four
+    curves form one channel."""
+    for layer in action.layers:
+        for strip in layer.strips:
+            for bag in strip.channelbags:
+                groups: dict[str, list] = {}
+                for fc in bag.fcurves:
+                    groups.setdefault(fc.data_path, []).append(fc)
+                yield from groups.values()
+
+
+def seamless_loop(action, first: int, last: int) -> None:
+    """Make a looping clip run through its seam instead of easing to a stop.
+
+    Blender's auto-clamped handles lie flat on an F-curve's first and last
+    key, so every channel of a loop slows to rest at the seam and the clip
+    reads as a reset. A channel that closes (same value at both ends) gets a
+    Cycles modifier on its curves: their seam handles are then computed
+    across the wrap, so the speed leaving the last frame is the speed
+    entering the first. A channel that does not close (a whole-turn spin ends
+    on −q) takes linear extrapolation, which keeps its end handles on the
+    slope to the next key. A curve that spans less than the clip is held to
+    both ends first."""
+    action.use_frame_range = True
+    action.frame_start, action.frame_end = first, last
+    action.use_cyclic = True
+    for curves in action_channels(action):
+        for fc in curves:
+            points = fc.keyframe_points
+            for frame in (first, last):
+                if not any(abs(k.co[0] - frame) < 1e-3 for k in points):
+                    points.insert(frame, fc.evaluate(frame), options={"FAST"})
+        closes = all(abs(fc.keyframe_points[0].co[1] - fc.keyframe_points[-1].co[1]) < 1e-4 for fc in curves)
+        for fc in curves:
+            if closes:
+                fc.modifiers.new("CYCLES")
+            else:
+                fc.extrapolation = "LINEAR"
+            fc.update()
+
+
+def snap_impact(action, frame: int) -> None:
+    """Make the key span that ends on the impact frame accelerate into it.
+
+    Auto-clamped Bezier eases both ends of every span, so a strike slows
+    down before it lands and reads soft. The span into the impact key gets a
+    cubic ease-in instead: it leaves the wind-up slowly and arrives at three
+    times its mean speed, then the next span leaves the contact pose at rest
+    (a hard stop)."""
+    for curves in action_channels(action):
+        for fc in curves:
+            points = fc.keyframe_points
+            for i in range(1, len(points)):
+                if abs(points[i].co[0] - frame) < 1e-3:
+                    points[i - 1].interpolation = "CUBIC"
+                    points[i - 1].easing = "EASE_IN"
+            fc.update()
+
+
 def build_clips(asset: Asset, objects) -> None:
     unit = units_per_voxel(asset.category)
     fps = CLIPS["fps"]
@@ -233,6 +299,10 @@ def build_clips(asset: Asset, objects) -> None:
             track.mute = True  # keep the rest pose unevaluated at export; see export_glb
             anim.action = None
             obj.location, obj.rotation_quaternion, obj.scale = rest_loc, rest_rot, rest_scale
+        if clip.loop and clip_frames(clip):
+            seamless_loop(action, *clip_frames(clip))
+        if clip.impact is not None:
+            snap_impact(action, round(clip.impact * fps))
 
 
 def export_glb(path: str, animated: bool) -> None:

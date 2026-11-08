@@ -1,0 +1,2932 @@
+[
+ {
+  "id": "ball_tennis",
+  "label": "Tennis ball",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 336,
+  "size": [
+   0.074,
+   0.074,
+   0.068
+  ],
+  "holdable": true,
+  "materials": [
+   "tennis",
+   "white"
+  ]
+ },
+ {
+  "id": "ball_rubber",
+  "label": "Rubber ball",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 140,
+  "size": [
+   0.086,
+   0.09,
+   0.09
+  ],
+  "holdable": true,
+  "materials": [
+   "red",
+   "white"
+  ]
+ },
+ {
+  "id": "ball_spiky",
+  "label": "Spiky squeaky ball",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 80,
+  "size": [
+   0.104,
+   0.099,
+   0.116
+  ],
+  "holdable": true,
+  "materials": [
+   "teal"
+  ]
+ },
+ {
+  "id": "bone_toy",
+  "label": "Rubber bone",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 108,
+  "size": [
+   0.066,
+   0.156,
+   0.04
+  ],
+  "holdable": true,
+  "materials": [
+   "dusty_blue"
+  ]
+ },
+ {
+  "id": "biscuit_bone",
+  "label": "Bone biscuit",
+  "category": "food",
+  "attach": "floor",
+  "tris": 284,
+  "size": [
+   0.037,
+   0.071,
+   0.012
+  ],
+  "holdable": true,
+  "materials": [
+   "biscuit"
+  ]
+ },
+ {
+  "id": "rope_tug",
+  "label": "Rope tug",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 372,
+  "size": [
+   0.053,
+   0.354,
+   0.047
+  ],
+  "holdable": true,
+  "materials": [
+   "linen",
+   "red"
+  ]
+ },
+ {
+  "id": "rope_ring",
+  "label": "Rope ring",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 384,
+  "size": [
+   0.182,
+   0.182,
+   0.032
+  ],
+  "holdable": true,
+  "materials": [
+   "linen",
+   "mustard"
+  ]
+ },
+ {
+  "id": "frisbee",
+  "label": "Frisbee",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 220,
+  "size": [
+   0.23,
+   0.23,
+   0.024
+  ],
+  "holdable": true,
+  "materials": [
+   "mustard",
+   "orange",
+   "white"
+  ]
+ },
+ {
+  "id": "stick",
+  "label": "Stick",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 100,
+  "size": [
+   0.091,
+   0.403,
+   0.026
+  ],
+  "holdable": true,
+  "materials": [
+   "bark",
+   "birch"
+  ]
+ },
+ {
+  "id": "kong",
+  "label": "Treat stuffer",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 176,
+  "size": [
+   0.08,
+   0.1,
+   0.076
+  ],
+  "holdable": true,
+  "materials": [
+   "red"
+  ]
+ },
+ {
+  "id": "chew_ring",
+  "label": "Chew ring",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 168,
+  "size": [
+   0.154,
+   0.15,
+   0.029
+  ],
+  "holdable": true,
+  "materials": [
+   "teal"
+  ]
+ },
+ {
+  "id": "antler",
+  "label": "Antler chew",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 90,
+  "size": [
+   0.076,
+   0.223,
+   0.056
+  ],
+  "holdable": true,
+  "materials": [
+   "linen",
+   "oatmeal"
+  ]
+ },
+ {
+  "id": "slipper",
+  "label": "Chewed slipper",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 128,
+  "size": [
+   0.26,
+   0.097,
+   0.062
+  ],
+  "holdable": true,
+  "materials": [
+   "charcoal",
+   "grey",
+   "white"
+  ]
+ },
+ {
+  "id": "plush_duck",
+  "label": "Plush duck",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 296,
+  "size": [
+   0.206,
+   0.118,
+   0.135
+  ],
+  "holdable": true,
+  "materials": [
+   "ink",
+   "mustard",
+   "orange",
+   "yellow"
+  ]
+ },
+ {
+  "id": "plush_fox",
+  "label": "Plush fox",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 228,
+  "size": [
+   0.348,
+   0.116,
+   0.188
+  ],
+  "holdable": true,
+  "materials": [
+   "ink",
+   "orange",
+   "white"
+  ]
+ },
+ {
+  "id": "plush_hedgehog",
+  "label": "Plush hedgehog",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 120,
+  "size": [
+   0.182,
+   0.133,
+   0.121
+  ],
+  "holdable": true,
+  "materials": [
+   "ink",
+   "oatmeal",
+   "walnut"
+  ]
+ },
+ {
+  "id": "squeaky_carrot",
+  "label": "Squeaky carrot",
+  "category": "toys",
+  "attach": "floor",
+  "tris": 60,
+  "size": [
+   0.057,
+   0.208,
+   0.055
+  ],
+  "holdable": true,
+  "materials": [
+   "leaf",
+   "orange"
+  ]
+ },
+ {
+  "id": "bowl_food",
+  "label": "Food bowl",
+  "category": "food",
+  "attach": "floor",
+  "tris": 166,
+  "size": [
+   0.2,
+   0.195,
+   0.055
+  ],
+  "holdable": false,
+  "materials": [
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "bowl_food_full",
+  "label": "Food bowl (full)",
+  "category": "food",
+  "attach": "floor",
+  "tris": 996,
+  "size": [
+   0.2,
+   0.195,
+   0.078
+  ],
+  "holdable": false,
+  "materials": [
+   "kibble",
+   "kibble_light",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "bowl_water",
+  "label": "Water bowl",
+  "category": "food",
+  "attach": "floor",
+  "tris": 218,
+  "size": [
+   0.2,
+   0.195,
+   0.055
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "water",
+   "white"
+  ]
+ },
+ {
+  "id": "bowl_steel",
+  "label": "Steel bowl",
+  "category": "food",
+  "attach": "floor",
+  "tris": 166,
+  "size": [
+   0.219,
+   0.213,
+   0.05
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "steel"
+  ]
+ },
+ {
+  "id": "feeder_raised",
+  "label": "Raised feeder",
+  "category": "food",
+  "attach": "floor",
+  "tris": 1070,
+  "size": [
+   0.26,
+   0.5,
+   0.274
+  ],
+  "holdable": false,
+  "materials": [
+   "kibble",
+   "kibble_light",
+   "oak",
+   "water",
+   "white"
+  ]
+ },
+ {
+  "id": "placemat",
+  "label": "Bowl mat",
+  "category": "food",
+  "attach": "floor",
+  "tris": 64,
+  "size": [
+   0.32,
+   0.55,
+   0.006
+  ],
+  "holdable": false,
+  "materials": [
+   "stone"
+  ]
+ },
+ {
+  "id": "treat_jar",
+  "label": "Treat jar",
+  "category": "food",
+  "attach": "floor",
+  "tris": 1084,
+  "size": [
+   0.141,
+   0.141,
+   0.225
+  ],
+  "holdable": false,
+  "materials": [
+   "biscuit",
+   "glass",
+   "linen",
+   "oak"
+  ]
+ },
+ {
+  "id": "kibble_bag",
+  "label": "Kibble bag",
+  "category": "food",
+  "attach": "floor",
+  "tris": 384,
+  "size": [
+   0.191,
+   0.28,
+   0.41
+  ],
+  "holdable": false,
+  "materials": [
+   "biscuit",
+   "sage",
+   "sand"
+  ]
+ },
+ {
+  "id": "kibble_pile",
+  "label": "Spilled kibble",
+  "category": "food",
+  "attach": "floor",
+  "tris": 830,
+  "size": [
+   0.225,
+   0.289,
+   0.031
+  ],
+  "holdable": false,
+  "materials": [
+   "kibble",
+   "kibble_light"
+  ]
+ },
+ {
+  "id": "meat_bone",
+  "label": "Meaty bone",
+  "category": "food",
+  "attach": "floor",
+  "tris": 144,
+  "size": [
+   0.076,
+   0.244,
+   0.076
+  ],
+  "holdable": true,
+  "materials": [
+   "blush",
+   "meat",
+   "white"
+  ]
+ },
+ {
+  "id": "treat_stick",
+  "label": "Chew stick",
+  "category": "food",
+  "attach": "floor",
+  "tris": 12,
+  "size": [
+   0.016,
+   0.14,
+   0.016
+  ],
+  "holdable": true,
+  "materials": [
+   "rust"
+  ]
+ },
+ {
+  "id": "dental_chew",
+  "label": "Dental chew",
+  "category": "food",
+  "attach": "floor",
+  "tris": 64,
+  "size": [
+   0.03,
+   0.119,
+   0.03
+  ],
+  "holdable": true,
+  "materials": [
+   "sage"
+  ]
+ },
+ {
+  "id": "food_can",
+  "label": "Food tin (open)",
+  "category": "food",
+  "attach": "floor",
+  "tris": 218,
+  "size": [
+   0.115,
+   0.085,
+   0.088
+  ],
+  "holdable": false,
+  "materials": [
+   "meat",
+   "mustard",
+   "steel"
+  ]
+ },
+ {
+  "id": "food_scoop",
+  "label": "Food scoop",
+  "category": "food",
+  "attach": "floor",
+  "tris": 98,
+  "size": [
+   0.15,
+   0.086,
+   0.09
+  ],
+  "holdable": false,
+  "materials": [
+   "oak"
+  ]
+ },
+ {
+  "id": "bed_donut",
+  "label": "Donut bed",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 512,
+  "size": [
+   0.8,
+   0.8,
+   0.2
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "oatmeal"
+  ]
+ },
+ {
+  "id": "bed_bolster",
+  "label": "Bolster bed",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 328,
+  "size": [
+   0.65,
+   0.9,
+   0.184
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "sage"
+  ]
+ },
+ {
+  "id": "bed_bolster_blue",
+  "label": "Bolster bed (blue)",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 328,
+  "size": [
+   0.65,
+   0.9,
+   0.184
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "white"
+  ]
+ },
+ {
+  "id": "bed_pillow",
+  "label": "Pillow bed",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 252,
+  "size": [
+   0.7,
+   0.95,
+   0.159
+  ],
+  "holdable": false,
+  "materials": [
+   "terracotta"
+  ]
+ },
+ {
+  "id": "bed_cot",
+  "label": "Raised cot",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 450,
+  "size": [
+   0.6,
+   0.85,
+   0.177
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "sand"
+  ]
+ },
+ {
+  "id": "bed_cave",
+  "label": "Cave bed",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 784,
+  "size": [
+   0.75,
+   0.75,
+   0.498
+  ],
+  "holdable": false,
+  "materials": [
+   "oatmeal",
+   "white"
+  ]
+ },
+ {
+  "id": "bed_basket",
+  "label": "Wicker basket bed",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 414,
+  "size": [
+   0.792,
+   1.056,
+   0.2
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "oak",
+   "oak_dark",
+   "sand"
+  ]
+ },
+ {
+  "id": "bed_crate",
+  "label": "Crate bed",
+  "category": "beds",
+  "attach": "floor",
+  "tris": 912,
+  "size": [
+   0.6,
+   0.85,
+   0.22
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "oak",
+   "oak_dark",
+   "white"
+  ]
+ },
+ {
+  "id": "blanket_flat",
+  "label": "Blanket (laid out)",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 370,
+  "size": [
+   0.918,
+   1.25,
+   0.032
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "sage"
+  ]
+ },
+ {
+  "id": "blanket_rumpled",
+  "label": "Blanket (rumpled)",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 370,
+  "size": [
+   1.026,
+   1.166,
+   0.097
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "white"
+  ]
+ },
+ {
+  "id": "blanket_folded",
+  "label": "Folded blankets",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 252,
+  "size": [
+   0.454,
+   0.563,
+   0.135
+  ],
+  "holdable": false,
+  "materials": [
+   "oatmeal",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "blanket_knit",
+  "label": "Chunky knit throw",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 1306,
+  "size": [
+   0.9,
+   1.2,
+   0.034
+  ],
+  "holdable": false,
+  "materials": [
+   "white"
+  ]
+ },
+ {
+  "id": "towel_flat",
+  "label": "Towel (laid out)",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 220,
+  "size": [
+   0.55,
+   1.0,
+   0.016
+  ],
+  "holdable": false,
+  "materials": [
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "towel_rolled",
+  "label": "Towel (rolled)",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 216,
+  "size": [
+   0.122,
+   0.408,
+   0.121
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "towel_folded",
+  "label": "Towels (folded)",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 204,
+  "size": [
+   0.32,
+   0.42,
+   0.12
+  ],
+  "holdable": false,
+  "materials": [
+   "blush",
+   "white"
+  ]
+ },
+ {
+  "id": "pillow_square",
+  "label": "Throw pillow",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 144,
+  "size": [
+   0.45,
+   0.45,
+   0.14
+  ],
+  "holdable": false,
+  "materials": [
+   "mustard"
+  ]
+ },
+ {
+  "id": "pillow_blush",
+  "label": "Throw pillow (blush)",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 144,
+  "size": [
+   0.45,
+   0.45,
+   0.14
+  ],
+  "holdable": false,
+  "materials": [
+   "blush"
+  ]
+ },
+ {
+  "id": "mat_washable",
+  "label": "Washable mat",
+  "category": "bedding",
+  "attach": "floor",
+  "tris": 192,
+  "size": [
+   0.6,
+   0.9,
+   0.02
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "grey"
+  ]
+ },
+ {
+  "id": "dog_house",
+  "label": "Dog house",
+  "category": "home",
+  "attach": "floor",
+  "tris": 568,
+  "size": [
+   0.99,
+   0.825,
+   0.893
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "oak",
+   "oak_dark",
+   "sage",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "toy_basket",
+  "label": "Toy basket",
+  "category": "home",
+  "attach": "floor",
+  "tris": 1466,
+  "size": [
+   0.396,
+   0.356,
+   0.287
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "ink",
+   "linen",
+   "mustard",
+   "oak_dark",
+   "oatmeal",
+   "orange",
+   "red",
+   "sand",
+   "tennis",
+   "white",
+   "yellow"
+  ]
+ },
+ {
+  "id": "fire_hydrant",
+  "label": "Fire hydrant",
+  "category": "home",
+  "attach": "floor",
+  "tris": 326,
+  "size": [
+   0.3,
+   0.36,
+   0.58
+  ],
+  "holdable": false,
+  "materials": [
+   "red",
+   "steel"
+  ]
+ },
+ {
+  "id": "leash_post",
+  "label": "Leash post",
+  "category": "home",
+  "attach": "floor",
+  "tris": 448,
+  "size": [
+   0.3,
+   0.3,
+   0.98
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "charcoal",
+   "oak",
+   "steel",
+   "stone",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "leash_hook",
+  "label": "Leash hook rack",
+  "category": "home",
+  "attach": "wall",
+  "tris": 372,
+  "size": [
+   0.095,
+   0.5,
+   0.513
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "navy",
+   "oak",
+   "oak_dark",
+   "steel",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "leash_coiled",
+  "label": "Leash (coiled)",
+  "category": "home",
+  "attach": "floor",
+  "tris": 516,
+  "size": [
+   0.511,
+   0.286,
+   0.03
+  ],
+  "holdable": false,
+  "materials": [
+   "steel",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "saddlebag_L",
+  "label": "Saddlebag (left)",
+  "category": "wear",
+  "attach": "harness.pack_L",
+  "tris": 152,
+  "size": [
+   0.16,
+   0.062,
+   0.117
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "mustard",
+   "oak_dark",
+   "rust"
+  ]
+ },
+ {
+  "id": "saddlebag_R",
+  "label": "Saddlebag (right)",
+  "category": "wear",
+  "attach": "harness.pack_R",
+  "tris": 152,
+  "size": [
+   0.16,
+   0.062,
+   0.117
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "mustard",
+   "oak_dark",
+   "rust"
+  ]
+ },
+ {
+  "id": "backpack_mini",
+  "label": "Mini backpack",
+  "category": "wear",
+  "attach": "harness.back",
+  "tris": 172,
+  "size": [
+   0.159,
+   0.11,
+   0.084
+  ],
+  "holdable": false,
+  "materials": [
+   "moss",
+   "oak_dark",
+   "sage"
+  ]
+ },
+ {
+  "id": "tag_round",
+  "label": "Tag (round)",
+  "category": "wear",
+  "attach": "collar.tag",
+  "tris": 100,
+  "size": [
+   0.015,
+   0.025,
+   0.039
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "steel"
+  ]
+ },
+ {
+  "id": "tag_bone",
+  "label": "Tag (bone)",
+  "category": "wear",
+  "attach": "collar.tag",
+  "tris": 156,
+  "size": [
+   0.015,
+   0.03,
+   0.033
+  ],
+  "holdable": false,
+  "materials": [
+   "steel"
+  ]
+ },
+ {
+  "id": "tag_heart",
+  "label": "Tag (heart)",
+  "category": "wear",
+  "attach": "collar.tag",
+  "tris": 128,
+  "size": [
+   0.015,
+   0.029,
+   0.04
+  ],
+  "holdable": false,
+  "materials": [
+   "rose",
+   "steel"
+  ]
+ },
+ {
+  "id": "agility_jump",
+  "label": "Bar jump",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 338,
+  "size": [
+   0.4,
+   1.26,
+   0.9
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "red",
+   "white"
+  ]
+ },
+ {
+  "id": "agility_tire",
+  "label": "Tire jump",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 460,
+  "size": [
+   0.4,
+   1.26,
+   1.305
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "mustard",
+   "steel"
+  ]
+ },
+ {
+  "id": "agility_weave",
+  "label": "Weave poles",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 1136,
+  "size": [
+   0.4,
+   3.2,
+   0.95
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "dusty_blue",
+   "white"
+  ]
+ },
+ {
+  "id": "agility_tunnel",
+  "label": "Tunnel",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 440,
+  "size": [
+   1.768,
+   1.758,
+   0.663
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "navy",
+   "white"
+  ]
+ },
+ {
+  "id": "agility_aframe",
+  "label": "A-frame",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 280,
+  "size": [
+   3.212,
+   0.904,
+   1.22
+  ],
+  "holdable": false,
+  "materials": [
+   "mustard",
+   "oak",
+   "red"
+  ]
+ },
+ {
+  "id": "agility_seesaw",
+  "label": "Seesaw",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 80,
+  "size": [
+   2.357,
+   0.6,
+   0.621
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "mustard",
+   "red"
+  ]
+ },
+ {
+  "id": "agility_table",
+  "label": "Pause table",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 156,
+  "size": [
+   0.9,
+   0.9,
+   0.425
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "white"
+  ]
+ },
+ {
+  "id": "agility_cone",
+  "label": "Training cone",
+  "category": "agility",
+  "attach": "floor",
+  "tris": 100,
+  "size": [
+   0.24,
+   0.24,
+   0.32
+  ],
+  "holdable": false,
+  "materials": [
+   "orange",
+   "white"
+  ]
+ },
+ {
+  "id": "sofa",
+  "label": "Sofa",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 1032,
+  "size": [
+   0.921,
+   2.14,
+   0.858
+  ],
+  "holdable": false,
+  "materials": [
+   "mustard",
+   "oak",
+   "oatmeal"
+  ]
+ },
+ {
+  "id": "armchair",
+  "label": "Armchair",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 488,
+  "size": [
+   0.921,
+   0.96,
+   0.858
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "oak"
+  ]
+ },
+ {
+  "id": "coffee_table",
+  "label": "Coffee table",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 240,
+  "size": [
+   0.9,
+   0.9,
+   0.442
+  ],
+  "holdable": false,
+  "materials": [
+   "oak"
+  ]
+ },
+ {
+  "id": "side_table",
+  "label": "Side table",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 196,
+  "size": [
+   0.44,
+   0.429,
+   0.531
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "dining_table",
+  "label": "Dining table",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 204,
+  "size": [
+   0.9,
+   1.6,
+   0.761
+  ],
+  "holdable": false,
+  "materials": [
+   "oak"
+  ]
+ },
+ {
+  "id": "dining_chair",
+  "label": "Dining chair",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 316,
+  "size": [
+   0.5,
+   0.44,
+   0.822
+  ],
+  "holdable": false,
+  "materials": [
+   "oak"
+  ]
+ },
+ {
+  "id": "dining_chair_sage",
+  "label": "Dining chair (painted)",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 316,
+  "size": [
+   0.5,
+   0.44,
+   0.822
+  ],
+  "holdable": false,
+  "materials": [
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "bench",
+  "label": "Bench",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 176,
+  "size": [
+   0.34,
+   1.3,
+   0.462
+  ],
+  "holdable": false,
+  "materials": [
+   "oak"
+  ]
+ },
+ {
+  "id": "sideboard",
+  "label": "Sideboard",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 464,
+  "size": [
+   0.46,
+   1.42,
+   0.692
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "oak_dark",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "rug_round",
+  "label": "Round rug",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 180,
+  "size": [
+   1.6,
+   1.6,
+   0.01
+  ],
+  "holdable": false,
+  "materials": [
+   "oatmeal",
+   "sand"
+  ]
+ },
+ {
+  "id": "rug_runner",
+  "label": "Striped rug",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 484,
+  "size": [
+   1.2,
+   1.92,
+   0.01
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "linen",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "floor_lamp",
+  "label": "Floor lamp",
+  "category": "furniture",
+  "attach": "floor",
+  "tris": 152,
+  "size": [
+   0.543,
+   0.507,
+   1.583
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "plant_pot",
+  "label": "Fiddle-leaf fig",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 400,
+  "size": [
+   0.833,
+   0.867,
+   1.412
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark",
+   "soil",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "plant_monstera",
+  "label": "Monstera",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 424,
+  "size": [
+   1.092,
+   1.125,
+   1.089
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark",
+   "soil",
+   "white"
+  ]
+ },
+ {
+  "id": "plant_snake",
+  "label": "Snake plant",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 228,
+  "size": [
+   0.242,
+   0.23,
+   0.931
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf_dark",
+   "moss",
+   "soil",
+   "stone"
+  ]
+ },
+ {
+  "id": "plant_olive",
+  "label": "Olive tree",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 300,
+  "size": [
+   0.633,
+   0.613,
+   1.714
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "olive",
+   "sage",
+   "soil",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "plant_cactus",
+  "label": "Cactus",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 332,
+  "size": [
+   0.176,
+   0.192,
+   0.518
+  ],
+  "holdable": false,
+  "materials": [
+   "cactus",
+   "mustard",
+   "rose",
+   "soil"
+  ]
+ },
+ {
+  "id": "plant_succulent",
+  "label": "Succulent bowl",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 454,
+  "size": [
+   0.18,
+   0.171,
+   0.074
+  ],
+  "holdable": false,
+  "materials": [
+   "olive",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "plant_trailing",
+  "label": "Trailing pothos",
+  "category": "plants",
+  "attach": "floor",
+  "tris": 984,
+  "size": [
+   0.35,
+   0.358,
+   0.461
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark",
+   "oatmeal",
+   "soil"
+  ]
+ },
+ {
+  "id": "bed_double",
+  "label": "Double bed",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 962,
+  "size": [
+   2.15,
+   1.72,
+   1.002
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "oak",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "bed_single",
+  "label": "Single bed",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 882,
+  "size": [
+   2.15,
+   1.07,
+   1.002
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "linen",
+   "mustard",
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "nightstand",
+  "label": "Nightstand",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 232,
+  "size": [
+   0.406,
+   0.42,
+   0.521
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "oak_dark",
+   "white"
+  ]
+ },
+ {
+  "id": "table_lamp",
+  "label": "Table lamp",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 122,
+  "size": [
+   0.28,
+   0.28,
+   0.38
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "wardrobe",
+  "label": "Wardrobe",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 276,
+  "size": [
+   0.623,
+   1.02,
+   2.045
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "dresser",
+  "label": "Chest of drawers",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 408,
+  "size": [
+   0.479,
+   0.9,
+   0.801
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "oak",
+   "oak_dark",
+   "white"
+  ]
+ },
+ {
+  "id": "desk",
+  "label": "Desk",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 346,
+  "size": [
+   0.62,
+   1.2,
+   1.131
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "oak",
+   "oak_dark",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "mirror_floor",
+  "label": "Leaning mirror",
+  "category": "bedroom",
+  "attach": "floor",
+  "tris": 56,
+  "size": [
+   0.254,
+   0.55,
+   1.586
+  ],
+  "holdable": false,
+  "materials": [
+   "glass",
+   "oak"
+  ]
+ },
+ {
+  "id": "kitchen_base",
+  "label": "Kitchen cabinet",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 156,
+  "size": [
+   0.626,
+   0.6,
+   0.9
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "oak",
+   "oak_dark",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "kitchen_drawers",
+  "label": "Kitchen drawers",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 332,
+  "size": [
+   0.626,
+   0.6,
+   0.9
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "oak",
+   "oak_dark",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "kitchen_sink",
+  "label": "Kitchen sink",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 260,
+  "size": [
+   0.626,
+   0.6,
+   1.209
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "grey",
+   "oak",
+   "oak_dark",
+   "sage",
+   "steel",
+   "white"
+  ]
+ },
+ {
+  "id": "kitchen_stove",
+  "label": "Stove & oven",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 746,
+  "size": [
+   0.65,
+   0.66,
+   0.99
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "grey",
+   "screen",
+   "steel",
+   "white"
+  ]
+ },
+ {
+  "id": "fridge",
+  "label": "Fridge",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 176,
+  "size": [
+   0.653,
+   0.6,
+   1.85
+  ],
+  "holdable": false,
+  "materials": [
+   "grey",
+   "mustard",
+   "red",
+   "steel",
+   "white"
+  ]
+ },
+ {
+  "id": "kitchen_wall_cabinet",
+  "label": "Wall cabinet",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 132,
+  "size": [
+   0.37,
+   0.6,
+   0.7
+  ],
+  "holdable": false,
+  "materials": [
+   "oak_dark",
+   "white"
+  ]
+ },
+ {
+  "id": "kitchen_shelf",
+  "label": "Open shelf",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 572,
+  "size": [
+   0.25,
+   0.9,
+   0.37
+  ],
+  "holdable": false,
+  "materials": [
+   "glass",
+   "oak",
+   "oak_dark",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "mugs",
+  "label": "Mugs",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 220,
+  "size": [
+   0.106,
+   0.217,
+   0.09
+  ],
+  "holdable": false,
+  "materials": [
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "kettle",
+  "label": "Kettle",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 174,
+  "size": [
+   0.284,
+   0.171,
+   0.228
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "fruit_bowl",
+  "label": "Fruit bowl",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 194,
+  "size": [
+   0.3,
+   0.3,
+   0.15
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "oak",
+   "orange",
+   "red",
+   "yellow"
+  ]
+ },
+ {
+  "id": "bar_stool",
+  "label": "Stool",
+  "category": "kitchen",
+  "attach": "floor",
+  "tris": 256,
+  "size": [
+   0.34,
+   0.34,
+   0.657
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "oak_dark"
+  ]
+ },
+ {
+  "id": "bathtub",
+  "label": "Bathtub",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 312,
+  "size": [
+   0.75,
+   1.7,
+   0.72
+  ],
+  "holdable": false,
+  "materials": [
+   "porcelain",
+   "steel",
+   "water",
+   "white"
+  ]
+ },
+ {
+  "id": "toilet",
+  "label": "Toilet",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 262,
+  "size": [
+   0.583,
+   0.4,
+   0.802
+  ],
+  "holdable": false,
+  "materials": [
+   "porcelain",
+   "steel",
+   "white"
+  ]
+ },
+ {
+  "id": "bath_vanity",
+  "label": "Vanity & basin",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 232,
+  "size": [
+   0.48,
+   0.8,
+   1.029
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "oak_dark",
+   "porcelain",
+   "steel"
+  ]
+ },
+ {
+  "id": "mirror_round",
+  "label": "Round mirror",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 120,
+  "size": [
+   0.028,
+   0.6,
+   0.6
+  ],
+  "holdable": false,
+  "materials": [
+   "glass",
+   "oak"
+  ]
+ },
+ {
+  "id": "towel_ladder",
+  "label": "Towel ladder",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 404,
+  "size": [
+   0.364,
+   0.475,
+   1.57
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "bath_mat",
+  "label": "Bath mat",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 160,
+  "size": [
+   0.5,
+   0.8,
+   0.02
+  ],
+  "holdable": false,
+  "materials": [
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "laundry_basket",
+  "label": "Laundry basket",
+  "category": "bathroom",
+  "attach": "floor",
+  "tris": 244,
+  "size": [
+   0.495,
+   0.4,
+   0.53
+  ],
+  "holdable": false,
+  "materials": [
+   "oatmeal",
+   "sand",
+   "white"
+  ]
+ },
+ {
+  "id": "bookshelf",
+  "label": "Bookshelf",
+  "category": "living",
+  "attach": "floor",
+  "tris": 1996,
+  "size": [
+   0.32,
+   0.9,
+   1.821
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "linen",
+   "mustard",
+   "navy",
+   "oak",
+   "olive",
+   "rust",
+   "sage",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "tv_stand",
+  "label": "TV & stand",
+  "category": "living",
+  "attach": "floor",
+  "tris": 894,
+  "size": [
+   0.428,
+   1.5,
+   1.292
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "dusty_blue",
+   "linen",
+   "mustard",
+   "oak",
+   "olive",
+   "sage",
+   "screen",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "wall_shelf",
+  "label": "Wall shelf",
+  "category": "living",
+  "attach": "floor",
+  "tris": 1124,
+  "size": [
+   0.35,
+   0.8,
+   0.533
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark",
+   "linen",
+   "navy",
+   "oak",
+   "oatmeal",
+   "rust",
+   "sage",
+   "soil",
+   "terracotta",
+   "white"
+  ]
+ },
+ {
+  "id": "pouf",
+  "label": "Knitted pouf",
+  "category": "living",
+  "attach": "floor",
+  "tris": 140,
+  "size": [
+   0.56,
+   0.546,
+   0.38
+  ],
+  "holdable": false,
+  "materials": [
+   "mustard",
+   "orange"
+  ]
+ },
+ {
+  "id": "floor_cushion",
+  "label": "Floor cushion",
+  "category": "living",
+  "attach": "floor",
+  "tris": 164,
+  "size": [
+   0.6,
+   0.6,
+   0.157
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "navy"
+  ]
+ },
+ {
+  "id": "pendant_lamp",
+  "label": "Pendant lamp",
+  "category": "living",
+  "attach": "floor",
+  "tris": 156,
+  "size": [
+   0.44,
+   0.429,
+   1.04
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "picture_frame",
+  "label": "Framed print",
+  "category": "living",
+  "attach": "floor",
+  "tris": 156,
+  "size": [
+   0.039,
+   0.7,
+   0.5
+  ],
+  "holdable": false,
+  "materials": [
+   "linen",
+   "oak",
+   "sage",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "vase_flowers",
+  "label": "Vase & flowers",
+  "category": "living",
+  "attach": "floor",
+  "tris": 238,
+  "size": [
+   0.214,
+   0.211,
+   0.52
+  ],
+  "holdable": false,
+  "materials": [
+   "blush",
+   "dusty_blue",
+   "leaf",
+   "leaf_dark",
+   "mustard",
+   "white"
+  ]
+ },
+ {
+  "id": "shoe_bench",
+  "label": "Shoe bench",
+  "category": "hall",
+  "attach": "floor",
+  "tris": 424,
+  "size": [
+   0.34,
+   1.0,
+   0.525
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "navy",
+   "oak",
+   "rust",
+   "sage",
+   "white"
+  ]
+ },
+ {
+  "id": "coat_rack",
+  "label": "Coat stand",
+  "category": "hall",
+  "attach": "floor",
+  "tris": 268,
+  "size": [
+   0.446,
+   0.454,
+   1.757
+  ],
+  "holdable": false,
+  "materials": [
+   "mustard",
+   "oak",
+   "oak_dark",
+   "terracotta"
+  ]
+ },
+ {
+  "id": "door_mat",
+  "label": "Door mat",
+  "category": "hall",
+  "attach": "floor",
+  "tris": 160,
+  "size": [
+   0.5,
+   0.8,
+   0.025
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "coir"
+  ]
+ },
+ {
+  "id": "wall",
+  "label": "Wall (1 m)",
+  "category": "house",
+  "attach": "floor",
+  "tris": 36,
+  "size": [
+   0.124,
+   1.0,
+   2.6
+  ],
+  "holdable": false,
+  "materials": [
+   "wall",
+   "white"
+  ]
+ },
+ {
+  "id": "wall_half",
+  "label": "Wall (0.5 m)",
+  "category": "house",
+  "attach": "floor",
+  "tris": 36,
+  "size": [
+   0.124,
+   0.5,
+   2.6
+  ],
+  "holdable": false,
+  "materials": [
+   "wall",
+   "white"
+  ]
+ },
+ {
+  "id": "wall_door",
+  "label": "Wall with doorway",
+  "category": "house",
+  "attach": "floor",
+  "tris": 168,
+  "size": [
+   0.132,
+   1.0,
+   2.6
+  ],
+  "holdable": false,
+  "materials": [
+   "oak_dark",
+   "wall",
+   "white"
+  ]
+ },
+ {
+  "id": "door",
+  "label": "Door",
+  "category": "house",
+  "attach": "floor",
+  "tris": 212,
+  "size": [
+   0.15,
+   0.8,
+   2.08
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "white"
+  ]
+ },
+ {
+  "id": "front_door",
+  "label": "Front door",
+  "category": "house",
+  "attach": "floor",
+  "tris": 176,
+  "size": [
+   0.16,
+   0.8,
+   2.08
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "glass",
+   "leaf_dark",
+   "moss"
+  ]
+ },
+ {
+  "id": "wall_window",
+  "label": "Wall with window",
+  "category": "house",
+  "attach": "floor",
+  "tris": 296,
+  "size": [
+   0.246,
+   1.0,
+   2.6
+  ],
+  "holdable": false,
+  "materials": [
+   "glass",
+   "oak",
+   "wall",
+   "white"
+  ]
+ },
+ {
+  "id": "floor_wood",
+  "label": "Floor: oak boards (1 m)",
+  "category": "house",
+  "attach": "floor",
+  "tris": 144,
+  "size": [
+   0.996,
+   0.996,
+   0.02
+  ],
+  "holdable": false,
+  "materials": [
+   "floor_oak",
+   "floor_oak2"
+  ]
+ },
+ {
+  "id": "floor_tile",
+  "label": "Floor: tiles (1 m)",
+  "category": "house",
+  "attach": "floor",
+  "tris": 312,
+  "size": [
+   1.0,
+   1.0,
+   0.022
+  ],
+  "holdable": false,
+  "materials": [
+   "grout",
+   "tile",
+   "white"
+  ]
+ },
+ {
+  "id": "fence_post",
+  "label": "Fence post",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 100,
+  "size": [
+   0.12,
+   0.12,
+   1.12
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "fence_picket",
+  "label": "Picket fence (1 m)",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 268,
+  "size": [
+   0.12,
+   1.064,
+   1.12
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "white"
+  ]
+ },
+ {
+  "id": "fence_low",
+  "label": "Low border fence (1 m)",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 176,
+  "size": [
+   0.051,
+   1.025,
+   0.42
+  ],
+  "holdable": false,
+  "materials": [
+   "oak"
+  ]
+ },
+ {
+  "id": "fence_slat",
+  "label": "Slatted fence (1 m)",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 352,
+  "size": [
+   0.09,
+   1.043,
+   1.15
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "oak_dark"
+  ]
+ },
+ {
+  "id": "fence_gate",
+  "label": "Garden gate",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 338,
+  "size": [
+   0.086,
+   0.92,
+   1.09
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "charcoal",
+   "white"
+  ]
+ },
+ {
+  "id": "gate_arch",
+  "label": "Gate arch",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 684,
+  "size": [
+   0.481,
+   1.237,
+   2.385
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark",
+   "rose",
+   "white"
+  ]
+ },
+ {
+  "id": "bush_round",
+  "label": "Round bush",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 120,
+  "size": [
+   0.887,
+   0.816,
+   0.67
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark"
+  ]
+ },
+ {
+  "id": "bush_small",
+  "label": "Small bush",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 120,
+  "size": [
+   0.465,
+   0.447,
+   0.375
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "leaf_dark"
+  ]
+ },
+ {
+  "id": "bush_flowering",
+  "label": "Flowering bush",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 400,
+  "size": [
+   0.815,
+   0.782,
+   0.704
+  ],
+  "holdable": false,
+  "materials": [
+   "blush",
+   "leaf",
+   "leaf_dark",
+   "rose",
+   "white"
+  ]
+ },
+ {
+  "id": "bush_lavender",
+  "label": "Lavender",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 300,
+  "size": [
+   0.434,
+   0.391,
+   0.663
+  ],
+  "holdable": false,
+  "materials": [
+   "lilac",
+   "sage"
+  ]
+ },
+ {
+  "id": "hedge",
+  "label": "Hedge (1 m)",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 60,
+  "size": [
+   0.6,
+   1.04,
+   0.9
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf_dark",
+   "moss"
+  ]
+ },
+ {
+  "id": "shrub_cone",
+  "label": "Evergreen shrub",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 100,
+  "size": [
+   0.64,
+   0.64,
+   1.13
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "leaf_dark",
+   "moss"
+  ]
+ },
+ {
+  "id": "tree_birch",
+  "label": "Birch tree",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 196,
+  "size": [
+   1.78,
+   1.383,
+   3.506
+  ],
+  "holdable": false,
+  "materials": [
+   "charcoal",
+   "leaf",
+   "olive",
+   "white"
+  ]
+ },
+ {
+  "id": "tree_pine",
+  "label": "Pine tree",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 148,
+  "size": [
+   1.746,
+   1.773,
+   3.0
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "leaf_dark",
+   "moss"
+  ]
+ },
+ {
+  "id": "tree_apple",
+  "label": "Apple tree",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 444,
+  "size": [
+   1.937,
+   1.864,
+   2.699
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "leaf",
+   "leaf_dark",
+   "red"
+  ]
+ },
+ {
+  "id": "tree_swing",
+  "label": "Tree with rope tug",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 828,
+  "size": [
+   1.937,
+   1.864,
+   2.699
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "leaf",
+   "leaf_dark",
+   "linen",
+   "red"
+  ]
+ },
+ {
+  "id": "stump",
+  "label": "Tree stump",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 148,
+  "size": [
+   0.729,
+   0.728,
+   0.432
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "oak",
+   "sand"
+  ]
+ },
+ {
+  "id": "log",
+  "label": "Fallen log",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 108,
+  "size": [
+   0.295,
+   1.212,
+   0.441
+  ],
+  "holdable": false,
+  "materials": [
+   "bark",
+   "moss",
+   "sand"
+  ]
+ },
+ {
+  "id": "rock_big",
+  "label": "Boulder",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 40,
+  "size": [
+   0.732,
+   0.654,
+   0.422
+  ],
+  "holdable": false,
+  "materials": [
+   "grey",
+   "stone"
+  ]
+ },
+ {
+  "id": "rock_small",
+  "label": "Stones",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 60,
+  "size": [
+   0.417,
+   0.31,
+   0.14
+  ],
+  "holdable": false,
+  "materials": [
+   "grey",
+   "stone"
+  ]
+ },
+ {
+  "id": "grass_tuft",
+  "label": "Grass tuft",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 72,
+  "size": [
+   0.235,
+   0.228,
+   0.258
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "moss"
+  ]
+ },
+ {
+  "id": "flower_patch",
+  "label": "Wildflowers",
+  "category": "garden",
+  "attach": "floor",
+  "tris": 520,
+  "size": [
+   0.569,
+   0.564,
+   0.332
+  ],
+  "holdable": false,
+  "materials": [
+   "blush",
+   "leaf",
+   "leaf_dark",
+   "lilac",
+   "moss",
+   "mustard",
+   "white"
+  ]
+ },
+ {
+  "id": "ground_grass",
+  "label": "Ground: grass (1 m)",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 84,
+  "size": [
+   1.0,
+   1.0,
+   0.086
+  ],
+  "holdable": false,
+  "materials": [
+   "leaf",
+   "moss"
+  ]
+ },
+ {
+  "id": "ground_path",
+  "label": "Ground: stone path (1 m)",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 220,
+  "size": [
+   1.0,
+   1.0,
+   0.053
+  ],
+  "holdable": false,
+  "materials": [
+   "grey",
+   "sand",
+   "stone"
+  ]
+ },
+ {
+  "id": "ground_deck",
+  "label": "Ground: deck (1 m)",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 96,
+  "size": [
+   1.0,
+   0.988,
+   0.085
+  ],
+  "holdable": false,
+  "materials": [
+   "birch",
+   "oak",
+   "oak_dark"
+  ]
+ },
+ {
+  "id": "paddling_pool",
+  "label": "Paddling pool",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 1028,
+  "size": [
+   1.48,
+   1.48,
+   0.267
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "linen",
+   "mustard",
+   "red",
+   "water",
+   "white"
+  ]
+ },
+ {
+  "id": "dig_pit",
+  "label": "Dig pit",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 762,
+  "size": [
+   1.2,
+   1.2,
+   0.243
+  ],
+  "holdable": false,
+  "materials": [
+   "dusty_blue",
+   "oak",
+   "sand",
+   "tennis",
+   "white"
+  ]
+ },
+ {
+  "id": "garden_bench",
+  "label": "Garden bench",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 404,
+  "size": [
+   0.546,
+   1.4,
+   0.89
+  ],
+  "holdable": false,
+  "materials": [
+   "oak",
+   "oak_dark"
+  ]
+ },
+ {
+  "id": "garden_tap",
+  "label": "Garden tap & hose",
+  "category": "yard",
+  "attach": "floor",
+  "tris": 272,
+  "size": [
+   0.491,
+   0.308,
+   0.7
+  ],
+  "holdable": false,
+  "materials": [
+   "brass",
+   "leaf_dark",
+   "oak_dark",
+   "red"
+  ]
+ }
+]

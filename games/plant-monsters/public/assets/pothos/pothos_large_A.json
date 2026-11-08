@@ -1,0 +1,25 @@
+{
+ "leaves": [
+  {
+   "name": "pothos_large_A_0",
+   "triangles": 160,
+   "blade_area": 0.38969
+  },
+  {
+   "name": "pothos_large_A_1",
+   "triangles": 160,
+   "blade_area": 0.3947
+  },
+  {
+   "name": "pothos_large_A_2",
+   "triangles": 160,
+   "blade_area": 0.41226
+  }
+ ],
+ "vine_uv": {
+  "u": 0.0562,
+  "v_min": 0.27793,
+  "v_max": 0.39409,
+  "radius": 0.02
+ }
+}

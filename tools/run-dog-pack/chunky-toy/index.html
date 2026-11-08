@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Chonky Hounds: Doggo Dynasties</title>
+<style>
+  html, body { margin: 0; background: #e9e9ec; font-family: system-ui, sans-serif; color: #333; }
+  header { padding: 16px 20px 4px; }
+  h1 { font-size: 18px; margin: 0; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #777; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; padding: 16px 20px 24px; }
+  .dog { background: #f4f4f6; border: 1px solid #d6d6db; border-radius: 8px; cursor: pointer; overflow: hidden; }
+  .dog:hover { border-color: #999; }
+  .dog img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .dog span { display: block; padding: 6px 10px 8px; font-size: 13px; font-weight: 600; }
+  .dog small { display: block; font-weight: 400; color: #888; font-size: 11px; }
+  #view { position: fixed; inset: 0; background: rgba(233, 233, 236, 0.97); display: none; }
+  #view.open { display: block; }
+  #view canvas { width: 100%; height: 100%; display: block; }
+  #view .bar { position: fixed; top: 14px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 600; pointer-events: none; }
+  #view .btns { display: flex; gap: 6px; }
+  #view button.on { background: #333; color: #fff; }
+  #view select { pointer-events: auto; font: inherit; font-size: 13px; padding: 5px 8px; border-radius: 6px; border: 1px solid #ccc; }
+  #view button { pointer-events: auto; font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Chonky Hounds: Doggo Dynasties</h1>
+  <p id="sub">Loading…</p>
+</header>
+<div id="grid"></div>
+<div id="view"><canvas id="c"></canvas><div class="bar"><span id="name"></span><span class="btns">
+  <select id="lod"><option value="rigged">Rigged · 1k tris</option><option value="models">Static · 3k tris</option></select>
+  <button data-clip="idle">Idle</button><button data-clip="walk">Walk</button><button data-clip="">Still</button>
+  <button id="close">Close</button></span></div></div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// breeds.csv: slug,breed,"look"; only the first two columns are needed here.
+const rows = (await (await fetch('breeds.csv')).text()).trim().split('\n').slice(1)
+  .map(line => line.split(',', 2));
+
+const grid = document.getElementById('grid');
+const sizes = {};
+for (const [slug, breed] of rows) {
+  const el = document.createElement('div');
+  el.className = 'dog';
+  el.innerHTML = `<img src="previews/${slug}.png" alt=""><span>${breed}<small id="kb-${slug}"></small></span>`;
+  el.onclick = () => open(slug, breed);
+  grid.appendChild(el);
+  fetch(`rigged/${slug}.glb`, { method: 'HEAD' }).then(r => {
+    const kb = Math.round(+r.headers.get('content-length') / 1024);
+    if (kb) document.getElementById(`kb-${slug}`).textContent = `${kb} KB`;
+  });
+}
+document.getElementById('sub').textContent = `${rows.length} breeds · one unique model each, one shared rig · 1k tris rigged (3k static), 512px texture. Click a dog to orbit it and play the shared clips.`;
+
+// Single viewer that only renders when the camera moves.
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe9e9ec);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b8, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-2, 4, 3);
+scene.add(sun);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 0.45, 0);
+const render = () => renderer.render(scene, camera);
+controls.addEventListener('change', render);
+
+const loader = new GLTFLoader();
+// One clip file for every dog: the skeleton is identical apart from bone offsets,
+// and the clips only carry rotations.
+const clips = loader.loadAsync('rigged/clips.glb').then(g => g.animations);
+let current, mixer, action, clipName = 'walk', openSlug, openBreed;
+const clock = new THREE.Clock();
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  render();
+}
+addEventListener('resize', resize);
+
+// Render every frame only while a clip plays; otherwise only on camera moves.
+function tick() {
+  if (!action || !document.getElementById('view').classList.contains('open')) return;
+  mixer.update(clock.getDelta());
+  render();
+  requestAnimationFrame(tick);
+}
+
+async function play(name) {
+  clipName = name;
+  document.querySelectorAll('[data-clip]').forEach(b => b.classList.toggle('on', b.dataset.clip === name));
+  if (action) action.stop();
+  action = null;
+  if (!mixer) { render(); return; }
+  const clip = name && (await clips).find(c => c.name === name);
+  if (!clip) { mixer.stopAllAction(); render(); return; }
+  action = mixer.clipAction(clip);
+  action.play();
+  clock.getDelta();
+  tick();
+}
+
+function open(slug, breed) {
+  openSlug = slug; openBreed = breed;
+  const dir = document.getElementById('lod').value;
+  document.getElementById('name').textContent = breed;
+  document.getElementById('view').classList.add('open');
+  camera.position.set(-1.4, 1.0, 2.2);
+  controls.update();
+  resize();
+  loader.load(`${dir}/${slug}.glb`, gltf => {
+    if (current) scene.remove(current);
+    current = gltf.scene;
+    scene.add(current);
+    mixer = dir === 'rigged' ? new THREE.AnimationMixer(current) : null;
+    action = null;
+    play(clipName);
+  });
+}
+document.querySelectorAll('[data-clip]').forEach(b => b.onclick = () => play(b.dataset.clip));
+document.getElementById('lod').onchange = () => open(openSlug, openBreed);
+document.getElementById('close').onclick = () => {
+  document.getElementById('view').classList.remove('open');
+  if (current) scene.remove(current);
+  current = mixer = action = null;
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chonky Hounds — example</title><style>html, body { margin: 0; height: 100%; } canvas { display: block; }</style></head>
+<body>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// The smallest working scene: six dogs trotting in a ring, random colourways. Tap to re-roll.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { loadClipLibrary, setupDog } from './dogclips.js';
+import { loadCoats } from './dogcoat.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xbfe6f5);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8fc06a, 1.8));
+const sun = new THREE.DirectionalLight(0xffffff, 2); sun.position.set(3, 8, 5); scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(6, 48), new THREE.MeshLambertMaterial({ color: 0x9fd47c }));
+ground.rotation.x = -Math.PI / 2; scene.add(ground);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 5.5, 7); camera.lookAt(0, 0, 0);
+
+const ktx2 = new KTX2Loader().setTranscoderPath('https://unpkg.com/three@0.169.0/examples/jsm/libs/basis/').detectSupport(renderer);
+const loader = new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
+const lib = await loadClipLibrary(loader, 'rigged/clips.glb');
+const coats = await loadCoats('coats.json', 'rigged/coats/', { ktx2Loader: ktx2 });
+
+const BREEDS = ['labrador-retriever', 'pug', 'pembroke-welsh-corgi', 'dalmatian', 'shiba-inu', 'dachshund'];
+const SIZE = { 'labrador-retriever': 1.1, pug: 0.65, 'pembroke-welsh-corgi': 0.65, dalmatian: 0.85, 'shiba-inu': 0.65, dachshund: 0.65 };
+const dogs = await Promise.all(BREEDS.map(async (b, i) => {
+  const root = SkeletonUtils.clone((await loader.loadAsync(`rigged/${b}.glb`)).scene);
+  root.scale.setScalar(SIZE[b]);
+  scene.add(root);
+  const dog = setupDog(root, lib);
+  const coat = await coats.apply(root, b, { lite: true });
+  dog.play('trot', { time: Math.random() });
+  dog.setSpeed(0.9, SIZE[b]);
+  return { b, root, dog, coat, a: i / BREEDS.length * Math.PI * 2 };
+}));
+const reroll = () => dogs.forEach(d => { const l = coats.index[d.b].colorways; d.coat.set(l[Math.floor(Math.random() * l.length)]); });
+reroll();
+addEventListener('pointerdown', reroll);
+addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  for (const d of dogs) {
+    d.a += dt * 0.9 / 3;
+    d.root.position.set(Math.cos(d.a) * 3, 0, Math.sin(d.a) * 3);
+    d.root.rotation.y = -d.a;
+    d.dog.update(dt);
+  }
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

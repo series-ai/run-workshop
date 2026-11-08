@@ -209,11 +209,21 @@ def build():
                    "rot": keys((0, (0, 5, 0)), (t / 2, (0, -5, 0)), (t, (0, 5, 0)))},
         "torso": {"rot": keys((0, (0, -6, 0)), (t / 2, (0, 6, 0)), (t, (0, -6, 0)))},
     }
+    # Overhead stun jab: the robot leans back, twists its prod shoulder away
+    # and cocks the prod high behind its head with the shield up on guard
+    # (0-0.37 s), then drives the prod down and forward in 3 frames as the
+    # whole robot lunges and twists into it (impact 0.433 s), holds the
+    # jab while the arc crackles, then steps back.
+    F = 1 / 30
+    hit_t = 13 * F
     attack = {
-        "arm-r": {"rot": keys((0, z), (0.2, (85, 0, 0)), (0.45, (36, 0, 0)), (0.7, (42, 0, 0)), (1.0, z))},
-        "torso": {"rot": keys((0, z), (0.2, (0, 14, 0)), (0.45, (0, -18, 0)), (1.0, z))},
-        "arm-l": {"rot": keys((0, z), (0.45, (18, 0, 0)), (1.0, z))},
-        "head": {"rot": keys((0, z), (0.45, (-8, 0, 0)), (1.0, z))},
+        "arm-r": {"rot": keys((0, z), (5 * F, (70, 0, 6)), (10 * F, (128, 0, 10)), (11 * F, (130, 0, 10)), (hit_t, (12, 0, -4)),
+                              (15 * F, (2, 0, -6)), (20 * F, (10, 0, -4)), (30 * F, z)),
+                  "loc": keys((0, z), (11 * F, (0, 0, 1.0)), (hit_t, (0, 0, -2.5)), (15 * F, (0, 0, -3.0)), (20 * F, (0, 0, -2.0)), (30 * F, z))},
+        "torso": {"rot": keys((0, z), (11 * F, (10, -22, 0)), (hit_t, (-12, 18, 0)), (15 * F, (-15, 22, 0)), (20 * F, (-11, 16, 0)), (30 * F, z))},
+        "security-robot": {"loc": keys((0, z), (11 * F, (0, 0, 2.5)), (hit_t, (0, 0, -5.5)), (15 * F, (0, 0, -6.0)), (20 * F, (0, 0, -5.5)), (30 * F, z))},
+        "arm-l": {"rot": keys((0, z), (10 * F, (30, 0, 0)), (hit_t + F, (-14, 0, 0)), (17 * F, (-18, 0, 0)), (22 * F, (-8, 0, 0)), (30 * F, z))},
+        "head": {"rot": keys((0, z), (10 * F, (-6, 14, 0)), (hit_t + F, (6, -12, 0)), (17 * F, (8, -14, 0)), (22 * F, (4, -8, 0)), (30 * F, z))},
     }
     hit = {
         "torso": {"rot": keys((0, z), (0.1, (-14, 0, 8)), (0.45, z))},
@@ -230,8 +240,8 @@ def build():
     prod = rig.sock("socket-prod", (CX + 11, YS - 17, CZ - 22), parent="arm-r")
     return asset(
         "creatures", "security-robot", "Security Robot", rig.root,
-        clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False),
+        clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t),
                Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
         sockets=[prod],
-        pfx=[{"effectId": "rvx-space-stun-arc", "socket": "socket-prod", "trigger": "clip:attack", "size": 11, "at": 0.45}],
+        pfx=[{"effectId": "rvx-space-stun-arc", "socket": "socket-prod", "trigger": "clip:attack", "size": 11, "at": round(hit_t, 3)}],
     )

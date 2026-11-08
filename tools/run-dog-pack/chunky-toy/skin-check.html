@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Skinning check</title>
+<style>body { font: 13px system-ui, sans-serif; margin: 16px; } td, th { padding: 2px 8px; text-align: right; } td:first-child, th:first-child { text-align: left; }</style>
+</head>
+<body>
+<p id="status">Loading…</p>
+<table id="out"></table>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Skinning check: plays every clip on every dog (through dogclips.js, exactly as the
+// park does) and measures how much each triangle deforms against its rest shape. A
+// triangle is "bad" if an edge stretches past STRETCH or shrinks below SQUASH. For each
+// dog and clip we keep the worst moment, how many triangles were bad, and which bones
+// they belong to. window.check() runs it; results land in window.report.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadClipLibrary, setupDog } from './dogclips.js';
+
+const STRETCH = 1.8, SQUASH = 0.5, SAMPLES = 10;
+const BUILD = Date.now();
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, `rigged/clips.glb?v=${BUILD}`);
+const slugs = (await (await fetch('breeds.csv')).text()).trim().split('\n').slice(1).map(l => l.split(',')[0]);
+
+function triangles(mesh) {
+  const idx = mesh.geometry.index.array, pos = mesh.geometry.attributes.position;
+  const sw = mesh.geometry.attributes.skinWeight, si = mesh.geometry.attributes.skinIndex;
+  const rest = i => new THREE.Vector3().fromBufferAttribute(pos, i);
+  const tris = [];
+  for (let k = 0; k < idx.length; k += 3) {
+    const [a, b, c] = [idx[k], idx[k + 1], idx[k + 2]];
+    const r = [rest(a), rest(b), rest(c)];
+    tris.push({ v: [a, b, c], len0: [r[0].distanceTo(r[1]), r[1].distanceTo(r[2]), r[2].distanceTo(r[0])] });
+  }
+  // Main bone of a vertex: highest skin weight.
+  const mainBone = i => {
+    let best = 0, w = -1;
+    for (let j = 0; j < 4; j++) if (sw.getComponent(i, j) > w) { w = sw.getComponent(i, j); best = si.getComponent(i, j); }
+    return mesh.skeleton.bones[best].name;
+  };
+  return { tris, mainBone };
+}
+
+async function checkDog(slug) {
+  const g = (await loader.loadAsync(`rigged/${slug}.glb?v=${BUILD}`)).scene;
+  const dog = setupDog(g, lib);
+  const meshes = [];
+  g.traverse(o => { if (o.isSkinnedMesh) meshes.push({ mesh: o, ...triangles(o) }); });
+  const rows = [];
+  for (const [name, meta] of Object.entries(lib.meta)) {
+    const action = dog.mixer.clipAction(dog.clips[name]);
+    dog.mixer.stopAllAction();
+    action.play();
+    dog.name = name; dog.action = action;
+    let worst = { bad: 0, time: 0, bones: {}, maxStretch: 1, minSquash: 1 };
+    for (let s = 0; s < SAMPLES; s++) {
+      action.time = meta.duration * s / SAMPLES;
+      dog.update(0);
+      g.updateMatrixWorld(true);
+      let bad = 0, maxS = 1, minS = 1;
+      const bones = {};
+      const p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+      for (const { mesh, tris, mainBone } of meshes) {
+        if (mesh.material.name === 'mouth' || mesh.material.name === 'tongue') continue;
+        for (const t of tris) {
+          t.v.forEach((i, j) => mesh.getVertexPosition(i, p[j]));
+          const len = [p[0].distanceTo(p[1]), p[1].distanceTo(p[2]), p[2].distanceTo(p[0])];
+          let hi = 0, lo = 9;
+          for (let j = 0; j < 3; j++) {
+            if (t.len0[j] < 1e-4) continue;
+            const r = len[j] / t.len0[j];
+            hi = Math.max(hi, r); lo = Math.min(lo, r);
+          }
+          maxS = Math.max(maxS, hi); minS = Math.min(minS, lo);
+          if (hi > STRETCH || lo < SQUASH) {
+            bad++;
+            const b = mainBone(t.v[0]);
+            bones[b] = (bones[b] || 0) + 1;
+          }
+        }
+      }
+      if (bad > worst.bad) worst = { bad, time: action.time, bones, maxStretch: maxS, minSquash: minS };
+    }
+    rows.push({ slug, clip: name, ...worst });
+  }
+  return rows;
+}
+
+window.check = async (only = slugs) => {
+  window.report = null;
+  const all = [];
+  for (const slug of only) {
+    document.getElementById('status').textContent = `Checking ${slug}…`;
+    all.push(...await checkDog(slug));
+  }
+  window.report = all;
+  document.getElementById('status').textContent = 'Done.';
+  const top = all.filter(r => r.bad > 0).sort((a, b) => b.bad - a.bad);
+  document.getElementById('out').innerHTML = '<tr><th>dog</th><th>clip</th><th>bad tris</th><th>at s</th><th>bones</th></tr>' +
+    top.slice(0, 80).map(r => `<tr><td>${r.slug}</td><td>${r.clip}</td><td>${r.bad}</td><td>${r.time.toFixed(2)}</td><td>${
+      Object.entries(r.bones).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([b, n]) => `${b}:${n}`).join(' ')}</td></tr>`).join('');
+  return top.length;
+};
+window.ready = true;
+</script>
+</body>
+</html>

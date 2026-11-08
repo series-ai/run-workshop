@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(asset-bot *)",
+      "Bash(grep *)",
+      "Bash(head *)"
+    ]
+  },
+  "mcpServers": {
+    "asset-bot": {
+      "command": "asset-bot",
+      "args": [
+        "mcp"
+      ],
+      "envFile": ".env"
+    }
+  }
+}
