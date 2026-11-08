@@ -27,6 +27,10 @@ example "true slopes (F2)"). The scale classes are in the README
   symmetric box.
 - **F6 Readable at 128 px.** The silhouette and the one function prop must
   read in a 128 px thumbnail.
+- **F7 Distinct function.** Compare an asset with its siblings at one scale.
+  A different name, colour, sign, or small prop does not make a new shape.
+  Give each building, creature, vehicle, and terrain piece a distinct main
+  form that shows its function before the viewer reads its label.
 
 ## Surface
 
@@ -53,6 +57,9 @@ example "true slopes (F2)"). The scale classes are in the README
   their accents (violet, toxic green, copper, teal) must be vivid.
 - **C3 Accents carry meaning.** Accent hues mark the function or the magic:
   glowing windows, flags, signs, gems, slime, energy.
+- **C4 Colour roles.** Choose the main material, support material, and one or
+  two accents before building. Compare their area with sibling assets. A pack
+  loses variety when every creature uses the same accent as its main colour.
 
 ## Kit
 
@@ -66,6 +73,10 @@ example "true slopes (F2)"). The scale classes are in the README
 - **K3 Props are icons.** A prop is one iconic shape with a face or a symbol
   where possible (the skull lamp, the tiki mask, the goblin totem). Few parts,
   big features.
+- **K4 Character detail.** Give an asset one purposeful visual detail when its
+  subject supports it. A leaning sign, an oversized tool, or a face can add
+  humour. The detail must show the asset's function and read at 128 px. Do not
+  add a joke that hides the function or repeats across a category.
 
 ## Motion
 
@@ -73,6 +84,15 @@ example "true slopes (F2)"). The scale classes are in the README
 - **M2 Pack variety.** Compare all creature attacks at the same clip times. Change attacks that use the same arm path and timing.
 - **M3 Contact.** Keep feet and weapons above the ground unless contact is part of the action. Check the full clip, not one pose.
 - **M4 Effect timing.** Start each attack effect at the action. Check its socket and aim in the RUN viewer.
+- **M5 Loop motion.** A loop must pass through its join without a visible
+  change in pose or speed. Inspect frames on both sides of the join. A matching
+  first and last pose alone does not prove a smooth loop.
+- **M6 Grip and direction.** Check a held item in the rest pose and through
+  the action. The hand must hold the grip, and the attack and effect must travel
+  in the intended direction.
+- **M7 Full action.** Inspect the start, windup, action, recovery, and end of
+  every changed attack. Compare the arm path with sibling attacks. Check feet,
+  weapons, and effects in the RUN viewer.
 
 ## Theme palettes
 

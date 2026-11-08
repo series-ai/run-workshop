@@ -20,7 +20,8 @@
     "pack-sheet": "node --import tsx scripts/pack-sheet.ts",
     "ui": "node --import tsx scripts/render-ui.ts",
     "lineup": "node --import tsx scripts/lineup.ts",
-    "review": "node --import tsx scripts/review.ts"
+    "review": "node --import tsx scripts/review.ts",
+    "review:check": "node --import tsx scripts/check-review.ts"
   },
   "dependencies": {
     "@gltf-transform/core": "^4.5.0",
