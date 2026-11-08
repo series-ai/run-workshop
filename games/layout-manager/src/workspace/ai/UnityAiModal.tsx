@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { UserConfig } from '../userConfig';
 import type { ImageNode } from '../types';
@@ -12,7 +12,7 @@ interface UnityAiModalProps {
   onPromptChange: (prompt: string) => void;
   refNodes: ImageNode[];
   position?: { top: number; left: number };
-  onGenerated: (imageUrl: string, width: number, height: number, prompts: { title: string; text: string }[], batchIndex: number) => void;
+  onGenerated: (imageUrl: string, width: number, height: number, prompts: { title: string; text: string }[], batchIndex: number) => void | Promise<void>;
   onProgress: (progress: { message: string; progress?: number } | null) => void;
   onClose: () => void;
 }
@@ -65,7 +65,13 @@ function isImageModel(m: UnityModel): boolean {
 
 export function UnityAiModal({ config, prompt, onPromptChange, refNodes, position, onGenerated, onProgress, onClose }: UnityAiModalProps) {
   const { panelRef, onPointerDown, onPointerMove, onPointerUp } = useDraggableModal();
-  const projectPath = config.unityProjectPath.trim();
+  const [connection, setConnection] = useState(() => ({
+    projectPath: config.unityProjectPath.trim(),
+    backend: config.unityBackend === 'headless' ? 'headless' : 'local',
+  }));
+  const { projectPath, backend } = connection;
+  const headless = backend === 'headless';
+  const statusRequest = useRef<AbortController | null>(null);
 
   const [status, setStatus] = useState<UnityStatus>({ checking: true });
   const [models, setModels] = useState<UnityModel[] | null>(null);
@@ -82,29 +88,55 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
   const [genError, setGenError] = useState<string | null>(null);
   const [lastCost, setLastCost] = useState<string | null>(null);
 
-  const checkStatus = useCallback(() => {
+  // Keep the modal and its connection alive for the entire job. Preferences
+  // saved mid-generation take effect after the result has been imported.
+  useEffect(() => {
+    const nextBackend = config.unityBackend === 'headless' ? 'headless' : 'local';
+    const nextPath = config.unityProjectPath.trim();
+    if (generating || (backend === nextBackend && projectPath === nextPath)) return;
+    setConnection({ backend: nextBackend, projectPath: nextPath });
     setStatus({ checking: true });
+    setModels(null);
+    setModelsProject(null);
+    setModelsError(null);
+    setModelId('');
+  }, [config.unityBackend, config.unityProjectPath, generating, backend, projectPath]);
+
+  const checkStatus = useCallback(() => {
+    statusRequest.current?.abort();
+    const controller = new AbortController();
+    statusRequest.current = controller;
+    setStatus({ checking: true });
+    setModelsError(null);
     fetch('/__unity-status', {
       method: 'POST',
+      signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectPath }),
+      body: JSON.stringify({ projectPath, backend }),
     })
       .then((r) => r.json())
-      .then((st) => setStatus({ checking: false, up: !!st.up, project: st.project, version: st.version, port: st.port, points: st.points, error: st.error }))
-      .catch((e) => setStatus({ checking: false, up: false, error: e instanceof Error ? e.message : 'Status check failed' }));
-  }, [projectPath]);
+      .then((st) => { if (!controller.signal.aborted) setStatus({ checking: false, up: !!st.up, project: st.project, version: st.version, port: st.port, points: st.points, error: st.error }); })
+      .catch((e) => { if (!controller.signal.aborted) setStatus({ checking: false, up: false, error: e instanceof Error ? e.message : 'Status check failed' }); });
+    return () => controller.abort();
+  }, [projectPath, backend]);
 
-  useEffect(() => { checkStatus(); }, [checkStatus]);
+  useEffect(() => checkStatus(), [checkStatus]);
 
   // Model list: fetched once the Editor is confirmed up (server caches it)
   useEffect(() => {
     const target = status.project ?? projectPath;
     if (status.checking || !status.up || (models && modelsProject === target)) return;
+    // A connectivity/points refresh preserves the same Editor's selection.
+    // A different resolved Editor must not keep the previous catalog usable.
+    if (modelsProject !== target) {
+      setModels(null);
+      setModelId('');
+    }
     let cancelled = false;
     fetch('/__unity-models', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectPath: target }),
+      body: JSON.stringify({ projectPath: target, backend }),
     })
       .then((r) => r.json())
       .then((j) => {
@@ -113,21 +145,20 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
         const list = (j.models as UnityModel[]).filter(isImageModel);
         setModels(list);
         setModelsProject(target);
-        if (!list.some((m) => m.id === modelId)) {
-          setModelId(list.find((m) => m.id === 'gemini-3.1-flash')?.id ?? list[0]?.id ?? '');
-        }
+        setModelId((current) => list.some((m) => m.id === current)
+          ? current : list.find((m) => m.id === 'gemini-3.1-flash')?.id ?? list[0]?.id ?? '');
       })
       .catch((e) => { if (!cancelled) setModelsError(e instanceof Error ? e.message : 'Could not load models'); });
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, projectPath, modelsProject]);
+  }, [status, projectPath, modelsProject, backend]);
 
   // The status probe resolves which project/Editor to talk to (auto-detected
   // when no path is configured) — models and generation follow it
   const effectiveProject = status.project ?? projectPath;
   const selected = models?.find((m) => m.id === modelId) ?? null;
-  const supportsCustomRes = !!selected?.caps.includes('SupportsCustomResolutions');
-  const supportsRefs = !!selected?.caps.includes('SupportsImageReference');
+  const supportsCustomRes = !headless && !!selected?.caps.includes('SupportsCustomResolutions');
+  const supportsRefs = !headless && !!selected?.caps.includes('SupportsImageReference');
   const refNode = refNodes[0] ?? null;
   const useRefImage = !!refNode && supportsRefs;
 
@@ -173,14 +204,20 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
   // Utilities transform the reference image: upscalers REQUIRE a reference
   // (running one without an image would spend points on nothing), while for
   // other models a reference makes the prompt optional
-  const canGenerate = UPSCALERS.has(modelId) ? useRefImage : (!!prompt.trim() || useRefImage);
+  const canGenerate = modelsProject === effectiveProject &&
+    (UPSCALERS.has(modelId) ? useRefImage : (!!prompt.trim() || useRefImage));
 
   const handleGenerate = useCallback(async () => {
-    if (!canGenerate || generating || !modelId) return;
+    if (!canGenerate || generating || !modelId || !status.up || status.checking || !models) return;
     setGenError(null);
     setLastCost(null);
     setGenerating(true);
     onProgress({ message: 'Starting Unity generation...' });
+    const showError = (raw: string) => setGenError(
+      headless && /401|403|invalid.*key|API key|PERMISSION_DENIED|unauthorized/i.test(raw)
+        ? 'Headless Unity access was rejected. Check url and apiKey in .unity-headless.local.json on the Layout Manager dev server, and the service permissions.'
+        : friendlyAiError(raw),
+    );
     try {
       let refImage: { base64: string; mimeType?: string } | undefined;
       if (useRefImage && refNode) {
@@ -208,6 +245,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectPath: effectiveProject,
+          backend,
           prompt: prompt.trim(),
           kind: 'image',
           model: modelId,
@@ -226,6 +264,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
       let buf = '';
       let hadError = false;
       let gotImage = false;
+      let batchIndex = 0;
       readLoop: while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -247,33 +286,35 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
             const t = parsed.elapsed ? ` (${parsed.elapsed}s${parsed.cost && parsed.cost !== '0' ? `, ${parsed.cost} pts` : ''})` : '';
             onProgress({ message: `${parsed.message ?? 'Working'}${t}` });
           } else if (event === 'image' && parsed.dataUrl) {
-            gotImage = true;
-            const img = await new Promise<HTMLImageElement>((resolve) => {
+            const img = await new Promise<HTMLImageElement>((resolve, reject) => {
               const el = new Image();
               el.onload = () => resolve(el);
+              el.onerror = () => reject(new Error('Unity returned an image that could not be decoded.'));
               el.src = parsed.dataUrl!;
             });
-            onGenerated(parsed.dataUrl, img.naturalWidth, img.naturalHeight, [{ title: 'Prompt', text: prompt.trim() }], 0);
+            await onGenerated(parsed.dataUrl, img.naturalWidth, img.naturalHeight, [{ title: 'Prompt', text: prompt.trim() }], batchIndex++);
+            gotImage = true;
           } else if (event === 'error') {
             hadError = true;
-            setGenError(friendlyAiError(parsed.error ?? 'Unknown error'));
+            showError(parsed.error ?? 'Unknown error');
           } else if (event === 'done') {
             break readLoop;
           }
         }
       }
+      if (!gotImage && !hadError) throw new Error('Unity finished without returning an image. The remote job may still be running if the connection was interrupted.');
       if (gotImage && !hadError) {
         import('./completionSound').then((m) => m.playCompletionSound());
       }
     } catch (e) {
-      setGenError(friendlyAiError(e instanceof Error ? e.message : 'Unknown error'));
+      showError(e instanceof Error ? e.message : 'Unknown error');
     }
     onProgress(null);
     setGenerating(false);
-  }, [prompt, canGenerate, generating, modelId, effectiveProject, width, height, supportsCustomRes, useRefImage, refNode, onGenerated, onProgress]);
+  }, [prompt, canGenerate, generating, modelId, effectiveProject, backend, headless, width, height, supportsCustomRes, useRefImage, refNode, onGenerated, onProgress, status.up, status.checking, models]);
 
-  const statusText = status.checking ? 'Checking Unity...'
-    : status.up ? `Unity connected — ${status.project?.split('/').pop() ?? 'project'} (${status.version ?? '?'}, port ${status.port ?? '?'})`
+  const statusText = status.checking ? (headless ? 'Checking headless Unity session...' : 'Checking Unity...')
+    : status.up ? (headless ? `Headless Unity connected — ${status.project}` : `Unity connected — ${status.project?.split('/').pop() ?? 'project'} (${status.version ?? '?'}, port ${status.port ?? '?'})`)
     : status.error ?? 'Unity not running';
 
   return createPortal(
@@ -292,7 +333,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
         <div className="grab-bar" />
       </div>
       <div className="prefs-header">
-        <h2>Unity AI</h2>
+        <h2>{headless ? 'Unity AI — Headless' : 'Unity AI'}</h2>
         <button className="prefs-close" onClick={onClose} disabled={generating}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -310,13 +351,14 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
             )}
           </span>
           {!status.checking && (
-            <button className="ai-modal-clear-btn" onClick={checkStatus} title="Re-check connection">↻</button>
+            <button className="ai-modal-clear-btn" onClick={checkStatus} disabled={generating} title="Re-check connection">↻</button>
           )}
         </div>
         {!status.checking && !status.up && (
           <span className="ai-modal-size-hint">
-            Open your project in Unity 6+ (with com.unity.ai.assistant and com.unity.pipeline installed), then re-check.
-            The running Editor is detected automatically; set a project path in Preferences &gt; AI only if more than one is open.
+            {headless
+              ? 'Check the remote service and .unity-headless.local.json on the Layout Manager dev server, then re-check. Switch back to Local Editor in Preferences > AI.'
+              : 'Open your project in Unity 6+ (with com.unity.ai.assistant and com.unity.pipeline installed), then re-check. The running Editor is detected automatically; set a project path in Preferences > AI only if more than one is open.'}
           </span>
         )}
 
@@ -403,7 +445,7 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
                   />
                 </div>
               ) : (
-                <span className="ai-modal-size-hint">This model uses a fixed output size</span>
+                <span className="ai-modal-size-hint">{headless ? 'The headless API uses the model’s default size' : 'This model uses a fixed output size'}</span>
               )}
             </label>
 
@@ -423,7 +465,10 @@ export function UnityAiModal({ config, prompt, onPromptChange, refNodes, positio
                 </div>
               </label>
             )}
-            {refNodes.length > 0 && !supportsRefs && selected && (
+            {headless && (
+              <span className="ai-modal-size-hint">Prompt-only images. The headless API does not accept canvas reference uploads or custom sizes; reference utilities are hidden.</span>
+            )}
+            {!headless && refNodes.length > 0 && !supportsRefs && selected && (
               <span className="ai-modal-size-hint">Selected model does not support reference images</span>
             )}
             {UPSCALERS.has(modelId) && !useRefImage && (
