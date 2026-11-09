@@ -1,0 +1,211 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Mochimon</title>
+<link rel="icon" href="data:,">
+<style>
+  /* theme tokens: everything below uses these, never a raw colour */
+  :root {
+    --bg: #eceae2; --fg: #1a1917; --muted: #6b665c; --line: #c9c5b8; --surface: #f6f4ee; --field: #fff;
+    /* where the cats are drawn: always paper-light, so their dark outlines read in either theme */
+    --stage: #f6f4ee; --stage-line: #c9c5b8; --check: #e2dfd5;
+    --sk: #e2dfd5; --sk-hi: #ece9e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161513; --fg: #eceae2; --muted: #9a958a; --line: #3a3833; --surface: #211f1c; --field: #2a2825;
+      --stage: #e6e3da; --stage-line: #4a4740; --check: #d6d2c6;
+      --sk: #2c2a26; --sk-hi: #37342f;
+    }
+  }
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; overflow: hidden; margin: 0; background: var(--bg); color: var(--fg); font: 13px/1.35 ui-monospace, Menlo, monospace; }
+  button { font: inherit; color: inherit; }
+  canvas { image-rendering: pixelated; display: block; }
+  h2 { font-size: 11px; margin: 0 0 6px; letter-spacing: 1px; color: var(--muted); font-weight: bold; }
+  .note { color: var(--muted); font-size: 11px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { border: 1.5px solid var(--fg); background: var(--surface); padding: 3px 8px; cursor: pointer; white-space: nowrap; }
+  .chip.on { background: var(--fg); color: var(--bg); }
+  /* a group preset that's only partly picked */
+  .chip.part { box-shadow: inset 0 -5px 0 var(--fg); }
+  .seg { display: inline-flex; }
+  .seg .chip + .chip { margin-left: -1.5px; }
+
+  /* ---- the export bar, always at the top */
+  .bar { flex: none; display: flex; align-items: stretch; gap: 14px; padding: 10px 18px; border-bottom: 1.5px solid var(--line); background: var(--surface); flex-wrap: wrap; }
+  .brand { display: flex; flex-direction: column; justify-content: center; min-width: 110px; }
+  .brand h1 { font-size: 16px; margin: 0; letter-spacing: 2px; }
+  .brand .note { font-size: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; justify-content: flex-end; }
+  .field > span { font-size: 10px; letter-spacing: 1px; color: var(--muted); }
+  .field input { font: inherit; color: var(--fg); width: 96px; border: 1.5px solid var(--fg); background: var(--field); padding: 3px 5px; box-sizing: border-box; height: 27px; }
+  .go { display: flex; flex-direction: column; gap: 4px; justify-content: flex-end; margin-left: auto; }
+  .go .row { display: flex; gap: 6px; }
+  .primary { font-weight: bold; border: 2px solid var(--fg); background: var(--fg); color: var(--bg); padding: 6px 12px; cursor: pointer; letter-spacing: 1px; white-space: nowrap; }
+  .secondary { border: 1.5px solid var(--fg); background: var(--surface); padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+  #exGo { width: 210px; }
+  .primary:disabled, .secondary:disabled { opacity: 0.45; cursor: default; }
+  /* progress and status: their space is always there, so nothing moves while an export runs */
+  .progress { height: 4px; background: var(--line); overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--fg); transition: width 0.12s; }
+  #exStatus { height: 14px; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+  /* every animation, one chip each (opened from PICK) */
+  .drawer { flex: none; display: none; padding: 10px 18px 12px; border-bottom: 1.5px solid var(--line); background: var(--surface); max-height: 40vh; overflow-y: auto; }
+  .drawer.open { display: block; }
+  .drawer .grp { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+  .drawer .grp h2 { width: 70px; flex: none; margin: 0; }
+  .drawer .chip { padding: 2px 6px; font-size: 11px; }
+  .drawer .opts { display: flex; gap: 14px; align-items: center; margin-top: 8px; }
+  .drawer .opts input { font: inherit; color: var(--fg); width: 52px; border: 1.5px solid var(--fg); background: var(--field); padding: 2px 4px; }
+
+  /* ---- the workspace: preview and colours on the left, the pickers on the right */
+  .wrap { flex: 1; min-height: 0; display: flex; gap: 24px; padding: 0 0 0 18px; }
+  .stage { display: flex; flex-direction: column; gap: 14px; height: 100%; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; padding: 0 4px 16px; width: 380px; flex: none; }
+  .preview { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 12px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .canvasBox { background: var(--stage); border: 1.5px solid var(--stage-line); display: flex; justify-content: center; align-items: center; }
+  #big { cursor: grab; touch-action: none; max-width: 100%; height: auto !important; }
+  .tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; font-size: 11px; }
+  .tools label { display: flex; gap: 4px; align-items: center; color: var(--muted); }
+  .tools input[type=range] { width: 70px; }
+  #pause { width: 58px; }
+  .tools .chip { padding: 2px 6px; font-size: 11px; }
+  .smallRow { display: flex; gap: 10px; align-items: center; }
+  .stage .chip { padding: 2px 6px; font-size: 11px; }
+  .modeGrp { margin-bottom: 6px; }
+  .modeGrp .note { display: block; margin-bottom: 3px; font-size: 10px; letter-spacing: 1px; }
+  .swatches { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .rampRow, .assignRow { display: flex; align-items: center; gap: 4px; }
+  .rampRow b, .assignRow b { width: 92px; font-size: 11px; font-weight: normal; color: var(--muted); }
+  .rampRow input { width: 22px; height: 20px; padding: 0; border: 1.5px solid var(--fg); background: none; cursor: pointer; }
+  .assignRow { margin-top: 4px; flex-wrap: wrap; }
+  .rampBtn { display: flex; padding: 2px; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; margin-right: 2px; }
+  .rampBtn.on { border-color: var(--fg); outline: 1.5px solid var(--fg); }
+  .rampBtn i { display: block; width: 9px; height: 14px; }
+  details > summary { cursor: pointer; list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary h2 { display: inline; }
+  details > summary::after { content: ' +'; color: var(--muted); }
+  details[open] > summary::after { content: ' -'; }
+  .kitBox { background: var(--stage); border: 1.5px solid var(--stage-line); padding: 6px; margin-top: 6px; }
+  #kitBubbles, #kitIcons { display: block; margin: 4px 0; max-width: 100%; height: auto; }
+
+  .picks { flex: 1; min-width: 0; height: 100%; overflow-y: auto; overflow-x: hidden; box-sizing: border-box; padding: 12px 18px 24px 0; }
+  .group { margin-bottom: 14px; }
+  .strip { display: flex; flex-wrap: wrap; gap: 4px; }
+  .strip figure { margin: 0; text-align: center; cursor: pointer; padding: 2px; border: 1.5px solid transparent; }
+  .strip figure:hover { border-color: var(--line); }
+  .strip figure.on { border-color: var(--fg); }
+  .strip canvas { background: var(--stage); }
+  .strip figcaption { font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* a thumbnail still on its way: a pulsing block the size of the finished one */
+  .strip canvas.sk, #big.sk, #small.sk { background: linear-gradient(90deg, var(--sk) 0 40%, var(--sk-hi) 50%, var(--sk) 60% 100%) 0 0 / 300% 100%; animation: sk 1.2s linear infinite; }
+  @keyframes sk { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+  dialog { border: 2px solid var(--fg); background: var(--surface); color: var(--fg); padding: 14px; max-width: min(92vw, 900px); }
+  dialog::backdrop { background: rgb(0 0 0 / 0.5); }
+  dialog .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+  #exSheet { max-width: 100%; height: auto; max-height: 70vh; object-fit: contain; background: repeating-conic-gradient(var(--check) 0% 25%, var(--stage) 0% 50%) 0 0 / 8px 8px; }
+
+  /* phones: one column. The export bar sits at the top, the preview stays pinned while everything else scrolls under it */
+  @media (max-width: 760px) {
+    body { overflow: auto; height: auto; }
+    .bar { padding: 8px 10px; gap: 8px 10px; }
+    .brand { min-width: 0; flex: 1 1 100%; flex-direction: row; align-items: baseline; gap: 8px; }
+    .go { margin-left: 0; flex: 1 1 100%; }
+    .go .row { width: 100%; }
+    #exGo { flex: 1; width: auto; }
+    #exStatus { max-width: none; }
+    .drawer { padding: 8px 10px; max-height: none; }
+    .drawer .grp { flex-direction: column; gap: 4px; }
+    .wrap { flex-direction: column; height: auto; padding: 0 10px; gap: 8px; }
+    .stage { width: 100%; height: auto; overflow: visible; padding: 0; }
+    .picks { height: auto; overflow: visible; padding: 0 0 24px; }
+    .preview { padding-top: 8px; }
+    .preview .canvasBox { align-self: stretch; height: 26vh; }
+    #big { height: 100% !important; width: auto !important; max-width: 100%; }
+    .smallRow .note { font-size: 10px; }
+  }
+</style>
+
+<div class="bar">
+  <div class="brand"><h1>MOCHIMON</h1><span class="note">make a character, export a sprite sheet</span></div>
+  <div class="field"><span>ANIMATIONS</span><div class="seg" id="exGroups"></div></div>
+  <div class="field"><span>&nbsp;</span><button class="chip" id="exPick" aria-expanded="false">PICK EACH ▾</button></div>
+  <div class="field"><span>DIRECTIONS</span><div class="seg" id="exDirs"></div></div>
+  <label class="field"><span>FILE NAME</span><input id="exName" type="text" value="cat" spellcheck="false"></label>
+  <div class="go">
+    <div class="row">
+      <button class="primary" id="exGo">EXPORT SPRITE SHEET</button>
+      <button class="secondary" id="exView" disabled title="see the last sheet you exported">VIEW</button>
+      <button class="secondary" id="kitGo" title="speech bubbles and UI icons in this palette">UI KIT</button>
+    </div>
+    <div class="progress"><i id="exBar"></i></div>
+    <div id="exStatus"></div>
+  </div>
+</div>
+<div class="drawer" id="exDrawer">
+  <div id="exAnims"></div>
+  <div class="opts">
+    <button class="chip" id="exAll">ALL</button><button class="chip" id="exNone">NONE</button>
+    <label class="note">fps <input id="exFps" type="number" min="1" max="60" value="12"></label>
+    <span class="note">The zip has the sheet PNG, a role-map PNG to recolour at runtime, and a JSON of frames, anchor and timing.</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="preview">
+      <div class="canvasBox"><canvas id="big" class="sk" width="88" height="72"></canvas></div>
+      <div class="tools">
+        <button class="chip" id="pause">pause</button>
+        <label>speed <input id="speed" type="range" min="0" max="30" value="12"></label>
+        <label>zoom <input id="zoom" type="range" min="2" max="12" value="7"></label>
+        <label>size <span class="chips" id="catSizes"></span></label>
+      </div>
+    </div>
+    <div class="smallRow">
+      <div class="canvasBox"><canvas id="small" class="sk" width="88" height="72"></canvas></div>
+      <span class="note">actual pixels, at 2x.<br>Drag the big one to turn it; double-click to reset.</span>
+    </div>
+    <div><h2>PLAYING</h2><div id="modes"></div></div>
+    <div>
+      <h2>COLOURS</h2>
+      <div class="chips" id="colorModes"></div>
+    </div>
+    <div id="themesRow">
+      <h2>PALETTE</h2>
+      <div class="chips" id="themes"></div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <details>
+      <summary><h2 id="assignHead">WHICH RAMP EACH PART USES</h2></summary>
+      <div id="assign"></div>
+    </details>
+    <details>
+      <summary><h2>UI KIT PREVIEW</h2></summary>
+      <div class="kitBox">
+        <canvas id="kitBubbles" width="1" height="1"></canvas>
+        <canvas id="kitIcons" width="1" height="1"></canvas>
+      </div>
+      <span class="note">Bubbles to put over a character (anchored at the tail tip) and little icons, in this palette.</span>
+    </details>
+  </div>
+  <div class="picks">
+    <div class="group"><h2>BODY</h2><div class="strip" id="bodies"></div></div>
+    <div class="group"><h2>COAT</h2><div class="strip" id="coats"></div></div>
+    <div class="group"><h2>EARS</h2><div class="strip" id="ears"></div></div>
+    <div class="group"><h2>HEAD ACCESSORY</h2><div class="strip" id="gear"></div></div>
+    <div class="group"><h2>EYEWEAR</h2><div class="strip" id="eyewear"></div></div>
+    <div class="group"><h2>CLOTHES</h2><div class="strip" id="clothes"></div></div>
+    <div class="group"><h2>FEET</h2><div class="strip" id="feet"></div></div>
+    <div class="group"><h2>TAIL</h2><div class="strip" id="tails"></div></div>
+  </div>
+</div>
+
+<dialog id="sheetDlg">
+  <div class="head"><h2 id="sheetTitle" style="margin:0">LAST EXPORT</h2><button class="secondary" id="sheetClose">CLOSE</button></div>
+  <canvas id="exSheet" width="1" height="1"></canvas>
+</dialog>
+<script type="module" src="./src/main.ts"></script>

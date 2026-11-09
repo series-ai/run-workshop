@@ -1,0 +1,27 @@
+{
+  "name": "mochimon",
+  "version": "0.1.0",
+  "description": "Mochimon: build a little pixel-art character (cats, bunnies, bears, foxes and more), dress it up, watch it move, and export game-ready sprite sheets and a UI kit.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5195",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@series-inc/rundot-game-sdk": "^5.28.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "typescript": "5.9.2",
+    "vite": "6.4.1"
+  },
+  "allowScripts": {
+    "@series-inc/rundot-game-sdk": true,
+    "esbuild": true,
+    "fsevents": true
+  },
+  "license": "SEE LICENSE IN ../../LICENSE.md"
+}
