@@ -1,5 +1,9 @@
 import { chromium } from "playwright";
 import fs from "fs";
+import path from "path";
+
+// Output stays repo-local (proofs/ is gitignored) unless overridden.
+const OUT_DIR = process.env.DEEP_TELEMETRY_OUT_DIR || "proofs";
 
 async function run() {
   console.log("Launching Chromium with WebGL...");
@@ -196,10 +200,12 @@ async function run() {
     sceneDeepAudit,
   };
 
-  fs.writeFileSync("/Users/pany/.gemini/antigravity-acp/brain/c85c855d-70ef-45e1-a292-72eeba99b77c/deep_telemetry_report.json", JSON.stringify(fullReport, null, 2));
-  console.log("Wrote /Users/pany/.gemini/antigravity-acp/brain/c85c855d-70ef-45e1-a292-72eeba99b77c/deep_telemetry_report.json");
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  const reportPath = path.join(OUT_DIR, "deep_telemetry_report.json");
+  fs.writeFileSync(reportPath, JSON.stringify(fullReport, null, 2));
+  console.log(`Wrote ${reportPath}`);
 
-  await page.screenshot({ path: "/Users/pany/.gemini/antigravity-acp/brain/c85c855d-70ef-45e1-a292-72eeba99b77c/deep_telemetry_screenshot.png" });
+  await page.screenshot({ path: path.join(OUT_DIR, "deep_telemetry_screenshot.png") });
   console.log("Saved screenshot.");
 
   await browser.close();

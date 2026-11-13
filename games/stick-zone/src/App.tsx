@@ -97,6 +97,7 @@ const MainApp: React.FC = () => {
   const queuedKick = useRef(false);
   const touchInputRef = useRef<{ dx: number; dz: number; sprint?: boolean; slide?: boolean; crouch?: boolean; roll?: boolean; jump?: boolean; kick?: boolean; shoot?: boolean; interact?: boolean; aimAngle?: number }>({ dx: 0, dz: 0 });
   const prevActionRef = useRef<string>("idle");
+  const prevStimRef = useRef<boolean>(false);
   const prevProximityRef = useRef<boolean>(false);
   const prevCashRef = useRef<number>(0);
   const prevWeaponRef = useRef<string | undefined>(sim.player.weapon);
@@ -378,7 +379,6 @@ const MainApp: React.FC = () => {
         (touchInputRef.current as any).switchWeapon = false;
 
         const stim = queuedStim.current || !!(touchInputRef.current as any).stim || !!pad?.stim;
-        if (stim) sound.playHealInject();
         queuedStim.current = false;
         (touchInputRef.current as any).stim = false;
 
@@ -412,6 +412,12 @@ const MainApp: React.FC = () => {
         };
 
         sim.step(input);
+
+        // Heal-inject sound only when the stim actually starts
+        if (sim.player.isUsingStim && !prevStimRef.current) {
+          sound.playHealInject();
+        }
+        prevStimRef.current = Boolean(sim.player.isUsingStim);
 
         // Sound triggers on kinetic state transitions
         const currentAction = sim.player.action;
@@ -553,7 +559,7 @@ const MainApp: React.FC = () => {
       lastHandledDamageTickRef.current = -1;
       lastHandledBarkTickRef.current = -1;
       lastHandledHitmarkerTickRef.current = -1;
-      const newSim = new SectorDepotSimulation(candidateRaidId);
+      const newSim = new SectorDepotSimulation(candidateRaidId, "hub");
       registerDeployment(newSim.player.id, candidateRaidId);
 
       setSim(newSim);

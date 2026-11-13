@@ -144,10 +144,15 @@ test.describe("INKLINE Visual Architecture & Dynamic FX Verification", () => {
       expect(meanWidth).toBeGreaterThanOrEqual(expectedThickness - tolerance);
       expect(meanWidth).toBeLessThanOrEqual(expectedThickness + tolerance);
 
-      // Negative control: measuring imgOff against itself must yield zero difference
+      // Negative control: a second frozen contour-off render must match
+      // the first byte for byte, so the on/off diff above measures only
+      // the contour and not frame-to-frame noise.
+      await page.evaluate(() => window.__STICK_ZONE_TEST__!.renderFrame());
+      const imgOffRepeat = await page.screenshot();
+      const pngOffRepeat = PNG.sync.read(imgOffRepeat);
       let controlDiffCount = 0;
       for (let i = 0; i < pngOff.data.length; i += 4) {
-        if (pngOff.data[i] !== pngOff.data[i]) controlDiffCount++;
+        if (pngOff.data[i] !== pngOffRepeat.data[i]) controlDiffCount++;
       }
       expect(controlDiffCount).toBe(0);
 
