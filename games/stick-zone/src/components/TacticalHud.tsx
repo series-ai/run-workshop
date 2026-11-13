@@ -687,7 +687,7 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
             </div>
             <div
               onClick={() => {
-                if (sim.useStim()) sound.playHealInject();
+                sim.useStim(); // inject sound plays centrally on the isUsingStim transition in App
               }}
               className="rail-item stim-item"
               title="Combat Stim Injector [H] (Click to Inject)"

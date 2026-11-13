@@ -223,7 +223,6 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ sim, onTouchInpu
               if (sim.isInputLocked()) return;
               if (sim.useStim()) {
                 triggerHaptic(40);
-                sound.playHealInject();
               }
             }}
             style={{
