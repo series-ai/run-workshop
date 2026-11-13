@@ -139,11 +139,31 @@ const MainApp: React.FC = () => {
       const originalOnExfilSuccess = sim.onExfilSuccess;
       sim.onExfilSuccess = (receipt?: any) => {
         originalOnExfilSuccess?.(receipt);
-        if (coordinatorRef.current?.spokeSession) {
-          coordinatorRef.current.spokeSession.requestExtractionAsync({ zoneId: "lz_sector_7" }).catch(() => {});
-          coordinatorRef.current.spokeSession.waitForDebriefAsync().then(() => hydrateStashFromCloud()).catch(() => {});
+        const coordinator = coordinatorRef.current;
+        if (coordinator?.spokeSession) {
+          coordinator
+            .requestCoopSettlement("lz_sector_7")
+            .then(async (debrief) => {
+              if (debrief.resolution?.kind === "void") {
+                sim.combatLog.push(
+                  `[CO-OP] Raid voided (${debrief.resolution.reason}). Loadout refund per debrief ${debrief.receiptId}.`,
+                );
+              } else {
+                sim.combatLog.push(
+                  `[CO-OP] Debrief settled: ${debrief.receiptId}, ${debrief.transfers.length} transfer(s).`,
+                );
+              }
+              await hydrateStashFromCloud();
+            })
+            .catch((err: unknown) => {
+              const message = err instanceof Error ? err.message : String(err);
+              sim.combatLog.push(`[CO-OP] Settlement failed: ${message}`);
+              console.error("[Coop] Settlement failed:", err);
+            });
         } else {
-          hydrateStashFromCloud().catch(() => {});
+          hydrateStashFromCloud().catch((err: unknown) => {
+            console.error("[Stash] Hydration after exfil failed:", err);
+          });
         }
       };
 

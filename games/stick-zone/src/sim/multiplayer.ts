@@ -1,7 +1,7 @@
 import { calculateShotgunHit } from './shotgunCollision.js';
 import type { ActiveSpokeSession } from "@series-inc/rundot-game-sdk";
 import { parseConfirmedState } from "../platform/synchub.js";
-import { confirmedView, movementIntent } from "./coopAdapter.js";
+import { confirmedView, movementIntent, type DebriefInput } from "./coopAdapter.js";
 import { buildCoopRaidRules } from "./coopConfig.js";
 /**
  * @file multiplayer.ts
@@ -372,6 +372,34 @@ export class MultiplayerCoordinator {
   public onSyncError?: (message: string) => void;
   private lastSubmittedPos: { x: number; z: number } | null = null;
   private reportedSyncIssues = new Set<string>();
+  private settlementByRaid = new Map<string, Promise<DebriefInput>>();
+
+  /**
+   * One settlement attempt per raid: request extraction, then wait for
+   * the debrief over HTTP so a lost socket cannot hide the receipt.
+   * Repeat calls for the same raid return the same promise; a failed
+   * attempt clears the entry so the player can retry.
+   */
+  public requestCoopSettlement(zoneId: string): Promise<DebriefInput> {
+    const spoke = this.spokeSession;
+    if (!spoke) {
+      return Promise.reject(new Error("[coop] settlement requested with no spoke session attached"));
+    }
+    const existing = this.settlementByRaid.get(spoke.raidId);
+    if (existing) return existing;
+    const attempt = (async (): Promise<DebriefInput> => {
+      const result = await spoke.requestExtractionAsync({ zoneId });
+      if (!result.success) {
+        throw new Error(`[coop] extraction request refused for zone ${zoneId}`);
+      }
+      return (await spoke.waitForDebriefAsync()) as DebriefInput;
+    })().catch((err: unknown) => {
+      this.settlementByRaid.delete(spoke.raidId);
+      throw err;
+    });
+    this.settlementByRaid.set(spoke.raidId, attempt);
+    return attempt;
+  }
 
   private reportSyncError(key: string, message: string): void {
     console.error(`[MultiplayerCoordinator] ${message}`);

@@ -110,6 +110,70 @@ describe("MultiplayerCoordinator SyncHub session", () => {
     expect(mate!.isAlive).toBe(true);
   });
 
+  it("requests co-op settlement once per raid and returns the debrief", async () => {
+    const { coordinator, spoke } = makeCoordinator();
+    let extractionRequests = 0;
+    const debrief = {
+      v: 1,
+      settled: true,
+      raidId: "raid-coop-1",
+      receiptId: "rcpt-1",
+      outcomeId: "out-1",
+      outcomeDigest: "digest-1",
+      throughTick: 90,
+      transfers: [],
+      participantResults: [],
+      committedAtMs: 1,
+    };
+    (spoke as any).requestExtractionAsync = async () => {
+      extractionRequests += 1;
+      return { success: true, extracted: true };
+    };
+    (spoke as any).waitForDebriefAsync = async () => debrief;
+    coordinator.attachSdkSession(spoke);
+
+    const first = await coordinator.requestCoopSettlement("lz_sector_7");
+    const second = await coordinator.requestCoopSettlement("lz_sector_7");
+    expect(first.receiptId).toBe("rcpt-1");
+    expect(second).toBe(first);
+    expect(extractionRequests).toBe(1);
+  });
+
+  it("propagates settlement failure and allows a retry", async () => {
+    const { coordinator, spoke } = makeCoordinator();
+    let attempts = 0;
+    (spoke as any).requestExtractionAsync = async () => {
+      attempts += 1;
+      if (attempts === 1) return { success: false, extracted: false };
+      return { success: true, extracted: true };
+    };
+    (spoke as any).waitForDebriefAsync = async () => ({
+      v: 1,
+      settled: true,
+      raidId: "raid-coop-1",
+      receiptId: "rcpt-2",
+      outcomeId: "out-2",
+      outcomeDigest: "digest-2",
+      throughTick: 91,
+      transfers: [],
+      participantResults: [],
+      committedAtMs: 2,
+    });
+    coordinator.attachSdkSession(spoke);
+
+    await expect(coordinator.requestCoopSettlement("lz_sector_7")).rejects.toThrow(
+      /extraction request refused/,
+    );
+    const retry = await coordinator.requestCoopSettlement("lz_sector_7");
+    expect(retry.receiptId).toBe("rcpt-2");
+    expect(attempts).toBe(2);
+  });
+
+  it("refuses settlement without an attached spoke", async () => {
+    const { coordinator } = makeCoordinator();
+    await expect(coordinator.requestCoopSettlement("lz_sector_7")).rejects.toThrow(/no spoke/);
+  });
+
   it("reports malformed confirmed state through onSyncError", () => {
     const { coordinator, spoke, emitConfirmed, errors } = makeCoordinator();
     coordinator.attachSdkSession(spoke);
