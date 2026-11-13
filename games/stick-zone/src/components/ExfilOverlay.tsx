@@ -18,6 +18,26 @@ interface ExfilOverlayProps {
   onReturnToHideout?: () => void;
 }
 
+
+/**
+ * Co-op settlement: the server debrief is the receipt. Returns a
+ * controller-compatible receipt shape; throws on any failure so the
+ * caller can run its normal failure path.
+ */
+async function settleViaCoop(sim: SectorDepotSimulation): Promise<any> {
+  const coordinator = (sim as any).multiplayerCoordinator;
+  if (!coordinator || typeof coordinator.requestCoopSettlement !== "function") {
+    throw new Error("Co-op spoke attached but no settlement coordinator is available");
+  }
+  const debrief = await coordinator.requestCoopSettlement("lz_sector_7");
+  return {
+    receiptId: debrief.receiptId,
+    raidId: debrief.raidId,
+    participantResults: debrief.participantResults ?? [],
+    debrief,
+  };
+}
+
 export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onReturnToHideout }) => {
   const [state, setState] = useState<ExfilState>(() => sim.exfilController.getState());
   const [corridorElapsed, setCorridorElapsed] = useState(0);
@@ -109,7 +129,10 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
             let outcomePayload: any = null;
             const activeLedger = (sim as any).settlementAuthority || defaultSettlementLedger;
 
-            if (typeof (sim as any).requestServerSettlement === "function") {
+            if (sim.coopSpokeAttached) {
+              canonicalReceipt = await settleViaCoop(sim);
+              outcomePayload = null;
+            } else if (typeof (sim as any).requestServerSettlement === "function") {
               for (let attempt = 1; attempt <= 5; attempt++) {
                 try {
                   const res = await (sim as any).requestServerSettlement(targetSnapshotTick, sim.player.cash);
@@ -153,8 +176,11 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
               defaultSettlementLedger.auditLog.set(canonicalReceipt.receiptId, canonicalReceipt);
             }
 
-            // Verify strict canonical BigInt, SHA-256 digest, and structural invariants against authoritative ledger BEFORE any profile or audit mutations
-            const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
+            // Co-op raids trust the server debrief; offline practice
+            // verifies the local ledger receipt before any mutation.
+            const verification = sim.coopSpokeAttached
+              ? { valid: true as const }
+              : await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
 
             const curState = sim.exfilController.getState();
             if (verification.valid && sim.player.isAlive && sim.player.health > 0 && (curState.kind === "submitting_settlement" || curState.kind === "extracted")) {
@@ -246,7 +272,10 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
       const targetSnapshotTick = sim.frozenSettlementTick ?? sim.tick;
       const targetSnapshotCash = sim.frozenSettlementCash ?? sim.player.cash;
 
-      if (typeof (sim as any).requestServerSettlement === "function") {
+      if (sim.coopSpokeAttached) {
+        canonicalReceipt = await settleViaCoop(sim);
+        outcomePayload = null;
+      } else if (typeof (sim as any).requestServerSettlement === "function") {
         for (let attempt = 1; attempt <= 5; attempt++) {
           try {
             const res = await (sim as any).requestServerSettlement(targetSnapshotTick, targetSnapshotCash);
@@ -277,7 +306,9 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
 
 
 
-      const verification = await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
+      const verification = sim.coopSpokeAttached
+        ? { valid: true as const }
+        : await verifySettlementReceipt(canonicalReceipt, outcomePayload, activeLedger);
 
       if (verification.valid && sim.player.isAlive && sim.player.health > 0 && sim.exfilController.getState().kind === "submitting_settlement") {
         const receiptKey = `${canonicalReceipt.raidId || sim.raidId}:${canonicalReceipt.receiptId}`;
@@ -358,6 +389,11 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
       const rawReceipt = (state as any).receipt || (sim as any).lastSettlementReceipt || null;
       if (!rawReceipt || typeof rawReceipt !== "object") {
         setReceiptCryptoVerified(false);
+        return;
+      }
+      // A co-op debrief receipt is server-settled by construction.
+      if (sim.coopSpokeAttached && rawReceipt.debrief) {
+        setReceiptCryptoVerified(true);
         return;
       }
       // Bound strictly to immutable verified snapshot and content parity

@@ -373,6 +373,7 @@ export class MultiplayerCoordinator {
   private lastSubmittedPos: { x: number; z: number } | null = null;
   private reportedSyncIssues = new Set<string>();
   private settlementByRaid = new Map<string, Promise<DebriefInput>>();
+  private spokeUnsubscribe: (() => void) | null = null;
 
   /**
    * One settlement attempt per raid: request extraction, then wait for
@@ -411,11 +412,18 @@ export class MultiplayerCoordinator {
   }
 
   public attachSdkSession(spokeSession: ActiveSpokeSession): void {
+    if (this.spokeSession && this.spokeSession !== spokeSession) {
+      this.spokeUnsubscribe?.();
+      this.spokeUnsubscribe = null;
+      void this.spokeSession.leaveAsync().catch((err: unknown) => {
+        console.error("[MultiplayerCoordinator] Leaving replaced spoke failed:", err);
+      });
+    }
     this.spokeSession = spokeSession;
     this.sim.raidId = spokeSession.raidId;
     this.sim.coopSpokeAttached = true;
     this.lastSubmittedPos = { x: this.sim.player.x, z: this.sim.player.z };
-    spokeSession.onConfirmedTick((tick: number, state: unknown) => {
+    this.spokeUnsubscribe = spokeSession.onConfirmedTick((tick: number, state: unknown) => {
       try {
         this.applyConfirmedState(tick, state);
       } catch (err) {
@@ -437,6 +445,15 @@ export class MultiplayerCoordinator {
     if (!spoke) return;
     const state = parseConfirmedState(rawState);
     const view = confirmedView(state, spoke.slot);
+    if (view.self) {
+      this.sim.coopDwellTicks = view.self.dwellTicks;
+      if (view.self.isExtracted) {
+        this.sim.player.isExtracted = true;
+      } else if (view.self.isCasualty || !view.self.isAlive) {
+        this.sim.player.health = 0;
+        this.sim.player.isAlive = false;
+      }
+    }
     for (const mate of view.squadmates) {
       const rivalId = `coop-slot-${mate.slot}`;
       const existing = this.sim.rivals.find((r) => r.id === rivalId);
@@ -3303,5 +3320,15 @@ export class MultiplayerCoordinator {
       } catch {}
       this.sdkRoom = null;
     }
+    this.spokeUnsubscribe?.();
+    this.spokeUnsubscribe = null;
+    if (this.spokeSession) {
+      void this.spokeSession.leaveAsync().catch((err: unknown) => {
+        console.error("[MultiplayerCoordinator] Spoke leave failed:", err);
+      });
+      this.spokeSession = null;
+    }
+    this.settlementByRaid.clear();
+    this.lastSubmittedPos = null;
   }
 }

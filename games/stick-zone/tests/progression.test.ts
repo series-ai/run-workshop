@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useStashStore } from '../src/progression/stashStore.js';
+import { useStashStore, applySimulationEntities, sellRecipeNameForItem } from '../src/progression/stashStore.js';
 import { SectorDepotSimulation } from '../src/sim/game.js';
 import { updateContractProgress, INITIAL_CONTRACTS } from '../src/progression/contracts.js';
 import { gamepad } from '../src/input/gamepadController.js';
@@ -69,15 +69,30 @@ describe('Player Progression, Economy & Armory Store', () => {
     expect(useStashStore.getState().bankCash).toBe(5000);
   });
 
-  it('5. Sells stash items for liquid cash to the Fence', () => {
+  it('5. Sells stash items for liquid cash to the Fence', async () => {
     const store = useStashStore.getState();
     const item = store.stashItems[0];
     const initialCash = store.bankCash;
     const itemVal = item.value;
 
-    const sold = store.sellStashItem(item.id);
+    const sold = await store.sellStashItem(item.id);
     expect(sold).toBe(true);
     expect(useStashStore.getState().bankCash).toBe(initialCash + itemVal);
+  });
+
+  it('5b. Sell recipes resolve from entity ids, never display-name slugs', () => {
+    expect(sellRecipeNameForItem({ id: 'item_circuit_board', name: 'Military Circuit Board' })).toBe('sell_circuit_board');
+    expect(sellRecipeNameForItem({ id: 'item_encrypted_drive', name: 'Encrypted Intel Drive' })).toBe('sell_encrypted_drive');
+    expect(sellRecipeNameForItem({ id: 'loot_123', name: 'Salvaged Component' })).toBeNull();
+  });
+
+  it('5c. Hydration applies zero cash and an empty inventory', () => {
+    applySimulationEntities({ currency_cash: '250', circuit_board: '2' });
+    expect(useStashStore.getState().bankCash).toBe(250);
+    expect(useStashStore.getState().stashItems.length).toBeGreaterThan(0);
+    applySimulationEntities({ currency_cash: '0' });
+    expect(useStashStore.getState().bankCash).toBe(0);
+    expect(useStashStore.getState().stashItems).toEqual([]);
   });
 
   it('6. Records successful raid outcome with XP progression, secured loot, and contracts', () => {

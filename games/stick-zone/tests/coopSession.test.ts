@@ -23,6 +23,7 @@ function makeCoordinator() {
   const intents: Array<Record<string, unknown>> = [];
   const errors: string[] = [];
   let confirmedCallback: ((tick: number, state: unknown) => void) | undefined;
+  const counters = { leaves: 0, unsubscribes: 0 };
   const spoke = {
     raidId: "raid-coop-1",
     slot: 0,
@@ -31,19 +32,24 @@ function makeCoordinator() {
     },
     onConfirmedTick: (callback: (tick: number, state: unknown) => void) => {
       confirmedCallback = callback;
-      return () => undefined;
+      return () => {
+        counters.unsubscribes += 1;
+      };
     },
     requestExtractionAsync: async () => ({ success: true, extracted: false }),
     waitForDebriefAsync: async () => {
       throw new Error("unused");
     },
-    leaveAsync: async () => undefined,
+    leaveAsync: async () => {
+      counters.leaves += 1;
+    },
   } as unknown as ActiveSpokeSession;
   coordinator.onSyncError = (message: string) => errors.push(message);
   return {
     sim,
     coordinator,
     spoke,
+    counters,
     intents,
     errors,
     emitConfirmed: (tick: number, state: unknown) => confirmedCallback?.(tick, state),
@@ -173,6 +179,34 @@ describe("MultiplayerCoordinator SyncHub session", () => {
   it("refuses settlement without an attached spoke", async () => {
     const { coordinator } = makeCoordinator();
     await expect(coordinator.requestCoopSettlement("lz_sector_7")).rejects.toThrow(/no spoke/);
+  });
+
+  it("cleanup unsubscribes and leaves the spoke session", () => {
+    const { coordinator, spoke, counters } = makeCoordinator();
+    coordinator.attachSdkSession(spoke);
+    coordinator.cleanup();
+    expect(counters.unsubscribes).toBe(1);
+    expect(counters.leaves).toBe(1);
+    expect(coordinator.spokeSession).toBeNull();
+  });
+
+  it("applies confirmed self casualty to the local player", () => {
+    const { sim, coordinator, spoke, emitConfirmed } = makeCoordinator();
+    coordinator.attachSdkSession(spoke);
+    let state = createInitialRaidState(buildCoopRaidRules());
+    state = admitSquadManifest(state, {
+      manifestId: "squad-a",
+      squadIndex: 0,
+      members: [
+        { slot: 0, entityId: "stick-0", spawnPosition: [0, 0, 0], initialItems: [] },
+        { slot: 4, entityId: "hostile", squadIndex: 1, spawnPosition: [2, 0, 0], initialItems: [] },
+      ],
+    }).state;
+    state = stepRaidTick(state, { 4: { attackTargetSlot: 0, attackDamage: 200 } });
+    expect(state.actors[0].isCasualty).toBe(true);
+    emitConfirmed(state.tick, state);
+    expect(sim.player.isAlive).toBe(false);
+    expect(sim.player.health).toBe(0);
   });
 
   it("reports malformed confirmed state through onSyncError", () => {

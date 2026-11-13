@@ -1,5 +1,5 @@
 import { telemetry } from "../render/telemetry.js";
-import React, { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { SectorDepotSimulation } from "../sim/game.js";
@@ -1003,6 +1003,48 @@ const PresentationFXManager: React.FC<{
   );
 };
 
+/**
+ * Scene membership layer. GameCanvas is memoized on the sim object, so
+ * roster changes (AI spawns, confirmed squadmates, deaths, extraction)
+ * never re-render it. This layer watches a cheap membership signature in
+ * useFrame and re-renders only when membership changes; positions keep
+ * updating inside each operative's own useFrame.
+ */
+const RosterLayer: React.FC<{ sim: SectorDepotSimulation }> = ({ sim }) => {
+  const [, setSignature] = useState("");
+  const signatureRef = useRef("");
+  useFrame(() => {
+    const signature = [
+      sim.player.isAlive, sim.player.isExtracted,
+      sim.squadmate.isAlive, sim.squadmate.isExtracted,
+      sim.exfilController.getState().kind,
+      ...sim.rivals.map((r) => `${r.id}:${r.isAlive ? 1 : 0}:${r.isExtracted ? 1 : 0}`),
+      ...sim.machines.map((m) => `${m.id}:${m.isAlive ? 1 : 0}`),
+    ].join("|");
+    if (signature !== signatureRef.current) {
+      signatureRef.current = signature;
+      setSignature(signature);
+    }
+  });
+  return (
+    <>
+      <ExfilZone exfilState={sim.exfilController.getState()} />
+      {sim.player.isAlive && !sim.player.isExtracted && (
+        <StickOperative operative={sim.player} isCurrentPlayer={true} />
+      )}
+      {sim.squadmate.isAlive && !sim.squadmate.isExtracted && (
+        <StickOperative operative={sim.squadmate} isCurrentPlayer={false} />
+      )}
+      {sim.rivals.map((rival) => (
+        <RivalOperative key={rival.id} operative={rival} />
+      ))}
+      {sim.machines.map((machine) => (
+        <MachineEnemy key={machine.id} machine={machine} />
+      ))}
+    </>
+  );
+};
+
 export const GameCanvas: React.FC<GameCanvasProps> = React.memo(({ sim }) => {
   const recoilImpulseRef = useRef<[number, number]>([0, 0]);
   const harnessRef = useRef<{
@@ -1191,28 +1233,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = React.memo(({ sim }) => {
           {/* Depot & FOB Outpost Environment */}
           <SectorMap crates={sim.crates} lastDummyHitTick={sim.lastDummyHitTick} lastDummyHitSide={sim.lastDummyHitSide} />
 
-          {/* Extraction LZ Smoke & Countdown Ring */}
-          <ExfilZone exfilState={sim.exfilController.getState()} />
-
-          {/* Player Operative */}
-          {sim.player.isAlive && !sim.player.isExtracted && (
-            <StickOperative operative={sim.player} isCurrentPlayer={true} />
-          )}
-
-          {/* Squadmate Companion */}
-          {sim.squadmate.isAlive && !sim.squadmate.isExtracted && (
-            <StickOperative operative={sim.squadmate} isCurrentPlayer={false} />
-          )}
-
-          {/* Rival Operatives (or Rogue AI) */}
-          {sim.rivals.map((rival) => (
-            <RivalOperative key={rival.id} operative={rival} />
-          ))}
-
-          {/* Automated Machine Defenses */}
-          {sim.machines.map((machine) => (
-            <MachineEnemy key={machine.id} machine={machine} />
-          ))}
+          {/* Operatives, rivals, machines, extraction zone: membership
+              changes re-render through RosterLayer, not this memo. */}
+          <RosterLayer sim={sim} />
 
           {/* Active F-1 Fragmentation Grenades with dynamic 3D physics flight & contact shadows */}
           <ActiveGrenadesRenderer sim={sim} />

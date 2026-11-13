@@ -242,6 +242,12 @@ const MainApp: React.FC = () => {
 
     const resetInputs = () => {
       keysPressed.current.clear();
+      queuedKick.current = false;
+      queuedStim.current = false;
+      queuedReload.current = false;
+      queuedInteract.current = false;
+      queuedSelectWeapon.current = null;
+      queuedSwitchWeapon.current = false;
       isMouseDown.current = false;
       isRightMouseDown.current = false;
       touchInputRef.current = {
@@ -367,18 +373,21 @@ const MainApp: React.FC = () => {
 
         const selectWeapon = queuedSelectWeapon.current || undefined;
         queuedSelectWeapon.current = null;
-        const switchWeapon = queuedSwitchWeapon.current || !!(touchInputRef.current as any).switchWeapon;
+        const switchWeapon = queuedSwitchWeapon.current || !!(touchInputRef.current as any).switchWeapon || !!pad?.switchWeapon;
         queuedSwitchWeapon.current = false;
         (touchInputRef.current as any).switchWeapon = false;
 
-        const stim = queuedStim.current || !!(touchInputRef.current as any).stim;
+        const stim = queuedStim.current || !!(touchInputRef.current as any).stim || !!pad?.stim;
         if (stim) sound.playHealInject();
         queuedStim.current = false;
         (touchInputRef.current as any).stim = false;
 
-        const reload = queuedReload.current || !!(touchInputRef.current as any).reload;
+        const reload = queuedReload.current || !!(touchInputRef.current as any).reload || !!pad?.reload;
         queuedReload.current = false;
         (touchInputRef.current as any).reload = false;
+
+        const kick = queuedKick.current;
+        queuedKick.current = false;
 
         const interact = queuedInteract.current || !!touchInputRef.current.interact;
         queuedInteract.current = false;
@@ -391,7 +400,8 @@ const MainApp: React.FC = () => {
           crouch: (keys.has("KeyC") && !isSprinting) || (!!touchInputRef.current.crouch && !touchInputRef.current.slide),
           roll: (keys.has("Space") && isSprinting) || !!touchInputRef.current.roll || !!pad?.roll,
           jump: (keys.has("Space") && !isSprinting) || !!touchInputRef.current.jump,
-          kick: keys.has("KeyV") || queuedKick.current || !!touchInputRef.current.kick || !!pad?.kick,
+          kick: keys.has("KeyV") || kick || !!touchInputRef.current.kick || !!pad?.kick,
+          ads: isRightMouseDown.current || !!(touchInputRef.current as any).ads || !!pad?.ads,
           shoot: keys.has("KeyJ") || keys.has("KeyK") || keys.has("Enter") || isMouseDown.current || !!touchInputRef.current.shoot || !!pad?.shoot,
           interact: interact || !!pad?.interact,
           selectWeapon,
@@ -623,42 +633,53 @@ const MainApp: React.FC = () => {
         <HideoutMenu
           onClose={() => setShowHideout(false)}
           onDeploy={(loadout) => {
-            if (!prepareInFlightRef.current) {
-              prepareInFlightRef.current = true;
-              const items = [
-                {
-                  itemId: loadout.primaryWeapon === "shotgun" ? "weapon_shotgun" : "weapon_rifle",
-                  quantity: "1",
-                },
-                ...(loadout.stims > 0
-                  ? [{ itemId: "med_stim", quantity: String(loadout.stims) }]
-                  : []),
-              ];
-              preparePlatformRaid({ sector: COOP_SECTOR_KEY, loadout: items })
-                .then((prep) => {
-                  if (prep.success) {
-                    coordinatorRef.current?.attachSdkSession(prep.spokeSession);
-                    sim.combatLog.push(`[CO-OP] SyncHub raid ${prep.raidId} live. Squad channel open.`);
-                  } else {
-                    sim.combatLog.push(`[CO-OP] SyncHub prepare failed: ${prep.error}`);
-                  }
-                })
-                .finally(() => {
-                  prepareInFlightRef.current = false;
-                });
+            // Staging only: mid-raid Deploy must not restore armor or
+            // stims, and the loadout applies only after preparation
+            // settles. A failed co-op prepare changes nothing; offline
+            // practice (no spoke attached) still applies locally.
+            if (sim.zoneMode !== "hub") {
+              sim.combatLog.push("[DEPLOY] Deployment is staging-only. Return to the hub to change loadout.");
+              return;
             }
-            sim.setWeapon(loadout.primaryWeapon === "shotgun" ? "shotgun" : "rifle");
-            if (loadout.armorTier === "light") {
-              sim.player.armor = 40;
-            } else if (loadout.armorTier === "medium") {
-              sim.player.armor = 75;
-            } else {
-              sim.player.armor = 100;
-            }
-            sim.player.stimsRemaining = loadout.stims;
-            sim.player.hasLaser = Boolean(loadout.hasLaserPointer);
-            setShowHideout(false);
-            sound.playDeploy();
+            if (prepareInFlightRef.current) return;
+            prepareInFlightRef.current = true;
+            const applyLoadout = () => {
+              sim.setWeapon(loadout.primaryWeapon === "shotgun" ? "shotgun" : "rifle");
+              if (loadout.armorTier === "light") {
+                sim.player.armor = 40;
+              } else if (loadout.armorTier === "medium") {
+                sim.player.armor = 75;
+              } else {
+                sim.player.armor = 100;
+              }
+              sim.player.stimsRemaining = loadout.stims;
+              sim.player.hasLaser = Boolean(loadout.hasLaserPointer);
+              setShowHideout(false);
+              sound.playDeploy();
+            };
+            const items = [
+              {
+                itemId: loadout.primaryWeapon === "shotgun" ? "weapon_shotgun" : "weapon_rifle",
+                quantity: "1",
+              },
+              ...(loadout.stims > 0
+                ? [{ itemId: "med_stim", quantity: String(loadout.stims) }]
+                : []),
+            ];
+            preparePlatformRaid({ sector: COOP_SECTOR_KEY, loadout: items })
+              .then((prep) => {
+                if (prep.success) {
+                  coordinatorRef.current?.attachSdkSession(prep.spokeSession);
+                  sim.combatLog.push(`[CO-OP] SyncHub raid ${prep.raidId} live. Squad channel open.`);
+                  applyLoadout();
+                } else {
+                  sim.combatLog.push(`[CO-OP] SyncHub prepare failed: ${prep.error}`);
+                  if (!sim.coopSpokeAttached) applyLoadout();
+                }
+              })
+              .finally(() => {
+                prepareInFlightRef.current = false;
+              });
           }}
         />
       )}

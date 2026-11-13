@@ -13,6 +13,7 @@ import { create } from "zustand";
 import { type Contract, INITIAL_CONTRACTS, updateContractProgress } from "./contracts.js";
 import { type DepotCrateItem } from "../sim/crates.js";
 import { computeCanonicalOutcomeDigest, type SettlementReceipt, type CanonicalOutcomePayload } from "../sim/airlock.js";
+import recipesConfig from "../../rundot/simulation/recipes.json";
 
 export type WeaponType = "rifle" | "shotgun" | "smg" | "dmr";
 export type ArmorTier = "light" | "medium" | "heavy";
@@ -99,7 +100,7 @@ export interface StashState {
     icon: string;
     price: number;
   }) => boolean;
-  sellStashItem: (itemId: string) => boolean;
+  sellStashItem: (itemId: string) => Promise<boolean>;
 
   // Armory Customization
   equipWeapon: (slot: "primary" | "secondary", weapon: WeaponType) => void;
@@ -146,6 +147,25 @@ const DEFAULT_STASH_ITEMS: StashItem[] = [
   { id: "item_12g_ammo", name: "12-Gauge Buckshot (24 Rnd)", type: "ammo", rarity: "common", icon: "📦", value: 350, count: 2 },
   { id: "item_propital_start", name: "Propital Combat Stim", type: "med", rarity: "rare", icon: "💉", value: 600, count: 2 },
 ];
+
+/**
+ * Map a stash item to its configured sell recipe by entity id. Stash item
+ * ids are `item_<entityId>` for hydrated loot; shop-bought ids carry a
+ * timestamp suffix on the shop id. Returns null when the catalog has no
+ * sell recipe, so callers never invent a recipe name from display text.
+ */
+export function sellRecipeNameForItem(item: { id: string; name: string }): string | null {
+  const recipes = (recipesConfig as { recipes: Record<string, unknown> }).recipes;
+  const candidates: string[] = [];
+  if (item.id.startsWith("item_")) candidates.push(item.id.slice("item_".length));
+  candidates.push(item.id.replace(/_\d+$/, ""));
+  candidates.push(item.name.toLowerCase().replace(/[^a-z0-9]+/g, "_"));
+  for (const entityId of candidates) {
+    const recipe = `sell_${entityId}`;
+    if (recipe in recipes) return recipe;
+  }
+  return null;
+}
 
 export function parseCanonicalQuantity(val: string | number | undefined): number {
   if (typeof val === "number") return val;
@@ -416,23 +436,28 @@ export const useStashStore = create<StashState>((set, get) => {
       return true;
     },
 
-    sellStashItem: (itemId) => {
+    sellStashItem: async (itemId) => {
       const state = get();
       const itemIndex = state.stashItems.findIndex((s) => s.id === itemId);
       if (itemIndex === -1) return false;
 
       const item = state.stashItems[itemIndex];
       const sellPrice = item.value || 200;
+
+      // With a live simulation API the server trade decides: execute the
+      // configured recipe first, then hydrate the confirmed inventory.
+      // A failed or unmapped trade changes nothing locally.
+      const simulation = getRundotGameApi()?.simulation;
+      if (simulation?.executeRecipeAsync) {
+        const recipeName = sellRecipeNameForItem(item);
+        if (!recipeName) return false;
+        const entityId = item.id.startsWith("item_") ? item.id.slice("item_".length) : item.id.replace(/_\d+$/, "");
+        await simulation.executeRecipeAsync(recipeName, { [entityId]: 1 });
+        await hydrateStashFromCloud();
+        return true;
+      }
+
       const newCash = state.bankCash + sellPrice;
-
-      // Pure RUN SDK simulation integration
-      try {
-        if (getRundotGameApi()?.simulation?.executeRecipeAsync) {
-          const recipeName = `sell_${item.name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
-          getRundotGameApi().simulation.executeRecipeAsync(recipeName, { [item.id || item.name]: 1 }).catch(() => {});
-        }
-      } catch {}
-
       const updatedStash = [...state.stashItems];
       if (item.count > 1) {
         updatedStash[itemIndex] = { ...item, count: item.count - 1 };
@@ -549,7 +574,7 @@ function mapEntityToStashItem(entityId: string, count: number): StashItem | null
   };
 }
 
-function applySimulationEntities(entities: Record<string, number | string>): void {
+export function applySimulationEntities(entities: Record<string, number | string>): void {
   const cashVal = parseCanonicalQuantity(entities["currency_cash"]);
   const items: StashItem[] = [];
 
@@ -564,8 +589,8 @@ function applySimulationEntities(entities: Record<string, number | string>): voi
 
   useStashStore.setState((prev) => ({
     ...prev,
-    bankCash: cashVal > 0 ? cashVal : prev.bankCash,
-    stashItems: items.length > 0 ? items : prev.stashItems,
+    bankCash: "currency_cash" in entities ? cashVal : prev.bankCash,
+    stashItems: items,
   }));
 }
 

@@ -876,6 +876,8 @@ export class SectorDepotSimulation {
   /** True once a SyncHub spoke session attaches: this raid settles only
    * from the server debrief, never from the local ledger. */
   public coopSpokeAttached = false;
+  /** Confirmed extraction dwell ticks from the server, for HUD display. */
+  public coopDwellTicks = 0;
 
   public isAdmitted(): boolean {
     return this.ingressController.getState().kind === 'confirmed_active';
@@ -1603,6 +1605,9 @@ export class SectorDepotSimulation {
   public reload(): boolean {
     if (this.isInputLocked()) return false;
     if (!this.player.isAlive || this.player.action === 'roll' || this.player.action === 'slide') return false;
+    // Only firearms reload: treating the grenade/kick slots as a rifle
+    // consumed rifle reserve and later restored the spent grenade.
+    if (this.player.weapon !== 'rifle' && this.player.weapon !== 'shotgun') return false;
     const isShotgun = this.player.weapon === 'shotgun';
     const currentAmmo = this.player.ammo;
     const maxAmmo = this.player.maxAmmo;
@@ -2677,16 +2682,12 @@ export class SectorDepotSimulation {
       if (mdist <= kickRange && mdist > 0.1) {
         if (!inSweepArc(machine.x, machine.z)) continue; // Must be in roundhouse sweep arc
         if (this.checkContainerRayObstruction(this.player.x, this.player.z, machine.x, machine.z, 1.0, 1.0)) continue;
-        const isAggregateWired = !!this.onKickAction;
-        const isPrediction = isAggregateWired || !!this.onMachineHit;
-        if (isPrediction) {
-          machine.health = Math.max(1, machine.health - 50);
-        } else {
-          machine.health = Math.max(0, machine.health - 50);
-          if (machine.health <= 0) {
-            machine.isAlive = false;
-            this.combatLog.push(`[TICK ${this.tick}] Machine destroyed by kinetic kick: ${machine.id}`);
-          }
+        // Machines are local-authority AI: full damage always applies.
+        // The broadcast below still reports the hit to any peer channel.
+        machine.health = Math.max(0, machine.health - 50);
+        if (machine.health <= 0) {
+          machine.isAlive = false;
+          this.combatLog.push(`[TICK ${this.tick}] Machine destroyed by kinetic kick: ${machine.id}`);
         }
         machineHits.push({
           id: machine.id,
@@ -2752,7 +2753,7 @@ export class SectorDepotSimulation {
           predictedArmor: rival.armor,
         });
         if (rival.health <= 0) {
-          if (!this.onHitTarget) {
+          if (!this.onHitTarget || rival.isAI) {
             rival.isAlive = false;
             this.combatLog.push(`[TICK ${this.tick}] Rival operator eliminated by melee kick: ${rival.name}`);
             if (isBossTarget) {
@@ -2897,7 +2898,7 @@ export class SectorDepotSimulation {
         const dist = Math.hypot(dx, dz);
         if (dist > 0.001 && dist <= 3.5) {
           const dot = (dx * dirX + dz * dirZ) / dist;
-          if (dot > 0.75) {
+          if (dot > 0.75 && !this.checkContainerRayObstruction(originX, originZ, r.x, r.z, 1.0, 1.0)) {
             pointBlankRival = r;
             break;
           }
@@ -2939,7 +2940,7 @@ export class SectorDepotSimulation {
 
         if (r.health <= 0) {
           const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
-          if (!this.onHitTarget) {
+          if (!this.onHitTarget || r.isAI) {
             r.isAlive = false;
             this.combatLog.push("[TICK " + this.tick + "] Rival eliminated by shotgun: " + r.name);
             if (isBossTarget) {
@@ -3120,7 +3121,7 @@ export class SectorDepotSimulation {
         const dist = Math.hypot(dx, dz);
         if (dist > 0.001 && dist <= 3.5) {
           const dot = (dx * normVx + dz * normVz) / dist;
-          if (dot > 0.75) {
+          if (dot > 0.75 && !this.checkContainerRayObstruction(proj.x, proj.z, r.x, r.z, 1.0, 1.0)) {
             this.player.lastHitmarkerTick = this.tick;
             this.player.lastHitmarkerCrit = dist <= 2.0;
 
@@ -3153,7 +3154,7 @@ export class SectorDepotSimulation {
 
             if (r.health <= 0) {
               const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
-              if (!this.onHitTarget) {
+              if (!this.onHitTarget || r.isAI) {
                 r.isAlive = false;
                 this.combatLog.push("[TICK " + this.tick + "] Rival eliminated: " + r.name);
                 if (isBossTarget) {
@@ -3177,7 +3178,7 @@ export class SectorDepotSimulation {
         const dist = Math.hypot(dx, dz);
         if (dist > 0.001 && dist <= 3.5) {
           const dot = (dx * normVx + dz * normVz) / dist;
-          if (dot > 0.75) {
+          if (dot > 0.75 && !this.checkContainerRayObstruction(proj.x, proj.z, m.x, m.z, 1.0, 1.0)) {
             this.player.lastHitmarkerTick = this.tick;
             const mY = typeof m.y === "number" ? m.y : (m.type === "drone" ? 3.5 : 1.0);
             this.enqueuePresentationEvent({
@@ -3188,7 +3189,8 @@ export class SectorDepotSimulation {
               label: "-" + proj.damage,
             });
             if (this.onMachineHit) {
-              m.health = Math.max(1, m.health - proj.damage);
+              m.health = Math.max(0, m.health - proj.damage);
+              if (m.health <= 0) m.isAlive = false;
               this.onMachineHit(m.id, proj.damage, proj.weapon);
             } else {
               m.health = Math.max(0, m.health - proj.damage);
@@ -3311,7 +3313,8 @@ export class SectorDepotSimulation {
               label: "-" + p.damage,
             });
             if (this.onMachineHit) {
-              m.health = Math.max(1, m.health - p.damage);
+              m.health = Math.max(0, m.health - p.damage);
+              if (m.health <= 0) m.isAlive = false;
               this.onMachineHit(m.id, p.damage, p.weapon);
             } else {
               m.health = Math.max(0, m.health - p.damage);
@@ -3364,7 +3367,7 @@ export class SectorDepotSimulation {
 
             if (r.health <= 0) {
               const isBossTarget = r.id === BOSS_CONFIG.id || r.badge === BOSS_CONFIG.badge;
-              if (!this.onHitTarget) {
+              if (!this.onHitTarget || r.isAI) {
                 r.isAlive = false;
                 this.combatLog.push("[TICK " + this.tick + "] Rival operator eliminated: " + r.name);
                 if (isBossTarget) {
@@ -3598,14 +3601,32 @@ export class SectorDepotSimulation {
       const isAlerted = ((rival as any).playerAlertTicks || 0) > 0 || Boolean((rival as any).convergeOnPlayer);
 
       if (isAIRoster && !isAlerted) {
-        const aiPos = computeAIPosition(rival.id, this.tick);
-        const isManuallyPositioned = Math.hypot(rival.x - aiPos.x, rival.z - aiPos.z) > 5.0;
-        if (!isManuallyPositioned) {
-          rival.x = aiPos.x;
-          rival.z = aiPos.z;
-          rival.facing = aiPos.facing;
-          rival.action = 'walk';
-          continue;
+        // Detection runs before patrol: an unalerted roster AI must still
+        // spot or hear a close player instead of patrolling past them.
+        const detectDx = this.player.x - rival.x;
+        const detectDz = this.player.z - rival.z;
+        const detectDist = Math.hypot(detectDx, detectDz);
+        const visualRange = this.player.isCrouching ? 15.0 : this.player.action === 'sprint' ? 36.0 : 28.0;
+        const auditoryRange = this.player.isCrouching ? 4.0 : this.player.action === 'sprint' ? 24.0 : 10.0;
+        const forwardDot = detectDist > 0.001
+          ? (detectDx * Math.sin(rival.facing) + detectDz * Math.cos(rival.facing)) / detectDist
+          : 1;
+        const spotted =
+          (detectDist <= visualRange && forwardDot > -0.25 &&
+            !this.checkContainerRayObstruction(rival.x, rival.z, this.player.x, this.player.z, 1.0, 1.0)) ||
+          detectDist <= auditoryRange;
+        if (spotted) {
+          (rival as any).playerAlertTicks = 300;
+        } else {
+          const aiPos = computeAIPosition(rival.id, this.tick);
+          const isManuallyPositioned = Math.hypot(rival.x - aiPos.x, rival.z - aiPos.z) > 5.0;
+          if (!isManuallyPositioned) {
+            rival.x = aiPos.x;
+            rival.z = aiPos.z;
+            rival.facing = aiPos.facing;
+            rival.action = 'walk';
+            continue;
+          }
         }
       }
 
