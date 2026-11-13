@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { rundotGameLibrariesPlugin } from "@series-inc/rundot-game-sdk/vite";
 import path from "path";
 
 /**
@@ -9,13 +10,15 @@ import path from "path";
  * @series-inc/rundot-syncplay and @series-inc/rundot-synchub.
  */
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), rundotGameLibrariesPlugin()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ["react", "react-dom", "three", "@react-three/fiber"],
   },
   optimizeDeps: {
+    exclude: ["@series-inc/rundot-game-sdk"],
     esbuildOptions: {
       target: "esnext",
     },
