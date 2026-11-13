@@ -5,12 +5,11 @@ export default defineConfig({
   testMatch: /.*\.spec\.ts/,
   timeout: 30000,
   use: {
-    baseURL: "http://localhost:5196",
+    baseURL: "http://localhost:58392",
   },
   webServer: {
     command: "npm run dev",
-    cwd: "/Users/pany/dev/run-workshop/games/stick-zone",
-    url: "http://localhost:5196/?testMode=1",
+    url: "http://localhost:58392/?testMode=1",
     reuseExistingServer: true,
     timeout: 30000,
   },

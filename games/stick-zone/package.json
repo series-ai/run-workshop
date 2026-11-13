@@ -7,24 +7,24 @@
   "scripts": {
     "dev": "vite --port 58392",
     "build": "node scripts/stage-inkline-assets.mjs && tsc && vite build",
-    "preview": "node scripts/kill-port.mjs 48392 && vite preview --port 48392",
+    "preview": "vite preview --port 48392",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "record:proofs": "node scripts/record-gameplay.mjs",
-    "start": "node scripts/kill-port.mjs 48392 && vite preview --port 48392",
-    "predev": "node scripts/stage-inkline-assets.mjs && node scripts/kill-port.mjs 58392"
+    "start": "vite preview --port 48392",
+    "predev": "node scripts/stage-inkline-assets.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.10",
-    "@series-inc/rundot-syncplay": "^6.0.0-rc.37",
+    "@series-inc/rundot-syncplay": "^6.0.0-rc.80",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "~0.170.0",
     "zustand": "^5.0.0",
-    "@series-inc/rundot-game-sdk": "^5.28.0"
+    "@series-inc/rundot-game-sdk": "^5.36.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.6",
