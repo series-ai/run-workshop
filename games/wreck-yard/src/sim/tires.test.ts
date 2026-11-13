@@ -25,7 +25,7 @@ describe('loose tires', () => {
     for (const id of TIRES) expect(state.bodies.find((body) => body.id === id)).toMatchObject({ material: 'rubber', collider: 'cylinder' });
   });
 
-  it('roll more than 8 m on the tread from a 5 m/s push, and stay upright', () => {
+  it('roll more than 6 m on the tread from a 5 m/s push, and stay upright', () => {
     const sim = testSim(1);
     const q = Math.SQRT1_2;
     // On its edge: a quarter turn about x puts the axis along z. It rolls along +x.
@@ -42,7 +42,10 @@ describe('loose tires', () => {
     });
     const state = runTicks(sim, 90);
     const tire = physicsStateBodyById(state.world, 'loose-tire-4')!;
-    expect(tire.x).toBeGreaterThan(8);
+    // The physics engine builds a cylinder collider as a 16-sided prism, so a rolling tire hops on its edges and
+    // loses speed at each one. The roll measures 6.64 m and moves between 6.13 and 6.80 m when the push changes
+    // by 1e-6 to 1e-2 m/s. The old engine rolled a round cylinder 10.9 m.
+    expect(tire.x).toBeGreaterThan(6);
     expect(tire.y - FLOOR_Y).toBeCloseTo(0.52, 1);
   });
 
