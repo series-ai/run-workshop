@@ -10,7 +10,7 @@ import * as THREE from "three";
 export const SharedMaterials = {
   inkBlack: new THREE.MeshBasicMaterial({ color: "#151716" }),
   inkBlackDoubleSided: new THREE.MeshBasicMaterial({ color: "#151716", side: THREE.DoubleSide }),
-  seamJoint: new THREE.MeshBasicMaterial({ color: "#151716", transparent: true, opacity: 0.25 }),
+  seamJoint: new THREE.MeshBasicMaterial({ color: "#475569", transparent: true, opacity: 0.55 }),
   shadowDark: new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.45 }),
   cyanGlow: new THREE.MeshBasicMaterial({ color: "#38bdf8" }),
   cyanVisor: new THREE.MeshBasicMaterial({ color: "#51E5F0" }),

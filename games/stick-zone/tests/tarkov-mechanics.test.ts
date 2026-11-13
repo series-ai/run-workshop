@@ -1504,8 +1504,8 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
       scale: 1.0,
     });
     expect(rotatedBox).toBeDefined();
-    expect(rotatedBox?.maxX - rotatedBox?.minX!).toBeCloseTo(0.7, 1);
-    expect(rotatedBox?.maxZ - rotatedBox?.minZ!).toBeCloseTo(2.2, 1);
+    expect((rotatedBox!.maxX) - (rotatedBox!.minX)).toBeCloseTo(0.7, 1);
+    expect((rotatedBox!.maxZ) - (rotatedBox!.minZ)).toBeCloseTo(2.2, 1);
 
     // 2. Placed FOB prefabs generate physical collision automatically in game simulation
     expect(FOB_PREFABS.length).toBeGreaterThanOrEqual(15);

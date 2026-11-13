@@ -463,6 +463,7 @@ function LoadedCharacter({
         onSampleBones({ footR: footPos, handR: handPos });
       }
     }
+    const liveFacing = operative ? operative.facing : facing;
     const liveAliveCheck = operative ? operative.isAlive : isAlive;
     const liveRollingCheck = operative ? operative.isRolling : isRolling;
     if (muzzleTipRef.current && isHoldingFirearm && liveAliveCheck && !liveRollingCheck && liveAction !== "kick") {

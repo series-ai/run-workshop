@@ -78,12 +78,14 @@ const CameraController: React.FC<{
   isCorridorActive?: boolean;
   sim: SectorDepotSimulation;
   recoilImpulseRef: React.MutableRefObject<[number, number]>;
-}> = ({ playerPos, isCorridorActive, sim, recoilImpulseRef }) => {
+}> = ({ playerPos, sim, recoilImpulseRef }) => {
   const isTestMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("testMode") === "1";
+  const initialCamY = 16.0;
+  const initialCamZ = sim.zoneMode === "hub" ? 7.5 : 6.46;
   const baseCameraPos = useRef(
     isTestMode
       ? new THREE.Vector3(0, 10.0, -10.0)
-      : new THREE.Vector3(playerPos.x, playerPos.y + 16.0, playerPos.z + 6.46)
+      : new THREE.Vector3(playerPos.x, playerPos.y + initialCamY, playerPos.z + initialCamZ)
   );
   const baseCameraTarget = useRef(
     isTestMode
@@ -99,7 +101,15 @@ const CameraController: React.FC<{
       Boolean((window as any).__STICK_ZONE_TEST__?.isPaused);
     if (isPaused) return;
 
-    const lerpFactor = 1 - Math.exp(-6 * Math.min(delta, 0.1));
+    // Responsive 14Hz exp dampening for immediate, silky smooth camera tracking
+    const lerpFactor = 1 - Math.exp(-14 * Math.min(delta, 0.1));
+
+    // Dynamic extraction presentation check from live simulation state
+    const exfilState = sim.exfilController.getState();
+    const isCorridor =
+      exfilState.kind === "corridor_presentation" ||
+      exfilState.kind === "submitting_settlement" ||
+      exfilState.kind === "extracted";
 
     let desiredX: number;
     let desiredY: number;
@@ -116,7 +126,7 @@ const CameraController: React.FC<{
       targetX = 0;
       targetY = 0;
       targetZ = 0;
-    } else if (isCorridorActive) {
+    } else if (isCorridor) {
       // Cinematic low-angle corridor vantage
       desiredX = playerPos.x + 3.0;
       desiredY = playerPos.y + 4.0;
@@ -125,16 +135,20 @@ const CameraController: React.FC<{
       targetY = playerPos.y + 1.2;
       targetZ = playerPos.z;
     } else if (sim.zoneMode === "hub") {
-      // FOB Outpost tactical staging vantage with subtle aim look-ahead
+      // FOB Outpost tactical staging vantage with smooth responsive aim look-ahead
       const vx = (sim.slideTicksRemaining > 0 ? sim.slideVx : sim.walkVx) || 0;
       const vz = (sim.slideTicksRemaining > 0 ? sim.slideVz : sim.walkVz) || 0;
-      const hubLead = computeCameraLookAhead(sim.player.facing, { x: vx, z: vz }, { aimLeadDistance: 1.2, maxOffset: 2.2 });
+      const hubLead = computeCameraLookAhead(sim.player.facing, { x: vx, z: vz }, {
+        aimLeadDistance: 1.8,
+        velocityLeadFactor: 0.25,
+        maxOffset: 3.2,
+      });
       desiredX = playerPos.x + hubLead.offsetX;
-      desiredY = playerPos.y + 20.0;
-      desiredZ = playerPos.z + hubLead.offsetZ + 10.0;
+      desiredY = playerPos.y + 16.0;
+      desiredZ = playerPos.z + hubLead.offsetZ + 7.5;
       targetX = playerPos.x + hubLead.offsetX;
-      targetY = playerPos.y + 1.2;
-      targetZ = playerPos.z + hubLead.offsetZ - 1.0;
+      targetY = playerPos.y + 1.0;
+      targetZ = playerPos.z + hubLead.offsetZ;
     } else {
       // Top-down tactical extraction vantage (68.0 deg tactical angle)
       // Look-ahead tracking downrange crosshair and movement velocity
@@ -148,7 +162,7 @@ const CameraController: React.FC<{
         isAds: sim.isAds,
       });
       const lookAhead = computeCameraLookAhead(sim.player.facing, { x: vx, z: vz }, {
-        aimLeadDistance: sim.isAds ? 3.6 : 2.2,
+        aimLeadDistance: sim.isAds ? 3.6 : 2.4,
         velocityLeadFactor: isSprinting ? 0.38 : 0.30,
         maxOffset: 4.8,
       });
@@ -1008,8 +1022,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = React.memo(({ sim }) => {
   const isCorridor =
     sim.exfilController.getState().kind === "corridor_presentation" ||
     sim.exfilController.getState().kind === "submitting_settlement" ||
-    sim.exfilController.getState().kind === "extracted" ||
-    sim.zoneMode === "airlock_corridor";
+    sim.exfilController.getState().kind === "extracted";
 
   // Test harness registration for Playwright suites
   useEffect(() => {
@@ -1144,8 +1157,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = React.memo(({ sim }) => {
             ? [0, 10.0, -10.0]
             : [
                 sim.player.x,
-                sim.player.y + (sim.zoneMode === "hub" ? 20.0 : 16.0),
-                sim.player.z + (sim.zoneMode === "hub" ? 10.0 : 6.46),
+                sim.player.y + 16.0,
+                sim.player.z + (sim.zoneMode === "hub" ? 7.5 : 6.46),
               ],
           fov: 46,
         }}

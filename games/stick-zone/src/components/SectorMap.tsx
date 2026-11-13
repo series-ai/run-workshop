@@ -588,15 +588,15 @@ export const SectorMap: React.FC<SectorMapProps> = React.memo(({ crates, lastDum
       vertOffset += 4;
     }
 
-    // 27 Z seams
+    // 27 Z seams across district terrain (every 6 meters)
     for (let i = 0; i < 27; i++) {
       const z = -80 + i * 6;
-      addQuad(-80, 80, z - 0.025, z + 0.025, -0.045);
+      addQuad(-80, 80, z - 0.045, z + 0.045, 0.005);
     }
-    // 27 X seams
+    // 27 X seams across district terrain (every 6 meters)
     for (let i = 0; i < 27; i++) {
       const x = -80 + i * 6;
-      addQuad(x - 0.025, x + 0.025, -80, 80, -0.045);
+      addQuad(x - 0.045, x + 0.045, -80, 80, 0.005);
     }
 
     geom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));

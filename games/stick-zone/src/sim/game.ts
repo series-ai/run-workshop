@@ -1316,13 +1316,13 @@ export class SectorDepotSimulation {
     this.ingressController = new StagedIngressController();
     this.cameraPos = {
       x: initialZone === "hub" ? 0 : SIM_CONFIG.SPAWN_SQUAD_A.x,
-      y: initialZone === "hub" ? 20.0 : 16.0,
-      z: (initialZone === "hub" ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z) + (initialZone === "hub" ? 10.0 : 6.46),
+      y: 16.0,
+      z: (initialZone === "hub" ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z) + (initialZone === "hub" ? 7.5 : 6.46),
     };
     this.cameraTarget = {
       x: initialZone === "hub" ? 0 : SIM_CONFIG.SPAWN_SQUAD_A.x,
       y: 1.0,
-      z: (initialZone === "hub" ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z) + (initialZone === "hub" ? -1.0 : 0),
+      z: initialZone === "hub" ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z,
     };
     this.cameraFov = 46.0;
 
@@ -2035,8 +2035,8 @@ export class SectorDepotSimulation {
   public enterSpatialAirlock(): void {
     if (this.zoneMode === 'airlock_corridor' || this.zoneMode === 'spoke') return;
     this.zoneMode = 'airlock_corridor';
-    this.airlockTimerMs = Date.now() + 2500;
-    this.combatLog.push();
+    this.airlockTimerMs = Date.now() + 1000;
+    this.combatLog.push('[AIRLOCK] Approaching Sector 7 bulkhead gateway.');
   }
 
   public returnToHub(): void {
@@ -2096,22 +2096,19 @@ export class SectorDepotSimulation {
     this.tick += 1;
 
     if (this.zoneMode === 'airlock_corridor') {
-      if (Date.now() >= this.airlockTimerMs) {
+      if (Date.now() >= this.airlockTimerMs || this.player.z >= -48) {
         this.zoneMode = 'spoke';
-        this.player.z = -46;
         this.player.isInvulnerable = true;
         (this.player as any).ingressShieldTicks = 180; // 3.0s invulnerability grace
         this.ingressController.activate(this.tick);
         this.combatLog.push('[INGRESS] Operative deployed into Sector 7. 3.0s tactical shield active.');
       }
-      return;
     }
 
     if (this.zoneMode === 'hub') {
       const distToAirlock = Math.hypot(this.player.x, this.player.z - (-52));
-      if (distToAirlock < 3.2 || (input.interact && distToAirlock < 6.0)) {
+      if (this.player.z >= -52 || distToAirlock < 3.2 || (input.interact && distToAirlock < 6.0)) {
         this.enterSpatialAirlock();
-        return;
       }
     }
 
