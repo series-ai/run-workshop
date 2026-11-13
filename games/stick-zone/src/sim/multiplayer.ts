@@ -1421,13 +1421,10 @@ export class MultiplayerCoordinator {
         if (typeof data?.x === "number" && typeof data?.z === "number") {
           const last = this.lastSubmittedPos ?? { x: data.x, z: data.z };
           try {
-            const intent = movementIntent(
-              {
-                dx: (data.x - last.x) / COOP_MAX_MOVE_PER_TICK,
-                dz: (data.z - last.z) / COOP_MAX_MOVE_PER_TICK,
-              },
-              COOP_MAX_MOVE_PER_TICK,
-            );
+            const intent = movementIntent({
+              dx: (data.x - last.x) / COOP_MAX_MOVE_PER_TICK,
+              dz: (data.z - last.z) / COOP_MAX_MOVE_PER_TICK,
+            });
             this.spokeSession.submitIntent(intent);
             this.lastSubmittedPos = {
               x: last.x + (intent.moveX ?? 0),

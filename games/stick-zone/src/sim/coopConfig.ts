@@ -9,7 +9,6 @@
  * renderer interpolates between confirmed ticks.
  */
 import type { RaidRulesConfig } from "@series-inc/rundot-syncplay/modules/extraction";
-import { SIM_CONFIG } from "./config.js";
 
 export const PLATFORM_MAX_TICK_RATE_HZ = 10;
 export const PLATFORM_MAX_DEADLINE_TICK = 1200;
@@ -56,7 +55,11 @@ export function buildCoopRaidRules(): RaidRulesConfig {
     ],
     deadlinePolicy: "burn-unextracted",
     raidDeadlineTick,
-    maxMoveSpeedPerTick: SIM_CONFIG.SPEED_SPRINT / RAID_TICK_RATE_HZ,
+    // The gateway bounds wire movement to [-1, 1] and the owner applies
+    // it unscaled, so confirmed speed caps at 1 m/tick (4 m/s at 4 Hz)
+    // regardless of this value. Keep it at the wire cap so replay and
+    // live clamps agree. Local sprint (7.5 m/s) stays presentation-only.
+    maxMoveSpeedPerTick: 1,
     maxAttackRangeFixed: 30,
     maxAttackDamageFixed: 200,
   };

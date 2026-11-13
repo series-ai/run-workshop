@@ -75,10 +75,12 @@ function admittedState(): RaidState {
 }
 
 describe("coop adapter intents against real stepRaidTick", () => {
-  it("movement intent clamps to max speed and moves the actor", () => {
-    const intent = movementIntent({ dx: 1, dz: 1 }, CONFIG.maxMoveSpeedPerTick!);
+  it("movement intent stays inside the wire bound and moves the actor", () => {
+    const intent = movementIntent({ dx: 1, dz: 1 });
     const magnitude = Math.hypot(intent.moveX!, intent.moveZ!);
-    expect(magnitude).toBeCloseTo(1.5, 6);
+    expect(magnitude).toBeCloseTo(1, 6);
+    expect(Math.abs(intent.moveX!)).toBeLessThanOrEqual(1);
+    expect(Math.abs(intent.moveZ!)).toBeLessThanOrEqual(1);
 
     const next = stepRaidTick(admittedState(), { 0: intent });
     expect(next.actors[0].x).toBeCloseTo(intent.moveX!, 6);
@@ -87,8 +89,7 @@ describe("coop adapter intents against real stepRaidTick", () => {
   });
 
   it("rejects non-finite movement and invalid attack or pickup ids", () => {
-    expect(() => movementIntent({ dx: Number.NaN, dz: 0 }, 1.5)).toThrow();
-    expect(() => movementIntent({ dx: 0, dz: 0 }, -1)).toThrow();
+    expect(() => movementIntent({ dx: Number.NaN, dz: 0 })).toThrow();
     expect(() => attackIntent(-1, 25)).toThrow();
     expect(() => attackIntent(1.5, 25)).toThrow();
     expect(() => attackIntent(4, 0)).toThrow();

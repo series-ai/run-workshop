@@ -34,26 +34,21 @@ function requirePickupId(value: string, name: string): string {
 }
 
 /**
- * Local axis input -> per-tick movement delta. Axes are strengths in
- * [-1, 1]; the result scales to maxMoveSpeedPerTick with the vector
- * magnitude clamped to that speed, matching the server clamp in
- * stepRaidTick.
+ * Local axis input -> wire movement intent. The gateway schema bounds
+ * moveX/moveZ to [-1, 1] and the raid owner applies them unscaled in
+ * stepRaidTick, so the wire format is a normalized direction whose
+ * magnitude is at most 1 (one meter per tick at full deflection).
+ * Anything outside that bound is rejected by the owner, so this
+ * function never emits it.
  */
-export function movementIntent(axes: MoveAxes, maxMoveSpeedPerTick: number): PlayerRaidIntent {
-  const maxSpeed = requireFinite(maxMoveSpeedPerTick, "maxMoveSpeedPerTick");
-  if (maxSpeed <= 0) {
-    throw new Error(`[coopAdapter] maxMoveSpeedPerTick must be positive, got ${maxSpeed}`);
-  }
+export function movementIntent(axes: MoveAxes): PlayerRaidIntent {
   const dx = Math.max(-1, Math.min(1, requireFinite(axes.dx, "dx")));
   const dz = Math.max(-1, Math.min(1, requireFinite(axes.dz, "dz")));
-  let moveX = dx * maxSpeed;
-  let moveZ = dz * maxSpeed;
-  const magnitude = Math.hypot(moveX, moveZ);
-  if (magnitude > maxSpeed) {
-    moveX = (moveX / magnitude) * maxSpeed;
-    moveZ = (moveZ / magnitude) * maxSpeed;
+  const magnitude = Math.hypot(dx, dz);
+  if (magnitude > 1) {
+    return { moveX: dx / magnitude, moveZ: dz / magnitude };
   }
-  return { moveX, moveZ };
+  return { moveX: dx, moveZ: dz };
 }
 
 export function attackIntent(targetSlot: number, damage: number): PlayerRaidIntent {

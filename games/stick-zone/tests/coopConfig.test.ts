@@ -39,11 +39,11 @@ describe("coop raid rules conversion", () => {
     expect(rules.deadlinePolicy).toBe("burn-unextracted");
   });
 
-  it("derives per-tick speed from the local sprint speed", () => {
-    expect(rules.maxMoveSpeedPerTick).toBeCloseTo(
-      SIM_CONFIG.SPEED_SPRINT / RAID_TICK_RATE_HZ,
-      10,
-    );
+  it("caps per-tick speed at the wire movement bound", () => {
+    // Gateway schema bounds moveX/moveZ to [-1, 1] and the owner applies
+    // them unscaled: confirmed speed is at most 1 m/tick at any tick rate.
+    expect(rules.maxMoveSpeedPerTick).toBe(1);
+    expect(SIM_CONFIG.SPEED_SPRINT).toBeGreaterThan(RAID_TICK_RATE_HZ);
   });
 
   it("uses the released mode key, not the display name", () => {
