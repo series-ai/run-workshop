@@ -14,7 +14,9 @@ export const SIM_CONFIG = {
   AI_FALLBACK_TICK: 7_200,      // 2:00 zero-liquidity rogue AI spawn
   RAID_DEADLINE_TICK: 54_000,   // 15:00 raid closing & burn deadline
 
-  // Exfil Timings (grounded in rundot/synchub.config.json)
+  // Exfil Timings (grounded in rundot/synchub.config.json). Local 60 Hz
+  // ticks: server dwell is the separate extractionZones.dwellTicks value
+  // (12 ticks at the 4 Hz raid rate in coopConfig.ts), also 3.0s.
   EXFIL_HOLD_TICKS: synchubConfig.airlock.holdTicks,        // 3.0s physical hold inside green smoke
   AIRLOCK_CORRIDOR_DURATION_MS: synchubConfig.airlock.corridorDurationMs, // 2.5s corridor presentation lock
   EXFIL_ZONE_RADIUS: synchubConfig.extractionZones[0].radius,       // 6 meter extraction LZ radius

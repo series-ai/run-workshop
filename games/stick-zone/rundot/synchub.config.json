@@ -1,8 +1,10 @@
 {
   "hubId": "stick-zone-hub",
   "spokeId": "sector-7-depot",
-  "sector": "Sector 7 Depot",
-  "mode": "hardcore_extraction",
+  "sector": "sector-7-depot",
+  "mode": "coop_extraction",
+  "tickRateHz": 4,
+  "raidDeadlineTick": 1200,
   "extractionZones": [
     {
       "id": "lz_sector_7",
@@ -11,7 +13,7 @@
       "y": 0,
       "z": 45,
       "radius": 6,
-      "dwellTicks": 180
+      "dwellTicks": 12
     }
   ],
   "escrow": {
