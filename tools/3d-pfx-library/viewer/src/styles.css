@@ -598,6 +598,7 @@ textarea {
 
 .pfx-transport {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
@@ -635,7 +636,7 @@ textarea {
 }
 
 .pfx-transport input[type='range'] {
-  flex: 1;
+  flex: 1 1 120px;
   min-width: 120px;
   accent-color: #22d3ee;
 }
@@ -975,6 +976,12 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  /* One column: the side rail must not create an implicit second column. */
+  .pfx-detail > .pfx-controls {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
   .pfx-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -996,4 +1003,243 @@ textarea {
   .pfx-quick-searches {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Material group inside each emitter panel (MaterialInspector.tsx). */
+.pfx-material-quality {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  background: #111827;
+  padding: 10px 12px;
+}
+
+.pfx-material-quality label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.pfx-material-quality select,
+.pfx-material select,
+.pfx-material input[type="number"] {
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.pfx-material {
+  margin: 0 10px 10px;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  background: #111827;
+}
+
+.pfx-material summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.pfx-material summary:focus-visible,
+.pfx-material button:focus-visible,
+.pfx-material input:focus-visible,
+.pfx-material select:focus-visible,
+.pfx-material-status:focus-visible,
+.pfx-material-quality select:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+.pfx-material-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.pfx-material-path {
+  color: #94a3b8;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.pfx-material-body {
+  display: grid;
+  gap: 8px;
+  padding: 4px 10px 10px;
+  min-width: 0;
+}
+
+.pfx-material-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 8px 10px 10px;
+}
+
+.pfx-material-group legend {
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.pfx-material-feature {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  align-items: end;
+  min-width: 0;
+}
+
+.pfx-material-feature > .pfx-material-check,
+.pfx-material-feature > .pfx-material-note,
+.pfx-material-feature > .pfx-material-reason,
+.pfx-material-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* A grid, not display: contents, so the ARIA group stays in the tree. */
+.pfx-material-vec,
+.pfx-material-life {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  align-items: end;
+  min-width: 0;
+}
+
+.pfx-material-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.pfx-material-field abbr {
+  text-decoration: none;
+  text-transform: none;
+  color: #94a3b8;
+}
+
+.pfx-material-field input[type="color"] {
+  width: 42px;
+  min-height: 30px;
+  padding: 0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #1f2937;
+}
+
+.pfx-material-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.pfx-material-check input {
+  accent-color: #22d3ee;
+}
+
+.pfx-material :disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pfx-material input[aria-invalid="true"] {
+  border-color: #f87171;
+}
+
+.pfx-material-note,
+.pfx-material-reason,
+.pfx-material-status,
+.pfx-control-note {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #94a3b8;
+  overflow-wrap: anywhere;
+}
+
+.pfx-control-note {
+  display: block;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.pfx-material-reason {
+  color: #fbbf24;
+}
+
+.pfx-material-error,
+.pfx-material-error-text {
+  margin: 0;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  background: #1f1315;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #fecaca;
+  overflow-wrap: anywhere;
+}
+
+.pfx-material-error p {
+  margin: 0 0 4px;
+  color: #fecaca;
+}
+
+.pfx-material-unavailable {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.pfx-material-unavailable button,
+.pfx-material-actions button,
+.pfx-material-error button {
+  margin-left: 6px;
+  padding: 3px 10px;
+  background: #1f2937;
+  color: #7dd3fc;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.pfx-material-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.pfx-material-actions button {
+  margin-left: 0;
 }

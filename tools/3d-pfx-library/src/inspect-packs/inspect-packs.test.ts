@@ -14,6 +14,8 @@ import {
 import { INSPECT_PACK_ITEMS, selectInspectPackItems } from './items'
 import { getDuelystSpriteRecipe } from './duelystRecipes'
 import { getPirateRecipe, PIRATE_RECIPES } from './pirateRecipes'
+import { RVX_RECIPES } from './rvxRecipes'
+import { hasPfxEffect } from '../PfxById'
 import { DUELYST_SHEET_DEFS } from './textures'
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
@@ -31,7 +33,7 @@ function pngFilesUnder(dir: string): string[] {
 describe('inspect packs', () => {
   it('ships inspect-pack textures as PNG images, not Git LFS pointers', () => {
     const assetsRoot = fileURLToPath(new URL('../../assets', import.meta.url))
-    const pngs = ['burger-shop', 'duelyst', 'pirate-nation'].flatMap((folder) =>
+    const pngs = ['burger-shop', 'duelyst', 'pirate-nation', 'run-voxel'].flatMap((folder) =>
       pngFilesUnder(join(assetsRoot, folder)),
     )
     expect(pngs.length).toBeGreaterThan(20)
@@ -51,8 +53,9 @@ describe('inspect packs', () => {
     expect(INSPECT_PACK_ITEMS.filter((item) => item.effect.id.startsWith('pirate-'))).toHaveLength(
       PIRATE_RECIPES.length,
     )
+    expect(INSPECT_PACK_ITEMS.filter((item) => item.effect.id.startsWith('rvx-'))).toHaveLength(RVX_RECIPES.length)
     expect(INSPECT_PACK_IDS).toHaveLength(
-      BURGER_SHOP_RECIPES.length + DUELYST_SHEET_DEFS.length + PIRATE_RECIPES.length,
+      BURGER_SHOP_RECIPES.length + DUELYST_SHEET_DEFS.length + PIRATE_RECIPES.length + RVX_RECIPES.length,
     )
   })
 
@@ -187,5 +190,24 @@ describe('inspect packs', () => {
     expect(selectInspectPackItems({ effectType: ['weather'] }).every((item) => item.effect.effectType === 'weather')).toBe(
       true,
     )
+  })
+
+  it('resolves RUN voxel and catalog effect ids by id', () => {
+    for (const recipe of RVX_RECIPES) expect(hasPfxEffect(recipe.id)).toBe(true)
+    expect(hasPfxEffect('coin-pickup-sparkle')).toBe(true)
+    expect(hasPfxEffect('rvx-nope')).toBe(false)
+    for (const recipe of RVX_RECIPES) {
+      expect(recipe.id).toMatch(/^rvx-(fantasy|space|monster|apocalypse)-[a-z0-9-]+$/)
+      expect(recipe.emitters.length).toBeGreaterThan(0)
+    }
+  })
+
+  it('keeps effect-ids.json in step with the ranked catalog (npm run effect-ids)', () => {
+    const exported = JSON.parse(readFileSync(fileURLToPath(new URL('../../effect-ids.json', import.meta.url)), 'utf8')) as {
+      catalog: string[]
+      rvx: { id: string; looping: boolean }[]
+    }
+    expect(exported.catalog).toEqual(PFX_TAXONOMY.map((effect) => effect.id))
+    expect(exported.rvx).toEqual(RVX_RECIPES.map((recipe) => ({ id: recipe.id, looping: recipe.looping })))
   })
 })

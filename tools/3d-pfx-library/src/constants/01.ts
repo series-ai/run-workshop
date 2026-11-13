@@ -273,7 +273,7 @@ export const PFX_CONTROL_DEFINITIONS: PfxControlDefinition[] = [
   { key: 'turbulence', label: 'Turbulence', kind: 'range', min: 0, max: 2, step: 0.05 },
   { key: 'spawnShape', label: 'Spawn Shape', kind: 'select', options: ['point', 'cone', 'sphere', 'ring', 'box', 'line', 'mesh'] },
   { key: 'texture', label: 'Texture', kind: 'select', options: ['soft-disc', 'spark', 'streak', 'ring', 'square', 'bubble'] },
-  { key: 'flipbook', label: 'Flipbook', kind: 'select', options: ['none', 'smoke-8', 'flame-8', 'magic-12', 'impact-6'] },
+  { key: 'flipbook', label: 'Legacy pulse', kind: 'select', options: ['none', 'smoke-8', 'flame-8', 'magic-12', 'impact-6'] },
   { key: 'blendMode', label: 'Blend Mode', kind: 'select', options: ['additive', 'alpha', 'multiply', 'screen'] },
   { key: 'emissiveBloom', label: 'Emissive Bloom', kind: 'range', min: 0, max: 1.5, step: 0.05 },
   { key: 'trailLength', label: 'Trail Length', kind: 'range', min: 0, max: 3, step: 0.05 },

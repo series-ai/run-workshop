@@ -9,6 +9,17 @@ export default authoredRecipe('flame-burst', 'Flame burst', 'Particle-first flam
       countScale: 0.64, speedScale: 2.25, speedJitter: 0.44, drag: 1.15, gravity: -1.4,
       spawnScale: 0.16, depthScale: 2.8, size: [0.16, 0.46, 0.12], spinScale: 0.55,
       stretch: 0.32, flicker: 1.3, death: 'erode', ease: 'snap', turbulenceScale: 0.1, positionOffset: [0, 0.04, 0],
+      material: {
+        uv: { scale: [1, 1], offset: [0, 0], rotation: 0, scroll: [0, 0.18], wrap: 'repeat' },
+        distortion: {
+          kind: 'noise', map: 'noise-a', direction: [0.45, 1], scroll: [0.12, 0.35],
+          strength: { kind: 'life', values: [0.008, 0.02, 0] },
+        },
+        dissolve: {
+          map: 'noise-a', progress: { kind: 'life', values: [-0.05, 0.02, 0.68] },
+          softness: 0.06, edgeWidth: 0.025, edgeColor: '#ffbd3d',
+        },
+      },
       referenceSource: 'flame-burst-folded-tongues-and-CC0-flame-sprite-language',
       referenceAdaptation: 'the blossom tongues become a staggered upward fountain of unequal flame cells with real depth',
       referenceLicense: 'repo-original-and-CC0-1.0',

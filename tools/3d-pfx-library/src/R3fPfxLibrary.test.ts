@@ -4,7 +4,21 @@ import fs from 'node:fs'
 import path from 'node:path'
 import * as THREE from 'three'
 import * as PfxLibrary from './index'
+import { createElement } from 'react'
+import { renderToString } from 'react-dom/server'
+import { PfxMaterialHostContractError, getPfxMaterialDefines, resolvePfxMaterialBinding, syncPfxMaterialUniforms } from './materials/bindings'
+import { PfxById } from './PfxById'
+import { PfxRecipeOverrideMismatchError } from './tooling/01'
+import { getPfxEmissionResourceKey } from './materials/keys'
+import { buildPfxMeshShaderMaterial } from './constants/06'
 import { PFX_SPRITE_SLICES } from './particleSprites'
+import * as RuneBurst from './effects/runeBurstInscription'
+import * as HealingBurst from './effects/healingBurstRestoration'
+import * as HolyBurst from './effects/holyBurstConsecration'
+import * as AcidBurst from './effects/acidBurstCorrosiveSplash'
+import * as SlimeBurst from './effects/slimeBurstElasticSplat'
+import { applyPfxDissolveUniforms, createPfxDissolveLifecycle, createPfxDissolveRuntimeState } from './effects/dissolveErodingProp'
+import { applyPfxPoisonCloudUniforms, createPfxPoisonCloudGasGeometry, createPfxPoisonCloudRuntimeState } from './effects/poisonCloudGasBank'
 import {
   PFX_BURST_CYCLE_MULTIPLIER,
   PFX_MATERIALIZE_GATHER_TARGET_HEIGHT_CEILING,
@@ -168,6 +182,218 @@ function completedRedTeamRows(
       : review,
   )
 }
+
+type BatchTwoClock = Parameters<typeof RuneBurst.createPfxRuneBurstRuntimeState>[0]
+
+function batchTwoRuntimeCheck<State extends { cycle: number; stage: string }>(
+  createState: (input: BatchTwoClock, target?: State) => State,
+  applyUniforms: (material: THREE.ShaderMaterial, state: State, opacity: number, reducedMotion: boolean) => void,
+) {
+  return (clock: BatchTwoClock, period: number, stages: string[], materials: THREE.ShaderMaterial[]) => {
+    const phases = [0.04, 0.24, 0.62, 0.94]
+    const target = createState(clock)
+    expect(phases.map((phase) => createState({ ...clock, elapsedSeconds: phase * period }).stage)).toEqual(stages)
+    for (const phase of phases) {
+      const input = { ...clock, elapsedSeconds: phase * period }
+      const state = createState(input, target)
+      expect(state).toBe(target)
+      expect(Math.abs(state.cycle - phase)).toBeLessThan(1e-12)
+      const repeat = createState({ ...input, elapsedSeconds: (3 + phase) * period })
+      expect(Math.abs(repeat.cycle - state.cycle)).toBeLessThan(1e-12)
+      expect(repeat.stage).toBe(state.stage)
+      const reduced = createState({ ...input, reducedMotion: true })
+      expect(reduced.cycle).toBe(state.cycle)
+      expect(reduced.stage).toBe(state.stage)
+      for (const material of materials) {
+        applyUniforms(material, state, 0.6, false)
+        expect(material.uniforms.uCycle!.value).toBe(state.cycle)
+        expect(material.uniforms.uOpacity!.value).toBe(state.stage === 'rest' ? 0 : 0.6)
+        expect(material.uniforms.uMotion!.value).toBe(1)
+        const flare = material.uniforms.uFlare!.value
+        applyUniforms(material, reduced, 0.6, true)
+        expect(material.uniforms.uCycle!.value).toBe(state.cycle)
+        expect(material.uniforms.uOpacity!.value).toBe(state.stage === 'rest' ? 0 : 0.6)
+        expect(material.uniforms.uMotion!.value).toBeGreaterThan(0)
+        expect(material.uniforms.uMotion!.value).toBeLessThan(1)
+        expect(material.uniforms.uFlare!.value).toBeLessThanOrEqual(flare)
+        applyUniforms(material, state, 0, false)
+        expect(material.uniforms.uOpacity!.value).toBe(0)
+      }
+    }
+    for (const phase of [0.9, 0.95, 0.999]) {
+      const rest = createState({ ...clock, elapsedSeconds: phase * period })
+      expect(rest.stage).toBe('rest')
+      for (const material of materials) {
+        applyUniforms(material, rest, 1, false)
+        expect(material.uniforms.uOpacity!.value).toBe(0)
+      }
+    }
+  }
+}
+
+const BATCH_TWO_EFFECTS = [
+  {
+    effectId: 'rune-burst', palette: ['#f8fafc', '#60a5fa'], period: 0.897423141975923,
+    shaderKeys: ['rune-burst-inscription', 'rune-burst-glyph-fragments'], stages: ['assemble', 'activate', 'release', 'rest'],
+    materialPolicies: [
+      { blending: THREE.NormalBlending, depthWrite: false },
+      { blending: THREE.NormalBlending, depthWrite: false },
+    ],
+    bodyGeometry: RuneBurst.createPfxRuneBurstBodyGeometry,
+    accentGeometry: RuneBurst.createPfxRuneBurstAccentGeometry,
+    checkRuntime: batchTwoRuntimeCheck(RuneBurst.createPfxRuneBurstRuntimeState, RuneBurst.applyPfxRuneBurstUniforms),
+  },
+  {
+    effectId: 'healing-burst', palette: ['#37d982', '#d7f8df', '#fff0b0'], period: 0.9921885329265192,
+    shaderKeys: ['healing-burst-restoration-weave', 'healing-burst-renewal-motes'], stages: ['assemble', 'activate', 'release', 'rest'],
+    materialPolicies: [
+      { blending: THREE.NormalBlending, depthWrite: false },
+      { blending: THREE.NormalBlending, depthWrite: false },
+    ],
+    bodyGeometry: HealingBurst.createPfxHealingBurstBodyGeometry,
+    accentGeometry: HealingBurst.createPfxHealingBurstAccentGeometry,
+    checkRuntime: batchTwoRuntimeCheck(HealingBurst.createPfxHealingBurstRuntimeState, HealingBurst.applyPfxHealingBurstUniforms),
+  },
+  {
+    effectId: 'holy-burst', palette: ['#fff9e6', '#ffc83d', '#9edcff'], period: 1.318816933638444,
+    shaderKeys: ['holy-burst-consecration-rays', 'holy-burst-sanctity-feathers'], stages: ['assemble', 'activate', 'release', 'rest'],
+    materialPolicies: [
+      { blending: THREE.NormalBlending, depthWrite: false },
+      { blending: THREE.NormalBlending, depthWrite: false },
+    ],
+    bodyGeometry: HolyBurst.createPfxHolyBurstBodyGeometry,
+    accentGeometry: HolyBurst.createPfxHolyBurstAccentGeometry,
+    checkRuntime: batchTwoRuntimeCheck(HolyBurst.createPfxHolyBurstRuntimeState, HolyBurst.applyPfxHolyBurstUniforms),
+  },
+  {
+    effectId: 'acid-burst', palette: ['#3f9f2f', '#d9ff47'], period: 1.08750643115942,
+    shaderKeys: ['acid-burst-corrosive-splash', 'acid-burst-caustic-spray'], stages: ['impact', 'eruption', 'recede', 'rest'],
+    materialPolicies: [
+      { blending: THREE.NormalBlending, depthWrite: false },
+      { blending: THREE.NormalBlending, depthWrite: false },
+    ],
+    bodyGeometry: AcidBurst.createPfxAcidBurstBodyGeometry,
+    accentGeometry: AcidBurst.createPfxAcidBurstAccentGeometry,
+    checkRuntime: batchTwoRuntimeCheck(AcidBurst.createPfxAcidBurstRuntimeState, AcidBurst.applyPfxAcidBurstUniforms),
+  },
+  {
+    effectId: 'slime-burst', palette: ['#2c8f45', '#b8ff75'], period: 1.1412507162360848,
+    shaderKeys: ['slime-burst-elastic-splat', 'slime-burst-sticky-drops'], stages: ['impact', 'stretch', 'recoil', 'rest'],
+    materialPolicies: [
+      { blending: THREE.NormalBlending, depthWrite: true },
+      { blending: THREE.NormalBlending, depthWrite: true },
+    ],
+    bodyGeometry: SlimeBurst.createPfxSlimeBurstBodyGeometry,
+    accentGeometry: SlimeBurst.createPfxSlimeBurstAccentGeometry,
+    checkRuntime: batchTwoRuntimeCheck(SlimeBurst.createPfxSlimeBurstRuntimeState, SlimeBurst.applyPfxSlimeBurstUniforms),
+  },
+]
+
+function assertBatchTwoRecipe(effectId: string) {
+  const contract = BATCH_TWO_EFFECTS.find((entry) => entry.effectId === effectId)
+  if (!contract) throw new Error(`Missing batch contract: ${effectId}`)
+  const preset = createPfxPreset(effectId)
+  const plan = getPfxRenderPlan(preset)
+  expect(validatePfxPreset(preset)).toEqual({ valid: true, errors: [] })
+  expect(preset.controls.spawnShape).toBe(effectId === 'rune-burst' ? 'mesh' : 'point')
+  expect(preset.controls.color).toEqual(contract.palette)
+  if (effectId === 'acid-burst') expect(preset.controls.density).toBe(0.58)
+  expect(plan.surfaces).toHaveLength(2)
+  expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(3)
+  expect(plan.surfaces.map((surface) => surface.tuning?.meshShader)).toEqual(contract.shaderKeys)
+  expect(plan.surfaces.some((surface) => ['screen-plane', 'ring-field', 'shockwave-ring', 'cloud-volume'].includes(surface.kind))).toBe(false)
+  expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
+  expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
+  expect(plan.surfaces.every((surface) => PfxLibrary.shouldApplyPfxSurfaceCameraFacing(surface, 3, false))).toBe(false)
+  expect(PfxLibrary.createPfxEmitterPhysicsFindings(plan)).toEqual([])
+  const recipe = PfxLibrary.AUTHORED_EFFECT_RECIPES[effectId]
+  expect(PfxLibrary.parsePfxAuthoredRecipeJson(JSON.stringify(recipe))).toEqual(recipe)
+  expect(Math.abs(PfxLibrary.getPfxBurstCycleSeconds(preset) - contract.period)).toBeLessThan(1e-12)
+  return { preset, plan, contract }
+}
+
+describe('batch two authored burst contracts', () => {
+  it('keeps source and license records for the authored paths', () => {
+    const missing = BATCH_TWO_EFFECTS.flatMap(({ effectId }) =>
+      getPfxRenderPlan(createPfxPreset(effectId)).surfaces
+        .filter((surface) => !surface.tuning?.referenceSource?.trim()
+          || !surface.tuning.referenceAdaptation?.trim()
+          || !['CC0-1.0', 'repo-original', 'repo-original-and-CC0-1.0'].includes(surface.tuning.referenceLicense ?? ''))
+        .map((surface) => `${effectId}:${surface.phase}`),
+    )
+    expect(missing).toEqual([])
+  })
+
+  for (const contract of BATCH_TWO_EFFECTS) {
+    it(`runs ${contract.effectId} through two supported shader paths with the retained clock`, () => {
+      const { preset, plan } = assertBatchTwoRecipe(contract.effectId)
+      const geometries = [contract.bodyGeometry(), contract.accentGeometry()]
+      const materials: THREE.ShaderMaterial[] = []
+      try {
+        for (const [index, surface] of plan.surfaces.entries()) {
+          const shader = surface.tuning?.meshShader
+          if (!shader) throw new Error(`Missing authored shader: ${surface.phase}`)
+          const material = buildPfxMeshShaderMaterial(shader, getPfxSurfaceMaterialProps(surface, preset.controls))
+          materials.push(material)
+          expect(material).toBeInstanceOf(THREE.ShaderMaterial)
+          expect(material.transparent).toBe(true)
+          expect(material).toMatchObject(contract.materialPolicies[index]!)
+          // Original procedural geometry needs no imported texture or scene pass.
+          expect(Object.values(material.uniforms).some((uniform) => uniform.value instanceof THREE.Texture)).toBe(false)
+          const geometry = geometries[index]!
+          const position = geometry.getAttribute('position')
+          expect(position.count).toBeGreaterThan(0)
+          const indices = geometry.getIndex()!
+          expect(indices.count).toBeGreaterThan(0)
+          expect(Array.from(indices.array).every((vertex) => Number.isInteger(vertex) && vertex >= 0 && vertex < position.count)).toBe(true)
+          expect(geometry.groups.length).toBeLessThanOrEqual(1)
+          for (const attribute of Object.values(geometry.attributes)) {
+            expect(attribute.count).toBe(position.count)
+            expect(Array.from(attribute.array).every(Number.isFinite)).toBe(true)
+          }
+          const repeat = index === 0 ? contract.bodyGeometry() : contract.accentGeometry()
+          try {
+            for (const [name, attribute] of Object.entries(geometry.attributes)) {
+              expect(Array.from(repeat.getAttribute(name).array)).toEqual(Array.from(attribute.array))
+            }
+            expect(Array.from(repeat.getIndex()!.array)).toEqual(Array.from(geometry.getIndex()!.array))
+          } finally {
+            repeat.dispose()
+          }
+          const redControls = { ...preset.controls, color: ['#ff0000', '#ff0000', '#ff0000'] }
+          const cyanControls = { ...preset.controls, color: ['#00ffff', '#00ffff', '#00ffff'] }
+          const red = buildPfxMeshShaderMaterial(shader, getPfxSurfaceMaterialProps(surface, redControls))
+          const cyan = buildPfxMeshShaderMaterial(shader, getPfxSurfaceMaterialProps(surface, cyanControls))
+          try {
+            // Material tones can include highlights from the control color.
+            const redColor: THREE.Color = red.uniforms.uColor!.value
+            const cyanColor: THREE.Color = cyan.uniforms.uColor!.value
+            expect(redColor).toBeInstanceOf(THREE.Color)
+            expect(cyanColor).toBeInstanceOf(THREE.Color)
+            expect([redColor.r, redColor.g, redColor.b, cyanColor.r, cyanColor.g, cyanColor.b].every(Number.isFinite)).toBe(true)
+            expect(redColor.r).toBeGreaterThan(redColor.g)
+            expect(redColor.r).toBeGreaterThan(redColor.b)
+            expect(cyanColor.r).toBeLessThan(cyanColor.g)
+            expect(cyanColor.r).toBeLessThan(cyanColor.b)
+            expect(red.uniforms.uHot!.value).not.toEqual(cyan.uniforms.uHot!.value)
+          } finally {
+            red.dispose()
+            cyan.dispose()
+          }
+        }
+        const clock = {
+          elapsedSeconds: 0, timing: preset.controls.timing, lifetime: preset.controls.lifetime,
+          tempo: plan.tempo, motionMultiplier: getPfxStyleRenderProfile(preset.controls.style).motionMultiplier,
+          cycleScale: 1, reducedMotion: false,
+        }
+        contract.checkRuntime(clock, contract.period, contract.stages, materials)
+      } finally {
+        for (const geometry of geometries) geometry.dispose()
+        for (const material of materials) material.dispose()
+      }
+    })
+  }
+})
 
 describe('r3f-pfx-library catalog contracts', () => {
   it('requires a current passing quality-matrix row as the sixth production-ready evidence slot', () => {
@@ -872,17 +1098,16 @@ describe('r3f-pfx-library catalog contracts', () => {
         'shockwave-burst-bowed-pressure-front',
         'dust-burst-radial-rolling-crown',
         'debris-burst-asymmetric-breakup',
-        'rune-burst-script-flash',
+        'rune-burst-body',
         'beam-burst-core-lance',
-        'plasma-burst-ion-core',
-        'water-burst-splash-ring',
+        'plasma-burst-ion-packet',
+        'water-burst-splash-crown',
         'snow-burst-radial-crystal-bloom',
         'poison-burst-particle-bruised-cloud',
-        'healing-burst-reference-cross-motes',
+        'healing-burst-body',
       ]),
     )
-    // Healing burst intentionally uses a small authored particle vocabulary,
-    // with the cross, halo, and seed release carrying separate timing jobs.
+    // The new bursts use two authored paths for each effect.
     expect(new Set(phases).size).toBeGreaterThanOrEqual(57)
   })
 
@@ -922,12 +1147,12 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(phases).toEqual(
       expect.arrayContaining([
-        'holy-burst-reference-sun-flare',
+        'holy-burst-body',
         'curse-burst-particle-void-knot',
         'portal-burst-vortex-rim',
-        'teleport-burst-arrival-ring',
+        'teleport-burst-spatial-slices',
         'shield-burst-shell-flash',
-        'dash-burst-speed-pop',
+        'dash-burst-shear-ribbons',
         'reward-burst-screen-prize',
         'target-burst-reticle-open',
         'warning-burst-alert-ring',
@@ -1844,17 +2069,32 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(manifest.effects[0].styleRender).toMatchObject(pixelForceField.styleRender)
   })
 
-  it('maps flipbook and authored phase controls to runtime animation props', () => {
+  it('maps legacy pulse and authored phase controls to runtime animation props', () => {
+    // The four old flipbook names are a legacy brightness pulse, not frame
+    // sheets: the renderer consumes only the opacity and size multipliers.
+    // Real atlas playback is proven on rendered frames by
+    // viewer/scripts/verify-material-controls.ts --case shader.
     const fireball = createPfxPreset('fireball')
     const flameStart = getPfxFlipbookFrameProps({ ...fireball.controls, flipbook: 'flame-8' }, 0)
     const flameLater = getPfxFlipbookFrameProps({ ...fireball.controls, flipbook: 'flame-8' }, 0.42)
     const noFlipbook = getPfxFlipbookFrameProps({ ...fireball.controls, flipbook: 'none' }, 0.42)
+    const frameAnimated = getPfxFlipbookFrameProps({ ...fireball.controls, flipbook: 'flame-8' }, 0.42, 'frame-animation')
 
+    expect(PfxLibrary.PFX_CONTROL_DEFINITIONS.find((control) => control.key === 'flipbook')?.label).toBe('Legacy pulse')
     expect(flameStart.frameCount).toBe(8)
     expect(flameLater.frameIndex).not.toBe(flameStart.frameIndex)
     expect(flameLater.uvOffset[0]).toBeGreaterThanOrEqual(0)
+    expect(flameLater.opacityMultiplier).not.toBe(flameStart.opacityMultiplier)
     expect(flameLater.opacityMultiplier).not.toBe(noFlipbook.opacityMultiplier)
     expect(noFlipbook.frameCount).toBe(1)
+    // Only an explicit frameAnimation removes the pulse.
+    expect(frameAnimated.opacityMultiplier).toBe(1)
+    expect(frameAnimated.sizeMultiplier).toBe(1)
+    // The no-pulse value is one shared frozen object; its type is read-only too.
+    expect(() => {
+      // @ts-expect-error PfxFlipbookFrameProps tuples are read-only.
+      frameAnimated.uvOffset[0] = 0.5
+    }).toThrow(TypeError)
 
     const firePlan = getPfxRenderPlan(fireball)
     const forceFieldPlan = getPfxRenderPlan(createPfxPreset('force-field'))
@@ -3590,29 +3830,43 @@ describe('r3f-pfx-library catalog contracts', () => {
     geometry.dispose()
   })
 
-  it('authors poison cloud as a spatial pigment-gas field instead of wire bubble shells or a hard backing mesh', () => {
-    const surfaces = getPfxRenderPlan(createPfxPreset('poison-cloud')).surfaces
-
-    expect(surfaces.some((surface) => surface.kind === 'bubble-shells')).toBe(false)
-    expect(surfaces.some((surface) => surface.kind === 'toxic-billows')).toBe(false)
-    const pool = surfaces.find((surface) => surface.kind === 'toxic-pool')!
-    expect(pool.tuning?.meshMotion).toBeUndefined()
-
-    const drift = surfaces.find((surface) => surface.phase === 'spore-drift')!
-    expect(drift.tuning).toMatchObject({ motion: 'drift-cloud', ramp: 'pigment' })
-    expect(drift.tuning!.countScale).toBeGreaterThanOrEqual(0.75)
-    expect(drift.tuning!.spawnScale).toBeGreaterThanOrEqual(1.5)
-    expect(drift.tuning!.depthScale).toBeGreaterThanOrEqual(3)
-
-    const spores = surfaces.find((surface) => surface.phase === 'toxic-spore-motes')!
-    expect(spores.tuning).toMatchObject({
-      motion: 'drift-cloud',
-      sprite: 'glow',
-      blend: 'additive',
-    })
-    expect(spores.tuning!.countScale).toBeGreaterThanOrEqual(0.1)
-    expect(spores.tuning!.countScale).toBeLessThanOrEqual(0.2)
-    expect(spores.tuning!.depthScale).toBeGreaterThanOrEqual(3)
+  it('keeps the poison gas spatial, translucent and continuous across the hazard loop', () => {
+    const preset = createPfxPreset('poison-cloud')
+    const plan = getPfxRenderPlan(preset)
+    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(3)
+    expect(plan.surfaces.some((surface) => surface.kind === 'bubble-shells' || surface.kind === 'toxic-billows')).toBe(false)
+    const gas = plan.surfaces.find((surface) => surface.kind === 'toxic-pool')!
+    expect(gas.tuning?.meshMotion).toBeUndefined()
+    const materials = plan.surfaces.map((surface) => buildPfxMeshShaderMaterial(surface.tuning!.meshShader!, PfxLibrary.getPfxSurfaceMaterialProps(surface, preset.controls)))
+    const geometry = createPfxPoisonCloudGasGeometry()
+    try {
+      const homes = geometry.getAttribute('aPuff')
+      const x = Array.from({ length: homes.count }, (_, i) => homes.getX(i))
+      const z = Array.from({ length: homes.count }, (_, i) => homes.getZ(i))
+      expect(Math.max(...x) - Math.min(...x)).toBeGreaterThan(1)
+      expect(Math.max(...z) - Math.min(...z)).toBeGreaterThan(1)
+      const clock = { timing: 1, lifetime: 1, tempo: 1, motionMultiplier: 1, cycleScale: 1 }
+      for (const phase of [0, 0.125, 0.25, 0.5, 0.75, 0.99]) {
+        const current = createPfxPoisonCloudRuntimeState({ ...clock, elapsedSeconds: PFX_BURST_CYCLE_MULTIPLIER * phase })
+        const replay = createPfxPoisonCloudRuntimeState({ ...clock, elapsedSeconds: PFX_BURST_CYCLE_MULTIPLIER * (1 + phase) })
+        expect(replay.cycle).toBeCloseTo(current.cycle, 10)
+        expect(replay.breath).toBeCloseTo(current.breath, 10)
+        for (const material of materials) {
+          expect(material.transparent).toBe(true)
+          expect(material.depthWrite).toBe(false)
+          applyPfxPoisonCloudUniforms(material, current, 0.6, false)
+          expect(material.uniforms.uOpacity!.value).toBe(0.6)
+          expect(material.uniforms.uCycle!.value).toBe(current.cycle)
+          applyPfxPoisonCloudUniforms(material, current, 0.6, true)
+          expect(material.uniforms.uOpacity!.value).toBe(0.6)
+          expect(material.uniforms.uCycle!.value).toBe(current.cycle)
+          expect(material.uniforms.uMotion!.value).toBeLessThan(1)
+        }
+      }
+    } finally {
+      geometry.dispose()
+      for (const material of materials) material.dispose()
+    }
   })
 
   it('puts the UI reward payout burst on the gem peak instead of after the payoff frame', () => {
@@ -3714,23 +3968,50 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(boundaryLate.opacityMultiplier).toBe(boundaryEarly.opacityMultiplier)
   })
 
-  it('exposes a progressive dissolve front and synchronizes released essence to it', () => {
-    const plan = getPfxRenderPlan(createPfxPreset('dissolve'))
-    const body = plan.surfaces.find((surface) => surface.phase === 'dissolve-eroding-subject')!
-    const motes = plan.surfaces.find((surface) => surface.phase === 'dissolve-edge-motes')!
+  it('erodes a solid subject before its released flakes retire, within two draws', () => {
+    const preset = createPfxPreset('dissolve')
+    const plan = getPfxRenderPlan(preset)
+    const body = plan.surfaces.find((surface) => surface.role === 'body')!
+    const fragments = plan.surfaces.find((surface) => surface.role === 'impact')!
     expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(2)
-    expect(body.tuning).toMatchObject({ meshShader: 'fresnel-shell', meshMotion: 'break', delay: 0 })
-    expect(body.tuning!.window).toBeGreaterThanOrEqual(0.65)
-    expect(motes.tuning).toMatchObject({ motion: 'column-rise', delay: 0 })
-    expect(motes.tuning!.window).toBeGreaterThanOrEqual(0.65)
-    expect(motes.tuning!.countScale).toBeGreaterThanOrEqual(0.5)
-    const breakProgress = (PfxLibrary as unknown as {
-      getPfxMeshBreakProgress: (surface: typeof body, cycle: number) => number
-    }).getPfxMeshBreakProgress
-    expect(breakProgress(body, 0)).toBe(0)
-    expect(breakProgress(body, 0.2)).toBeGreaterThan(0.2)
-    expect(breakProgress(body, 0.55)).toBeLessThan(1)
-    expect(breakProgress(body, 0.72)).toBe(1)
+    expect(plan.surfaces).toHaveLength(2)
+    const bodyMaterial = buildPfxMeshShaderMaterial(body.tuning!.meshShader!, PfxLibrary.getPfxSurfaceMaterialProps(body, preset.controls))
+    const fragmentMaterial = buildPfxMeshShaderMaterial(fragments.tuning!.meshShader!, PfxLibrary.getPfxSurfaceMaterialProps(fragments, preset.controls))
+    try {
+      expect(bodyMaterial.transparent).toBe(false)
+      expect(bodyMaterial.depthWrite).toBe(true)
+      expect(fragmentMaterial.depthWrite).toBe(false)
+      const states = Array.from({ length: 101 }, (_, i) => createPfxDissolveLifecycle(i / 100))
+      expect(states[0]!.progress).toBeLessThan(0)
+      for (let i = 1; i < states.length; i += 1) {
+        expect(states[i]!.progress).toBeGreaterThanOrEqual(states[i - 1]!.progress)
+      }
+      expect(states.some((state) => state.stage === 'erode' && state.progress > 0 && state.progress < 1)).toBe(true)
+      // The erosion field is bounded by 1. A release interval must remain
+      // after every body fragment is gone and before all flakes retire.
+      const release = states.find((state) => state.stage === 'release')!
+      expect(release).toBeDefined()
+      expect(release.progress).toBeGreaterThanOrEqual(1)
+      const restIndex = states.findIndex((state) => state.stage === 'rest')
+      expect(restIndex).toBeGreaterThan(states.indexOf(release))
+      expect(restIndex).toBeLessThan(100)
+      expect(states.slice(restIndex).every((state) => state.stage === 'rest' && state.heat === 0)).toBe(true)
+      const clock = { timing: 1, lifetime: 1, tempo: 1, motionMultiplier: 1, cycleScale: 1 }
+      const period = PFX_BURST_CYCLE_MULTIPLIER
+      const active = createPfxDissolveRuntimeState({ ...clock, elapsedSeconds: period * 0.45 })
+      applyPfxDissolveUniforms(bodyMaterial, active, 1, false)
+      applyPfxDissolveUniforms(fragmentMaterial, active, 1, false)
+      expect(bodyMaterial.uniforms.uProgress!.value).toBe(fragmentMaterial.uniforms.uProgress!.value)
+      const retired = createPfxDissolveRuntimeState({ ...clock, elapsedSeconds: period * 0.99 })
+      applyPfxDissolveUniforms(fragmentMaterial, retired, 1, false)
+      expect(retired.stage).toBe('rest')
+      expect(fragmentMaterial.uniforms.uOpacity!.value).toBe(0)
+      const replay = createPfxDissolveRuntimeState({ ...clock, elapsedSeconds: period + period * 0.45 })
+      expect(replay.progress).toBeCloseTo(active.progress, 10)
+    } finally {
+      bodyMaterial.dispose()
+      fragmentMaterial.dispose()
+    }
   })
 
   it('keeps the world portal face and rounded aperture rim on their authored plane', () => {
@@ -10886,38 +11167,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(getPfxSurfaceAnimationProps(plan.surfaces[0]!, preset.controls, 0.2).signature).toContain('mud-burst:')
   })
 
-  it('authors slime burst as a three-layer particle-first elastic splat with bubbles and a trailing ooze cloud', () => {
-    const preset = createPfxPreset('slime-burst')
-    const plan = getPfxRenderPlan(preset)
-    const crown = plan.surfaces.find((surface) => surface.phase === 'slime-burst-particle-sticky-contact')
-    const bubbles = plan.surfaces.find((surface) => surface.phase === 'slime-burst-particle-bubble-fountain')
-    const ooze = plan.surfaces.find((surface) => surface.phase === 'slime-burst-particle-ooze-cloud')
-
-    expect(preset.controls.color).toEqual(['#2c8f45', '#b8ff75'])
-    expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBeLessThanOrEqual(3)
-    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
-    expect(plan.surfaces.some((surface) => surface.kind === 'ring-field')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'shockwave-ring')).toBe(false)
-    expect(plan.surfaces.some((surface) => surface.kind === 'cloud-volume')).toBe(false)
-    expect(crown).toMatchObject({ kind: 'particles', role: 'impact', tuning: { motion: 'impact-burst', sprite: 'splat', lifecycle: 'slime-burst-particle-elasticity', blend: 'alpha', colorOverride: '#3b9f52' } })
-    expect(bubbles).toMatchObject({
-      kind: 'particles',
-      role: 'trail',
-      tuning: {
-        motion: 'cone-fountain',
-        sprite: 'bubble',
-        lifecycle: 'slime-burst-particle-elasticity',
-        blend: 'alpha',
-        colorOverride: '#b8ff75',
-      },
-    })
-    expect(ooze).toMatchObject({ kind: 'particles', role: 'volume', tuning: { motion: 'drift-cloud', sprite: 'smoke-variants', lifecycle: 'slime-burst-particle-elasticity' } })
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(crown!, 3, false)).toBe(false)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(bubbles!, 3, false)).toBe(false)
-
+  it('keeps the earlier slime burst geometry, material and lifecycle APIs', () => {
     const crownGeometry = PfxLibrary.createPfxSlimeBurstCrownGeometry()
     expect(crownGeometry.userData).toMatchObject({
       pfxSlimeBurstCrownDrawCalls: 1,
@@ -10964,7 +11214,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(bubbleGeometry.getAttribute('pfxSlimeBurstForm')).toBeDefined()
     bubbleGeometry.dispose()
 
-    const crownMaterial = PfxLibrary.createPfxSlimeBurstCrownMaterial(crown!.opacity, '#2c8f45', '#b8ff75', 0.58, 0.52)
+    const crownMaterial = PfxLibrary.createPfxSlimeBurstCrownMaterial(0.98, '#2c8f45', '#b8ff75', 0.58, 0.52)
     expect(crownMaterial).toBeInstanceOf(THREE.ShaderMaterial)
     expect(crownMaterial.blending).toBe(THREE.NormalBlending)
     expect(crownMaterial.depthWrite).toBe(false)
@@ -10987,7 +11237,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(crownMaterial.userData['pfxSlimeBurstMaterialProfile']).toBe('translucent-gel-crown-with-wet-rim')
     crownMaterial.dispose()
 
-    const bubbleMaterial = PfxLibrary.createPfxSlimeBurstBubbleMaterial(bubbles!.opacity, '#2c8f45', '#b8ff75', 0.58, 0.52)
+    const bubbleMaterial = PfxLibrary.createPfxSlimeBurstBubbleMaterial(0.94, '#2c8f45', '#b8ff75', 0.58, 0.52)
     expect(bubbleMaterial.blending).toBe(THREE.NormalBlending)
     expect(bubbleMaterial.depthWrite).toBe(false)
     expect(bubbleMaterial.depthTest).toBe(false)
@@ -11127,39 +11377,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(samples[3]).toEqual({ energy: 0, seed: 0, rupture: 0, disperse: 0, stage: 'rest' })
   })
 
-  it('authors acid burst as a three-layer wet particle eruption instead of rock-like meshes', () => {
-    const preset = createPfxPreset('acid-burst')
-    const plan = getPfxRenderPlan(preset)
-    const crown = plan.surfaces.find((surface) => surface.phase === 'acid-burst-particle-grounded-wet-scuff')
-    const vapor = plan.surfaces.find((surface) => surface.phase === 'acid-burst-particle-caustic-vapor')
-    const droplets = plan.surfaces.find((surface) => surface.phase === 'acid-burst-particle-droplet-column')
-
-    expect(preset.controls.color).toEqual(['#3f9f2f', '#d9ff47'])
-    expect(preset.controls.density).toBe(0.58)
-    expect(preset.controls.spawnShape).toBe('point')
-    expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBe(3)
-    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
-    expect(crown).toMatchObject({
-      kind: 'particles', role: 'impact', opacity: 0.92,
-      tuning: { motion: 'ground-scuff', sprite: 'splat', lifecycle: 'acid-burst-particle-eruption', blend: 'alpha', colorOverride: '#557c26', positionOffset: [0, -0.32, 0] },
-    })
-    expect(vapor).toMatchObject({
-      kind: 'particles', role: 'volume', opacity: 0.68,
-      tuning: { motion: 'drift-cloud', sprite: 'smoke-variants', lifecycle: 'acid-burst-particle-eruption', blend: 'alpha', colorOverride: '#779b32', positionOffset: [0, -0.18, 0] },
-    })
-    expect(droplets).toMatchObject({
-      kind: 'particles', role: 'trail', opacity: 0.84,
-      tuning: { motion: 'column-rise', sprite: 'bubble', lifecycle: 'acid-burst-particle-eruption', blend: 'alpha', colorOverride: '#d3ed5a', positionOffset: [0, -0.12, 0] },
-    })
-    expect(crown!.scale).toBeCloseTo(1.196)
-    expect(vapor!.scale).toBeCloseTo(1.357)
-    expect(droplets!.scale).toBeCloseTo(0.966)
-    expect(plan.surfaces.every((surface) => typeof surface.tuning?.referenceSource === 'string')).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.referenceLicense)).toBe(true)
-
+  it('keeps the earlier acid burst geometry, material and lifecycle APIs', () => {
     const crownGeometry = PfxLibrary.createPfxAcidBurstCrownGeometry()
     expect(crownGeometry.userData).toMatchObject({
       pfxAcidBurstCrownDrawCalls: 1,
@@ -11235,7 +11453,7 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(dropletGeometry.getAttribute('pfxAcidBurstForm')).toBeDefined()
     dropletGeometry.dispose()
 
-    const crownMaterial = PfxLibrary.createPfxAcidBurstCrownMaterial(crown!.opacity, '#3f9f2f', '#d9ff47', 0.58, 0.52)
+    const crownMaterial = PfxLibrary.createPfxAcidBurstCrownMaterial(0.92, '#3f9f2f', '#d9ff47', 0.58, 0.52)
     expect(crownMaterial.blending).toBe(THREE.NormalBlending)
     expect(crownMaterial.depthWrite).toBe(false)
     expect(crownMaterial.depthTest).toBe(false)
@@ -11300,13 +11518,13 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(crownMaterial.userData['pfxAcidBurstMaterialProfile']).toBe('translucent-corrosive-splash-with-flowing-caustic-meniscus')
     crownMaterial.dispose()
 
-    const neonCrownMaterial = PfxLibrary.createPfxAcidBurstCrownMaterial(crown!.opacity, '#06b6d4', '#67e8f9', 0.58, 0.9, '#22d3ee')
+    const neonCrownMaterial = PfxLibrary.createPfxAcidBurstCrownMaterial(0.92, '#06b6d4', '#67e8f9', 0.58, 0.9, '#22d3ee')
     expect(neonCrownMaterial.blending).toBe(THREE.AdditiveBlending)
     expect(neonCrownMaterial.toneMapped).toBe(false)
     expect(neonCrownMaterial.userData['pfxAcidBurstNeonMaterialProfile']).toBe('additive-emissive-neon')
     neonCrownMaterial.dispose()
 
-    const dropletMaterial = PfxLibrary.createPfxAcidBurstDropletMaterial(droplets!.opacity, '#3f9f2f', '#d9ff47', 0.58, 0.52)
+    const dropletMaterial = PfxLibrary.createPfxAcidBurstDropletMaterial(0.84, '#3f9f2f', '#d9ff47', 0.58, 0.52)
     expect(dropletMaterial.blending).toBe(THREE.AdditiveBlending)
     expect(dropletMaterial.depthWrite).toBe(false)
     expect(dropletMaterial.depthTest).toBe(false)
@@ -11338,53 +11556,6 @@ describe('r3f-pfx-library catalog contracts', () => {
     expect(samples[3]).toEqual({ energy: 0, pool: 0, eruption: 0, collapse: 0, stage: 'rest' })
   })
 
-  it('authors healing burst as a particle-first cross and halo from CC0/repo references', () => {
-    const preset = createPfxPreset('healing-burst')
-    const plan = getPfxRenderPlan(preset)
-    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
-
-    expect(preset.controls.color).toEqual(['#37d982', '#d7f8df', '#fff0b0'])
-    expect(preset.controls.spawnShape).toBe('point')
-    expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBe(3)
-    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
-    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['healing-cross', 'orbit-ring', 'column-rise'])
-    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['glow', 'glow', 'sparkle'])
-    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'healing-burst-restoration-release')).toBe(true)
-    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
-    expect(sources.every((source) => typeof source.referenceAdaptation === 'string')).toBe(true)
-    expect(sources.every((source) => ['CC0-1.0', 'repo-original', 'repo-original-and-CC0-1.0'].includes(source.referenceLicense as string))).toBe(true)
-    expect(new Set(sources.map((source) => source.referenceSource)).size).toBe(3)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(plan.surfaces[0]!, 3, false)).toBe(false)
-    expect(getPfxSurfaceAnimationProps(plan.surfaces[0]!, preset.controls, 0.2).signature).toContain('healing-burst:')
-  })
-
-  it('authors holy burst as particle-first sun, halo, and motes from CC0/repo references', () => {
-    const preset = createPfxPreset('holy-burst')
-    const plan = getPfxRenderPlan(preset)
-    const sources = plan.surfaces.map((surface) => surface.tuning as Record<string, unknown>)
-
-    expect(preset.controls.color).toEqual(['#fff9e6', '#ffc83d', '#9edcff'])
-    expect(preset.controls.spawnShape).toBe('point')
-    expect(plan.surfaces).toHaveLength(3)
-    expect(plan.estimatedDrawCalls).toBe(3)
-    expect(plan.tempo).toBeCloseTo(0.82)
-    expect(plan.surfaces.every((surface) => surface.kind === 'particles')).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshGeometry === undefined)).toBe(true)
-    expect(plan.surfaces.every((surface) => surface.tuning?.meshMotion === undefined)).toBe(true)
-    expect(plan.surfaces.map((surface) => surface.tuning?.motion)).toEqual(['impact-burst', 'orbit-ring', 'column-rise'])
-    expect(plan.surfaces.map((surface) => surface.tuning?.sprite)).toEqual(['sparkle', 'glow', 'sparkle'])
-    expect(plan.surfaces.every((surface) => surface.tuning?.lifecycle === 'holy-burst-consecration-release')).toBe(true)
-    expect(sources.every((source) => typeof source.referenceSource === 'string')).toBe(true)
-    expect(sources.every((source) => typeof source.referenceAdaptation === 'string')).toBe(true)
-    expect(sources.every((source) => ['CC0-1.0', 'repo-original', 'repo-original-and-CC0-1.0'].includes(source.referenceLicense as string))).toBe(true)
-    expect(new Set(sources.map((source) => source.referenceSource)).size).toBe(3)
-    expect(PfxLibrary.shouldApplyPfxSurfaceCameraFacing(plan.surfaces[0]!, 3, false)).toBe(false)
-    expect(getPfxSurfaceAnimationProps(plan.surfaces[0]!, preset.controls, 0.2).signature).toContain('holy-burst:')
-    expect(getPfxSurfaceAnimationProps(plan.surfaces[0]!, preset.controls, 0.02).scaleMultiplier).toBeGreaterThan(0.8)
-  })
 
   it('authors curse burst as a three-layer particle malediction distinct from the curse cone', () => {
     const preset = createPfxPreset('curse-burst')
@@ -20413,7 +20584,11 @@ describe('r3f-pfx-library catalog contracts', () => {
 
     expect(kindsOf('poison-cloud')).toContain('toxic-pool')
     expect(kindsOf('poison-cloud')).not.toContain('bubble-shells')
-    expect(surfacesOf('poison-cloud').find((surface) => surface.kind === 'toxic-pool')?.tuning?.meshShader).toBe('toxic-pool')
+    const poisonGas = surfacesOf('poison-cloud').find((surface) => surface.kind === 'toxic-pool')!
+    const poisonMaterial = buildPfxMeshShaderMaterial(poisonGas.tuning!.meshShader!, PfxLibrary.getPfxSurfaceMaterialProps(poisonGas, createPfxPreset('poison-cloud').controls))
+    expect(poisonMaterial.transparent).toBe(true)
+    expect(poisonMaterial.depthWrite).toBe(false)
+    poisonMaterial.dispose()
     // Element doctrine: ONE dissolve language — the fresnel-shell break
     // (noise-front erosion), not voxel confetti.
     expect(kindsOf('dissolve')).toContain('shield-shell')
@@ -21220,6 +21395,10 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
     ] as const
 
     for (const reference of referenceAdaptations) {
+      if (BATCH_TWO_EFFECTS.some((contract) => contract.effectId === reference.effectId)) {
+        assertBatchTwoRecipe(reference.effectId)
+        continue
+      }
       const plan = getPfxRenderPlan(createPfxPreset(reference.effectId))
       const surfaces = plan.surfaces.filter((surface) => surface.kind === 'particles')
       expect(surfaces, `${reference.effectId} particle surfaces`).toHaveLength(3)
@@ -21248,6 +21427,10 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
     ] as const
 
     for (const reference of references) {
+      if (BATCH_TWO_EFFECTS.some((contract) => contract.effectId === reference.effectId)) {
+        assertBatchTwoRecipe(reference.effectId)
+        continue
+      }
       const preset = createPfxPreset(reference.effectId)
       const surfaces = getPfxRenderPlan(preset).surfaces
       expect(preset.controls.spawnShape, `${reference.effectId} spawn shape`).toBe('point')
@@ -21299,6 +21482,10 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
     ] as const
 
     for (const reference of references) {
+      if (BATCH_TWO_EFFECTS.some((contract) => contract.effectId === reference.effectId)) {
+        assertBatchTwoRecipe(reference.effectId)
+        continue
+      }
       const preset = createPfxPreset(reference.effectId)
       const surfaces = getPfxRenderPlan(preset).surfaces
       expect(preset.controls.spawnShape, `${reference.effectId} spawn shape`).toBe('point')
@@ -21382,6 +21569,19 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
 
   it('keeps the audited particle stacks inside the craft-guide hero particle band', () => {
     for (const effectId of ['mud-burst', 'healing-burst', 'holy-burst', 'shadow-burst'] as const) {
+      const authored = BATCH_TWO_EFFECTS.find((contract) => contract.effectId === effectId)
+      if (authored) {
+        assertBatchTwoRecipe(effectId)
+        const geometry = authored.accentGeometry()
+        try {
+          const count = (geometry.getIndex()?.count ?? 0) / 6
+          expect(count, `${effectId} accent budget`).toBeGreaterThan(0)
+          expect(count, `${effectId} accent budget`).toBeLessThanOrEqual(60)
+        } finally {
+          geometry.dispose()
+        }
+        continue
+      }
       const preset = createPfxPreset(effectId)
       const plan = getPfxRenderPlan(preset)
       const particleCount = plan.surfaces
@@ -21424,5 +21624,178 @@ describe('r3f-pfx-library surface tuning (reference-derived recipes)', () => {
     // gravity unstretched. Two layers, two jobs.
     expect(plan.surfaces.some((surface) => (surface.tuning?.stretch ?? 0) > 1 && (surface.tuning?.gravity ?? 0) === 0)).toBe(true)
     expect(plan.surfaces.some((surface) => (surface.tuning?.gravity ?? 0) < 0 && (surface.tuning?.stretch ?? 0) === 0)).toBe(true)
+  })
+})
+
+describe('r3f-pfx-library material binding and resource keys', () => {
+  const flame = PfxLibrary.AUTHORED_EFFECT_RECIPES['flame-burst']!
+  const portal = PfxLibrary.AUTHORED_EFFECT_RECIPES['portal-idle-loop']!
+  const layer = (recipe: typeof flame, phase: string) => recipe.surfaces.find((surface) => surface.phase === phase)!
+  const withMaterial = (surface: ReturnType<typeof layer>, material: PfxLibrary.PfxMaterialTuning) =>
+    ({ ...surface, tuning: { ...surface.tuning, material } })
+  // T6 gives this pilot layer material settings. These contracts start from
+  // the source layer without them (the frozen no-feature input).
+  const withoutMaterial = (surface: ReturnType<typeof layer>) => {
+    const { material: _material, ...tuning } = surface.tuning ?? {}
+    return { ...surface, tuning }
+  }
+  const licks = withoutMaterial(layer(flame, 'flame-burst-particle-upward-licks'))
+  const dissolve = (progress: number) => ({ map: 'noise-a' as const, progress, softness: 0.05, edgeWidth: 0.1, edgeColor: '#ffffff' })
+  const bind = (surface: ReturnType<typeof layer>, quality: 'low' | 'high' = 'low', reducedMotion = false) =>
+    resolvePfxMaterialBinding({ effectId: 'flame-burst', surface, atlasRegistry: PfxLibrary.PFX_DEFAULT_ATLAS_REGISTRY, quality, reducedMotion })
+
+  it('keeps a layer without a material object on the original renderer', () => {
+    expect(bind(licks)).toBeNull()
+  })
+
+  it('separates scalar values from structure in the binding key', () => {
+    const low = bind(withMaterial(licks, { dissolve: dissolve(0.2) }))!
+    const high = bind(withMaterial(licks, { dissolve: dissolve(0.7) }))!
+    const masked = bind(withMaterial(licks, { dissolve: dissolve(0.2), mask: { map: 'mask-a', channel: 'b', strength: 1 } }))!
+    expect(high.structureKey).toBe(low.structureKey)
+    expect(masked.structureKey).not.toBe(low.structureKey)
+    expect(getPfxMaterialDefines(masked)).toMatchObject({ PFX_MAT_DISSOLVE: true, PFX_MAT_MASK: true })
+  })
+
+  it('drops high-only distortion on low quality and under reduced motion, with a named reason', () => {
+    const distortion = { kind: 'noise' as const, map: 'noise-a' as const, strength: 0.1, direction: [1, 0] as [number, number], scroll: [0, 0.5] as [number, number] }
+    const surface = withMaterial(licks, { distortion })
+    expect(bind(surface, 'low')!.disabled).toEqual([{ setting: 'distortion', reason: 'needs-high-quality' }])
+    expect(getPfxMaterialDefines(bind(surface, 'low')!).PFX_MAT_DISTORTION).toBeUndefined()
+    expect(getPfxMaterialDefines(bind(surface, 'high')!).PFX_MAT_DISTORTION).toBe(true)
+    expect(bind(surface, 'high', true)!.disabled).toEqual([{ setting: 'distortion', reason: 'reduced-motion' }])
+  })
+
+  it('freezes explicit frame animation under reduced motion', () => {
+    const surface = withMaterial(licks, { frameAnimation: { atlas: PfxLibrary.PFX_BUILTIN_ATLAS_IDS.smallFlame, frameBlend: true } })
+    expect(getPfxMaterialDefines(bind(surface)!)).toMatchObject({ PFX_MAT_FRAME_ANIMATION: true, PFX_MAT_FRAME_BLEND: true })
+    const frozen = getPfxMaterialDefines(bind(surface, 'low', true)!)
+    expect(frozen).toMatchObject({ PFX_MAT_FRAME_ANIMATION: true, PFX_MAT_FRAME_FROZEN: true })
+    expect(frozen.PFX_MAT_FRAME_BLEND).toBeUndefined()
+  })
+
+  it('rejects material settings on an unsupported path with the effect and layer', () => {
+    const vortex = layer(portal, 'vortex-rim')
+    expect(() => resolvePfxMaterialBinding({
+      effectId: 'portal-idle-loop',
+      surface: withMaterial(vortex, { rim: { power: 2, strength: 1 } }),
+      atlasRegistry: PfxLibrary.PFX_DEFAULT_ATLAS_REGISTRY,
+      quality: 'low',
+      reducedMotion: false,
+    })).toThrow(/portal-idle-loop.*vortex-rim/)
+  })
+
+  it('keys emissions by value and ignores the material subtree', () => {
+    const controls = createPfxPreset('flame-burst').controls
+    const key = (surface: ReturnType<typeof layer>) =>
+      getPfxEmissionResourceKey({ effectId: 'flame-burst', profile: 'directional-burst', reducedMotion: false, controls, surface })
+    expect(key(structuredClone(licks))).toBe(key(licks))
+    expect(key(withMaterial(licks, { dissolve: dissolve(0.4) }))).toBe(key(licks))
+    expect(key({ ...licks, opacity: licks.opacity * 0.5 })).not.toBe(key(licks))
+    expect(key(licks)).not.toBe(getPfxEmissionResourceKey({ effectId: 'flame-burst', profile: 'directional-burst', reducedMotion: false, controls: { ...controls, seed: controls.seed + 1 }, surface: licks }))
+  })
+
+  it('writes literal path tags only in the supported factories', () => {
+    const props = { opacity: 0.8, color: '#66ccff', blending: 'additive' as const, particleSizeMultiplier: 1, edgeHardness: 0.5 }
+    const tag = (shader: Parameters<typeof buildPfxMeshShaderMaterial>[0]) =>
+      buildPfxMeshShaderMaterial(shader, props).userData[PfxLibrary.PFX_MATERIAL_PATH_USERDATA_KEY]
+    expect(tag('fresnel-shell')).toBe('fresnel-shell')
+    expect(tag('hex-shell')).toBe('fresnel-shell')
+    expect(tag('vortex-swirl')).toBe('vortex-swirl')
+    expect(tag('portal-throat')).toBe('portal-throat')
+    expect(tag('heal-wave')).toBeUndefined()
+    expect(tag('combo-ring-meter')).toBeUndefined()
+    const throat = layer(portal, 'aperture-depth')
+    const throatBinding = resolvePfxMaterialBinding({
+      effectId: 'portal-idle-loop',
+      surface: withMaterial(throat, { rim: { power: 2.2, strength: 1 } }),
+      atlasRegistry: PfxLibrary.PFX_DEFAULT_ATLAS_REGISTRY,
+      quality: 'low',
+      reducedMotion: false,
+    })!
+    // A binding for one path never reaches another factory.
+    expect(() => buildPfxMeshShaderMaterial('vortex-swirl', props, throatBinding)).toThrow(/does not match/)
+    // An omitted rim colour feeds the factory's own hot colour.
+    const material = buildPfxMeshShaderMaterial('portal-throat', props, throatBinding)
+    expect((material.uniforms.uPfxRimColor!.value as THREE.Vector3).toArray()).toEqual((material.uniforms.uColorHot!.value as THREE.Vector3).toArray())
+  })
+
+  it('checks the material host contract before syncPfxMaterialUniforms writes', () => {
+    const props = { opacity: 0.8, color: '#66ccff', blending: 'additive' as const, particleSizeMultiplier: 1, edgeHardness: 0.5 }
+    const throatBinding = resolvePfxMaterialBinding({
+      effectId: 'portal-idle-loop',
+      surface: withMaterial(layer(portal, 'aperture-depth'), { rim: { power: 2.2, strength: 1 } }),
+      atlasRegistry: PfxLibrary.PFX_DEFAULT_ATLAS_REGISTRY,
+      quality: 'low',
+      reducedMotion: false,
+    })!
+    const contractError = (mutate: (userData: Record<string, unknown>) => void) => {
+      const material = buildPfxMeshShaderMaterial('portal-throat', props, throatBinding)
+      const power = material.uniforms.uPfxRimPower!.value
+      mutate(material.userData)
+      material.uniforms.uPfxRimPower!.value = -1
+      try {
+        syncPfxMaterialUniforms(material, throatBinding)
+      } catch (error) {
+        // Nothing was written before the check failed.
+        expect(material.uniforms.uPfxRimPower!.value).toBe(-1)
+        expect(power).toBe(2.2)
+        return error
+      }
+      throw new Error('expected a host contract error')
+    }
+    const missingConvention = contractError((userData) => { delete userData.pfxMaterialColorConvention })
+    expect(missingConvention).toBeInstanceOf(PfxMaterialHostContractError)
+    expect(missingConvention).toMatchObject({ name: 'PfxMaterialHostContractError', field: 'pfxMaterialColorConvention' })
+    expect(contractError((userData) => { userData.pfxMaterialColorConvention = 'linear' })).toMatchObject({ field: 'pfxMaterialColorConvention' })
+    expect(contractError((userData) => { delete userData.pfxBaselineHotColor })).toMatchObject({ field: 'pfxBaselineHotColor' })
+    expect(contractError((userData) => { userData.pfxBaselineHotColor = [1, 1, 1] })).toMatchObject({ field: 'pfxBaselineHotColor' })
+
+    // A valid host still syncs to the factory values.
+    const material = buildPfxMeshShaderMaterial('portal-throat', props, throatBinding)
+    const rimColor = material.uniforms.uPfxRimColor!.value as THREE.Vector3
+    rimColor.set(0, 0, 0)
+    syncPfxMaterialUniforms(material, throatBinding)
+    expect(rimColor.toArray()).toEqual((material.uniforms.uColorHot!.value as THREE.Vector3).toArray())
+  })
+})
+
+describe('r3f-pfx-library recipeOverride effect boundary', () => {
+  const flame = PfxLibrary.AUTHORED_EFFECT_RECIPES['flame-burst']!
+  const portal = PfxLibrary.AUTHORED_EFFECT_RECIPES['portal-idle-loop']!
+  const mismatch = (render: () => unknown) => {
+    try {
+      render()
+    } catch (error) {
+      return error
+    }
+    throw new Error('expected PfxRecipeOverrideMismatchError')
+  }
+
+  it('renders a matching override and keeps the registry recipe without one', () => {
+    const preset = createPfxPreset('flame-burst')
+    const copy = structuredClone(flame)
+    const plan = getPfxRenderPlan(preset, { recipeOverride: { ...copy, surfaces: copy.surfaces.slice(0, 1) } })
+    expect(plan.effectId).toBe('flame-burst')
+    expect(plan.surfaces).toHaveLength(1)
+    expect(getPfxRenderPlan(preset).surfaces).toHaveLength(flame.surfaces.length)
+  })
+
+  it('rejects an override for another effect with both IDs in getPfxRenderPlan', () => {
+    const error = mismatch(() => getPfxRenderPlan(createPfxPreset('flame-burst'), { recipeOverride: portal }))
+    expect(error).toBeInstanceOf(PfxRecipeOverrideMismatchError)
+    expect(error).toMatchObject({ name: 'PfxRecipeOverrideMismatchError', presetEffectId: 'flame-burst', overrideEffectId: 'portal-idle-loop' })
+    expect((error as Error).message).toContain("'portal-idle-loop'")
+    expect((error as Error).message).toContain("'flame-burst'")
+  })
+
+  it('rejects the mismatch through the PfxById and drop-in entry points', () => {
+    // Real React render of the public components. The plan throws before any
+    // R3F hook runs, so no Canvas is needed to observe the boundary.
+    const byId = mismatch(() => renderToString(createElement(PfxById, { effectId: 'flame-burst', recipeOverride: portal })))
+    expect(byId).toMatchObject({ name: 'PfxRecipeOverrideMismatchError', presetEffectId: 'flame-burst', overrideEffectId: 'portal-idle-loop' })
+    const FlameBurstPfx = createGamePfxComponent('flame-burst')
+    const dropIn = mismatch(() => renderToString(createElement(FlameBurstPfx, { recipeOverride: portal })))
+    expect(dropIn).toMatchObject({ name: 'PfxRecipeOverrideMismatchError', presetEffectId: 'flame-burst', overrideEffectId: 'portal-idle-loop' })
   })
 })

@@ -2,8 +2,12 @@ import * as THREE from 'three'
 import { PFX_FIREBALL_FLIPBOOK_ATLAS } from '../fireballFlipbook'
 import { PFX_FLAME_FLIPBOOK_ATLAS } from '../flameFlipbook'
 import { getPfxStyleRenderProfile } from '../constants/01'
-import { PFX_SPRITE_PARTICLE_VERTEX, getPfxParticleShapeProfile, getPfxSharedFireballFlipbookTexture, getPfxSharedFlameFlipbookTexture, getPfxSharedSpriteAtlasTexture } from '../constants/04'
+import { PFX_SPRITE_PARTICLE_VERTEX, getPfxParticleShapeProfile, getPfxSharedSpriteAtlasTexture } from '../constants/04'
 import { PFX_SPRITE_PARTICLE_FRAGMENT } from '../constants/05'
+import { PFX_DEFAULT_ATLAS_REGISTRY, resolvePfxLayerAtlas, type PfxLayerAtlas } from '../materials/atlas'
+import { createPfxMaterialUniforms, getPfxMaterialDefines, type PfxMaterialBinding } from '../materials/bindings'
+import { getPfxMaterialAtlasTexture } from '../materials/maps'
+import { PFX_MATERIAL_DEPTH_VARIANT_USERDATA_KEY, PFX_MATERIAL_PATH_USERDATA_KEY } from '../materials/types'
 import { getPfxParticleColorRamp } from './particleColor'
 import { getPfxSpriteVariantLayout } from './spriteVariant'
 import type { PfxControls } from '../types/01'
@@ -19,13 +23,26 @@ export function createPfxSpriteEmissionMaterial(
   feelVersion = 2,
   cycleScale = 1,
   tempo = 1,
+  /** Validated layer binding. Null keeps the original material. */
+  materialBinding: PfxMaterialBinding | null = null,
 ): THREE.ShaderMaterial {
   const tuning = surface.tuning
-  const flipbookAtlas = tuning?.flipbookAtlas === PFX_FIREBALL_FLIPBOOK_ATLAS.id
-    ? PFX_FIREBALL_FLIPBOOK_ATLAS
-    : PFX_FLAME_FLIPBOOK_ATLAS
-  const usesAuthoredFlipbook = tuning?.flipbookAtlas === flipbookAtlas.id
-  const animatesAuthoredFlipbook = usesAuthoredFlipbook && controls.flipbook !== 'none'
+  if (materialBinding && materialBinding.path.kind !== 'generic-sprite') {
+    throw new Error(`createPfxSpriteEmissionMaterial: binding path '${materialBinding.path.kind}' is not the generic sprite path`)
+  }
+  // One resolver for the old flipbookAtlas field and material.frameAnimation.
+  // Without a binding, the old field resolves through the built-in registry.
+  const layerAtlas: PfxLayerAtlas = materialBinding?.layerAtlas
+    ?? resolvePfxLayerAtlas(surface, PFX_DEFAULT_ATLAS_REGISTRY, surface.phase ?? surface.kind)
+  const atlas = layerAtlas.kind === 'none' ? null : layerAtlas.atlas
+  // Grid uniforms keep the flame sheet values on layers without an atlas, as before.
+  const flipbookAtlas = atlas ?? PFX_FLAME_FLIPBOOK_ATLAS
+  const usesAuthoredFlipbook = atlas !== null
+  const isFireballSheet = atlas?.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id
+  // The legacy path keeps its old switch: the controls.flipbook value. Real
+  // frame animation (frameAnimation) uses the descriptor and its own defines.
+  const animatesAuthoredFlipbook = layerAtlas.kind === 'legacy-flipbook-atlas' && controls.flipbook !== 'none'
+  const playsFrameAnimation = materialBinding?.active.frameAnimation ?? null
   const shape = getPfxParticleShapeProfile(emission.motionKind)
   const ramp = getPfxParticleColorRamp(controls, surface)
   const rampStyle =
@@ -139,11 +156,7 @@ export function createPfxSpriteEmissionMaterial(
       uStretch: { value: tuning?.stretch ?? shape.stretch },
       uAdditiveShrink: { value: materialProps.blending === 'additive' ? 1 : 0 },
       uAtlas: {
-        value: usesAuthoredFlipbook
-          ? flipbookAtlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id
-            ? getPfxSharedFireballFlipbookTexture()
-            : getPfxSharedFlameFlipbookTexture()
-          : getPfxSharedSpriteAtlasTexture(),
+        value: atlas ? getPfxMaterialAtlasTexture(atlas) : getPfxSharedSpriteAtlasTexture(),
       },
       // 5% inset: hot texels at cell borders render hard rectangle edges.
       uUvOffset: {
@@ -164,13 +177,13 @@ export function createPfxSpriteEmissionMaterial(
       uFlipbookColumns: { value: flipbookAtlas.columns },
       uFlipbookRows: { value: flipbookAtlas.rows },
       uFlipbookFrameCount: { value: animatesAuthoredFlipbook ? flipbookAtlas.frameCount : 1 },
-      uFlipbookFrameRate: { value: animatesAuthoredFlipbook ? 22 : 0 },
+      uFlipbookFrameRate: { value: animatesAuthoredFlipbook && atlas ? atlas.frameRate : 0 },
       // FireBall01 contains useful luminance structure but its white center
       // clips when several camera-facing cards overlap. Grade that heat into
       // a bounded red/orange/gold palette and use normal alpha compositing;
       // the separate gather motes still provide additive energy sparkle.
       uFlipbookTemperatureGrade: {
-        value: usesAuthoredFlipbook && flipbookAtlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id ? 1 : 0,
+        value: isFireballSheet ? 1 : 0,
       },
       uMaterializeEnergyGrade: {
         value:
@@ -180,7 +193,7 @@ export function createPfxSpriteEmissionMaterial(
             : 0,
       },
       uFlipbookTurbulentCells: {
-        value: usesAuthoredFlipbook && flipbookAtlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id ? 1 : 0,
+        value: isFireballSheet ? 1 : 0,
       },
       uSpriteAspect: {
         value: emission.motionKind === 'materialize-release'
@@ -223,18 +236,31 @@ export function createPfxSpriteEmissionMaterial(
       // Keep the GPU wrap interval in that same space or particles jump at
       // the unscaled boundary when the effect is enlarged.
       uBeamScale: { value: controls.scale },
+      ...(materialBinding ? createPfxMaterialUniforms(materialBinding, { convention: 'sprite-direct' }) : {}),
     },
-    defines,
+    defines: materialBinding ? { ...defines, ...getPfxMaterialDefines(materialBinding) } : defines,
     vertexShader: PFX_SPRITE_PARTICLE_VERTEX,
     fragmentShader: PFX_SPRITE_PARTICLE_FRAGMENT,
     transparent: true,
     blending: materialProps.blending === 'additive' ? THREE.AdditiveBlending : THREE.NormalBlending,
     depthWrite: false,
   })
-  if (usesAuthoredFlipbook) {
-    material.userData['pfxFlipbookAtlas'] = flipbookAtlas.id
-    material.userData['pfxFlipbookLicense'] = flipbookAtlas.license
-    material.userData['pfxFlipbookReducedMotion'] = animatesAuthoredFlipbook ? 'animated' : 'frozen-first-frame'
+  // Literal shared-material path of this factory.
+  material.userData[PFX_MATERIAL_PATH_USERDATA_KEY] = 'generic-sprite'
+  if (materialBinding) material.userData.pfxMaterialColorConvention = 'sprite-direct'
+  // The depth-fade variant. PfxSurface tags its hard-depth fallback.
+  if (materialBinding?.active.softParticles) material.userData[PFX_MATERIAL_DEPTH_VARIANT_USERDATA_KEY] = 'soft'
+  if (atlas) {
+    const license = atlas.id === PFX_FIREBALL_FLIPBOOK_ATLAS.id
+      ? PFX_FIREBALL_FLIPBOOK_ATLAS.license
+      : atlas.id === PFX_FLAME_FLIPBOOK_ATLAS.id
+        ? PFX_FLAME_FLIPBOOK_ATLAS.license
+        : null
+    material.userData['pfxFlipbookAtlas'] = atlas.id
+    if (license) material.userData['pfxFlipbookLicense'] = license
+    material.userData['pfxFlipbookReducedMotion'] = playsFrameAnimation
+      ? playsFrameAnimation.frozen ? 'frozen-first-frame' : 'animated'
+      : animatesAuthoredFlipbook ? 'animated' : 'frozen-first-frame'
   }
   if (surface.phase === 'flame-charge-braided-fire-convergence') {
     material.userData['pfxFlameChargeGather'] = 'three-continuous-converging-lanes'

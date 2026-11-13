@@ -46,7 +46,11 @@ function applyEuler(point: [number, number, number], euler: [number, number, num
   return [x, y, z]
 }
 
-function emitDirection(shape: BurgerShopShape, random: () => number): [number, number, number] {
+function emitDirection(shape: BurgerShopShape, random: () => number, point?: [number, number, number]): [number, number, number] {
+  if (shape.kind === 'circle') {
+    const length = Math.hypot(point![0], point![1]) || 1
+    return [point![0] / length, point![1] / length, 0]
+  }
   if (shape.kind === 'point' || shape.kind === 'rectangle' || shape.kind === 'box') return [0, 0, 1]
   const yaw = random() * Math.PI * 2
   if (shape.kind === 'sphere' || shape.kind === 'hemisphere') {
@@ -60,9 +64,13 @@ function emitDirection(shape: BurgerShopShape, random: () => number): [number, n
 
 function emitPoint(shape: BurgerShopShape, random: () => number): [number, number, number] {
   if (shape.kind === 'point') return [0, 0, 0]
+  if (shape.kind === 'circle') {
+    const angle = random() * Math.PI * 2
+    return [Math.cos(angle) * shape.radius, Math.sin(angle) * shape.radius, 0]
+  }
   if (shape.kind === 'sphere' || shape.kind === 'hemisphere') {
     const direction = emitDirection(shape, random)
-    const radius = shape.radius * Math.cbrt(random())
+    const radius = shape.shell ? shape.radius : shape.radius * Math.cbrt(random())
     return [direction[0] * radius, direction[1] * radius, direction[2] * radius]
   }
   if (shape.kind === 'cone' || shape.kind === 'cone-volume') {
@@ -72,11 +80,7 @@ function emitPoint(shape: BurgerShopShape, random: () => number): [number, numbe
     return [Math.cos(yaw) * radius, Math.sin(yaw) * radius, height]
   }
   if (shape.kind === 'box') {
-    return [
-      (random() - 0.5) * shape.size[0],
-      (random() - 0.5) * shape.size[1],
-      (random() - 0.5) * shape.size[2],
-    ]
+    return [(random() - 0.5) * shape.size[0], (random() - 0.5) * shape.size[1], (random() - 0.5) * shape.size[2]]
   }
   return [(random() - 0.5) * shape.size[0], (random() - 0.5) * shape.size[1], 0]
 }
@@ -108,13 +112,33 @@ export function sampleCurve(keys: { t: number; v: number }[], time: number): num
   return keys[keys.length - 1].v
 }
 
+/**
+ * Where world-space emitters are born: the effect's local-to-world matrix
+ * (column-major, as three.js `Matrix4.elements`) and its uniform scale.
+ */
+export interface BurgerShopFrame {
+  matrix: ArrayLike<number>
+  unit: number
+}
+
+function toFrame(frame: BurgerShopFrame, x: number, y: number, z: number, w: number): [number, number, number] {
+  const m = frame.matrix
+  return [
+    m[0]! * x + m[4]! * y + m[8]! * z + m[12]! * w,
+    m[1]! * x + m[5]! * y + m[9]! * z + m[13]! * w,
+    m[2]! * x + m[6]! * y + m[10]! * z + m[14]! * w,
+  ]
+}
+
 export function spawnParticle(
   emitter: BurgerShopEmitter,
   emitterIndex: number,
   random: () => number,
+  frame?: BurgerShopFrame,
 ): BurgerShopParticle {
-  const point = applyLocal(emitter, emitPoint(emitter.shape, random))
-  const direction = applyDirection(emitter, emitDirection(emitter.shape, random))
+  const local = emitPoint(emitter.shape, random)
+  const point = applyLocal(emitter, local)
+  const direction = applyDirection(emitter, emitDirection(emitter.shape, random, local))
   const speed = pickRange(emitter.speed, random)
   const length = Math.hypot(direction[0], direction[1], direction[2]) || 1
   const sheetCount = Math.max(1, emitter.sheet.columns * emitter.sheet.rows)
@@ -135,25 +159,51 @@ export function spawnParticle(
     color: pickColor(emitter.color, random),
     sheetIndex: Math.floor(random() * sheetCount),
   }
-  if (emitter.worldVelocity) {
-    particle.vx += emitter.worldVelocity[0]
-    particle.vy += emitter.worldVelocity[1]
-    particle.vz += emitter.worldVelocity[2]
-  }
   if (emitter.minHeight != null && particle.y < emitter.minHeight) particle.y = emitter.minHeight
+  let unit = 1
+  if (emitter.worldSpace) {
+    if (!frame) throw new Error(`${emitter.name}: a world-space emitter needs the effect's world frame`)
+    if (emitter.swirl || emitter.minHeight != null)
+      throw new Error(
+        `${emitter.name}: swirl and minHeight work in the effect's own space, so they cannot be world-space`,
+      )
+    ;[particle.x, particle.y, particle.z] = toFrame(frame, particle.x, particle.y, particle.z, 1)
+    ;[particle.vx, particle.vy, particle.vz] = toFrame(frame, particle.vx, particle.vy, particle.vz, 0)
+    particle.unit = unit = frame.unit
+  }
+  if (emitter.worldVelocity) {
+    particle.vx += emitter.worldVelocity[0] * unit
+    particle.vy += emitter.worldVelocity[1] * unit
+    particle.vz += emitter.worldVelocity[2] * unit
+  }
   return particle
 }
 
-export function advanceParticle(
-  particle: BurgerShopParticle,
-  emitter: BurgerShopEmitter,
-  delta: number,
-): void {
+export function advanceParticle(particle: BurgerShopParticle, emitter: BurgerShopEmitter, delta: number): void {
   particle.age += delta
   const lifeT = Math.min(1, particle.age / particle.life)
-  particle.vy -= BURGER_SHOP_GRAVITY * emitter.gravity * delta
+  const unit = particle.unit ?? 1
+  particle.vy -= BURGER_SHOP_GRAVITY * emitter.gravity * unit * delta
+  if (emitter.drag) {
+    const keep = Math.exp(-emitter.drag * delta)
+    particle.vx *= keep
+    particle.vy *= keep
+    particle.vz *= keep
+  }
+  if (emitter.swirl) {
+    // Turn the position and the velocity around the emitter's local Y axis.
+    const angle = emitter.swirl * delta
+    const cosine = Math.cos(angle)
+    const sine = Math.sin(angle)
+    const x = particle.x
+    particle.x = x * cosine + particle.z * sine
+    particle.z = -x * sine + particle.z * cosine
+    const vx = particle.vx
+    particle.vx = vx * cosine + particle.vz * sine
+    particle.vz = -vx * sine + particle.vz * cosine
+  }
   if (emitter.noise) {
-    const strength = (emitter.noise.min + emitter.noise.max) * 0.5
+    const strength = (emitter.noise.min + emitter.noise.max) * 0.5 * unit
     particle.x += Math.sin(particle.age * 6.4 + particle.roll) * strength * delta
     particle.y += Math.cos(particle.age * 5.1 + particle.sheetIndex) * strength * 0.45 * delta
     particle.z += Math.sin(particle.age * 7.2 + particle.spin) * strength * delta
@@ -168,11 +218,27 @@ export function advanceParticle(
 
 export function liveSize(particle: BurgerShopParticle, emitter: BurgerShopEmitter): number {
   const lifeT = Math.min(1, particle.age / Math.max(0.0001, particle.life))
+  const size = particle.size * (particle.unit ?? 1)
   if (emitter.sizeCurve && emitter.sizeCurve.length > 0) {
-    return particle.size * sampleCurve(emitter.sizeCurve, lifeT)
+    return size * sampleCurve(emitter.sizeCurve, lifeT)
   }
-  if (!emitter.sizeOverLife) return particle.size
-  return particle.size * (emitter.sizeOverLife[0] + (emitter.sizeOverLife[1] - emitter.sizeOverLife[0]) * lifeT)
+  if (!emitter.sizeOverLife) return size
+  return size * (emitter.sizeOverLife[0] + (emitter.sizeOverLife[1] - emitter.sizeOverLife[0]) * lifeT)
+}
+
+/** The particle's colour now: its spawn colour times `colorOverLife` at its age. */
+export function liveColor(particle: BurgerShopParticle, emitter: BurgerShopEmitter): [number, number, number, number] {
+  const keys = emitter.colorOverLife
+  if (!keys || keys.length === 0) return particle.color
+  const lifeT = Math.min(1, particle.age / Math.max(0.0001, particle.life))
+  const out = [...particle.color] as [number, number, number, number]
+  for (let channel = 0; channel < 4; channel += 1) {
+    out[channel] *= sampleCurve(
+      keys.map((key) => ({ t: key.t, v: key.c[channel] ?? 1 })),
+      lifeT,
+    )
+  }
+  return out
 }
 
 export function sheetFrame(particle: BurgerShopParticle, emitter: BurgerShopEmitter): number {
@@ -197,6 +263,8 @@ export interface BurgerShopSimulation {
   particles: BurgerShopParticle[]
   time: number
   walker: { x: number; z: number; lastX: number; lastZ: number }
+  /** The effect's world frame now; the renderer sets it before each step (world-space emitters). */
+  frame?: BurgerShopFrame
 }
 
 export function createBurgerShopSimulation(recipe: BurgerShopRecipe): BurgerShopSimulation {
@@ -216,7 +284,7 @@ function emitBurst(
   count: number,
 ): void {
   for (let index = 0; index < count; index += 1) {
-    const particle = spawnParticle(emitter, emitterIndex, random)
+    const particle = spawnParticle(emitter, emitterIndex, random, simulation.frame)
     if (simulation.recipe.id === 'character-footsteps') {
       particle.x += simulation.walker.x
       particle.z += simulation.walker.z
@@ -225,11 +293,7 @@ function emitBurst(
   }
 }
 
-export function stepBurgerShopSimulation(
-  simulation: BurgerShopSimulation,
-  delta: number,
-  random: () => number,
-): void {
+export function stepBurgerShopSimulation(simulation: BurgerShopSimulation, delta: number, random: () => number): void {
   const previous = simulation.time
   simulation.time += delta
   if (simulation.recipe.id === 'character-footsteps') {
@@ -245,7 +309,9 @@ export function stepBurgerShopSimulation(
     const cycle = emitter.looping ? localTime % emitter.duration : localTime
     const previousCycle = previous - (emitter.delay ?? 0)
     const crossedStart = previousCycle < 0 || (!emitter.looping && previousCycle <= 0 && localTime > 0)
-    const loopRestart = emitter.looping && Math.floor(localTime / emitter.duration) !== Math.floor(Math.max(0, previousCycle) / emitter.duration)
+    const loopRestart =
+      emitter.looping &&
+      Math.floor(localTime / emitter.duration) !== Math.floor(Math.max(0, previousCycle) / emitter.duration)
     if (emitter.burst && (crossedStart || loopRestart)) {
       emitBurst(simulation, emitter, emitterIndex, random, Math.round(pickRange(emitter.burst, random)))
     }

@@ -141,7 +141,7 @@ export function createGamePfxComponent(
     throw new Error(`Unknown PFX effect id for component: ${effectId}`)
   }
 
-  const DropInPfx = ({ overrides, position, reducedMotion }: PfxDropInComponentProps) => {
+  const DropInPfx = ({ overrides, ...gamePfxProps }: PfxDropInComponentProps) => {
     const preset = useMemo(
       () =>
         createPfxPreset(effectId, {
@@ -150,7 +150,7 @@ export function createGamePfxComponent(
         }),
       [overrides],
     )
-    return <GamePfx preset={preset} position={position} reducedMotion={reducedMotion} />
+    return <GamePfx preset={preset} {...gamePfxProps} />
   }
   DropInPfx.displayName = definition.componentName
   DropInPfx.effectId = effectId

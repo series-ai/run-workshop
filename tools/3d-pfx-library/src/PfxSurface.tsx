@@ -1,12 +1,27 @@
+import { applyPfxTeleportBurstUniforms, createPfxTeleportBurstBodyGeometry, createPfxTeleportBurstAccentGeometry, createPfxTeleportBurstRuntimeState, type PfxTeleportBurstRuntimeState } from './effects/teleportBurstSpatial'
+import { applyPfxSpawnBurstUniforms, createPfxSpawnBurstBodyGeometry, createPfxSpawnBurstAccentGeometry, createPfxSpawnBurstRuntimeState, type PfxSpawnBurstRuntimeState } from './effects/spawnBurstMaterialize'
+import { applyPfxDespawnBurstUniforms, createPfxDespawnBurstBodyGeometry, createPfxDespawnBurstAccentGeometry, createPfxDespawnBurstRuntimeState, type PfxDespawnBurstRuntimeState } from './effects/despawnBurstDisperse'
+import { applyPfxDashBurstUniforms, createPfxDashBurstBodyGeometry, createPfxDashBurstAccentGeometry, createPfxDashBurstRuntimeState, type PfxDashBurstRuntimeState } from './effects/dashBurstSlipstream'
+import { applyPfxReflectBurstUniforms, createPfxReflectBurstBodyGeometry, createPfxReflectBurstAccentGeometry, createPfxReflectBurstRuntimeState, type PfxReflectBurstRuntimeState } from './effects/reflectBurstRebound'
+import { applyPfxRuneBurstUniforms, createPfxRuneBurstBodyGeometry, createPfxRuneBurstAccentGeometry, createPfxRuneBurstRuntimeState, type PfxRuneBurstRuntimeState } from './effects/runeBurstInscription'
+import { applyPfxHealingBurstUniforms, createPfxHealingBurstBodyGeometry, createPfxHealingBurstAccentGeometry, createPfxHealingBurstRuntimeState, type PfxHealingBurstRuntimeState } from './effects/healingBurstRestoration'
+import { applyPfxHolyBurstUniforms, createPfxHolyBurstBodyGeometry, createPfxHolyBurstAccentGeometry, createPfxHolyBurstRuntimeState, type PfxHolyBurstRuntimeState } from './effects/holyBurstConsecration'
+import { applyPfxAcidBurstUniforms, createPfxAcidBurstBodyGeometry, createPfxAcidBurstAccentGeometry, createPfxAcidBurstRuntimeState, type PfxAcidBurstRuntimeState } from './effects/acidBurstCorrosiveSplash'
+import { applyPfxSlimeBurstUniforms, createPfxSlimeBurstBodyGeometry, createPfxSlimeBurstAccentGeometry, createPfxSlimeBurstRuntimeState, type PfxSlimeBurstRuntimeState } from './effects/slimeBurstElasticSplat'
+import { applyPfxFrostBurstUniforms, createPfxFrostBurstBodyGeometry, createPfxFrostBurstAccentGeometry, createPfxFrostBurstRuntimeState, type PfxFrostBurstRuntimeState } from './effects/frostBurstCrystallization'
+import { applyPfxElectricBurstUniforms, createPfxElectricBurstBodyGeometry, createPfxElectricBurstAccentGeometry, createPfxElectricBurstRuntimeState, type PfxElectricBurstRuntimeState } from './effects/electricBurstDischarge'
+import { applyPfxPlasmaBurstUniforms, createPfxPlasmaBurstBodyGeometry, createPfxPlasmaBurstAccentGeometry, createPfxPlasmaBurstRuntimeState, type PfxPlasmaBurstRuntimeState } from './effects/plasmaBurstMagnetic'
+import { applyPfxWaterBurstUniforms, createPfxWaterBurstBodyGeometry, createPfxWaterBurstAccentGeometry, createPfxWaterBurstRuntimeState, type PfxWaterBurstRuntimeState } from './effects/waterBurstSplash'
+import { applyPfxBubbleBurstUniforms, createPfxBubbleBurstBodyGeometry, createPfxBubbleBurstAccentGeometry, createPfxBubbleBurstRuntimeState, type PfxBubbleBurstRuntimeState } from './effects/bubbleBurstThinFilm'
 import * as THREE from 'three'
-import { RefObject, useEffect, useMemo, useRef } from 'react'
+import { RefObject, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { PFX_SPRITE_SLICES } from './particleSprites'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { getPfxStyleRenderProfile } from './constants/01'
 import { roundMetric } from './constants/03'
 import { PFX_BURST_CYCLE_MULTIPLIER, PFX_PARTICLE_BASE_SIZE, buildPfxSpriteEmissionGeometry, createPfxFlameBurstGeometry, createPfxFlameBurstRuntimeState, createPfxMeteorBurstGeometry, getPfxSharedParticleTexture, getPfxSharedSpriteAtlasTexture } from './constants/04'
 import { PFX_ARC_INNER_RADIUS, PFX_ARC_OUTER_RADIUS, PFX_ARC_THETA_LENGTH, PFX_ARC_THETA_START, createPfxComboRingMaterial, createPfxExhaustTelegraphMaterial, createPfxHologramBreakMaterial, createPfxMarkerReleaseMaterial, createPfxScanConeMaterial, createPfxTargetSpawnMaterial, createPfxThrusterTrailMaterial, createPfxUiPickupMaterial, createPfxWarningLoopMaterial, getPfxSharedGradientTexture, isPfxOmniLightRead } from './constants/05'
-import { buildPfxMeshShaderMaterial, createPfxFlameBurstMaterial, createPfxHologramBreakRuntimeState, createPfxMarkerReleaseRuntimeState, createPfxMeteorBurstMaterial, createPfxScanConeRuntimeState, createPfxThrusterTrailRuntimeState, createPfxWarningLoopRuntimeState } from './constants/06'
+import { buildPfxMeshShaderMaterial, isPfxAuthoredSubjectMeshShader, createPfxFlameBurstMaterial, createPfxHologramBreakRuntimeState, createPfxMarkerReleaseRuntimeState, createPfxMeteorBurstMaterial, createPfxScanConeRuntimeState, createPfxThrusterTrailRuntimeState, createPfxWarningLoopRuntimeState } from './constants/06'
 import { PFX_PROJECTILE_COMET_TAIL_LOBES, PFX_SMOKE_BILLOW_LOBES, PFX_SPAWN_VOXEL_LAYOUT, createPfxComboRingRuntimeState, createPfxExhaustTelegraphRuntimeState, createPfxMeteorBurstRuntimeState, createPfxTargetSpawnRuntimeState, createPfxUiPickupRuntimeState, shouldApplyPfxSurfaceCameraFacing, shouldRotatePfxBurstPattern } from './constants/07'
 import { createPfxAcidBurstCrownGeometry, createPfxAcidBurstCrownMaterial } from './effects/acidBurstCrown'
 import { createPfxAcidBurstDropletGeometry, createPfxAcidBurstDropletMaterial } from './effects/acidBurstDroplet'
@@ -38,6 +53,11 @@ import { applyPfxCurseConeMaterialAppearance } from './effects/curseConeMaterial
 import { createPfxDashIdleGeometry, createPfxDashIdleMaterial } from './effects/dashIdle'
 import { applyPfxDashIdleMaterialAppearance } from './effects/dashIdleMaterial'
 import { createPfxDebrisBurstGeometry, createPfxDebrisBurstMaterial, createPfxDebrisBurstRuntimeState } from './effects/debrisBurst'
+import { applyPfxHologramBurstUniforms, createPfxHologramBurstEmitterGeometry, createPfxHologramBurstRuntimeState, createPfxHologramBurstSubjectGeometry, type PfxHologramBurstRuntimeState } from './effects/hologramBurstProjection'
+import { applyPfxDissolveUniforms, createPfxDissolveFragmentGeometry, createPfxDissolvePropGeometry, createPfxDissolveRuntimeState, type PfxDissolveRuntimeState } from './effects/dissolveErodingProp'
+import { applyPfxGhostBurstUniforms, createPfxGhostBurstBodyGeometry, createPfxGhostBurstRuntimeState, createPfxGhostBurstWispGeometry, type PfxGhostBurstRuntimeState } from './effects/ghostBurstApparition'
+import { applyPfxPoisonCloudUniforms, createPfxPoisonCloudGasGeometry, createPfxPoisonCloudRuntimeState, createPfxPoisonCloudSporeGeometry, type PfxPoisonCloudRuntimeState } from './effects/poisonCloudGasBank'
+import { applyPfxWarpBurstUniforms, createPfxWarpBurstRuntimeState, createPfxWarpBurstSheetGeometry, createPfxWarpBurstTraceGeometry, type PfxWarpBurstRuntimeState } from './effects/warpBurstFold'
 import { createPfxDebrisMissFragmentGeometry, createPfxDebrisMissFragmentMaterial } from './effects/debrisMissFragment'
 import { createPfxDebrisReleaseFragmentGeometry, createPfxDebrisReleaseFragmentMaterial } from './effects/debrisReleaseFragment'
 import { createPfxDespawnImpactGeometry, createPfxDespawnImpactMaterial } from './effects/despawnImpact'
@@ -204,6 +224,11 @@ import { createPfxWindBurstPressureGeometry, createPfxWindBurstPressureMaterial 
 import { createPfxWindBurstWakeGeometry, createPfxWindBurstWakeMaterial } from './effects/windBurstWake'
 import { createPfxWindPressureGeometry, createPfxWindPressureMaterial } from './effects/windPressure'
 import { createPfxParticleEmission } from './tooling/01'
+import { getPfxLayerAnimationMode } from './materials/atlas'
+import { describePfxMaterialBinding, getPfxHardDepthBinding, resolvePfxMaterialBinding, syncPfxMaterialUniforms, updatePfxMaterialClock } from './materials/bindings'
+import { getPfxEmissionResourceKey, getPfxMaterialResourceKey, stablePfxSerialize } from './materials/keys'
+import { checkPfxMaterialDepthDraw, createPfxMaterialDepthFrame, readPfxMaterialDepthFrame, usePfxMaterialContext, validatePfxMaterialDepthSource } from './materials/PfxMaterialProvider'
+import { PFX_MATERIAL_DEPTH_VARIANT_USERDATA_KEY } from './materials/types'
 import { createPfxSparkGapGeometry, createPfxSparkGapMaterial, getPfxSurfaceAnimationProps } from './tooling/05'
 import type { PfxControls } from './types/01'
 import type { PfxBlastBurstRuntimeState, PfxComboRingRuntimeState, PfxDebrisBurstRuntimeState, PfxDustBurstRuntimeState, PfxExhaustTelegraphRuntimeState, PfxFlameBurstRuntimeState, PfxHologramBreakRuntimeState, PfxImplementationProfile, PfxMarkerReleaseRuntimeState, PfxMeteorBurstRuntimeState, PfxRenderSurface, PfxScanConeRuntimeState, PfxShockwaveBurstRuntimeState, PfxTargetSpawnRuntimeState, PfxThrusterTrailRuntimeState, PfxUiPickupRuntimeState, PfxWarningLoopRuntimeState } from './types/02'
@@ -361,6 +386,26 @@ export function PfxSurface({
   const debrisBurstRuntimeState = useRef<PfxDebrisBurstRuntimeState>({
     cycle: 0, periodSeconds: 0, progress: 0, opacity: 0, fracture: 0, eject: 0, fall: 0, darken: 0, stage: 'fracture',
   })
+  const hologramBurstRuntimeState = useRef<PfxHologramBurstRuntimeState | undefined>(undefined)
+  const dissolveRuntimeState = useRef<PfxDissolveRuntimeState | undefined>(undefined)
+  const ghostBurstRuntimeState = useRef<PfxGhostBurstRuntimeState | undefined>(undefined)
+  const poisonCloudRuntimeState = useRef<PfxPoisonCloudRuntimeState | undefined>(undefined)
+  const warpBurstRuntimeState = useRef<PfxWarpBurstRuntimeState | undefined>(undefined)
+  const frostBurstRuntimeState = useRef<PfxFrostBurstRuntimeState | undefined>(undefined)
+  const electricBurstRuntimeState = useRef<PfxElectricBurstRuntimeState | undefined>(undefined)
+  const plasmaBurstRuntimeState = useRef<PfxPlasmaBurstRuntimeState | undefined>(undefined)
+  const waterBurstRuntimeState = useRef<PfxWaterBurstRuntimeState | undefined>(undefined)
+  const bubbleBurstRuntimeState = useRef<PfxBubbleBurstRuntimeState | undefined>(undefined)
+  const runeBurstRuntimeState = useRef<PfxRuneBurstRuntimeState | undefined>(undefined)
+  const healingBurstRuntimeState = useRef<PfxHealingBurstRuntimeState | undefined>(undefined)
+  const holyBurstRuntimeState = useRef<PfxHolyBurstRuntimeState | undefined>(undefined)
+  const acidBurstRuntimeState = useRef<PfxAcidBurstRuntimeState | undefined>(undefined)
+  const slimeBurstRuntimeState = useRef<PfxSlimeBurstRuntimeState | undefined>(undefined)
+  const teleportBurstRuntimeState = useRef<PfxTeleportBurstRuntimeState | undefined>(undefined)
+  const spawnBurstRuntimeState = useRef<PfxSpawnBurstRuntimeState | undefined>(undefined)
+  const despawnBurstRuntimeState = useRef<PfxDespawnBurstRuntimeState | undefined>(undefined)
+  const dashBurstRuntimeState = useRef<PfxDashBurstRuntimeState | undefined>(undefined)
+  const reflectBurstRuntimeState = useRef<PfxReflectBurstRuntimeState | undefined>(undefined)
   const surfaceParentWorldQuaternion = useRef(new THREE.Quaternion())
   const materialProps = getPfxSurfaceMaterialProps(surface, controls)
   const styleProfile = getPfxStyleRenderProfile(controls.style)
@@ -368,6 +413,42 @@ export function PfxSurface({
   const positionOffset = getPfxSurfacePositionOffset(surface)
   const segmentCount = styleProfile.geometrySegments
   const isSimulatedPoints = surface.kind === 'particles' || surface.kind === 'impact-sparks'
+  // Material settings: read the provider once and resolve one validated
+  // binding from the tuning, registry, actual path, and quality. Memos key on
+  // values, so a new recipe object with equal values rebuilds nothing.
+  const materialContext = usePfxMaterialContext()
+  const materialSignature = surface.tuning?.material === undefined ? null : stablePfxSerialize(surface.tuning.material)
+  const materialPathSignature = stablePfxSerialize([
+    surface.kind,
+    surface.phase ?? null,
+    surface.tuning?.screenShader ?? null,
+    surface.tuning?.motion ?? null,
+    surface.tuning?.meshShader ?? null,
+    surface.tuning?.meshGeometry ?? null,
+    surface.tuning?.meshMotion ?? null,
+    surface.tuning?.blend ?? null,
+    surface.tuning?.flipbookAtlas ?? null,
+  ])
+  const materialBinding = useMemo(
+    () => resolvePfxMaterialBinding({
+      effectId,
+      surface,
+      atlasRegistry: materialContext.atlasRegistry,
+      quality: materialContext.quality,
+      reducedMotion,
+      depthSourceAvailable: materialContext.depthSource !== null,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectId, materialContext.atlasRegistry, materialContext.depthSource, materialContext.quality, materialPathSignature, materialSignature, reducedMotion],
+  )
+  // Depth fade: the drawn material is the hard-depth fallback unless a
+  // validated source selects the soft variant in this frame.
+  const hardMaterialBinding = useMemo(() => (materialBinding ? getPfxHardDepthBinding(materialBinding) : null), [materialBinding])
+  // Only an explicit frameAnimation replaces the legacy pulse.
+  const layerAnimationMode = getPfxLayerAnimationMode(surface.tuning)
+  const emissionKey = isSimulatedPoints
+    ? getPfxEmissionResourceKey({ effectId, profile, reducedMotion, controls, surface })
+    : null
   const emission = useMemo(
     () =>
       isSimulatedPoints
@@ -378,13 +459,16 @@ export function PfxSurface({
             reducedMotion,
           }, surface)
         : null,
-    [controls, effectId, isSimulatedPoints, profile, reducedMotion, surface],
+    // emissionKey holds every emitter input by value (materials/keys.ts).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [emissionKey, isSimulatedPoints],
   )
   const isMeteorChunkEmission = emission?.motionKind === 'meteor-impact'
   const spriteGeometry = useMemo(
     () => (emission && !isMeteorChunkEmission ? buildPfxSpriteEmissionGeometry(emission) : null),
     [emission, isMeteorChunkEmission],
   )
+  useEffect(() => () => spriteGeometry?.dispose(), [spriteGeometry])
   const meteorChunkGeometry = useMemo(
     () => isMeteorChunkEmission ? createPfxMeteorChunkGeometry() : null,
     [isMeteorChunkEmission],
@@ -786,19 +870,95 @@ export function PfxSurface({
     () => surface.kind === 'water-cone-sheet' ? createPfxWaterConeGeometry() : null,
     [surface.kind],
   )
+  // emissionKey already covers controls and the non-material surface; the
+  // other baked inputs follow by value. Material scalars are uniforms.
+  const spriteMaterialKey = emission && !isMeteorChunkEmission
+    ? getPfxMaterialResourceKey({
+        factory: 'generic-sprite',
+        structure: hardMaterialBinding?.structureKey ?? null,
+        baked: { emissionKey, feelVersion, cycleScale, tempo, materialProps },
+      })
+    : null
   const spriteMaterial = useMemo(
     () => (emission && !isMeteorChunkEmission
-      ? createPfxSpriteEmissionMaterial(emission, controls, surface, materialProps, feelVersion, cycleScale, tempo)
+      ? createPfxSpriteEmissionMaterial(emission, controls, surface, materialProps, feelVersion, cycleScale, tempo, hardMaterialBinding)
       : null),
-    // materialProps is derived from controls + surface; keying on its fields
-    // avoids a new material every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [emission, controls, surface, materialProps.opacity, materialProps.color, materialProps.blending, isMeteorChunkEmission],
+    [emission, spriteMaterialKey],
   )
+  useEffect(() => () => spriteMaterial?.dispose(), [spriteMaterial])
+  useLayoutEffect(() => {
+    if (spriteMaterial && hardMaterialBinding) syncPfxMaterialUniforms(spriteMaterial, hardMaterialBinding)
+  }, [hardMaterialBinding, spriteMaterial])
+  // The soft variant is prebuilt at the same structural change as its
+  // fallback. Frames only switch the mesh between these two references.
+  const softSpriteMaterialKey = emission && !isMeteorChunkEmission && materialBinding?.active.softParticles
+    ? getPfxMaterialResourceKey({
+        factory: 'generic-sprite',
+        structure: materialBinding.structureKey,
+        baked: { emissionKey, feelVersion, cycleScale, tempo, materialProps },
+      })
+    : null
+  const softSpriteMaterial = useMemo(
+    () => (emission && softSpriteMaterialKey
+      ? createPfxSpriteEmissionMaterial(emission, controls, surface, materialProps, feelVersion, cycleScale, tempo, materialBinding)
+      : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [emission, softSpriteMaterialKey],
+  )
+  useEffect(() => () => softSpriteMaterial?.dispose(), [softSpriteMaterial])
+  useLayoutEffect(() => {
+    if (softSpriteMaterial && materialBinding) syncPfxMaterialUniforms(softSpriteMaterial, materialBinding)
+  }, [materialBinding, softSpriteMaterial])
+  const depthScratch = useMemo(() => ({
+    frame: createPfxMaterialDepthFrame(),
+    viewport: new THREE.Vector4(),
+    precompiled: null as THREE.ShaderMaterial | null,
+  }), [])
+  const depthSourceRef = materialContext.depthSource
+  const reportDepthFallback = materialContext.reportDepthFallback
+  const gl = useThree((state) => state.gl)
+  const camera = useThree((state) => state.camera)
+  const scene = useThree((state) => state.scene)
+  // Owner of the sprite mesh's `material`. The JSX does not set it. At each
+  // commit, this effect shows the hard material when the mesh shows neither
+  // member of the current pair, so a new pair starts on the fallback. It
+  // compiles both programs of a new pair here, outside the frame loop. While
+  // the pair lives, only selectSpriteDepthVariant switches between the two.
+  useLayoutEffect(() => {
+    const mesh = object.current
+    if (!spriteMaterial || !spriteGeometry || !(mesh instanceof THREE.Mesh) || mesh.geometry !== spriteGeometry) return
+    if (mesh.material !== spriteMaterial && mesh.material !== softSpriteMaterial) mesh.material = spriteMaterial
+    if (!softSpriteMaterial || depthScratch.precompiled === softSpriteMaterial) return
+    depthScratch.precompiled = softSpriteMaterial
+    const shown = mesh.material
+    mesh.material = softSpriteMaterial
+    gl.compile(mesh, camera, scene)
+    mesh.material = spriteMaterial
+    gl.compile(mesh, camera, scene)
+    mesh.material = shown
+  })
+  useLayoutEffect(() => {
+    if (spriteMaterial) {
+      if (softSpriteMaterial) spriteMaterial.userData[PFX_MATERIAL_DEPTH_VARIANT_USERDATA_KEY] = 'hard'
+      else delete spriteMaterial.userData[PFX_MATERIAL_DEPTH_VARIANT_USERDATA_KEY]
+    }
+    if (!softSpriteMaterial || !depthSourceRef) return
+    const gate = softSpriteMaterial.uniforms.uPfxDepthFadeGate!
+    // Draw-time guard: a camera change after the priority-0 consumers closes
+    // the gate, so this draw equals the hard result. It allocates nothing.
+    softSpriteMaterial.onBeforeRender = (renderer, _scene, camera) => {
+      const source = depthSourceRef.current
+      if (gate.value === 0 || !source) return
+      const check = checkPfxMaterialDepthDraw(source, renderer, camera, depthScratch.viewport)
+      if (check.reason === null) return
+      gate.value = 0
+      softSpriteMaterial.uniformsNeedUpdate = true
+      reportDepthFallback(check.reason)
+    }
+  }, [depthScratch, depthSourceRef, reportDepthFallback, softSpriteMaterial, spriteMaterial])
   useEffect(
     () => () => {
-      spriteGeometry?.dispose()
-      spriteMaterial?.dispose()
       meteorChunkGeometry?.dispose()
       meteorChunkMaterial?.dispose()
       meteorHeatFrontGeometry?.dispose()
@@ -833,7 +993,7 @@ export function PfxSurface({
       jumpPickupRewardGemMaterial?.dispose()
       waterConeGeometry?.dispose()
     },
-    [acidPoolGeometry, barrierLowHealthGeometry, blastBeamGeometry, coinRewardBurstGeometry, curseColumnGeometry, electricWakeGeometry, flameChargeCrucibleGeometry, impactCoreGeometry, impactShardGeometry, jumpPickupCradleGeometry, jumpPickupCradleMaterial, jumpPickupRewardGemGeometry, jumpPickupRewardGemMaterial, magicCircleGeometry, magicCircleMaterial, meteorChunkGeometry, meteorChunkMaterial, meteorHeatFrontGeometry, muzzleFlameGeometry, plasmaAmbientCoreGeometry, plasmaAmbientOrbitGeometry, portalThroatGeometry, projectileWakeGeometry, shieldFragmentGeometry, shockwaveSpawnPressureFrontGeometry, shockwaveSpawnPressureFrontMaterial, snowSpawnCradleGeometry, spawnScreenReticleGeometry, spawnScreenReticleMaterial, spriteGeometry, spriteMaterial, targetBreakReticleGeometry, targetLockShellGeometry, waterConeGeometry, windPressureGeometry],
+    [acidPoolGeometry, barrierLowHealthGeometry, blastBeamGeometry, coinRewardBurstGeometry, curseColumnGeometry, electricWakeGeometry, flameChargeCrucibleGeometry, impactCoreGeometry, impactShardGeometry, jumpPickupCradleGeometry, jumpPickupCradleMaterial, jumpPickupRewardGemGeometry, jumpPickupRewardGemMaterial, magicCircleGeometry, magicCircleMaterial, meteorChunkGeometry, meteorChunkMaterial, meteorHeatFrontGeometry, muzzleFlameGeometry, plasmaAmbientCoreGeometry, plasmaAmbientOrbitGeometry, portalThroatGeometry, projectileWakeGeometry, shieldFragmentGeometry, shockwaveSpawnPressureFrontGeometry, shockwaveSpawnPressureFrontMaterial, snowSpawnCradleGeometry, spawnScreenReticleGeometry, spawnScreenReticleMaterial, targetBreakReticleGeometry, targetLockShellGeometry, waterConeGeometry, windPressureGeometry],
   )
   const coreSurfaceMaterial = useMemo(() => {
     const next = coreMaterial.clone()
@@ -1355,6 +1515,71 @@ export function PfxSurface({
     [meshShader],
   )
   useEffect(() => () => slashArcGeometry?.dispose(), [slashArcGeometry])
+  // Authored subjects own their geometry and material clock.
+  const authoredSubjectGeometry = useMemo(() => {
+    if (!isPfxAuthoredSubjectMeshShader(meshShader)) return null
+    switch (meshShader) {
+      case 'hologram-burst-projection': return createPfxHologramBurstSubjectGeometry()
+      case 'hologram-burst-emitter': return createPfxHologramBurstEmitterGeometry()
+      case 'dissolve-eroding-prop': return createPfxDissolvePropGeometry()
+      case 'dissolve-front-fragments': return createPfxDissolveFragmentGeometry()
+      case 'ghost-burst-apparition': return createPfxGhostBurstBodyGeometry()
+      case 'ghost-burst-wisps': return createPfxGhostBurstWispGeometry()
+      case 'poison-cloud-gas-bank': return createPfxPoisonCloudGasGeometry()
+      case 'poison-cloud-spores': return createPfxPoisonCloudSporeGeometry()
+      case 'warp-burst-fold-sheet': return createPfxWarpBurstSheetGeometry()
+      case 'warp-burst-shear-traces': return createPfxWarpBurstTraceGeometry()
+      case 'frost-burst-crystal-fan': return createPfxFrostBurstBodyGeometry()
+      case 'frost-burst-freezing-mist': return createPfxFrostBurstAccentGeometry()
+      case 'electric-burst-branch-network': return createPfxElectricBurstBodyGeometry()
+      case 'electric-burst-corona': return createPfxElectricBurstAccentGeometry()
+      case 'plasma-burst-magnetic-core': return createPfxPlasmaBurstBodyGeometry()
+      case 'plasma-burst-ion-filaments': return createPfxPlasmaBurstAccentGeometry()
+      case 'water-burst-splash-crown': return createPfxWaterBurstBodyGeometry()
+      case 'water-burst-ballistic-droplets': return createPfxWaterBurstAccentGeometry()
+      case 'bubble-burst-thin-film': return createPfxBubbleBurstBodyGeometry()
+      case 'bubble-burst-pop-fragments': return createPfxBubbleBurstAccentGeometry()
+      case 'rune-burst-inscription': return createPfxRuneBurstBodyGeometry()
+      case 'rune-burst-glyph-fragments': return createPfxRuneBurstAccentGeometry()
+      case 'healing-burst-restoration-weave': return createPfxHealingBurstBodyGeometry()
+      case 'healing-burst-renewal-motes': return createPfxHealingBurstAccentGeometry()
+      case 'holy-burst-consecration-rays': return createPfxHolyBurstBodyGeometry()
+      case 'holy-burst-sanctity-feathers': return createPfxHolyBurstAccentGeometry()
+      case 'acid-burst-corrosive-splash': return createPfxAcidBurstBodyGeometry()
+      case 'acid-burst-caustic-spray': return createPfxAcidBurstAccentGeometry()
+      case 'slime-burst-elastic-splat': return createPfxSlimeBurstBodyGeometry()
+      case 'slime-burst-sticky-drops': return createPfxSlimeBurstAccentGeometry()
+      case 'teleport-burst-spatial-slices': return createPfxTeleportBurstBodyGeometry()
+      case 'teleport-burst-arrival-traces': return createPfxTeleportBurstAccentGeometry()
+      case 'spawn-burst-materialize-weave': return createPfxSpawnBurstBodyGeometry()
+      case 'spawn-burst-rising-motes': return createPfxSpawnBurstAccentGeometry()
+      case 'despawn-burst-unmake-slices': return createPfxDespawnBurstBodyGeometry()
+      case 'despawn-burst-exit-fragments': return createPfxDespawnBurstAccentGeometry()
+      case 'dash-burst-shear-ribbons': return createPfxDashBurstBodyGeometry()
+      case 'dash-burst-speed-traces': return createPfxDashBurstAccentGeometry()
+      case 'reflect-burst-parry-fan': return createPfxReflectBurstBodyGeometry()
+      case 'reflect-burst-return-streaks': return createPfxReflectBurstAccentGeometry()
+      default: {
+        const unhandled: never = meshShader
+        throw new Error(`Unhandled authored subject geometry: ${unhandled}`)
+      }
+    }
+  }, [meshShader])
+  useEffect(() => () => authoredSubjectGeometry?.dispose(), [authoredSubjectGeometry])
+  // The same inputs as before, by value, plus the material structure.
+  const meshShaderMaterialKey = getPfxMaterialResourceKey({
+    factory: `mesh:${meshShader ?? 'none'}`,
+    structure: materialBinding?.structureKey ?? null,
+    baked: [
+      controls.color,
+      controls.density,
+      materialProps.opacity,
+      materialProps.color,
+      styleProfile.edgeHardness,
+      surface.tuning?.colorOverride ?? null,
+      surface.tuning?.meshGeometry ?? null,
+    ],
+  })
   const meshShaderMaterial = useMemo(
     () => (meshShader && meshShader !== 'plasma-impact-flipbook'
       ? surface.tuning?.meshGeometry === 'flame-charge-convergence-tendrils'
@@ -1499,12 +1724,15 @@ export function PfxSurface({
             controls.density,
             styleProfile.edgeHardness,
           )
-        : buildPfxMeshShaderMaterial(meshShader, materialProps)
+        : buildPfxMeshShaderMaterial(meshShader, materialProps, materialBinding)
       : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [controls.color, controls.density, meshShader, materialProps.opacity, materialProps.color, styleProfile.edgeHardness, surface.tuning?.colorOverride, surface.tuning?.meshGeometry],
+    [meshShaderMaterialKey],
   )
   useEffect(() => () => meshShaderMaterial?.dispose(), [meshShaderMaterial])
+  useLayoutEffect(() => {
+    if (meshShaderMaterial && materialBinding) syncPfxMaterialUniforms(meshShaderMaterial, materialBinding)
+  }, [materialBinding, meshShaderMaterial])
   // fire-body heads carry a companion eroded-alpha shell (same surface, no
   // extra draw-call accounting — meshes within a surface are free).
   const fireErodeMaterial = useMemo(
@@ -1513,6 +1741,49 @@ export function PfxSurface({
     [meshShader, materialProps.opacity, materialProps.color],
   )
   useEffect(() => () => fireErodeMaterial?.dispose(), [fireErodeMaterial])
+
+  // Dispatch marker: the drawn object carries the surface it drew, so the
+  // all-recipe check resolves the path from production output and compares
+  // it with the factory's own material tag.
+  useLayoutEffect(() => {
+    const node = object.current
+    if (!node) return
+    node.userData.pfxSurface = surface
+    node.userData.pfxMaterialBinding = describePfxMaterialBinding(materialBinding)
+    node.userData.pfxDepthVariants = softSpriteMaterial && spriteMaterial
+      ? { soft: softSpriteMaterial.uuid, hard: spriteMaterial.uuid }
+      : null
+  })
+
+  // Priority-0 consumer: runs after the provider counter (-2) and the host
+  // capture (-1), before the normal R3F render. It switches references only;
+  // the commit-time effect above compiled both programs of the pair.
+  const selectSpriteDepthVariant = (
+    mesh: THREE.Mesh,
+    hard: THREE.ShaderMaterial,
+    soft: THREE.ShaderMaterial,
+    state: { gl: THREE.WebGLRenderer; camera: THREE.Camera },
+  ) => {
+    const source = depthSourceRef?.current ?? null
+    const frame = readPfxMaterialDepthFrame(depthScratch.frame, state.gl, state.camera, materialContext.frame?.token ?? -1)
+    const validity = validatePfxMaterialDepthSource(source, frame)
+    const uniforms = soft.uniforms
+    if (validity.valid && source) {
+      const projection = source.projectionMatrix.elements
+      uniforms.uPfxSceneDepth!.value = source.texture
+      ;(uniforms.uPfxDepthProjection!.value as THREE.Vector4).set(projection[10]!, projection[14]!, projection[11]!, projection[15]!)
+      ;(uniforms.uPfxDepthBufferSize!.value as THREE.Vector2).copy(source.bufferSize)
+      if (uniforms.uPfxDepthFadeGate!.value !== 1) {
+        uniforms.uPfxDepthFadeGate!.value = 1
+        soft.uniformsNeedUpdate = true
+      }
+      if (mesh.material !== soft) mesh.material = soft
+      return
+    }
+    uniforms.uPfxDepthFadeGate!.value = 0
+    if (mesh.material !== hard) mesh.material = hard
+    if (validity.reason !== null) reportDepthFallback(validity.reason)
+  }
 
   useFrame((state) => {
     if (!object.current) return
@@ -1525,9 +1796,130 @@ export function PfxSurface({
       return
     }
     if (spriteMaterial) {
+      if (softSpriteMaterial && object.current instanceof THREE.Mesh) {
+        selectSpriteDepthVariant(object.current, spriteMaterial, softSpriteMaterial, state)
+      }
       spriteMaterial.uniforms.uTime!.value = elapsed
+      if (materialBinding) updatePfxMaterialClock(spriteMaterial, materialBinding, elapsed * spriteMaterial.uniforms.uTiming!.value)
+      if (softSpriteMaterial) {
+        softSpriteMaterial.uniforms.uTime!.value = elapsed
+        if (materialBinding) updatePfxMaterialClock(softSpriteMaterial, materialBinding, elapsed * softSpriteMaterial.uniforms.uTiming!.value)
+      }
     }
     if (meshShaderMaterial) {
+      if (isPfxAuthoredSubjectMeshShader(meshShader)) {
+        const clock = { elapsedSeconds: elapsed, timing: controls.timing, lifetime: controls.lifetime, tempo, motionMultiplier: styleProfile.motionMultiplier, cycleScale }
+        if (meshShader === 'hologram-burst-projection' || meshShader === 'hologram-burst-emitter') {
+          const hologramState = createPfxHologramBurstRuntimeState({ ...clock, reducedMotion }, hologramBurstRuntimeState.current)
+          hologramBurstRuntimeState.current = hologramState
+          applyPfxHologramBurstUniforms(meshShaderMaterial, hologramState, materialProps.opacity, reducedMotion)
+          object.current.visible = hologramState.stage !== 'rest'
+        } else if (meshShader === 'dissolve-eroding-prop' || meshShader === 'dissolve-front-fragments') {
+          const dissolveState = createPfxDissolveRuntimeState(clock, dissolveRuntimeState.current)
+          dissolveRuntimeState.current = dissolveState
+          applyPfxDissolveUniforms(meshShaderMaterial, dissolveState, materialProps.opacity, reducedMotion)
+          object.current.visible = dissolveState.stage !== 'rest'
+        } else if (meshShader === 'ghost-burst-apparition' || meshShader === 'ghost-burst-wisps') {
+          const ghostState = createPfxGhostBurstRuntimeState({ ...clock, reducedMotion }, ghostBurstRuntimeState.current)
+          ghostBurstRuntimeState.current = ghostState
+          applyPfxGhostBurstUniforms(meshShaderMaterial, ghostState, materialProps.opacity, reducedMotion)
+          object.current.visible = ghostState.stage !== 'rest'
+        } else if (meshShader === 'poison-cloud-gas-bank' || meshShader === 'poison-cloud-spores') {
+          // poison-cloud is a persistent hazard loop: it never hides.
+          const poisonState = createPfxPoisonCloudRuntimeState(clock, poisonCloudRuntimeState.current)
+          poisonCloudRuntimeState.current = poisonState
+          applyPfxPoisonCloudUniforms(meshShaderMaterial, poisonState, materialProps.opacity, reducedMotion)
+          object.current.visible = true
+        } else if (meshShader === 'warp-burst-fold-sheet' || meshShader === 'warp-burst-shear-traces') {
+          const warpState = createPfxWarpBurstRuntimeState({ ...clock, reducedMotion }, warpBurstRuntimeState.current)
+          warpBurstRuntimeState.current = warpState
+          applyPfxWarpBurstUniforms(meshShaderMaterial, warpState, materialProps.opacity, reducedMotion)
+          object.current.visible = warpState.stage !== 'rest'
+        } else if (meshShader === 'frost-burst-crystal-fan' || meshShader === 'frost-burst-freezing-mist') {
+          const frostBurstState = createPfxFrostBurstRuntimeState({ ...clock, reducedMotion }, frostBurstRuntimeState.current)
+          frostBurstRuntimeState.current = frostBurstState
+          applyPfxFrostBurstUniforms(meshShaderMaterial, frostBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = frostBurstState.stage !== 'rest'
+        } else if (meshShader === 'electric-burst-branch-network' || meshShader === 'electric-burst-corona') {
+          const electricBurstState = createPfxElectricBurstRuntimeState({ ...clock, reducedMotion }, electricBurstRuntimeState.current)
+          electricBurstRuntimeState.current = electricBurstState
+          applyPfxElectricBurstUniforms(meshShaderMaterial, electricBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = electricBurstState.stage !== 'rest'
+        } else if (meshShader === 'plasma-burst-magnetic-core' || meshShader === 'plasma-burst-ion-filaments') {
+          const plasmaBurstState = createPfxPlasmaBurstRuntimeState({ ...clock, reducedMotion }, plasmaBurstRuntimeState.current)
+          plasmaBurstRuntimeState.current = plasmaBurstState
+          applyPfxPlasmaBurstUniforms(meshShaderMaterial, plasmaBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = plasmaBurstState.stage !== 'rest'
+        } else if (meshShader === 'water-burst-splash-crown' || meshShader === 'water-burst-ballistic-droplets') {
+          const waterBurstState = createPfxWaterBurstRuntimeState({ ...clock, reducedMotion }, waterBurstRuntimeState.current)
+          waterBurstRuntimeState.current = waterBurstState
+          applyPfxWaterBurstUniforms(meshShaderMaterial, waterBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = waterBurstState.stage !== 'rest'
+        } else if (meshShader === 'bubble-burst-thin-film' || meshShader === 'bubble-burst-pop-fragments') {
+          const bubbleBurstState = createPfxBubbleBurstRuntimeState({ ...clock, reducedMotion }, bubbleBurstRuntimeState.current)
+          bubbleBurstRuntimeState.current = bubbleBurstState
+          applyPfxBubbleBurstUniforms(meshShaderMaterial, bubbleBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = bubbleBurstState.stage !== 'rest'
+        } else if (meshShader === 'rune-burst-inscription' || meshShader === 'rune-burst-glyph-fragments') {
+          const runeBurstState = createPfxRuneBurstRuntimeState({ ...clock, reducedMotion }, runeBurstRuntimeState.current)
+          runeBurstRuntimeState.current = runeBurstState
+          applyPfxRuneBurstUniforms(meshShaderMaterial, runeBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = runeBurstState.stage !== 'rest'
+        } else if (meshShader === 'healing-burst-restoration-weave' || meshShader === 'healing-burst-renewal-motes') {
+          const healingBurstState = createPfxHealingBurstRuntimeState({ ...clock, reducedMotion }, healingBurstRuntimeState.current)
+          healingBurstRuntimeState.current = healingBurstState
+          applyPfxHealingBurstUniforms(meshShaderMaterial, healingBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = healingBurstState.stage !== 'rest'
+        } else if (meshShader === 'holy-burst-consecration-rays' || meshShader === 'holy-burst-sanctity-feathers') {
+          const holyBurstState = createPfxHolyBurstRuntimeState({ ...clock, reducedMotion }, holyBurstRuntimeState.current)
+          holyBurstRuntimeState.current = holyBurstState
+          applyPfxHolyBurstUniforms(meshShaderMaterial, holyBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = holyBurstState.stage !== 'rest'
+        } else if (meshShader === 'acid-burst-corrosive-splash' || meshShader === 'acid-burst-caustic-spray') {
+          const acidBurstState = createPfxAcidBurstRuntimeState({ ...clock, reducedMotion }, acidBurstRuntimeState.current)
+          acidBurstRuntimeState.current = acidBurstState
+          applyPfxAcidBurstUniforms(meshShaderMaterial, acidBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = acidBurstState.stage !== 'rest'
+        } else if (meshShader === 'slime-burst-elastic-splat' || meshShader === 'slime-burst-sticky-drops') {
+          const slimeBurstState = createPfxSlimeBurstRuntimeState({ ...clock, reducedMotion }, slimeBurstRuntimeState.current)
+          slimeBurstRuntimeState.current = slimeBurstState
+          applyPfxSlimeBurstUniforms(meshShaderMaterial, slimeBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = slimeBurstState.stage !== 'rest'
+        } else if (meshShader === 'teleport-burst-spatial-slices' || meshShader === 'teleport-burst-arrival-traces') {
+          const teleportBurstState = createPfxTeleportBurstRuntimeState({ ...clock, reducedMotion }, teleportBurstRuntimeState.current)
+          teleportBurstRuntimeState.current = teleportBurstState
+          applyPfxTeleportBurstUniforms(meshShaderMaterial, teleportBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = teleportBurstState.stage !== 'rest'
+        } else if (meshShader === 'spawn-burst-materialize-weave' || meshShader === 'spawn-burst-rising-motes') {
+          const spawnBurstState = createPfxSpawnBurstRuntimeState({ ...clock, reducedMotion }, spawnBurstRuntimeState.current)
+          spawnBurstRuntimeState.current = spawnBurstState
+          applyPfxSpawnBurstUniforms(meshShaderMaterial, spawnBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = spawnBurstState.stage !== 'rest'
+        } else if (meshShader === 'despawn-burst-unmake-slices' || meshShader === 'despawn-burst-exit-fragments') {
+          const despawnBurstState = createPfxDespawnBurstRuntimeState({ ...clock, reducedMotion }, despawnBurstRuntimeState.current)
+          despawnBurstRuntimeState.current = despawnBurstState
+          applyPfxDespawnBurstUniforms(meshShaderMaterial, despawnBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = despawnBurstState.stage !== 'rest'
+        } else if (meshShader === 'dash-burst-shear-ribbons' || meshShader === 'dash-burst-speed-traces') {
+          const dashBurstState = createPfxDashBurstRuntimeState({ ...clock, reducedMotion }, dashBurstRuntimeState.current)
+          dashBurstRuntimeState.current = dashBurstState
+          applyPfxDashBurstUniforms(meshShaderMaterial, dashBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = dashBurstState.stage !== 'rest'
+        } else if (meshShader === 'reflect-burst-parry-fan' || meshShader === 'reflect-burst-return-streaks') {
+          const reflectBurstState = createPfxReflectBurstRuntimeState({ ...clock, reducedMotion }, reflectBurstRuntimeState.current)
+          reflectBurstRuntimeState.current = reflectBurstState
+          applyPfxReflectBurstUniforms(meshShaderMaterial, reflectBurstState, materialProps.opacity, reducedMotion)
+          object.current.visible = reflectBurstState.stage !== 'rest'
+        } else {
+          const unhandled: never = meshShader
+          throw new Error(`Unhandled authored subject shader: ${unhandled}`)
+        }
+        const basePosition = object.current.userData['basePosition'] as THREE.Vector3 | undefined
+        if (!basePosition) object.current.userData['basePosition'] = object.current.position.clone()
+        const bp = object.current.userData['basePosition'] as THREE.Vector3; const manual = surface.tuning?.positionOffset
+        object.current.position.set(bp.x + positionOffset[0] + (manual?.[0] ?? 0), bp.y + positionOffset[1] + (manual?.[1] ?? 0), bp.z + positionOffset[2] + (manual?.[2] ?? 0))
+        return
+      }
       if (meshShader === 'warning-loop-panel' || meshShader === 'warning-loop-beacon') {
         const warningState = createPfxWarningLoopRuntimeState(
           elapsed,
@@ -1924,6 +2316,7 @@ export function PfxSurface({
       const cycle = ((elapsed * timeScale) % (period * Math.max(1, cycleScale))) / period
       meshShaderMaterial.uniforms.uTime!.value = elapsed * timeScale
       meshShaderMaterial.uniforms.uCycle!.value = cycle
+      if (materialBinding) updatePfxMaterialClock(meshShaderMaterial, materialBinding, elapsed * timeScale)
       meshShaderMaterial.uniforms.uArcErosion!.value = meshShader === 'arc-sweep' ? createPfxArcSweepErosionStrength(cycle) : 0
       meshShaderMaterial.uniforms.uWakeEnvelope!.value = meshShader === 'projectile-wake'
         ? createPfxProjectileWakeEnvelope(cycle)
@@ -2019,7 +2412,7 @@ export function PfxSurface({
       return
     }
     const motion = getPfxSurfaceAnimationProps(surface, controls, elapsed, cycleScale, tempo, feelVersion)
-    const flipbook = getPfxFlipbookFrameProps(controls, elapsed)
+    const flipbook = getPfxFlipbookFrameProps(controls, elapsed, layerAnimationMode)
     // turbulenceScale 0 layers are ballistic: the idle group wobble
     // (sinusoidal rotationZ + drift) visibly bent their straight paths into
     // rotated directions no thrown object follows.
@@ -2873,6 +3266,7 @@ export function PfxSurface({
     if (spriteMaterial) {
       spriteMaterial.uniforms.uOpacity!.value =
         Math.min(1, materialProps.opacity * 1.25) * motion.opacityMultiplier * flipbook.opacityMultiplier
+      if (softSpriteMaterial) softSpriteMaterial.uniforms.uOpacity!.value = spriteMaterial.uniforms.uOpacity!.value
       return
     }
     const material =
@@ -2927,10 +3321,22 @@ export function PfxSurface({
   }
 
   if (spriteGeometry && spriteMaterial) {
-    return <mesh ref={object as RefObject<THREE.Mesh>} geometry={spriteGeometry} material={spriteMaterial} frustumCulled={false} />
+    // `material` is set by the sprite material owner effect, not by JSX.
+    return <mesh ref={object as RefObject<THREE.Mesh>} geometry={spriteGeometry} frustumCulled={false} />
   }
 
   if (meshShaderMaterial) {
+    if (authoredSubjectGeometry) {
+      return (
+        <mesh
+          ref={object as RefObject<THREE.Mesh>}
+          geometry={authoredSubjectGeometry}
+          material={meshShaderMaterial}
+          scale={surface.scale}
+          frustumCulled={meshShader !== 'dissolve-front-fragments'}
+        />
+      )
+    }
     if (meshShader === 'flame-burst-blossom' || meshShader === 'meteor-burst-collision' || (meshShader as string | undefined) === 'blast-burst-pressure-fracture' || (meshShader as string | undefined) === 'shockwave-burst-pressure-front' || (meshShader as string | undefined) === 'dust-burst-pigment-roll' || (meshShader as string | undefined) === 'debris-burst-ballistic-breakup') {
       return (
         <mesh
@@ -3380,7 +3786,7 @@ export function PfxSurface({
         </mesh>
       )
     }
-    if (meshShader === 'vortex-swirl') {
+    if (meshShader === 'vortex-swirl' || meshShader === 'portal-aperture') {
       // The swirl shader IS the portal — bare accent toruses around it read
       // as untextured magenta donuts (user round: "missing textures").
       // Billboarded plane keeps the read from every angle.

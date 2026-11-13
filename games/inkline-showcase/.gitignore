@@ -1,0 +1,24 @@
+node_modules/
+dist/
+dist-pack/
+test-results/
+.playwright-cli/
+*.blend1
+dist-audit/
+.cache/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Raw QA receipts and traces are not committed. Regenerate with the committed
+# harnesses (scripts/verify-*.ts, scripts/write-*-review.py) - see
+# docs/verification/README.md, section Raw traces and bundles.
+/docs/verification/**/*.json
+/docs/verification/**/*.jsonl
+
+# Generated asset bytes and archives live in the jam-ready-assets pack.
+# Link them with: npm run pack:link
+/public/assets/*
+!/public/assets/characters.json
+!/public/assets/props.json
+/public/downloads/

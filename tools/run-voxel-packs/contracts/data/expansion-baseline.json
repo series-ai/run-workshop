@@ -1,0 +1,4446 @@
+{
+ "baseCommit": "bafac95611f7361f32f0fe3793b483550d3537e5",
+ "packs": {
+  "fantasy": {
+   "ids": [
+    "fantasy-animated-props-bell-frame",
+    "fantasy-animated-props-bubbling-cauldron",
+    "fantasy-animated-props-catapult",
+    "fantasy-animated-props-crystal-pylon",
+    "fantasy-animated-props-forge-bellows",
+    "fantasy-animated-props-mimic-chest",
+    "fantasy-animated-props-portcullis",
+    "fantasy-animated-props-rune-portal",
+    "fantasy-animated-props-scrying-orb",
+    "fantasy-animated-props-spell-book",
+    "fantasy-animated-props-treasure-chest",
+    "fantasy-animated-props-well",
+    "fantasy-buildings-blacksmith",
+    "fantasy-buildings-castle-keep",
+    "fantasy-buildings-castle-tower",
+    "fantasy-buildings-castle-wall",
+    "fantasy-buildings-chapel",
+    "fantasy-buildings-elven-treehouse",
+    "fantasy-buildings-gatehouse",
+    "fantasy-buildings-tavern",
+    "fantasy-buildings-windmill",
+    "fantasy-buildings-wizard-tower",
+    "fantasy-creatures-dragon",
+    "fantasy-creatures-ent",
+    "fantasy-creatures-forest-wisp",
+    "fantasy-creatures-goblin",
+    "fantasy-creatures-griffin",
+    "fantasy-creatures-skeleton-knight",
+    "fantasy-creatures-slime",
+    "fantasy-creatures-unicorn",
+    "fantasy-held-items-battle-axe",
+    "fantasy-held-items-crossbow",
+    "fantasy-held-items-dagger",
+    "fantasy-held-items-elven-bow",
+    "fantasy-held-items-flail",
+    "fantasy-held-items-flanged-mace",
+    "fantasy-held-items-frost-wand",
+    "fantasy-held-items-greatsword",
+    "fantasy-held-items-kite-shield",
+    "fantasy-held-items-lantern-staff",
+    "fantasy-held-items-longsword",
+    "fantasy-held-items-mage-staff",
+    "fantasy-held-items-spear",
+    "fantasy-held-items-spellbook",
+    "fantasy-held-items-torch",
+    "fantasy-held-items-war-hammer",
+    "fantasy-props-alchemy-table",
+    "fantasy-props-anvil",
+    "fantasy-props-archery-target",
+    "fantasy-props-armor-stand",
+    "fantasy-props-arrow-barrel",
+    "fantasy-props-banner-stand",
+    "fantasy-props-banquet-table",
+    "fantasy-props-barrel",
+    "fantasy-props-bookshelf",
+    "fantasy-props-brazier",
+    "fantasy-props-candelabra",
+    "fantasy-props-crate",
+    "fantasy-props-fence",
+    "fantasy-props-grindstone",
+    "fantasy-props-hay-bales",
+    "fantasy-props-heraldic-shield",
+    "fantasy-props-knight-statue",
+    "fantasy-props-knight-tent",
+    "fantasy-props-lantern-post",
+    "fantasy-props-lectern",
+    "fantasy-props-market-stall",
+    "fantasy-props-potion-shelf",
+    "fantasy-props-rune-stone",
+    "fantasy-props-sack-pile",
+    "fantasy-props-signpost",
+    "fantasy-props-stone-altar",
+    "fantasy-props-throne",
+    "fantasy-props-training-dummy",
+    "fantasy-props-treasure-pile",
+    "fantasy-props-weapon-rack",
+    "fantasy-terrain-nature-ancient-oak",
+    "fantasy-terrain-nature-cliff-waterfall",
+    "fantasy-terrain-nature-crystal-formation",
+    "fantasy-terrain-nature-elven-tree",
+    "fantasy-terrain-nature-fairy-ring",
+    "fantasy-terrain-nature-giant-mushrooms",
+    "fantasy-terrain-nature-pine-tree",
+    "fantasy-terrain-nature-rock-cluster",
+    "fantasy-terrain-nature-ruined-arch",
+    "fantasy-terrain-nature-stone-bridge",
+    "fantasy-vehicles-ballista-cart",
+    "fantasy-vehicles-covered-wagon",
+    "fantasy-vehicles-elven-swan-boat",
+    "fantasy-vehicles-royal-carriage",
+    "fantasy-vehicles-siege-tower",
+    "fantasy-vehicles-sky-airship",
+    "fantasy-avatar-parts",
+    "fantasy-characters-skins-dark-knight",
+    "fantasy-characters-skins-druid",
+    "fantasy-characters-skins-dwarf",
+    "fantasy-characters-skins-elf-mage",
+    "fantasy-characters-skins-elf-ranger",
+    "fantasy-characters-skins-paladin"
+   ],
+   "avatarModels": [
+    {
+     "id": "fantasy-held-items-battle-axe",
+     "pack": "fantasy",
+     "name": "Dwarven Battle Axe",
+     "category": "held-items",
+     "filename": "fantasy-held-items-battle-axe.glb",
+     "relativePath": "held-items/fantasy-held-items-battle-axe.glb",
+     "leaf": "world",
+     "sizeBytes": 34520,
+     "bounds": {
+      "min": [
+       -0.375,
+       0.015,
+       -0.04
+      ],
+      "max": [
+       0.065,
+       0.045,
+       0.13
+      ],
+      "size": [
+       0.44,
+       0.03,
+       0.17
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-edge"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-slash-arc",
+       "trigger": "manual",
+       "size": 0.281,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.094,
+        0.03,
+        0.045
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-crossbow",
+     "pack": "fantasy",
+     "name": "Heavy Crossbow",
+     "category": "held-items",
+     "filename": "fantasy-held-items-crossbow.glb",
+     "relativePath": "held-items/fantasy-held-items-crossbow.glb",
+     "leaf": "world",
+     "sizeBytes": 68272,
+     "bounds": {
+      "min": [
+       -0.305,
+       -0.105,
+       -0.025
+      ],
+      "max": [
+       0.105,
+       0.165,
+       0.055
+      ],
+      "size": [
+       0.41,
+       0.27,
+       0.08
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-bow-release",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.36,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-dagger",
+     "pack": "fantasy",
+     "name": "Assassin's Dagger",
+     "category": "held-items",
+     "filename": "fantasy-held-items-dagger.glb",
+     "relativePath": "held-items/fantasy-held-items-dagger.glb",
+     "leaf": "world",
+     "sizeBytes": 27924,
+     "bounds": {
+      "min": [
+       -0.205,
+       0.015,
+       -0.03
+      ],
+      "max": [
+       0.035,
+       0.045,
+       0.04
+      ],
+      "size": [
+       0.24,
+       0.03,
+       0.07
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-slash-arc",
+       "trigger": "manual",
+       "size": 0.146,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.049,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-elven-bow",
+     "pack": "fantasy",
+     "name": "Elven Longbow",
+     "category": "held-items",
+     "filename": "fantasy-held-items-elven-bow.glb",
+     "relativePath": "held-items/fantasy-held-items-elven-bow.glb",
+     "leaf": "world",
+     "sizeBytes": 29312,
+     "bounds": {
+      "min": [
+       -0.28,
+       -0.09,
+       -0.01
+      ],
+      "max": [
+       0.28,
+       0.06,
+       0.02
+      ],
+      "size": [
+       0.56,
+       0.15,
+       0.03
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-arrow"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-bow-release",
+       "socket": "socket-arrow",
+       "trigger": "manual",
+       "size": 0.5,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-flail",
+     "pack": "fantasy",
+     "name": "Morning-Star Flail",
+     "category": "held-items",
+     "filename": "fantasy-held-items-flail.glb",
+     "relativePath": "held-items/fantasy-held-items-flail.glb",
+     "leaf": "world",
+     "sizeBytes": 68968,
+     "bounds": {
+      "min": [
+       -0.295,
+       -0.03,
+       -0.1
+      ],
+      "max": [
+       0.065,
+       0.09,
+       0.02
+      ],
+      "size": [
+       0.36,
+       0.12,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-ball"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-metal-clang",
+       "socket": "socket-ball",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-flanged-mace",
+     "pack": "fantasy",
+     "name": "Flanged Mace",
+     "category": "held-items",
+     "filename": "fantasy-held-items-flanged-mace.glb",
+     "relativePath": "held-items/fantasy-held-items-flanged-mace.glb",
+     "leaf": "world",
+     "sizeBytes": 71224,
+     "bounds": {
+      "min": [
+       -0.295,
+       -0.03,
+       -0.06
+      ],
+      "max": [
+       0.065,
+       0.1,
+       0.07
+      ],
+      "size": [
+       0.36,
+       0.13,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-head"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-metal-clang",
+       "socket": "socket-head",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-frost-wand",
+     "pack": "fantasy",
+     "name": "Frost Wand",
+     "category": "held-items",
+     "filename": "fantasy-held-items-frost-wand.glb",
+     "relativePath": "held-items/fantasy-held-items-frost-wand.glb",
+     "leaf": "world",
+     "sizeBytes": 72732,
+     "bounds": {
+      "min": [
+       -0.345,
+       -0.04,
+       -0.05
+      ],
+      "max": [
+       0.065,
+       0.07,
+       0.07
+      ],
+      "size": [
+       0.41,
+       0.11,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-frost-nova",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.4
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-greatsword",
+     "pack": "fantasy",
+     "name": "Runic Greatsword",
+     "category": "held-items",
+     "filename": "fantasy-held-items-greatsword.glb",
+     "relativePath": "held-items/fantasy-held-items-greatsword.glb",
+     "leaf": "world",
+     "sizeBytes": 39216,
+     "bounds": {
+      "min": [
+       -0.535,
+       0.015,
+       -0.085
+      ],
+      "max": [
+       0.065,
+       0.045,
+       0.085
+      ],
+      "size": [
+       0.6,
+       0.03,
+       0.17
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-slash-arc",
+       "trigger": "manual",
+       "size": 0.401,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.134,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-kite-shield",
+     "pack": "fantasy",
+     "name": "Heraldic Kite Shield",
+     "category": "held-items",
+     "filename": "fantasy-held-items-kite-shield.glb",
+     "relativePath": "held-items/fantasy-held-items-kite-shield.glb",
+     "leaf": "world",
+     "sizeBytes": 54980,
+     "bounds": {
+      "min": [
+       -0.19,
+       -0.08,
+       -0.005
+      ],
+      "max": [
+       0.15,
+       0.14,
+       0.045
+      ],
+      "size": [
+       0.34,
+       0.22,
+       0.05
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-face"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-metal-clang",
+       "socket": "socket-face",
+       "trigger": "manual",
+       "size": 0.32
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-lantern-staff",
+     "pack": "fantasy",
+     "name": "Lantern Staff",
+     "category": "held-items",
+     "filename": "fantasy-held-items-lantern-staff.glb",
+     "relativePath": "held-items/fantasy-held-items-lantern-staff.glb",
+     "leaf": "world",
+     "sizeBytes": 30888,
+     "bounds": {
+      "min": [
+       -0.265,
+       0.01,
+       -0.07
+      ],
+      "max": [
+       0.065,
+       0.07,
+       0.01
+      ],
+      "size": [
+       0.33,
+       0.06,
+       0.08
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-light"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-torch-flame",
+       "socket": "socket-light",
+       "trigger": "manual",
+       "size": 0.18,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-longsword",
+     "pack": "fantasy",
+     "name": "Knight's Longsword",
+     "category": "held-items",
+     "filename": "fantasy-held-items-longsword.glb",
+     "relativePath": "held-items/fantasy-held-items-longsword.glb",
+     "leaf": "world",
+     "sizeBytes": 18916,
+     "bounds": {
+      "min": [
+       -0.415,
+       0.015,
+       -0.05
+      ],
+      "max": [
+       0.065,
+       0.045,
+       0.05
+      ],
+      "size": [
+       0.48,
+       0.03,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-slash-arc",
+       "trigger": "manual",
+       "size": 0.311,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.104,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-mage-staff",
+     "pack": "fantasy",
+     "name": "Archmage Staff",
+     "category": "held-items",
+     "filename": "fantasy-held-items-mage-staff.glb",
+     "relativePath": "held-items/fantasy-held-items-mage-staff.glb",
+     "leaf": "world",
+     "sizeBytes": 105512,
+     "bounds": {
+      "min": [
+       -0.415,
+       -0.03,
+       -0.06
+      ],
+      "max": [
+       0.155,
+       0.1,
+       0.07
+      ],
+      "size": [
+       0.57,
+       0.13,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-arcane-bolt",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.6,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-spear",
+     "pack": "fantasy",
+     "name": "Elven Spear",
+     "category": "held-items",
+     "filename": "fantasy-held-items-spear.glb",
+     "relativePath": "held-items/fantasy-held-items-spear.glb",
+     "leaf": "world",
+     "sizeBytes": 19800,
+     "bounds": {
+      "min": [
+       -0.415,
+       0.015,
+       -0.035
+      ],
+      "max": [
+       0.185,
+       0.045,
+       0.035
+      ],
+      "size": [
+       0.6,
+       0.03,
+       0.07
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-slash-arc",
+       "trigger": "manual",
+       "size": 0.311,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.104,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-spellbook",
+     "pack": "fantasy",
+     "name": "Grimoire",
+     "category": "held-items",
+     "filename": "fantasy-held-items-spellbook.glb",
+     "relativePath": "held-items/fantasy-held-items-spellbook.glb",
+     "leaf": "world",
+     "sizeBytes": 18372,
+     "bounds": {
+      "min": [
+       -0.17,
+       0,
+       -0.08
+      ],
+      "max": [
+       0.03,
+       0.06,
+       0.08
+      ],
+      "size": [
+       0.2,
+       0.06,
+       0.16
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-sigil"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-arcane-bolt",
+       "socket": "socket-sigil",
+       "trigger": "manual",
+       "size": 0.6,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-torch",
+     "pack": "fantasy",
+     "name": "Pitch Torch",
+     "category": "held-items",
+     "filename": "fantasy-held-items-torch.glb",
+     "relativePath": "held-items/fantasy-held-items-torch.glb",
+     "leaf": "world",
+     "sizeBytes": 34196,
+     "bounds": {
+      "min": [
+       -0.25,
+       0,
+       -0.03
+      ],
+      "max": [
+       0.08,
+       0.06,
+       0.03
+      ],
+      "size": [
+       0.33,
+       0.06,
+       0.06
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-flame"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-torch-flame",
+       "socket": "socket-flame",
+       "trigger": "manual",
+       "size": 0.16,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-held-items-war-hammer",
+     "pack": "fantasy",
+     "name": "Paladin's War Hammer",
+     "category": "held-items",
+     "filename": "fantasy-held-items-war-hammer.glb",
+     "relativePath": "held-items/fantasy-held-items-war-hammer.glb",
+     "leaf": "world",
+     "sizeBytes": 88152,
+     "bounds": {
+      "min": [
+       -0.385,
+       -0.02,
+       -0.11
+      ],
+      "max": [
+       0.065,
+       0.08,
+       0.11
+      ],
+      "size": [
+       0.45,
+       0.1,
+       0.22
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-head"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-fantasy-metal-clang",
+       "socket": "socket-head",
+       "trigger": "manual",
+       "size": 0.36
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "fantasy-avatar-parts",
+     "pack": "fantasy",
+     "name": "Fantasy Avatar Parts",
+     "category": "avatar",
+     "filename": "fantasy-avatar-parts.glb",
+     "relativePath": "avatar/fantasy-avatar-parts.glb",
+     "leaf": "characters",
+     "sizeBytes": 1181264,
+     "bounds": {
+      "min": [
+       -0.1624,
+       -0.0004,
+       -0.2506
+      ],
+      "max": [
+       0.1624,
+       0.7624,
+       0.2506
+      ],
+      "size": [
+       0.3248,
+       0.7628,
+       0.5012
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [
+      "32_Cast_Spell",
+      "33_Shield_Block",
+      "34_Bow_Draw",
+      "35_Sword_Slash",
+      "36_Heal",
+      "37_Kneel",
+      "38_Levitate",
+      "39_Victory"
+     ],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "fantasy-characters-skins-dark-knight",
+     "pack": "fantasy",
+     "name": "Dark Knight",
+     "category": "characters-skins",
+     "filename": "fantasy-characters-skins-dark-knight.glb",
+     "relativePath": "characters-skins/fantasy-characters-skins-dark-knight.glb",
+     "leaf": "characters",
+     "sizeBytes": 260384,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.11,
+       0.65,
+       0.3
+      ],
+      "size": [
+       0.19,
+       0.65,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "fantasy-characters-skins-druid",
+     "pack": "fantasy",
+     "name": "Druid",
+     "category": "characters-skins",
+     "filename": "fantasy-characters-skins-druid.glb",
+     "relativePath": "characters-skins/fantasy-characters-skins-druid.glb",
+     "leaf": "characters",
+     "sizeBytes": 467832,
+     "bounds": {
+      "min": [
+       -0.11,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.11,
+       0.78,
+       0.29
+      ],
+      "size": [
+       0.22,
+       0.78,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "fantasy-characters-skins-dwarf",
+     "pack": "fantasy",
+     "name": "Dwarf Warrior",
+     "category": "characters-skins",
+     "filename": "fantasy-characters-skins-dwarf.glb",
+     "relativePath": "characters-skins/fantasy-characters-skins-dwarf.glb",
+     "leaf": "characters",
+     "sizeBytes": 459272,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.29
+      ],
+      "size": [
+       0.18,
+       0.6,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "fantasy-characters-skins-elf-mage",
+     "pack": "fantasy",
+     "name": "Elf Mage",
+     "category": "characters-skins",
+     "filename": "fantasy-characters-skins-elf-mage.glb",
+     "relativePath": "characters-skins/fantasy-characters-skins-elf-mage.glb",
+     "leaf": "characters",
+     "sizeBytes": 327096,
+     "bounds": {
+      "min": [
+       -0.09,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.11,
+       0.6,
+       0.29
+      ],
+      "size": [
+       0.2,
+       0.6,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "fantasy-characters-skins-elf-ranger",
+     "pack": "fantasy",
+     "name": "Elf Ranger",
+     "category": "characters-skins",
+     "filename": "fantasy-characters-skins-elf-ranger.glb",
+     "relativePath": "characters-skins/fantasy-characters-skins-elf-ranger.glb",
+     "leaf": "characters",
+     "sizeBytes": 365916,
+     "bounds": {
+      "min": [
+       -0.13,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.11,
+       0.61,
+       0.29
+      ],
+      "size": [
+       0.24,
+       0.61,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "fantasy-characters-skins-paladin",
+     "pack": "fantasy",
+     "name": "Paladin",
+     "category": "characters-skins",
+     "filename": "fantasy-characters-skins-paladin.glb",
+     "relativePath": "characters-skins/fantasy-characters-skins-paladin.glb",
+     "leaf": "characters",
+     "sizeBytes": 294600,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.3
+      ],
+      "size": [
+       0.18,
+       0.6,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    }
+   ]
+  },
+  "space": {
+   "ids": [
+    "space-animated-props-airlock-door",
+    "space-animated-props-cryo-pod",
+    "space-animated-props-holo-projector",
+    "space-animated-props-laser-turret",
+    "space-animated-props-loot-cache",
+    "space-animated-props-planet-globe",
+    "space-animated-props-radar-dish",
+    "space-animated-props-reactor-core",
+    "space-animated-props-robotic-arm",
+    "space-animated-props-shield-generator",
+    "space-animated-props-signal-beacon",
+    "space-animated-props-teleporter-pad",
+    "space-buildings-alien-hive",
+    "space-buildings-comm-array",
+    "space-buildings-control-tower",
+    "space-buildings-hab-dome",
+    "space-buildings-hangar",
+    "space-buildings-launch-pad",
+    "space-buildings-mining-rig",
+    "space-buildings-reactor-plant",
+    "space-buildings-research-lab",
+    "space-buildings-station-module",
+    "space-creatures-alien-grunt",
+    "space-creatures-mech-walker",
+    "space-creatures-robot-dog",
+    "space-creatures-space-slug",
+    "space-creatures-tentacle-alien",
+    "space-creatures-ufo-drone",
+    "space-creatures-xeno-drone",
+    "space-creatures-xeno-queen",
+    "space-held-items-bio-blaster",
+    "space-held-items-blaster-rifle",
+    "space-held-items-data-pad",
+    "space-held-items-energy-shield",
+    "space-held-items-gravity-hammer",
+    "space-held-items-laser-cannon",
+    "space-held-items-laser-pistol",
+    "space-held-items-plasma-grenade",
+    "space-held-items-plasma-sword",
+    "space-held-items-pulse-smg",
+    "space-held-items-ray-gun",
+    "space-held-items-scanner",
+    "space-held-items-space-wrench",
+    "space-held-items-star-flag",
+    "space-held-items-stun-baton",
+    "space-held-items-welding-torch",
+    "space-props-alien-eggs",
+    "space-props-cargo-crate",
+    "space-props-comm-radio",
+    "space-props-computer-terminal",
+    "space-props-control-console",
+    "space-props-crew-seat",
+    "space-props-fuel-barrel",
+    "space-props-fuel-cell",
+    "space-props-fuel-pump",
+    "space-props-hazard-barrier",
+    "space-props-hologram-table",
+    "space-props-hydro-planter",
+    "space-props-landing-beacon",
+    "space-props-med-kit",
+    "space-props-mining-drill",
+    "space-props-ore-rock",
+    "space-props-oxygen-tanks",
+    "space-props-plasma-conduit",
+    "space-props-power-cell-crate",
+    "space-props-power-generator",
+    "space-props-robot-parts",
+    "space-props-satellite-dish",
+    "space-props-sensor-probe",
+    "space-props-solar-panel",
+    "space-props-stasis-tube",
+    "space-props-storage-locker",
+    "space-props-supply-pod",
+    "space-props-tool-cart",
+    "space-props-vending-machine",
+    "space-props-water-recycler",
+    "space-terrain-nature-alien-plant",
+    "space-terrain-nature-asteroid-cluster",
+    "space-terrain-nature-crystal-cluster",
+    "space-terrain-nature-gas-giant",
+    "space-terrain-nature-ice-planet",
+    "space-terrain-nature-impact-crater",
+    "space-terrain-nature-lava-planet",
+    "space-terrain-nature-moon-rocks",
+    "space-terrain-nature-spore-tree",
+    "space-terrain-nature-terra-planet",
+    "space-vehicles-cargo-freighter",
+    "space-vehicles-hover-bike",
+    "space-vehicles-moon-rover",
+    "space-vehicles-shuttle",
+    "space-vehicles-star-fighter",
+    "space-vehicles-ufo-saucer",
+    "space-avatar-parts",
+    "space-characters-skins-android",
+    "space-characters-skins-astronaut",
+    "space-characters-skins-bounty-hunter",
+    "space-characters-skins-grey-alien",
+    "space-characters-skins-space-marine",
+    "space-characters-skins-starship-captain"
+   ],
+   "avatarModels": [
+    {
+     "id": "space-held-items-bio-blaster",
+     "pack": "space",
+     "name": "Bio Blaster",
+     "category": "held-items",
+     "filename": "space-held-items-bio-blaster.glb",
+     "relativePath": "held-items/space-held-items-bio-blaster.glb",
+     "leaf": "world",
+     "sizeBytes": 74156,
+     "bounds": {
+      "min": [
+       -0.265,
+       -0.02,
+       -0.025
+      ],
+      "max": [
+       0.035,
+       0.08,
+       0.115
+      ],
+      "size": [
+       0.3,
+       0.1,
+       0.14
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-goo-shot",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.3,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-blaster-rifle",
+     "pack": "space",
+     "name": "Blaster Rifle",
+     "category": "held-items",
+     "filename": "space-held-items-blaster-rifle.glb",
+     "relativePath": "held-items/space-held-items-blaster-rifle.glb",
+     "leaf": "world",
+     "sizeBytes": 62264,
+     "bounds": {
+      "min": [
+       -0.365,
+       0.005,
+       -0.04
+      ],
+      "max": [
+       0.135,
+       0.055,
+       0.08
+      ],
+      "size": [
+       0.5,
+       0.05,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-laser-bolt",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.3,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-data-pad",
+     "pack": "space",
+     "name": "Holo Data Pad",
+     "category": "held-items",
+     "filename": "space-held-items-data-pad.glb",
+     "relativePath": "held-items/space-held-items-data-pad.glb",
+     "leaf": "world",
+     "sizeBytes": 88708,
+     "bounds": {
+      "min": [
+       -0.2,
+       -0.05,
+       -0.06
+      ],
+      "max": [
+       0.06,
+       0.11,
+       0.12
+      ],
+      "size": [
+       0.26,
+       0.16,
+       0.18
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-holo"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-holo-scan",
+       "socket": "socket-holo",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-energy-shield",
+     "pack": "space",
+     "name": "Energy Shield",
+     "category": "held-items",
+     "filename": "space-held-items-energy-shield.glb",
+     "relativePath": "held-items/space-held-items-energy-shield.glb",
+     "leaf": "world",
+     "sizeBytes": 49504,
+     "bounds": {
+      "min": [
+       -0.065,
+       -0.105,
+       -0.145
+      ],
+      "max": [
+       0.015,
+       0.155,
+       0.135
+      ],
+      "size": [
+       0.08,
+       0.26,
+       0.28
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-shield"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-shield-hit",
+       "socket": "socket-shield",
+       "trigger": "manual",
+       "size": 0.32
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-gravity-hammer",
+     "pack": "space",
+     "name": "Gravity Hammer",
+     "category": "held-items",
+     "filename": "space-held-items-gravity-hammer.glb",
+     "relativePath": "held-items/space-held-items-gravity-hammer.glb",
+     "leaf": "world",
+     "sizeBytes": 40964,
+     "bounds": {
+      "min": [
+       -0.4,
+       -0.03,
+       -0.08
+      ],
+      "max": [
+       0.06,
+       0.09,
+       0.08
+      ],
+      "size": [
+       0.46,
+       0.12,
+       0.16
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-head"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-gravity-slam",
+       "socket": "socket-head",
+       "trigger": "manual",
+       "size": 0.6
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-laser-cannon",
+     "pack": "space",
+     "name": "Laser Cannon",
+     "category": "held-items",
+     "filename": "space-held-items-laser-cannon.glb",
+     "relativePath": "held-items/space-held-items-laser-cannon.glb",
+     "leaf": "world",
+     "sizeBytes": 122044,
+     "bounds": {
+      "min": [
+       -0.48,
+       -0.015,
+       -0.02
+      ],
+      "max": [
+       0.08,
+       0.075,
+       0.14
+      ],
+      "size": [
+       0.56,
+       0.09,
+       0.16
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-laser-bolt",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.55,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-laser-pistol",
+     "pack": "space",
+     "name": "Laser Pistol",
+     "category": "held-items",
+     "filename": "space-held-items-laser-pistol.glb",
+     "relativePath": "held-items/space-held-items-laser-pistol.glb",
+     "leaf": "world",
+     "sizeBytes": 24740,
+     "bounds": {
+      "min": [
+       -0.16,
+       0.005,
+       -0.07
+      ],
+      "max": [
+       0.04,
+       0.055,
+       0.05
+      ],
+      "size": [
+       0.2,
+       0.05,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-laser-bolt",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.22,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-plasma-grenade",
+     "pack": "space",
+     "name": "Plasma Grenade",
+     "category": "held-items",
+     "filename": "space-held-items-plasma-grenade.glb",
+     "relativePath": "held-items/space-held-items-plasma-grenade.glb",
+     "leaf": "world",
+     "sizeBytes": 39588,
+     "bounds": {
+      "min": [
+       -0.08,
+       -0.01,
+       -0.02
+      ],
+      "max": [
+       0.03,
+       0.07,
+       0.07
+      ],
+      "size": [
+       0.11,
+       0.08,
+       0.09
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-core"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-plasma-blast",
+       "socket": "socket-core",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-plasma-sword",
+     "pack": "space",
+     "name": "Plasma Sword",
+     "category": "held-items",
+     "filename": "space-held-items-plasma-sword.glb",
+     "relativePath": "held-items/space-held-items-plasma-sword.glb",
+     "leaf": "world",
+     "sizeBytes": 30804,
+     "bounds": {
+      "min": [
+       -0.43,
+       0.005,
+       -0.035
+      ],
+      "max": [
+       0.05,
+       0.055,
+       0.055
+      ],
+      "size": [
+       0.48,
+       0.05,
+       0.09
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-plasma-slash",
+       "trigger": "manual",
+       "size": 0.323,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.107,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-pulse-smg",
+     "pack": "space",
+     "name": "Pulse SMG",
+     "category": "held-items",
+     "filename": "space-held-items-pulse-smg.glb",
+     "relativePath": "held-items/space-held-items-pulse-smg.glb",
+     "leaf": "world",
+     "sizeBytes": 63516,
+     "bounds": {
+      "min": [
+       -0.26,
+       -0.005,
+       -0.03
+      ],
+      "max": [
+       0.06,
+       0.065,
+       0.11
+      ],
+      "size": [
+       0.32,
+       0.07,
+       0.14
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-laser-bolt",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.25,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-ray-gun",
+     "pack": "space",
+     "name": "Atomic Ray Gun",
+     "category": "held-items",
+     "filename": "space-held-items-ray-gun.glb",
+     "relativePath": "held-items/space-held-items-ray-gun.glb",
+     "leaf": "world",
+     "sizeBytes": 61972,
+     "bounds": {
+      "min": [
+       -0.2,
+       -0.005,
+       -0.05
+      ],
+      "max": [
+       0.05,
+       0.065,
+       0.1
+      ],
+      "size": [
+       0.25,
+       0.07,
+       0.15
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-ray-bolt",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.25,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-scanner",
+     "pack": "space",
+     "name": "Bio Scanner",
+     "category": "held-items",
+     "filename": "space-held-items-scanner.glb",
+     "relativePath": "held-items/space-held-items-scanner.glb",
+     "leaf": "world",
+     "sizeBytes": 24448,
+     "bounds": {
+      "min": [
+       -0.16,
+       -0.005,
+       -0.05
+      ],
+      "max": [
+       0.04,
+       0.065,
+       0.06
+      ],
+      "size": [
+       0.2,
+       0.07,
+       0.11
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-sensor"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-holo-scan",
+       "socket": "socket-sensor",
+       "trigger": "manual",
+       "size": 0.28
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-space-wrench",
+     "pack": "space",
+     "name": "Space Wrench",
+     "category": "held-items",
+     "filename": "space-held-items-space-wrench.glb",
+     "relativePath": "held-items/space-held-items-space-wrench.glb",
+     "leaf": "world",
+     "sizeBytes": 23456,
+     "bounds": {
+      "min": [
+       -0.29,
+       0.015,
+       -0.055
+      ],
+      "max": [
+       0.05,
+       0.045,
+       0.045
+      ],
+      "size": [
+       0.34,
+       0.03,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-star-flag",
+     "pack": "space",
+     "name": "Star Flag",
+     "category": "held-items",
+     "filename": "space-held-items-star-flag.glb",
+     "relativePath": "held-items/space-held-items-star-flag.glb",
+     "leaf": "world",
+     "sizeBytes": 57496,
+     "bounds": {
+      "min": [
+       -0.48,
+       0.005,
+       -0.01
+      ],
+      "max": [
+       0.08,
+       0.055,
+       0.26
+      ],
+      "size": [
+       0.56,
+       0.05,
+       0.27
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-stun-baton",
+     "pack": "space",
+     "name": "Stun Baton",
+     "category": "held-items",
+     "filename": "space-held-items-stun-baton.glb",
+     "relativePath": "held-items/space-held-items-stun-baton.glb",
+     "leaf": "world",
+     "sizeBytes": 22608,
+     "bounds": {
+      "min": [
+       -0.29,
+       0.005,
+       -0.025
+      ],
+      "max": [
+       0.05,
+       0.055,
+       0.025
+      ],
+      "size": [
+       0.34,
+       0.05,
+       0.05
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-stun-arc",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-held-items-welding-torch",
+     "pack": "space",
+     "name": "Welding Torch",
+     "category": "held-items",
+     "filename": "space-held-items-welding-torch.glb",
+     "relativePath": "held-items/space-held-items-welding-torch.glb",
+     "leaf": "world",
+     "sizeBytes": 63520,
+     "bounds": {
+      "min": [
+       -0.24,
+       -0.01,
+       -0.03
+      ],
+      "max": [
+       0.06,
+       0.07,
+       0.09
+      ],
+      "size": [
+       0.3,
+       0.08,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-flame"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-space-weld-sparks",
+       "socket": "socket-flame",
+       "trigger": "manual",
+       "size": 0.25,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "space-avatar-parts",
+     "pack": "space",
+     "name": "Space Avatar Parts",
+     "category": "avatar",
+     "filename": "space-avatar-parts.glb",
+     "relativePath": "avatar/space-avatar-parts.glb",
+     "leaf": "characters",
+     "sizeBytes": 1083120,
+     "bounds": {
+      "min": [
+       -0.1308,
+       -0.0004,
+       -0.2406
+      ],
+      "max": [
+       0.1324,
+       0.6824,
+       0.2406
+      ],
+      "size": [
+       0.2632,
+       0.6828,
+       0.4812
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [
+      "40_Rifle_Aim",
+      "41_Rifle_Shoot",
+      "42_Jetpack_Hover",
+      "43_Salute",
+      "44_Scan",
+      "45_Zero_G_Float",
+      "46_Pistol_Shoot",
+      "47_Plasma_Slash"
+     ],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "space-characters-skins-android",
+     "pack": "space",
+     "name": "Android",
+     "category": "characters-skins",
+     "filename": "space-characters-skins-android.glb",
+     "relativePath": "characters-skins/space-characters-skins-android.glb",
+     "leaf": "characters",
+     "sizeBytes": 174316,
+     "bounds": {
+      "min": [
+       -0.14,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.09,
+       0.64,
+       0.3
+      ],
+      "size": [
+       0.23,
+       0.64,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "space-characters-skins-astronaut",
+     "pack": "space",
+     "name": "Astronaut",
+     "category": "characters-skins",
+     "filename": "space-characters-skins-astronaut.glb",
+     "relativePath": "characters-skins/space-characters-skins-astronaut.glb",
+     "leaf": "characters",
+     "sizeBytes": 157584,
+     "bounds": {
+      "min": [
+       -0.12,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.11,
+       0.67,
+       0.3
+      ],
+      "size": [
+       0.23,
+       0.67,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "space-characters-skins-bounty-hunter",
+     "pack": "space",
+     "name": "Bounty Hunter",
+     "category": "characters-skins",
+     "filename": "space-characters-skins-bounty-hunter.glb",
+     "relativePath": "characters-skins/space-characters-skins-bounty-hunter.glb",
+     "leaf": "characters",
+     "sizeBytes": 117912,
+     "bounds": {
+      "min": [
+       -0.12,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.3
+      ],
+      "size": [
+       0.22,
+       0.6,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "space-characters-skins-grey-alien",
+     "pack": "space",
+     "name": "Grey Alien",
+     "category": "characters-skins",
+     "filename": "space-characters-skins-grey-alien.glb",
+     "relativePath": "characters-skins/space-characters-skins-grey-alien.glb",
+     "leaf": "characters",
+     "sizeBytes": 139232,
+     "bounds": {
+      "min": [
+       -0.1,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.09,
+       0.64,
+       0.3
+      ],
+      "size": [
+       0.19,
+       0.64,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "space-characters-skins-space-marine",
+     "pack": "space",
+     "name": "Space Marine",
+     "category": "characters-skins",
+     "filename": "space-characters-skins-space-marine.glb",
+     "relativePath": "characters-skins/space-characters-skins-space-marine.glb",
+     "leaf": "characters",
+     "sizeBytes": 285924,
+     "bounds": {
+      "min": [
+       -0.13,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.1,
+       0.62,
+       0.3
+      ],
+      "size": [
+       0.23,
+       0.62,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "space-characters-skins-starship-captain",
+     "pack": "space",
+     "name": "Starship Captain",
+     "category": "characters-skins",
+     "filename": "space-characters-skins-starship-captain.glb",
+     "relativePath": "characters-skins/space-characters-skins-starship-captain.glb",
+     "leaf": "characters",
+     "sizeBytes": 145692,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.3
+      ],
+      "max": [
+       0.13,
+       0.62,
+       0.3
+      ],
+      "size": [
+       0.21,
+       0.62,
+       0.6
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    }
+   ]
+  },
+  "monster": {
+   "ids": [
+    "monster-animated-props-chained-coffin",
+    "monster-animated-props-chandelier",
+    "monster-animated-props-dungeon-door",
+    "monster-animated-props-hanging-cage",
+    "monster-animated-props-haunted-mirror",
+    "monster-animated-props-iron-maiden",
+    "monster-animated-props-spider-thread",
+    "monster-animated-props-torch-sconce",
+    "monster-animated-props-trapdoor",
+    "monster-animated-props-upright-coffin",
+    "monster-animated-props-vampire-coffin",
+    "monster-animated-props-witch-cauldron",
+    "monster-buildings-bell-tower",
+    "monster-buildings-crypt",
+    "monster-buildings-dungeon-entrance",
+    "monster-buildings-gothic-chapel",
+    "monster-buildings-haunted-manor",
+    "monster-buildings-haunted-windmill",
+    "monster-buildings-mausoleum",
+    "monster-buildings-ruined-watchtower",
+    "monster-buildings-undertaker-shop",
+    "monster-buildings-witch-hut",
+    "monster-creatures-gargoyle",
+    "monster-creatures-giant-spider",
+    "monster-creatures-mummy",
+    "monster-creatures-vampire-bat",
+    "monster-creatures-vampire-lord",
+    "monster-creatures-wailing-ghost",
+    "monster-creatures-werewolf",
+    "monster-creatures-zombie-ghoul",
+    "monster-held-items-bone-club",
+    "monster-held-items-butcher-cleaver",
+    "monster-held-items-garlic-mace",
+    "monster-held-items-grave-shovel",
+    "monster-held-items-holy-water",
+    "monster-held-items-hunter-lantern",
+    "monster-held-items-pitchfork",
+    "monster-held-items-reaper-scythe",
+    "monster-held-items-silver-axe",
+    "monster-held-items-silver-blunderbuss",
+    "monster-held-items-silver-dagger",
+    "monster-held-items-skull-staff",
+    "monster-held-items-stake-crossbow",
+    "monster-held-items-torch",
+    "monster-held-items-witch-wand",
+    "monster-held-items-wooden-stake",
+    "monster-props-blood-barrel",
+    "monster-props-bone-pile",
+    "monster-props-bookshelf",
+    "monster-props-brazier",
+    "monster-props-candelabra",
+    "monster-props-cobweb-arch",
+    "monster-props-coffin-stack",
+    "monster-props-cursed-well",
+    "monster-props-dungeon-crate",
+    "monster-props-dungeon-pillar",
+    "monster-props-dungeon-stairs",
+    "monster-props-dungeon-wall-corner",
+    "monster-props-dungeon-wall",
+    "monster-props-funeral-urn",
+    "monster-props-gargoyle-statue",
+    "monster-props-gravestone-cross",
+    "monster-props-gravestone-obelisk",
+    "monster-props-gravestone-rounded",
+    "monster-props-jack-o-lantern",
+    "monster-props-lamp-post",
+    "monster-props-pipe-organ",
+    "monster-props-potion-table",
+    "monster-props-pumpkin-patch",
+    "monster-props-ritual-altar",
+    "monster-props-sarcophagus",
+    "monster-props-shackle-post",
+    "monster-props-skull-pile",
+    "monster-props-stocks",
+    "monster-props-torture-rack",
+    "monster-props-vampire-throne",
+    "monster-terrain-nature-dead-tree",
+    "monster-terrain-nature-dungeon-floor",
+    "monster-terrain-nature-dungeon-grate",
+    "monster-terrain-nature-fog-pit",
+    "monster-terrain-nature-glow-mushrooms",
+    "monster-terrain-nature-grave-mound",
+    "monster-terrain-nature-iron-fence",
+    "monster-terrain-nature-mossy-rocks",
+    "monster-terrain-nature-thorn-bramble",
+    "monster-terrain-nature-weeping-willow",
+    "monster-vehicles-bone-cart",
+    "monster-vehicles-coffin-wagon",
+    "monster-vehicles-ghost-ship",
+    "monster-vehicles-hearse-carriage",
+    "monster-vehicles-spider-carriage",
+    "monster-vehicles-witch-broom",
+    "monster-avatar-parts",
+    "monster-characters-skins-frankenstein",
+    "monster-characters-skins-mummy",
+    "monster-characters-skins-skeleton-hunter",
+    "monster-characters-skins-vampire",
+    "monster-characters-skins-werewolf",
+    "monster-characters-skins-witch"
+   ],
+   "avatarModels": [
+    {
+     "id": "monster-held-items-bone-club",
+     "pack": "monster",
+     "name": "Bone Club",
+     "category": "held-items",
+     "filename": "monster-held-items-bone-club.glb",
+     "relativePath": "held-items/monster-held-items-bone-club.glb",
+     "leaf": "world",
+     "sizeBytes": 64756,
+     "bounds": {
+      "min": [
+       -0.24,
+       -0.02,
+       -0.04
+      ],
+      "max": [
+       0.08,
+       0.08,
+       0.05
+      ],
+      "size": [
+       0.32,
+       0.1,
+       0.09
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-head"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-blood-splat",
+       "socket": "socket-head",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-butcher-cleaver",
+     "pack": "monster",
+     "name": "Butcher's Cleaver",
+     "category": "held-items",
+     "filename": "monster-held-items-butcher-cleaver.glb",
+     "relativePath": "held-items/monster-held-items-butcher-cleaver.glb",
+     "leaf": "world",
+     "sizeBytes": 25024,
+     "bounds": {
+      "min": [
+       -0.21,
+       0.015,
+       -0.015
+      ],
+      "max": [
+       0.05,
+       0.045,
+       0.105
+      ],
+      "size": [
+       0.26,
+       0.03,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-edge"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-blood-splat",
+       "socket": "socket-edge",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-garlic-mace",
+     "pack": "monster",
+     "name": "Garlic Mace",
+     "category": "held-items",
+     "filename": "monster-held-items-garlic-mace.glb",
+     "relativePath": "held-items/monster-held-items-garlic-mace.glb",
+     "leaf": "world",
+     "sizeBytes": 66856,
+     "bounds": {
+      "min": [
+       -0.26,
+       -0.03,
+       -0.06
+      ],
+      "max": [
+       0.07,
+       0.08,
+       0.07
+      ],
+      "size": [
+       0.33,
+       0.11,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-head"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-holy-burst",
+       "socket": "socket-head",
+       "trigger": "manual",
+       "size": 0.36
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-grave-shovel",
+     "pack": "monster",
+     "name": "Grave Shovel",
+     "category": "held-items",
+     "filename": "monster-held-items-grave-shovel.glb",
+     "relativePath": "held-items/monster-held-items-grave-shovel.glb",
+     "leaf": "world",
+     "sizeBytes": 42924,
+     "bounds": {
+      "min": [
+       -0.32,
+       0.015,
+       -0.055
+      ],
+      "max": [
+       0.14,
+       0.045,
+       0.055
+      ],
+      "size": [
+       0.46,
+       0.03,
+       0.11
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-blade"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-dirt-toss",
+       "socket": "socket-blade",
+       "trigger": "manual",
+       "size": 0.4
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-holy-water",
+     "pack": "monster",
+     "name": "Holy Water",
+     "category": "held-items",
+     "filename": "monster-held-items-holy-water.glb",
+     "relativePath": "held-items/monster-held-items-holy-water.glb",
+     "leaf": "world",
+     "sizeBytes": 76800,
+     "bounds": {
+      "min": [
+       -0.2,
+       -0.02,
+       -0.06
+      ],
+      "max": [
+       0.06,
+       0.08,
+       0.06
+      ],
+      "size": [
+       0.26,
+       0.1,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-splash"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-holy-burst",
+       "socket": "socket-splash",
+       "trigger": "manual",
+       "size": 0.36
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-hunter-lantern",
+     "pack": "monster",
+     "name": "Hunter's Lantern",
+     "category": "held-items",
+     "filename": "monster-held-items-hunter-lantern.glb",
+     "relativePath": "held-items/monster-held-items-hunter-lantern.glb",
+     "leaf": "world",
+     "sizeBytes": 37180,
+     "bounds": {
+      "min": [
+       -0.19,
+       -0.01,
+       -0.07
+      ],
+      "max": [
+       0.06,
+       0.07,
+       0.08
+      ],
+      "size": [
+       0.25,
+       0.08,
+       0.15
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-flame"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-candle-flame",
+       "socket": "socket-flame",
+       "trigger": "manual",
+       "size": 0.12,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-pitchfork",
+     "pack": "monster",
+     "name": "Mob Pitchfork",
+     "category": "held-items",
+     "filename": "monster-held-items-pitchfork.glb",
+     "relativePath": "held-items/monster-held-items-pitchfork.glb",
+     "leaf": "world",
+     "sizeBytes": 38576,
+     "bounds": {
+      "min": [
+       -0.4,
+       0.015,
+       -0.045
+      ],
+      "max": [
+       0.12,
+       0.045,
+       0.045
+      ],
+      "size": [
+       0.52,
+       0.03,
+       0.09
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tines"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-blood-splat",
+       "socket": "socket-tines",
+       "trigger": "manual",
+       "size": 0.32
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-reaper-scythe",
+     "pack": "monster",
+     "name": "Reaper's Scythe",
+     "category": "held-items",
+     "filename": "monster-held-items-reaper-scythe.glb",
+     "relativePath": "held-items/monster-held-items-reaper-scythe.glb",
+     "leaf": "world",
+     "sizeBytes": 53304,
+     "bounds": {
+      "min": [
+       -0.39,
+       0.005,
+       -0.03
+      ],
+      "max": [
+       0.08,
+       0.055,
+       0.22
+      ],
+      "size": [
+       0.47,
+       0.05,
+       0.25
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-blade"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-reaper-slash",
+       "trigger": "manual",
+       "size": 0.352,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.117,
+        0.03,
+        0.11
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-silver-axe",
+     "pack": "monster",
+     "name": "Silver Axe",
+     "category": "held-items",
+     "filename": "monster-held-items-silver-axe.glb",
+     "relativePath": "held-items/monster-held-items-silver-axe.glb",
+     "leaf": "world",
+     "sizeBytes": 42500,
+     "bounds": {
+      "min": [
+       -0.29,
+       0.005,
+       -0.09
+      ],
+      "max": [
+       0.09,
+       0.055,
+       0.09
+      ],
+      "size": [
+       0.38,
+       0.05,
+       0.18
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-blade"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-silver-slash",
+       "trigger": "manual",
+       "size": 0.217,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.072,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-silver-blunderbuss",
+     "pack": "monster",
+     "name": "Silver Blunderbuss",
+     "category": "held-items",
+     "filename": "monster-held-items-silver-blunderbuss.glb",
+     "relativePath": "held-items/monster-held-items-silver-blunderbuss.glb",
+     "leaf": "world",
+     "sizeBytes": 68292,
+     "bounds": {
+      "min": [
+       -0.34,
+       -0.015,
+       -0.05
+      ],
+      "max": [
+       0.06,
+       0.075,
+       0.08
+      ],
+      "size": [
+       0.4,
+       0.09,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-blunderbuss-blast",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.42,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-silver-dagger",
+     "pack": "monster",
+     "name": "Silver Dagger",
+     "category": "held-items",
+     "filename": "monster-held-items-silver-dagger.glb",
+     "relativePath": "held-items/monster-held-items-silver-dagger.glb",
+     "leaf": "world",
+     "sizeBytes": 26124,
+     "bounds": {
+      "min": [
+       -0.19,
+       0.015,
+       -0.055
+      ],
+      "max": [
+       0.05,
+       0.045,
+       0.055
+      ],
+      "size": [
+       0.24,
+       0.03,
+       0.11
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-silver-slash",
+       "trigger": "manual",
+       "size": 0.143,
+       "aim": [
+        -1,
+        0,
+        0
+       ],
+       "offset": [
+        -0.048,
+        0.03,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-skull-staff",
+     "pack": "monster",
+     "name": "Skull Staff",
+     "category": "held-items",
+     "filename": "monster-held-items-skull-staff.glb",
+     "relativePath": "held-items/monster-held-items-skull-staff.glb",
+     "leaf": "world",
+     "sizeBytes": 57500,
+     "bounds": {
+      "min": [
+       -0.44,
+       -0.03,
+       -0.03
+      ],
+      "max": [
+       0.14,
+       0.09,
+       0.07
+      ],
+      "size": [
+       0.58,
+       0.12,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-soul-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.4
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-stake-crossbow",
+     "pack": "monster",
+     "name": "Stake Crossbow",
+     "category": "held-items",
+     "filename": "monster-held-items-stake-crossbow.glb",
+     "relativePath": "held-items/monster-held-items-stake-crossbow.glb",
+     "leaf": "world",
+     "sizeBytes": 52184,
+     "bounds": {
+      "min": [
+       -0.31,
+       0.015,
+       -0.13
+      ],
+      "max": [
+       0.05,
+       0.045,
+       0.14
+      ],
+      "size": [
+       0.36,
+       0.03,
+       0.27
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-bolt-twang",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.5,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-torch",
+     "pack": "monster",
+     "name": "Pitch Torch",
+     "category": "held-items",
+     "filename": "monster-held-items-torch.glb",
+     "relativePath": "held-items/monster-held-items-torch.glb",
+     "leaf": "world",
+     "sizeBytes": 46828,
+     "bounds": {
+      "min": [
+       -0.21,
+       0,
+       -0.03
+      ],
+      "max": [
+       0.08,
+       0.06,
+       0.1
+      ],
+      "size": [
+       0.29,
+       0.06,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-flame"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-torch-flame",
+       "socket": "socket-flame",
+       "trigger": "manual",
+       "size": 0.16,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-witch-wand",
+     "pack": "monster",
+     "name": "Witch's Wand",
+     "category": "held-items",
+     "filename": "monster-held-items-witch-wand.glb",
+     "relativePath": "held-items/monster-held-items-witch-wand.glb",
+     "leaf": "world",
+     "sizeBytes": 59424,
+     "bounds": {
+      "min": [
+       -0.28,
+       -0.02,
+       -0.05
+      ],
+      "max": [
+       0.07,
+       0.08,
+       0.05
+      ],
+      "size": [
+       0.35,
+       0.1,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-curse-cloud",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.35
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-held-items-wooden-stake",
+     "pack": "monster",
+     "name": "Wooden Stake",
+     "category": "held-items",
+     "filename": "monster-held-items-wooden-stake.glb",
+     "relativePath": "held-items/monster-held-items-wooden-stake.glb",
+     "leaf": "world",
+     "sizeBytes": 15336,
+     "bounds": {
+      "min": [
+       -0.23,
+       0.005,
+       -0.025
+      ],
+      "max": [
+       0.05,
+       0.055,
+       0.025
+      ],
+      "size": [
+       0.28,
+       0.05,
+       0.05
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-monster-holy-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.3
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "monster-avatar-parts",
+     "pack": "monster",
+     "name": "Monster Avatar Parts",
+     "category": "avatar",
+     "filename": "monster-avatar-parts.glb",
+     "relativePath": "avatar/monster-avatar-parts.glb",
+     "leaf": "characters",
+     "sizeBytes": 1198052,
+     "bounds": {
+      "min": [
+       -0.1208,
+       -0.0004,
+       -0.2708
+      ],
+      "max": [
+       0.1612,
+       0.8524,
+       0.2708
+      ],
+      "size": [
+       0.282,
+       0.8528,
+       0.5416
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [
+      "48_Howl",
+      "49_Coffin_Rise",
+      "50_Bat_Flap",
+      "51_Lunge",
+      "52_Creep_Walk",
+      "53_Cast_Curse",
+      "54_Zombie_Shamble",
+      "55_Claw_Swipe"
+     ],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "monster-characters-skins-frankenstein",
+     "pack": "monster",
+     "name": "Frankenstein's Monster",
+     "category": "characters-skins",
+     "filename": "monster-characters-skins-frankenstein.glb",
+     "relativePath": "characters-skins/monster-characters-skins-frankenstein.glb",
+     "leaf": "characters",
+     "sizeBytes": 166520,
+     "bounds": {
+      "min": [
+       -0.07,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.09,
+       0.61,
+       0.29
+      ],
+      "size": [
+       0.16,
+       0.61,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "monster-characters-skins-mummy",
+     "pack": "monster",
+     "name": "Mummy Pharaoh",
+     "category": "characters-skins",
+     "filename": "monster-characters-skins-mummy.glb",
+     "relativePath": "characters-skins/monster-characters-skins-mummy.glb",
+     "leaf": "characters",
+     "sizeBytes": 115784,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.29
+      ],
+      "size": [
+       0.18,
+       0.6,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "monster-characters-skins-skeleton-hunter",
+     "pack": "monster",
+     "name": "Skeleton Hunter",
+     "category": "characters-skins",
+     "filename": "monster-characters-skins-skeleton-hunter.glb",
+     "relativePath": "characters-skins/monster-characters-skins-skeleton-hunter.glb",
+     "leaf": "characters",
+     "sizeBytes": 152264,
+     "bounds": {
+      "min": [
+       -0.11,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.13,
+       0.67,
+       0.29
+      ],
+      "size": [
+       0.24,
+       0.67,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "monster-characters-skins-vampire",
+     "pack": "monster",
+     "name": "Vampire Count",
+     "category": "characters-skins",
+     "filename": "monster-characters-skins-vampire.glb",
+     "relativePath": "characters-skins/monster-characters-skins-vampire.glb",
+     "leaf": "characters",
+     "sizeBytes": 199496,
+     "bounds": {
+      "min": [
+       -0.07,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.09,
+       0.59,
+       0.29
+      ],
+      "size": [
+       0.16,
+       0.59,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "monster-characters-skins-werewolf",
+     "pack": "monster",
+     "name": "Werewolf",
+     "category": "characters-skins",
+     "filename": "monster-characters-skins-werewolf.glb",
+     "relativePath": "characters-skins/monster-characters-skins-werewolf.glb",
+     "leaf": "characters",
+     "sizeBytes": 408436,
+     "bounds": {
+      "min": [
+       -0.12,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.16,
+       0.67,
+       0.29
+      ],
+      "size": [
+       0.28,
+       0.67,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "monster-characters-skins-witch",
+     "pack": "monster",
+     "name": "Swamp Witch",
+     "category": "characters-skins",
+     "filename": "monster-characters-skins-witch.glb",
+     "relativePath": "characters-skins/monster-characters-skins-witch.glb",
+     "leaf": "characters",
+     "sizeBytes": 316304,
+     "bounds": {
+      "min": [
+       -0.1,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.12,
+       0.87,
+       0.29
+      ],
+      "size": [
+       0.22,
+       0.87,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    }
+   ]
+  },
+  "apocalypse": {
+   "ids": [
+    "apocalypse-animated-props-bear-trap",
+    "apocalypse-animated-props-burning-barrel",
+    "apocalypse-animated-props-campfire",
+    "apocalypse-animated-props-garage-door",
+    "apocalypse-animated-props-gas-pump",
+    "apocalypse-animated-props-generator",
+    "apocalypse-animated-props-porta-potty",
+    "apocalypse-animated-props-radio-tower",
+    "apocalypse-animated-props-street-lamp",
+    "apocalypse-animated-props-supply-crate",
+    "apocalypse-animated-props-toxic-barrel",
+    "apocalypse-animated-props-windmill-pump",
+    "apocalypse-buildings-brick-warehouse",
+    "apocalypse-buildings-bunker",
+    "apocalypse-buildings-cold-storage",
+    "apocalypse-buildings-collapsed-apartment",
+    "apocalypse-buildings-gas-station",
+    "apocalypse-buildings-roadside-diner",
+    "apocalypse-buildings-survivor-shack",
+    "apocalypse-buildings-warehouse-shed",
+    "apocalypse-buildings-watchtower",
+    "apocalypse-buildings-water-tower",
+    "apocalypse-creatures-crow",
+    "apocalypse-creatures-mutant-behemoth",
+    "apocalypse-creatures-mutant-dog",
+    "apocalypse-creatures-rad-rat",
+    "apocalypse-creatures-raider-bot",
+    "apocalypse-creatures-zombie-bloated",
+    "apocalypse-creatures-zombie-runner",
+    "apocalypse-creatures-zombie-walker",
+    "apocalypse-held-items-chainsaw",
+    "apocalypse-held-items-crossbow",
+    "apocalypse-held-items-crowbar",
+    "apocalypse-held-items-double-barrel",
+    "apocalypse-held-items-fire-axe",
+    "apocalypse-held-items-flashlight",
+    "apocalypse-held-items-frying-pan",
+    "apocalypse-held-items-gas-can",
+    "apocalypse-held-items-machete",
+    "apocalypse-held-items-molotov",
+    "apocalypse-held-items-nail-bat",
+    "apocalypse-held-items-pipe-wrench",
+    "apocalypse-held-items-pistol",
+    "apocalypse-held-items-pump-shotgun",
+    "apocalypse-held-items-sawn-off",
+    "apocalypse-held-items-spear",
+    "apocalypse-props-ammo-crate",
+    "apocalypse-props-chainlink-fence",
+    "apocalypse-props-crt-tv",
+    "apocalypse-props-drum-pallet",
+    "apocalypse-props-dumpster",
+    "apocalypse-props-engine-block",
+    "apocalypse-props-fire-hydrant",
+    "apocalypse-props-fuel-can",
+    "apocalypse-props-jersey-barrier",
+    "apocalypse-props-keep-out-sign",
+    "apocalypse-props-mailbox",
+    "apocalypse-props-mattress",
+    "apocalypse-props-oil-drum",
+    "apocalypse-props-pallet-stack",
+    "apocalypse-props-payphone",
+    "apocalypse-props-propane-tank",
+    "apocalypse-props-radio",
+    "apocalypse-props-sandbag-wall",
+    "apocalypse-props-scrap-pile",
+    "apocalypse-props-shopping-cart",
+    "apocalypse-props-skull-pike",
+    "apocalypse-props-spike-barricade",
+    "apocalypse-props-stop-sign",
+    "apocalypse-props-survivor-tent",
+    "apocalypse-props-tire-stack",
+    "apocalypse-props-toolbox",
+    "apocalypse-props-traffic-cone",
+    "apocalypse-props-vending-machine",
+    "apocalypse-props-water-tank",
+    "apocalypse-props-wooden-crate",
+    "apocalypse-terrain-nature-cracked-road",
+    "apocalypse-terrain-nature-crater",
+    "apocalypse-terrain-nature-dead-grass",
+    "apocalypse-terrain-nature-dead-tree",
+    "apocalypse-terrain-nature-flipped-car",
+    "apocalypse-terrain-nature-rock-mesa",
+    "apocalypse-terrain-nature-rubble-pile",
+    "apocalypse-terrain-nature-sand-dune",
+    "apocalypse-terrain-nature-toxic-pool",
+    "apocalypse-terrain-nature-wrecked-sedan",
+    "apocalypse-vehicles-armored-van",
+    "apocalypse-vehicles-dune-buggy",
+    "apocalypse-vehicles-motorbike",
+    "apocalypse-vehicles-pickup-truck",
+    "apocalypse-vehicles-school-bus",
+    "apocalypse-vehicles-war-pickup",
+    "apocalypse-avatar-parts",
+    "apocalypse-characters-skins-hazmat",
+    "apocalypse-characters-skins-mechanic",
+    "apocalypse-characters-skins-raider",
+    "apocalypse-characters-skins-survivor",
+    "apocalypse-characters-skins-wasteland-ranger",
+    "apocalypse-characters-skins-zombie"
+   ],
+   "avatarModels": [
+    {
+     "id": "apocalypse-held-items-chainsaw",
+     "pack": "apocalypse",
+     "name": "Chainsaw",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-chainsaw.glb",
+     "relativePath": "held-items/apocalypse-held-items-chainsaw.glb",
+     "leaf": "world",
+     "sizeBytes": 44716,
+     "bounds": {
+      "min": [
+       -0.43,
+       -0.015,
+       -0.1
+      ],
+      "max": [
+       0.09,
+       0.075,
+       0.03
+      ],
+      "size": [
+       0.52,
+       0.09,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-exhaust",
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-exhaust-smoke",
+       "socket": "socket-exhaust",
+       "trigger": "idle",
+       "size": 0.1
+      },
+      {
+       "effectId": "rvx-apocalypse-gore-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.4
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-crossbow",
+     "pack": "apocalypse",
+     "name": "Scrap Crossbow",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-crossbow.glb",
+     "relativePath": "held-items/apocalypse-held-items-crossbow.glb",
+     "leaf": "world",
+     "sizeBytes": 32480,
+     "bounds": {
+      "min": [
+       -0.3,
+       -0.095,
+       -0.02
+      ],
+      "max": [
+       0.12,
+       0.155,
+       0.09
+      ],
+      "size": [
+       0.42,
+       0.25,
+       0.11
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-bolt"
+     ],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-crowbar",
+     "pack": "apocalypse",
+     "name": "Crowbar",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-crowbar.glb",
+     "relativePath": "held-items/apocalypse-held-items-crowbar.glb",
+     "leaf": "world",
+     "sizeBytes": 17444,
+     "bounds": {
+      "min": [
+       -0.34,
+       0.025,
+       -0.01
+      ],
+      "max": [
+       0.08,
+       0.045,
+       0.09
+      ],
+      "size": [
+       0.42,
+       0.02,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-metal-clang",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.42
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-double-barrel",
+     "pack": "apocalypse",
+     "name": "Double-Barrel Shotgun",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-double-barrel.glb",
+     "relativePath": "held-items/apocalypse-held-items-double-barrel.glb",
+     "leaf": "world",
+     "sizeBytes": 21292,
+     "bounds": {
+      "min": [
+       -0.39,
+       0.005,
+       -0.04
+      ],
+      "max": [
+       0.15,
+       0.055,
+       0.06
+      ],
+      "size": [
+       0.54,
+       0.05,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-shotgun-blast",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.3,
+       "aim": [
+        0,
+        0,
+        1
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-fire-axe",
+     "pack": "apocalypse",
+     "name": "Fire Axe",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-fire-axe.glb",
+     "relativePath": "held-items/apocalypse-held-items-fire-axe.glb",
+     "leaf": "world",
+     "sizeBytes": 62620,
+     "bounds": {
+      "min": [
+       -0.39,
+       0.005,
+       -0.025
+      ],
+      "max": [
+       0.07,
+       0.055,
+       0.175
+      ],
+      "size": [
+       0.46,
+       0.05,
+       0.2
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-gore-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.36
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-flashlight",
+     "pack": "apocalypse",
+     "name": "Police Flashlight",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-flashlight.glb",
+     "relativePath": "held-items/apocalypse-held-items-flashlight.glb",
+     "leaf": "world",
+     "sizeBytes": 83152,
+     "bounds": {
+      "min": [
+       -0.24,
+       -0.015,
+       -0.045
+      ],
+      "max": [
+       0.1,
+       0.075,
+       0.045
+      ],
+      "size": [
+       0.34,
+       0.09,
+       0.09
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-beam"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-flashlight-beam",
+       "socket": "socket-beam",
+       "trigger": "idle",
+       "size": 0.4,
+       "aim": [
+        0,
+        0,
+        1
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-frying-pan",
+     "pack": "apocalypse",
+     "name": "Frying Pan",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-frying-pan.glb",
+     "relativePath": "held-items/apocalypse-held-items-frying-pan.glb",
+     "leaf": "world",
+     "sizeBytes": 47832,
+     "bounds": {
+      "min": [
+       -0.34,
+       -0.07,
+       -0.02
+      ],
+      "max": [
+       0.05,
+       0.13,
+       0.01
+      ],
+      "size": [
+       0.39,
+       0.2,
+       0.03
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-metal-clang",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.42
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-gas-can",
+     "pack": "apocalypse",
+     "name": "Gas Can",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-gas-can.glb",
+     "relativePath": "held-items/apocalypse-held-items-gas-can.glb",
+     "leaf": "world",
+     "sizeBytes": 18480,
+     "bounds": {
+      "min": [
+       -0.175,
+       -0.025,
+       -0.2
+      ],
+      "max": [
+       0.085,
+       0.085,
+       0.01
+      ],
+      "size": [
+       0.26,
+       0.11,
+       0.21
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-spout"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-fuel-splash",
+       "socket": "socket-spout",
+       "trigger": "manual",
+       "size": 0.28
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-machete",
+     "pack": "apocalypse",
+     "name": "Machete",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-machete.glb",
+     "relativePath": "held-items/apocalypse-held-items-machete.glb",
+     "leaf": "world",
+     "sizeBytes": 28992,
+     "bounds": {
+      "min": [
+       -0.43,
+       0.015,
+       -0.03
+      ],
+      "max": [
+       0.06,
+       0.045,
+       0.04
+      ],
+      "size": [
+       0.49,
+       0.03,
+       0.07
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-gore-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.36
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-molotov",
+     "pack": "apocalypse",
+     "name": "Molotov Cocktail",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-molotov.glb",
+     "relativePath": "held-items/apocalypse-held-items-molotov.glb",
+     "leaf": "world",
+     "sizeBytes": 35072,
+     "bounds": {
+      "min": [
+       -0.2,
+       -0.015,
+       -0.045
+      ],
+      "max": [
+       0.06,
+       0.075,
+       0.045
+      ],
+      "size": [
+       0.26,
+       0.09,
+       0.09
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-wick"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-wick-flame",
+       "socket": "socket-wick",
+       "trigger": "idle",
+       "size": 0.1,
+       "aim": [
+        1,
+        0,
+        0
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-nail-bat",
+     "pack": "apocalypse",
+     "name": "Nail Bat",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-nail-bat.glb",
+     "relativePath": "held-items/apocalypse-held-items-nail-bat.glb",
+     "leaf": "world",
+     "sizeBytes": 91576,
+     "bounds": {
+      "min": [
+       -0.38,
+       -0.025,
+       -0.055
+      ],
+      "max": [
+       0.07,
+       0.085,
+       0.055
+      ],
+      "size": [
+       0.45,
+       0.11,
+       0.11
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-gore-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.36
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-pipe-wrench",
+     "pack": "apocalypse",
+     "name": "Pipe Wrench",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-pipe-wrench.glb",
+     "relativePath": "held-items/apocalypse-held-items-pipe-wrench.glb",
+     "leaf": "world",
+     "sizeBytes": 22348,
+     "bounds": {
+      "min": [
+       -0.31,
+       0.005,
+       -0.02
+      ],
+      "max": [
+       0.09,
+       0.055,
+       0.1
+      ],
+      "size": [
+       0.4,
+       0.05,
+       0.12
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-metal-clang",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.42
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-pistol",
+     "pack": "apocalypse",
+     "name": "Service Pistol",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-pistol.glb",
+     "relativePath": "held-items/apocalypse-held-items-pistol.glb",
+     "leaf": "world",
+     "sizeBytes": 14980,
+     "bounds": {
+      "min": [
+       -0.16,
+       0.015,
+       -0.04
+      ],
+      "max": [
+       0.03,
+       0.045,
+       0.09
+      ],
+      "size": [
+       0.19,
+       0.03,
+       0.13
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-pistol-shot",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.2,
+       "aim": [
+        0,
+        0,
+        1
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-pump-shotgun",
+     "pack": "apocalypse",
+     "name": "Pump Shotgun",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-pump-shotgun.glb",
+     "relativePath": "held-items/apocalypse-held-items-pump-shotgun.glb",
+     "leaf": "world",
+     "sizeBytes": 30636,
+     "bounds": {
+      "min": [
+       -0.415,
+       0.005,
+       -0.045
+      ],
+      "max": [
+       0.145,
+       0.055,
+       0.055
+      ],
+      "size": [
+       0.56,
+       0.05,
+       0.1
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-light",
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-shotgun-blast",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.3,
+       "aim": [
+        0,
+        0,
+        1
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-sawn-off",
+     "pack": "apocalypse",
+     "name": "Sawn-Off Shotgun",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-sawn-off.glb",
+     "relativePath": "held-items/apocalypse-held-items-sawn-off.glb",
+     "leaf": "world",
+     "sizeBytes": 20028,
+     "bounds": {
+      "min": [
+       -0.26,
+       0.005,
+       -0.035
+      ],
+      "max": [
+       0.04,
+       0.055,
+       0.075
+      ],
+      "size": [
+       0.3,
+       0.05,
+       0.11
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-muzzle"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-shotgun-blast",
+       "socket": "socket-muzzle",
+       "trigger": "manual",
+       "size": 0.3,
+       "aim": [
+        0,
+        0,
+        1
+       ]
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-held-items-spear",
+     "pack": "apocalypse",
+     "name": "Scavenger Spear",
+     "category": "held-items",
+     "filename": "apocalypse-held-items-spear.glb",
+     "relativePath": "held-items/apocalypse-held-items-spear.glb",
+     "leaf": "world",
+     "sizeBytes": 17784,
+     "bounds": {
+      "min": [
+       -0.38,
+       0.01,
+       -0.04
+      ],
+      "max": [
+       0.22,
+       0.05,
+       0.02
+      ],
+      "size": [
+       0.6,
+       0.04,
+       0.06
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [
+      "socket-tip",
+      "socket-trail"
+     ],
+     "pfx": [
+      {
+       "effectId": "rvx-apocalypse-gore-burst",
+       "socket": "socket-tip",
+       "trigger": "manual",
+       "size": 0.32
+      }
+     ],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0)"
+    },
+    {
+     "id": "apocalypse-avatar-parts",
+     "pack": "apocalypse",
+     "name": "Post-Apocalypse Avatar Parts",
+     "category": "avatar",
+     "filename": "apocalypse-avatar-parts.glb",
+     "relativePath": "avatar/apocalypse-avatar-parts.glb",
+     "leaf": "characters",
+     "sizeBytes": 1069060,
+     "bounds": {
+      "min": [
+       -0.1424,
+       -0.0004,
+       -0.2406
+      ],
+      "max": [
+       0.1624,
+       0.6824,
+       0.2406
+      ],
+      "size": [
+       0.3048,
+       0.6828,
+       0.4812
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [
+      "56_Shotgun_Pump",
+      "57_Shotgun_Fire",
+      "58_Zombie_Shamble",
+      "59_Crouch_Walk",
+      "60_Scavenge",
+      "61_Throw",
+      "62_Bat_Swing"
+     ],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "apocalypse-characters-skins-hazmat",
+     "pack": "apocalypse",
+     "name": "Hazmat Suit",
+     "category": "characters-skins",
+     "filename": "apocalypse-characters-skins-hazmat.glb",
+     "relativePath": "characters-skins/apocalypse-characters-skins-hazmat.glb",
+     "leaf": "characters",
+     "sizeBytes": 319536,
+     "bounds": {
+      "min": [
+       -0.09,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.13,
+       0.61,
+       0.29
+      ],
+      "size": [
+       0.22,
+       0.61,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "apocalypse-characters-skins-mechanic",
+     "pack": "apocalypse",
+     "name": "Mechanic",
+     "category": "characters-skins",
+     "filename": "apocalypse-characters-skins-mechanic.glb",
+     "relativePath": "characters-skins/apocalypse-characters-skins-mechanic.glb",
+     "leaf": "characters",
+     "sizeBytes": 289280,
+     "bounds": {
+      "min": [
+       -0.12,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.29
+      ],
+      "size": [
+       0.22,
+       0.6,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "apocalypse-characters-skins-raider",
+     "pack": "apocalypse",
+     "name": "Raider",
+     "category": "characters-skins",
+     "filename": "apocalypse-characters-skins-raider.glb",
+     "relativePath": "characters-skins/apocalypse-characters-skins-raider.glb",
+     "leaf": "characters",
+     "sizeBytes": 364424,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.1,
+       0.66,
+       0.29
+      ],
+      "size": [
+       0.18,
+       0.66,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "apocalypse-characters-skins-survivor",
+     "pack": "apocalypse",
+     "name": "Survivor",
+     "category": "characters-skins",
+     "filename": "apocalypse-characters-skins-survivor.glb",
+     "relativePath": "characters-skins/apocalypse-characters-skins-survivor.glb",
+     "leaf": "characters",
+     "sizeBytes": 305400,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.29
+      ],
+      "size": [
+       0.18,
+       0.6,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "apocalypse-characters-skins-wasteland-ranger",
+     "pack": "apocalypse",
+     "name": "Wasteland Ranger",
+     "category": "characters-skins",
+     "filename": "apocalypse-characters-skins-wasteland-ranger.glb",
+     "relativePath": "characters-skins/apocalypse-characters-skins-wasteland-ranger.glb",
+     "leaf": "characters",
+     "sizeBytes": 433884,
+     "bounds": {
+      "min": [
+       -0.13,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.15,
+       0.62,
+       0.29
+      ],
+      "size": [
+       0.28,
+       0.62,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    },
+    {
+     "id": "apocalypse-characters-skins-zombie",
+     "pack": "apocalypse",
+     "name": "Zombie",
+     "category": "characters-skins",
+     "filename": "apocalypse-characters-skins-zombie.glb",
+     "relativePath": "characters-skins/apocalypse-characters-skins-zombie.glb",
+     "leaf": "characters",
+     "sizeBytes": 90372,
+     "bounds": {
+      "min": [
+       -0.08,
+       0,
+       -0.29
+      ],
+      "max": [
+       0.1,
+       0.6,
+       0.29
+      ],
+      "size": [
+       0.18,
+       0.6,
+       0.58
+      ]
+     },
+     "normalizedShift": 0,
+     "space": "avatar",
+     "clips": [],
+     "sockets": [],
+     "pfx": [],
+     "route": "code",
+     "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+     "copyright": "Copyright (c) 2026 Series Entertainment, Inc.; RUN License (RUN Repository Supplemental License v1.0); avatar rig data Copyright (c) 2026 Proof of Play, Inc., MIT License"
+    }
+   ]
+  }
+ }
+}

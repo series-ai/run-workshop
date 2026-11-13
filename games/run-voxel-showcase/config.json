@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "run-voxel-showcase",
+    "name": "RUN Voxel Packs",
+    "description": "Browse the RUN voxel packs (fantasy, space, monster, post-apocalypse) next to Pirate Nation, and dress one avatar in parts from every pack.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

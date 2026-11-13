@@ -1,7 +1,11 @@
 import { authoredRecipe } from '../constants/01'
 
-export default authoredRecipe('warp-burst', "Warp burst", "Spatial distortion burst with shear streaks and origin ring.", [
-  { kind: 'particles', role: 'trail', opacity: 0.8, scale: 0.64, phase: 'warp-burst-shear-streak', tuning: { sprite: 'streak', stretch: 2.2, gravity: 0, lifeScale: 0.3, spinScale: 0, window: 0.2, countScale: 0.2, speedScale: 2, drag: 3, turbulenceScale: 0, size: [0.9, 0.6, 0.15], ramp: 'held' } },
-  { kind: 'ring-field', role: 'aura', opacity: 0.42, scale: 0.64, phase: 'warp-burst-origin-rim', tuning: { meshMotion: 'shockwave', ringPurpose: 'shockwave' } },
-  { kind: 'particles', role: 'aura', opacity: 0.52, scale: 0.54, phase: 'warp-burst-pixel-flecks', tuning: { delay: 0.14, window: 0.14, lifeScale: 0.6, ease: 'snap', turbulenceScale: 0, sprite: 'sparkle', gravity: 0, spinScale: 1.4, countScale: 0.88 } },
+// A disc of space lattice pinches toward an off-centre crease, then snaps
+// into an asymmetric Z-fold: the upper half rolls over toward the viewer and
+// the halves shear apart. Traces release along the shear and shrink away,
+// and the lattice tears from the crease outward. Tempo keeps the earlier
+// 0.778 s cycle.
+export default authoredRecipe('warp-burst', 'Warp burst', 'A space lattice pinches, then snaps into a sheared fold. Traces slide out along the shear while the lattice tears from the crease.', [
+  { kind: 'shield-shell', role: 'body', opacity: 0.95, scale: 1.3, phase: 'warp-burst-folding-lattice', tuning: { meshShader: 'warp-burst-fold-sheet', colorIndex: 1, turbulenceScale: 0 } },
+  { kind: 'mesh-fragments', role: 'trail', opacity: 0.95, scale: 1.3, phase: 'warp-burst-shear-traces', tuning: { meshShader: 'warp-burst-shear-traces', colorIndex: 1, turbulenceScale: 0 } },
 ], 2, 1.4)

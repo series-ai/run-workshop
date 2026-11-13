@@ -1677,10 +1677,29 @@ export function createPfxControlExtremesContactSheetAsset(
   }
 }
 
+/**
+ * A recipeOverride for another effect would draw its layers with this
+ * preset's controls, seed, and timing. getPfxRenderPlan is the one boundary
+ * that GamePfx, PfxById, and the drop-in components share, so it rejects the
+ * mismatch for all of them.
+ */
+export class PfxRecipeOverrideMismatchError extends Error {
+  constructor(
+    readonly presetEffectId: string,
+    readonly overrideEffectId: string,
+  ) {
+    super(`getPfxRenderPlan: recipeOverride.effectId '${overrideEffectId}' does not match the preset effectId '${presetEffectId}'`)
+    this.name = 'PfxRecipeOverrideMismatchError'
+  }
+}
+
 export function getPfxRenderPlan(
   preset: Pick<PfxPreset, 'effectId' | 'implementationProfile' | 'controls'>,
   options: PfxRenderPlanOptions = {},
 ): PfxRenderPlan {
+  if (options.recipeOverride !== undefined && options.recipeOverride.effectId !== preset.effectId) {
+    throw new PfxRecipeOverrideMismatchError(preset.effectId, options.recipeOverride.effectId)
+  }
   const recipe = options.recipeOverride ?? AUTHORED_EFFECT_RECIPES[preset.effectId]
   if (recipe) {
     const effect = PFX_TAXONOMY.find((entry) => entry.id === preset.effectId)

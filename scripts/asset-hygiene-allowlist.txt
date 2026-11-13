@@ -8,3 +8,4 @@
 # Our own generated UI templates / annotated reference sheets (original work).
 games/beat-board/references/ui-references/
 games/beat-board/references/ui-set-templates/
+games/inkline-showcase/docs/reference/

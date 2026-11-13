@@ -5,6 +5,7 @@ import {
   PFX_MATERIALIZE_GATHER_BIRTH_VISIBILITY,
   sharedGradientTextureCache,
 } from './04'
+import { PFX_MATERIAL_COMMON_CHUNK, PFX_MATERIAL_SOFT_PARTICLE_CHUNK, PFX_MATERIAL_SPRITE_CHUNK, pfxMaterialCoverageGlsl } from '../materials/chunks'
 import type { PfxComboRingMultiplier, PfxGradientTextureKind, PfxSurfaceTuning } from '../types/02'
 
 export const PFX_SCREEN_VIGNETTE_VERTEX = /* glsl */ `
@@ -1604,6 +1605,13 @@ export function getPfxSharedGradientTexture(kind: PfxGradientTextureKind): THREE
   return texture
 }
 
+const PFX_SPRITE_COVERAGE = pfxMaterialCoverageGlsl({
+  alpha: 'sprite.a',
+  coverageUv: 'vUv',
+  lifeT: 'vProgress',
+  maskCoverage: 'pfxMaskCoverage',
+})
+
 export const PFX_SPRITE_PARTICLE_FRAGMENT = /* glsl */ `
 uniform sampler2D uAtlas;
 uniform vec2 uUvOffset;
@@ -1640,6 +1648,23 @@ varying float vBrightness;
 varying float vFlicker;
 varying float vVariant;
 varying float vChargeEnvelope;
+#ifdef PFX_MAT_FRAME_ANIMATION
+  // Actual particle age in effect seconds (vertex shader).
+  varying float vPfxAge;
+#endif
+${PFX_MATERIAL_COMMON_CHUNK}
+${PFX_MATERIAL_SPRITE_CHUNK}
+${PFX_MATERIAL_SOFT_PARTICLE_CHUNK}
+#ifdef PFX_MAT_MASK
+  #define PFX_SPRITE_MASK pfxMaskCoverage
+#else
+  #define PFX_SPRITE_MASK 1.0
+#endif
+#ifdef PFX_MAT_LOCAL_UV
+  #define PFX_CONTINUOUS_UV pfxContinuousUv
+#else
+  #define PFX_CONTINUOUS_UV spriteUv
+#endif
 
 void main() {
   float variantIndex = uVariantStartIndex + floor(min(vVariant, 0.9999) * uVariantCount);
@@ -1666,7 +1691,34 @@ void main() {
         0.982
       );
   #endif
+  #ifdef PFX_MAT_MASK
+    // One mask sample serves the displacement and the coverage.
+    float pfxMaskCoverage = mix(1.0, dot(texture2D(uPfxMaskMap, vUv), uPfxMaskChannel), uPfxMaskStrength);
+  #endif
+  #ifdef PFX_MAT_LOCAL_UV
+    vec2 pfxContinuousUv = pfxMaterialLocalUv(spriteUv, vProgress, PFX_SPRITE_MASK);
+    spriteUv = pfxWrapLocalUv(pfxContinuousUv);
+  #endif
   vec4 sprite;
+  #ifdef PFX_MAT_FRAME_ANIMATION
+    // Real atlas playback from the registry descriptor. Frame index:
+    // floor(mod(ageSeconds * rate + floor(variant * 11), frameCount)), where
+    // ageSeconds = normalized particle progress * uLifetime, as on the
+    // existing atlas path. Each blended frame resolves its own cell.
+    #ifdef PFX_MAT_FRAME_FROZEN
+      float pfxFramePhase = 0.0;
+    #else
+      // frameRate is frames per second of actual particle age, so each
+      // particle plays at the descriptor rate whatever its duration.
+      float pfxFramePhase = mod(vPfxAge * uPfxAtlasFrameRate + floor(vVariant * 11.0), uPfxAtlasFrameCount);
+    #endif
+    flipbookFrame = floor(pfxFramePhase);
+    sprite = pfxSampleAtlasFrame(uAtlas, flipbookFrame, spriteUv, PFX_CONTINUOUS_UV);
+    #ifdef PFX_MAT_FRAME_BLEND
+      vec4 pfxNextSprite = pfxSampleAtlasFrame(uAtlas, mod(flipbookFrame + 1.0, uPfxAtlasFrameCount), spriteUv, PFX_CONTINUOUS_UV);
+      sprite = mix(sprite, pfxNextSprite, smoothstep(0.0, 1.0, fract(pfxFramePhase)));
+    #endif
+  #else
   if (uFlipbookFrameCount > 1.5) {
     // Each particle advances at the authored rate from its own age. A stable
     // variant phase prevents a stack of identical flames from pulsing in lockstep.
@@ -1680,8 +1732,12 @@ void main() {
     float flipbookRow = floor(flipbookFrame / uFlipbookColumns);
     vec2 flipbookCell = vec2(1.0 / uFlipbookColumns, 1.0 / uFlipbookRows);
     vec2 flipbookOrigin = vec2(flipbookColumn, uFlipbookRows - 1.0 - flipbookRow) * flipbookCell;
-    vec2 flipbookUv = flipbookOrigin + mix(vec2(0.018), vec2(0.982), spriteUv) * flipbookCell;
-    sprite = texture2D(uAtlas, flipbookUv);
+    #ifdef PFX_MAT_LOCAL_UV
+      sprite = pfxSampleAtlasCell(uAtlas, flipbookOrigin, flipbookCell, spriteUv, pfxContinuousUv);
+    #else
+      vec2 flipbookUv = flipbookOrigin + mix(vec2(0.018), vec2(0.982), spriteUv) * flipbookCell;
+      sprite = texture2D(uAtlas, flipbookUv);
+    #endif
     #ifdef MOTION_MATERIALIZE
       // Frame blending is the conventional flipbook-particle solution to
       // stepped cards: it preserves authored motion while removing the
@@ -1698,11 +1754,15 @@ void main() {
           uFlipbookRows - 1.0 - materializeNextRow
         ) *
         flipbookCell;
-      vec4 materializeNextSprite = texture2D(
-        uAtlas,
-        materializeNextOrigin +
-          mix(vec2(0.018), vec2(0.982), spriteUv) * flipbookCell
-      );
+      #ifdef PFX_MAT_LOCAL_UV
+        vec4 materializeNextSprite = pfxSampleAtlasCell(uAtlas, materializeNextOrigin, flipbookCell, spriteUv, pfxContinuousUv);
+      #else
+        vec4 materializeNextSprite = texture2D(
+          uAtlas,
+          materializeNextOrigin +
+            mix(vec2(0.018), vec2(0.982), spriteUv) * flipbookCell
+        );
+      #endif
       float materializeFrameBlend =
         smoothstep(0.0, 1.0, fract(flipbookPhase));
       sprite = mix(sprite, materializeNextSprite, materializeFrameBlend);
@@ -1710,6 +1770,7 @@ void main() {
   } else {
     sprite = texture2D(uAtlas, uUvOffset + variantOffset + spriteUv * uUvScale);
   }
+  #endif
   #ifdef MOTION_MATERIALIZE_RELEASE
     // Bright contact particles sample the radial atlas cell while gather and
     // release particles retain the tapered streak. One batched draw therefore
@@ -1923,6 +1984,8 @@ void main() {
     float eroded = smoothstep(erodeCut * 0.6, erodeCut * 0.6 + 0.24, body);
     sprite.a = mix(sprite.a, eroded * sprite.a, erodeCut);
   }
+  // Material mask and dissolve multiply the coverage that survived erosion.
+${PFX_SPRITE_COVERAGE.coverage}
   // Cel temperature banding: quantize the sprite's radial falloff into flat
   // rings — near-white core, tinted mid, rim at the ramp color — replacing
   // the smooth airbrush gradient with the hand-drawn read.
@@ -1994,6 +2057,10 @@ void main() {
   #ifdef MOTION_LASER_SPRAY_RICOCHET
     alpha *= vChargeEnvelope;
   #endif
+  #ifdef PFX_MAT_SOFT_PARTICLES
+    // Last alpha rule: optional depth fade against the host scene depth.
+    alpha *= pfxSoftParticleFade();
+  #endif
   if (alpha < 0.003) discard;
   // Alpha-blend layers take color from the ramp, mostly ignoring the sprite
   // texture's internal dark greys — multiplying them in rendered smoke as
@@ -2034,6 +2101,7 @@ void main() {
   #endif
   // Eroding matter cools and dirties as it is consumed.
   outColor *= 1.0 - erodeCut * 0.45;
+${PFX_SPRITE_COVERAGE.edge('outColor')}
   gl_FragColor = vec4(outColor, alpha);
 }
 `

@@ -1,7 +1,11 @@
 import { authoredRecipe } from '../constants/01'
 
-export default authoredRecipe('frost-burst', "Frost burst", "Soft freezing pop for chill status and environmental cold.", [
-  { kind: 'particles', role: 'volume', opacity: 0.3, scale: 0.66, phase: 'frost-burst-frost-cloud', tuning: { sprite: 'puff', blend: 'alpha', window: 0.3, countScale: 0.25, speedScale: 0.4, gravity: 0.3, drag: 1.6, size: [0.8, 1.15, 1.3], ramp: 'dark', lifeScale: 0.9, death: 'erode', turbulenceScale: 0.5 } },
-  { kind: 'particles', role: 'volume', opacity: 0.56, scale: 0.58, phase: 'frost-burst-crystal-pop', tuning: { window: 0.14, lifeScale: 0.6, ease: 'snap', ramp: 'pinned-hot', spinScale: 1.2, turbulenceScale: 0, sprite: 'sparkle', gravity: -0.8, delay: 0.12 } },
-  { kind: 'ring-field', role: 'aura', opacity: 0.5, scale: 0.62, phase: 'frost-burst-chill-boundary', tuning: { meshMotion: 'shockwave', ringPurpose: 'shockwave' } },
+// A cold contact bites, then a fan of thin faceted ice blades grows out of
+// it with fern side blades, at an uneven speed on each stem. The fan holds,
+// then turns brittle: the outer pieces crack first, drift, turn and fall,
+// and sublimate into thin cold vapor and tumbling flakes. Tempo keeps the
+// earlier 1.070 s cycle.
+export default authoredRecipe('frost-burst', 'Frost burst', 'A cold contact grows a fan of faceted rime blades and ferns, which crack, drift and sublimate into cold vapor and flakes.', [
+  { kind: 'shield-shell', role: 'body', opacity: 0.95, scale: 1.45, phase: 'frost-burst-rime-fan', tuning: { meshShader: 'frost-burst-crystal-fan', colorIndex: 0, turbulenceScale: 0 } },
+  { kind: 'mesh-fragments', role: 'trail', opacity: 0.9, scale: 1.45, phase: 'frost-burst-sublimation-mist', tuning: { meshShader: 'frost-burst-freezing-mist', colorIndex: 0, turbulenceScale: 0 } },
 ], 2, 1.0)

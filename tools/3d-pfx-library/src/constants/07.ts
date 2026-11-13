@@ -484,7 +484,7 @@ export function isPfxSurfaceCameraFacing(
     feelVersion >= 2 && !authoredVolume && (
       isPfxOmniLightRead(surface.tuning) ||
       surface.kind === 'cloud-volume' ||
-      surface.tuning?.meshShader === 'vortex-swirl' ||
+      (surface.tuning?.meshShader === 'vortex-swirl' || surface.tuning?.meshShader === 'portal-aperture') ||
       surface.tuning?.meshShader === 'portal-throat'
     )
   ))
