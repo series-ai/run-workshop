@@ -1,5 +1,9 @@
+import { createSimulatedSyncplayMatch } from '@series-inc/rundot-syncplay/testing';
+import type { SyncplayRoomTransport } from '@series-inc/rundot-syncplay/browser';
 import { describe, expect, it, vi } from 'vitest';
-import { NEUTRAL_INPUT, TOOL } from '../sim/input';
+import { TICK_RATE } from '../sim/constants';
+import { encodeYardInput, NEUTRAL_INPUT, TOOL } from '../sim/input';
+import { yardRoomOptions } from '../sim/session';
 import { YardSim } from '../sim/sim';
 import { MatchController, type MatchDeps } from './match';
 
@@ -131,5 +135,57 @@ describe('MatchController', () => {
     expect(controller.snapshot().status).toBe('live');
     expect(controller.snapshot().error).toBeNull();
     controller.stop();
+  });
+
+  it('stays live across multi-tick authority bursts instead of bouncing back to connecting', async () => {
+    const match = createSimulatedSyncplayMatch({
+      roomConfig: {
+        ...yardRoomOptions(4),
+        playerCount: 4,
+        seed: 73,
+        tickRateHz: TICK_RATE,
+        hardToleranceTicks: 2,
+        redundancyWindowTicks: 8,
+        neutralInput: encodeYardInput(NEUTRAL_INPUT),
+      },
+    });
+    let reconnectingHandler: (() => void) | undefined;
+    const transport = async (): Promise<SyncplayRoomTransport> => {
+      const raw = match.openTransport('owner');
+      return {
+        ...raw,
+        roomCode: 'STABLE',
+        isCreator: true,
+        occupancy: { players: [], occupied: 1, maxPlayers: 4, full: false, locked: false },
+        onConnectionEvent: (handler) => {
+          reconnectingHandler = () => handler({ kind: 'reconnecting' });
+        },
+        onOccupancyChange: () => () => {},
+        setSeatingOpen: () => {},
+      };
+    };
+    const controller = new MatchController(deps({ createRoomTransport: transport }));
+    try {
+      const pending = controller.start({ kind: 'create' });
+      let now = 0;
+      for (let i = 0; i < 10; i += 1) {
+        match.advance(1);
+        now += 1000 / TICK_RATE;
+        controller.pump(now);
+        await Promise.resolve();
+      }
+      await pending;
+      expect(controller.snapshot().status).toBe('live');
+
+      // Simulate a frame hiccup / transport reconnect catch-up where the runner enters 'syncing'.
+      reconnectingHandler?.();
+      expect(controller.snapshot().status).toBe('live');
+      match.advance(8);
+      now += 1000 / TICK_RATE;
+      controller.pump(now);
+      expect(controller.snapshot().status).toBe('live');
+    } finally {
+      controller.stop();
+    }
   });
 });

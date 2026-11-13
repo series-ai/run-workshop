@@ -167,13 +167,14 @@ export function formatMatchError(
   };
 }
 
-function mapStatus(status: SyncplayRunnerStatus): MatchStatus {
+function mapStatus(status: SyncplayRunnerStatus, current: MatchStatus): MatchStatus {
   switch (status) {
     case "offline":
     case "live":
       return "live";
-    case "connecting":
     case "syncing":
+      return current === "live" ? "live" : "connecting";
+    case "connecting":
       return "connecting";
     case "error":
       return "error";
@@ -227,7 +228,6 @@ export class MatchController {
       },
       presentation: { project: projectYard, interpolate: interpolateYard },
       maxOfflineStepsPerUpdate: 2,
-      maxConfirmedFramesPerTurn: 2,
       pacing: { targetLeadTicks: 2, maxStepsPerPump: 2 },
       inputDelay: { minTicks: 1, maxTicks: 3 },
     });
@@ -240,7 +240,7 @@ export class MatchController {
       // Offline start reports stopped while it acquires the runtime.
       // The controller remains connecting until the runtime is ready or fails.
       if (this.status === "connecting" && snapshot.status === "stopped") return;
-      const next = mapStatus(snapshot.status);
+      const next = mapStatus(snapshot.status, this.status);
       const nextCrew = crewPresence(snapshot);
       const nextError =
         snapshot.status === "error"
