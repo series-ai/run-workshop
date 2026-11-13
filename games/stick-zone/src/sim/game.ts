@@ -1638,6 +1638,9 @@ export class SectorDepotSimulation {
   public useStim(): boolean {
     if (this.isInputLocked()) return false;
     if (!this.player.isAlive || (this.player.stimsRemaining ?? 0) <= 0 || this.player.isUsingStim) return false;
+    // A stim heals +45 (clamped at 100) and cures bleeding; with neither
+    // injury present, injecting would waste the dose.
+    if (this.player.health >= 100 && !this.player.isBleeding) return false;
     // Reject stim administration during active movement states (roll, slide, jump)
     if (this.player.action === 'roll' || this.player.action === 'slide' || this.player.action === 'jump' || this.player.isJumping || this.player.y > 0 || (this.slideTicksRemaining ?? 0) > 0) {
       return false;
@@ -2050,7 +2053,7 @@ export class SectorDepotSimulation {
     this.player.isExtracted = false;
     this.damageIndicators = [];
     this.lastDamageDirectionDeg = null;
-    this.combatLog.push();
+    this.combatLog.push('[HUB] Operative returned to FOB outpost.');
   }
   public step(input: GameInput): void {
     const dt = SIM_CONFIG.TICK_INTERVAL_MS / 1000;
@@ -2096,7 +2099,13 @@ export class SectorDepotSimulation {
     this.tick += 1;
 
     if (this.zoneMode === 'airlock_corridor') {
-      if (Date.now() >= this.airlockTimerMs || this.player.z >= -48) {
+      const distFromBulkhead = Math.hypot(this.player.x, this.player.z - (-52));
+      if (this.player.z < -52 && distFromBulkhead > 3.2) {
+        // Walked back to hub ground: cancel ingress instead of deploying
+        // into spoke at a hub position when the timer ends.
+        this.zoneMode = 'hub';
+        this.combatLog.push('[AIRLOCK] Returned to FOB hub. Ingress cancelled.');
+      } else if (Date.now() >= this.airlockTimerMs || this.player.z >= -48) {
         this.zoneMode = 'spoke';
         this.player.isInvulnerable = true;
         (this.player as any).ingressShieldTicks = 180; // 3.0s invulnerability grace
@@ -2127,11 +2136,14 @@ export class SectorDepotSimulation {
           this.interruptStimTreatment('movement');
         }
       }
-      // Handle ingress grace shield countdown
+      // Handle ingress grace shield countdown. The action-timer resets
+      // below must not stomp this shield, so they reuse ingressShieldActive.
+      let ingressShieldActive = ((this.player as any).ingressShieldTicks ?? 0) > 0;
       if ((this.player as any).ingressShieldTicks && (this.player as any).ingressShieldTicks > 0) {
         (this.player as any).ingressShieldTicks -= 1;
         this.player.isInvulnerable = true;
         if ((this.player as any).ingressShieldTicks <= 0) {
+          ingressShieldActive = false;
           this.player.isInvulnerable = false;
           this.combatLog.push('[TACTICAL] Ingress shield expired. Weapons hot.');
         }
@@ -2162,7 +2174,7 @@ export class SectorDepotSimulation {
         this.player.actionTicks -= 1;
         if (this.player.action === 'roll') {
           const elapsed = SIM_CONFIG.ROLL_TICKS - this.player.actionTicks;
-          this.player.isInvulnerable = elapsed <= SIM_CONFIG.ROLL_IFRAMES;
+          this.player.isInvulnerable = ingressShieldActive || elapsed <= SIM_CONFIG.ROLL_IFRAMES;
         }
         if (this.player.action === 'kick' && this.kickStrikePending && this.player.actionTicks <= 26) {
           this.kickStrikePending = false;
@@ -2170,7 +2182,7 @@ export class SectorDepotSimulation {
         }
         if (this.player.actionTicks === 0) {
           this.player.action = (this.player.isJumping || this.player.y > 0) ? 'jump' : 'idle';
-          this.player.isInvulnerable = false;
+          this.player.isInvulnerable = ingressShieldActive;
           this.kickStrikePending = false;
           if (this.player.weapon === 'grenade' && (this.player.fragGrenades ?? 0) <= 0) {
             this.setWeapon('rifle');
@@ -2184,7 +2196,7 @@ export class SectorDepotSimulation {
             this.setWeapon('rifle');
           }
         }
-        this.player.isInvulnerable = false;
+        this.player.isInvulnerable = ingressShieldActive;
       }
     }
 

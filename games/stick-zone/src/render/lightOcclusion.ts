@@ -93,7 +93,10 @@ function hexToRgb(hex: string): [number, number, number] {
 
 
 // Pre-allocated static scratch buffers to eliminate runtime heap allocations and GC spikes in useFrame
-const MAX_SCRATCH_RAYS = 384;
+/** Hard cap on visibility-polygon rays. Consumers that copy polygon data
+ * into fixed GPU buffers must size those buffers from this constant. */
+export const MAX_VISIBILITY_RAYS = 384;
+const MAX_SCRATCH_RAYS = MAX_VISIBILITY_RAYS;
 const MAX_SCRATCH_VERTS = MAX_SCRATCH_RAYS + 1;
 const _scratchPositions = new Float32Array(MAX_SCRATCH_VERTS * 3);
 const _scratchColors = new Float32Array(MAX_SCRATCH_VERTS * 4);

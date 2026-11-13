@@ -27,6 +27,7 @@ export const PerformanceOverlay: React.FC = () => {
   if (!visible) {
     return (
       <button
+        className="perf-fps-pill"
         onClick={() => setVisible(telemetry.toggleOverlay())}
         style={{
           position: 'absolute',

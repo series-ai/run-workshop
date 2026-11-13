@@ -266,8 +266,8 @@ test.describe("INKLINE Visual Architecture & Dynamic FX Verification", () => {
     });
   });
 
-  test.describe("Suite 3: Container Line-of-Sight Clearance (Active Camera)", () => {
-    test("adjusts camera line-of-sight when player teleports behind shipping container cnt_01", async ({ page }) => {
+  test.describe("Suite 3: Container Line-of-Sight Clearance (X-Ray Silhouette)", () => {
+    test("keeps an X-Ray silhouette pass for a player behind shipping container cnt_01", async ({ page }) => {
       await page.goto("/?testMode=1");
       await page.waitForFunction(
         () => window.__STICK_ZONE_TEST__?.isReady === true,
@@ -275,21 +275,45 @@ test.describe("INKLINE Visual Architecture & Dynamic FX Verification", () => {
         { timeout: 15000 }
       );
 
-      // Teleport player behind cnt_01 (located at [-20, 0, -30])
+      // Occlusion handling is the X-Ray silhouette (celShader
+      // updateXraySilhouette): GreaterDepth, depthWrite off, renderOrder
+      // 999, so the operative renders only where geometry occludes it.
+      // The camera itself never moves (cutaway.ts apply() is disabled).
       await page.evaluate(() => {
         window.__STICK_ZONE_TEST__!.teleportPlayer({ x: -20, y: 0, z: -32.1 });
       });
 
-      // Wait for unpaused active camera controller to compute occlusion
+      const GREATER_DEPTH = 6; // THREE.GreaterDepth
       await page.waitForFunction(
-        () => window.__STICK_ZONE_TEST__?.lastCameraOcclusion?.adjusted === true,
-        undefined,
+        (greaterDepth) => {
+          const scene = (window as any).__STICK_ZONE_THREE_SCENE__;
+          if (!scene) return false;
+          let ok = false;
+          scene.traverse((obj: any) => {
+            if (
+              obj.userData?.xraySilhouette &&
+              obj.visible &&
+              obj.renderOrder === 999 &&
+              obj.material?.depthFunc === greaterDepth &&
+              obj.material?.depthWrite === false
+            ) {
+              ok = true;
+            }
+          });
+          return ok;
+        },
+        GREATER_DEPTH,
         { timeout: 5000 }
       );
 
-      const occlusion = await page.evaluate(() => window.__STICK_ZONE_TEST__!.lastCameraOcclusion);
-      expect(occlusion.adjusted).toBe(true);
-      expect(occlusion.obstacleIndex).toBeDefined();
+      // A frame must render clean after the teleport (no crash, still ready).
+      await page.evaluate(() => window.__STICK_ZONE_TEST__!.renderFrame());
+      const simState = await page.evaluate(() => ({
+        ready: window.__STICK_ZONE_TEST__!.isReady,
+        z: window.__STICK_ZONE_TEST__!.sim.player.z,
+      }));
+      expect(simState.ready).toBe(true);
+      expect(simState.z).toBeCloseTo(-32.1, 3);
     });
   });
 });

@@ -3035,3 +3035,47 @@ html, body, #root {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }
 }
+
+/* --- Narrow phones: the bottom band cannot fit minimap (176px), the
+   280px health cluster, and the weapon column side by side. Shrink the
+   side stacks and lift the health cluster above them. --- */
+@media (max-width: 640px) {
+  .surviv-minimap-root {
+    width: 104px;
+    height: 104px;
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .surviv-mid-bottom {
+    width: 240px;
+    bottom: 208px;
+  }
+
+  .surviv-bottom-right {
+    transform: scale(0.85);
+    transform-origin: bottom right;
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .surviv-top-right {
+    transform: scale(0.85);
+    transform-origin: top right;
+    top: 12px;
+    right: 12px;
+  }
+
+  .surviv-right-rail {
+    transform: scale(0.85);
+    transform-origin: top right;
+    right: 12px;
+  }
+
+  /* The pill normally sits right of the 176px minimap; park it above the
+     shrunken minimap instead of on the gear strip. */
+  .perf-fps-pill {
+    left: 12px !important;
+    bottom: 124px !important;
+  }
+}

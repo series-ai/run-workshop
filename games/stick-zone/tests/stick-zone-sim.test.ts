@@ -2068,4 +2068,43 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(bunkerCrate!.cashValue).toBe(3800);
     expect(bunkerCrate!.items!.reduce((sum, it) => sum + it.value, 0)).toBe(3800);
   });
+
+  it("46. spatial airlock: forward walk deploys, retreat to hub cancels the corridor", () => {
+    const idle = { dx: 0, dz: 0, sprint: false, slide: false, roll: false, kick: false, shoot: false, interact: false };
+
+    // Forward: cross the bulkhead trigger, then the deploy line.
+    const fwd = new SectorDepotSimulation("raid_airlock_fwd", "hub");
+    fwd.admitOperative(0);
+    fwd.player.z = -51;
+    fwd.step(idle);
+    expect(fwd.zoneMode).toBe("airlock_corridor");
+    fwd.player.z = -47;
+    fwd.step(idle);
+    expect(fwd.zoneMode).toBe("spoke");
+    expect((fwd.player as any).ingressShieldTicks).toBeGreaterThan(0);
+    expect(fwd.player.isInvulnerable).toBe(true);
+
+    // Timer expiry inside the corridor strip also deploys in place.
+    const timed = new SectorDepotSimulation("raid_airlock_timed", "hub");
+    timed.admitOperative(0);
+    timed.player.z = -51;
+    timed.step(idle);
+    expect(timed.zoneMode).toBe("airlock_corridor");
+    timed.player.z = -50;
+    timed.airlockTimerMs = 0;
+    timed.step(idle);
+    expect(timed.zoneMode).toBe("spoke");
+
+    // Retreat: back on hub ground when the timer ends. The corridor must
+    // cancel, not deploy the player into spoke at a hub position.
+    const back = new SectorDepotSimulation("raid_airlock_back", "hub");
+    back.admitOperative(0);
+    back.player.z = -51;
+    back.step(idle);
+    expect(back.zoneMode).toBe("airlock_corridor");
+    back.player.z = -60;
+    back.airlockTimerMs = 0;
+    back.step(idle);
+    expect(back.zoneMode).toBe("hub");
+  });
 });

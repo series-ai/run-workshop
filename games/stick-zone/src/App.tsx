@@ -681,7 +681,7 @@ function TestApp() {
   return (
     <div className="relative w-screen h-screen bg-[#dde0e4] overflow-hidden select-none">
       <GameCanvas sim={sim} />
-      <div className="hud-panel" style={{ position: "absolute", top: 16, left: 16 }}>
+      <div className="hud-panel" style={{ position: "static" }}>
         <TacticalHud sim={sim} />
       </div>
     </div>

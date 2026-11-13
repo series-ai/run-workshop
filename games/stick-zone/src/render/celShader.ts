@@ -84,7 +84,10 @@ export function updatePaleInkContour(
 
     outline.onBeforeRender = (renderer) => {
       renderer.getDrawingBufferSize(viewport);
-      width.value = baseWidth * 0.38 * renderer.getPixelRatio();
+      // The shader expands the silhouette by inkWidth px on every side, so
+      // baseWidth is the total added width across a limb: displace half of
+      // it per side.
+      width.value = baseWidth * 0.5 * renderer.getPixelRatio();
     };
 
     mesh.add(outline);

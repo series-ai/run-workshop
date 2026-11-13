@@ -144,6 +144,23 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.player.isBleeding).toBe(true);
   });
 
+  it('4b. Propital stim is not wasted at full health without bleeding', () => {
+    sim.machines = [];
+    sim.rivals = [];
+    sim.player.health = 100;
+    sim.player.isBleeding = false;
+    sim.player.stimsRemaining = 2;
+
+    expect(sim.useStim()).toBe(false);
+    expect(sim.player.isUsingStim).toBeFalsy();
+    expect(sim.player.stimsRemaining).toBe(2);
+
+    // Bleeding at full health is still a valid stim target.
+    sim.player.isBleeding = true;
+    expect(sim.useStim()).toBe(true);
+    expect(sim.player.isUsingStim).toBe(true);
+  });
+
   it('5. Boss keycard drop: awarded on BOTH firearm and melee kick kills', () => {
     // A) Gunfire kill
     sim.player.hasKeycard = false;

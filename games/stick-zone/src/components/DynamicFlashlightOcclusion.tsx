@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import {
   computeVisibilityPolygon,
+  MAX_VISIBILITY_RAYS,
   type LightOcclusionOptions,
 } from "../render/lightOcclusion.js";
 import { ALL_OCCLUDING_OBSTACLES, type OperativeState } from "../sim/game.js";
@@ -19,7 +20,7 @@ export interface DynamicFlashlightOcclusionProps {
   showSpotLight?: boolean;
 }
 
-const MAX_RAYS = 160;
+const MAX_RAYS = MAX_VISIBILITY_RAYS;
 const MAX_VERTICES = MAX_RAYS + 1;
 
 export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProps> = ({
@@ -128,14 +129,15 @@ export const DynamicFlashlightOcclusion: React.FC<DynamicFlashlightOcclusionProp
     const idxAttr = meshGeom.index as THREE.BufferAttribute;
 
     const copyVerts = Math.min(poly.vertexCount, MAX_VERTICES);
+    const copyTris = Math.min(poly.triangleCount, MAX_RAYS, Math.max(0, copyVerts - 1));
     (posAttr.array as Float32Array).set(poly.positions.subarray(0, copyVerts * 3));
     (colAttr.array as Float32Array).set(poly.colors.subarray(0, copyVerts * 4));
-    (idxAttr.array as Uint16Array).set(poly.indices.subarray(0, poly.triangleCount * 3));
+    (idxAttr.array as Uint16Array).set(poly.indices.subarray(0, copyTris * 3));
 
     posAttr.needsUpdate = true;
     colAttr.needsUpdate = true;
     idxAttr.needsUpdate = true;
-    meshGeom.setDrawRange(0, poly.triangleCount * 3);
+    meshGeom.setDrawRange(0, copyTris * 3);
 
     // Update shadow boundary lines
     const edgePosAttr = edgeGeom.attributes.position as THREE.BufferAttribute;
