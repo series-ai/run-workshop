@@ -1,5 +1,8 @@
-import { getRundotGameApi } from "../sdk.js";
 import { calculateShotgunHit } from './shotgunCollision.js';
+import type { ActiveSpokeSession } from "@series-inc/rundot-game-sdk";
+import { parseConfirmedState } from "../platform/synchub.js";
+import { confirmedView, movementIntent } from "./coopAdapter.js";
+import { buildCoopRaidRules } from "./coopConfig.js";
 /**
  * @file multiplayer.ts
  * Real-time multiplayer synchronization delegated to first-party SyncHub platform SDK
@@ -361,46 +364,87 @@ function isValidSnapshotTick(t: any): boolean {
   return typeof t === "number" && Number.isFinite(t) && !Number.isNaN(t) && Number.isInteger(t) && t >= 0 && t <= 54_000;
 }
 
+const COOP_MAX_MOVE_PER_TICK = buildCoopRaidRules().maxMoveSpeedPerTick!;
+
 export class MultiplayerCoordinator {
   public sdkRoom: any = null;
-  public spokeSession: any = null;
+  public spokeSession: ActiveSpokeSession | null = null;
+  public onSyncError?: (message: string) => void;
+  private lastSubmittedPos: { x: number; z: number } | null = null;
+  private reportedSyncIssues = new Set<string>();
 
-  public attachSdkSession(grant?: any, spokeSession?: any): void {
-    if (spokeSession) {
-      this.spokeSession = spokeSession;
-      this.sim.raidId = spokeSession.raidId;
-      spokeSession.onConfirmedTick((tick: number, state: unknown) => {
-        if (state && typeof state === "object") {
-          this.handleServerMessage(state);
-        }
-      });
-      this.authenticated = true;
-      this.sim.isSocketDisconnected = false;
-      return;
+  private reportSyncError(key: string, message: string): void {
+    console.error(`[MultiplayerCoordinator] ${message}`);
+    if (!this.reportedSyncIssues.has(key)) {
+      this.reportedSyncIssues.add(key);
+      this.onSyncError?.(message);
+      this.sim.combatLog.push(`[CO-OP] ${message}`);
     }
+  }
 
-    if (grant && grant.wsUrl) {
-      const api = getRundotGameApi();
-      const realtimeApi = api?.realtime || api?.multiplayer;
-      if (realtimeApi?.connectWithTicket) {
-        realtimeApi.connectWithTicket(grant).then((room: any) => {
-          this.sdkRoom = room;
-          this.authenticated = true;
-          this.sim.isSocketDisconnected = false;
-          room.on({
-            onMessage: (msg: any) => {
-              this.handleServerMessage(msg);
-            },
-            onDisconnect: () => {
-              this.sim.isSocketDisconnected = true;
-            },
-            onError: (err: any) => {
-              console.warn("[MultiplayerCoordinator] SDK room error:", err);
-            },
-          });
-        }).catch((err: any) => {
-          console.warn("[MultiplayerCoordinator] connectWithTicket error:", err);
-        });
+  public attachSdkSession(spokeSession: ActiveSpokeSession): void {
+    this.spokeSession = spokeSession;
+    this.sim.raidId = spokeSession.raidId;
+    this.lastSubmittedPos = { x: this.sim.player.x, z: this.sim.player.z };
+    spokeSession.onConfirmedTick((tick: number, state: unknown) => {
+      try {
+        this.applyConfirmedState(tick, state);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.reportSyncError(`confirmed:${message}`, `Confirmed state rejected: ${message}`);
+      }
+    });
+    this.authenticated = true;
+    this.sim.isSocketDisconnected = false;
+  }
+
+  /**
+   * Apply one confirmed RaidState: squadmates become render rivals keyed
+   * by slot. Server state is the only source for their position, health,
+   * and extraction finality.
+   */
+  public applyConfirmedState(_tick: number, rawState: unknown): void {
+    const spoke = this.spokeSession;
+    if (!spoke) return;
+    const state = parseConfirmedState(rawState);
+    const view = confirmedView(state, spoke.slot);
+    for (const mate of view.squadmates) {
+      const rivalId = `coop-slot-${mate.slot}`;
+      const existing = this.sim.rivals.find((r) => r.id === rivalId);
+      if (existing) {
+        if (existing.isExtracted) continue;
+        existing.x = mate.x;
+        existing.z = mate.z;
+        existing.health = mate.health;
+        existing.isAlive = mate.isAlive && !mate.isExtracted;
+        existing.isExtracted = mate.isExtracted;
+      } else {
+        this.sim.rivals.push({
+          id: rivalId,
+          isPlayer: false,
+          isRival: true,
+          isAI: false,
+          name: `SQUADMATE-${mate.slot}`,
+          badge: this.localSquad,
+          x: mate.x,
+          y: 0,
+          z: mate.z,
+          facing: 0,
+          health: mate.health,
+          armor: 0,
+          cash: 0,
+          action: "idle" as any,
+          actionTicks: 0,
+          isInvulnerable: false,
+          isAlive: mate.isAlive && !mate.isExtracted,
+          isExtracted: mate.isExtracted,
+          ammo: 30,
+          maxAmmo: 30,
+          isSliding: false,
+          slideTicksRemaining: 0,
+          lastStateTimestamp: this.getServerNow(),
+        } as any);
+        this.sim.combatLog.push(`[CO-OP] Squadmate slot ${mate.slot} confirmed in raid.`);
       }
     }
   }
@@ -1340,18 +1384,47 @@ export class MultiplayerCoordinator {
 
   private sendPacket(packet: PeerPacket): void {
     if (this.spokeSession) {
-      try {
-        this.spokeSession.submitIntent({
-          action: packet.type,
-          extra: packet.data,
-        });
-      } catch {}
+      // The spoke accepts PlayerRaidIntent only. State broadcasts become
+      // movement deltas from the last submitted position; every other
+      // peer packet type has no SyncHub representation and is reported
+      // loud once per type instead of being silently swallowed.
+      if (packet.type === "state") {
+        const data = packet.data;
+        if (typeof data?.x === "number" && typeof data?.z === "number") {
+          const last = this.lastSubmittedPos ?? { x: data.x, z: data.z };
+          try {
+            const intent = movementIntent(
+              {
+                dx: (data.x - last.x) / COOP_MAX_MOVE_PER_TICK,
+                dz: (data.z - last.z) / COOP_MAX_MOVE_PER_TICK,
+              },
+              COOP_MAX_MOVE_PER_TICK,
+            );
+            this.spokeSession.submitIntent(intent);
+            this.lastSubmittedPos = {
+              x: last.x + (intent.moveX ?? 0),
+              z: last.z + (intent.moveZ ?? 0),
+            };
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            this.reportSyncError(`submit:${message}`, `Movement intent rejected: ${message}`);
+          }
+        }
+      } else {
+        this.reportSyncError(
+          `unsupported:${packet.type}`,
+          `Packet type "${packet.type}" has no SyncHub intent; not sent to the spoke.`,
+        );
+      }
     }
 
     if (this.sdkRoom) {
       try {
         this.sdkRoom.send(packet);
-      } catch {}
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.reportSyncError(`room:${message}`, `Legacy room send failed: ${message}`);
+      }
     }
   }
 

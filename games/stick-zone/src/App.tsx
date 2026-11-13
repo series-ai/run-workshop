@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { SectorDepotSimulation, type GameInput, computeGroundAimAngle } from "./sim/game.js";
 import { MultiplayerCoordinator } from "./sim/multiplayer.js";
 import { preparePlatformRaid, registerDeployment } from "./sim/airlock.js";
+import { COOP_SECTOR_KEY } from "./sim/coopConfig.js";
 import { GameCanvas } from "./components/GameCanvas.js";
 import { TacticalHud } from "./components/TacticalHud.js";
 import { ExfilOverlay } from "./components/ExfilOverlay.js";
@@ -105,6 +106,7 @@ const MainApp: React.FC = () => {
   const lastHandledBarkTickRef = useRef<number>(-1);
   const lastHandledHitmarkerTickRef = useRef<number>(-1);
   const hasPlayedDeathAudioRef = useRef<boolean>(false);
+  const prepareInFlightRef = useRef<boolean>(false);
 
   useEffect(() => {
     // Instantiate multiplayer coordinator
@@ -123,18 +125,8 @@ const MainApp: React.FC = () => {
       handleRestart(newRaidId, true);
     };
     let isCancelled = false;
-    // Turnkey platform extraction session initialization on mount (no offline)
-    preparePlatformRaid({
-      sector: "Sector 7 Depot",
-      loadout: [
-        { itemId: "weapon_rifle", quantity: "1" },
-        { itemId: "med_stim", quantity: "2" },
-      ],
-    }).then((prep) => {
-      if (prep.success && coordinatorRef.current) {
-        coordinatorRef.current.attachSdkSession(prep.grant, prep.spokeSession);
-      }
-    }).catch(() => {});
+    // Co-op SyncHub preparation is explicit: it runs from the hideout
+    // Deploy action (deployPrepare below), never on mount.
 
 
 
@@ -534,18 +526,6 @@ const MainApp: React.FC = () => {
       const newSim = new SectorDepotSimulation(candidateRaidId);
       registerDeployment(newSim.player.id, candidateRaidId);
 
-      preparePlatformRaid({
-        sector: "Sector 7 Depot",
-        loadout: [
-          { itemId: "weapon_rifle", quantity: "1" },
-          { itemId: "med_stim", quantity: "2" },
-        ],
-      }).then((prep) => {
-        if (prep.success && coordinatorRef.current) {
-          coordinatorRef.current.attachSdkSession(prep.grant, prep.spokeSession);
-        }
-      }).catch(() => {});
-
       setSim(newSim);
       if (typeof window !== "undefined") {
         if ((import.meta as any).env?.VITE_EXPOSE_DEBUG_SIM === "1") (window as any).debugSim = newSim;
@@ -623,6 +603,30 @@ const MainApp: React.FC = () => {
         <HideoutMenu
           onClose={() => setShowHideout(false)}
           onDeploy={(loadout) => {
+            if (!prepareInFlightRef.current) {
+              prepareInFlightRef.current = true;
+              const items = [
+                {
+                  itemId: loadout.primaryWeapon === "shotgun" ? "weapon_shotgun" : "weapon_rifle",
+                  quantity: "1",
+                },
+                ...(loadout.stims > 0
+                  ? [{ itemId: "med_stim", quantity: String(loadout.stims) }]
+                  : []),
+              ];
+              preparePlatformRaid({ sector: COOP_SECTOR_KEY, loadout: items })
+                .then((prep) => {
+                  if (prep.success) {
+                    coordinatorRef.current?.attachSdkSession(prep.spokeSession);
+                    sim.combatLog.push(`[CO-OP] SyncHub raid ${prep.raidId} live. Squad channel open.`);
+                  } else {
+                    sim.combatLog.push(`[CO-OP] SyncHub prepare failed: ${prep.error}`);
+                  }
+                })
+                .finally(() => {
+                  prepareInFlightRef.current = false;
+                });
+            }
             sim.setWeapon(loadout.primaryWeapon === "shotgun" ? "shotgun" : "rifle");
             if (loadout.armorTier === "light") {
               sim.player.armor = 40;

@@ -48,6 +48,7 @@ export interface ConfirmedSubscription {
 
 export interface SyncHubClient {
   prepare(options: PrepareRaidOptions): Promise<ActiveAirlockSession>;
+  enter(airlock: ActiveAirlockSession): Promise<ActiveSpokeSession>;
   enterAndSubscribe(
     airlock: ActiveAirlockSession,
     onConfirmed: (tick: number, state: RaidState) => void,
@@ -62,6 +63,10 @@ export function createSyncHubClient(api: ExtractionApi): SyncHubClient {
         throw new Error("[synchub] prepare requires a non-empty sector (released mode key)");
       }
       return api.prepareRaidAsync(options);
+    },
+
+    async enter(airlock: ActiveAirlockSession): Promise<ActiveSpokeSession> {
+      return airlock.enterAsync();
     },
 
     async enterAndSubscribe(

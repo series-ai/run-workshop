@@ -1,4 +1,11 @@
-import { getRundotGameApi } from "../sdk.js";
+import {
+  getSyncHubClient,
+  type SyncHubClient,
+} from "../platform/synchub.js";
+import type {
+  ActiveAirlockSession,
+  ActiveSpokeSession,
+} from "@series-inc/rundot-game-sdk";
 /**
  * @file airlock.ts
  * Turnkey Syncplay & SyncHub client integration for stick-zone.
@@ -826,40 +833,42 @@ export async function createAuthoritativeSettlement(
 }
 
 
+export type PreparePlatformRaidResult =
+  | {
+      success: true;
+      raidId: string;
+      spokeSession: ActiveSpokeSession;
+      airlockSession: ActiveAirlockSession;
+    }
+  | { success: false; error: string };
+
 /**
- * Pure RUN SDK extraction preparation integration.
- * Communicates with turnkey Venus platform extraction service via SDK.
+ * Prepare and enter a co-op raid through the typed SyncHub facade.
+ * Success requires a live spoke session. Prepare and enter failures
+ * return their message; nothing here reports success on a dead session
+ * or touches the SDK-private grant.
  */
 export async function preparePlatformRaid(options: {
   sector: string;
   loadout: Array<{ itemId: string; quantity: string }>;
-}): Promise<{
-  success: boolean;
-  raidId?: string;
-  grant?: any;
-  spokeSession?: any;
-  airlockSession?: any;
-}> {
-  const api = getRundotGameApi();
-  if (typeof api !== "undefined" && api?.extraction?.prepareRaidAsync) {
-    try {
-      const airlockSession = await api.extraction.prepareRaidAsync(options);
-      let spokeSession: any = null;
-      try {
-        spokeSession = await airlockSession.enterAsync();
-      } catch (enterErr) {
-        console.warn("[Airlock] enterAsync error:", enterErr);
-      }
-      return {
-        success: true,
-        raidId: airlockSession.raidId,
-        grant: (airlockSession as any).grant,
-        spokeSession,
-        airlockSession,
-      };
-    } catch (err) {
-      console.warn("[Airlock] Platform prepareRaidAsync error:", err);
-    }
+  client?: SyncHubClient;
+}): Promise<PreparePlatformRaidResult> {
+  try {
+    const client = options.client ?? (await getSyncHubClient());
+    const airlockSession = await client.prepare({
+      sector: options.sector,
+      loadout: options.loadout,
+    });
+    const spokeSession = await client.enter(airlockSession);
+    return {
+      success: true,
+      raidId: airlockSession.raidId,
+      spokeSession,
+      airlockSession,
+    };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error("[Airlock] Co-op raid prepare failed:", error);
+    return { success: false, error };
   }
-  return { success: false };
 }
