@@ -873,6 +873,9 @@ export class SectorDepotSimulation {
    */
   public serverMachineDamageAuthority = false;
   public isSocketDisconnected = false;
+  /** True once a SyncHub spoke session attaches: this raid settles only
+   * from the server debrief, never from the local ledger. */
+  public coopSpokeAttached = false;
 
   public isAdmitted(): boolean {
     return this.ingressController.getState().kind === 'confirmed_active';

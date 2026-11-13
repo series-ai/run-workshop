@@ -413,6 +413,7 @@ export class MultiplayerCoordinator {
   public attachSdkSession(spokeSession: ActiveSpokeSession): void {
     this.spokeSession = spokeSession;
     this.sim.raidId = spokeSession.raidId;
+    this.sim.coopSpokeAttached = true;
     this.lastSubmittedPos = { x: this.sim.player.x, z: this.sim.player.z };
     spokeSession.onConfirmedTick((tick: number, state: unknown) => {
       try {

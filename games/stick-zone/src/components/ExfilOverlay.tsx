@@ -195,24 +195,14 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
                 return;
               }
                             sim.onExfilSuccess?.(canonicalReceipt);
-              useStashStore.getState().recordVerifiedSettlement({
-                receipt: canonicalReceipt,
-                outcomePayload,
-                cratesLooted: sim.crates.filter((c) => c.opened && c.claimedBy === sim.player.id).length,
-                kills: sim.combatLog.filter((l) => l.includes("Eliminated") || l.includes("Terminated") || l.includes("downed")).length,
-                bossKill: sim.combatLog.some((l) => l.includes("WARLORD") || l.includes("Boss")),
-                hasKeycard: Boolean(sim.player.hasKeycard),
-                hadBleed: Boolean(sim.player.isBleeding),
-                itemsSecured: ((sim.player as any).lootItems || []).map((item: any) => ({
-                  id: item.id || "loot_" + Date.now(),
-                  name: item.name || "Salvaged Component",
-                  type: item.type || "valuable",
-                  rarity: item.rarity || "rare",
-                  icon: item.icon || "💎",
-                  value: item.value || 500,
-                  count: 1,
-                })),
-              });
+              // SyncHub-only settlement: rewards bank from the server
+              // debrief (co-op) or not at all (offline practice). The
+              // local ledger never credits cash, items, or XP.
+              sim.combatLog.push(
+                sim.coopSpokeAttached
+                  ? "[CO-OP] Rewards settle from the SyncHub debrief only. Local credit skipped."
+                  : "[PRACTICE] Offline raid complete. No rewards banked without SyncHub settlement.",
+              );
               sim.acceptedReceiptKeys?.add(receiptKey);
               coordinator?.acceptedReceiptKeys?.add(receiptKey);
               if (!(sim as any).__acceptedReceiptKeys) (sim as any).__acceptedReceiptKeys = new Set<string>();
@@ -303,24 +293,12 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
         sim.exfilController.onReceipt(canonicalReceipt);
         sim.player.isExtracted = true;
         sim.onExfilSuccess?.(canonicalReceipt);
-        useStashStore.getState().recordVerifiedSettlement({
-          receipt: canonicalReceipt,
-          outcomePayload,
-          cratesLooted: sim.crates.filter((c) => c.opened && c.claimedBy === sim.player.id).length,
-          kills: sim.combatLog.filter((l) => l.includes("Eliminated") || l.includes("Terminated") || l.includes("downed")).length,
-          bossKill: sim.combatLog.some((l) => l.includes("WARLORD") || l.includes("Boss")),
-          hasKeycard: Boolean(sim.player.hasKeycard),
-          hadBleed: Boolean(sim.player.isBleeding),
-          itemsSecured: ((sim.player as any).lootItems || []).map((item: any) => ({
-            id: item.id || "loot_" + Date.now(),
-            name: item.name || "Salvaged Component",
-            type: item.type || "valuable",
-            rarity: item.rarity || "rare",
-            icon: item.icon || "💎",
-            value: item.value || 500,
-            count: 1,
-          })),
-        });
+        // SyncHub-only settlement: see the corridor branch above.
+        sim.combatLog.push(
+          sim.coopSpokeAttached
+            ? "[CO-OP] Rewards settle from the SyncHub debrief only. Local credit skipped."
+            : "[PRACTICE] Offline raid complete. No rewards banked without SyncHub settlement.",
+        );
         sim.acceptedReceiptKeys?.add(receiptKey);
         coordinator?.acceptedReceiptKeys?.add(receiptKey);
         if (!(sim as any).__acceptedReceiptKeys) (sim as any).__acceptedReceiptKeys = new Set<string>();
@@ -366,7 +344,9 @@ export const ExfilOverlay: React.FC<ExfilOverlayProps> = ({ sim, onRestart, onRe
   const outcomeRecordedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (activeModalKind === "kia" && outcomeRecordedRef.current !== sim.raidId) {
+    // SyncHub-only settlement: the server debrief owns raid statistics
+    // too, so a co-op KIA records nothing locally.
+    if (activeModalKind === "kia" && outcomeRecordedRef.current !== sim.raidId && !sim.coopSpokeAttached) {
       outcomeRecordedRef.current = sim.raidId;
       useStashStore.getState().recordKiaOutcome(sim.raidId);
     }

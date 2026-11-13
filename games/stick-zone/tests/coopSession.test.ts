@@ -56,6 +56,7 @@ describe("MultiplayerCoordinator SyncHub session", () => {
     coordinator.attachSdkSession(spoke);
     expect(sim.raidId).toBe("raid-coop-1");
     expect(coordinator.spokeSession).toBe(spoke);
+    expect(sim.coopSpokeAttached).toBe(true);
   });
 
   it("submits only movement intents for state broadcasts, never action/extra", () => {

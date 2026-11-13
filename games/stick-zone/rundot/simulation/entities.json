@@ -7,7 +7,7 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "Sector Credits",
-        "description": "Black-market operational currency extracted from Sector 7 Depot"
+        "description": "Black-market operational currency. Legal tender in exactly one depot and zero courtrooms."
       }
     },
     "weapon_rifle": {
@@ -66,7 +66,8 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "Military Med Stim",
-        "healAmount": 45
+        "healAmount": 45,
+        "description": "Stops bleeding, starts confidence. Side effects include confidence."
       }
     },
     "tactical_bandage": {
@@ -88,7 +89,7 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "Sector 7 Depot Red Keycard",
-        "description": "Grants high-tier airlock corridor access"
+        "description": "Grants high-tier airlock clearance and low-tier small talk."
       }
     },
     "circuit_board": {
@@ -99,7 +100,8 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "Military Circuit Board",
-        "value": 450
+        "value": 450,
+        "description": "Military grade. The green ones are faster. Science has not confirmed this."
       }
     },
     "encrypted_drive": {
@@ -110,7 +112,8 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "Encrypted Intel Drive",
-        "value": 1200
+        "value": 1200,
+        "description": "Encrypted intel drive. Password is probably still admin123."
       }
     },
     "military_battery": {
@@ -121,7 +124,8 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "High-Capacity Military Battery",
-        "value": 850
+        "value": 850,
+        "description": "High-capacity battery. Do not lick. Again."
       }
     },
     "weapon_parts": {
@@ -132,7 +136,8 @@
       "clientViewable": true,
       "metadata": {
         "displayName": "Precision Weapon Parts",
-        "value": 300
+        "value": 300,
+        "description": "Precision weapon parts. Some assembly required. Most, legally."
       }
     },
     "loadout_container": {
