@@ -466,11 +466,12 @@ export function segmentIntersectsAABB3D(
 import { SIM_CONFIG, BOSS_CONFIG, computeBossPosition, AI_CONFIGS, computeAIPosition } from './config.js';
 import {
   createExfilController,
-  registerDeployment,
-  ExfilController,
+  RaidExfilController,
   StagedIngressController,
   type RaidWorldSnapshot,
 } from './airlock.js';
+import { RaidCompletionFlow, type RaidCompletion } from './raidCompletion.js';
+import type { DebriefInput } from './coopAdapter.js';
 
 export interface Vector2D {
   x: number;
@@ -728,8 +729,6 @@ export class SectorDepotSimulation {
   public activeGrenades: ActiveGrenade[] = [];
   public airlockTimerMs: number = 0;
   public aiSpawned = false;
-  public frozenSettlementTick?: number;
-  public frozenSettlementCash?: number;
   private cratePreviousAmmo = new Map<string, number>();
   private crateLootHistory: Array<{
     crateId: string;
@@ -748,7 +747,7 @@ export class SectorDepotSimulation {
   public rivals: OperativeState[] = [];
   public machines: MachineDefense[] = [];
   public crates: LootCrate[] = [];
-  public exfilController: ExfilController;
+  public exfilController: RaidExfilController;
   public confirmedAIStates: Map<string, { health: number; armor: number; isAlive: boolean; isKia: boolean; killerId?: string }> = new Map();
 
   public applyConfirmedAIState(targetId: string, state: { health: number; armor: number; isAlive: boolean; isKia: boolean; killerId?: string }): void {
@@ -787,9 +786,6 @@ export class SectorDepotSimulation {
   // External network coordinator callbacks
   public onHitTarget?: (targetId: string, damage: number, knockbackX?: number, knockbackZ?: number, kind?: 'rifle' | 'kick' | 'shotgun', shotId?: string) => void;
   public onLootCrate?: (crateId: string, cash: number, claimTimestamp?: number) => void;
-  public onHoldProgress?: (holdTicks: number, currentTick: number) => void;
-  public settlementAuthority?: any;
-  public requestServerSettlement?: (tick: number, cash: number) => Promise<{ receipt: any; outcomePayload: any }>;
   public onRequestLootCrate?: (crateId: string, cashValue: number) => void;
   public keycardSources = new Set<string>();
 
@@ -847,24 +843,21 @@ export class SectorDepotSimulation {
    * Falls back to per-target onMachineHit/onHitTarget when no aggregator is wired (offline/solo).
    */
   public onKickAction?: (action: KickActionPayload) => void;
-  private _onExfilSuccess?: (receipt?: any) => void;
-  public acceptedReceiptKeys = new Set<string>();
-
-  public get onExfilSuccess(): ((receipt?: any) => void) | undefined {
-    if (!this._onExfilSuccess) return undefined;
-    return (receipt?: any) => {
-      if (receipt && receipt.receiptId) {
-        const key = `${receipt.raidId || this.raidId}:${receipt.receiptId}`;
-        if (this.acceptedReceiptKeys.has(key)) return;
-        this.acceptedReceiptKeys.add(key);
-      }
-      this._onExfilSuccess?.(receipt);
-    };
-  }
-
-  public set onExfilSuccess(fn: ((receipt?: any) => void) | undefined) {
-    this._onExfilSuccess = fn;
-  }
+  /** Runs once when the raid completes as practice or from a debrief. */
+  public onRaidCompleted?: (completion: RaidCompletion) => void;
+  public readonly raidCompletion: RaidCompletionFlow = new RaidCompletionFlow({
+    exfil: () => this.exfilController,
+    raidId: () => this.raidId,
+    source: () => {
+      const requestDebrief = this.coopDebriefRequest;
+      return requestDebrief ? { kind: 'coop', requestDebrief } : { kind: 'practice' };
+    },
+    log: (line) => this.combatLog.push(line),
+    onCompleted: (completion) => {
+      this.player.isExtracted = true;
+      this.onRaidCompleted?.(completion);
+    },
+  });
   /**
    * When the authenticated relay runs server-side machine attack authority, local
    * machine->player damage is suppressed (visual fire continues): machine damage to
@@ -873,31 +866,17 @@ export class SectorDepotSimulation {
    */
   public serverMachineDamageAuthority = false;
   public isSocketDisconnected = false;
-  /** True once a SyncHub spoke session attaches: this raid settles only
-   * from the server debrief, never from the local ledger. */
-  public coopSpokeAttached = false;
+  /** Set while a SyncHub spoke is attached. The raid then settles only
+   * from the server debrief. Without it, extraction is practice. */
+  public coopDebriefRequest: (() => Promise<DebriefInput>) | null = null;
+  public get coopSpokeAttached(): boolean {
+    return this.coopDebriefRequest !== null;
+  }
   /** Confirmed extraction dwell ticks from the server, for HUD display. */
   public coopDwellTicks = 0;
 
   public isAdmitted(): boolean {
     return this.ingressController.getState().kind === 'confirmed_active';
-  }
-
-  public freezeSettlementSnapshot(minTick?: number): { tick: number; cash: number } {
-    const serverHoldTick = (this as any).serverHoldCompletedAtTick ?? 0;
-    const requiredTick = Math.max(this.tick, minTick ?? 0, serverHoldTick);
-    if (this.frozenSettlementTick === undefined) {
-      this.frozenSettlementTick = requiredTick;
-      this.frozenSettlementCash = this.player.cash;
-    } else if (this.frozenSettlementTick < requiredTick) {
-      this.frozenSettlementTick = requiredTick;
-    }
-    return { tick: this.frozenSettlementTick, cash: this.frozenSettlementCash ?? this.player.cash };
-  }
-
-  public clearFrozenSettlement(): void {
-    this.frozenSettlementTick = undefined;
-    this.frozenSettlementCash = undefined;
   }
 
   public recordCrateLootAmmo(crateId: string): void {
@@ -995,48 +974,12 @@ export class SectorDepotSimulation {
         if (isNowClaimedByMe && !wasClaimedByMe) {
           if (!this.player.isExtracted) {
             this.player.cash += crate.cashValue;
-            if (this.frozenSettlementCash !== undefined) {
-              this.frozenSettlementCash += crate.cashValue;
-            }
             if (!this.cratePreviousAmmo.has(crate.id)) {
               this.cratePreviousAmmo.set(crate.id, this.player.ammo);
             }
             this.recordCrateLootAmmo(crate.id);
             this.handleCrateApprovalAmmo(crate.id);
           }
-        }
-      }
-    }
-  }
-
-  public restoreExtractionCustody(info: { holdCompleted?: boolean; holdCompletedAtTick?: number; isExtracted?: boolean; extractedAtTick?: number; receipt?: any }): void {
-    if (info.isExtracted) {
-      this.player.isExtracted = true;
-      if (typeof (this.exfilController as any)?.restoreExtractionState === "function") {
-        (this.exfilController as any).restoreExtractionState(info);
-      }
-    } else if (info.holdCompleted) {
-      if (typeof info.holdCompletedAtTick === "number" && info.holdCompletedAtTick > 0) {
-        (this as any).serverHoldCompletedAtTick = info.holdCompletedAtTick;
-      } else if (!(this as any).serverHoldCompletedAtTick) {
-        (this as any).serverHoldCompletedAtTick = Math.min(this.tick, SIM_CONFIG.RAID_DEADLINE_TICK);
-      }
-      if (typeof (this.exfilController as any)?.restoreExtractionState === "function") {
-        (this.exfilController as any).restoreExtractionState(info);
-      }
-    } else {
-      // Authoritative cancellation: clear local extraction custody and frozen settlement snapshot
-      (this as any).serverHoldCompletedAtTick = 0;
-      this.player.isExtracted = false;
-      this.frozenSettlementCash = undefined;
-      this.frozenSettlementTick = undefined;
-      if (typeof (this.exfilController as any)?.restoreExtractionState === "function") {
-        (this.exfilController as any).restoreExtractionState({ holdCompleted: false, isExtracted: false });
-      } else {
-        try {
-          this.exfilController.cancel();
-        } catch {
-          (this.exfilController as any).state = { kind: "idle" };
         }
       }
     }
@@ -1060,9 +1003,6 @@ export class SectorDepotSimulation {
       crate.opened = true;
       crate.claimedAt = effectiveTimestamp;
       this.player.cash += cash;
-      if (this.frozenSettlementCash !== undefined) {
-        this.frozenSettlementCash += cash;
-      }
       if (!this.cratePreviousAmmo.has(crate.id)) {
         this.cratePreviousAmmo.set(crate.id, this.player.ammo);
       }
@@ -1109,9 +1049,6 @@ export class SectorDepotSimulation {
       const a = this.crateAddedShotgunAmmo.get(crateId)!;
       this.player.reserveShotgunAmmo = Math.max(0, (this.player.reserveShotgunAmmo ?? 0) - a);
       this.crateAddedShotgunAmmo.delete(crateId);
-    }
-    if (this.frozenSettlementCash !== undefined) {
-      this.frozenSettlementCash = Math.min(this.frozenSettlementCash, this.player.cash);
     }
   }
 
@@ -1337,7 +1274,7 @@ export class SectorDepotSimulation {
     const spawnZ = initialZone === 'hub' ? -66 : SIM_CONFIG.SPAWN_SQUAD_A.z;
     const spawnFacing = 0;
 
-    // Spawn player operative with automatic deployment registration on identity change
+    // Spawn the player operative.
     const rawPlayer: OperativeState = {
       id: 'op_player',
       isPlayer: true,
@@ -1373,16 +1310,7 @@ export class SectorDepotSimulation {
       stimChannelTicks: 0,
       hasKeycard: false,
     };
-    this.player = new Proxy(rawPlayer, {
-      set: (target: any, prop: string | symbol, val: any) => {
-        target[prop] = val;
-        if (prop === 'id' && typeof val === 'string' && this.raidId) {
-          registerDeployment(val, this.raidId);
-        }
-        return true;
-      },
-    });
-    registerDeployment(this.player.id, this.raidId);
+    this.player = rawPlayer;
 
     // Spawn companion scout right beside the player
     const squadmateX = initialZone === 'hub' ? 2.2 : SIM_CONFIG.SPAWN_SQUAD_A.x + 2;
@@ -1865,7 +1793,6 @@ export class SectorDepotSimulation {
     }
     if (interruptedActiveHold) {
       this.lastInterruptionTick = this.tick;
-      this.onHoldProgress?.(0, this.tick);
     }
     this.onDamageTaken?.();
   }
@@ -2089,10 +2016,11 @@ export class SectorDepotSimulation {
 
     if (this.zoneMode === 'spoke' && this.tick >= SIM_CONFIG.RAID_DEADLINE_TICK) {
       const exfilState = this.exfilController.getState();
-      const serverHoldTick = (this as any).serverHoldCompletedAtTick || 0;
+      // A completed hold before the deadline earns a short grace for the
+      // corridor and the completion phase, including a retryable failure.
       const isEligibleGrace = (exfilState.kind === "corridor_presentation" ||
         exfilState.kind === "submitting_settlement" ||
-        (exfilState.kind === "failed" && serverHoldTick > 0 && serverHoldTick <= SIM_CONFIG.RAID_DEADLINE_TICK)) &&
+        (exfilState.kind === "failed" && exfilState.canRetry)) &&
         this.tick <= 57600;
       if (!isEligibleGrace) {
         this.isRaidExpired = true;
@@ -2302,58 +2230,6 @@ export class SectorDepotSimulation {
 
     this.exfilController.onTick(this.tick, inExfilZone, activeZoneId, machineDamage);
 
-    const exfilState = this.exfilController.getState();
-    const isCompletedOrSubmitting =
-      exfilState.kind === "corridor_presentation" ||
-      exfilState.kind === "submitting_settlement" ||
-      exfilState.kind === "extracted" ||
-      (exfilState.kind === "failed" && (exfilState as any).canRetry);
-
-    const holdTicks =
-      "currentTicks" in exfilState
-        ? (exfilState as any).currentTicks
-        : ("holdTicks" in exfilState
-          ? (exfilState as any).holdTicks
-          : (isCompletedOrSubmitting ? 180 : 0));
-
-    if (inExfilZone || holdTicks > 0 || isCompletedOrSubmitting) {
-
-
-      const reporter = (globalThis as any).__stickZoneHoldReporter;
-      if (typeof reporter === "function") {
-        reporter(this.raidId, this.player.id, holdTicks, this.tick, {
-          inZone: inExfilZone,
-          damageTaken: machineDamage,
-          simTickAdvancement: true,
-        });
-      }
-      if (this.settlementAuthority && typeof this.settlementAuthority.recordExtractionHold === "function") {
-        this.settlementAuthority.recordExtractionHold(this.raidId, this.player.id, holdTicks, this.tick, {
-          inZone: inExfilZone,
-          damageTaken: machineDamage,
-          simTickAdvancement: true,
-        });
-      }
-      this.onHoldProgress?.(holdTicks, this.tick);
-    } else {
-
-      const reporter = (globalThis as any).__stickZoneHoldReporter;
-      if (typeof reporter === "function") {
-        reporter(this.raidId, this.player.id, 0, this.tick, {
-          inZone: false,
-          damageTaken: 0,
-          simTickAdvancement: true,
-        });
-      }
-      if (this.settlementAuthority && typeof this.settlementAuthority.recordExtractionHold === "function") {
-        this.settlementAuthority.recordExtractionHold(this.raidId, this.player.id, 0, this.tick, {
-          inZone: false,
-          damageTaken: 0,
-          simTickAdvancement: true,
-        });
-      }
-      this.onHoldProgress?.(0, this.tick);
-    }
 
     // 6. Proximity Radar (<= 60m alert, > 60m all clear)
     this.updateProximityAlert();

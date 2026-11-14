@@ -455,15 +455,15 @@ async function recordAll() {
   await pageExfil.screenshot({ path: path.join(OUT_DIR, "12_corridor_presentation_mask.png") });
 
   // Wait for corridor countdown (2.5s) to finish and receipt debrief modal to appear
-  await pageExfil.waitForSelector(".exfil-receipt-modal", { timeout: 45000 });
+  await pageExfil.waitForSelector("[data-completion]", { timeout: 45000 });
   clip3Timings.debrief = (Date.now() - clip3Start) / 1000;
-  console.log("✓ Authoritative settlement debrief verified with server receipt");
+  console.log("Raid completion screen shown. This local check does not prove server settlement.");
 
-  // Screenshot 13: Authoritative Victory Settlement Debrief with BigInt verified receipt
+  // Capture the local completion screen.
   await pageExfil.screenshot({ path: path.join(OUT_DIR, "13_settlement_receipt_debrief.png") });
   await sleep(3000);
 
-  // Capture Screenshot 14: Settlement Error & Official Recovery (Retry/Cancel) UI
+  // Capture the debrief failure screen.
   await pageExfil.evaluate(() => {
     if (window.debugSim) {
       window.debugSim.exfilController = new window.debugSim.exfilController.constructor({
@@ -474,17 +474,15 @@ async function recordAll() {
         window.debugSim.exfilController.onTick(i, true, "lz_sector7_charlie", 0);
       }
       window.debugSim.exfilController.submitSettlement();
-      window.debugSim.exfilController.onFailure("Ledger settlement authority rejected: concurrent pool contention", true);
+      window.debugSim.exfilController.onFailure("SyncHub debrief failed: debrief poll timed out", true);
     }
   });
   await pageExfil.waitForSelector(".exfil-error-card", { timeout: 4000 });
   await pageExfil.screenshot({ path: path.join(OUT_DIR, "14_settlement_recovery_retry_cancel.png") });
-  console.log("✓ Settlement recovery screen captured (UI presentation fixture: ExfilController state-machine unit, not a combat claim): Retry Settlement and Return to Raid visible");
-
-  // Click Return to Raid and assert official cancel() unlocks inputs back to idle
-  await pageExfil.click(".exfil-cancel-btn");
-  await pageExfil.waitForFunction(() => window.debugSim?.exfilController?.getState()?.kind === "idle" && !window.debugSim?.exfilController?.isInputLocked(), { timeout: 4000 });
-  console.log("✓ Return to Raid confirmed: controller reset to idle and inputs unlocked");
+  console.log("Debrief failure screen captured. Retry is available.");
+  if (await pageExfil.locator(".exfil-cancel-btn").count()) {
+    throw new Error("Debrief failure must not return to the raid");
+  }
 
   // Capture Screenshot 15: Operative Eliminated (K.I.A.) Screen — UI presentation
   // fixture (terminal-modal unit): the life-state transition shown is the modal's
@@ -496,7 +494,7 @@ async function recordAll() {
       window.debugSim.player.isExtracted = false;
     }
   });
-  await pageExfil.waitForSelector(".exfil-kia-modal", { timeout: 4000 });
+  await pageExfil.waitForSelector(".exfil-kia-fullscreen:not([data-completion])", { timeout: 4000 });
   await pageExfil.screenshot({ path: path.join(OUT_DIR, "15_operative_eliminated_kia.png") });
   console.log("✓ Operative Eliminated screen captured (UI presentation fixture for the K.I.A. terminal modal)");
   await sleep(1500);

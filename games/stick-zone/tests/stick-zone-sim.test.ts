@@ -3,15 +3,6 @@ import path from 'node:path';
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { SectorDepotSimulation, isPositionInWater, computeGroundAimAngle } from '../src/sim/game.js';
 import { SIM_CONFIG } from '../src/sim/config.js';
-import {
-  verifyReceiptIntegrity,
-  createAuthoritativeSettlement,
-  authoritativeLedgerCommit,
-  verifySettlementReceipt,
-  AuthoritativeSettlementLedger,
-  defaultSettlementLedger,
-  type SettlementReceipt,
-} from '../src/sim/airlock.js';
 import { MultiplayerCoordinator, validateAndSanitizeSnapshot, type PeerPacket } from '../src/sim/multiplayer.js';
 
 describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
@@ -19,7 +10,6 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
 
   beforeEach(() => {
     sim = new SectorDepotSimulation();
-    defaultSettlementLedger.reset();
   });
 
   it('1. staged ingress lifecycle: barriers guarded & cutoff tick > 28,800 rejects', () => {
@@ -311,94 +301,6 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     const stateAfter = sim.exfilController.getState();
     expect(stateAfter.kind).toBe('idle');
     expect(sim.lastInterruptionTick).toBe(sim.tick);
-  });
-
-  it('10. authoritative settlement pipeline: strict verification of all fields, digests, and bilateral custody', async () => {
-    sim.player.id = 'op_alpha_1';
-    sim.player.cash = 4500;
-    sim.player.isExtracted = true;
-    sim.tick = 180;
-
-    const { receipt: alphaReceipt, outcomePayload: alphaPayload } = await authoritativeLedgerCommit(sim);
-    expect(alphaReceipt.receiptId.startsWith('receipt_s7_')).toBe(true);
-    expect(alphaReceipt.transfers[0].quantity).toBe('BE:4500');
-    expect(alphaReceipt.transfers[0].source).toBe('world_spawn');
-    expect(alphaReceipt.raidId).toBe('raid_sector7_1042');
-    expect(alphaReceipt.throughTick).toBe(180);
-
-    const alphaVerify = await verifySettlementReceipt(alphaReceipt, alphaPayload);
-    expect(alphaVerify.valid).toBe(true);
-
-    // Sequential commit for Bravo updates persistent custody
-    const simBravo = new SectorDepotSimulation();
-    simBravo.player.id = 'op_bravo_1';
-    simBravo.player.cash = 7200;
-    simBravo.player.isExtracted = true;
-    simBravo.tick = 200;
-
-    const { receipt: bravoReceipt, outcomePayload: bravoPayload } = await authoritativeLedgerCommit(simBravo);
-    expect(bravoReceipt.participantResults.find((p) => p.profileId === 'op_bravo_1')?.activeRaidCleared).toBe(true);
-    // Alpha previously extracted, so dynamic ledger reports Alpha as activeRaidCleared: true at revision 14
-    expect(bravoReceipt.participantResults.find((p) => p.profileId === 'op_alpha_1')?.activeRaidCleared).toBe(true);
-    expect(bravoReceipt.participantResults.find((p) => p.profileId === 'op_alpha_1')?.inventoryRevision).toBe(14);
-
-    const bravoVerify = await verifySettlementReceipt(bravoReceipt, bravoPayload);
-    expect(bravoVerify.valid).toBe(true);
-
-    // Reject arbitrary/excessive cash banked (e.g. 999,999,999)
-    const cheatSim = new SectorDepotSimulation();
-    cheatSim.player.cash = 999999999;
-    cheatSim.player.isExtracted = true;
-    cheatSim.tick = 200;
-    await expect(authoritativeLedgerCommit(cheatSim)).rejects.toThrow('exceeds allowable pool limit');
-
-    // Reject extracting activeRaidCleared as non-boolean string "yes"
-    const tamperedClearedStr = {
-      ...alphaReceipt,
-      participantResults: [
-        { ...alphaReceipt.participantResults[0], activeRaidCleared: 'yes' as any },
-        alphaReceipt.participantResults[1],
-      ],
-    };
-    const clearedStrVerify = await verifySettlementReceipt(tamperedClearedStr, alphaPayload);
-    expect(clearedStrVerify.valid).toBe(false);
-    expect(clearedStrVerify.reason).toContain('activeRaidCleared strictly equal to boolean true');
-
-    // Reject retained activeRaidCleared as null
-    const tamperedRetainedNull = {
-      ...alphaReceipt,
-      participantResults: [
-        alphaReceipt.participantResults[0],
-        { ...alphaReceipt.participantResults[1], activeRaidCleared: null as any },
-      ],
-    };
-    const retainedNullVerify = await verifySettlementReceipt(tamperedRetainedNull, alphaPayload);
-    expect(retainedNullVerify.valid).toBe(false);
-    expect(retainedNullVerify.reason).toContain('activeRaidCleared strictly equal to boolean');
-
-    // Reject transfer with unauthorized sourceEscrowId
-    const tamperedTransferEscrow = {
-      ...alphaReceipt,
-      transfers: [{ ...alphaReceipt.transfers[0], sourceEscrowId: 'bravo_escrow' as any }],
-    };
-    const transferEscrowVerify = await verifySettlementReceipt(tamperedTransferEscrow, alphaPayload);
-    expect(transferEscrowVerify.valid).toBe(false);
-    expect(transferEscrowVerify.reason).toContain('Unauthorized or mutated fields in transfer');
-
-    // Reject transfer with unauthorized fromProfileId
-    const tamperedFromProfile = {
-      ...alphaReceipt,
-      transfers: [{ ...alphaReceipt.transfers[0], fromProfileId: 'op_bravo_1' as any }],
-    };
-    const fromProfileVerify = await verifySettlementReceipt(tamperedFromProfile, alphaPayload);
-    expect(fromProfileVerify.valid).toBe(false);
-    expect(fromProfileVerify.reason).toContain('Unauthorized or mutated fields in transfer');
-
-    // Reject negative/invalid committedAtMs
-    const tamperedTimeReceipt = { ...alphaReceipt, committedAtMs: -1000 };
-    const timeVerify = await verifySettlementReceipt(tamperedTimeReceipt, alphaPayload);
-    expect(timeVerify.valid).toBe(false);
-    expect(timeVerify.reason).toContain('Invalid commitment timestamp');
   });
 
   it('11. combat roll iframes: immediate immunity on frame 1 and 12 iframes coverage', () => {
@@ -785,72 +687,6 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     coord.cleanup();
   });
 
-  it('19. receipt verification rejects uncommitted receipts and invalid timestamps', async () => {
-    const simTest = new SectorDepotSimulation();
-    simTest.player.id = 'op_alpha_1';
-    simTest.player.cash = 2500;
-    simTest.player.isExtracted = true;
-    simTest.tick = 100;
-
-    const { receipt, outcomePayload } = await authoritativeLedgerCommit(simTest);
-
-    // 1. Valid committed receipt passes
-    const validVerify = await verifySettlementReceipt(receipt, outcomePayload);
-    expect(validVerify.valid).toBe(true);
-
-    // 2. Uncommitted receipt in a fresh ledger where it was never committed rejected
-    const freshLedger = new AuthoritativeSettlementLedger();
-    const uncommittedVerify = await verifySettlementReceipt(receipt, outcomePayload, freshLedger);
-    expect(uncommittedVerify.valid).toBe(false);
-    expect(uncommittedVerify.reason).toContain('Receipt was not committed in authoritative ledger');
-
-    // 3. Receipt with timestamp before 2017 (< 1500000000000) or NaN rejected
-    const ancientReceipt = { ...receipt, committedAtMs: 1400000000000 };
-    const ancientVerify = await verifySettlementReceipt(ancientReceipt, outcomePayload);
-    expect(ancientVerify.valid).toBe(false);
-    expect(ancientVerify.reason).toContain('Invalid commitment timestamp');
-
-    const nanReceipt = { ...receipt, committedAtMs: NaN };
-    const nanVerify = await verifySettlementReceipt(nanReceipt, outcomePayload);
-    expect(nanVerify.valid).toBe(false);
-    expect(nanVerify.reason).toContain('Invalid commitment timestamp');
-  });
-
-  it('20. ledger allowable pool limit and atomic commit rollback', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const simTest = new SectorDepotSimulation();
-    simTest.player.id = 'op_alpha_1';
-    simTest.player.isExtracted = true;
-    simTest.tick = 180;
-
-    // 1. Float cash banked rejected upfront before any mutation
-    simTest.player.cash = 100.5 as any;
-    await expect(authoritativeLedgerCommit(simTest, ledger)).rejects.toThrow('Must be non-negative integer');
-    // Ensure profile custody was NOT cleared on failed commit!
-    expect(ledger.profiles.get('op_alpha_1')?.activeRaid).toBe('raid_sector7_1042');
-    expect(ledger.profiles.get('op_alpha_1')?.inventoryRevision).toBe(13);
-
-    // 2. Excessive cash banked exceeding remaining pool rejected
-    simTest.player.cash = 50001; // pool is 50,000
-    await expect(authoritativeLedgerCommit(simTest, ledger)).rejects.toThrow('exceeds allowable pool limit');
-    expect(ledger.profiles.get('op_alpha_1')?.activeRaid).toBe('raid_sector7_1042');
-
-    // 3. Valid commit of 40,000 succeeds
-    simTest.player.cash = 40000;
-    const { receipt: r1 } = await authoritativeLedgerCommit(simTest, ledger);
-    expect(r1.receiptId).toBeDefined();
-    expect(ledger.raids.get('raid_sector7_1042')?.totalBanked).toBe(40000);
-
-    // 4. Subsequent commit of 15,000 exceeds remaining 10,000 pool limit!
-    const simBravo = new SectorDepotSimulation();
-    simBravo.player.id = 'op_bravo_1';
-    simBravo.player.cash = 15000;
-    simBravo.player.isExtracted = true;
-    simBravo.tick = 190;
-    await expect(authoritativeLedgerCommit(simBravo, ledger)).rejects.toThrow('exceeds allowable pool limit');
-    expect(ledger.profiles.get('op_bravo_1')?.activeRaid).toBe('raid_sector7_1042');
-  });
-
   it('21. human remote rival combat action is preserved by stepRivals', () => {
     const simTest = new SectorDepotSimulation();
     simTest.admitOperative();
@@ -974,133 +810,6 @@ describe('Stick Zone: Exfil Simulation & Lifecycle Verification', () => {
     expect(simTest.player.x).toBeCloseTo(startX + 4.5, 1);
 
     coord.cleanup();
-  });
-
-  it('23. tick 0 and unextracted operative commit rejection', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const simUnextracted = new SectorDepotSimulation();
-    simUnextracted.player.id = 'op_alpha_1';
-    simUnextracted.player.cash = 1000;
-    simUnextracted.tick = 100;
-    // Operative is alive in depot, has NOT extracted
-    simUnextracted.player.isExtracted = false;
-
-    await expect(authoritativeLedgerCommit(simUnextracted, ledger)).rejects.toThrow('Operative extraction has not completed');
-
-    // Tick 0 rejected
-    const simTickZero = new SectorDepotSimulation();
-    simTickZero.player.id = 'op_alpha_1';
-    simTickZero.player.cash = 1000;
-    simTickZero.player.isExtracted = true;
-    simTickZero.tick = 0;
-    await expect(authoritativeLedgerCommit(simTickZero, ledger)).rejects.toThrow('Must be greater than 0');
-  });
-
-  it('24. concurrent commit pool serialization: Alpha 40k + Bravo 15k strictly capped at 50k pool', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const simAlpha = new SectorDepotSimulation();
-    simAlpha.player.id = 'op_alpha_1';
-    simAlpha.player.cash = 40000;
-    simAlpha.player.isExtracted = true;
-    simAlpha.tick = 180;
-
-    const simBravo = new SectorDepotSimulation();
-    simBravo.player.id = 'op_bravo_1';
-    simBravo.player.cash = 15000;
-    simBravo.player.isExtracted = true;
-    simBravo.tick = 180;
-
-    // Fire both commits concurrently
-    const pAlpha = authoritativeLedgerCommit(simAlpha, ledger);
-    const pBravo = authoritativeLedgerCommit(simBravo, ledger);
-
-    const results = await Promise.allSettled([pAlpha, pBravo]);
-    const fulfilled = results.filter((r) => r.status === 'fulfilled');
-    const rejected = results.filter((r) => r.status === 'rejected');
-
-    // Exactly one must succeed and one must be rejected for exceeding 50,000 pool limit!
-    expect(fulfilled.length).toBe(1);
-    expect(rejected.length).toBe(1);
-    expect((rejected[0] as PromiseRejectedResult).reason.message).toContain('exceeds allowable pool limit');
-
-    // Total banked in raid is strictly 40,000, never 55,000
-    expect(ledger.raids.get('raid_sector7_1042')?.totalBanked).toBe(40000);
-  });
-
-  it('25. immutable auditLog: modifying returned receipt does not alter committed record', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const simTest = new SectorDepotSimulation();
-    simTest.player.id = 'op_alpha_1';
-    simTest.player.cash = 5000;
-    simTest.player.isExtracted = true;
-    simTest.tick = 180;
-
-    const { receipt, outcomePayload } = await authoritativeLedgerCommit(simTest, ledger);
-    const originalTime = receipt.committedAtMs;
-
-    // Caller tampers with returned receipt in memory
-    (receipt as any).committedAtMs = 9999999999999;
-    (receipt.transfers[0] as any).quantity = 'BE:999999999';
-
-    // The committed record in auditLog remains untampered!
-    const committed = ledger.auditLog.get(receipt.receiptId)!;
-    expect(committed.committedAtMs).toBe(originalTime);
-    expect(committed.transfers[0].quantity).toBe('BE:5000');
-
-    // Verifying the tampered receipt against the ledger fails
-    const verifyTampered = await verifySettlementReceipt(receipt, outcomePayload, ledger);
-    expect(verifyTampered.valid).toBe(false);
-  });
-
-  it('26. stable idempotency retry: repeating commit with same parameters returns committed receipt', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const simTest = new SectorDepotSimulation();
-    simTest.player.id = 'op_alpha_1';
-    simTest.player.cash = 3200;
-    simTest.player.isExtracted = true;
-    simTest.tick = 180;
-
-    // First commit succeeds
-    const { receipt: r1, outcomePayload } = await authoritativeLedgerCommit(simTest, ledger);
-    expect(r1.receiptId).toBeDefined();
-
-    // Exact retry with same operative, tick, and cash returns existing receipt without error!
-    const { receipt: r2 } = await authoritativeLedgerCommit(simTest, ledger);
-    expect(r2.receiptId).toBe(r1.receiptId);
-    expect(r2.outcomeDigest).toBe(r1.outcomeDigest);
-
-    // Verify still passes
-    const verifyRetry = await verifySettlementReceipt(r2, outcomePayload, ledger);
-    expect(verifyRetry.valid).toBe(true);
-  });
-
-  it('27. independent validity of Alpha receipt after Bravo subsequently extracts', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-
-    // 1. Alpha extracts first at tick 180
-    const simAlpha = new SectorDepotSimulation();
-    simAlpha.player.id = 'op_alpha_1';
-    simAlpha.player.cash = 10000;
-    simAlpha.player.isExtracted = true;
-    simAlpha.tick = 180;
-    const { receipt: rAlpha, outcomePayload: pAlpha } = await authoritativeLedgerCommit(simAlpha, ledger);
-
-    // Alpha receipt valid
-    const v1 = await verifySettlementReceipt(rAlpha, pAlpha, ledger);
-    expect(v1.valid).toBe(true);
-
-    // 2. Bravo subsequently extracts at tick 300
-    const simBravo = new SectorDepotSimulation();
-    simBravo.player.id = 'op_bravo_1';
-    simBravo.player.cash = 8000;
-    simBravo.player.isExtracted = true;
-    simBravo.tick = 300;
-    const { receipt: rBravo, outcomePayload: pBravo } = await authoritativeLedgerCommit(simBravo, ledger);
-    expect((await verifySettlementReceipt(rBravo, pBravo, ledger)).valid).toBe(true);
-
-    // 3. Re-verifying Alpha receipt AFTER Bravo extracted remains 100% valid!
-    const vAlphaPost = await verifySettlementReceipt(rAlpha, pAlpha, ledger);
-    expect(vAlphaPost.valid).toBe(true);
   });
 
   it('28. numeric damage validation and admitted combat past cutoff', () => {

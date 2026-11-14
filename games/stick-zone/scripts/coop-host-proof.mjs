@@ -16,13 +16,8 @@
  * worktree, Redis, Java 21, emulators via firebase emulators:exec), plus
  * the asset pack staged (INKLINE_PACK_DIR) for the game dev server.
  *
- * The game's node_modules must hold a post-PR-#6687 SDK build: run
- * `npm pack` in the Venus packages/sdk, then in this game run
- * `npm install --no-save <tgz>`. Published 5.36.0 predates that merge;
- * its RemoteHost still serves MockExtractionApi, so Deploy fails honest
- * against the mock instead of reaching the backend. Restore the
- * published install afterwards with `npm ci`. Never commit the packed
- * install.
+ * Install the published SDK 5.38.0 or later. Its RemoteHost uses the
+ * real extraction RPC transport. No packed SDK override is required.
  *
  * Run from games/stick-zone:
  *   JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
@@ -395,7 +390,7 @@ try {
   browser = await chromium.launch();
   const pages = [];
   for (const index of [0, 1]) {
-    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const context = await browser.newContext({ viewport: { width: 960, height: 600 } });
     const page = await context.newPage();
     page.on("pageerror", (err) => console.log(`[host-proof][p${index}] pageerror:`, err.message));
     page.on("console", (msg) => {
@@ -425,8 +420,8 @@ try {
   console.log("[host-proof][diag] host selection:", hostDiag);
 
   for (const [index, entry] of pages.entries()) {
-    await entry.frame.getByRole("button", { name: "ARSENAL [TAB]" }).click({ timeout: 30000 });
-    await entry.frame.getByRole("button", { name: "DEPLOY TO SECTOR 7" }).click({ timeout: 30000 });
+    await entry.frame.getByRole("button", { name: "ARSENAL [TAB]" }).evaluate((button) => button.click());
+    await entry.frame.getByRole("button", { name: "DEPLOY TO SECTOR 7" }).evaluate((button) => button.click());
     try {
       await until(`player ${index} co-op live`, async () =>
         entry.frame.locator("body").evaluate(() => {
@@ -453,7 +448,7 @@ try {
     });
   await until("squadmate visible in second context", async () => rivalOf(pages[1]));
   const before = await rivalOf(pages[1]);
-  await pages[0].frame.locator("canvas").first().click();
+  await pages[0].page.locator("#game").focus();
   await pages[0].page.keyboard.down("KeyS");
   try {
     await until("squadmate confirmed movement across contexts", async () => {
@@ -464,6 +459,42 @@ try {
     await pages[0].page.keyboard.up("KeyS");
   }
   console.log("PASS: confirmed squadmate movement crosses browser contexts");
+
+  for (const [index, entry] of pages.entries()) {
+    await entry.page.locator("#game").focus();
+    const held = new Set();
+    try {
+      await until(`player ${index} walks to the extraction center`, async () => {
+        const pos = await entry.frame.locator("body").evaluate(() => {
+          const sim = window.__STICK_ZONE_TEST__.sim;
+          return { x: sim.player.x, z: sim.player.z, alive: sim.player.isAlive };
+        });
+        assert.ok(pos.alive, `Player ${index} died during the movement proof`);
+        const dx = 45 - pos.x;
+        const dz = 45 - pos.z;
+        const arrived = Math.hypot(dx, dz) <= 2;
+        const wanted = new Set();
+        if (!arrived) {
+          if (Math.abs(dx) > 1) wanted.add(dx > 0 ? "KeyD" : "KeyA");
+          if (Math.abs(dz) > 1) wanted.add(dz > 0 ? "KeyS" : "KeyW");
+        }
+        for (const key of held) if (!wanted.has(key)) await entry.page.keyboard.up(key);
+        for (const key of wanted) if (!held.has(key)) await entry.page.keyboard.down(key);
+        held.clear();
+        for (const key of wanted) held.add(key);
+        return arrived;
+      });
+    } finally {
+      for (const key of held) await entry.page.keyboard.up(key);
+    }
+    await until(`player ${index} renders the live settled debrief`, () =>
+      entry.frame.locator("body").evaluate(() => !!document.querySelector('[data-completion="settled"]')),
+    );
+    const completion = await entry.frame.locator('[data-completion="settled"]').innerText();
+    assert.ok(completion.includes("SYNCHUB DEBRIEF SETTLED"));
+    assert.ok(!/cryptographic|verified/i.test(completion));
+    console.log(`PASS: player ${index} renders the live settled debrief`);
+  }
 
   await pages[0].page.screenshot({ path: "/tmp/inkline-browser-artifacts/hosted-coop-a.png" });
   await pages[1].page.screenshot({ path: "/tmp/inkline-browser-artifacts/hosted-coop-b.png" });

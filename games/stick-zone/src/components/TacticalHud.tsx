@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { type SectorDepotSimulation, DEPOT_CONTAINERS } from "../sim/game.js";
 import { SIM_CONFIG } from "../sim/config.js";
+import { RAID_DURATION_SECONDS } from "../sim/coopConfig.js";
 import { sound } from "../audio.js";
 import { useStashStore } from "../progression/stashStore.js";
 
@@ -389,7 +390,10 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
       ? Math.max(0, (SIM_CONFIG.EXFIL_HOLD_TICKS - holdTicks) / 60).toFixed(1)
       : "0.0";
 
-    const remainingTicks = Math.max(0, SIM_CONFIG.RAID_DEADLINE_TICK - tick);
+    const deadlineTicks = sim.coopSpokeAttached
+      ? RAID_DURATION_SECONDS * SIM_CONFIG.TICKS_PER_SECOND
+      : SIM_CONFIG.RAID_DEADLINE_TICK;
+    const remainingTicks = Math.max(0, deadlineTicks - tick);
     const totalSeconds = Math.floor(remainingTicks / SIM_CONFIG.TICKS_PER_SECOND);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;

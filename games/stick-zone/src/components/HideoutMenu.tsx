@@ -51,7 +51,6 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
     setLaserPointer,
     buyShopItem,
     sellStashItem,
-    claimContractReward,
     resetProgress,
   } = useStashStore();
 
@@ -924,10 +923,8 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
                           </div>
                         ) : c.completed ? (
                           <button
-                            onClick={() => {
-                              claimContractReward(c.id);
-                              if (soundEnabled) sound.playLootChime();
-                            }}
+                            disabled
+                            title="Contract rewards need server support."
                             style={{
                               background: "#22c55e",
                               color: "#052e16",
@@ -940,7 +937,7 @@ export const HideoutMenu: React.FC<HideoutMenuProps> = ({ onDeploy, onClose }) =
                               boxShadow: "0 0 16px rgba(34, 197, 94, 0.4)",
                             }}
                           >
-                            CLAIM BOUNTY
+                            SERVER SUPPORT REQUIRED
                           </button>
                         ) : (
                           <div style={{

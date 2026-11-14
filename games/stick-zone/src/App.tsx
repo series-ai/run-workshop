@@ -6,7 +6,7 @@ import { gamepad } from "./input/gamepadController.js";
 import React, { useEffect, useRef, useState } from "react";
 import { SectorDepotSimulation, type GameInput, computeGroundAimAngle } from "./sim/game.js";
 import { MultiplayerCoordinator } from "./sim/multiplayer.js";
-import { preparePlatformRaid, registerDeployment } from "./sim/airlock.js";
+import { preparePlatformRaid } from "./sim/airlock.js";
 import { COOP_SECTOR_KEY } from "./sim/coopConfig.js";
 import { GameCanvas } from "./components/GameCanvas.js";
 import { TacticalHud } from "./components/TacticalHud.js";
@@ -131,42 +131,16 @@ const MainApp: React.FC = () => {
 
 
 
-      sim.onHoldProgress = (holdTicks: number, currentTick: number) => {
-        if (coordinatorRef.current && !sim.player.isExtracted && sim.player.isAlive) {
-          coordinatorRef.current.reportHoldProgress(holdTicks, currentTick);
-        }
-      };
-
-      const originalOnExfilSuccess = sim.onExfilSuccess;
-      sim.onExfilSuccess = (receipt?: any) => {
-        originalOnExfilSuccess?.(receipt);
-        const coordinator = coordinatorRef.current;
-        if (coordinator?.spokeSession) {
-          coordinator
-            .requestCoopSettlement("lz_sector_7")
-            .then(async (debrief) => {
-              if (debrief.resolution?.kind === "void") {
-                sim.combatLog.push(
-                  `[CO-OP] Raid voided (${debrief.resolution.reason}). Loadout refund per debrief ${debrief.receiptId}.`,
-                );
-              } else {
-                sim.combatLog.push(
-                  `[CO-OP] Debrief settled: ${debrief.receiptId}, ${debrief.transfers.length} transfer(s).`,
-                );
-              }
-              await hydrateStashFromCloud();
-            })
-            .catch((err: unknown) => {
-              const message = err instanceof Error ? err.message : String(err);
-              sim.combatLog.push(`[CO-OP] Settlement failed: ${message}`);
-              console.error("[Coop] Settlement failed:", err);
-            });
-        } else {
-          hydrateStashFromCloud().catch((err: unknown) => {
-            console.error("[Stash] Hydration after exfil failed:", err);
-          });
-        }
-      };
+    // The completion flow logs the outcome. A debrief changed the hub
+    // stash, so refresh it. Practice banks nothing and needs no refresh.
+    sim.onRaidCompleted = (completion) => {
+      if (completion.kind === "practice") return;
+      hydrateStashFromCloud().catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        sim.combatLog.push(`[CO-OP] Stash refresh after debrief failed: ${message}`);
+        console.error("[Stash] Hydration after debrief failed:", err);
+      });
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (sim.isInputLocked()) return;
@@ -560,7 +534,6 @@ const MainApp: React.FC = () => {
       lastHandledBarkTickRef.current = -1;
       lastHandledHitmarkerTickRef.current = -1;
       const newSim = new SectorDepotSimulation(candidateRaidId, "hub");
-      registerDeployment(newSim.player.id, candidateRaidId);
 
       setSim(newSim);
       if (typeof window !== "undefined") {

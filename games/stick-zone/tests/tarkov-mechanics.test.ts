@@ -1,7 +1,6 @@
 import { computePrefabObstacleBox, PREFAB_CATALOG, FOB_PREFABS, FOB_PREFAB_OBSTACLES } from "../src/sim/prefabs.js";
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SectorDepotSimulation, type GameInput } from '../src/sim/game.js';
-import { authoritativeLedgerCommit, verifySettlementReceipt, AuthoritativeSettlementLedger, registerDeployment, defaultSettlementLedger } from '../src/sim/airlock.js';
 import { MultiplayerCoordinator, validateAndSanitizeSnapshot } from '../src/sim/multiplayer.js';
 
 
@@ -262,28 +261,6 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     sim.restoreCrateStateFromSnapshot([{ id: crate2.id, opened: true, claimedBy: 'rival_spectre', claimedAt: 100 }]);
     expect(sim.player.cash).toBe(0);
     expect(sim.player.stimsRemaining).toBe(initialStims); // Stim rolled back via snapshot!
-  });
-
-  it('8. Dynamic raid custody: repeated extractions and fresh raids settle cleanly without activeRaid mismatch', async () => {
-    // Raid 1
-    const raid1 = new SectorDepotSimulation('raid_sequence_alpha', 'spoke');
-    raid1.tick = 500;
-    raid1.player.cash = 3000;
-    raid1.player.isExtracted = true;
-    const commit1 = await authoritativeLedgerCommit(raid1);
-    expect(commit1.receipt.raidId).toBe('raid_sequence_alpha');
-
-    // Raid 2 for same player profile (sequential deployment)
-    const raid2 = new SectorDepotSimulation('raid_sequence_beta', 'spoke');
-    raid2.tick = 600;
-    raid2.player.cash = 4500;
-    raid2.player.isExtracted = true;
-    const commit2 = await authoritativeLedgerCommit(raid2);
-    expect(commit2.receipt.raidId).toBe('raid_sequence_beta');
-    expect(commit2.receipt.receiptId).not.toBe(commit1.receipt.receiptId);
-
-    const verifyResult = await verifySettlementReceipt(commit2.receipt, commit2.outcomePayload);
-    expect(verifyResult.valid).toBe(true);
   });
 
   it('9. Extracted & locked state invariants: actions rejected when extracted', () => {
@@ -742,27 +719,6 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.player.cash).toBe(initialCash);
   });
 
-  it('14. Settlement finality: coordinator registers operative identity and ledger rejects duplicate settlement when tick changes', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const testRaidId = `raid_finality_${Date.now()}`;
-    const testSim = new SectorDepotSimulation(testRaidId);
-    const testCoord = new MultiplayerCoordinator(testSim);
-
-    expect(testSim.player.id).toBe('op_alpha_1');
-    testSim.player.cash = 4500;
-    testSim.player.isExtracted = true;
-    testSim.tick = 200;
-
-    // First settlement commit succeeds
-    const { receipt: r1 } = await authoritativeLedgerCommit(testSim, ledger);
-    expect(r1.receiptId).toBeDefined();
-
-    // Duplicate settlement attempt with advanced tick is rejected by the ledger
-    testSim.tick = 205;
-    await expect(authoritativeLedgerCommit(testSim, ledger)).rejects.toThrow(
-      /has already settled for raid/
-    );
-  });
   it("15. Snapshot crate custody: authoritative snapshot resetting crate to unclaimed triggers local rollback", () => {
     const crate = sim.crates[0];
     const initialCash = sim.player.cash;
@@ -783,28 +739,6 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.player.cash).toBe(initialCash);
   });
 
-  it("16. Settlement finality: registerDeployment preserves settled status for completed raids", async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    const testRaidId = `raid_persist_${Date.now()}`;
-    const testSim = new SectorDepotSimulation(testRaidId);
-    testSim.player.cash = 3000;
-    testSim.player.isExtracted = true;
-    testSim.tick = 100;
-
-    await authoritativeLedgerCommit(testSim, ledger);
-    const key = `${testRaidId}:${testSim.player.id}`;
-    expect((ledger as any).settledRaids.has(key)).toBe(true);
-
-    // Redeployment call must NOT wipe the settled record
-    ledger.registerDeployment(testSim.player.id, testRaidId);
-    expect((ledger as any).settledRaids.has(key)).toBe(true);
-
-    // Any attempt to commit again still throws
-    testSim.tick = 110;
-    await expect(authoritativeLedgerCommit(testSim, ledger)).rejects.toThrow(
-      /has already settled for raid/
-    );
-  });
   it('17. Weapon-specific ammo grant and rollback: looting crate with rifle increases rifle ammo; switching to shotgun and revoking claim leaves shotgun intact and rolls back rifle ammo', () => {
     // 1. Start with BOTH weapon pools depleted: rifle 5/30, shotgun 2/8, active weapon rifle
     sim.player.weapon = 'rifle';
@@ -894,25 +828,7 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.exfilController.getState().kind).toBe('submitting_settlement');
   });
 
-  it('19. Fatal damage during extraction and elimination invariant', async () => {
-    sim.player.health = 20;
-    sim.player.armor = 0;
-    sim.player.isInvulnerable = false;
-    sim.player.isAlive = true;
-    for (let t = 1; t <= 50; t++) {
-      sim.exfilController.onTick(t, true, 'lz_sector7_charlie', 0);
-    }
-
-    // Operative takes fatal 50 damage
-    sim.applyDamageToPlayer(50);
-    expect(sim.player.health).toBe(0);
-    expect(sim.player.isAlive).toBe(false);
-
-    // Authoritative commit MUST reject eliminated operative
-    await expect(authoritativeLedgerCommit(sim as any)).rejects.toThrow(/Cannot commit settlement: Operative .* is K.I.A./);
-  });
-
-  it('20. Unified bunker radius and authority hold custody restoration', () => {
+  it('20. Unified bunker radius', () => {
     // A) Unified 6.0m bunker radius check
     sim.player.hasKeycard = true;
     sim.player.x = -45;
@@ -921,45 +837,7 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
 
     sim.player.z = -45 + 6.5; // dist = 6.5m > 6.0m
     expect(sim.isPlayerInExfilZone()).toBe(false);
-
-    // B) Authority custody adoption: confirmed hold sets serverHoldCompletedAtTick
-    sim.restoreExtractionCustody({ holdCompleted: true, holdCompletedAtTick: 240 });
-    expect((sim as any).serverHoldCompletedAtTick).toBe(240);
-
-    // C) Authority custody cancellation: holdCompleted: false clears hold and custody
-    sim.restoreExtractionCustody({ holdCompleted: false });
-    expect((sim as any).serverHoldCompletedAtTick).toBe(0);
-    expect(sim.player.isExtracted).toBe(false);
   });
-  it('21. Asynchronous digest calculation race and post-await eligibility rejection', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    ledger.registerDeployment(sim.player.id, sim.raidId);
-    sim.player.health = 100;
-    sim.player.isAlive = true;
-    sim.player.cash = 1250;
-    (sim.exfilController as any).state = { kind: 'submitting_settlement' };
-
-    // Start commit
-    const commitPromise = ledger.commitSettlement({
-      tick: 200,
-      player: sim.player as any,
-      exfilController: sim.exfilController,
-      raidId: sim.raidId,
-      rivals: [],
-    });
-
-    // Fatal damage occurs during async calculation
-    sim.player.health = 0;
-    sim.player.isAlive = false;
-
-    // Must reject and NOT write to ledger
-    await expect(commitPromise).rejects.toThrow(/Cannot commit settlement: Operative .* is K.I.A./);
-
-    // Ledger auditLog must remain empty and raid unsettled
-    expect(ledger.auditLog.size).toBe(0);
-    expect(ledger.settledRaids.has(`${sim.raidId}:${sim.player.id}`)).toBe(false);
-  });
-
   it('22. Network machine and rival trauma starts heavy arterial bleeding', () => {
     const coord = new MultiplayerCoordinator(sim);
     sim.player.armor = 0;
@@ -991,101 +869,6 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.player.isBleeding).toBe(true); // Symmetrical heavy bleed on network damage!
 
     coord.cleanup();
-  });
-
-  it('23. Strict custody packet validation and operative binding', () => {
-    const coord = new MultiplayerCoordinator(sim);
-    (sim as any).serverHoldCompletedAtTick = 0;
-
-    // A) Missing holdCompleted is NOT treated as true
-    coord.handleMessage({
-      eventId: 'evt_hold_invalid_1',
-      type: 'hold_result',
-      senderId: 'server',
-      senderName: 'SYSTEM RELAY',
-      squad: 'SYSTEM',
-      timestamp: Date.now(),
-      serverAuthoritative: true,
-      data: {
-        holdCompletedAtTick: 180, // missing holdCompleted: true
-      },
-    } as any);
-    expect((sim as any).serverHoldCompletedAtTick).toBe(0);
-
-    // B) Packet bound to a DIFFERENT operative is ignored
-    coord.handleMessage({
-      eventId: 'evt_hold_diff_op',
-      type: 'hold_result',
-      senderId: 'server',
-      senderName: 'SYSTEM RELAY',
-      squad: 'SYSTEM',
-      timestamp: Date.now(),
-      serverAuthoritative: true,
-      data: {
-        operativeId: 'op_bravo_99',
-        holdCompleted: true,
-        holdCompletedAtTick: 180,
-      },
-    } as any);
-    expect((sim as any).serverHoldCompletedAtTick).toBe(0);
-
-    // C) Valid packet bound to this operative adopts custody
-    coord.handleMessage({
-      eventId: 'evt_hold_valid',
-      type: 'hold_result',
-      senderId: 'server',
-      senderName: 'SYSTEM RELAY',
-      squad: 'SYSTEM',
-      timestamp: Date.now(),
-      serverAuthoritative: true,
-      data: {
-        operativeId: sim.player.id,
-        holdCompleted: true,
-        holdCompletedAtTick: 180,
-      },
-    } as any);
-    expect((sim as any).serverHoldCompletedAtTick).toBe(180);
-
-    // D) Explicit holdCompleted: false clears custody
-    coord.handleMessage({
-      eventId: 'evt_hold_cancel',
-      type: 'hold_result',
-      senderId: 'server',
-      senderName: 'SYSTEM RELAY',
-      squad: 'SYSTEM',
-      timestamp: Date.now(),
-      serverAuthoritative: true,
-      data: {
-        operativeId: sim.player.id,
-        holdCompleted: false,
-      },
-    } as any);
-    expect((sim as any).serverHoldCompletedAtTick).toBe(0);
-
-    coord.cleanup();
-  });
-
-  it('24. Public authoritativeLedgerCommit checks live elimination through public function', async () => {
-    const ledger = new AuthoritativeSettlementLedger();
-    ledger.registerDeployment(sim.player.id, sim.raidId);
-    sim.tick = 270;
-    sim.freezeSettlementSnapshot(270);
-    sim.player.health = 100;
-    sim.player.isAlive = true;
-    sim.player.cash = 1250;
-    (sim.exfilController as any).state = { kind: 'submitting_settlement' };
-
-    // Invoke public authoritativeLedgerCommit function
-    const commitPromise = authoritativeLedgerCommit(sim, ledger);
-
-    // Fatal damage occurs during async calculation
-    sim.player.health = 0;
-    sim.player.isAlive = false;
-
-    // Must reject through public function and NOT commit
-    await expect(commitPromise).rejects.toThrow(/Cannot commit settlement: Operative .* is K.I.A./);
-    expect(ledger.auditLog.size).toBe(0);
-    expect(ledger.settledRaids.has(`${sim.raidId}:${sim.player.id}`)).toBe(false);
   });
 
   it('25. Flanking container cover: movement collision and ray obstruction', () => {
@@ -1141,19 +924,6 @@ describe('Tarkov Extraction Hardcore Mechanics Verification', () => {
     expect(sim.player.isUsingStim).toBe(true);
     sim.step(makeInput({ dx: 1, dz: 0, sprint: true }));
     expect(sim.player.isUsingStim).toBe(false);
-  });
-
-  it('27. Extraction custody cancellation clears frozen settlement cash snapshot', () => {
-    sim.player.cash = 3000;
-    sim.freezeSettlementSnapshot(200);
-    expect(sim.frozenSettlementCash).toBe(3000);
-
-    // Server sends custody cancellation (holdCompleted: false)
-    sim.restoreExtractionCustody({ holdCompleted: false });
-
-    // Must clear frozen settlement snapshot so subsequent settlements don't use stale cash
-    expect(sim.frozenSettlementCash).toBeUndefined();
-    expect(sim.frozenSettlementTick).toBeUndefined();
   });
 
   it('28. Gunfire acoustic propagation: gunshot alerts unaware AI within 45m and ignores distant AI', () => {

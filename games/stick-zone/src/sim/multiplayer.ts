@@ -2,7 +2,8 @@ import { calculateShotgunHit } from './shotgunCollision.js';
 import type { ActiveSpokeSession } from "@series-inc/rundot-game-sdk";
 import { parseConfirmedState } from "../platform/synchub.js";
 import { confirmedView, movementIntent, type DebriefInput } from "./coopAdapter.js";
-import { buildCoopRaidRules } from "./coopConfig.js";
+import { completionFromDebrief, ExtractionRefusedError } from "./raidCompletion.js";
+import { buildCoopRaidRules, RAID_TICK_RATE_HZ } from "./coopConfig.js";
 /**
  * @file multiplayer.ts
  * Real-time multiplayer synchronization delegated to first-party SyncHub platform SDK
@@ -12,8 +13,8 @@ import { buildCoopRaidRules } from "./coopConfig.js";
 
 import type { SectorDepotSimulation, StickActionState, KickActionPayload } from './game.js';
 import { DEPOT_CONTAINERS, segmentIntersectsAABB } from './game.js';
-import type { RaidWorldSnapshot, SettlementReceipt } from './airlock.js';
-import { verifyReceiptIntegrity, defaultSettlementLedger, registerDeployment } from './airlock.js';
+import type { RaidWorldSnapshot } from './airlock.js';
+import { EXTRACTION_ZONE } from './coopConfig.js';
 import { SIM_CONFIG, BOSS_CONFIG, AI_CONFIGS } from './config.js';
 import { sound } from '../audio.js';
 
@@ -163,38 +164,6 @@ export interface RaidRestartPacketData {
   newRaidId?: string;
 }
 
-export interface CanonicalReceiptPayload {
-  v?: number;
-  receiptId?: string;
-  raidId?: string;
-  operativeId?: string;
-  snapshotTick?: number;
-  committed?: boolean;
-  verifiedCash?: number;
-  outcomeId?: string;
-  intentHash?: string;
-  outcomeDigest?: string;
-  throughTick?: number;
-  committedAtMs?: number;
-  participantResults?: Array<{
-    profileId?: string;
-    releasedEscrowIds?: string[];
-    inventoryRevision?: number;
-    activeRaidCleared?: boolean;
-  }>;
-  transfers?: Array<{
-    itemId?: string;
-    quantity?: string;
-    toProfileId?: string;
-    source?: string;
-  }>;
-}
-
-export interface ExfilSuccessPacketData {
-  receipt?: SettlementReceipt | CanonicalReceiptPayload;
-  snapshotTick?: number;
-}
-
 export interface IngressRequestPacketData {
   requestedTick?: number;
   isResuming?: boolean;
@@ -256,7 +225,6 @@ export type PeerPacket =
   | (PeerPacketBase & { type: 'machine_attack'; data: MachineAttackPacketData })
   | (PeerPacketBase & { type: 'machine_roster'; data: MachineRosterPacketData })
   | (PeerPacketBase & { type: 'kick_action_rejected'; data: KickActionRejectedPacketData })
-  | (PeerPacketBase & { type: 'exfil_success'; data: ExfilSuccessPacketData })
   | (PeerPacketBase & { type: 'ingress_request'; data?: IngressRequestPacketData })
   | (PeerPacketBase & { type: 'ingress_snapshot'; data: IngressSnapshotPacketData })
   | (PeerPacketBase & { type: 'squad_ack'; data: SquadAckPacketData })
@@ -370,35 +338,43 @@ export class MultiplayerCoordinator {
   public sdkRoom: any = null;
   public spokeSession: ActiveSpokeSession | null = null;
   public onSyncError?: (message: string) => void;
-  private lastSubmittedPos: { x: number; z: number } | null = null;
+  private confirmedSelfPosition: { x: number; z: number } | null = null;
   private reportedSyncIssues = new Set<string>();
   private settlementByRaid = new Map<string, Promise<DebriefInput>>();
+  private extractionAcceptedRaids = new Set<string>();
   private spokeUnsubscribe: (() => void) | null = null;
 
   /**
    * One settlement attempt per raid: request extraction, then wait for
    * the debrief over HTTP so a lost socket cannot hide the receipt.
-   * Repeat calls for the same raid return the same promise; a failed
-   * attempt clears the entry so the player can retry.
+   * Repeat calls for the same raid return the same promise. A failed
+   * attempt clears the entry so the player can retry. After the server
+   * accepts the extraction request, a retry only waits for the debrief.
    */
   public requestCoopSettlement(zoneId: string): Promise<DebriefInput> {
     const spoke = this.spokeSession;
     if (!spoke) {
       return Promise.reject(new Error("[coop] settlement requested with no spoke session attached"));
     }
-    const existing = this.settlementByRaid.get(spoke.raidId);
+    const raidId = spoke.raidId;
+    const existing = this.settlementByRaid.get(raidId);
     if (existing) return existing;
     const attempt = (async (): Promise<DebriefInput> => {
-      const result = await spoke.requestExtractionAsync({ zoneId });
-      if (!result.success) {
-        throw new Error(`[coop] extraction request refused for zone ${zoneId}`);
+      if (!this.extractionAcceptedRaids.has(raidId)) {
+        const result = await spoke.requestExtractionAsync({ zoneId });
+        if (!result.success) {
+          throw new ExtractionRefusedError(`[coop] extraction request refused for zone ${zoneId}`);
+        }
+        if (result.extracted) this.extractionAcceptedRaids.add(raidId);
       }
-      return (await spoke.waitForDebriefAsync()) as DebriefInput;
+      const debrief: DebriefInput = await spoke.waitForDebriefAsync();
+      completionFromDebrief(raidId, debrief);
+      return debrief;
     })().catch((err: unknown) => {
-      this.settlementByRaid.delete(spoke.raidId);
+      this.settlementByRaid.delete(raidId);
       throw err;
     });
-    this.settlementByRaid.set(spoke.raidId, attempt);
+    this.settlementByRaid.set(raidId, attempt);
     return attempt;
   }
 
@@ -421,8 +397,8 @@ export class MultiplayerCoordinator {
     }
     this.spokeSession = spokeSession;
     this.sim.raidId = spokeSession.raidId;
-    this.sim.coopSpokeAttached = true;
-    this.lastSubmittedPos = { x: this.sim.player.x, z: this.sim.player.z };
+    this.sim.coopDebriefRequest = () => this.requestCoopSettlement(EXTRACTION_ZONE.zoneId);
+    this.confirmedSelfPosition = null;
     this.spokeUnsubscribe = spokeSession.onConfirmedTick((tick: number, state: unknown) => {
       try {
         this.applyConfirmedState(tick, state);
@@ -446,9 +422,19 @@ export class MultiplayerCoordinator {
     const state = parseConfirmedState(rawState);
     const view = confirmedView(state, spoke.slot);
     if (view.self) {
+      if (!this.confirmedSelfPosition) {
+        this.sim.tick = Math.floor(state.tick * SIM_CONFIG.TICKS_PER_SECOND / RAID_TICK_RATE_HZ);
+        this.sim.player.x = view.self.x;
+        this.sim.player.z = view.self.z;
+        this.sim.zoneMode = "spoke";
+        this.sim.admitOperative(this.sim.tick, true);
+      }
+      this.confirmedSelfPosition = { x: view.self.x, z: view.self.z };
       this.sim.coopDwellTicks = view.self.dwellTicks;
       if (view.self.isExtracted) {
         this.sim.player.isExtracted = true;
+        this.extractionAcceptedRaids.add(spoke.raidId);
+        void this.sim.raidCompletion.beginConfirmedExtraction();
       } else if (view.self.isCasualty || !view.self.isAlive) {
         this.sim.player.health = 0;
         this.sim.player.isAlive = false;
@@ -550,7 +536,6 @@ export class MultiplayerCoordinator {
     return Date.now() + (this.serverTimeOffset || 0);
   }
   private selfReadinessTimer: any = null;
-  public acceptedReceiptKeys: Set<string>;
   private discoveryInterval: any = null;
   public pendingWorldEvents: Array<PeerPacket> = [];
   public extractedPeerIds = new Set<string>();
@@ -631,8 +616,6 @@ export class MultiplayerCoordinator {
 
   constructor(sim: SectorDepotSimulation) {
     this.sim = sim;
-    this.acceptedReceiptKeys = sim.acceptedReceiptKeys || new Set<string>();
-    sim.acceptedReceiptKeys = this.acceptedReceiptKeys;
     (this.sim as any).multiplayerCoordinator = this;
     (this.sim as any).coordinator = this;
 
@@ -663,7 +646,6 @@ export class MultiplayerCoordinator {
         this.sim.player.z = SIM_CONFIG.SPAWN_SQUAD_A.z;
       }
     }
-    registerDeployment(this.localId, this.sim.raidId);
 
     // Connect callbacks from simulation
     this.sim.onHitTarget = (targetId, damage, knockX, knockZ, kind, shotId) => {
@@ -684,16 +666,6 @@ export class MultiplayerCoordinator {
 
     this.sim.onKickAction = (action) => {
       this.sendKickAction(action);
-    };
-
-    const rawPrevOnExfil = (this.sim as any)._onExfilSuccess || this.sim.onExfilSuccess;
-    this.sim.onExfilSuccess = (receipt?: any) => {
-      try { rawPrevOnExfil?.(receipt); } catch {}
-      this.broadcastExfilSuccess(receipt);
-    };
-
-    this.sim.requestServerSettlement = (tick: number, cash: number) => {
-      return this.requestServerSettlement(tick, cash);
     };
 
     const origOnPlayerDeath = this.sim.onPlayerDeath;
@@ -1150,59 +1122,6 @@ export class MultiplayerCoordinator {
     this.sendPacket(packet);
   }
 
-  
-  private pendingSettlementCommitMap = new Map<string, { resolve: (res: any) => void; reject: (err: any) => void }>();
-
-  public async requestServerSettlement(snapshotTick: number, snapshotCash: number): Promise<{ receipt: any; outcomePayload: any }> {
-    return new Promise((resolve, reject) => {
-      const eventId = this.createEventId();
-      const timer = setTimeout(() => {
-        this.pendingSettlementCommitMap.delete(eventId);
-        reject(new Error("Server settlement commit timed out"));
-      }, 8000);
-
-      this.pendingSettlementCommitMap.set(eventId, {
-        resolve: (val) => { clearTimeout(timer); resolve(val); },
-        reject: (err) => { clearTimeout(timer); reject(err); },
-      });
-
-      this.sendPacket({
-        eventId,
-        type: "settlement_commit" as any,
-        senderId: this.localId,
-        senderName: this.sim.player.name,
-        squad: this.localSquad,
-        raidId: this.sim.raidId,
-        timestamp: this.getServerNow(),
-        data: {
-          tick: snapshotTick,
-          cash: snapshotCash,
-          exfilSubmitted: true,
-        },
-      } as any);
-    });
-  }
-
-  public reportHoldProgress(holdTicks: number, currentTick: number): void {
-    if (this.isDisposed || !this.sim.player.isAlive) return;
-    const packet: any = {
-      eventId: this.createEventId(),
-      type: 'hold_tick',
-      senderId: this.localId,
-      senderName: this.sim.player.name,
-      squad: this.localSquad,
-      raidId: this.sim.raidId,
-      timestamp: this.getServerNow(),
-      data: {
-        holdTicks,
-        currentTick,
-        zone: this.sim.isPlayerInExfilZone() ? 'lz' : 'outside',
-        hasKeycard: this.sim.player.hasKeycard,
-      },
-    };
-    this.sendPacket(packet);
-  }
-
   public broadcastState(holdTicks: number): void {
     if (!this.sim.isAdmitted()) return;
 
@@ -1414,40 +1333,22 @@ export class MultiplayerCoordinator {
     this.sendPacket(packet);
   }
 
-  public broadcastExfilSuccess(receipt?: any): void {
-    const packet: PeerPacket = {
-      eventId: this.createEventId(),
-      type: 'exfil_success',
-      senderId: this.localId,
-      senderName: this.sim.player.name,
-      squad: this.localSquad,
-      raidId: this.sim.raidId,
-      timestamp: this.getServerNow(),
-      data: { receipt },
-    };
-    this.sendPacket(packet);
-  }
-
   private sendPacket(packet: PeerPacket): void {
     if (this.spokeSession) {
       // The spoke accepts PlayerRaidIntent only. State broadcasts become
-      // movement deltas from the last submitted position; every other
+      // movement targets relative to the last confirmed position; every other
       // peer packet type has no SyncHub representation and is reported
       // loud once per type instead of being silently swallowed.
       if (packet.type === "state") {
         const data = packet.data;
         if (typeof data?.x === "number" && typeof data?.z === "number") {
-          const last = this.lastSubmittedPos ?? { x: data.x, z: data.z };
+          const last = this.confirmedSelfPosition ?? { x: data.x, z: data.z };
           try {
             const intent = movementIntent({
               dx: (data.x - last.x) / COOP_MAX_MOVE_PER_TICK,
               dz: (data.z - last.z) / COOP_MAX_MOVE_PER_TICK,
             });
             this.spokeSession.submitIntent(intent);
-            this.lastSubmittedPos = {
-              x: last.x + (intent.moveX ?? 0),
-              z: last.z + (intent.moveZ ?? 0),
-            };
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             this.reportSyncError(`submit:${message}`, `Movement intent rejected: ${message}`);
@@ -2546,7 +2447,6 @@ export class MultiplayerCoordinator {
           this.sim.interruptStimTreatment();
           if (interruptedActiveHold) {
             this.sim.lastInterruptionTick = this.sim.tick;
-            this.sim.onHoldProgress?.(0, this.sim.tick);
           }
           this.sim.onDamageTaken?.();
           this.sim.combatLog.push(`[AUTHORITATIVE HIT] Confirmed strike from ${packet.senderName}: HP=${this.sim.player.health} Armor=${this.sim.player.armor}`);
@@ -3017,35 +2917,6 @@ export class MultiplayerCoordinator {
         this.adoptMachineVitals(c.id, c.health, c.isAlive, (c as any).vitalsSeq, (c as any).maxHealth);
       }
       this.sim.combatLog.push(`[KICK REJECTED] Strike rejected by relay (${d.reason || "invalid"}); machine predictions reconciled to custody`);
-    } else if ((packet as any).type === 'hold_confirm' || (packet as any).type === 'hold_result') {
-      const isRelayAuthoritative = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
-      if (!isRelayAuthoritative) return;
-      if ((packet as any).senderId && (packet as any).senderId !== "server") return;
-      const d = (packet as any).data;
-      if (!d || typeof d !== "object") return;
-
-      const targetOperative = d.operativeId || d.targetId;
-      if (targetOperative && targetOperative !== this.localId && targetOperative !== this.sim.player.id) {
-        return;
-      }
-
-      if (d.holdCompleted === true && typeof d.holdCompletedAtTick === "number" && Number.isFinite(d.holdCompletedAtTick) && d.holdCompletedAtTick > 0 && d.holdCompletedAtTick <= SIM_CONFIG.RAID_DEADLINE_TICK) {
-        this.sim.restoreExtractionCustody({
-          holdCompleted: true,
-          holdCompletedAtTick: d.holdCompletedAtTick,
-          isExtracted: d.isExtracted === true,
-          extractedAtTick: typeof d.extractedAtTick === 'number' ? d.extractedAtTick : undefined,
-          receipt: d.receipt,
-        });
-      } else if (d.cancelled === true || d.reset === true || (d.holdCompleted === false && (typeof d.holdTicks !== 'number' || d.holdTicks === 0))) {
-        this.sim.restoreExtractionCustody({
-          holdCompleted: false,
-        });
-      } else if (typeof d.holdTicks === 'number' && d.holdTicks > 0) {
-        if (typeof (this.sim.exfilController as any)?.reconcileAuthoritativeHold === 'function') {
-          (this.sim.exfilController as any).reconcileAuthoritativeHold(d.holdTicks);
-        }
-      }
     } else if (packet.type === 'machine_roster') {
       // Versioned full-roster reconciliation: adopts the RELAY-DEPLOYED machine set —
       // membership (add/remove), type, placement geometry, patrol origins, vitals. Only
@@ -3087,7 +2958,6 @@ export class MultiplayerCoordinator {
       this.sim.interruptStimTreatment();
       if (wasHolding) {
         this.sim.lastInterruptionTick = this.sim.tick;
-        this.sim.onHoldProgress?.(0, this.sim.tick);
       }
       this.sim.player.health = d.targetHealth;
       this.sim.player.armor = d.targetArmor;
@@ -3191,98 +3061,6 @@ export class MultiplayerCoordinator {
         } as unknown as PeerPacket;
         this.validateAndApplyMachineHit(sub, false);
       }
-    } else if (packet.type === 'exfil_success') {
-      if (!isAuthorizedSender(packet.senderId, packet.senderName)) return;
-      if (!peerEntry.ingressDone || peerEntry.handshakeState !== 'confirmed') return;
-      const receipt = packet.data?.receipt;
-      if (!receipt || typeof receipt !== "object") return;
-      // All canonical fields required: raidId, outcomeDigest, throughTick/snapshotTick
-      if (typeof receipt.raidId !== "string" || receipt.raidId !== this.sim.raidId) return;
-      if (typeof receipt.outcomeDigest !== "string" || !receipt.outcomeDigest) return;
-
-      const receiptId = typeof receipt.receiptId === "string" ? receipt.receiptId : "";
-      if (!receiptId.startsWith("receipt_s7_") && !receiptId.startsWith("rcpt_")) return;
-
-      const receivedTick = typeof receipt.throughTick === "number" ? receipt.throughTick : (typeof (receipt as any).snapshotTick === "number" ? (receipt as any).snapshotTick : 0);
-      if (receivedTick < 180 || isNaN(receivedTick) || !Number.isFinite(receivedTick)) return;
-
-      const applyVerifiedExtraction = (committedRecord: any): boolean => {
-        if (!committedRecord || typeof committedRecord !== "object") return false;
-        if (committedRecord.receiptId && committedRecord.receiptId !== receiptId) return false;
-        if (committedRecord.raidId && committedRecord.raidId !== this.sim.raidId) return false;
-
-        // Detect altered fields: verify outcomeDigest matches committed record
-        if (!committedRecord.outcomeDigest || committedRecord.outcomeDigest !== receipt.outcomeDigest) {
-          this.sim.combatLog.push(`[SETTLEMENT REJECTED] Altered outcome digest in receipt ${receiptId} for ${packet.senderName}`);
-          return false;
-        }
-
-        // Detect altered tick: verify throughTick / snapshotTick strictly matches committed record
-        const committedTick = typeof committedRecord.throughTick === "number" ? committedRecord.throughTick : (typeof committedRecord.snapshotTick === "number" ? committedRecord.snapshotTick : 0);
-        if (committedTick !== receivedTick) {
-          this.sim.combatLog.push(`[SETTLEMENT REJECTED] Altered throughTick in receipt ${receiptId} (got ${receivedTick}, committed ${committedTick}) for ${packet.senderName}`);
-          return false;
-        }
-
-        // Verify that the extracting participant had activeRaidCleared === true
-        const pResults = committedRecord.participantResults;
-        let isCleared = false;
-        if (Array.isArray(pResults)) {
-          const participant = pResults.find((p: any) => p && (p.profileId === packet.senderId || p.operativeId === packet.senderId));
-          if (participant && participant.activeRaidCleared === true) {
-            isCleared = true;
-          }
-        } else if (committedRecord.operativeId === packet.senderId && committedRecord.activeRaidCleared !== false) {
-          isCleared = true;
-        }
-
-        if (!isCleared) {
-          this.sim.combatLog.push(`[SETTLEMENT REJECTED] Operative ${packet.senderName} was not cleared for extraction in receipt ${receiptId}`);
-          return false;
-        }
-
-        this.extractedPeerIds.add(packet.senderId);
-        const rival = this.sim.rivals.find((r) => r.id === packet.senderId);
-        if (rival) {
-          rival.isExtracted = true;
-          rival.isAlive = false;
-          this.sim.combatLog.push(`[STATUS] Rival ${rival.name} successfully extracted.`);
-        }
-
-        // Cache into local defaultSettlementLedger auditLog
-        if (defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.set === "function") {
-          defaultSettlementLedger.auditLog.set(receiptId, committedRecord);
-        }
-
-        return true;
-      };
-
-      let localCommitted: any = null;
-      if (this.sim.settlementAuthority && typeof this.sim.settlementAuthority.getCommittedReceipt === "function") {
-        localCommitted = this.sim.settlementAuthority.getCommittedReceipt(receiptId)?.receipt || null;
-      } else if (this.sim.settlementAuthority?.auditLog && typeof this.sim.settlementAuthority.auditLog.get === "function") {
-        localCommitted = this.sim.settlementAuthority.auditLog.get(receiptId)?.receipt || null;
-      }
-      if (!localCommitted && defaultSettlementLedger?.auditLog && typeof defaultSettlementLedger.auditLog.get === "function") {
-        localCommitted = defaultSettlementLedger.auditLog.get(receiptId) || null;
-      }
-
-      if (localCommitted) {
-        if (!applyVerifiedExtraction(localCommitted)) {
-          return;
-        }
-        return;
-      }
-
-      const isRelayAuthoritative = (packet as any).serverAuthoritative === true && !(packet as any)._fromBroadcastChannel;
-      if (isRelayAuthoritative) {
-        const pktReceipt = (packet.data as any)?.receipt || (packet as any).receipt;
-        if (pktReceipt && verifyReceiptIntegrity(pktReceipt)) {
-          applyVerifiedExtraction(pktReceipt);
-          return;
-        }
-      }
-      this.sim.combatLog.push(`[SETTLEMENT REJECTED] Unverified extraction receipt ${receiptId} for ${packet.senderName}`);
     }
   }
 
@@ -3295,13 +3073,6 @@ export class MultiplayerCoordinator {
     this.authenticated = false;
     this.sim.isSocketDisconnected = false;
     this.sim.serverMachineDamageAuthority = false;
-    if (this.sim.requestServerSettlement) {
-      this.sim.requestServerSettlement = undefined;
-    }
-    for (const pending of this.pendingSettlementCommitMap.values()) {
-      pending.reject(new Error("MultiplayerCoordinator disposed"));
-    }
-    this.pendingSettlementCommitMap.clear();
     if (this.pruneInterval) {
       clearInterval(this.pruneInterval);
       this.pruneInterval = null;
@@ -3329,6 +3100,8 @@ export class MultiplayerCoordinator {
       this.spokeSession = null;
     }
     this.settlementByRaid.clear();
-    this.lastSubmittedPos = null;
+    this.extractionAcceptedRaids.clear();
+    this.sim.coopDebriefRequest = null;
+    this.confirmedSelfPosition = null;
   }
 }

@@ -17,14 +17,14 @@
   "dependencies": {
     "@react-three/drei": "^9.121.4",
     "@react-three/fiber": "^8.17.10",
+    "@series-inc/rundot-game-sdk": "^5.38.0",
     "@series-inc/rundot-syncplay": "^6.0.0-rc.80",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "~0.170.0",
-    "zustand": "^5.0.0",
-    "@series-inc/rundot-game-sdk": "^5.36.0"
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.6",

@@ -2,11 +2,11 @@ import React, { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { SIM_CONFIG } from "../sim/config.js";
-import type { ExfilState } from "../sim/airlock.js";
+import type { RaidExfilState } from "../sim/airlock.js";
 import { InklineModel } from "./InklineModel.js";
 
 interface ExfilZoneProps {
-  exfilState: ExfilState;
+  exfilState: RaidExfilState;
 }
 
 export const ExfilZone: React.FC<ExfilZoneProps> = React.memo(({ exfilState }) => {
