@@ -9,7 +9,7 @@ import { NEVER_FRAME, type ContraptionState, type LampState } from './state';
  * flickers, so a player sees that a second hit will break it.
  */
 export const FLOODLIGHT = {
-  /** Closing speed (m/s) below which a hit does nothing. Fuel drums take damage from 3.5 m/s. */
+  /** Closing speed (m/s) below which a hit does nothing. Fuel drums take damage from 3 m/s. */
   minHitSpeed: 2.5,
   /** Closing speed (m/s) at which one hit breaks a whole lens. */
   breakSpeed: 5.5,

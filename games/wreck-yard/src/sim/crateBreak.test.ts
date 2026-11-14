@@ -74,7 +74,7 @@ describe('fragile crate break', () => {
     const sim = testSim(1);
     runTicks(sim, 5);
     const bottom = sim.state.bodies.filter((body) => body.storageBay === 'storage').slice(0, 40).map((body) => body.id);
-    sim.edit((physics) => { for (const id of bottom) setPhysicsBodyVelocity(physics, id, [0, 0, 16 / TICK_RATE]); });
+    sim.edit((physics) => { for (const id of bottom) setPhysicsBodyVelocity(physics, id, [0, 0, 12 / TICK_RATE]); });
     let before = sim.state.stats.fractures;
     let most = 0;
     for (let tick = 0; tick < 120; tick++) {

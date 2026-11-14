@@ -71,9 +71,7 @@ describe('native storage attraction', () => {
           && Math.hypot(after.x - control.x, after.z - control.z) > distance;
       };
       // Check horizontal response against the same settled state with no shove.
-      // The bottom crates carry the real load of the tiers above (Box3D friction), so fewer of them move.
-      // Measured minimum over 3 runs: 16 of 40. The floor allows a margin of 2.
-      expect(bottom.filter((body) => movedHorizontally(body, STORAGE.size / 16)).length).toBeGreaterThanOrEqual(14);
+      expect(bottom.filter((body) => movedHorizontally(body, STORAGE.size / 16)).length).toBeGreaterThan(20);
       expect(top.filter((body) => movedHorizontally(body, STORAGE.size / 96)).length).toBeGreaterThan(20);
       expect(sim.state.bodies.filter((b) => b.storageBay === 'storage')).toHaveLength(400);
     } finally {

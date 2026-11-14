@@ -51,12 +51,13 @@ async function liquidAssetsScene(page: Page) {
     hand?.traverse((object: { isMesh?: boolean; geometry?: { uuid: string } }) => {
       if (object.isMesh && object.geometry) geometryIds.push(object.geometry.uuid);
     });
-    return {
+    const result = {
       basin: Boolean(basin),
       surface: Boolean(basin?.getObjectByName('lava-surface')),
       hand: Boolean(hand),
       geometryIds: geometryIds.sort(),
     };
+    return result;
   });
 }
 
