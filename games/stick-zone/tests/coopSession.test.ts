@@ -81,6 +81,7 @@ describe("MultiplayerCoordinator SyncHub session", () => {
     emitConfirmed(state.tick, state);
     expect(sim.zoneMode).toBe("spoke");
     expect(sim.tick).toBe(120);
+    expect(sim.coopConfirmedTick).toBe(8);
     expect(sim.isAdmitted()).toBe(true);
     expect(sim.player.x).toBe(30);
     expect(sim.player.z).toBe(45);

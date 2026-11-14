@@ -874,6 +874,8 @@ export class SectorDepotSimulation {
   }
   /** Confirmed extraction dwell ticks from the server, for HUD display. */
   public coopDwellTicks = 0;
+  /** Null until the first confirmed self snapshot arrives. */
+  public coopConfirmedTick: number | null = null;
 
   public isAdmitted(): boolean {
     return this.ingressController.getState().kind === 'confirmed_active';

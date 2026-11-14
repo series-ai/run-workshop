@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { type SectorDepotSimulation, DEPOT_CONTAINERS } from "../sim/game.js";
 import { SIM_CONFIG } from "../sim/config.js";
-import { RAID_DURATION_SECONDS } from "../sim/coopConfig.js";
+import { RAID_DURATION_SECONDS, RAID_TICK_RATE_HZ } from "../sim/coopConfig.js";
 import { sound } from "../audio.js";
 import { useStashStore } from "../progression/stashStore.js";
 
@@ -393,11 +393,16 @@ export const TacticalHud: React.FC<TacticalHudProps> = React.memo(
     const deadlineTicks = sim.coopSpokeAttached
       ? RAID_DURATION_SECONDS * SIM_CONFIG.TICKS_PER_SECOND
       : SIM_CONFIG.RAID_DEADLINE_TICK;
-    const remainingTicks = Math.max(0, deadlineTicks - tick);
+    const elapsedTicks = sim.coopSpokeAttached
+      ? sim.coopConfirmedTick === null
+        ? null
+        : sim.coopConfirmedTick * SIM_CONFIG.TICKS_PER_SECOND / RAID_TICK_RATE_HZ
+      : tick;
+    const remainingTicks = Math.max(0, deadlineTicks - (elapsedTicks ?? 0));
     const totalSeconds = Math.floor(remainingTicks / SIM_CONFIG.TICKS_PER_SECOND);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    const timeFormatted = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    const timeFormatted = elapsedTicks === null ? "SYNCING" : `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
     const nearbyCrate = sim.crates.find(
       (c) => !c.opened && Math.hypot(player.x - c.x, player.z - c.z) <= 4.0

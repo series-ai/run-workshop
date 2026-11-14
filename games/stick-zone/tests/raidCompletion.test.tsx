@@ -17,6 +17,7 @@ import {
 } from "../src/sim/raidCompletion.js";
 import type { DebriefInput } from "../src/sim/coopAdapter.js";
 import { SectorDepotSimulation } from "../src/sim/game.js";
+import { TacticalHud } from "../src/components/TacticalHud.js";
 import { ExfilOverlay } from "../src/components/ExfilOverlay.js";
 import { useStashStore } from "../src/progression/stashStore.js";
 import { SIM_CONFIG } from "../src/sim/config.js";
@@ -371,4 +372,22 @@ describe("ExfilOverlay completion screens", () => {
     expect(html).toContain("owner-lost");
     expect(html).not.toMatch(/BANKED PAYOUT/);
   });
+});
+
+describe("co-op HUD clock", () => {
+  it("shows syncing while the drop snapshot is pending after a long hub wait", () => {
+    const sim = new SectorDepotSimulation(RAID_ID, "hub");
+    sim.tick = 60_000;
+    sim.coopDebriefRequest = async () => settledDebrief();
+    const html = renderToStaticMarkup(<TacticalHud sim={sim} />);
+    expect(html).toContain(">SYNCING</span>");
+  });
+  it("uses confirmed raid time even when the local clock still has hub time", () => {
+    const sim = new SectorDepotSimulation(RAID_ID, "hub");
+    sim.tick = 60_000;
+    sim.coopDebriefRequest = async () => settledDebrief();
+    sim.coopConfirmedTick = 8;
+    expect(renderToStaticMarkup(<TacticalHud sim={sim} />)).toContain(">4:58</span>");
+  });
+
 });

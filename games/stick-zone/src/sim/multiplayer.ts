@@ -399,6 +399,7 @@ export class MultiplayerCoordinator {
     this.sim.raidId = spokeSession.raidId;
     this.sim.coopDebriefRequest = () => this.requestCoopSettlement(EXTRACTION_ZONE.zoneId);
     this.confirmedSelfPosition = null;
+    this.sim.coopConfirmedTick = null;
     this.spokeUnsubscribe = spokeSession.onConfirmedTick((tick: number, state: unknown) => {
       try {
         this.applyConfirmedState(tick, state);
@@ -430,6 +431,7 @@ export class MultiplayerCoordinator {
         this.sim.admitOperative(this.sim.tick, true);
       }
       this.confirmedSelfPosition = { x: view.self.x, z: view.self.z };
+      this.sim.coopConfirmedTick = state.tick;
       this.sim.coopDwellTicks = view.self.dwellTicks;
       if (view.self.isExtracted) {
         this.sim.player.isExtracted = true;
@@ -3103,5 +3105,6 @@ export class MultiplayerCoordinator {
     this.extractionAcceptedRaids.clear();
     this.sim.coopDebriefRequest = null;
     this.confirmedSelfPosition = null;
+    this.sim.coopConfirmedTick = null;
   }
 }

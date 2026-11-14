@@ -82,6 +82,11 @@ const driveToCorridor = (page) => page.evaluate(() => {
       }), 600));
     };
   });
+  await page.waitForFunction(() => document.querySelector(".surviv-clock-badge")?.textContent.includes("SYNCING"));
+  check("coop: pending drop clock shows syncing", (await page.locator(".surviv-clock-badge").innerText()).includes("SYNCING"));
+  await page.evaluate(() => { window.debugSim.tick = 60000; window.debugSim.coopConfirmedTick = 8; });
+  await page.waitForFunction(() => document.querySelector(".surviv-clock-badge")?.textContent.includes("4:58"));
+  check("coop: confirmed clock excludes hub time", (await page.locator(".surviv-clock-badge").innerText()).includes("4:58"));
   check("coop: corridor entered", (await driveToCorridor(page)) === "corridor_presentation");
   await waitForDom(page, ".exfil-error-card", 15000);
   await page.evaluate(() => {
