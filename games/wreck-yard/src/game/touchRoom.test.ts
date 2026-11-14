@@ -68,6 +68,7 @@ describe('touch actions in a real room', () => {
       ...match.openTransport('controller'), roomCode: 'THUMBS', isCreator: true,
       occupancy: { players: [], occupied: 1, maxPlayers: 1, full: true, locked: false },
       onConnectionEvent: () => {}, onOccupancyChange: () => () => {}, setSeatingOpen: () => {},
+      reportSettlement: () => {}, onSettlementRejected: () => () => {},
     });
     const controller = new MatchController({
       createRoomTransport: transport, quickMatchTransport: transport, joinRoomTransport: transport,

@@ -22,6 +22,7 @@ function transport(raw: SimulatedSyncplayTransport, code: string): SyncplayRoomT
     ...raw, roomCode: code, isCreator: true,
     occupancy: { players: [], occupied: 1, maxPlayers: 4, full: false, locked: false },
     onConnectionEvent: () => {}, onOccupancyChange: () => () => {}, setSeatingOpen: () => {},
+    reportSettlement: () => {}, onSettlementRejected: () => () => {},
   };
 }
 

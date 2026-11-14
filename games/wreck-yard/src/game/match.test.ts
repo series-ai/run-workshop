@@ -162,6 +162,8 @@ describe('MatchController', () => {
         },
         onOccupancyChange: () => () => {},
         setSeatingOpen: () => {},
+        reportSettlement: () => {},
+        onSettlementRejected: () => () => {},
       };
     };
     const controller = new MatchController(deps({ createRoomTransport: transport }));
