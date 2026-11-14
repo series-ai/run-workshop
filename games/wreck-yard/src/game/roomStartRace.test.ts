@@ -22,7 +22,8 @@ function transport(raw: SimulatedSyncplayTransport, code: string): SyncplayRoomT
     ...raw, roomCode: code, isCreator: true,
     occupancy: { players: [], occupied: 1, maxPlayers: 4, full: false, locked: false },
     onConnectionEvent: () => {}, onOccupancyChange: () => () => {}, setSeatingOpen: () => {},
-    reportSettlement: () => {}, onSettlementRejected: () => () => {},
+    reportSettlement: () => { throw new Error('WRECK_YARD_NO_SETTLEMENT: the yard does not report settlements.'); },
+    onSettlementRejected: () => { throw new Error('WRECK_YARD_NO_SETTLEMENT: the yard does not read settlement rejections.'); },
   };
 }
 

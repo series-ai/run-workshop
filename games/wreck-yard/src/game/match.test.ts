@@ -162,8 +162,8 @@ describe('MatchController', () => {
         },
         onOccupancyChange: () => () => {},
         setSeatingOpen: () => {},
-        reportSettlement: () => {},
-        onSettlementRejected: () => () => {},
+        reportSettlement: () => { throw new Error('WRECK_YARD_NO_SETTLEMENT: the yard does not report settlements.'); },
+        onSettlementRejected: () => { throw new Error('WRECK_YARD_NO_SETTLEMENT: the yard does not read settlement rejections.'); },
       };
     };
     const controller = new MatchController(deps({ createRoomTransport: transport }));

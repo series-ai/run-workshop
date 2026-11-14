@@ -31,7 +31,8 @@ function fixture(match: SimulatedSyncplayMatch, id: string, occupancy: number | 
     const extra = {
       ...raw, roomCode: 'SEATED', isCreator: id === 'owner',
       onConnectionEvent: () => {}, onOccupancyChange: () => () => {}, setSeatingOpen: () => {},
-      reportSettlement: () => {}, onSettlementRejected: () => () => {},
+      reportSettlement: () => { throw new Error('WRECK_YARD_NO_SETTLEMENT: the yard does not report settlements.'); },
+      onSettlementRejected: () => { throw new Error('WRECK_YARD_NO_SETTLEMENT: the yard does not read settlement rejections.'); },
     };
     // The raw runner transport permits absent occupancy. This tests that boundary.
     // It does not claim that the deployed room transport omits this field.
