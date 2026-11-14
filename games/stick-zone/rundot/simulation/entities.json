@@ -1,0 +1,181 @@
+{
+  "entities": {
+    "currency_cash": {
+      "tags": [
+        "currency"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Sector Credits",
+        "description": "Black-market operational currency. Legal tender in exactly one depot and zero courtrooms."
+      }
+    },
+    "weapon_rifle": {
+      "tags": [
+        "weapon",
+        "primary"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Assault Rifle",
+        "damage": 24,
+        "cooldownTicks": 8,
+        "ammoType": "rifle_ammo"
+      }
+    },
+    "weapon_shotgun": {
+      "tags": [
+        "weapon",
+        "secondary"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Tactical Shotgun",
+        "damage": 16,
+        "cooldownTicks": 40,
+        "ammoType": "shotgun_ammo"
+      }
+    },
+    "armor_light": {
+      "tags": [
+        "armor",
+        "tier1"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Light Recon Vest",
+        "armorValue": 50
+      }
+    },
+    "armor_heavy": {
+      "tags": [
+        "armor",
+        "tier2"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Heavy Assault Armor",
+        "armorValue": 100
+      }
+    },
+    "med_stim": {
+      "tags": [
+        "consumable",
+        "medical"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Military Med Stim",
+        "healAmount": 45,
+        "description": "Stops bleeding, starts confidence. Side effects include confidence."
+      }
+    },
+    "tactical_bandage": {
+      "tags": [
+        "consumable",
+        "medical"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Tactical Bandage",
+        "healAmount": 20
+      }
+    },
+    "depot_keycard": {
+      "tags": [
+        "quest",
+        "access"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Sector 7 Depot Red Keycard",
+        "description": "Grants high-tier airlock clearance and low-tier small talk."
+      }
+    },
+    "circuit_board": {
+      "tags": [
+        "loot",
+        "electronics"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Military Circuit Board",
+        "value": 450,
+        "description": "Military grade. The green ones are faster. Science has not confirmed this."
+      }
+    },
+    "encrypted_drive": {
+      "tags": [
+        "loot",
+        "intel"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Encrypted Intel Drive",
+        "value": 1200,
+        "description": "Encrypted intel drive. Password is probably still admin123."
+      }
+    },
+    "military_battery": {
+      "tags": [
+        "loot",
+        "power"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "High-Capacity Military Battery",
+        "value": 850,
+        "description": "High-capacity battery. Do not lick. Again."
+      }
+    },
+    "weapon_parts": {
+      "tags": [
+        "loot",
+        "materials"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Precision Weapon Parts",
+        "value": 300,
+        "description": "Precision weapon parts. Some assembly required. Most, legally."
+      }
+    },
+    "loadout_container": {
+      "tags": [
+        "container"
+      ],
+      "clientViewable": true,
+      "metadata": {
+        "displayName": "Operative Combat Loadout"
+      },
+      "slots": {
+        "primary": {
+          "allowedTags": [
+            "weapon",
+            "primary"
+          ],
+          "maxItems": 1
+        },
+        "secondary": {
+          "allowedTags": [
+            "weapon",
+            "secondary"
+          ],
+          "maxItems": 1
+        },
+        "armor": {
+          "allowedTags": [
+            "armor"
+          ],
+          "maxItems": 1
+        },
+        "stim": {
+          "allowedTags": [
+            "consumable"
+          ],
+          "maxItems": 4
+        }
+      }
+    }
+  }
+}

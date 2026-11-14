@@ -1,0 +1,93 @@
+{
+  "recipes": {
+    "craft_med_stim": {
+      "duration": 0,
+      "scope": "player",
+      "clientViewable": true,
+      "inputs": {
+        "tactical_bandage": 2,
+        "circuit_board": 1
+      },
+      "outputs": {
+        "med_stim": 1
+      },
+      "metadata": {
+        "displayName": "Synthesize Military Med Stim"
+      }
+    },
+    "repair_heavy_armor": {
+      "duration": 0,
+      "scope": "player",
+      "clientViewable": true,
+      "inputs": {
+        "weapon_parts": 2,
+        "currency_cash": 400
+      },
+      "outputs": {
+        "armor_heavy": 1
+      },
+      "metadata": {
+        "displayName": "Reinforce Heavy Assault Armor"
+      }
+    },
+    "sell_circuit_board": {
+      "duration": 0,
+      "scope": "player",
+      "clientViewable": true,
+      "inputs": {
+        "circuit_board": 1
+      },
+      "outputs": {
+        "currency_cash": 450
+      },
+      "metadata": {
+        "displayName": "Fulfill Circuit Board Bounty"
+      }
+    },
+    "sell_encrypted_drive": {
+      "duration": 0,
+      "scope": "player",
+      "clientViewable": true,
+      "inputs": {
+        "encrypted_drive": 1
+      },
+      "outputs": {
+        "currency_cash": 1200
+      },
+      "metadata": {
+        "displayName": "Decrypt & Sell Intel Drive"
+      }
+    },
+    "sell_military_battery": {
+      "duration": 0,
+      "scope": "player",
+      "clientViewable": true,
+      "inputs": {
+        "military_battery": 1
+      },
+      "outputs": {
+        "currency_cash": 850
+      },
+      "metadata": {
+        "displayName": "Trade Military Battery"
+      }
+    },
+    "grant_starter_loadout": {
+      "duration": 0,
+      "scope": "player",
+      "clientViewable": true,
+      "inputs": {},
+      "outputs": {
+        "weapon_rifle": 1,
+        "weapon_shotgun": 1,
+        "armor_heavy": 1,
+        "med_stim": 2,
+        "currency_cash": 5000
+      },
+      "metadata": {
+        "displayName": "Grant Operative Starter Package",
+        "description": "Initial equipment allotment for newly deployed operative"
+      }
+    }
+  }
+}
