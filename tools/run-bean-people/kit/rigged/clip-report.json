@@ -1,0 +1,746 @@
+{
+ "top-hoodie": {
+  "pokes": {
+   "arms": {
+    "verts": 15,
+    "max_depth": 0.124
+   },
+   "body": {
+    "verts": 17,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-puffer": {
+  "pokes": {
+   "arms": {
+    "verts": 26,
+    "max_depth": 0.183
+   },
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-tee": {
+  "pokes": {
+   "arms": {
+    "verts": 8,
+    "max_depth": 0.164
+   },
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-overalls": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "seam": {
+    "verts": 4,
+    "max_depth": 0.005
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-trench": {
+  "pokes": {
+   "arms": {
+    "verts": 16,
+    "max_depth": 0.159
+   },
+   "body": {
+    "verts": 7,
+    "max_depth": 0.173
+   },
+   "seam": {
+    "verts": 4,
+    "max_depth": 0.007
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-tracksuit": {
+  "pokes": {
+   "arms": {
+    "verts": 32,
+    "max_depth": 0.177
+   },
+   "body": {
+    "verts": 17,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-raincoat": {
+  "pokes": {
+   "arms": {
+    "verts": 16,
+    "max_depth": 0.159
+   },
+   "body": {
+    "verts": 8,
+    "max_depth": 0.173
+   },
+   "seam": {
+    "verts": 4,
+    "max_depth": 0.007
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-vest": {
+  "pokes": {
+   "arms": {
+    "verts": 22,
+    "max_depth": 0.183
+   },
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-hoodie-screen": {
+  "pokes": {
+   "arms": {
+    "verts": 15,
+    "max_depth": 0.124
+   },
+   "body": {
+    "verts": 17,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-raincoat-screen": {
+  "pokes": {
+   "arms": {
+    "verts": 16,
+    "max_depth": 0.159
+   },
+   "body": {
+    "verts": 8,
+    "max_depth": 0.173
+   },
+   "seam": {
+    "verts": 4,
+    "max_depth": 0.007
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-hoodie+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 37,
+    "max_depth": 0.15
+   },
+   "top": {
+    "verts": 1,
+    "max_depth": 0.005
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-hoodie+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.15
+   },
+   "top": {
+    "verts": 1,
+    "max_depth": 0.005
+   }
+  },
+  "sunk": {
+   "verts": 11,
+   "max_depth": 0.152
+  }
+ },
+ "top-puffer+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 24,
+    "max_depth": 0.051
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.042
+  }
+ },
+ "top-puffer+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 30,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 21,
+    "max_depth": 0.096
+   }
+  },
+  "sunk": {
+   "verts": 12,
+   "max_depth": 0.152
+  }
+ },
+ "top-puffer+head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 24,
+    "max_depth": 0.051
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.042
+  }
+ },
+ "top-puffer+head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 24,
+    "max_depth": 0.051
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.042
+  }
+ },
+ "top-tee+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 2,
+    "max_depth": 0.017
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-tee+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 1,
+    "max_depth": 0.017
+   }
+  },
+  "sunk": {
+   "verts": 10,
+   "max_depth": 0.152
+  }
+ },
+ "top-tee+head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 2,
+    "max_depth": 0.017
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-tee+head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 2,
+    "max_depth": 0.017
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-overalls+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 64,
+    "max_depth": 0.081
+   },
+   "top": {
+    "verts": 3,
+    "max_depth": 0.128
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.193
+  }
+ },
+ "top-overalls+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 62,
+    "max_depth": 0.081
+   },
+   "top": {
+    "verts": 2,
+    "max_depth": 0.089
+   }
+  },
+  "sunk": {
+   "verts": 10,
+   "max_depth": 0.152
+  }
+ },
+ "top-overalls+head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 64,
+    "max_depth": 0.081
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-overalls+head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 64,
+    "max_depth": 0.081
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-trench+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.151
+   },
+   "top": {
+    "verts": 1,
+    "max_depth": 0.025
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-trench+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 30,
+    "max_depth": 0.151
+   }
+  },
+  "sunk": {
+   "verts": 11,
+   "max_depth": 0.152
+  }
+ },
+ "top-trench+head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.151
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-trench+head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.151
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-tracksuit+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 31,
+    "max_depth": 0.148
+   },
+   "stripe": {
+    "verts": 11,
+    "max_depth": 0.033
+   }
+  },
+  "sunk": {
+   "verts": 1,
+   "max_depth": 0.137
+  }
+ },
+ "top-tracksuit+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 28,
+    "max_depth": 0.148
+   },
+   "stripe": {
+    "verts": 11,
+    "max_depth": 0.033
+   },
+   "top": {
+    "verts": 8,
+    "max_depth": 0.072
+   }
+  },
+  "sunk": {
+   "verts": 10,
+   "max_depth": 0.152
+  }
+ },
+ "top-tracksuit+head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 31,
+    "max_depth": 0.148
+   },
+   "stripe": {
+    "verts": 11,
+    "max_depth": 0.033
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-tracksuit+head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 31,
+    "max_depth": 0.148
+   },
+   "stripe": {
+    "verts": 11,
+    "max_depth": 0.033
+   }
+  },
+  "sunk": {
+   "verts": 0,
+   "max_depth": 0
+  }
+ },
+ "top-raincoat+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.151
+   },
+   "top": {
+    "verts": 11,
+    "max_depth": 0.011
+   }
+  },
+  "sunk": {
+   "verts": 9,
+   "max_depth": 0.009
+  }
+ },
+ "top-raincoat+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 30,
+    "max_depth": 0.151
+   }
+  },
+  "sunk": {
+   "verts": 10,
+   "max_depth": 0.152
+  }
+ },
+ "top-vest+extra-scarf": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 24,
+    "max_depth": 0.051
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.042
+  }
+ },
+ "top-vest+extra-backpack": {
+  "pokes": {
+   "body": {
+    "verts": 4,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 30,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 21,
+    "max_depth": 0.096
+   }
+  },
+  "sunk": {
+   "verts": 12,
+   "max_depth": 0.152
+  }
+ },
+ "top-vest+head-bucket": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 24,
+    "max_depth": 0.051
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.042
+  }
+ },
+ "top-vest+head-beanie": {
+  "pokes": {
+   "body": {
+    "verts": 5,
+    "max_depth": 0.173
+   },
+   "garment": {
+    "verts": 33,
+    "max_depth": 0.153
+   },
+   "top": {
+    "verts": 24,
+    "max_depth": 0.051
+   }
+  },
+  "sunk": {
+   "verts": 2,
+   "max_depth": 0.042
+  }
+ }
+}
