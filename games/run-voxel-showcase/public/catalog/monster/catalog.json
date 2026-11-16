@@ -10,7 +10,7 @@
    "filename": "monster-animated-props-bat-roost.glb",
    "relativePath": "animated-props/monster-animated-props-bat-roost.glb",
    "leaf": "world",
-   "sizeBytes": 29884,
+   "sizeBytes": 29812,
    "bounds": {
     "min": [
      -15,
@@ -57,7 +57,7 @@
    "filename": "monster-animated-props-blood-fountain.glb",
    "relativePath": "animated-props/monster-animated-props-blood-fountain.glb",
    "leaf": "world",
-   "sizeBytes": 44012,
+   "sizeBytes": 43940,
    "bounds": {
     "min": [
      -15,
@@ -104,7 +104,7 @@
    "filename": "monster-animated-props-chained-coffin.glb",
    "relativePath": "animated-props/monster-animated-props-chained-coffin.glb",
    "leaf": "world",
-   "sizeBytes": 45532,
+   "sizeBytes": 45460,
    "bounds": {
     "min": [
      -13,
@@ -152,7 +152,7 @@
    "filename": "monster-animated-props-chandelier.glb",
    "relativePath": "animated-props/monster-animated-props-chandelier.glb",
    "leaf": "world",
-   "sizeBytes": 109528,
+   "sizeBytes": 109456,
    "bounds": {
     "min": [
      -14.5,
@@ -198,7 +198,7 @@
    "filename": "monster-animated-props-dungeon-door.glb",
    "relativePath": "animated-props/monster-animated-props-dungeon-door.glb",
    "leaf": "world",
-   "sizeBytes": 70804,
+   "sizeBytes": 70788,
    "bounds": {
     "min": [
      -22,
@@ -237,7 +237,7 @@
    "filename": "monster-animated-props-guillotine.glb",
    "relativePath": "animated-props/monster-animated-props-guillotine.glb",
    "leaf": "world",
-   "sizeBytes": 52948,
+   "sizeBytes": 52932,
    "bounds": {
     "min": [
      -17,
@@ -287,7 +287,7 @@
    "filename": "monster-animated-props-hanging-cage.glb",
    "relativePath": "animated-props/monster-animated-props-hanging-cage.glb",
    "leaf": "world",
-   "sizeBytes": 81600,
+   "sizeBytes": 81592,
    "bounds": {
     "min": [
      -20.1287,
@@ -326,7 +326,7 @@
    "filename": "monster-animated-props-haunted-mirror.glb",
    "relativePath": "animated-props/monster-animated-props-haunted-mirror.glb",
    "leaf": "world",
-   "sizeBytes": 41844,
+   "sizeBytes": 41772,
    "bounds": {
     "min": [
      -16,
@@ -373,7 +373,7 @@
    "filename": "monster-animated-props-haunted-portrait.glb",
    "relativePath": "animated-props/monster-animated-props-haunted-portrait.glb",
    "leaf": "world",
-   "sizeBytes": 22268,
+   "sizeBytes": 22196,
    "bounds": {
     "min": [
      -16,
@@ -420,7 +420,7 @@
    "filename": "monster-animated-props-iron-maiden.glb",
    "relativePath": "animated-props/monster-animated-props-iron-maiden.glb",
    "leaf": "world",
-   "sizeBytes": 33384,
+   "sizeBytes": 33368,
    "bounds": {
     "min": [
      -11,
@@ -459,7 +459,7 @@
    "filename": "monster-animated-props-jack-in-the-box.glb",
    "relativePath": "animated-props/monster-animated-props-jack-in-the-box.glb",
    "leaf": "world",
-   "sizeBytes": 46516,
+   "sizeBytes": 46572,
    "bounds": {
     "min": [
      -10,
@@ -508,7 +508,7 @@
    "filename": "monster-animated-props-lab-generator.glb",
    "relativePath": "animated-props/monster-animated-props-lab-generator.glb",
    "leaf": "world",
-   "sizeBytes": 46064,
+   "sizeBytes": 45992,
    "bounds": {
     "min": [
      -13,
@@ -555,7 +555,7 @@
    "filename": "monster-animated-props-music-box.glb",
    "relativePath": "animated-props/monster-animated-props-music-box.glb",
    "leaf": "world",
-   "sizeBytes": 39732,
+   "sizeBytes": 39660,
    "bounds": {
     "min": [
      -8.5,
@@ -604,7 +604,7 @@
    "filename": "monster-animated-props-ouija-table.glb",
    "relativePath": "animated-props/monster-animated-props-ouija-table.glb",
    "leaf": "world",
-   "sizeBytes": 16452,
+   "sizeBytes": 16380,
    "bounds": {
     "min": [
      -14,
@@ -652,7 +652,7 @@
    "filename": "monster-animated-props-pendulum-blade.glb",
    "relativePath": "animated-props/monster-animated-props-pendulum-blade.glb",
    "leaf": "world",
-   "sizeBytes": 17460,
+   "sizeBytes": 17644,
    "bounds": {
     "min": [
      -15,
@@ -685,7 +685,7 @@
      "socket": "socket-blade",
      "trigger": "clip:attack",
      "size": 24,
-     "at": 0.45
+     "at": 0.5
     }
    ],
    "route": "code",
@@ -700,7 +700,7 @@
    "filename": "monster-animated-props-rising-grave.glb",
    "relativePath": "animated-props/monster-animated-props-rising-grave.glb",
    "leaf": "world",
-   "sizeBytes": 21292,
+   "sizeBytes": 22004,
    "bounds": {
     "min": [
      -14.923,
@@ -748,7 +748,7 @@
    "filename": "monster-animated-props-rocking-chair.glb",
    "relativePath": "animated-props/monster-animated-props-rocking-chair.glb",
    "leaf": "world",
-   "sizeBytes": 42508,
+   "sizeBytes": 42436,
    "bounds": {
     "min": [
      -9.5,
@@ -795,7 +795,7 @@
    "filename": "monster-animated-props-spider-thread.glb",
    "relativePath": "animated-props/monster-animated-props-spider-thread.glb",
    "leaf": "world",
-   "sizeBytes": 62048,
+   "sizeBytes": 61976,
    "bounds": {
     "min": [
      -20,
@@ -843,7 +843,7 @@
    "filename": "monster-animated-props-swinging-lantern.glb",
    "relativePath": "animated-props/monster-animated-props-swinging-lantern.glb",
    "leaf": "world",
-   "sizeBytes": 21408,
+   "sizeBytes": 21336,
    "bounds": {
     "min": [
      -13.5,
@@ -890,7 +890,7 @@
    "filename": "monster-animated-props-torch-sconce.glb",
    "relativePath": "animated-props/monster-animated-props-torch-sconce.glb",
    "leaf": "world",
-   "sizeBytes": 37612,
+   "sizeBytes": 37540,
    "bounds": {
     "min": [
      -7,
@@ -936,7 +936,7 @@
    "filename": "monster-animated-props-trapdoor.glb",
    "relativePath": "animated-props/monster-animated-props-trapdoor.glb",
    "leaf": "world",
-   "sizeBytes": 26488,
+   "sizeBytes": 26200,
    "bounds": {
     "min": [
      -16,
@@ -985,7 +985,7 @@
    "filename": "monster-animated-props-upright-coffin.glb",
    "relativePath": "animated-props/monster-animated-props-upright-coffin.glb",
    "leaf": "world",
-   "sizeBytes": 17832,
+   "sizeBytes": 17880,
    "bounds": {
     "min": [
      -8,
@@ -1038,7 +1038,7 @@
    "filename": "monster-animated-props-vampire-coffin.glb",
    "relativePath": "animated-props/monster-animated-props-vampire-coffin.glb",
    "leaf": "world",
-   "sizeBytes": 42992,
+   "sizeBytes": 42952,
    "bounds": {
     "min": [
      -13,
@@ -1086,7 +1086,7 @@
    "filename": "monster-animated-props-witch-cauldron.glb",
    "relativePath": "animated-props/monster-animated-props-witch-cauldron.glb",
    "leaf": "world",
-   "sizeBytes": 119080,
+   "sizeBytes": 119008,
    "bounds": {
     "min": [
      -14.5,
@@ -1132,7 +1132,7 @@
    "filename": "monster-buildings-bell-tower.glb",
    "relativePath": "buildings/monster-buildings-bell-tower.glb",
    "leaf": "world",
-   "sizeBytes": 164620,
+   "sizeBytes": 164548,
    "bounds": {
     "min": [
      -34.4611,
@@ -1178,7 +1178,7 @@
    "filename": "monster-buildings-crypt.glb",
    "relativePath": "buildings/monster-buildings-crypt.glb",
    "leaf": "world",
-   "sizeBytes": 240340,
+   "sizeBytes": 240268,
    "bounds": {
     "min": [
      -48,
@@ -1213,7 +1213,7 @@
    "filename": "monster-buildings-cursed-library.glb",
    "relativePath": "buildings/monster-buildings-cursed-library.glb",
    "leaf": "world",
-   "sizeBytes": 203052,
+   "sizeBytes": 202980,
    "bounds": {
     "min": [
      -59,
@@ -1248,7 +1248,7 @@
    "filename": "monster-buildings-dungeon-entrance.glb",
    "relativePath": "buildings/monster-buildings-dungeon-entrance.glb",
    "leaf": "world",
-   "sizeBytes": 332500,
+   "sizeBytes": 332428,
    "bounds": {
     "min": [
      -56.7724,
@@ -1283,7 +1283,7 @@
    "filename": "monster-buildings-gothic-chapel.glb",
    "relativePath": "buildings/monster-buildings-gothic-chapel.glb",
    "leaf": "world",
-   "sizeBytes": 270704,
+   "sizeBytes": 270632,
    "bounds": {
     "min": [
      -48.5,
@@ -1320,7 +1320,7 @@
    "filename": "monster-buildings-graveyard-gate.glb",
    "relativePath": "buildings/monster-buildings-graveyard-gate.glb",
    "leaf": "world",
-   "sizeBytes": 34468,
+   "sizeBytes": 34396,
    "bounds": {
     "min": [
      -45,
@@ -1355,7 +1355,7 @@
    "filename": "monster-buildings-haunted-carnival-tent.glb",
    "relativePath": "buildings/monster-buildings-haunted-carnival-tent.glb",
    "leaf": "world",
-   "sizeBytes": 44396,
+   "sizeBytes": 44324,
    "bounds": {
     "min": [
      -42.0781,
@@ -1390,7 +1390,7 @@
    "filename": "monster-buildings-haunted-lighthouse.glb",
    "relativePath": "buildings/monster-buildings-haunted-lighthouse.glb",
    "leaf": "world",
-   "sizeBytes": 317416,
+   "sizeBytes": 317344,
    "bounds": {
     "min": [
      -31.5,
@@ -1425,7 +1425,7 @@
    "filename": "monster-buildings-haunted-manor.glb",
    "relativePath": "buildings/monster-buildings-haunted-manor.glb",
    "leaf": "world",
-   "sizeBytes": 287552,
+   "sizeBytes": 287480,
    "bounds": {
     "min": [
      -59.5,
@@ -1471,7 +1471,7 @@
    "filename": "monster-buildings-haunted-schoolhouse.glb",
    "relativePath": "buildings/monster-buildings-haunted-schoolhouse.glb",
    "leaf": "world",
-   "sizeBytes": 211804,
+   "sizeBytes": 211732,
    "bounds": {
     "min": [
      -58,
@@ -1506,7 +1506,7 @@
    "filename": "monster-buildings-haunted-windmill.glb",
    "relativePath": "buildings/monster-buildings-haunted-windmill.glb",
    "leaf": "world",
-   "sizeBytes": 136540,
+   "sizeBytes": 136468,
    "bounds": {
     "min": [
      -51.9112,
@@ -1552,7 +1552,7 @@
    "filename": "monster-buildings-hunters-lodge.glb",
    "relativePath": "buildings/monster-buildings-hunters-lodge.glb",
    "leaf": "world",
-   "sizeBytes": 228588,
+   "sizeBytes": 228516,
    "bounds": {
     "min": [
      -70,
@@ -1587,7 +1587,7 @@
    "filename": "monster-buildings-mad-lab-tower.glb",
    "relativePath": "buildings/monster-buildings-mad-lab-tower.glb",
    "leaf": "world",
-   "sizeBytes": 177872,
+   "sizeBytes": 177800,
    "bounds": {
     "min": [
      -35.3372,
@@ -1622,7 +1622,7 @@
    "filename": "monster-buildings-mausoleum.glb",
    "relativePath": "buildings/monster-buildings-mausoleum.glb",
    "leaf": "world",
-   "sizeBytes": 179084,
+   "sizeBytes": 179012,
    "bounds": {
     "min": [
      -46,
@@ -1657,7 +1657,7 @@
    "filename": "monster-buildings-potion-shop.glb",
    "relativePath": "buildings/monster-buildings-potion-shop.glb",
    "leaf": "world",
-   "sizeBytes": 203500,
+   "sizeBytes": 203428,
    "bounds": {
     "min": [
      -58,
@@ -1710,7 +1710,7 @@
    "filename": "monster-buildings-ruined-watchtower.glb",
    "relativePath": "buildings/monster-buildings-ruined-watchtower.glb",
    "leaf": "world",
-   "sizeBytes": 142448,
+   "sizeBytes": 142376,
    "bounds": {
     "min": [
      -33.7321,
@@ -1745,7 +1745,7 @@
    "filename": "monster-buildings-sinister-greenhouse.glb",
    "relativePath": "buildings/monster-buildings-sinister-greenhouse.glb",
    "leaf": "world",
-   "sizeBytes": 243156,
+   "sizeBytes": 243084,
    "bounds": {
     "min": [
      -43,
@@ -1780,7 +1780,7 @@
    "filename": "monster-buildings-undertaker-shop.glb",
    "relativePath": "buildings/monster-buildings-undertaker-shop.glb",
    "leaf": "world",
-   "sizeBytes": 136684,
+   "sizeBytes": 136612,
    "bounds": {
     "min": [
      -50.5,
@@ -1826,7 +1826,7 @@
    "filename": "monster-buildings-vampire-castle-tower.glb",
    "relativePath": "buildings/monster-buildings-vampire-castle-tower.glb",
    "leaf": "world",
-   "sizeBytes": 238192,
+   "sizeBytes": 238120,
    "bounds": {
     "min": [
      -32,
@@ -1861,7 +1861,7 @@
    "filename": "monster-buildings-witch-hut.glb",
    "relativePath": "buildings/monster-buildings-witch-hut.glb",
    "leaf": "world",
-   "sizeBytes": 167628,
+   "sizeBytes": 167556,
    "bounds": {
     "min": [
      -46.2643,
@@ -1907,7 +1907,7 @@
    "filename": "monster-creatures-bone-hound.glb",
    "relativePath": "creatures/monster-creatures-bone-hound.glb",
    "leaf": "world",
-   "sizeBytes": 104480,
+   "sizeBytes": 118420,
    "bounds": {
     "min": [
      -8.4,
@@ -1931,7 +1931,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-fangs"
@@ -1942,7 +1943,7 @@
      "socket": "socket-fangs",
      "trigger": "clip:attack",
      "size": 30,
-     "at": 0.35
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -1957,7 +1958,7 @@
    "filename": "monster-creatures-gargoyle.glb",
    "relativePath": "creatures/monster-creatures-gargoyle.glb",
    "leaf": "world",
-   "sizeBytes": 82564,
+   "sizeBytes": 97764,
    "bounds": {
     "min": [
      -31.3281,
@@ -1981,7 +1982,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-eyes"
@@ -1992,7 +1994,7 @@
      "socket": "socket-eyes",
      "trigger": "clip:death",
      "size": 44,
-     "at": 0.2
+     "at": 0.6666666666666666
     }
    ],
    "route": "code",
@@ -2007,7 +2009,7 @@
    "filename": "monster-creatures-giant-spider.glb",
    "relativePath": "creatures/monster-creatures-giant-spider.glb",
    "leaf": "world",
-   "sizeBytes": 62332,
+   "sizeBytes": 101076,
    "bounds": {
     "min": [
      -29.5015,
@@ -2031,7 +2033,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-fangs",
@@ -2055,7 +2058,7 @@
      "socket": "socket-fangs",
      "trigger": "clip:death",
      "size": 40,
-     "at": 0.16
+     "at": 0.3
     }
    ],
    "route": "code",
@@ -2070,7 +2073,7 @@
    "filename": "monster-creatures-headless-horseman.glb",
    "relativePath": "creatures/monster-creatures-headless-horseman.glb",
    "leaf": "world",
-   "sizeBytes": 112936,
+   "sizeBytes": 123564,
    "bounds": {
     "min": [
      -19.9375,
@@ -2120,7 +2123,7 @@
      "socket": "socket-blade",
      "trigger": "clip:attack",
      "size": 34,
-     "at": 0.42
+     "at": 0.5333333333333333
     }
    ],
    "route": "code",
@@ -2135,7 +2138,7 @@
    "filename": "monster-creatures-imp.glb",
    "relativePath": "creatures/monster-creatures-imp.glb",
    "leaf": "world",
-   "sizeBytes": 69476,
+   "sizeBytes": 83248,
    "bounds": {
     "min": [
      -21.4062,
@@ -2159,7 +2162,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-chest",
@@ -2172,7 +2176,7 @@
      "socket": "socket-hands",
      "trigger": "clip:attack",
      "size": 24,
-     "at": 0.45
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -2187,7 +2191,7 @@
    "filename": "monster-creatures-lich.glb",
    "relativePath": "creatures/monster-creatures-lich.glb",
    "leaf": "world",
-   "sizeBytes": 51464,
+   "sizeBytes": 56968,
    "bounds": {
     "min": [
      -12.846,
@@ -2211,7 +2215,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-chest",
@@ -2224,7 +2229,7 @@
      "socket": "socket-chest",
      "trigger": "clip:death",
      "size": 54,
-     "at": 0.85
+     "at": 0.1
     }
    ],
    "route": "code",
@@ -2239,7 +2244,7 @@
    "filename": "monster-creatures-mummy.glb",
    "relativePath": "creatures/monster-creatures-mummy.glb",
    "leaf": "world",
-   "sizeBytes": 52540,
+   "sizeBytes": 71436,
    "bounds": {
     "min": [
      -15,
@@ -2260,10 +2265,11 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
-    "idle",
     "attack",
-    "hit"
+    "death",
+    "hit",
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-eye"
@@ -2289,7 +2295,7 @@
    "filename": "monster-creatures-patchwork-giant.glb",
    "relativePath": "creatures/monster-creatures-patchwork-giant.glb",
    "leaf": "world",
-   "sizeBytes": 82092,
+   "sizeBytes": 101632,
    "bounds": {
     "min": [
      -29.7,
@@ -2310,9 +2316,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2340,7 +2347,7 @@
    "filename": "monster-creatures-phantom-knight.glb",
    "relativePath": "creatures/monster-creatures-phantom-knight.glb",
    "leaf": "world",
-   "sizeBytes": 76092,
+   "sizeBytes": 94700,
    "bounds": {
     "min": [
      -16.3,
@@ -2361,9 +2368,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2392,7 +2400,7 @@
    "filename": "monster-creatures-scarecrow-fiend.glb",
    "relativePath": "creatures/monster-creatures-scarecrow-fiend.glb",
    "leaf": "world",
-   "sizeBytes": 62464,
+   "sizeBytes": 73732,
    "bounds": {
     "min": [
      -23.0625,
@@ -2413,9 +2421,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2429,7 +2438,7 @@
      "socket": "socket-chest",
      "trigger": "clip:death",
      "size": 40,
-     "at": 0.85
+     "at": 0.7666666666666667
     }
    ],
    "route": "code",
@@ -2444,7 +2453,7 @@
    "filename": "monster-creatures-swamp-creature.glb",
    "relativePath": "creatures/monster-creatures-swamp-creature.glb",
    "leaf": "world",
-   "sizeBytes": 72856,
+   "sizeBytes": 82216,
    "bounds": {
     "min": [
      -25,
@@ -2465,9 +2474,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2481,7 +2491,7 @@
      "socket": "socket-mouth",
      "trigger": "clip:attack",
      "size": 44,
-     "at": 0.45
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -2496,7 +2506,7 @@
    "filename": "monster-creatures-vampire-bat.glb",
    "relativePath": "creatures/monster-creatures-vampire-bat.glb",
    "leaf": "world",
-   "sizeBytes": 26520,
+   "sizeBytes": 30888,
    "bounds": {
     "min": [
      -11.5,
@@ -2520,7 +2530,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-mouth"
@@ -2531,7 +2542,7 @@
      "socket": "socket-mouth",
      "trigger": "clip:attack",
      "size": 18,
-     "at": 0.32
+     "at": 0.16666666666666666
     }
    ],
    "route": "code",
@@ -2546,7 +2557,7 @@
    "filename": "monster-creatures-vampire-lord.glb",
    "relativePath": "creatures/monster-creatures-vampire-lord.glb",
    "leaf": "world",
-   "sizeBytes": 114832,
+   "sizeBytes": 125744,
    "bounds": {
     "min": [
      -87.5156,
@@ -2570,7 +2581,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-chest",
@@ -2594,7 +2606,7 @@
       0,
       -20
      ],
-     "at": 0.48
+     "at": 0.5
     },
     {
      "effectId": "rvx-monster-blood-splat",
@@ -2615,7 +2627,7 @@
    "filename": "monster-creatures-wailing-ghost.glb",
    "relativePath": "creatures/monster-creatures-wailing-ghost.glb",
    "leaf": "world",
-   "sizeBytes": 50072,
+   "sizeBytes": 55128,
    "bounds": {
     "min": [
      -21.5,
@@ -2639,7 +2651,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-core"
@@ -2656,7 +2669,7 @@
      "socket": "socket-core",
      "trigger": "clip:death",
      "size": 56,
-     "at": 0.9
+     "at": 0.6
     }
    ],
    "route": "code",
@@ -2671,7 +2684,7 @@
    "filename": "monster-creatures-werewolf.glb",
    "relativePath": "creatures/monster-creatures-werewolf.glb",
    "leaf": "world",
-   "sizeBytes": 79588,
+   "sizeBytes": 92436,
    "bounds": {
     "min": [
      -24,
@@ -2692,9 +2705,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2712,14 +2726,14 @@
       2,
       -12
      ],
-     "at": 0.6
+     "at": 0.8666666666666667
     },
     {
      "effectId": "rvx-monster-claw-slash",
      "socket": "socket-claw-r",
      "trigger": "clip:attack",
      "size": 30,
-     "at": 0.36
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -2734,7 +2748,7 @@
    "filename": "monster-creatures-zombie-ghoul.glb",
    "relativePath": "creatures/monster-creatures-zombie-ghoul.glb",
    "leaf": "world",
-   "sizeBytes": 55180,
+   "sizeBytes": 70828,
    "bounds": {
     "min": [
      -13.0312,
@@ -2757,8 +2771,9 @@
    "clips": [
     "attack",
     "death",
+    "hit",
     "idle",
-    "hit"
+    "move"
    ],
    "sockets": [
     "socket-mouth"
@@ -2784,7 +2799,7 @@
    "filename": "monster-held-items-bone-club.glb",
    "relativePath": "held-items/monster-held-items-bone-club.glb",
    "leaf": "world",
-   "sizeBytes": 64756,
+   "sizeBytes": 64684,
    "bounds": {
     "min": [
      -0.24,
@@ -2828,7 +2843,7 @@
    "filename": "monster-held-items-butcher-cleaver.glb",
    "relativePath": "held-items/monster-held-items-butcher-cleaver.glb",
    "leaf": "world",
-   "sizeBytes": 25024,
+   "sizeBytes": 24952,
    "bounds": {
     "min": [
      -0.21,
@@ -2872,7 +2887,7 @@
    "filename": "monster-held-items-garlic-mace.glb",
    "relativePath": "held-items/monster-held-items-garlic-mace.glb",
    "leaf": "world",
-   "sizeBytes": 66856,
+   "sizeBytes": 66784,
    "bounds": {
     "min": [
      -0.26,
@@ -2916,7 +2931,7 @@
    "filename": "monster-held-items-grave-shovel.glb",
    "relativePath": "held-items/monster-held-items-grave-shovel.glb",
    "leaf": "world",
-   "sizeBytes": 42924,
+   "sizeBytes": 42852,
    "bounds": {
     "min": [
      -0.32,
@@ -2960,7 +2975,7 @@
    "filename": "monster-held-items-holy-water.glb",
    "relativePath": "held-items/monster-held-items-holy-water.glb",
    "leaf": "world",
-   "sizeBytes": 76800,
+   "sizeBytes": 76728,
    "bounds": {
     "min": [
      -0.2,
@@ -3004,7 +3019,7 @@
    "filename": "monster-held-items-hunter-lantern.glb",
    "relativePath": "held-items/monster-held-items-hunter-lantern.glb",
    "leaf": "world",
-   "sizeBytes": 37180,
+   "sizeBytes": 37108,
    "bounds": {
     "min": [
      -0.19,
@@ -3053,7 +3068,7 @@
    "filename": "monster-held-items-pitchfork.glb",
    "relativePath": "held-items/monster-held-items-pitchfork.glb",
    "leaf": "world",
-   "sizeBytes": 38576,
+   "sizeBytes": 38504,
    "bounds": {
     "min": [
      -0.4,
@@ -3097,7 +3112,7 @@
    "filename": "monster-held-items-reaper-scythe.glb",
    "relativePath": "held-items/monster-held-items-reaper-scythe.glb",
    "leaf": "world",
-   "sizeBytes": 53304,
+   "sizeBytes": 53232,
    "bounds": {
     "min": [
      -0.39,
@@ -3150,7 +3165,7 @@
    "filename": "monster-held-items-silver-axe.glb",
    "relativePath": "held-items/monster-held-items-silver-axe.glb",
    "leaf": "world",
-   "sizeBytes": 42500,
+   "sizeBytes": 42428,
    "bounds": {
     "min": [
      -0.29,
@@ -3203,7 +3218,7 @@
    "filename": "monster-held-items-silver-blunderbuss.glb",
    "relativePath": "held-items/monster-held-items-silver-blunderbuss.glb",
    "leaf": "world",
-   "sizeBytes": 68292,
+   "sizeBytes": 68220,
    "bounds": {
     "min": [
      -0.34,
@@ -3252,7 +3267,7 @@
    "filename": "monster-held-items-silver-dagger.glb",
    "relativePath": "held-items/monster-held-items-silver-dagger.glb",
    "leaf": "world",
-   "sizeBytes": 26124,
+   "sizeBytes": 26052,
    "bounds": {
     "min": [
      -0.19,
@@ -3305,7 +3320,7 @@
    "filename": "monster-held-items-skull-staff.glb",
    "relativePath": "held-items/monster-held-items-skull-staff.glb",
    "leaf": "world",
-   "sizeBytes": 57500,
+   "sizeBytes": 57428,
    "bounds": {
     "min": [
      -0.44,
@@ -3349,7 +3364,7 @@
    "filename": "monster-held-items-stake-crossbow.glb",
    "relativePath": "held-items/monster-held-items-stake-crossbow.glb",
    "leaf": "world",
-   "sizeBytes": 52184,
+   "sizeBytes": 52112,
    "bounds": {
     "min": [
      -0.31,
@@ -3398,7 +3413,7 @@
    "filename": "monster-held-items-torch.glb",
    "relativePath": "held-items/monster-held-items-torch.glb",
    "leaf": "world",
-   "sizeBytes": 46828,
+   "sizeBytes": 46756,
    "bounds": {
     "min": [
      -0.21,
@@ -3447,7 +3462,7 @@
    "filename": "monster-held-items-witch-wand.glb",
    "relativePath": "held-items/monster-held-items-witch-wand.glb",
    "leaf": "world",
-   "sizeBytes": 59424,
+   "sizeBytes": 59352,
    "bounds": {
     "min": [
      -0.28,
@@ -3491,7 +3506,7 @@
    "filename": "monster-held-items-wooden-stake.glb",
    "relativePath": "held-items/monster-held-items-wooden-stake.glb",
    "leaf": "world",
-   "sizeBytes": 15336,
+   "sizeBytes": 15264,
    "bounds": {
     "min": [
      -0.23,
@@ -3535,7 +3550,7 @@
    "filename": "monster-props-black-candles.glb",
    "relativePath": "props/monster-props-black-candles.glb",
    "leaf": "world",
-   "sizeBytes": 46276,
+   "sizeBytes": 46204,
    "bounds": {
     "min": [
      -12,
@@ -3593,7 +3608,7 @@
    "filename": "monster-props-blood-barrel.glb",
    "relativePath": "props/monster-props-blood-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 25436,
+   "sizeBytes": 25364,
    "bounds": {
     "min": [
      -12,
@@ -3628,7 +3643,7 @@
    "filename": "monster-props-bone-fence.glb",
    "relativePath": "props/monster-props-bone-fence.glb",
    "leaf": "world",
-   "sizeBytes": 39204,
+   "sizeBytes": 39132,
    "bounds": {
     "min": [
      -16,
@@ -3663,7 +3678,7 @@
    "filename": "monster-props-bone-pile.glb",
    "relativePath": "props/monster-props-bone-pile.glb",
    "leaf": "world",
-   "sizeBytes": 47000,
+   "sizeBytes": 46928,
    "bounds": {
     "min": [
      -15.0937,
@@ -3698,7 +3713,7 @@
    "filename": "monster-props-bookshelf.glb",
    "relativePath": "props/monster-props-bookshelf.glb",
    "leaf": "world",
-   "sizeBytes": 40044,
+   "sizeBytes": 39972,
    "bounds": {
     "min": [
      -16,
@@ -3733,7 +3748,7 @@
    "filename": "monster-props-brain-jar.glb",
    "relativePath": "props/monster-props-brain-jar.glb",
    "leaf": "world",
-   "sizeBytes": 19936,
+   "sizeBytes": 19864,
    "bounds": {
     "min": [
      -8.4,
@@ -3777,7 +3792,7 @@
    "filename": "monster-props-brazier.glb",
    "relativePath": "props/monster-props-brazier.glb",
    "leaf": "world",
-   "sizeBytes": 25648,
+   "sizeBytes": 25576,
    "bounds": {
     "min": [
      -10.5,
@@ -3812,7 +3827,7 @@
    "filename": "monster-props-broken-wagon-wheel.glb",
    "relativePath": "props/monster-props-broken-wagon-wheel.glb",
    "leaf": "world",
-   "sizeBytes": 43680,
+   "sizeBytes": 43608,
    "bounds": {
     "min": [
      -16.1719,
@@ -3856,7 +3871,7 @@
    "filename": "monster-props-candelabra.glb",
    "relativePath": "props/monster-props-candelabra.glb",
    "leaf": "world",
-   "sizeBytes": 50688,
+   "sizeBytes": 50616,
    "bounds": {
     "min": [
      -12.6,
@@ -3891,7 +3906,7 @@
    "filename": "monster-props-chained-book.glb",
    "relativePath": "props/monster-props-chained-book.glb",
    "leaf": "world",
-   "sizeBytes": 37428,
+   "sizeBytes": 37356,
    "bounds": {
     "min": [
      -14,
@@ -3935,7 +3950,7 @@
    "filename": "monster-props-cobweb-arch.glb",
    "relativePath": "props/monster-props-cobweb-arch.glb",
    "leaf": "world",
-   "sizeBytes": 70888,
+   "sizeBytes": 70808,
    "bounds": {
     "min": [
      -20,
@@ -3970,7 +3985,7 @@
    "filename": "monster-props-coffin-lid-pile.glb",
    "relativePath": "props/monster-props-coffin-lid-pile.glb",
    "leaf": "world",
-   "sizeBytes": 21800,
+   "sizeBytes": 21728,
    "bounds": {
     "min": [
      -18,
@@ -4005,7 +4020,7 @@
    "filename": "monster-props-coffin-stack.glb",
    "relativePath": "props/monster-props-coffin-stack.glb",
    "leaf": "world",
-   "sizeBytes": 34324,
+   "sizeBytes": 34252,
    "bounds": {
     "min": [
      -13,
@@ -4040,7 +4055,7 @@
    "filename": "monster-props-cracked-statue.glb",
    "relativePath": "props/monster-props-cracked-statue.glb",
    "leaf": "world",
-   "sizeBytes": 19124,
+   "sizeBytes": 19052,
    "bounds": {
     "min": [
      -14.5,
@@ -4084,7 +4099,7 @@
    "filename": "monster-props-crow-statue.glb",
    "relativePath": "props/monster-props-crow-statue.glb",
    "leaf": "world",
-   "sizeBytes": 32368,
+   "sizeBytes": 32296,
    "bounds": {
     "min": [
      -10,
@@ -4119,7 +4134,7 @@
    "filename": "monster-props-crypt-lantern.glb",
    "relativePath": "props/monster-props-crypt-lantern.glb",
    "leaf": "world",
-   "sizeBytes": 14708,
+   "sizeBytes": 14636,
    "bounds": {
     "min": [
      -8,
@@ -4163,7 +4178,7 @@
    "filename": "monster-props-cursed-doll-shelf.glb",
    "relativePath": "props/monster-props-cursed-doll-shelf.glb",
    "leaf": "world",
-   "sizeBytes": 44844,
+   "sizeBytes": 44772,
    "bounds": {
     "min": [
      -17,
@@ -4198,7 +4213,7 @@
    "filename": "monster-props-cursed-well.glb",
    "relativePath": "props/monster-props-cursed-well.glb",
    "leaf": "world",
-   "sizeBytes": 26724,
+   "sizeBytes": 26652,
    "bounds": {
     "min": [
      -15,
@@ -4233,7 +4248,7 @@
    "filename": "monster-props-dungeon-crate.glb",
    "relativePath": "props/monster-props-dungeon-crate.glb",
    "leaf": "world",
-   "sizeBytes": 18944,
+   "sizeBytes": 18872,
    "bounds": {
     "min": [
      -19.5,
@@ -4268,7 +4283,7 @@
    "filename": "monster-props-dungeon-pillar.glb",
    "relativePath": "props/monster-props-dungeon-pillar.glb",
    "leaf": "world",
-   "sizeBytes": 16904,
+   "sizeBytes": 16832,
    "bounds": {
     "min": [
      -8,
@@ -4303,7 +4318,7 @@
    "filename": "monster-props-dungeon-stairs.glb",
    "relativePath": "props/monster-props-dungeon-stairs.glb",
    "leaf": "world",
-   "sizeBytes": 61004,
+   "sizeBytes": 60924,
    "bounds": {
     "min": [
      -16,
@@ -4338,7 +4353,7 @@
    "filename": "monster-props-dungeon-wall-corner.glb",
    "relativePath": "props/monster-props-dungeon-wall-corner.glb",
    "leaf": "world",
-   "sizeBytes": 57220,
+   "sizeBytes": 57148,
    "bounds": {
     "min": [
      -16,
@@ -4375,7 +4390,7 @@
    "filename": "monster-props-dungeon-wall.glb",
    "relativePath": "props/monster-props-dungeon-wall.glb",
    "leaf": "world",
-   "sizeBytes": 54676,
+   "sizeBytes": 54596,
    "bounds": {
     "min": [
      -16,
@@ -4410,7 +4425,7 @@
    "filename": "monster-props-eyeball-jar.glb",
    "relativePath": "props/monster-props-eyeball-jar.glb",
    "leaf": "world",
-   "sizeBytes": 14160,
+   "sizeBytes": 14088,
    "bounds": {
     "min": [
      -11,
@@ -4454,7 +4469,7 @@
    "filename": "monster-props-funeral-urn.glb",
    "relativePath": "props/monster-props-funeral-urn.glb",
    "leaf": "world",
-   "sizeBytes": 26588,
+   "sizeBytes": 26516,
    "bounds": {
     "min": [
      -8.3281,
@@ -4489,7 +4504,7 @@
    "filename": "monster-props-gargoyle-fountain.glb",
    "relativePath": "props/monster-props-gargoyle-fountain.glb",
    "leaf": "world",
-   "sizeBytes": 40196,
+   "sizeBytes": 40124,
    "bounds": {
     "min": [
      -17.5,
@@ -4540,7 +4555,7 @@
    "filename": "monster-props-gargoyle-statue.glb",
    "relativePath": "props/monster-props-gargoyle-statue.glb",
    "leaf": "world",
-   "sizeBytes": 34028,
+   "sizeBytes": 33956,
    "bounds": {
     "min": [
      -12,
@@ -4575,7 +4590,7 @@
    "filename": "monster-props-garlic-wreath-post.glb",
    "relativePath": "props/monster-props-garlic-wreath-post.glb",
    "leaf": "world",
-   "sizeBytes": 55220,
+   "sizeBytes": 55148,
    "bounds": {
     "min": [
      -12.1323,
@@ -4619,7 +4634,7 @@
    "filename": "monster-props-grandfather-clock.glb",
    "relativePath": "props/monster-props-grandfather-clock.glb",
    "leaf": "world",
-   "sizeBytes": 25572,
+   "sizeBytes": 25500,
    "bounds": {
     "min": [
      -10,
@@ -4663,7 +4678,7 @@
    "filename": "monster-props-gravestone-cross.glb",
    "relativePath": "props/monster-props-gravestone-cross.glb",
    "leaf": "world",
-   "sizeBytes": 35224,
+   "sizeBytes": 35144,
    "bounds": {
     "min": [
      -11.1817,
@@ -4698,7 +4713,7 @@
    "filename": "monster-props-gravestone-obelisk.glb",
    "relativePath": "props/monster-props-gravestone-obelisk.glb",
    "leaf": "world",
-   "sizeBytes": 55824,
+   "sizeBytes": 55752,
    "bounds": {
     "min": [
      -12,
@@ -4733,7 +4748,7 @@
    "filename": "monster-props-gravestone-rounded.glb",
    "relativePath": "props/monster-props-gravestone-rounded.glb",
    "leaf": "world",
-   "sizeBytes": 24572,
+   "sizeBytes": 24500,
    "bounds": {
     "min": [
      -10,
@@ -4768,7 +4783,7 @@
    "filename": "monster-props-haunted-chair.glb",
    "relativePath": "props/monster-props-haunted-chair.glb",
    "leaf": "world",
-   "sizeBytes": 23420,
+   "sizeBytes": 23348,
    "bounds": {
     "min": [
      -10,
@@ -4803,7 +4818,7 @@
    "filename": "monster-props-haunted-dollhouse.glb",
    "relativePath": "props/monster-props-haunted-dollhouse.glb",
    "leaf": "world",
-   "sizeBytes": 14900,
+   "sizeBytes": 14828,
    "bounds": {
     "min": [
      -11.0156,
@@ -4847,7 +4862,7 @@
    "filename": "monster-props-jack-o-lantern.glb",
    "relativePath": "props/monster-props-jack-o-lantern.glb",
    "leaf": "world",
-   "sizeBytes": 20692,
+   "sizeBytes": 20620,
    "bounds": {
     "min": [
      -10,
@@ -4882,7 +4897,7 @@
    "filename": "monster-props-lamp-post.glb",
    "relativePath": "props/monster-props-lamp-post.glb",
    "leaf": "world",
-   "sizeBytes": 42028,
+   "sizeBytes": 41956,
    "bounds": {
     "min": [
      -14.5,
@@ -4919,7 +4934,7 @@
    "filename": "monster-props-lantern-cluster.glb",
    "relativePath": "props/monster-props-lantern-cluster.glb",
    "leaf": "world",
-   "sizeBytes": 27360,
+   "sizeBytes": 27288,
    "bounds": {
     "min": [
      -19,
@@ -4970,7 +4985,7 @@
    "filename": "monster-props-mortuary-slab.glb",
    "relativePath": "props/monster-props-mortuary-slab.glb",
    "leaf": "world",
-   "sizeBytes": 47660,
+   "sizeBytes": 47588,
    "bounds": {
     "min": [
      -15,
@@ -5014,7 +5029,7 @@
    "filename": "monster-props-mourning-bench.glb",
    "relativePath": "props/monster-props-mourning-bench.glb",
    "leaf": "world",
-   "sizeBytes": 17472,
+   "sizeBytes": 17400,
    "bounds": {
     "min": [
      -18,
@@ -5049,7 +5064,7 @@
    "filename": "monster-props-operating-table.glb",
    "relativePath": "props/monster-props-operating-table.glb",
    "leaf": "world",
-   "sizeBytes": 39448,
+   "sizeBytes": 39376,
    "bounds": {
     "min": [
      -18.4,
@@ -5093,7 +5108,7 @@
    "filename": "monster-props-pipe-organ.glb",
    "relativePath": "props/monster-props-pipe-organ.glb",
    "leaf": "world",
-   "sizeBytes": 40940,
+   "sizeBytes": 40868,
    "bounds": {
     "min": [
      -19,
@@ -5128,7 +5143,7 @@
    "filename": "monster-props-potion-table.glb",
    "relativePath": "props/monster-props-potion-table.glb",
    "leaf": "world",
-   "sizeBytes": 37908,
+   "sizeBytes": 37836,
    "bounds": {
     "min": [
      -18.0928,
@@ -5163,7 +5178,7 @@
    "filename": "monster-props-pumpkin-patch.glb",
    "relativePath": "props/monster-props-pumpkin-patch.glb",
    "leaf": "world",
-   "sizeBytes": 64896,
+   "sizeBytes": 64824,
    "bounds": {
     "min": [
      -18,
@@ -5198,7 +5213,7 @@
    "filename": "monster-props-raven-cage.glb",
    "relativePath": "props/monster-props-raven-cage.glb",
    "leaf": "world",
-   "sizeBytes": 50276,
+   "sizeBytes": 50196,
    "bounds": {
     "min": [
      -11,
@@ -5242,7 +5257,7 @@
    "filename": "monster-props-ritual-altar.glb",
    "relativePath": "props/monster-props-ritual-altar.glb",
    "leaf": "world",
-   "sizeBytes": 49068,
+   "sizeBytes": 48996,
    "bounds": {
     "min": [
      -19,
@@ -5277,7 +5292,7 @@
    "filename": "monster-props-rusted-gate.glb",
    "relativePath": "props/monster-props-rusted-gate.glb",
    "leaf": "world",
-   "sizeBytes": 57112,
+   "sizeBytes": 57032,
    "bounds": {
     "min": [
      -32,
@@ -5312,7 +5327,7 @@
    "filename": "monster-props-sarcophagus.glb",
    "relativePath": "props/monster-props-sarcophagus.glb",
    "leaf": "world",
-   "sizeBytes": 13960,
+   "sizeBytes": 13888,
    "bounds": {
     "min": [
      -9,
@@ -5347,7 +5362,7 @@
    "filename": "monster-props-shackle-post.glb",
    "relativePath": "props/monster-props-shackle-post.glb",
    "leaf": "world",
-   "sizeBytes": 37496,
+   "sizeBytes": 37424,
    "bounds": {
     "min": [
      -15.5,
@@ -5382,7 +5397,7 @@
    "filename": "monster-props-silver-bullet-crate.glb",
    "relativePath": "props/monster-props-silver-bullet-crate.glb",
    "leaf": "world",
-   "sizeBytes": 44564,
+   "sizeBytes": 44492,
    "bounds": {
     "min": [
      -15,
@@ -5417,7 +5432,7 @@
    "filename": "monster-props-skeleton-chair.glb",
    "relativePath": "props/monster-props-skeleton-chair.glb",
    "leaf": "world",
-   "sizeBytes": 49388,
+   "sizeBytes": 49316,
    "bounds": {
     "min": [
      -10.6094,
@@ -5452,7 +5467,7 @@
    "filename": "monster-props-skull-pile.glb",
    "relativePath": "props/monster-props-skull-pile.glb",
    "leaf": "world",
-   "sizeBytes": 60548,
+   "sizeBytes": 60476,
    "bounds": {
     "min": [
      -17.3,
@@ -5487,7 +5502,7 @@
    "filename": "monster-props-spell-scroll-pile.glb",
    "relativePath": "props/monster-props-spell-scroll-pile.glb",
    "leaf": "world",
-   "sizeBytes": 45508,
+   "sizeBytes": 45428,
    "bounds": {
     "min": [
      -14.6984,
@@ -5531,7 +5546,7 @@
    "filename": "monster-props-spider-egg-sac.glb",
    "relativePath": "props/monster-props-spider-egg-sac.glb",
    "leaf": "world",
-   "sizeBytes": 30832,
+   "sizeBytes": 30760,
    "bounds": {
     "min": [
      -13.9485,
@@ -5575,7 +5590,7 @@
    "filename": "monster-props-stake-crate.glb",
    "relativePath": "props/monster-props-stake-crate.glb",
    "leaf": "world",
-   "sizeBytes": 31304,
+   "sizeBytes": 31232,
    "bounds": {
     "min": [
      -14.5,
@@ -5610,7 +5625,7 @@
    "filename": "monster-props-stocks.glb",
    "relativePath": "props/monster-props-stocks.glb",
    "leaf": "world",
-   "sizeBytes": 47736,
+   "sizeBytes": 47664,
    "bounds": {
     "min": [
      -19,
@@ -5645,7 +5660,7 @@
    "filename": "monster-props-tombstone-angel.glb",
    "relativePath": "props/monster-props-tombstone-angel.glb",
    "leaf": "world",
-   "sizeBytes": 31208,
+   "sizeBytes": 31136,
    "bounds": {
     "min": [
      -15,
@@ -5680,7 +5695,7 @@
    "filename": "monster-props-torture-rack.glb",
    "relativePath": "props/monster-props-torture-rack.glb",
    "leaf": "world",
-   "sizeBytes": 47268,
+   "sizeBytes": 47196,
    "bounds": {
     "min": [
      -12,
@@ -5715,7 +5730,7 @@
    "filename": "monster-props-vampire-throne.glb",
    "relativePath": "props/monster-props-vampire-throne.glb",
    "leaf": "world",
-   "sizeBytes": 24044,
+   "sizeBytes": 23972,
    "bounds": {
     "min": [
      -16,
@@ -5750,7 +5765,7 @@
    "filename": "monster-props-werewolf-trap.glb",
    "relativePath": "props/monster-props-werewolf-trap.glb",
    "leaf": "world",
-   "sizeBytes": 48220,
+   "sizeBytes": 47832,
    "bounds": {
     "min": [
      -12.0424,
@@ -5784,7 +5799,7 @@
      "socket": "socket-teeth",
      "trigger": "clip:close",
      "size": 18,
-     "at": 0.42
+     "at": 0.2
     }
    ],
    "route": "code",
@@ -5799,7 +5814,7 @@
    "filename": "monster-props-witch-hat-stand.glb",
    "relativePath": "props/monster-props-witch-hat-stand.glb",
    "leaf": "world",
-   "sizeBytes": 38824,
+   "sizeBytes": 38752,
    "bounds": {
     "min": [
      -17.5593,
@@ -5834,7 +5849,7 @@
    "filename": "monster-terrain-nature-bog-reeds.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-bog-reeds.glb",
    "leaf": "world",
-   "sizeBytes": 47752,
+   "sizeBytes": 47680,
    "bounds": {
     "min": [
      -21,
@@ -5878,7 +5893,7 @@
    "filename": "monster-terrain-nature-cliff-crags.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-cliff-crags.glb",
    "leaf": "world",
-   "sizeBytes": 44200,
+   "sizeBytes": 44128,
    "bounds": {
     "min": [
      -30.5,
@@ -5922,7 +5937,7 @@
    "filename": "monster-terrain-nature-corpse-flower.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-corpse-flower.glb",
    "leaf": "world",
-   "sizeBytes": 21916,
+   "sizeBytes": 21844,
    "bounds": {
     "min": [
      -20,
@@ -5966,7 +5981,7 @@
    "filename": "monster-terrain-nature-crooked-path.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-crooked-path.glb",
    "leaf": "world",
-   "sizeBytes": 41620,
+   "sizeBytes": 41548,
    "bounds": {
     "min": [
      -24,
@@ -6010,7 +6025,7 @@
    "filename": "monster-terrain-nature-dead-tree.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-dead-tree.glb",
    "leaf": "world",
-   "sizeBytes": 69596,
+   "sizeBytes": 69524,
    "bounds": {
     "min": [
      -21.2969,
@@ -6045,7 +6060,7 @@
    "filename": "monster-terrain-nature-dungeon-floor.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-dungeon-floor.glb",
    "leaf": "world",
-   "sizeBytes": 51296,
+   "sizeBytes": 51224,
    "bounds": {
     "min": [
      -24,
@@ -6080,7 +6095,7 @@
    "filename": "monster-terrain-nature-dungeon-grate.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-dungeon-grate.glb",
    "leaf": "world",
-   "sizeBytes": 32792,
+   "sizeBytes": 32720,
    "bounds": {
     "min": [
      -24,
@@ -6124,7 +6139,7 @@
    "filename": "monster-terrain-nature-ectoplasm-pool.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-ectoplasm-pool.glb",
    "leaf": "world",
-   "sizeBytes": 39520,
+   "sizeBytes": 39448,
    "bounds": {
     "min": [
      -22.5,
@@ -6168,7 +6183,7 @@
    "filename": "monster-terrain-nature-fog-pit.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-fog-pit.glb",
    "leaf": "world",
-   "sizeBytes": 37528,
+   "sizeBytes": 37456,
    "bounds": {
     "min": [
      -22,
@@ -6212,7 +6227,7 @@
    "filename": "monster-terrain-nature-glow-mushrooms.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-glow-mushrooms.glb",
    "leaf": "world",
-   "sizeBytes": 44724,
+   "sizeBytes": 44644,
    "bounds": {
     "min": [
      -20,
@@ -6256,7 +6271,7 @@
    "filename": "monster-terrain-nature-gnarled-roots.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-gnarled-roots.glb",
    "leaf": "world",
-   "sizeBytes": 60116,
+   "sizeBytes": 60044,
    "bounds": {
     "min": [
      -25.2313,
@@ -6300,7 +6315,7 @@
    "filename": "monster-terrain-nature-grave-mound.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-grave-mound.glb",
    "leaf": "world",
-   "sizeBytes": 45500,
+   "sizeBytes": 45428,
    "bounds": {
     "min": [
      -13.6946,
@@ -6335,7 +6350,7 @@
    "filename": "monster-terrain-nature-iron-fence.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-iron-fence.glb",
    "leaf": "world",
-   "sizeBytes": 28580,
+   "sizeBytes": 28508,
    "bounds": {
     "min": [
      -16,
@@ -6370,7 +6385,7 @@
    "filename": "monster-terrain-nature-mossy-rocks.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-mossy-rocks.glb",
    "leaf": "world",
-   "sizeBytes": 30236,
+   "sizeBytes": 30164,
    "bounds": {
     "min": [
      -23,
@@ -6405,7 +6420,7 @@
    "filename": "monster-terrain-nature-stalagmites.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-stalagmites.glb",
    "leaf": "world",
-   "sizeBytes": 36828,
+   "sizeBytes": 36756,
    "bounds": {
     "min": [
      -23,
@@ -6449,7 +6464,7 @@
    "filename": "monster-terrain-nature-swamp-water.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-swamp-water.glb",
    "leaf": "world",
-   "sizeBytes": 108908,
+   "sizeBytes": 108836,
    "bounds": {
     "min": [
      -43.0781,
@@ -6495,7 +6510,7 @@
    "filename": "monster-terrain-nature-tar-pit.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-tar-pit.glb",
    "leaf": "world",
-   "sizeBytes": 57128,
+   "sizeBytes": 57056,
    "bounds": {
     "min": [
      -22.6393,
@@ -6539,7 +6554,7 @@
    "filename": "monster-terrain-nature-thorn-bramble.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-thorn-bramble.glb",
    "leaf": "world",
-   "sizeBytes": 40928,
+   "sizeBytes": 40856,
    "bounds": {
     "min": [
      -23,
@@ -6583,7 +6598,7 @@
    "filename": "monster-terrain-nature-web-thicket.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-web-thicket.glb",
    "leaf": "world",
-   "sizeBytes": 97372,
+   "sizeBytes": 97300,
    "bounds": {
     "min": [
      -24.5,
@@ -6627,7 +6642,7 @@
    "filename": "monster-terrain-nature-weeping-willow.glb",
    "relativePath": "terrain-nature/monster-terrain-nature-weeping-willow.glb",
    "leaf": "world",
-   "sizeBytes": 89604,
+   "sizeBytes": 89532,
    "bounds": {
     "min": [
      -23,
@@ -6671,7 +6686,7 @@
    "filename": "monster-vehicles-bat-glider.glb",
    "relativePath": "vehicles/monster-vehicles-bat-glider.glb",
    "leaf": "world",
-   "sizeBytes": 66072,
+   "sizeBytes": 66000,
    "bounds": {
     "min": [
      -43.4784,
@@ -6719,7 +6734,7 @@
    "filename": "monster-vehicles-bone-cart.glb",
    "relativePath": "vehicles/monster-vehicles-bone-cart.glb",
    "leaf": "world",
-   "sizeBytes": 110556,
+   "sizeBytes": 110484,
    "bounds": {
     "min": [
      -23,
@@ -6765,7 +6780,7 @@
    "filename": "monster-vehicles-coffin-wagon.glb",
    "relativePath": "vehicles/monster-vehicles-coffin-wagon.glb",
    "leaf": "world",
-   "sizeBytes": 119264,
+   "sizeBytes": 119192,
    "bounds": {
     "min": [
      -22,
@@ -6811,7 +6826,7 @@
    "filename": "monster-vehicles-ghost-ship.glb",
    "relativePath": "vehicles/monster-vehicles-ghost-ship.glb",
    "leaf": "world",
-   "sizeBytes": 136768,
+   "sizeBytes": 136696,
    "bounds": {
     "min": [
      -24,
@@ -6875,7 +6890,7 @@
    "filename": "monster-vehicles-ghost-train-engine.glb",
    "relativePath": "vehicles/monster-vehicles-ghost-train-engine.glb",
    "leaf": "world",
-   "sizeBytes": 183636,
+   "sizeBytes": 184960,
    "bounds": {
     "min": [
      -26.5,
@@ -6931,7 +6946,7 @@
    "filename": "monster-vehicles-hearse-carriage.glb",
    "relativePath": "vehicles/monster-vehicles-hearse-carriage.glb",
    "leaf": "world",
-   "sizeBytes": 104936,
+   "sizeBytes": 118448,
    "bounds": {
     "min": [
      -20,
@@ -6979,7 +6994,7 @@
    "filename": "monster-vehicles-pumpkin-coach.glb",
    "relativePath": "vehicles/monster-vehicles-pumpkin-coach.glb",
    "leaf": "world",
-   "sizeBytes": 126808,
+   "sizeBytes": 126736,
    "bounds": {
     "min": [
      -28.5,
@@ -7040,7 +7055,7 @@
    "filename": "monster-vehicles-skeleton-rowboat.glb",
    "relativePath": "vehicles/monster-vehicles-skeleton-rowboat.glb",
    "leaf": "world",
-   "sizeBytes": 54120,
+   "sizeBytes": 54040,
    "bounds": {
     "min": [
      -31.6,
@@ -7088,7 +7103,7 @@
    "filename": "monster-vehicles-spider-carriage.glb",
    "relativePath": "vehicles/monster-vehicles-spider-carriage.glb",
    "leaf": "world",
-   "sizeBytes": 87136,
+   "sizeBytes": 87064,
    "bounds": {
     "min": [
      -52.3199,
@@ -7142,7 +7157,7 @@
    "filename": "monster-vehicles-steam-crawler.glb",
    "relativePath": "vehicles/monster-vehicles-steam-crawler.glb",
    "leaf": "world",
-   "sizeBytes": 100128,
+   "sizeBytes": 101068,
    "bounds": {
     "min": [
      -35,
@@ -7190,7 +7205,7 @@
    "filename": "monster-vehicles-witch-broom.glb",
    "relativePath": "vehicles/monster-vehicles-witch-broom.glb",
    "leaf": "world",
-   "sizeBytes": 53348,
+   "sizeBytes": 53276,
    "bounds": {
     "min": [
      -9,
@@ -7242,7 +7257,7 @@
    "filename": "monster-vehicles-wolf-sled.glb",
    "relativePath": "vehicles/monster-vehicles-wolf-sled.glb",
    "leaf": "world",
-   "sizeBytes": 139740,
+   "sizeBytes": 150824,
    "bounds": {
     "min": [
      -22.25,
@@ -7290,7 +7305,7 @@
    "filename": "monster-avatar-parts.glb",
    "relativePath": "avatar/monster-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1198052,
+   "sizeBytes": 1199268,
    "bounds": {
     "min": [
      -0.1208,
@@ -7334,7 +7349,7 @@
    "filename": "monster-characters-skins-frankenstein.glb",
    "relativePath": "characters-skins/monster-characters-skins-frankenstein.glb",
    "leaf": "characters",
-   "sizeBytes": 166520,
+   "sizeBytes": 166412,
    "bounds": {
     "min": [
      -0.07,
@@ -7369,7 +7384,7 @@
    "filename": "monster-characters-skins-mummy.glb",
    "relativePath": "characters-skins/monster-characters-skins-mummy.glb",
    "leaf": "characters",
-   "sizeBytes": 115784,
+   "sizeBytes": 115676,
    "bounds": {
     "min": [
      -0.08,
@@ -7404,7 +7419,7 @@
    "filename": "monster-characters-skins-skeleton-hunter.glb",
    "relativePath": "characters-skins/monster-characters-skins-skeleton-hunter.glb",
    "leaf": "characters",
-   "sizeBytes": 152264,
+   "sizeBytes": 152152,
    "bounds": {
     "min": [
      -0.11,
@@ -7439,7 +7454,7 @@
    "filename": "monster-characters-skins-vampire.glb",
    "relativePath": "characters-skins/monster-characters-skins-vampire.glb",
    "leaf": "characters",
-   "sizeBytes": 199496,
+   "sizeBytes": 199384,
    "bounds": {
     "min": [
      -0.07,
@@ -7474,7 +7489,7 @@
    "filename": "monster-characters-skins-werewolf.glb",
    "relativePath": "characters-skins/monster-characters-skins-werewolf.glb",
    "leaf": "characters",
-   "sizeBytes": 408436,
+   "sizeBytes": 408328,
    "bounds": {
     "min": [
      -0.12,
@@ -7509,7 +7524,7 @@
    "filename": "monster-characters-skins-witch.glb",
    "relativePath": "characters-skins/monster-characters-skins-witch.glb",
    "leaf": "characters",
-   "sizeBytes": 316304,
+   "sizeBytes": 316196,
    "bounds": {
     "min": [
      -0.1,

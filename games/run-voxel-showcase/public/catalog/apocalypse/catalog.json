@@ -10,7 +10,7 @@
    "filename": "apocalypse-animated-props-alarm-siren.glb",
    "relativePath": "animated-props/apocalypse-animated-props-alarm-siren.glb",
    "leaf": "world",
-   "sizeBytes": 25024,
+   "sizeBytes": 24944,
    "bounds": {
     "min": [
      -11,
@@ -57,7 +57,7 @@
    "filename": "apocalypse-animated-props-arcade-machine.glb",
    "relativePath": "animated-props/apocalypse-animated-props-arcade-machine.glb",
    "leaf": "world",
-   "sizeBytes": 22944,
+   "sizeBytes": 22872,
    "bounds": {
     "min": [
      -11,
@@ -105,7 +105,7 @@
    "filename": "apocalypse-animated-props-bear-trap.glb",
    "relativePath": "animated-props/apocalypse-animated-props-bear-trap.glb",
    "leaf": "world",
-   "sizeBytes": 41308,
+   "sizeBytes": 41236,
    "bounds": {
     "min": [
      -17.5,
@@ -154,7 +154,7 @@
    "filename": "apocalypse-animated-props-burning-barrel.glb",
    "relativePath": "animated-props/apocalypse-animated-props-burning-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 30952,
+   "sizeBytes": 30880,
    "bounds": {
     "min": [
      -9.8,
@@ -200,7 +200,7 @@
    "filename": "apocalypse-animated-props-campfire.glb",
    "relativePath": "animated-props/apocalypse-animated-props-campfire.glb",
    "leaf": "world",
-   "sizeBytes": 72976,
+   "sizeBytes": 72904,
    "bounds": {
     "min": [
      -19.5,
@@ -246,7 +246,7 @@
    "filename": "apocalypse-animated-props-garage-door.glb",
    "relativePath": "animated-props/apocalypse-animated-props-garage-door.glb",
    "leaf": "world",
-   "sizeBytes": 33392,
+   "sizeBytes": 33136,
    "bounds": {
     "min": [
      -35,
@@ -287,7 +287,7 @@
    "filename": "apocalypse-animated-props-gas-pump.glb",
    "relativePath": "animated-props/apocalypse-animated-props-gas-pump.glb",
    "leaf": "world",
-   "sizeBytes": 34396,
+   "sizeBytes": 34324,
    "bounds": {
     "min": [
      -16.5,
@@ -327,7 +327,7 @@
    "filename": "apocalypse-animated-props-generator.glb",
    "relativePath": "animated-props/apocalypse-animated-props-generator.glb",
    "leaf": "world",
-   "sizeBytes": 43848,
+   "sizeBytes": 43768,
    "bounds": {
     "min": [
      -18.25,
@@ -374,7 +374,7 @@
    "filename": "apocalypse-animated-props-moonshine-still.glb",
    "relativePath": "animated-props/apocalypse-animated-props-moonshine-still.glb",
    "leaf": "world",
-   "sizeBytes": 47692,
+   "sizeBytes": 47612,
    "bounds": {
     "min": [
      -24.1481,
@@ -421,7 +421,7 @@
    "filename": "apocalypse-animated-props-oil-pumpjack.glb",
    "relativePath": "animated-props/apocalypse-animated-props-oil-pumpjack.glb",
    "leaf": "world",
-   "sizeBytes": 114092,
+   "sizeBytes": 114016,
    "bounds": {
     "min": [
      -13,
@@ -475,7 +475,7 @@
    "filename": "apocalypse-animated-props-porta-potty.glb",
    "relativePath": "animated-props/apocalypse-animated-props-porta-potty.glb",
    "leaf": "world",
-   "sizeBytes": 24272,
+   "sizeBytes": 24268,
    "bounds": {
     "min": [
      -14,
@@ -514,7 +514,7 @@
    "filename": "apocalypse-animated-props-radio-tower.glb",
    "relativePath": "animated-props/apocalypse-animated-props-radio-tower.glb",
    "leaf": "world",
-   "sizeBytes": 96952,
+   "sizeBytes": 96880,
    "bounds": {
     "min": [
      -16.5,
@@ -553,7 +553,7 @@
    "filename": "apocalypse-animated-props-scrap-crane.glb",
    "relativePath": "animated-props/apocalypse-animated-props-scrap-crane.glb",
    "leaf": "world",
-   "sizeBytes": 69360,
+   "sizeBytes": 69288,
    "bounds": {
     "min": [
      -40,
@@ -601,7 +601,7 @@
    "filename": "apocalypse-animated-props-scrap-forge.glb",
    "relativePath": "animated-props/apocalypse-animated-props-scrap-forge.glb",
    "leaf": "world",
-   "sizeBytes": 45996,
+   "sizeBytes": 45924,
    "bounds": {
     "min": [
      -30,
@@ -655,7 +655,7 @@
    "filename": "apocalypse-animated-props-scrap-turret.glb",
    "relativePath": "animated-props/apocalypse-animated-props-scrap-turret.glb",
    "leaf": "world",
-   "sizeBytes": 38484,
+   "sizeBytes": 38412,
    "bounds": {
     "min": [
      -22.5,
@@ -708,7 +708,7 @@
    "filename": "apocalypse-animated-props-spike-trap.glb",
    "relativePath": "animated-props/apocalypse-animated-props-spike-trap.glb",
    "leaf": "world",
-   "sizeBytes": 19460,
+   "sizeBytes": 15524,
    "bounds": {
     "min": [
      -24,
@@ -741,7 +741,7 @@
      "socket": "socket-teeth",
      "trigger": "clip:active",
      "size": 12,
-     "at": 0.42
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -756,7 +756,7 @@
    "filename": "apocalypse-animated-props-street-lamp.glb",
    "relativePath": "animated-props/apocalypse-animated-props-street-lamp.glb",
    "leaf": "world",
-   "sizeBytes": 21596,
+   "sizeBytes": 21524,
    "bounds": {
     "min": [
      -17.8009,
@@ -802,7 +802,7 @@
    "filename": "apocalypse-animated-props-supply-crate.glb",
    "relativePath": "animated-props/apocalypse-animated-props-supply-crate.glb",
    "leaf": "world",
-   "sizeBytes": 22188,
+   "sizeBytes": 22116,
    "bounds": {
     "min": [
      -19.8,
@@ -836,7 +836,7 @@
      "socket": "socket-loot",
      "trigger": "clip:open",
      "size": 30,
-     "at": 0.12
+     "at": 0.1
     }
    ],
    "route": "code",
@@ -851,7 +851,7 @@
    "filename": "apocalypse-animated-props-toxic-barrel.glb",
    "relativePath": "animated-props/apocalypse-animated-props-toxic-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 22568,
+   "sizeBytes": 22496,
    "bounds": {
     "min": [
      -17.2352,
@@ -897,7 +897,7 @@
    "filename": "apocalypse-animated-props-traffic-light.glb",
    "relativePath": "animated-props/apocalypse-animated-props-traffic-light.glb",
    "leaf": "world",
-   "sizeBytes": 71108,
+   "sizeBytes": 71028,
    "bounds": {
     "min": [
      -21.25,
@@ -944,7 +944,7 @@
    "filename": "apocalypse-animated-props-vault-door.glb",
    "relativePath": "animated-props/apocalypse-animated-props-vault-door.glb",
    "leaf": "world",
-   "sizeBytes": 62840,
+   "sizeBytes": 62768,
    "bounds": {
     "min": [
      -34,
@@ -977,7 +977,7 @@
      "socket": "socket-handwheel",
      "trigger": "clip:active",
      "size": 14,
-     "at": 0.8
+     "at": 2.1333333333333333
     }
    ],
    "route": "code",
@@ -992,7 +992,7 @@
    "filename": "apocalypse-animated-props-water-purifier.glb",
    "relativePath": "animated-props/apocalypse-animated-props-water-purifier.glb",
    "leaf": "world",
-   "sizeBytes": 58820,
+   "sizeBytes": 58748,
    "bounds": {
     "min": [
      -28,
@@ -1039,7 +1039,7 @@
    "filename": "apocalypse-animated-props-wind-turbine.glb",
    "relativePath": "animated-props/apocalypse-animated-props-wind-turbine.glb",
    "leaf": "world",
-   "sizeBytes": 40908,
+   "sizeBytes": 40836,
    "bounds": {
     "min": [
      -26.5138,
@@ -1086,7 +1086,7 @@
    "filename": "apocalypse-animated-props-windmill-pump.glb",
    "relativePath": "animated-props/apocalypse-animated-props-windmill-pump.glb",
    "leaf": "world",
-   "sizeBytes": 108820,
+   "sizeBytes": 108748,
    "bounds": {
     "min": [
      -24,
@@ -1124,7 +1124,7 @@
    "filename": "apocalypse-buildings-brick-warehouse.glb",
    "relativePath": "buildings/apocalypse-buildings-brick-warehouse.glb",
    "leaf": "world",
-   "sizeBytes": 143452,
+   "sizeBytes": 143380,
    "bounds": {
     "min": [
      -67.3,
@@ -1159,7 +1159,7 @@
    "filename": "apocalypse-buildings-bunker.glb",
    "relativePath": "buildings/apocalypse-buildings-bunker.glb",
    "leaf": "world",
-   "sizeBytes": 79744,
+   "sizeBytes": 79672,
    "bounds": {
     "min": [
      -60.0625,
@@ -1196,7 +1196,7 @@
    "filename": "apocalypse-buildings-church-ruin.glb",
    "relativePath": "buildings/apocalypse-buildings-church-ruin.glb",
    "leaf": "world",
-   "sizeBytes": 130808,
+   "sizeBytes": 130736,
    "bounds": {
     "min": [
      -48.5,
@@ -1231,7 +1231,7 @@
    "filename": "apocalypse-buildings-cold-storage.glb",
    "relativePath": "buildings/apocalypse-buildings-cold-storage.glb",
    "leaf": "world",
-   "sizeBytes": 104540,
+   "sizeBytes": 103748,
    "bounds": {
     "min": [
      -73.8,
@@ -1268,7 +1268,7 @@
    "filename": "apocalypse-buildings-collapsed-apartment.glb",
    "relativePath": "buildings/apocalypse-buildings-collapsed-apartment.glb",
    "leaf": "world",
-   "sizeBytes": 130944,
+   "sizeBytes": 130872,
    "bounds": {
     "min": [
      -66.3,
@@ -1303,7 +1303,7 @@
    "filename": "apocalypse-buildings-gas-station.glb",
    "relativePath": "buildings/apocalypse-buildings-gas-station.glb",
    "leaf": "world",
-   "sizeBytes": 127852,
+   "sizeBytes": 127780,
    "bounds": {
     "min": [
      -66,
@@ -1340,7 +1340,7 @@
    "filename": "apocalypse-buildings-greenhouse-shelter.glb",
    "relativePath": "buildings/apocalypse-buildings-greenhouse-shelter.glb",
    "leaf": "world",
-   "sizeBytes": 75648,
+   "sizeBytes": 75568,
    "bounds": {
     "min": [
      -56.5,
@@ -1375,7 +1375,7 @@
    "filename": "apocalypse-buildings-grocery-store.glb",
    "relativePath": "buildings/apocalypse-buildings-grocery-store.glb",
    "leaf": "world",
-   "sizeBytes": 110104,
+   "sizeBytes": 110032,
    "bounds": {
     "min": [
      -60,
@@ -1410,7 +1410,7 @@
    "filename": "apocalypse-buildings-hospital-ruin.glb",
    "relativePath": "buildings/apocalypse-buildings-hospital-ruin.glb",
    "leaf": "world",
-   "sizeBytes": 347380,
+   "sizeBytes": 347308,
    "bounds": {
     "min": [
      -61,
@@ -1445,7 +1445,7 @@
    "filename": "apocalypse-buildings-mechanic-garage.glb",
    "relativePath": "buildings/apocalypse-buildings-mechanic-garage.glb",
    "leaf": "world",
-   "sizeBytes": 59860,
+   "sizeBytes": 59788,
    "bounds": {
     "min": [
      -58.5,
@@ -1480,7 +1480,7 @@
    "filename": "apocalypse-buildings-motel.glb",
    "relativePath": "buildings/apocalypse-buildings-motel.glb",
    "leaf": "world",
-   "sizeBytes": 238748,
+   "sizeBytes": 238676,
    "bounds": {
     "min": [
      -74.6777,
@@ -1517,7 +1517,7 @@
    "filename": "apocalypse-buildings-police-station.glb",
    "relativePath": "buildings/apocalypse-buildings-police-station.glb",
    "leaf": "world",
-   "sizeBytes": 66600,
+   "sizeBytes": 66528,
    "bounds": {
     "min": [
      -52,
@@ -1552,7 +1552,7 @@
    "filename": "apocalypse-buildings-radio-station.glb",
    "relativePath": "buildings/apocalypse-buildings-radio-station.glb",
    "leaf": "world",
-   "sizeBytes": 148268,
+   "sizeBytes": 148196,
    "bounds": {
     "min": [
      -54.5,
@@ -1587,7 +1587,7 @@
    "filename": "apocalypse-buildings-roadside-diner.glb",
    "relativePath": "buildings/apocalypse-buildings-roadside-diner.glb",
    "leaf": "world",
-   "sizeBytes": 88612,
+   "sizeBytes": 88540,
    "bounds": {
     "min": [
      -73,
@@ -1624,7 +1624,7 @@
    "filename": "apocalypse-buildings-scrap-gate.glb",
    "relativePath": "buildings/apocalypse-buildings-scrap-gate.glb",
    "leaf": "world",
-   "sizeBytes": 81336,
+   "sizeBytes": 81256,
    "bounds": {
     "min": [
      -64,
@@ -1659,7 +1659,7 @@
    "filename": "apocalypse-buildings-survivor-shack.glb",
    "relativePath": "buildings/apocalypse-buildings-survivor-shack.glb",
    "leaf": "world",
-   "sizeBytes": 151124,
+   "sizeBytes": 151052,
    "bounds": {
     "min": [
      -55.5,
@@ -1705,7 +1705,7 @@
    "filename": "apocalypse-buildings-trading-post.glb",
    "relativePath": "buildings/apocalypse-buildings-trading-post.glb",
    "leaf": "world",
-   "sizeBytes": 115788,
+   "sizeBytes": 115716,
    "bounds": {
     "min": [
      -52,
@@ -1740,7 +1740,7 @@
    "filename": "apocalypse-buildings-warehouse-shed.glb",
    "relativePath": "buildings/apocalypse-buildings-warehouse-shed.glb",
    "leaf": "world",
-   "sizeBytes": 128236,
+   "sizeBytes": 128164,
    "bounds": {
     "min": [
      -84.8,
@@ -1777,7 +1777,7 @@
    "filename": "apocalypse-buildings-watchtower.glb",
    "relativePath": "buildings/apocalypse-buildings-watchtower.glb",
    "leaf": "world",
-   "sizeBytes": 124548,
+   "sizeBytes": 124476,
    "bounds": {
     "min": [
      -34,
@@ -1828,7 +1828,7 @@
    "filename": "apocalypse-buildings-water-tower.glb",
    "relativePath": "buildings/apocalypse-buildings-water-tower.glb",
    "leaf": "world",
-   "sizeBytes": 125480,
+   "sizeBytes": 125408,
    "bounds": {
     "min": [
      -34,
@@ -1863,7 +1863,7 @@
    "filename": "apocalypse-creatures-crow.glb",
    "relativePath": "creatures/apocalypse-creatures-crow.glb",
    "leaf": "world",
-   "sizeBytes": 30088,
+   "sizeBytes": 32272,
    "bounds": {
     "min": [
      -5.5,
@@ -1906,7 +1906,7 @@
    "filename": "apocalypse-creatures-giant-scorpion.glb",
    "relativePath": "creatures/apocalypse-creatures-giant-scorpion.glb",
    "leaf": "world",
-   "sizeBytes": 119448,
+   "sizeBytes": 181144,
    "bounds": {
     "min": [
      -35.9374,
@@ -1927,8 +1927,8 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
     "idle",
     "move"
@@ -1961,7 +1961,7 @@
      "socket": "socket-sting",
      "trigger": "clip:attack",
      "size": 36,
-     "at": 0.45
+     "at": 0.4666666666666667
     }
    ],
    "route": "code",
@@ -1976,7 +1976,7 @@
    "filename": "apocalypse-creatures-mutant-behemoth.glb",
    "relativePath": "creatures/apocalypse-creatures-mutant-behemoth.glb",
    "leaf": "world",
-   "sizeBytes": 112364,
+   "sizeBytes": 129012,
    "bounds": {
     "min": [
      -79.5,
@@ -1997,8 +1997,8 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
     "idle",
     "move"
@@ -2015,14 +2015,14 @@
      "socket": "socket-fist",
      "trigger": "clip:attack",
      "size": 90,
-     "at": 1
+     "at": 0.9333333333333333
     },
     {
      "effectId": "rvx-apocalypse-ground-slam",
      "socket": "socket-fist-l",
      "trigger": "clip:attack",
      "size": 90,
-     "at": 1
+     "at": 0.9333333333333333
     },
     {
      "effectId": "rvx-apocalypse-toxic-vent",
@@ -2049,7 +2049,7 @@
    "filename": "apocalypse-creatures-mutant-boar.glb",
    "relativePath": "creatures/apocalypse-creatures-mutant-boar.glb",
    "leaf": "world",
-   "sizeBytes": 56012,
+   "sizeBytes": 76408,
    "bounds": {
     "min": [
      -11.3991,
@@ -2084,7 +2084,8 @@
      "effectId": "rvx-apocalypse-gore-burst",
      "socket": "socket-snout",
      "trigger": "clip:attack",
-     "size": 14
+     "size": 14,
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -2099,7 +2100,7 @@
    "filename": "apocalypse-creatures-mutant-cow.glb",
    "relativePath": "creatures/apocalypse-creatures-mutant-cow.glb",
    "leaf": "world",
-   "sizeBytes": 73804,
+   "sizeBytes": 92484,
    "bounds": {
     "min": [
      -23.2309,
@@ -2123,8 +2124,8 @@
     "attack",
     "death",
     "hit",
-    "idle",
-    "move"
+    "move",
+    "idle"
    ],
    "sockets": [
     "socket-horns"
@@ -2134,7 +2135,8 @@
      "effectId": "rvx-apocalypse-gore-burst",
      "socket": "socket-horns",
      "trigger": "clip:attack",
-     "size": 12
+     "size": 12,
+     "at": 0.4666666666666667
     }
    ],
    "route": "code",
@@ -2149,7 +2151,7 @@
    "filename": "apocalypse-creatures-mutant-dog.glb",
    "relativePath": "creatures/apocalypse-creatures-mutant-dog.glb",
    "leaf": "world",
-   "sizeBytes": 44560,
+   "sizeBytes": 63968,
    "bounds": {
     "min": [
      -8.5,
@@ -2170,11 +2172,11 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
-    "idle",
-    "move"
+    "move",
+    "idle"
    ],
    "sockets": [
     "socket-feet",
@@ -2205,7 +2207,7 @@
    "filename": "apocalypse-creatures-mutant-vulture.glb",
    "relativePath": "creatures/apocalypse-creatures-mutant-vulture.glb",
    "leaf": "world",
-   "sizeBytes": 71764,
+   "sizeBytes": 83904,
    "bounds": {
     "min": [
      -45.5,
@@ -2226,10 +2228,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
-    "move",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2240,7 +2242,8 @@
      "effectId": "rvx-apocalypse-gore-burst",
      "socket": "socket-beak",
      "trigger": "clip:attack",
-     "size": 10
+     "size": 10,
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -2255,7 +2258,7 @@
    "filename": "apocalypse-creatures-rad-rat.glb",
    "relativePath": "creatures/apocalypse-creatures-rad-rat.glb",
    "leaf": "world",
-   "sizeBytes": 38388,
+   "sizeBytes": 53104,
    "bounds": {
     "min": [
      -6.2,
@@ -2276,11 +2279,11 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
-    "idle",
-    "move"
+    "move",
+    "idle"
    ],
    "sockets": [
     "socket-body"
@@ -2298,7 +2301,7 @@
    "filename": "apocalypse-creatures-raider-bot.glb",
    "relativePath": "creatures/apocalypse-creatures-raider-bot.glb",
    "leaf": "world",
-   "sizeBytes": 90240,
+   "sizeBytes": 101688,
    "bounds": {
     "min": [
      -16.7,
@@ -2322,8 +2325,8 @@
     "attack",
     "death",
     "hit",
-    "idle",
-    "move"
+    "move",
+    "idle"
    ],
    "sockets": [
     "socket-core",
@@ -2336,7 +2339,7 @@
      "socket": "socket-saw",
      "trigger": "clip:attack",
      "size": 38,
-     "at": 0.4
+     "at": 0.43333333333333335
     },
     {
      "effectId": "rvx-apocalypse-exhaust-smoke",
@@ -2349,7 +2352,7 @@
      "socket": "socket-core",
      "trigger": "clip:death",
      "size": 44,
-     "at": 0.24
+     "at": 0.16666666666666666
     }
    ],
    "route": "code",
@@ -2364,7 +2367,7 @@
    "filename": "apocalypse-creatures-scavenger-drone.glb",
    "relativePath": "creatures/apocalypse-creatures-scavenger-drone.glb",
    "leaf": "world",
-   "sizeBytes": 35376,
+   "sizeBytes": 47228,
    "bounds": {
     "min": [
      -11.8281,
@@ -2385,10 +2388,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
+    "attack",
     "death",
     "hit",
     "move",
-    "attack",
     "idle"
    ],
    "sockets": [
@@ -2405,7 +2408,7 @@
       0,
       -1
      ],
-     "at": 0.1
+     "at": 0.26666666666666666
     }
    ],
    "route": "code",
@@ -2420,7 +2423,7 @@
    "filename": "apocalypse-creatures-sewer-croc.glb",
    "relativePath": "creatures/apocalypse-creatures-sewer-croc.glb",
    "leaf": "world",
-   "sizeBytes": 94920,
+   "sizeBytes": 117296,
    "bounds": {
     "min": [
      -22.1,
@@ -2461,7 +2464,7 @@
       0,
       -1
      ],
-     "at": 0.22
+     "at": 0.4
     }
    ],
    "route": "code",
@@ -2476,7 +2479,7 @@
    "filename": "apocalypse-creatures-zombie-bloated.glb",
    "relativePath": "creatures/apocalypse-creatures-zombie-bloated.glb",
    "leaf": "world",
-   "sizeBytes": 58688,
+   "sizeBytes": 65768,
    "bounds": {
     "min": [
      -20.5,
@@ -2497,11 +2500,11 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
-    "idle",
-    "move"
+    "move",
+    "idle"
    ],
    "sockets": [
     "socket-belly",
@@ -2539,7 +2542,7 @@
    "filename": "apocalypse-creatures-zombie-crawler.glb",
    "relativePath": "creatures/apocalypse-creatures-zombie-crawler.glb",
    "leaf": "world",
-   "sizeBytes": 44316,
+   "sizeBytes": 54932,
    "bounds": {
     "min": [
      -15,
@@ -2580,7 +2583,7 @@
       0,
       -1
      ],
-     "at": 0.28
+     "at": 0.43333333333333335
     }
    ],
    "route": "code",
@@ -2595,7 +2598,7 @@
    "filename": "apocalypse-creatures-zombie-runner.glb",
    "relativePath": "creatures/apocalypse-creatures-zombie-runner.glb",
    "leaf": "world",
-   "sizeBytes": 45356,
+   "sizeBytes": 56524,
    "bounds": {
     "min": [
      -13.5,
@@ -2616,8 +2619,8 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
     "idle",
     "move"
@@ -2646,7 +2649,7 @@
    "filename": "apocalypse-creatures-zombie-soldier.glb",
    "relativePath": "creatures/apocalypse-creatures-zombie-soldier.glb",
    "leaf": "world",
-   "sizeBytes": 45880,
+   "sizeBytes": 62100,
    "bounds": {
     "min": [
      -13.1,
@@ -2667,10 +2670,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
+    "attack",
     "death",
     "hit",
     "move",
-    "attack",
     "idle"
    ],
    "sockets": [
@@ -2682,7 +2685,7 @@
      "socket": "socket-rifle",
      "trigger": "clip:attack",
      "size": 9,
-     "at": 0.22
+     "at": 0.4666666666666667
     }
    ],
    "route": "code",
@@ -2697,7 +2700,7 @@
    "filename": "apocalypse-creatures-zombie-walker.glb",
    "relativePath": "creatures/apocalypse-creatures-zombie-walker.glb",
    "leaf": "world",
-   "sizeBytes": 54864,
+   "sizeBytes": 67780,
    "bounds": {
     "min": [
      -16,
@@ -2718,11 +2721,11 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
-    "idle",
-    "move"
+    "move",
+    "idle"
    ],
    "sockets": [
     "socket-chest",
@@ -2748,7 +2751,7 @@
    "filename": "apocalypse-held-items-chainsaw.glb",
    "relativePath": "held-items/apocalypse-held-items-chainsaw.glb",
    "leaf": "world",
-   "sizeBytes": 44716,
+   "sizeBytes": 44644,
    "bounds": {
     "min": [
      -0.43,
@@ -2799,7 +2802,7 @@
    "filename": "apocalypse-held-items-crossbow.glb",
    "relativePath": "held-items/apocalypse-held-items-crossbow.glb",
    "leaf": "world",
-   "sizeBytes": 32480,
+   "sizeBytes": 32408,
    "bounds": {
     "min": [
      -0.3,
@@ -2836,7 +2839,7 @@
    "filename": "apocalypse-held-items-crowbar.glb",
    "relativePath": "held-items/apocalypse-held-items-crowbar.glb",
    "leaf": "world",
-   "sizeBytes": 17444,
+   "sizeBytes": 17372,
    "bounds": {
     "min": [
      -0.34,
@@ -2880,7 +2883,7 @@
    "filename": "apocalypse-held-items-double-barrel.glb",
    "relativePath": "held-items/apocalypse-held-items-double-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 21292,
+   "sizeBytes": 21220,
    "bounds": {
     "min": [
      -0.39,
@@ -2929,7 +2932,7 @@
    "filename": "apocalypse-held-items-fire-axe.glb",
    "relativePath": "held-items/apocalypse-held-items-fire-axe.glb",
    "leaf": "world",
-   "sizeBytes": 62620,
+   "sizeBytes": 62548,
    "bounds": {
     "min": [
      -0.39,
@@ -2974,7 +2977,7 @@
    "filename": "apocalypse-held-items-flashlight.glb",
    "relativePath": "held-items/apocalypse-held-items-flashlight.glb",
    "leaf": "world",
-   "sizeBytes": 83152,
+   "sizeBytes": 83080,
    "bounds": {
     "min": [
      -0.24,
@@ -3023,7 +3026,7 @@
    "filename": "apocalypse-held-items-frying-pan.glb",
    "relativePath": "held-items/apocalypse-held-items-frying-pan.glb",
    "leaf": "world",
-   "sizeBytes": 47832,
+   "sizeBytes": 47760,
    "bounds": {
     "min": [
      -0.34,
@@ -3067,7 +3070,7 @@
    "filename": "apocalypse-held-items-gas-can.glb",
    "relativePath": "held-items/apocalypse-held-items-gas-can.glb",
    "leaf": "world",
-   "sizeBytes": 18480,
+   "sizeBytes": 18408,
    "bounds": {
     "min": [
      -0.175,
@@ -3111,7 +3114,7 @@
    "filename": "apocalypse-held-items-machete.glb",
    "relativePath": "held-items/apocalypse-held-items-machete.glb",
    "leaf": "world",
-   "sizeBytes": 28992,
+   "sizeBytes": 28920,
    "bounds": {
     "min": [
      -0.43,
@@ -3156,7 +3159,7 @@
    "filename": "apocalypse-held-items-molotov.glb",
    "relativePath": "held-items/apocalypse-held-items-molotov.glb",
    "leaf": "world",
-   "sizeBytes": 35072,
+   "sizeBytes": 35000,
    "bounds": {
     "min": [
      -0.2,
@@ -3205,7 +3208,7 @@
    "filename": "apocalypse-held-items-nail-bat.glb",
    "relativePath": "held-items/apocalypse-held-items-nail-bat.glb",
    "leaf": "world",
-   "sizeBytes": 91576,
+   "sizeBytes": 91504,
    "bounds": {
     "min": [
      -0.38,
@@ -3250,7 +3253,7 @@
    "filename": "apocalypse-held-items-pipe-wrench.glb",
    "relativePath": "held-items/apocalypse-held-items-pipe-wrench.glb",
    "leaf": "world",
-   "sizeBytes": 22348,
+   "sizeBytes": 22276,
    "bounds": {
     "min": [
      -0.31,
@@ -3294,7 +3297,7 @@
    "filename": "apocalypse-held-items-pistol.glb",
    "relativePath": "held-items/apocalypse-held-items-pistol.glb",
    "leaf": "world",
-   "sizeBytes": 14980,
+   "sizeBytes": 14908,
    "bounds": {
     "min": [
      -0.16,
@@ -3343,7 +3346,7 @@
    "filename": "apocalypse-held-items-pump-shotgun.glb",
    "relativePath": "held-items/apocalypse-held-items-pump-shotgun.glb",
    "leaf": "world",
-   "sizeBytes": 30636,
+   "sizeBytes": 30564,
    "bounds": {
     "min": [
      -0.415,
@@ -3393,7 +3396,7 @@
    "filename": "apocalypse-held-items-sawn-off.glb",
    "relativePath": "held-items/apocalypse-held-items-sawn-off.glb",
    "leaf": "world",
-   "sizeBytes": 20028,
+   "sizeBytes": 19956,
    "bounds": {
     "min": [
      -0.26,
@@ -3442,7 +3445,7 @@
    "filename": "apocalypse-held-items-spear.glb",
    "relativePath": "held-items/apocalypse-held-items-spear.glb",
    "leaf": "world",
-   "sizeBytes": 17784,
+   "sizeBytes": 17712,
    "bounds": {
     "min": [
      -0.38,
@@ -3487,7 +3490,7 @@
    "filename": "apocalypse-props-ammo-crate.glb",
    "relativePath": "props/apocalypse-props-ammo-crate.glb",
    "leaf": "world",
-   "sizeBytes": 12548,
+   "sizeBytes": 12476,
    "bounds": {
     "min": [
      -14,
@@ -3522,7 +3525,7 @@
    "filename": "apocalypse-props-barbed-wire-coil.glb",
    "relativePath": "props/apocalypse-props-barbed-wire-coil.glb",
    "leaf": "world",
-   "sizeBytes": 58540,
+   "sizeBytes": 58468,
    "bounds": {
     "min": [
      -18,
@@ -3557,7 +3560,7 @@
    "filename": "apocalypse-props-battery-bank.glb",
    "relativePath": "props/apocalypse-props-battery-bank.glb",
    "leaf": "world",
-   "sizeBytes": 47572,
+   "sizeBytes": 47500,
    "bounds": {
     "min": [
      -16,
@@ -3592,7 +3595,7 @@
    "filename": "apocalypse-props-bicycle-wreck.glb",
    "relativePath": "props/apocalypse-props-bicycle-wreck.glb",
    "leaf": "world",
-   "sizeBytes": 44724,
+   "sizeBytes": 44652,
    "bounds": {
     "min": [
      -9,
@@ -3627,7 +3630,7 @@
    "filename": "apocalypse-props-billboard-wreck.glb",
    "relativePath": "props/apocalypse-props-billboard-wreck.glb",
    "leaf": "world",
-   "sizeBytes": 49536,
+   "sizeBytes": 49464,
    "bounds": {
     "min": [
      -32.4561,
@@ -3662,7 +3665,7 @@
    "filename": "apocalypse-props-bus-stop-shelter.glb",
    "relativePath": "props/apocalypse-props-bus-stop-shelter.glb",
    "leaf": "world",
-   "sizeBytes": 44988,
+   "sizeBytes": 44916,
    "bounds": {
     "min": [
      -22.0312,
@@ -3697,7 +3700,7 @@
    "filename": "apocalypse-props-canned-food-stack.glb",
    "relativePath": "props/apocalypse-props-canned-food-stack.glb",
    "leaf": "world",
-   "sizeBytes": 48324,
+   "sizeBytes": 48252,
    "bounds": {
     "min": [
      -14.5,
@@ -3732,7 +3735,7 @@
    "filename": "apocalypse-props-chainlink-fence.glb",
    "relativePath": "props/apocalypse-props-chainlink-fence.glb",
    "leaf": "world",
-   "sizeBytes": 47220,
+   "sizeBytes": 47140,
    "bounds": {
     "min": [
      -16,
@@ -3767,7 +3770,7 @@
    "filename": "apocalypse-props-cooler-box.glb",
    "relativePath": "props/apocalypse-props-cooler-box.glb",
    "leaf": "world",
-   "sizeBytes": 19652,
+   "sizeBytes": 19580,
    "bounds": {
     "min": [
      -11,
@@ -3802,7 +3805,7 @@
    "filename": "apocalypse-props-couch-ruin.glb",
    "relativePath": "props/apocalypse-props-couch-ruin.glb",
    "leaf": "world",
-   "sizeBytes": 13120,
+   "sizeBytes": 13048,
    "bounds": {
     "min": [
      -21.5,
@@ -3837,7 +3840,7 @@
    "filename": "apocalypse-props-crt-tv.glb",
    "relativePath": "props/apocalypse-props-crt-tv.glb",
    "leaf": "world",
-   "sizeBytes": 18060,
+   "sizeBytes": 17988,
    "bounds": {
     "min": [
      -9,
@@ -3872,7 +3875,7 @@
    "filename": "apocalypse-props-drum-pallet.glb",
    "relativePath": "props/apocalypse-props-drum-pallet.glb",
    "leaf": "world",
-   "sizeBytes": 40172,
+   "sizeBytes": 40100,
    "bounds": {
     "min": [
      -16,
@@ -3907,7 +3910,7 @@
    "filename": "apocalypse-props-dumpster.glb",
    "relativePath": "props/apocalypse-props-dumpster.glb",
    "leaf": "world",
-   "sizeBytes": 33320,
+   "sizeBytes": 33248,
    "bounds": {
     "min": [
      -18.5,
@@ -3942,7 +3945,7 @@
    "filename": "apocalypse-props-engine-block.glb",
    "relativePath": "props/apocalypse-props-engine-block.glb",
    "leaf": "world",
-   "sizeBytes": 31836,
+   "sizeBytes": 31764,
    "bounds": {
     "min": [
      -12.0312,
@@ -3977,7 +3980,7 @@
    "filename": "apocalypse-props-extension-reel.glb",
    "relativePath": "props/apocalypse-props-extension-reel.glb",
    "leaf": "world",
-   "sizeBytes": 24588,
+   "sizeBytes": 24516,
    "bounds": {
     "min": [
      -18,
@@ -4012,7 +4015,7 @@
    "filename": "apocalypse-props-fire-hydrant.glb",
    "relativePath": "props/apocalypse-props-fire-hydrant.glb",
    "leaf": "world",
-   "sizeBytes": 18240,
+   "sizeBytes": 18168,
    "bounds": {
     "min": [
      -10.9,
@@ -4047,7 +4050,7 @@
    "filename": "apocalypse-props-fuel-can.glb",
    "relativePath": "props/apocalypse-props-fuel-can.glb",
    "leaf": "world",
-   "sizeBytes": 19492,
+   "sizeBytes": 19420,
    "bounds": {
     "min": [
      -14,
@@ -4082,7 +4085,7 @@
    "filename": "apocalypse-props-gas-mask-rack.glb",
    "relativePath": "props/apocalypse-props-gas-mask-rack.glb",
    "leaf": "world",
-   "sizeBytes": 38576,
+   "sizeBytes": 38504,
    "bounds": {
     "min": [
      -19.5,
@@ -4117,7 +4120,7 @@
    "filename": "apocalypse-props-graffiti-wall.glb",
    "relativePath": "props/apocalypse-props-graffiti-wall.glb",
    "leaf": "world",
-   "sizeBytes": 19344,
+   "sizeBytes": 19272,
    "bounds": {
     "min": [
      -16.5,
@@ -4152,7 +4155,7 @@
    "filename": "apocalypse-props-grocery-shelf.glb",
    "relativePath": "props/apocalypse-props-grocery-shelf.glb",
    "leaf": "world",
-   "sizeBytes": 34944,
+   "sizeBytes": 34872,
    "bounds": {
     "min": [
      -18,
@@ -4187,7 +4190,7 @@
    "filename": "apocalypse-props-handcart.glb",
    "relativePath": "props/apocalypse-props-handcart.glb",
    "leaf": "world",
-   "sizeBytes": 28268,
+   "sizeBytes": 28196,
    "bounds": {
     "min": [
      -12.0312,
@@ -4222,7 +4225,7 @@
    "filename": "apocalypse-props-jersey-barrier.glb",
    "relativePath": "props/apocalypse-props-jersey-barrier.glb",
    "leaf": "world",
-   "sizeBytes": 7244,
+   "sizeBytes": 7172,
    "bounds": {
     "min": [
      -17,
@@ -4257,7 +4260,7 @@
    "filename": "apocalypse-props-keep-out-sign.glb",
    "relativePath": "props/apocalypse-props-keep-out-sign.glb",
    "leaf": "world",
-   "sizeBytes": 20884,
+   "sizeBytes": 20812,
    "bounds": {
     "min": [
      -18.4926,
@@ -4292,7 +4295,7 @@
    "filename": "apocalypse-props-mailbox.glb",
    "relativePath": "props/apocalypse-props-mailbox.glb",
    "leaf": "world",
-   "sizeBytes": 17284,
+   "sizeBytes": 17212,
    "bounds": {
     "min": [
      -8.3801,
@@ -4327,7 +4330,7 @@
    "filename": "apocalypse-props-mattress.glb",
    "relativePath": "props/apocalypse-props-mattress.glb",
    "leaf": "world",
-   "sizeBytes": 13268,
+   "sizeBytes": 13196,
    "bounds": {
     "min": [
      -20.8486,
@@ -4362,7 +4365,7 @@
    "filename": "apocalypse-props-medical-cabinet.glb",
    "relativePath": "props/apocalypse-props-medical-cabinet.glb",
    "leaf": "world",
-   "sizeBytes": 36984,
+   "sizeBytes": 36912,
    "bounds": {
     "min": [
      -13.4021,
@@ -4397,7 +4400,7 @@
    "filename": "apocalypse-props-newspaper-box.glb",
    "relativePath": "props/apocalypse-props-newspaper-box.glb",
    "leaf": "world",
-   "sizeBytes": 10640,
+   "sizeBytes": 10568,
    "bounds": {
     "min": [
      -9.1384,
@@ -4432,7 +4435,7 @@
    "filename": "apocalypse-props-oil-drum.glb",
    "relativePath": "props/apocalypse-props-oil-drum.glb",
    "leaf": "world",
-   "sizeBytes": 7520,
+   "sizeBytes": 7448,
    "bounds": {
     "min": [
      -8.4997,
@@ -4467,7 +4470,7 @@
    "filename": "apocalypse-props-pallet-stack.glb",
    "relativePath": "props/apocalypse-props-pallet-stack.glb",
    "leaf": "world",
-   "sizeBytes": 21408,
+   "sizeBytes": 21336,
    "bounds": {
     "min": [
      -13.5,
@@ -4502,7 +4505,7 @@
    "filename": "apocalypse-props-parking-meter.glb",
    "relativePath": "props/apocalypse-props-parking-meter.glb",
    "leaf": "world",
-   "sizeBytes": 22028,
+   "sizeBytes": 21956,
    "bounds": {
     "min": [
      -10.1095,
@@ -4537,7 +4540,7 @@
    "filename": "apocalypse-props-payphone.glb",
    "relativePath": "props/apocalypse-props-payphone.glb",
    "leaf": "world",
-   "sizeBytes": 16028,
+   "sizeBytes": 15956,
    "bounds": {
     "min": [
      -11,
@@ -4574,7 +4577,7 @@
    "filename": "apocalypse-props-propane-tank.glb",
    "relativePath": "props/apocalypse-props-propane-tank.glb",
    "leaf": "world",
-   "sizeBytes": 19260,
+   "sizeBytes": 19188,
    "bounds": {
     "min": [
      -18,
@@ -4609,7 +4612,7 @@
    "filename": "apocalypse-props-radio.glb",
    "relativePath": "props/apocalypse-props-radio.glb",
    "leaf": "world",
-   "sizeBytes": 22744,
+   "sizeBytes": 22672,
    "bounds": {
     "min": [
      -13,
@@ -4644,7 +4647,7 @@
    "filename": "apocalypse-props-rain-barrel.glb",
    "relativePath": "props/apocalypse-props-rain-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 38952,
+   "sizeBytes": 38880,
    "bounds": {
     "min": [
      -12,
@@ -4679,7 +4682,7 @@
    "filename": "apocalypse-props-rooftop-antenna.glb",
    "relativePath": "props/apocalypse-props-rooftop-antenna.glb",
    "leaf": "world",
-   "sizeBytes": 31976,
+   "sizeBytes": 31896,
    "bounds": {
     "min": [
      -11,
@@ -4714,7 +4717,7 @@
    "filename": "apocalypse-props-sandbag-wall.glb",
    "relativePath": "props/apocalypse-props-sandbag-wall.glb",
    "leaf": "world",
-   "sizeBytes": 28740,
+   "sizeBytes": 28660,
    "bounds": {
     "min": [
      -16.9465,
@@ -4749,7 +4752,7 @@
    "filename": "apocalypse-props-scrap-pile.glb",
    "relativePath": "props/apocalypse-props-scrap-pile.glb",
    "leaf": "world",
-   "sizeBytes": 22268,
+   "sizeBytes": 22196,
    "bounds": {
     "min": [
      -17.8638,
@@ -4784,7 +4787,7 @@
    "filename": "apocalypse-props-scrap-shield-wall.glb",
    "relativePath": "props/apocalypse-props-scrap-shield-wall.glb",
    "leaf": "world",
-   "sizeBytes": 36452,
+   "sizeBytes": 36372,
    "bounds": {
     "min": [
      -17.7969,
@@ -4819,7 +4822,7 @@
    "filename": "apocalypse-props-scrap-workbench.glb",
    "relativePath": "props/apocalypse-props-scrap-workbench.glb",
    "leaf": "world",
-   "sizeBytes": 36644,
+   "sizeBytes": 36572,
    "bounds": {
     "min": [
      -20,
@@ -4854,7 +4857,7 @@
    "filename": "apocalypse-props-seed-crates.glb",
    "relativePath": "props/apocalypse-props-seed-crates.glb",
    "leaf": "world",
-   "sizeBytes": 12324,
+   "sizeBytes": 12252,
    "bounds": {
     "min": [
      -16.5312,
@@ -4889,7 +4892,7 @@
    "filename": "apocalypse-props-shipping-container.glb",
    "relativePath": "props/apocalypse-props-shipping-container.glb",
    "leaf": "world",
-   "sizeBytes": 60652,
+   "sizeBytes": 60580,
    "bounds": {
     "min": [
      -25,
@@ -4924,7 +4927,7 @@
    "filename": "apocalypse-props-shopping-cart.glb",
    "relativePath": "props/apocalypse-props-shopping-cart.glb",
    "leaf": "world",
-   "sizeBytes": 64848,
+   "sizeBytes": 64776,
    "bounds": {
     "min": [
      -10,
@@ -4959,7 +4962,7 @@
    "filename": "apocalypse-props-skull-pike.glb",
    "relativePath": "props/apocalypse-props-skull-pike.glb",
    "leaf": "world",
-   "sizeBytes": 25500,
+   "sizeBytes": 25428,
    "bounds": {
     "min": [
      -13,
@@ -4994,7 +4997,7 @@
    "filename": "apocalypse-props-sleeping-bag.glb",
    "relativePath": "props/apocalypse-props-sleeping-bag.glb",
    "leaf": "world",
-   "sizeBytes": 32620,
+   "sizeBytes": 32548,
    "bounds": {
     "min": [
      -18,
@@ -5029,7 +5032,7 @@
    "filename": "apocalypse-props-smoker-grill.glb",
    "relativePath": "props/apocalypse-props-smoker-grill.glb",
    "leaf": "world",
-   "sizeBytes": 48144,
+   "sizeBytes": 48072,
    "bounds": {
     "min": [
      -16,
@@ -5073,7 +5076,7 @@
    "filename": "apocalypse-props-spike-barricade.glb",
    "relativePath": "props/apocalypse-props-spike-barricade.glb",
    "leaf": "world",
-   "sizeBytes": 21296,
+   "sizeBytes": 21224,
    "bounds": {
     "min": [
      -19,
@@ -5108,7 +5111,7 @@
    "filename": "apocalypse-props-stop-sign.glb",
    "relativePath": "props/apocalypse-props-stop-sign.glb",
    "leaf": "world",
-   "sizeBytes": 15888,
+   "sizeBytes": 15816,
    "bounds": {
     "min": [
      -14.8281,
@@ -5143,7 +5146,7 @@
    "filename": "apocalypse-props-survivor-tent.glb",
    "relativePath": "props/apocalypse-props-survivor-tent.glb",
    "leaf": "world",
-   "sizeBytes": 34536,
+   "sizeBytes": 34464,
    "bounds": {
     "min": [
      -19.1094,
@@ -5178,7 +5181,7 @@
    "filename": "apocalypse-props-tire-stack.glb",
    "relativePath": "props/apocalypse-props-tire-stack.glb",
    "leaf": "world",
-   "sizeBytes": 42312,
+   "sizeBytes": 42232,
    "bounds": {
     "min": [
      -14.8436,
@@ -5213,7 +5216,7 @@
    "filename": "apocalypse-props-toolbox.glb",
    "relativePath": "props/apocalypse-props-toolbox.glb",
    "leaf": "world",
-   "sizeBytes": 15364,
+   "sizeBytes": 15292,
    "bounds": {
     "min": [
      -11.5312,
@@ -5248,7 +5251,7 @@
    "filename": "apocalypse-props-traffic-cone.glb",
    "relativePath": "props/apocalypse-props-traffic-cone.glb",
    "leaf": "world",
-   "sizeBytes": 11840,
+   "sizeBytes": 11760,
    "bounds": {
     "min": [
      -17,
@@ -5283,7 +5286,7 @@
    "filename": "apocalypse-props-trash-bags.glb",
    "relativePath": "props/apocalypse-props-trash-bags.glb",
    "leaf": "world",
-   "sizeBytes": 46180,
+   "sizeBytes": 46108,
    "bounds": {
     "min": [
      -14.8468,
@@ -5318,7 +5321,7 @@
    "filename": "apocalypse-props-vending-machine.glb",
    "relativePath": "props/apocalypse-props-vending-machine.glb",
    "leaf": "world",
-   "sizeBytes": 16324,
+   "sizeBytes": 16252,
    "bounds": {
     "min": [
      -15.4635,
@@ -5353,7 +5356,7 @@
    "filename": "apocalypse-props-washing-machine.glb",
    "relativePath": "props/apocalypse-props-washing-machine.glb",
    "leaf": "world",
-   "sizeBytes": 23540,
+   "sizeBytes": 23468,
    "bounds": {
     "min": [
      -9,
@@ -5388,7 +5391,7 @@
    "filename": "apocalypse-props-water-jugs.glb",
    "relativePath": "props/apocalypse-props-water-jugs.glb",
    "leaf": "world",
-   "sizeBytes": 48056,
+   "sizeBytes": 47984,
    "bounds": {
     "min": [
      -16.5,
@@ -5423,7 +5426,7 @@
    "filename": "apocalypse-props-water-tank.glb",
    "relativePath": "props/apocalypse-props-water-tank.glb",
    "leaf": "world",
-   "sizeBytes": 48216,
+   "sizeBytes": 48144,
    "bounds": {
     "min": [
      -11,
@@ -5458,7 +5461,7 @@
    "filename": "apocalypse-props-weapon-locker.glb",
    "relativePath": "props/apocalypse-props-weapon-locker.glb",
    "leaf": "world",
-   "sizeBytes": 43348,
+   "sizeBytes": 43268,
    "bounds": {
     "min": [
      -20,
@@ -5493,7 +5496,7 @@
    "filename": "apocalypse-props-wheelbarrow.glb",
    "relativePath": "props/apocalypse-props-wheelbarrow.glb",
    "leaf": "world",
-   "sizeBytes": 27976,
+   "sizeBytes": 27904,
    "bounds": {
     "min": [
      -9.5,
@@ -5528,7 +5531,7 @@
    "filename": "apocalypse-props-wooden-crate.glb",
    "relativePath": "props/apocalypse-props-wooden-crate.glb",
    "leaf": "world",
-   "sizeBytes": 23096,
+   "sizeBytes": 23016,
    "bounds": {
     "min": [
      -16.5,
@@ -5563,7 +5566,7 @@
    "filename": "apocalypse-props-wooden-palisade.glb",
    "relativePath": "props/apocalypse-props-wooden-palisade.glb",
    "leaf": "world",
-   "sizeBytes": 34200,
+   "sizeBytes": 34120,
    "bounds": {
     "min": [
      -16,
@@ -5598,7 +5601,7 @@
    "filename": "apocalypse-terrain-nature-broken-overpass.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-broken-overpass.glb",
    "leaf": "world",
-   "sizeBytes": 109016,
+   "sizeBytes": 108944,
    "bounds": {
     "min": [
      -70,
@@ -5633,7 +5636,7 @@
    "filename": "apocalypse-terrain-nature-cactus-cluster.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-cactus-cluster.glb",
    "leaf": "world",
-   "sizeBytes": 52556,
+   "sizeBytes": 52484,
    "bounds": {
     "min": [
      -32.75,
@@ -5668,7 +5671,7 @@
    "filename": "apocalypse-terrain-nature-charred-stumps.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-charred-stumps.glb",
    "leaf": "world",
-   "sizeBytes": 47800,
+   "sizeBytes": 47728,
    "bounds": {
     "min": [
      -32.0093,
@@ -5703,7 +5706,7 @@
    "filename": "apocalypse-terrain-nature-concrete-ruins.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-concrete-ruins.glb",
    "leaf": "world",
-   "sizeBytes": 35432,
+   "sizeBytes": 35360,
    "bounds": {
     "min": [
      -43,
@@ -5738,7 +5741,7 @@
    "filename": "apocalypse-terrain-nature-cracked-earth.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-cracked-earth.glb",
    "leaf": "world",
-   "sizeBytes": 41320,
+   "sizeBytes": 41248,
    "bounds": {
     "min": [
      -29.724,
@@ -5773,7 +5776,7 @@
    "filename": "apocalypse-terrain-nature-cracked-road.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-cracked-road.glb",
    "leaf": "world",
-   "sizeBytes": 25584,
+   "sizeBytes": 25512,
    "bounds": {
     "min": [
      -24,
@@ -5808,7 +5811,7 @@
    "filename": "apocalypse-terrain-nature-crater.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-crater.glb",
    "leaf": "world",
-   "sizeBytes": 49972,
+   "sizeBytes": 49900,
    "bounds": {
     "min": [
      -27.5625,
@@ -5843,7 +5846,7 @@
    "filename": "apocalypse-terrain-nature-dead-grass.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-dead-grass.glb",
    "leaf": "world",
-   "sizeBytes": 33824,
+   "sizeBytes": 33752,
    "bounds": {
     "min": [
      -15.8469,
@@ -5878,7 +5881,7 @@
    "filename": "apocalypse-terrain-nature-dead-tree.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-dead-tree.glb",
    "leaf": "world",
-   "sizeBytes": 43256,
+   "sizeBytes": 43184,
    "bounds": {
     "min": [
      -31.4238,
@@ -5913,7 +5916,7 @@
    "filename": "apocalypse-terrain-nature-dry-riverbed.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-dry-riverbed.glb",
    "leaf": "world",
-   "sizeBytes": 71076,
+   "sizeBytes": 71004,
    "bounds": {
     "min": [
      -37,
@@ -5948,7 +5951,7 @@
    "filename": "apocalypse-terrain-nature-fallen-power-pole.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-fallen-power-pole.glb",
    "leaf": "world",
-   "sizeBytes": 32472,
+   "sizeBytes": 32392,
    "bounds": {
     "min": [
      -52.8498,
@@ -5983,7 +5986,7 @@
    "filename": "apocalypse-terrain-nature-flipped-car.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-flipped-car.glb",
    "leaf": "world",
-   "sizeBytes": 79168,
+   "sizeBytes": 79096,
    "bounds": {
     "min": [
      -30.8097,
@@ -6018,7 +6021,7 @@
    "filename": "apocalypse-terrain-nature-oil-slick.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-oil-slick.glb",
    "leaf": "world",
-   "sizeBytes": 16000,
+   "sizeBytes": 15928,
    "bounds": {
     "min": [
      -31.6254,
@@ -6053,7 +6056,7 @@
    "filename": "apocalypse-terrain-nature-rock-mesa.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-rock-mesa.glb",
    "leaf": "world",
-   "sizeBytes": 64412,
+   "sizeBytes": 64340,
    "bounds": {
     "min": [
      -48.1406,
@@ -6088,7 +6091,7 @@
    "filename": "apocalypse-terrain-nature-rubble-pile.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-rubble-pile.glb",
    "leaf": "world",
-   "sizeBytes": 28032,
+   "sizeBytes": 27960,
    "bounds": {
     "min": [
      -22.7083,
@@ -6123,7 +6126,7 @@
    "filename": "apocalypse-terrain-nature-sand-dune.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-sand-dune.glb",
    "leaf": "world",
-   "sizeBytes": 43560,
+   "sizeBytes": 43480,
    "bounds": {
     "min": [
      -32.7511,
@@ -6158,7 +6161,7 @@
    "filename": "apocalypse-terrain-nature-sinkhole.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-sinkhole.glb",
    "leaf": "world",
-   "sizeBytes": 36460,
+   "sizeBytes": 36388,
    "bounds": {
     "min": [
      -41.881,
@@ -6193,7 +6196,7 @@
    "filename": "apocalypse-terrain-nature-toxic-pool.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-toxic-pool.glb",
    "leaf": "world",
-   "sizeBytes": 74968,
+   "sizeBytes": 74896,
    "bounds": {
     "min": [
      -43.3919,
@@ -6239,7 +6242,7 @@
    "filename": "apocalypse-terrain-nature-tumbleweed-patch.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-tumbleweed-patch.glb",
    "leaf": "world",
-   "sizeBytes": 153380,
+   "sizeBytes": 153308,
    "bounds": {
     "min": [
      -35.2833,
@@ -6274,7 +6277,7 @@
    "filename": "apocalypse-terrain-nature-wrecked-sedan.glb",
    "relativePath": "terrain-nature/apocalypse-terrain-nature-wrecked-sedan.glb",
    "leaf": "world",
-   "sizeBytes": 67332,
+   "sizeBytes": 67260,
    "bounds": {
     "min": [
      -34.5312,
@@ -6309,7 +6312,7 @@
    "filename": "apocalypse-vehicles-ambulance.glb",
    "relativePath": "vehicles/apocalypse-vehicles-ambulance.glb",
    "leaf": "world",
-   "sizeBytes": 41056,
+   "sizeBytes": 40984,
    "bounds": {
     "min": [
      -27,
@@ -6363,7 +6366,7 @@
    "filename": "apocalypse-vehicles-armored-van.glb",
    "relativePath": "vehicles/apocalypse-vehicles-armored-van.glb",
    "leaf": "world",
-   "sizeBytes": 56188,
+   "sizeBytes": 56116,
    "bounds": {
     "min": [
      -28,
@@ -6416,7 +6419,7 @@
    "filename": "apocalypse-vehicles-dune-buggy.glb",
    "relativePath": "vehicles/apocalypse-vehicles-dune-buggy.glb",
    "leaf": "world",
-   "sizeBytes": 51572,
+   "sizeBytes": 51492,
    "bounds": {
     "min": [
      -27,
@@ -6468,7 +6471,7 @@
    "filename": "apocalypse-vehicles-garbage-truck.glb",
    "relativePath": "vehicles/apocalypse-vehicles-garbage-truck.glb",
    "leaf": "world",
-   "sizeBytes": 104172,
+   "sizeBytes": 104100,
    "bounds": {
     "min": [
      -31,
@@ -6536,7 +6539,7 @@
    "filename": "apocalypse-vehicles-gyrocopter.glb",
    "relativePath": "vehicles/apocalypse-vehicles-gyrocopter.glb",
    "leaf": "world",
-   "sizeBytes": 42688,
+   "sizeBytes": 42608,
    "bounds": {
     "min": [
      -33,
@@ -6595,7 +6598,7 @@
    "filename": "apocalypse-vehicles-motorbike.glb",
    "relativePath": "vehicles/apocalypse-vehicles-motorbike.glb",
    "leaf": "world",
-   "sizeBytes": 58216,
+   "sizeBytes": 58136,
    "bounds": {
     "min": [
      -13,
@@ -6647,7 +6650,7 @@
    "filename": "apocalypse-vehicles-pickup-truck.glb",
    "relativePath": "vehicles/apocalypse-vehicles-pickup-truck.glb",
    "leaf": "world",
-   "sizeBytes": 69860,
+   "sizeBytes": 69788,
    "bounds": {
     "min": [
      -28,
@@ -6699,7 +6702,7 @@
    "filename": "apocalypse-vehicles-rv-camper.glb",
    "relativePath": "vehicles/apocalypse-vehicles-rv-camper.glb",
    "leaf": "world",
-   "sizeBytes": 75828,
+   "sizeBytes": 75756,
    "bounds": {
     "min": [
      -33.5,
@@ -6755,7 +6758,7 @@
    "filename": "apocalypse-vehicles-school-bus.glb",
    "relativePath": "vehicles/apocalypse-vehicles-school-bus.glb",
    "leaf": "world",
-   "sizeBytes": 55120,
+   "sizeBytes": 55048,
    "bounds": {
     "min": [
      -30,
@@ -6807,7 +6810,7 @@
    "filename": "apocalypse-vehicles-scrap-tank.glb",
    "relativePath": "vehicles/apocalypse-vehicles-scrap-tank.glb",
    "leaf": "world",
-   "sizeBytes": 111352,
+   "sizeBytes": 117204,
    "bounds": {
     "min": [
      -37.0312,
@@ -6828,9 +6831,9 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
+    "attack",
     "idle",
-    "move",
-    "attack"
+    "move"
    ],
    "sockets": [
     "socket-exhaust",
@@ -6874,7 +6877,7 @@
    "filename": "apocalypse-vehicles-tractor.glb",
    "relativePath": "vehicles/apocalypse-vehicles-tractor.glb",
    "leaf": "world",
-   "sizeBytes": 61348,
+   "sizeBytes": 61276,
    "bounds": {
     "min": [
      -28.9375,
@@ -6929,7 +6932,7 @@
    "filename": "apocalypse-vehicles-war-pickup.glb",
    "relativePath": "vehicles/apocalypse-vehicles-war-pickup.glb",
    "leaf": "world",
-   "sizeBytes": 60188,
+   "sizeBytes": 60108,
    "bounds": {
     "min": [
      -28,
@@ -6981,7 +6984,7 @@
    "filename": "apocalypse-avatar-parts.glb",
    "relativePath": "avatar/apocalypse-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1069060,
+   "sizeBytes": 1072132,
    "bounds": {
     "min": [
      -0.1424,
@@ -7024,7 +7027,7 @@
    "filename": "apocalypse-characters-skins-hazmat.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-hazmat.glb",
    "leaf": "characters",
-   "sizeBytes": 319536,
+   "sizeBytes": 319428,
    "bounds": {
     "min": [
      -0.09,
@@ -7059,7 +7062,7 @@
    "filename": "apocalypse-characters-skins-mechanic.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-mechanic.glb",
    "leaf": "characters",
-   "sizeBytes": 289280,
+   "sizeBytes": 289168,
    "bounds": {
     "min": [
      -0.12,
@@ -7094,7 +7097,7 @@
    "filename": "apocalypse-characters-skins-raider.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-raider.glb",
    "leaf": "characters",
-   "sizeBytes": 364424,
+   "sizeBytes": 364316,
    "bounds": {
     "min": [
      -0.08,
@@ -7129,7 +7132,7 @@
    "filename": "apocalypse-characters-skins-survivor.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-survivor.glb",
    "leaf": "characters",
-   "sizeBytes": 305400,
+   "sizeBytes": 305288,
    "bounds": {
     "min": [
      -0.08,
@@ -7164,7 +7167,7 @@
    "filename": "apocalypse-characters-skins-wasteland-ranger.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-wasteland-ranger.glb",
    "leaf": "characters",
-   "sizeBytes": 433884,
+   "sizeBytes": 433776,
    "bounds": {
     "min": [
      -0.13,
@@ -7199,7 +7202,7 @@
    "filename": "apocalypse-characters-skins-zombie.glb",
    "relativePath": "characters-skins/apocalypse-characters-skins-zombie.glb",
    "leaf": "characters",
-   "sizeBytes": 90372,
+   "sizeBytes": 90264,
    "bounds": {
     "min": [
      -0.08,
