@@ -3,3 +3,4 @@ out/
 *.tsbuildinfo
 __pycache__/
 *.pyc
+covers/out/
