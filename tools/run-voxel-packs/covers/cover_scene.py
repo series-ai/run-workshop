@@ -192,15 +192,15 @@ scene.world = world
 world.use_nodes = True
 bg = world.node_tree.nodes["Background"]
 bg.inputs["Color"].default_value = (*spec.get("fill", (0.62, 0.72, 1.0)), 1.0)
-bg.inputs["Strength"].default_value = spec.get("fill_strength", 0.72)
+bg.inputs["Strength"].default_value = spec.get("fill_strength", 0.4)
 sun = bpy.data.objects.new("key", bpy.data.lights.new("key", "SUN"))
-sun.data.energy = spec.get("key_strength", 3.9)
+sun.data.energy = spec.get("key_strength", 5.2)
 sun.data.color = spec.get("key", (1.0, 0.84, 0.64))
 sun.data.angle = math.radians(14)
-sun.rotation_euler = (math.radians(spec.get("key_tilt", 60)), 0, math.radians(spec.get("key_turn", -140)))  # from the front-left (a sun points down its local -Z)
+sun.rotation_euler = (math.radians(spec.get("key_tilt", 63)), 0, math.radians(spec.get("key_turn", -122)))  # from the front-left (a sun points down its local -Z)
 scene.collection.objects.link(sun)
 rim = bpy.data.objects.new("rim", bpy.data.lights.new("rim", "SUN"))
-rim.data.energy = spec.get("rim_strength", 1.6)
+rim.data.energy = spec.get("rim_strength", 3.0)
 rim.data.color = spec.get("rim", (0.7, 0.82, 1.0))
 rim.data.angle = math.radians(10)
 rim.rotation_euler = (math.radians(65), 0, math.radians(25))  # from behind-right
@@ -237,12 +237,13 @@ for _ in range(6):  # fit: push the camera until every corner lands inside the f
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     # Want x in [m, 1-m] and y in [logo*0.55, 1-m] (the content may run a little under the logo).
     m = spec.get("margin", 0.03)
-    want_w, want_h = spec.get("overflow", 1.2) * (1 - 2 * m), 1 - m - logo * 0.3  # the sides may crop: a cover, not a catalogue
+    bottom = spec.get("bottom", logo * 0.3)  # where the lowest feet land: may tuck under the logo's word
+    want_w, want_h = spec.get("overflow", 1.2) * (1 - 2 * m), 1 - m - bottom  # the sides may crop: a cover, not a catalogue
     k = max((x1 - x0) / want_w, (y1 - y0) / want_h)
     dist *= k
     # shift the aim so the content box sits where we want it
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
-    want_cy = (logo * 0.3 + 1 - m) / 2
+    want_cy = (bottom + 1 - m) / 2
     right = cam.matrix_world.to_3x3() @ Vector((1, 0, 0))
     up = cam.matrix_world.to_3x3() @ Vector((0, 1, 0))
     span = 2 * dist * math.tan(cam.data.angle / 2)

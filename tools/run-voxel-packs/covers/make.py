@@ -37,22 +37,26 @@ PACKS = {  # pack key -> (stage dir, theme dir, file prefix, ground colour)
 # props with the smallest critters in front. The camera frames the front two rows.
 WORLD = {
     "fantasy": dict(
-        front=["props/barrel", "creatures/slime", "props/market-stall", "creatures/goblin", "animated-props/bubbling-cauldron", "props/hay-bales"],
-        mid=["creatures/unicorn", "creatures/griffin", ("creatures/dragon", "attack", 0.3), "creatures/skeleton-knight", "creatures/centaur"],
-        back=["buildings/windmill", "buildings/tavern", "buildings/castle-keep", "buildings/wizard-tower", "buildings/bakery"]),
+        front=["creatures/slime", "props/market-stall", "creatures/goblin"],
+        mid=["creatures/griffin", ("creatures/dragon", "attack", 0.3), "creatures/unicorn"],
+        back=["buildings/windmill", "buildings/tavern", "buildings/castle-keep", "buildings/wizard-tower"]),
     "space": dict(
-        front=["props/cargo-crate", "creatures/alien-grunt", "props/holo-sign", "creatures/robot-dog", "animated-props/planet-globe", "props/fuel-barrel"],
-        mid=["creatures/alien-scout", "creatures/astro-crab", ("creatures/mech-walker", "attack", 0.3), "creatures/tentacle-alien", "creatures/ufo-drone"],
-        back=["buildings/hab-dome", "buildings/control-tower", "buildings/spaceport-terminal", "buildings/cantina", "buildings/observatory"]),
+        front=["creatures/robot-dog", "creatures/alien-grunt", "creatures/ufo-drone"],
+        mid=[("creatures/mech-walker", "attack", 0.3)],
+        back=["buildings/hab-dome", "buildings/control-tower", "buildings/observatory"]),
     "monster": dict(
-        front=["props/jack-o-lantern", "creatures/imp", "props/gravestone-rounded", "animated-props/witch-cauldron", "creatures/vampire-bat", "props/pumpkin-patch"],
-        mid=["creatures/zombie-ghoul", "creatures/werewolf", ("creatures/vampire-lord", "attack", 0.35), "creatures/wailing-ghost", "creatures/mummy"],
+        front=["props/jack-o-lantern", "creatures/imp", "animated-props/witch-cauldron", "creatures/vampire-bat"],
+        mid=["creatures/werewolf", ("creatures/vampire-lord", "attack", 0.35), "creatures/wailing-ghost", "creatures/zombie-ghoul"],
         back=["buildings/witch-hut", "buildings/haunted-manor", "buildings/gothic-chapel", "buildings/potion-shop", "buildings/haunted-windmill"]),
     "apocalypse": dict(
         front=["props/oil-drum", "creatures/rad-rat", "animated-props/burning-barrel", "props/shopping-cart", "creatures/crow", "props/tire-stack"],
         mid=["creatures/zombie-walker", "creatures/mutant-dog", ("creatures/mutant-behemoth", "attack", 0.6), "creatures/raider-bot", "creatures/zombie-runner"],
         back=["buildings/gas-station", "buildings/roadside-diner", "buildings/water-tower", "buildings/trading-post", "buildings/watchtower"]),
 }
+# How far the town's front rows may run past the frame edges (less = the camera stands back).
+WORLD_OVERFLOW = {"fantasy": 0.98, "space": 0.72}
+WORLD_BEHIND = {"space": 1.8}
+WORLD_GAP = {"space": 1.1}  # its crew spread out in front of the mech  # the space hero (the tall mech) stands further back, behind its crew
 # Characters: the pack's six avatar skins hanging out in front of a few props and buildings.
 CHARACTER_SET = {
     "fantasy": dict(props=["props/barrel", "props/market-stall", "props/crate"], back=["buildings/tavern", "buildings/castle-tower", "buildings/bakery"]),
@@ -176,16 +180,16 @@ def ui_cover(pack: str, bg: Image.Image) -> Image.Image:
     banner = up(ui("general-header-banner"), 2)
     bx, by = dx + (dialog.width - banner.width) // 2, 34
     out.alpha_composite(banner, (bx, by))
-    label(out, title, (bx + banner.width // 2, by + banner.height // 2 - 4), 54, big=True)
+    label(out, title, (bx + banner.width // 2, by + round(banner.height * 0.53)), 54, big=True)  # the face sits a little low in the art
     close = up(ui("general-icon-close"), 1)
     out.alpha_composite(close, (dx + dialog.width - close.width + 14, dy - 14))
     frame = up(ui("general-progress-frame"), 2)
     for k, (fill, share, name) in enumerate((("health", 0.8, "HP"), ("energy", 0.55, "MP"), ("xp", 0.35, "XP"))):
-        fx, fy = dx + (dialog.width - frame.width) // 2 + 34, 210 + k * 70
+        fx, fy = dx + (dialog.width - frame.width) // 2, 212 + k * 70  # centred: even margins on both sides
         out.alpha_composite(frame, (fx, fy))
         bar = up(ui(f"general-progress-fill-{fill}"), 2)
         out.alpha_composite(bar.crop((0, 0, round(bar.width * share), bar.height)), (fx + 16, fy + 16))
-        label(out, name, (fx - 40, fy + frame.height // 2), 34)
+        label(out, name, (fx + 46, fy + frame.height // 2 - 1), 30)  # the label rides on the bar
     slots = ["general-slot-filled", "general-slot-selected", "general-slot-filled", "general-slot-locked"]
     s0 = up(ui(slots[0]), 2)
     sx0 = dx + (dialog.width - 4 * s0.width - 3 * 20) // 2
@@ -200,11 +204,15 @@ def ui_cover(pack: str, bg: Image.Image) -> Image.Image:
         x = dx + dialog.width // 2 - b.width - 12 + k * (b.width + 24)
         out.alpha_composite(b, (x, 572))
         label(out, text, (x + b.width // 2, 572 + b.height // 2 - 3), 36)
-    for k, r in enumerate(("common", "uncommon", "rare", "epic", "legendary")):
+    # side tabs: the rarity frames holding the pack's own UI glyphs (model sprites read badly this small)
+    glyphs = ("general-icon-plus", "general-icon-check", "general-icon-arrow", "general-checkbox-on", "general-icon-close")
+    for k, (r, glyph) in enumerate(zip(("common", "uncommon", "rare", "epic", "legendary"), glyphs)):
         g = up(ui(f"rarities-rarity-{r}"), 1.5)
         gx, gy = dx - g.width // 2 - 6, dy + 24 + k * (g.height + 10)
         out.alpha_composite(g, (gx, gy))
-        icon = icon_fit(stage, prefix, ICONS[pack][k], g.width - 26)
+        icon = ui(glyph)
+        icon = icon.crop(icon.getchannel("A").getbbox())
+        icon = up(icon, max(1, (g.width - 40) // max(icon.size)))
         out.alpha_composite(icon, (gx + (g.width - icon.width) // 2, gy + (g.height - icon.height) // 2))
     return out
 
@@ -232,8 +240,8 @@ def main() -> None:
         scene = os.path.join(work, f"{pack}-world.png")
         if want("world"):
             w = WORLD[pack]
-            render({"ground": list(ground), "yaw": 14, "pitch": 11, "lens": 70, "overflow": 1.1,
-                    "rows": [{"items": row(pack, w["front"]), "gap": 0.25, "stagger": 0.25, "behind": 0.5},
+            render({"ground": list(ground), "yaw": 14, "pitch": 10, "lens": 60, "overflow": WORLD_OVERFLOW.get(pack, 1.15), "bottom": 0.16,
+                    "rows": [{"items": row(pack, w["front"]), "gap": WORLD_GAP.get(pack, 0.25), "stagger": 0.25, "behind": WORLD_BEHIND.get(pack, 0.5)},
                              {"items": row(pack, w["mid"]), "gap": 0.35, "stagger": 0.45, "behind": 1.2},
                              {"items": row(pack, w["back"]), "gap": 0.6, "stagger": 0.8, "frame": False}]}, scene, blender)
         if want("world"):
@@ -243,8 +251,8 @@ def main() -> None:
             chars = os.path.join(work, f"{pack}-characters.png")
             c = CHARACTER_SET[pack]
             skin = lambda f: {"path": os.path.join(STAGE, stage, "3D", "characters", "characters-skins", f), "turn": SKIN_TURN, "arms": 65}  # noqa: E731
-            render({"ground": list(ground), "yaw": 12, "pitch": 8, "lens": 70, "overflow": 1.25, "logo_band": 0.26,
-                    "rows": [{"items": [skin(f) for f in skins[:3]], "gap": 0.3, "stagger": 0.08, "behind": 0.2},
+            render({"ground": list(ground), "yaw": 12, "pitch": 8, "lens": 60, "overflow": 1.3, "bottom": 0.16,
+                    "rows": [{"items": [skin(f) for f in skins[:3]], "gap": 0.3, "stagger": 0.08, "behind": 0.55},
                              {"items": [skin(f) for f in skins[3:]], "gap": 0.3, "stagger": 0.08, "behind": 0.4, "shift": 0.42},
                              # the avatars are built far smaller than the world models: size the set to them
                              {"items": [dict(i, height=0.75) for i in row(pack, c["props"])], "gap": 0.9, "stagger": 0.15, "behind": 0.6, "frame": False},
