@@ -37,9 +37,9 @@ PACKS = {  # pack key -> (stage dir, theme dir, file prefix, ground colour)
 # props with the smallest critters in front. The camera frames the front two rows.
 WORLD = {
     "fantasy": dict(
-        front=["creatures/slime", "props/market-stall", "creatures/goblin"],
-        mid=["creatures/griffin", ("creatures/dragon", "attack", 0.3), "creatures/unicorn"],
-        back=["buildings/windmill", "buildings/tavern", "buildings/castle-keep", "buildings/wizard-tower"]),
+        front=["creatures/goblin", "creatures/slime"],
+        mid=["creatures/unicorn", {"rel": "creatures/dragon", "clip": "attack", "t": 0.15, "turn": -35}, "creatures/griffin"],
+        back=["buildings/windmill", "props/market-stall", "buildings/tavern", "buildings/castle-keep", "buildings/wizard-tower"]),
     "space": dict(
         front=["creatures/robot-dog", "creatures/alien-grunt", "creatures/ufo-drone"],
         mid=[("creatures/mech-walker", "attack", 0.3)],
@@ -56,7 +56,8 @@ WORLD = {
 # How far the town's front rows may run past the frame edges (less = the camera stands back).
 WORLD_OVERFLOW = {"fantasy": 0.98, "space": 0.72}
 WORLD_BEHIND = {"space": 1.8}
-WORLD_GAP = {"space": 1.1}  # its crew spread out in front of the mech  # the space hero (the tall mech) stands further back, behind its crew
+WORLD_GAP = {"space": 1.1}  # space: a crew spread in front of the mech
+FRONT_GAP_WIDTHS = {"fantasy": 4.0}  # fantasy: the goblin and slime step aside, clear of the dragon
 # Characters: the pack's six avatar skins hanging out in front of a few props and buildings.
 CHARACTER_SET = {
     "fantasy": dict(props=["props/barrel", "props/market-stall", "props/crate"], back=["buildings/tavern", "buildings/castle-tower", "buildings/bakery"]),
@@ -88,6 +89,9 @@ def glb(pack: str, rel: str, leaf: str = "world") -> str:
 def row(pack, items, leaf="world"):
     out = []
     for it in items:
+        if isinstance(it, dict):  # {"rel": ..., plus any cover_scene item keys (clip, t, turn, scale, dx, dy)}
+            out.append({**{k: v for k, v in it.items() if k != "rel"}, "path": glb(pack, it["rel"], leaf)})
+            continue
         rel, clip, t = (it, "", 0.0) if isinstance(it, str) else it
         out.append({"path": glb(pack, rel, leaf), "clip": clip, "t": t})
     return out
@@ -241,7 +245,8 @@ def main() -> None:
         if want("world"):
             w = WORLD[pack]
             render({"ground": list(ground), "yaw": 14, "pitch": 10, "lens": 60, "overflow": WORLD_OVERFLOW.get(pack, 1.15), "bottom": 0.16,
-                    "rows": [{"items": row(pack, w["front"]), "gap": WORLD_GAP.get(pack, 0.25), "stagger": 0.25, "behind": WORLD_BEHIND.get(pack, 0.5)},
+                    "rows": [{"items": row(pack, w["front"]), "gap": WORLD_GAP.get(pack, 0.25), "stagger": 0.25, "behind": WORLD_BEHIND.get(pack, 0.5),
+                              **({"gap_widths": FRONT_GAP_WIDTHS[pack]} if pack in FRONT_GAP_WIDTHS else {})},
                              {"items": row(pack, w["mid"]), "gap": 0.35, "stagger": 0.45, "behind": 1.2},
                              {"items": row(pack, w["back"]), "gap": 0.6, "stagger": 0.8, "frame": False}]}, scene, blender)
         if want("world"):
@@ -251,7 +256,7 @@ def main() -> None:
             chars = os.path.join(work, f"{pack}-characters.png")
             c = CHARACTER_SET[pack]
             skin = lambda f: {"path": os.path.join(STAGE, stage, "3D", "characters", "characters-skins", f), "turn": SKIN_TURN, "arms": 65}  # noqa: E731
-            render({"ground": list(ground), "yaw": 12, "pitch": 8, "lens": 60, "overflow": 1.3, "bottom": 0.16,
+            render({"ground": list(ground), "yaw": 12, "pitch": 8, "lens": 60, "overflow": 1.3, "bottom": 0.2, "align": "feet",
                     "rows": [{"items": [skin(f) for f in skins[:3]], "gap": 0.3, "stagger": 0.08, "behind": 0.55},
                              {"items": [skin(f) for f in skins[3:]], "gap": 0.3, "stagger": 0.08, "behind": 0.4, "shift": 0.42},
                              # the avatars are built far smaller than the world models: size the set to them

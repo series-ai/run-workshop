@@ -141,8 +141,10 @@ for r, row in enumerate(spec["rows"]):
             holder.scale = (item["height"] / max(1e-6, hi.z - lo.z),) * 3
             lo, hi = bounds(objs)
         items.append((holder, objs, lo, hi, item))
-    gap = row.get("gap", 0.4)
     widths = [hi.x - lo.x for _, _, lo, hi, _ in items]
+    gap = row.get("gap", 0.4)
+    if "gap_widths" in row:  # a gap measured in the row's own mean model width (packs use different units)
+        gap = row["gap_widths"] * sum(widths) / len(widths)
     total = sum(widths) + gap * (len(items) - 1)
     depth = max(hi.y - lo.y for _, _, lo, hi, _ in items)
     x = -total / 2 + row.get("shift", 0.0)  # a sideways shift, so a row can stand in the gaps of the one in front
@@ -247,7 +249,13 @@ for _ in range(6):  # fit: push the camera until every corner lands inside the f
     right = cam.matrix_world.to_3x3() @ Vector((1, 0, 0))
     up = cam.matrix_world.to_3x3() @ Vector((0, 1, 0))
     span = 2 * dist * math.tan(cam.data.angle / 2)
-    target += right * (cx - 0.5) * span * k + up * (cy - want_cy) * span * k
+    if spec.get("align") == "feet":
+        # pin the lowest feet to `bottom` (e.g. tucked under the logo's word) even when the
+        # width decides the zoom: the group then fills upward instead of floating in the middle
+        y0_after = 0.5 + (y0 - 0.5) / k
+        target += right * (cx - 0.5) * span * k + up * (y0_after - bottom) * span * k
+    else:
+        target += right * (cx - 0.5) * span * k + up * (cy - want_cy) * span * k
 cam.location = target + d * dist
 cam.rotation_euler = (target - cam.location).to_track_quat("-Z", "Y").to_euler()
 
