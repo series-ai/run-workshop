@@ -32,13 +32,14 @@ PACKS = {  # pack key -> (stage dir, theme dir, file prefix, ground colour)
     "apocalypse": ("run-voxel-post-apocalypse", "post-apocalypse", "apocalypse", (0.30, 0.22, 0.13)),
 }
 
+DRAGON_T = float(os.environ.get("DRAGON_T", 0.667))  # the fantasy hero mid-lunge, jaw open (fire breath at frame 20)
 # World scenes are a little town: buildings along the back (they may crop at the top),
 # creatures hanging out in the middle (the hero in the centre, posed mid-attack), and
 # props with the smallest critters in front. The camera frames the front two rows.
 WORLD = {
     "fantasy": dict(
-        front=["creatures/goblin", "creatures/slime"],
-        mid=["creatures/unicorn", {"rel": "creatures/dragon", "clip": "attack", "t": 0.15, "turn": -35}, "creatures/griffin"],
+        front=["creatures/goblin", {"rel": "creatures/dragon", "clip": "attack", "t": DRAGON_T, "turn": -35}, "creatures/slime"],
+        mid=["creatures/unicorn", "creatures/griffin"],
         back=["buildings/windmill", "props/market-stall", "buildings/tavern", "buildings/castle-keep", "buildings/wizard-tower"]),
     "space": dict(
         front=["creatures/robot-dog", "creatures/alien-grunt", "creatures/ufo-drone"],
@@ -57,7 +58,7 @@ WORLD = {
 WORLD_OVERFLOW = {"fantasy": 0.98, "space": 0.72}
 WORLD_BEHIND = {"space": 1.8}
 WORLD_GAP = {"space": 1.1}  # space: a crew spread in front of the mech
-FRONT_GAP_WIDTHS = {"fantasy": 4.0}  # fantasy: the goblin and slime step aside, clear of the dragon
+FRONT_GAP_WIDTHS = {}
 # Characters: the pack's six avatar skins hanging out in front of a few props and buildings.
 CHARACTER_SET = {
     "fantasy": dict(props=["props/barrel", "props/market-stall", "props/crate"], back=["buildings/tavern", "buildings/castle-tower", "buildings/bakery"]),
@@ -244,7 +245,7 @@ def main() -> None:
         scene = os.path.join(work, f"{pack}-world.png")
         if want("world"):
             w = WORLD[pack]
-            render({"ground": list(ground), "yaw": 14, "pitch": 10, "lens": 60, "overflow": WORLD_OVERFLOW.get(pack, 1.15), "bottom": 0.16,
+            render({"ground": list(ground), "yaw": 14, "pitch": 10, "lens": 60, "overflow": WORLD_OVERFLOW.get(pack, 1.15), "bottom": 0.16, **({"align": "feet", "bottom": 0.2} if pack == "fantasy" else {}),
                     "rows": [{"items": row(pack, w["front"]), "gap": WORLD_GAP.get(pack, 0.25), "stagger": 0.25, "behind": WORLD_BEHIND.get(pack, 0.5),
                               **({"gap_widths": FRONT_GAP_WIDTHS[pack]} if pack in FRONT_GAP_WIDTHS else {})},
                              {"items": row(pack, w["mid"]), "gap": 0.35, "stagger": 0.45, "behind": 1.2},
