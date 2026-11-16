@@ -37,6 +37,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import clips_lib  # noqa: E402
 
 args = sys.argv[sys.argv.index('--') + 1:]
+# Per-model data (faces.json, tails.json): this folder, or RIG_DATA for another pack on the same rig (Chonky Cats).
+DATA = os.environ.get('RIG_DATA') or os.path.dirname(os.path.abspath(__file__))
+if os.environ.get('CLIPS_MODULE'):   # another pack's clip set on the same rig (clips_cat.py)
+    import importlib
+    sys.path.append(DATA)   # appended: a same-named module here never shadows chunky-toy's
+    clips_lib = importlib.import_module(os.environ['CLIPS_MODULE'])
 src, dst = args[:2]
 png = args[2] if len(args) > 2 and args[2] else None
 clips_path = args[3] if len(args) > 3 else None
@@ -208,8 +214,9 @@ def tail_like(co):
 # Curled tails (tails.json, picked by hand): the coil lies on the rump, where the search
 # above can't tell coil from bum. Every vertex in the coil is tail, and the bones run from
 # where it leaves the body through the coil, so the whole curl wags as one piece.
-curl_hint = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tails.json'))).get(
+curl_hint = json.load(open(os.path.join(DATA, 'tails.json'))).get(
     os.path.basename(dst)[:-4])
+curl_hint = curl_hint if curl_hint and 'curl' in curl_hint else None   # traced paths are handled below
 if curl_hint:
     cy, cz, cr = curl_hint['curl']
     centre_c = Vector((0, cy, cz))
@@ -221,6 +228,63 @@ if curl_hint:
     for i in tail_set:
         tail_kd.insert(Vector(P[i]), i)
     tail_kd.balance()
+# Traced tails (tails.json "path", picked by hand): the tail's centreline and radius from a
+# side render. Upright cat tails rise from the rump, where the search above can't tell
+# tail from bum. Every vertex inside the tube is tail; weights follow distance along the
+# path (the tail weighting below), so the tail bends smoothly from a soft root.
+path_hint = json.load(open(os.path.join(DATA, 'tails.json'))).get(os.path.basename(dst)[:-4])
+path_hint = path_hint if path_hint and 'path' in path_hint else None
+if path_hint:
+    path_pts = [Vector((0, py, pz)) for py, pz in path_hint['path']]
+    path_r = path_hint['r']
+    seg_len = [(b - a).length for a, b in zip(path_pts, path_pts[1:])]
+    path_len = sum(seg_len)
+
+    def on_path(co):
+        """(distance to the centreline, arc fraction 0..1 along it; < 0 before the base)."""
+        best = (1e9, 0.0)
+        run = 0.0
+        for k, (a, b) in enumerate(zip(path_pts, path_pts[1:])):
+            ab = b - a
+            u = (co - a).dot(ab) / ab.length_squared
+            last = k == len(path_pts) - 2
+            uc = min(1.6 if last else 1.0, max(0.0 if k else -1.0, u))   # the first segment extends back into the
+            # body, the last one past the traced tip (a trace that stops short of the real tip)
+            d = (co - (a + ab * uc)).length
+            if d < best[0]:
+                best = (d, min(1.0, (run + uc * seg_len[k]) / path_len))
+            run += seg_len[k]
+        return best
+
+    def radius_at(f):
+        f = min(1.0, max(0.0, f)) * (len(path_r) - 1)
+        k = min(int(f), len(path_r) - 2)
+        return path_r[k] + (path_r[k + 1] - path_r[k]) * (f - k)
+
+    tail_set = set()
+    for i, co in enumerate(P):
+        d, f = on_path(Vector(co))
+        if f >= 0 and d < radius_at(f):
+            tail_set.add(i)
+    # A hand trace is never exactly centred: past the root (where the tail hangs in free air)
+    # grow along the mesh to anything up to twice the radius, so no tail-surface vertex is
+    # left on the hips (it would tear when the tail bends).
+    todo = list(tail_set)
+    while todo:
+        i = todo.pop()
+        for j in adj[i]:
+            if j in tail_set:
+                continue
+            d, f = on_path(Vector(P[j]))
+            if f >= 0.2 and d < 2 * radius_at(f):
+                tail_set.add(j)
+                todo.append(j)
+    tail_kd = KDTree(max(1, len(tail_set)))
+    for i in tail_set:
+        tail_kd.insert(Vector(P[i]), i)
+    tail_kd.balance()
+    tail_base = path_pts[0]
+
 tail_idx = [i for i in tail_set if (Vector(P[i]) - tail_base).length >= 0.03]
 
 if os.environ.get('TAIL_DEBUG') and tail_set:
@@ -228,7 +292,9 @@ if os.environ.get('TAIL_DEBUG') and tail_set:
     print('TDBG base', np.round(tail_base, 3), 'n', len(tail_set), 'z range', T_[:, 2].min().round(3), T_[:, 2].max().round(3),
           'y range', T_[:, 1].min().round(3), T_[:, 1].max().round(3), 'x max', np.abs(T_[:, 0]).max().round(3),
           'spine', round(spine_z, 3), 'belly', round(belly_z, 3), 'rump', round(rump_y, 3), 'plume', plume)
-if len(tail_idx) >= 8:  # fewer is a stray bit of rump, not a tail (Corgi, Pomeranian)
+if path_hint and len(tail_idx) < 8:
+    raise SystemExit(f'tails.json path for {os.path.basename(dst)} catches only {len(tail_idx)} vertices: retrace it')
+if len(tail_idx) >= 8 or path_hint:  # fewer is a stray bit of rump, not a tail (Corgi, Pomeranian)
     pts = P[tail_idx]
     dist = np.linalg.norm(pts - np.array(tail_base), axis=1)
     tail_tip = Vector(pts[int(np.argmax(dist))])
@@ -241,6 +307,15 @@ if len(tail_idx) >= 8:  # fewer is a stray bit of rump, not a tail (Corgi, Pomer
     if curl_hint:   # base -> into the coil -> its centre -> out the far side
         out_dir = (centre_c - tail_base).normalized()
         tail_joints = [tail_base, tail_base.lerp(centre_c, 0.5), centre_c, centre_c + out_dir * 0.6 * cr]
+    if path_hint:   # bones evenly along the traced path
+        def at(f):
+            f *= path_len
+            for (a, b), L_ in zip(zip(path_pts, path_pts[1:]), seg_len):
+                if f <= L_:
+                    return a.lerp(b, f / L_)
+                f -= L_
+            return path_pts[-1].copy()
+        tail_joints = [at(0.0), at(1 / 3), at(2 / 3), at(1.0)]
     tail_bob = False
 else:  # bobbed or no visible tail: a short stub pointing back and up
     stub = Vector((0, math.cos(TAIL_ANGLE), math.sin(TAIL_ANGLE))) * 0.02
@@ -271,14 +346,22 @@ print('LANDMARKS', dict(y_front=y_front, y_back=y_back, x_front=x_front, x_back=
 # Cut the muzzle along the mouth line and split it, so the jaw can open. Behind the
 # lips: a dark mouth (moves with the head) and a tongue (moves with the jaw). The skin
 # is drawn double-sided so an open mouth never shows a see-through gap.
+# faces.json "mouth_w": cut only this fraction of the muzzle's width (cats: a small mouth under
+# the nose; across a wide flat cat face the full cut left lip ledges and creases over the cheeks)
+face_opts = json.load(open(os.path.join(DATA, 'faces.json'))).get(os.path.basename(dst)[:-4], {})
+mouth_w = face_opts.get('mouth_w', 9.0)
 bm = bmesh.new()
 bm.from_mesh(mesh.data)
 front = [f for f in bm.faces
-         if f.calc_center_median().y < hinge_y and chin_z - 0.03 < f.calc_center_median().z < nose_z + 0.03]
+         if f.calc_center_median().y < hinge_y and chin_z - 0.03 < f.calc_center_median().z < nose_z + 0.03
+         and abs(f.calc_center_median().x) < mouth_w * muzzle_w]
 geom = list({v for f in front for v in f.verts}) + list({e for f in front for e in f.edges}) + front
-cut = bmesh.ops.bisect_plane(bm, geom=geom, plane_co=(0, 0, mouth_z), plane_no=(0, 0, 1))['geom_cut']
-lips = [e for e in cut if isinstance(e, bmesh.types.BMEdge) and all(v.co.y < hinge_y - 1e-4 for v in e.verts)]
-bmesh.ops.split_edges(bm, edges=lips)
+if mouth_w > 0:
+    cut = bmesh.ops.bisect_plane(bm, geom=geom, plane_co=(0, 0, mouth_z), plane_no=(0, 0, 1))['geom_cut']
+    lips = [e for e in cut if isinstance(e, bmesh.types.BMEdge) and all(v.co.y < hinge_y - 1e-4 for v in e.verts)]
+    bmesh.ops.split_edges(bm, edges=lips)
+# mouth_w 0 (cats): no cut at all. The lower muzzle is still tagged for the jaw, so it drops the
+# chin smoothly; a cut through a flat cat face left seams round the muzzle even when closed.
 part = bm.verts.layers.int.new('part')  # 1 = lower lip (jaw), 2 = mouth (head), 3 = tongue (jaw)
 for v in bm.verts:
     if v.co.y < hinge_y and v.link_faces:
@@ -329,10 +412,13 @@ def blob(center, radii, mat, tag):
 
 gap = nose_z - chin_z
 mouth_len = hinge_y - snout_y
+if mouth_w <= 0:   # no cut: no mouth or tongue behind the lips either
+    blob = lambda *a, **k: None   # noqa: E731
 # set back from the lips so their tips never poke through a closed mouth
-blob((0, snout_y + 0.74 * mouth_len, mouth_z + 0.05 * gap), (0.6 * muzzle_w, 0.32 * mouth_len, 0.26 * gap),
+mw_ = min(1.0, max(mouth_w, 0.01) / 0.75)   # a narrower cut gets a narrower mouth behind it
+blob((0, snout_y + 0.74 * mouth_len, mouth_z + 0.05 * gap), (0.6 * muzzle_w * mw_, 0.32 * mouth_len, 0.26 * gap),
      add_material('mouth', (0.16, 0.03, 0.04)), 2)
-blob((0, snout_y + 0.79 * mouth_len, mouth_z - 0.12 * gap), (0.45 * muzzle_w, 0.3 * mouth_len, 0.09 * gap),
+blob((0, snout_y + 0.79 * mouth_len, mouth_z - 0.12 * gap), (0.45 * muzzle_w * mw_, 0.3 * mouth_len, 0.09 * gap),
      add_material('tongue', (0.85, 0.35, 0.42)), 3)
 bm.to_mesh(mesh.data)
 bm.free()
@@ -377,6 +463,13 @@ for k in range(3):  # three bones along the tail, so it can curve, whip and poin
     bone(f'tail.{k + 1}', a, b - a, (b - a).length, 'hips' if k == 0 else f'tail.{k}', k > 0)
 # Marker at the tail tip (no skin), so the engine can aim the last tail bone too.
 bone('tail.tip', tail_joints[3], tail_joints[3] - tail_joints[2], 0.01, 'tail.3', True, deform=False)
+if face_opts.get('pupil'):   # carries the pupils' dilation as its x scale (1 slit .. 2 round): clips animate it
+    bone('dilate', Vector(tuple(head_c)), Vector((0, 0, 1)), 0.03, 'head', False, deform=False)
+    # one bone per eye, at the eye's spot on the face: each eye (ball and pupil) rides it alone, so
+    # scaling it grows the eye in place (kittens' big eyes, dogclips.js dog.eyes)
+    ex_, ey_, ez_ = face_opts['eye']
+    for side_, sx_ in (('L', 1), ('R', -1)):
+        bone(f'eye.{side_}', Vector((sx_ * ex_, -ez_, ey_)), Vector((0, -1, 0)), 0.02, 'head', False)
 
 for side, sx in (('L', 1), ('R', -1)):  # the dog's left is +X when it faces -Y
     for names, yy, xx, parent in ((('upperarm', 'forearm', 'hand'), y_front, x_front, 'chest'),
@@ -482,6 +575,12 @@ for i, src, dst_g, w in moves:
 # is fully on the tail bones (so the whole tail swings, plumes included).
 hips_g = groups['hips']
 tail_names = ('tail.1', 'tail.2', 'tail.3')
+
+
+def ease_w(x):
+    return x * x * (3 - 2 * x)
+
+
 tail_segs = {n: (arm_obj.data.bones[n].head_local, arm_obj.data.bones[n].tail_local) for n in tail_names}
 for n in tail_names:
     if n not in groups:
@@ -495,6 +594,25 @@ for v in mesh.data.vertices:
             if mesh.vertex_groups[g.group].name in tail_names:
                 g.weight = 0.0
         hips_g.add([v.index], tw, 'ADD')
+    elif is_tail and path_hint:
+        # Traced tail: by distance along it. The first fifth blends from the hips into tail.1
+        # (a soft root, no crease where it leaves the body); each bone then hands over to the
+        # next across its middle (tent weights centred on each third).
+        f = on_path(co)[1]
+        for gi in [g.group for g in v.groups]:
+            mesh.vertex_groups[gi].remove([v.index])
+        root = ease_w(min(1.0, max(0.0, f / 0.2)))
+        bw = [max(0.0, 1 - abs(3 * f - (k + 0.5))) for k in range(3)]
+        if f < 1 / 6:
+            bw = [1.0, 0.0, 0.0]
+        elif f > 5 / 6:
+            bw = [0.0, 0.0, 1.0]
+        tot = sum(bw)
+        if 1 - root > 1e-4:
+            hips_g.add([v.index], 1 - root, 'REPLACE')
+        for n, w in zip(tail_names, bw):
+            if root * w / tot > 1e-4:
+                groups[n].add([v.index], root * w / tot, 'REPLACE')
     elif is_tail and tw < 0.95:
         for gi in [g.group for g in v.groups]:
             mesh.vertex_groups[gi].remove([v.index])
@@ -579,7 +697,8 @@ for e in mesh.data.edges:
     nbrs[j].append(i)
 co_all = np.array([tuple(mesh.matrix_world @ v.co) for v in verts])
 locked = np.array([bool(mouth_part[i]) or (tail_like(co_all[i]) and not tail_bob
-                   and np.linalg.norm(co_all[i] - np.array(tail_base)) > 0.06) for i in range(len(verts))])
+                   and (path_hint or np.linalg.norm(co_all[i] - np.array(tail_base)) > 0.06))
+                   for i in range(len(verts))])   # a traced tail already has its soft root
 for _ in range(4):
     avg = np.array([W[n].mean(axis=0) if n else W[i] for i, n in enumerate(nbrs)])
     W = np.where(locked[:, None], W, 0.5 * W + 0.5 * avg)
@@ -654,7 +773,12 @@ for k, n in enumerate(names):
 # Separate glossy geometry laid on the face, so eyes and nose read as crisp dark dots on any
 # coat and any colorway. Positions and sizes come from faces.json (picked on the original
 # textures, glTF space: x left, y up, z forward). Skinned like the face beneath them.
-def face_part(center, rx, ry, segs, material, nose=False):
+EYE_DEPTH, EYE_SINK = 0.55, -0.15   # eyes with pupils (cats): front of the eye 0.4 r out of the face (dogs' 0.6)
+EYE_IN = 0.3            # pupils turned a little toward the nose (straight ahead read as cock-eyed)
+DILATED = (0.62, 0.68)  # the round "doughnut" pupil (width, height of the eye) the dilate shape key opens to
+
+
+def face_part(center, rx, ry, segs, material, nose=False, pupil=None):
     from mathutils.bvhtree import BVHTree
     bvh = BVHTree.FromPolygons([v.co.copy() for v in mesh.data.vertices], [list(p.vertices) for p in mesh.data.polygons])
     hit, n, *_ = bvh.find_nearest(center)
@@ -688,6 +812,63 @@ def face_part(center, rx, ry, segs, material, nose=False):
             a, b, c = v.co   # a: across, b: up, c: out of the face
             a *= 1 + 0.3 * b if nose else 1
             v.co = hit + ux * (a * rx) + uy * (b * ry) + n * (c * depth + sink)
+        if pupil is not None:
+            # Cats: a rounder ball (the 10 x 6 sphere read as an octagon close up), the pupil
+            # looking ahead (not along the surface normal, which on a round head turns the far
+            # eye's pupil away to the side), and the face tucked under the ball wherever it
+            # poked out over its rim.
+            bm2.clear()
+            # flatter and set deeper than the dogs' eyes (a lens in the face, not a ball popping out)
+            depth, sink = EYE_DEPTH * min(rx, ry), EYE_SINK * min(rx, ry)
+            made = bmesh.ops.create_uvsphere(bm2, u_segments=16, v_segments=8, radius=1.0)['verts']
+            for v in made:
+                a, b, c = v.co
+                v.co = hit + ux * (a * rx) + uy * (b * ry) + n * (c * depth + sink)
+            centre = hit + n * sink
+            fwd = Vector((0, -1, 0))                                  # the head looks along -y (Blender)
+            inward = Vector((-1.0 if hit.x > 0 else 1.0, 0, 0))
+            look = (n + 1.0 * fwd + EYE_IN * inward).normalized()   # ahead, a touch inward: no eye looks away
+            lu = (Vector((0, 0, 1)) - look * look.z).normalized()       # pupil's up: world up, square to `look`
+            ls = lu.cross(look)
+            pw, ph = pupil
+            r0 = min(rx, ry)
+
+            def on_ball(off):
+                """The eyeball's surface seen along `look` through centre + off (an ellipsoid with
+                semi-axes rx, ry, depth in the n frame): the far root of |M(off + look t)| = 1."""
+                M = lambda w: Vector((w.dot(ux) / rx, w.dot(uy) / ry, w.dot(n) / depth))   # noqa: E731
+                A, B = M(look), M(off)
+                qa, qb, qc = A.dot(A), 2 * A.dot(B), B.dot(B) - 1
+                disc = max(qb * qb - 4 * qa * qc, 0.0)
+                return centre + off + look * ((-qb + math.sqrt(disc)) / (2 * qa))
+
+            # the slit pupil: nearly the eye's full height, wrapped onto the eye's curve, standing a
+            # hair proud of it (a thin lens, not a lozenge floating in front)
+            # Each pupil vertex also keeps where it goes when the pupil dilates (a round pupil, the
+            # same wrap): the "dilate" shape key, driven by the dilate bone (dogclips.js).
+            dil = bm2.verts.layers.float_vector.new('dilated')
+            dil_w = bm2.verts.layers.float.new('dil_w')
+            pv = bmesh.ops.create_uvsphere(bm2, u_segments=10, v_segments=8, radius=1.0)['verts']
+            for v in pv:
+                a, b, c = v.co
+                lift = look * ((0.04 + 0.05 * c) * r0)
+                v[dil] = on_ball(ls * (a * DILATED[0] * rx) + lu * (b * DILATED[1] * ry)) + lift
+                v[dil_w] = 1.0
+                v.co = on_ball(ls * (a * pw * rx) + lu * (b * ph * ry)) + lift
+            for f in {f for v in pv for f in v.link_faces}:
+                f.material_index = 1
+            # tuck: face vertices over the ball's footprint that stand above its surface go just under it
+            for mv in mesh.data.vertices:
+                dv = mv.co - centre
+                h = dv.dot(n)
+                pu, pq = dv.dot(ux) / rx, dv.dot(uy) / ry
+                rho2 = pu * pu + pq * pq
+                if rho2 >= 1.6 ** 2 or h < -depth:
+                    continue
+                # under the ball, and past its rim a gentle slope down to it (no flap stands over the edge)
+                top = depth * math.sqrt(max(0.0, 1 - min(rho2, 1.0))) - 0.08 * r0 + max(0.0, math.sqrt(rho2) - 1.0) * 0.9 * r0
+                if h > top:
+                    mv.co = mv.co - n * (h - top)
     else:
         rings = (0.0, 0.6, 1.0)
         # Surface height under each vertex (along the centre normal), from a ray down onto the
@@ -750,6 +931,8 @@ def face_part(center, rx, ry, segs, material, nose=False):
         p.use_smooth = True
 
     me.materials.append(material)
+    if pupil is not None:
+        me.materials.append(pupil_mat)
     ob = bpy.data.objects.new(material.name, me)
     bpy.context.scene.collection.objects.link(ob)
     # Same weights as the face under each vertex, so the part rides the skin exactly.
@@ -759,6 +942,10 @@ def face_part(center, rx, ry, segs, material, nose=False):
         kd.insert(v.co, i)
     kd.balance()
     gname = {g.index: g.name for g in mesh.vertex_groups}
+    if pupil is not None:   # eyes with their own bone (cats): the whole eye on it
+        g = ob.vertex_groups.new(name='eye.L' if hit.x > 0 else 'eye.R')
+        g.add(list(range(len(me.vertices))), 1.0, 'REPLACE')
+        return ob
     for v in me.vertices:
         _, i, _ = kd.find(v.co)
         for ge in mesh.data.vertices[i].groups:
@@ -777,16 +964,20 @@ def glossy(name, rgb, rough):
     return mat
 
 
-face = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'faces.json'))).get(
+face = json.load(open(os.path.join(DATA, 'faces.json'))).get(
     os.path.basename(dst)[:-4])
 if face:
     g2b = lambda p: Vector((p[0], -p[2], p[1]))  # noqa: E731  glTF -> Blender axes
     ec = face.get('eye_color')   # e.g. the Husky's blue eyes
     ec = tuple(((int(ec[i:i + 2], 16) / 255 + 0.055) / 1.055) ** 2.4 for i in (1, 3, 5)) if ec else (0.012, 0.011, 0.011)
-    eye_mat, nose_mat = glossy('eye', ec, 0.22), glossy('nose', (0.018, 0.016, 0.016), 0.38)
+    nc = face.get('nose_color')  # e.g. a cat's pink nose
+    nc = tuple(((int(nc[i:i + 2], 16) / 255 + 0.055) / 1.055) ** 2.4 for i in (1, 3, 5)) if nc else (0.018, 0.016, 0.016)
+    eye_mat, nose_mat = glossy('eye', ec, 0.22), glossy('nose', nc, 0.38)
     ex, ey, ez = face['eye']
     eye_mat_r = glossy('eyeR', ec, 0.22)   # the dog's right eye: its own part, so each eye can differ
-    parts = [face_part(g2b((sx * ex, ey, ez)), face['eye_r'], face['eye_r'] * 1.08, 12, m) for sx, m in ((1, eye_mat), (-1, eye_mat_r))]
+    pupil_mat = glossy('pupil', (0.006, 0.005, 0.005), 0.2)   # _PART 6: keeps its colour (dogcoat.js recolours 1-5)
+    parts = [face_part(g2b((sx * ex, ey, ez)), face['eye_r'], face['eye_r'] * 1.08, 12, m, pupil=face.get('pupil'))
+             for sx, m in ((1, eye_mat), (-1, eye_mat_r))]
     parts.append(face_part(g2b(face['nose']), *face['nose_r'], 14, nose_mat, nose=True))
     bpy.ops.object.select_all(action='DESELECT')
     for o in parts:
@@ -794,12 +985,23 @@ if face:
     mesh.select_set(True)
     bpy.context.view_layer.objects.active = mesh
     bpy.ops.object.join()
+    if face.get('pupil') and 'dil_w' in mesh.data.attributes:
+        # the dilate shape key (glTF morph target "dilate"): only the pupils move
+        dw = [a.value for a in mesh.data.attributes['dil_w'].data]
+        dv = [a.vector.copy() for a in mesh.data.attributes['dilated'].data]
+        mesh.shape_key_add(name='Basis', from_mix=False)
+        sk = mesh.shape_key_add(name='dilate', from_mix=False)
+        for i, w in enumerate(dw):
+            if w > 0.5:
+                sk.data[i].co = dv[i]
+        mesh.data.attributes.remove(mesh.data.attributes['dil_w'])
+        mesh.data.attributes.remove(mesh.data.attributes['dilated'])
 
 # ---------------------------------------------------------------- one material for the face parts
 # Eyes, nose, mouth and tongue share one material (one draw call instead of four). Each
 # vertex carries its part's default color (COLOR_0) and a part id (_PART: 0 coat, 1 left eye,
 # 2 nose, 3 mouth, 4 tongue, 5 right eye), so a game can still recolor each part (dogcoat.js setFace).
-PARTS = {'eye': 1, 'nose': 2, 'mouth': 3, 'tongue': 4, 'eyeR': 5}
+PARTS = {'eye': 1, 'nose': 2, 'mouth': 3, 'tongue': 4, 'eyeR': 5, 'pupil': 6}
 mats = mesh.data.materials
 part_of_slot = {i: PARTS.get(m.name.split('.')[0], 0) for i, m in enumerate(mats)}
 slot_color = {}
@@ -865,7 +1067,7 @@ import wear_lib  # noqa: E402
 wear_dir = os.path.join(os.path.dirname(dst), 'wear')
 os.makedirs(wear_dir, exist_ok=True)
 fit = wear_lib.Fitter(mesh, arm_obj)
-for kind in ('collar', 'bandana'):
+for kind in os.environ.get('WEAR_KINDS', 'collar,bandana').split(','):   # cats add bell_collar, neckerchief
     ob = getattr(fit, kind)()
     wear_lib.export_wear(arm_obj, ob, os.path.join(wear_dir, f'{os.path.basename(dst)[:-4]}--{kind}.glb'))
     bpy.data.objects.remove(ob)

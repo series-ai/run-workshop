@@ -1,0 +1,13 @@
+# Local only, as the other packs (scratch and review material never goes in the repo):
+# raw AI meshes, concept boards and style tests, review renders, preview renders,
+# the library build (library.mjs writes it; jam-ready-assets carries the shipped copy)
+raw/
+concepts/
+review/
+previews/
+previews-rigged/
+library/
+props/raw/
+props/concepts/
+props/previews/
+__pycache__/

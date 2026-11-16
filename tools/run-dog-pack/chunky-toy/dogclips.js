@@ -58,7 +58,9 @@ function retarget(clip, legRatio, tilt, restRef = {}, restDog = {}, lieScale = 1
     }
     return new THREE.QuaternionKeyframeTrack(track.name, track.times, values);
   });
-  const byName = Object.fromEntries(c.tracks.map(t => [t.name.split('.')[0], t]));
+  // rotation tracks only: a bone can also have a scale track (a cat's puffed tail), and keyed by
+  // bone name alone it would replace the rotation here, so the refit bone lost its rotation
+  const byName = Object.fromEntries(c.tracks.filter(t => t.ValueTypeName === 'quaternion').map(t => [t.name.split('.')[0], t]));
   const sampler = name => {
     const t = byName[name];
     if (!t || t.ValueTypeName !== 'quaternion') return () => new THREE.Quaternion();
@@ -105,7 +107,7 @@ function retarget(clip, legRatio, tilt, restRef = {}, restDog = {}, lieScale = 1
 
 export function setupDog(root, lib) {
   let leg = 0.4, body = 0.55, ballRadius = 0.05, mouth = null, bellyGap = 0.55, tailRadius = 0.03, tailCurl = false;
-  const rest = {}, bones = {};
+  const rest = {}, bones = {}, dilateMeshes = [];
   root.traverse(o => {
     if (o.isBone) { rest[o.name] = o.quaternion.clone(); bones[o.name] = o; }
     if (o.userData.leg_length) leg = o.userData.leg_length;
@@ -115,6 +117,7 @@ export function setupDog(root, lib) {
     if (o.userData.tail_radius) tailRadius = o.userData.tail_radius;
     if (o.userData.tail_curl) tailCurl = true;
     if (o.isBone && o.name === 'mouth') mouth = o;
+    if (o.isMesh && o.morphTargetDictionary?.dilate !== undefined) dilateMeshes.push(o);
   });
   const mixer = new THREE.AnimationMixer(root);
   // Long dogs tilt less: keep the chest drop the same in leg lengths.
@@ -151,8 +154,28 @@ export function setupDog(root, lib) {
       if (!m?.gait || !dog.action) return;
       dog.action.timeScale = speed * m.duration / (m.stride * leg * scale);
     },
+    // Pupils (Chonky Cats): 0 slit .. 1 round. null lets the clip decide (the dilate bone's x
+    // scale: 1 slit, 2 round); a number holds the pupils there whatever the clip does.
+    pupils: null,
+    // Eye size (Chonky Cats): 1 adult; kittens bigger. Scales each eye bone in place.
+    eyes: 1,
+    // Growing up by scale only (proportions stay): g 0 baby .. 1 adult, from `baby` scale to
+    // `adult` (cats: kitten 0.3; small 0.45, medium 0.55, large 0.65; dogs: puppy 0.45 .. 1.1).
+    // Babies get bigger eyes (cats only: bodies with eye bones), shrinking to 1 as they grow.
+    grow(g, adult, baby = 0.3, babyEyes = 1.35) {
+      g = Math.min(1, Math.max(0, g));
+      const s = baby + (adult - baby) * g;
+      root.scale.setScalar(s);
+      dog.eyes = 1 + (babyEyes - 1) * (1 - g);
+      return s;
+    },
     update(dt) {
       mixer.update(dt);
+      if (bones['eyeL'] && bones['eyeR']) { bones['eyeL'].scale.setScalar(dog.eyes); bones['eyeR'].scale.setScalar(dog.eyes); }
+      if (dilateMeshes.length) {
+        const w = dog.pupils ?? Math.min(1, Math.max(0, (bones.dilate?.scale.x ?? 1) - 1));
+        for (const m of dilateMeshes) m.morphTargetInfluences[m.morphTargetDictionary.dilate] = w;
+      }
       const m0 = lib.meta[dog.name];
       if (m0?.nose_ground) groundNose();
       if (m0?.tail_line && dog.action) tailLine(dog.action.time, m0.tail_line);
