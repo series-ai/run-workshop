@@ -1139,6 +1139,9 @@ REBASE = {
 }
 
 
+REBASE_BLUR, REBASE_SHADE = 4, 0.7   # how much of the AI coat's shading a repaint keeps (Chonky Cats keep less)
+
+
 def inpaint(d, tex, region, reach=0.05):
     """Fill `region` texels from the surrounding fur (inverse-distance blend of the nearest
     good texels outside it, in 3D), so nothing of what was painted there survives."""
@@ -1198,7 +1201,7 @@ def prepare_base(breed):
         # shading from a blurred copy: soft form shading stays, the AI's painted lines go
         from scipy.ndimage import gaussian_filter
         orig = np.where(tex <= 0.04045, tex / 12.92, ((tex + 0.055) / 1.055) ** 2.4)
-        soft = gaussian_filter(d.dilate(np.where(d.cover, shade_offset(ch, orig), 0)), 4) * 0.7
+        soft = gaussian_filter(d.dilate(np.where(d.cover, shade_offset(ch, orig), 0)), REBASE_BLUR) * REBASE_SHADE
         tex = recolor(ch, tex, palette(breed, recipe, layers, SOURCES_AI[breed]), shade=soft)
     tex, n = clean_face(d, breed, tex)
     rgb = d.dilate(np.where(d.cover[..., None], tex, d.tex))

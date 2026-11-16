@@ -305,7 +305,7 @@ varying float vPart;`)
   int fp = int(vPart + 0.5);
   if (fp > 0 && fp < 6 && faceSet[fp].w > 0.5) diffuseColor.rgb = faceSet[fp].rgb;`)
     .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-  roughnessFactor = fp == 1 || fp == 5 ? 0.2 : fp == 2 ? 0.38 : 0.7;   // glossy eyes, satin nose, matte mouth`);
+  roughnessFactor = fp == 1 || fp == 5 || fp == 6 ? 0.2 : fp == 2 ? 0.38 : 0.7;   // glossy eyes and pupils (6: cats), satin nose, matte mouth`);
 }
 
 // ---------------------------------------------------------------- breeding

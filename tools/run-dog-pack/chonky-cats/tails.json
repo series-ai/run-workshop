@@ -1,0 +1,11 @@
+{
+ "_about": "Cat tails, traced by hand on side renders of lowpoly/<body>.glb (Blender space: y back, z up, x = 0). path: the tail's centreline from where it leaves the body to the tip; r: the tube radius at each path point. rig.py makes every vertex inside the tube tail, puts the bones along the path, and weights by distance along it, blending into the hips over the first fifth.",
+ "moggy": {"path": [[0.311, 0.537], [0.436, 0.741], [0.489, 0.883], [0.587, 0.972]], "r": [0.065, 0.065, 0.06, 0.06]},
+ "cobby": {"path": [[0.364, 0.581], [0.444, 0.706], [0.533, 0.812], [0.587, 0.937]], "r": [0.09, 0.09, 0.12, 0.12]},
+ "flatface": {"path": [[0.311, 0.634], [0.427, 0.741], [0.516, 0.866], [0.569, 0.972]], "r": [0.08, 0.09, 0.12, 0.12]},
+ "floof": {"path": [[0.196, 0.546], [0.32, 0.706], [0.409, 0.848], [0.533, 0.901]], "r": [0.09, 0.14, 0.18, 0.18]},
+ "sleek": {"path": [[0.276, 0.466], [0.382, 0.581], [0.498, 0.759], [0.613, 0.91]], "r": [0.05, 0.05, 0.05, 0.05]},
+ "pixie": {"path": [[0.4, 0.48], [0.5, 0.58], [0.55, 0.7], [0.54, 0.83]], "r": [0.06, 0.05, 0.04, 0.035]},
+ "munchkin": {"path": [[0.32, 0.474], [0.444, 0.617], [0.551, 0.794], [0.587, 0.866]], "r": [0.06, 0.06, 0.06, 0.06]},
+ "bobtail": {"path": [[0.427, 0.563], [0.471, 0.59], [0.516, 0.608], [0.569, 0.617]], "r": [0.06, 0.09, 0.1, 0.1]}
+}

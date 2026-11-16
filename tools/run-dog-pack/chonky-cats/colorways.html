@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Chonky Cats: colourways</title>
+<style>body { margin: 0; background: #eceae4; font: 13px system-ui, sans-serif; } canvas { display: block; }
+#bar { position: fixed; top: 6px; left: 8px; } #bar a { margin-right: 8px; color: #333; }</style></head>
+<body>
+<div id="bar"></div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Colourway gallery (drag to swivel every cat at once; the pupils slider dilates every cat's eyes): ?body=moggy shows every colourway of a body; ?breeds (default) shows the
+// 30 breeds (the colourways tagged with a breeds.csv breed). Coats come from coats.json through
+// the Hounds' dogcoat.js, exactly as a game applies them. ?save=<name> posts a screenshot.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { clone } from 'three/addons/utils/SkeletonUtils.js';
+import { loadClipLibrary, setupDog } from '../chunky-toy/dogclips.js';
+import { loadCoats } from '../chunky-toy/dogcoat.js';
+
+const q = new URLSearchParams(location.search);
+const coats = await loadCoats('coats.json', 'rigged/coats/');
+const index = await (await fetch('coats.json')).json();
+const bodies = Object.keys(index);
+document.getElementById('bar').innerHTML = '<a href="?breeds">breeds</a>' + bodies.map(b => `<a href="?body=${b}">${b}</a>`).join('');
+// cells: [body, colourway entry]
+let cells = [];
+if (q.get('body')) cells = index[q.get('body')].colorways.map(c => [q.get('body'), c]);
+else for (const b of bodies) for (const c of index[b].colorways) if (c.breed) cells.push([b, c]);
+const COLS = Math.ceil(Math.sqrt(cells.length * innerWidth / innerHeight)), ROWS = Math.ceil(cells.length / COLS);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setScissorTest(true);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a917f, 2.0));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+sun.position.set(2, 4, 4);
+scene.add(sun);
+const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, 'rigged/clips.glb');
+const gltfs = {};
+const label = document.createElement('canvas');
+const top = 26, cw = innerWidth / COLS, ch = (innerHeight - top) / ROWS;
+const items = [];
+for (const [b, c] of cells) {
+  gltfs[b] ||= await loader.loadAsync(`rigged/${b}.glb`);
+  const root = clone(gltfs[b].scene);
+  const dog = setupDog(root, lib);
+  dog.play('idle', { fade: 0, time: 0.2 });
+  dog.update(0);
+  const coat = await coats.apply(root, b);
+  coat.set(coats.palette(b, c.slug));
+  items.push({ root, name: c.name, dog });
+}
+// One camera for every cell. Drag anywhere to swivel them all together (scroll to zoom,
+// right-drag to pan); it only redraws when the view moves.
+camera.aspect = cw / ch;
+camera.position.set(q.has('back') ? -1.3 : 1.1, 0.75, q.has('back') ? -2.0 : 2.2);   // ?back: from behind
+camera.updateProjectionMatrix();
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.45, 0);
+controls.update();
+function drawAll() {
+  renderer.setClearColor(0xeceae4);
+  renderer.setScissor(0, 0, innerWidth, innerHeight);
+  renderer.setViewport(0, 0, innerWidth, innerHeight);
+  renderer.clear();
+  items.forEach(({ root }, i) => {
+    scene.add(root);
+    const x = (i % COLS) * cw, y = innerHeight - top - (Math.floor(i / COLS) + 1) * ch;
+    renderer.setViewport(x, y, cw, ch); renderer.setScissor(x, y, cw, ch);
+    renderer.render(scene, camera);
+    scene.remove(root);
+  });
+}
+controls.addEventListener('change', drawAll);
+// pupils: slit .. round (dog.pupils, the eyes' dilate shape), ?pupils=1 to start round
+const slider = Object.assign(document.createElement('input'), { type: 'range', min: 0, max: 1, step: 0.01, value: q.get('pupils') || 0 });
+slider.style.cssText = 'position:fixed;top:4px;right:12px;width:180px';
+// age: kitten .. adult (dog.grow). Shown at adult scale 1 so the cells stay comparable: a kitten is
+// 0.3 / 0.55 of a medium adult, with bigger eyes. ?age=0 to start as kittens.
+const age = Object.assign(document.createElement('input'), { type: 'range', min: 0, max: 1, step: 0.01, value: q.get('age') ?? 1 });
+age.style.cssText = 'position:fixed;top:4px;right:280px;width:180px';
+const setPupils = () => {
+  for (const { dog } of items) { dog.pupils = +slider.value; dog.grow(+age.value, 1, 0.3 / 0.55); dog.update(0); }
+  drawAll();
+};
+age.oninput = () => setPupils();
+document.body.append(Object.assign(document.createElement('span'), { textContent: 'kitten → adult', style: 'position:fixed;top:6px;right:470px' }), age);
+slider.oninput = setPupils;
+document.body.append(Object.assign(document.createElement('span'), { textContent: 'pupils', style: 'position:fixed;top:6px;right:200px' }), slider);
+setPupils();
+drawAll();
+// names over the cells
+const names = document.createElement('div');
+names.style.cssText = 'position:fixed;inset:0;pointer-events:none';
+items.forEach(({ name }, i) => {
+  const d = document.createElement('div');
+  d.textContent = name;
+  d.style.cssText = `position:absolute;left:${(i % COLS) * cw + 6}px;top:${top + Math.floor(i / COLS) * ch + 2}px;font-size:12px;color:#333`;
+  names.appendChild(d);
+});
+document.body.appendChild(names);
+if (q.get('save')) {
+  // bake the labels into the posted image
+  const c2 = document.createElement('canvas'); c2.width = renderer.domElement.width; c2.height = renderer.domElement.height;
+  const g = c2.getContext('2d'); g.drawImage(renderer.domElement, 0, 0);
+  const s = c2.width / innerWidth; g.font = `${12 * s}px system-ui`; g.fillStyle = '#333';
+  items.forEach(({ name }, i) => g.fillText(name, ((i % COLS) * cw + 6) * s, (top + Math.floor(i / COLS) * ch + 14) * s));
+  await fetch('/save?name=' + q.get('save'), { method: 'POST', body: c2.toDataURL('image/png') });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chonky Cats: cover</title>
+<style>
+  html, body { margin: 0; background: #1d1f24; }
+  canvas#out { display: block; max-width: 100vw; max-height: 100vh; margin: auto; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&display=block" rel="stylesheet">
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="out"></canvas>
+<script type="module">
+// The Chonky Cats cover (2048 square): a crowd of cats in many coats, kittens up front with their
+// big eyes, among the novelty beds and toys, fully lit on a plain pale floor; the balloon-letter
+// logo (the Chonky Hounds' sister logo) along the bottom, reading through its own outline, no scrim.
+// Serve tools/run-dog-pack, open chonky-cats/promo/cover.html. ?v=tx,ty,tz,dist,pitch,yaw moves
+// the camera; ?save=<name> posts the PNG (capture.py cover).
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
+import { loadClipLibrary, setupDog, attachWear } from "../../chunky-toy/dogclips.js";
+import { loadCoats, loadClothPatterns, tintCloth } from "../../chunky-toy/dogcoat.js";
+
+const Q = new URLSearchParams(location.search);
+const FONT = `"Titan One", "Arial Rounded MT Bold", Arial, sans-serif`;
+const ADULT = { small: 0.45, medium: 0.55, large: 0.65 }, KITTEN = 0.3;
+const N = 2048;
+const FLOOR = "#f6e3dc";   // a pale blush floor: warm, plain, so every coat pops
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(N, N, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const out = document.getElementById("out");
+out.width = out.height = N;
+const ctx = out.getContext("2d");
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(FLOOR);
+const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd9b8ae, 2.1));
+const sun = new THREE.DirectionalLight(0xfff4e6, 2.3);
+sun.position.set(3, 8, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.bias = -0.0004;
+Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 0.5, far: 30 });
+scene.add(sun, sun.target);
+// the floor is unlit (it stays pale); shadows come from a shadow-only layer
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshBasicMaterial({ color: FLOOR }));
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+const shade = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.ShadowMaterial({ opacity: 0.18, color: "#6a3d34" }));
+shade.rotation.x = -Math.PI / 2;
+shade.position.y = 0.002;
+shade.receiveShadow = true;
+scene.add(shade);
+
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, "../rigged/clips.glb");
+const coats = await loadCoats("../coats.json", "../rigged/coats/");
+const cloth = await loadClothPatterns("../../chunky-toy/rigged/wear/cloth.png");
+await document.fonts.load(`40px "Titan One"`);
+const G = {};
+const glb = async url => (G[url] ||= await loader.loadAsync(url));
+
+async function cat(body, colour, { x = 0, y = 0, z = 0, ry = 0, size = "medium", age = 1, clip = "idle", t = 0, pupils = null, wear = null } = {}) {
+  const model = SkeletonUtils.clone((await glb(`../rigged/${body}.glb`)).scene);
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  const g = new THREE.Group();
+  g.add(model);
+  g.position.set(x, y, z);
+  g.rotation.y = ry;
+  scene.add(g);
+  const d = setupDog(model, lib);
+  const s = d.grow(age, ADULT[size], KITTEN);   // scales `model`; the group carries the placement
+  const c = await coats.apply(model, body);
+  c.set(coats.palette(body, colour));
+  if (wear) {
+    const [kind, a, b = "#f6f0e4", pat = "plain"] = wear;
+    for (const m of attachWear(model, (await glb(`../rigged/wear/${body}--${kind}.glb`)).scene)) {
+      m.castShadow = true;
+      if (m.material.name === "bandana") tintCloth(m.material, cloth, a, b, pat);
+      else if (m.material.name === "collar") m.material.color.set(a);
+    }
+  }
+  d.pupils = pupils;
+  d.play(clip, { time: t * lib.meta[clip].duration, fade: 0 });
+  d.update(0);
+  return g;
+}
+async function prop(slug, x = 0, z = 0, ry = 0, s = 1, y = 0) {
+  const m = SkeletonUtils.clone((await glb(`../props/models/${slug}.glb`)).scene);
+  m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  m.position.set(x, y, z);
+  m.rotation.y = ry;
+  m.scale.setScalar(s);
+  scene.add(m);
+  return m;
+}
+
+// ------------------------------------------------------------------ the crowd
+// Big cosy props at the back, adults in the middle, kittens up front; everyone turned three-quarters
+// toward the middle so faces read. The logo sits over the empty floor at the bottom.
+await prop("pineapple-house", -1.2, -1.3, 0.6, 0.8);
+await prop("strawberry-cave", 1.22, -1.25, -0.6, 0.72);
+await prop("fruit-tart-bed", 0.02, -1.35, 0.2, 0.85);
+await prop("yarn-ball", -0.3, 1.3, 0.4, 1.5);
+await prop("toy-mouse", 0.78, 1.32, -0.9, 1.5);
+await prop("croissant-toy", 0.2, 1.18, 0.6, 1.15);
+
+const CAST = [
+  // back row, by the beds
+  ["floof", "maine-coon", { x: -0.96, z: -0.62, ry: 0.42, size: "large", clip: "idle", t: 0.1 }],   // standing: the plume tail shows
+  ["moggy", "ginger-tabby", { x: 0.02, y: 0.17, z: -1.28, ry: 0.15, size: "medium", clip: "loaf_loop", t: 0.1, wear: ["bell_collar", "#2f6fb5"] }],
+  ["sleek", "siamese", { x: 1.0, z: -0.9, ry: -0.4, size: "medium", clip: "sit_loop", t: 0.5 }],
+  // middle
+  ["flatface", "persian-white", { x: -1.45, z: -0.3, ry: 0.65, size: "medium", clip: "idle", t: 0.1, wear: ["neckerchief", "#e46a8c", "#f6f0e4", "dots"] }],
+  ["moggy", "tuxedo", { x: -0.35, z: -0.05, ry: 0.3, size: "medium", clip: "idle", t: 0.55 }],
+  ["cobby", "british-blue", { x: 0.4, z: -0.15, ry: -0.25, size: "medium", clip: "sit_loop", t: 0.1, wear: ["bell_collar", "#e0a21b"] }],
+  ["moggy", "ginger-white", { x: 1.35, z: -0.3, ry: -0.6, size: "medium", clip: "sit_loop", t: 0.3 }],
+  // kittens up front: big eyes, round pupils, all facing the camera
+  ["pixie", "sphynx", { x: -1.4, z: 0.62, ry: 0.4, age: 0.2, clip: "sit_loop", t: 0.2, pupils: 0.8 }],
+  ["moggy", "calico", { x: -0.85, z: 0.55, ry: 0.25, age: 0, clip: "sit_loop", t: 0.3, pupils: 0.85 }],
+  ["munchkin", "munchkin", { x: -0.05, z: 0.6, ry: 0.05, age: 0, clip: "sit_loop", t: 0.05, pupils: 0.9, wear: ["neckerchief", "#2c9a5a", "#f6f0e4", "gingham"] }],
+  ["bobtail", "mi-ke", { x: 0.75, z: 0.6, ry: -0.2, age: 0, clip: "bat", t: 0.3, pupils: 1 }],
+  ["sleek", "black", { x: 1.5, z: 0.5, ry: -0.4, age: 0, clip: "sit_loop", t: 0.6, pupils: 0.9, wear: ["bell_collar", "#d93a3a"] }],
+];
+// squeeze the layout in x (it was wider than the frame) and bring the front row (kittens and
+// toys) forward, under the camera, so they read bigger and fill down to the logo
+const SX = 0.8, SXF = 0.62, FRONT = 0.38, MID = 0.3;   // MID: the middle row forward, closing the gap to the kittens
+for (const [body, colour, o] of CAST) {
+  const front = o.z > 0.3;
+  const mid = !front && o.z > -0.6;
+  await cat(body, colour, { ...o, x: o.x * (front ? SXF : SX), z: front ? o.z + FRONT : mid ? o.z + MID : o.z + MID * 0.5 });
+}
+
+// ------------------------------------------------------------------ camera
+const V = Q.get("v")?.split(",").map(Number) || [0.0, 0.25, -0.35, 5.6, 22, 0];
+const [tx, ty, tz, dist, pitch, yaw] = V;
+const p = THREE.MathUtils.degToRad(pitch), y = THREE.MathUtils.degToRad(yaw);
+camera.position.set(tx + Math.sin(y) * Math.cos(p) * dist, ty + Math.sin(p) * dist, tz + Math.cos(y) * Math.cos(p) * dist);
+camera.lookAt(tx, ty, tz);
+camera.setViewOffset(N, N, 0, N * (+(Q.get("lift") || 0.17)), N, N);   // the crowd sits high, over the logo
+camera.updateProjectionMatrix();
+renderer.render(scene, camera);
+ctx.drawImage(renderer.domElement, 0, 0);
+
+// ------------------------------------------------------------------ the logo (bottom)
+const CANDY = [["#ff9fc0", "#d4628a"], ["#ffd166", "#d69a2a"], ["#7fd8f7", "#3a9ec4"], ["#a6e891", "#5fae4f"], ["#cfb0ff", "#8f6ad6"], ["#ffab78", "#d06a35"]];
+const INK = "#3b2418";
+function balloonLetter(ch, size, ci) {
+  const [fill, side] = CANDY[ci % CANDY.length];
+  const c = document.createElement("canvas"), g = c.getContext("2d");
+  const pad = size * 0.5;
+  g.font = `${size}px ${FONT}`;
+  const w = Math.ceil(g.measureText(ch).width + pad * 2), h = Math.ceil(size * 1.6 + pad);
+  c.width = w; c.height = h;
+  g.font = `${size}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+  const cx = w / 2, cy = h / 2 - size * 0.08, depth = size * 0.12, step = Math.max(2, size / 85);
+  for (let k = depth; k > 0; k -= step) { g.lineWidth = size * 0.2; g.strokeStyle = INK; g.strokeText(ch, cx, cy + k); }
+  for (let k = depth; k > 0; k -= step) { g.fillStyle = side; g.fillText(ch, cx, cy + k); }
+  g.lineWidth = size * 0.2; g.strokeStyle = INK; g.strokeText(ch, cx, cy);
+  g.fillStyle = fill; g.fillText(ch, cx, cy);
+  const hi = document.createElement("canvas"); hi.width = w; hi.height = h;
+  const hc = hi.getContext("2d");
+  hc.font = g.font; hc.textAlign = "center"; hc.textBaseline = "middle";
+  hc.fillStyle = "rgba(255,255,255,0.55)"; hc.fillText(ch, cx, cy);
+  hc.globalCompositeOperation = "destination-out";
+  hc.fillText(ch, cx + size * 0.05, cy + size * 0.07);
+  g.drawImage(hi, 0, 0);
+  return c;
+}
+// cat ears on a letter: two rounded triangles in the letter's colours, outlined like it
+function ears(cx, top, size, ci) {
+  const [fill, side] = CANDY[ci % CANDY.length];
+  for (const sx of [-1, 1]) {
+    const bx = cx + sx * size * 0.26, by = top + size * 0.24;   // seated on the letter, not floating
+    const pts = [[bx - sx * size * 0.2, by + size * 0.04], [bx + sx * size * 0.14, by - size * 0.02], [bx + sx * size * 0.02, by - size * 0.42]];
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
+    ctx.lineWidth = size * 0.2; ctx.strokeStyle = INK; ctx.stroke();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(bx - sx * size * 0.1, by - size * 0.02); ctx.lineTo(bx + sx * size * 0.06, by - size * 0.04); ctx.lineTo(bx + sx * size * 0.0, by - size * 0.26);
+    ctx.closePath(); ctx.fillStyle = side; ctx.fill();
+    ctx.restore();
+  }
+}
+let letterN = 0;
+function balloon(line, cxAll, y, size, earsOn = -1) {
+  ctx.font = `${size}px ${FONT}`;
+  const widths = [...line].map(c => ctx.measureText(c).width + size * 0.07);
+  let x = cxAll - widths.reduce((a, b) => a + b, 0) / 2;
+  [...line].forEach((c, i) => {
+    const cx = x + widths[i] / 2;
+    x += widths[i];
+    letterN++;
+    if (c === " ") return;
+    const ty = y + Math.sin(letterN * 0.7) * size * 0.03, rot = Math.sin(letterN * 2.3) * 0.08;
+    if (i === earsOn) {
+      ctx.save(); ctx.translate(cx, ty); ctx.rotate(rot); ctx.translate(-cx, -ty);
+      ears(cx, ty - size * 0.5, size, letterN);
+      ctx.restore();
+    }
+    const gl = balloonLetter(c, size, letterN);
+    ctx.save();
+    ctx.translate(cx, ty);
+    ctx.rotate(rot);
+    ctx.drawImage(gl, -gl.width / 2, -gl.height / 2);
+    ctx.restore();
+  });
+}
+const TITLE = Q.get("title") || "CHONKY CATS", SUB = Q.get("sub") || "PURRFECT PEDIGREES";
+balloon(TITLE, N / 2, N * 0.815, 236, TITLE.indexOf("C", 6));   // cat ears on the C of CATS
+balloon(SUB, N / 2, N * 0.925, 112);
+
+if (Q.get("save")) {
+  await fetch("/save?name=" + Q.get("save"), { method: "POST", body: out.toDataURL("image/png") });
+}
+document.title = "DONE";
+</script>
+</body>
+</html>

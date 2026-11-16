@@ -1,0 +1,51 @@
+slug,name,group,tier,height,look,length
+paper-bag,Paper bag,bed,basic,0.6182,"a brown paper grocery bag standing open on its side on the floor, the open end facing the viewer",
+laundry-basket,Laundry basket,bed,basic,0.7069,a round white plastic laundry basket with a crumpled grey t-shirt inside,1.0583
+cardboard-box,Cardboard box,bed,basic,0.5629,"an empty open brown cardboard box with the four top flaps standing up and folded out, big enough for a cat to sit in",
+cat-cave,Cat cave,bed,standard,0.7651,a round felted wool cat cave bed in light grey with a round doorway in the front,
+window-perch,Window perch,bed,standard,0.3703,a small flat cat hammock seat in beige fabric stretched on a white frame with two round suction cups at the back,1.0577
+radiator-hammock,Radiator hammock,bed,standard,0.6034,a small fleece cat hammock in soft pink hanging from a low black metal frame on four short legs,1.0576
+crinkle-tunnel,Cat tunnel,bed,standard,0.7364,"a long play tunnel for cats, a fabric tube in navy blue with a round opening at each end and a small hole in the middle on top, lying on its side",1.6
+heated-pad,Heated pad,bed,standard,0.088,a flat round fleece cat warming pad in light brown with a short cable,0.888
+strawberry-cave,Strawberry cave,bed,standard,1.0176,"a soft cat cave bed shaped like a big red strawberry with small yellow seeds, green leaves around the top and a round opening in the front",
+fruit-tart-bed,Fruit tart bed,bed,standard,0.5688,"a round cat bed shaped like a fruit tart: a golden fluted pastry rim around a cream cushion, with big soft pillows shaped like a kiwi slice, a strawberry and blueberries on top",
+watermelon-bed,Watermelon bed,bed,standard,0.3675,"a round cat bed shaped like half a watermelon cut open: a green striped rind outside, a white rim and a red cushion inside with black seeds",
+avocado-bed,Avocado bed,bed,standard,0.2634,"an oval cat bed shaped like half an avocado with the pit taken out: a dark green skin rim and a soft pale green cushion with a round hollow in the middle where the pit was, empty",
+toast-bed,Toast bed,bed,standard,0.1933,a flat cat bed shaped like a big slice of toast: a golden brown crust rim around a soft light tan cushion,
+shark-bed,Shark bed,bed,standard,0.8559,"a soft cat cave bed shaped like a grey shark head with a wide open mouth as the entrance, a row of soft white felt teeth, round eyes and a fin on top",
+cat-teepee,Cat teepee,bed,premium,1.1897,a small cat teepee tent made of light pink felt over four wooden poles with a grey round cushion inside the open doorway,
+cat-condo,Cat condo,bed,premium,1.1767,a cat condo cube covered in beige carpet with a round doorway on the front and a flat padded platform on top,
+cat-tree,Cat tree,bed,premium,2.4,"a very tall cat tree, much taller than wide: a heavy square carpeted base, four thick posts wrapped in brown sisal rope, five round cream carpeted platforms stepping up at different heights, a carpeted cube house with a round doorway halfway up, a round lookout bed on the very top and a small pom-pom toy hanging from one platform",
+pineapple-house,Pineapple house,bed,premium,1.3481,"a cat house shaped like a big pineapple: a round yellow body with a diamond pattern, a crown of green leaves on top and a round doorway in the front",
+mushroom-house,Mushroom house,bed,premium,1.388,"a cat house shaped like a red mushroom with white spots on the round cap, a cream stem with a round doorway in the front",
+scratch-pad,Cardboard scratcher,scratch,basic,0.1682,a flat rectangular cardboard cat scratching pad with corrugated cardboard edges showing on top,0.9654
+scratch-post,Scratching post,scratch,standard,0.7,"a cat scratching post: a thick post wrapped in brown sisal rope on a square cream carpet base, with a small round platform on top",
+scratch-lounge,Scratcher lounge,scratch,premium,0.4601,a curved wave-shaped corrugated cardboard cat scratcher lounge in natural brown,1.4284
+mushroom-tree,Mushroom cat tree,scratch,premium,1.2,"procedural: one big red mushroom with white spots, the cap a platform a cat can lie on, a stem wrapped in rope, on a green base",
+paper-ball,Paper ball,toy,basic,0.09,a crumpled white paper ball,
+bottle-cap,Bottle cap,toy,basic,0.04,"a red plastic bottle cap lying on the floor, open side down",
+hair-tie,Hair tie,toy,basic,0.04,"a black elastic hair tie lying flat on the floor, a thick round loop",
+toy-mouse,Toy mouse,toy,standard,0.09,a small grey felt toy mouse with round pink ears and a long thin string tail,
+yarn-ball,Ball of yarn,toy,standard,0.12,a round ball of red wool yarn with one loose strand trailing on the floor,
+crinkle-ball,Crinkle ball,toy,standard,0.09,a small shiny round crinkle ball made of bright blue crinkled foil,
+jingle-ball,Jingle ball,toy,standard,0.09,a small hollow round plastic ball in bright yellow with round holes and a little bell inside,
+feather-wand,Feather wand,toy,standard,0.3183,a cat teaser wand lying flat on the floor: a thin wooden stick with a string and a bunch of colourful feathers on the end,0.8
+spring-toys,Spring toys,toy,standard,0.06,"three short coiled plastic spring cat toys in green, pink and purple lying on the floor",
+catnip-fish,Catnip fish,toy,standard,0.105,"a plush catnip fish cat toy in blue with orange fins, lying on its side",
+croissant-toy,Croissant toy,toy,standard,0.08,"a plush golden croissant cat toy, curved, lying flat",
+ball-track,Ball track tower,toy,premium,0.25,a three-level round plastic ball track cat toy tower in white with a bright ball in each circular track,
+mechanical-mouse,Wind-up mouse,toy,premium,0.105,a grey wind-up toy mouse with a silver key on its back and tiny wheels,
+kicker-toy,Kicker toy,toy,premium,0.2221,"a long plush kicker cat toy shaped like a banana, yellow with a brown stem, lying on its side",0.5
+litter-tray,Litter tray,care,basic,0.2456,a rectangular open blue plastic cat litter tray filled with grey litter,
+milk-saucer,Milk saucer,care,basic,0.045,a small white china saucer with milk in it,
+cucumber,Cucumber,care,basic,0.121,one whole green cucumber lying on the floor,0.4
+cat-poop,Cat poop,care,basic,0.05,procedural: two small brown poop logs,
+litter-clump,Litter clump,care,basic,0.05,procedural: a lumpy grey clump of used litter,
+pee-spot,Pee spot,care,basic,0.006,"procedural: a flat wobbly yellow puddle, see-through",
+litter-scoop,Litter scoop,care,standard,0.0588,a slotted plastic cat litter scoop in green lying flat,0.45
+food-tin,Cat food tin,care,standard,0.12,a small round open tin of wet cat food with a fish picture on the label and a peeled-back lid,
+food-bag,Dry food bag,care,standard,0.4,"a tall paper bag of cat food, folded closed at the top, with a simple fish picture on the front",
+cat-grass,Cat grass,care,standard,0.32,a small terracotta pot of bright green cat grass,
+nail-clipper,Nail clipper,care,standard,0.02,"a small pair of pet nail clippers with orange handles, lying flat",
+covered-litter,Covered litter box,care,premium,0.9284,a hooded cat litter box in light grey with a swinging flap door at the front and a carry handle on top,
+carrier,Pet carrier,care,premium,0.8983,a plastic pet carrier in white and light blue with a metal grille door at the front and a handle on top,

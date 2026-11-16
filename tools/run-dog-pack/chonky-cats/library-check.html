@@ -1,0 +1,77 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Chonky Cats: library check</title>
+<style>body{margin:0;background:#eceae4}canvas{display:block}</style></head>
+<body>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// The packaged library (library/), loaded the way a game does: meshopt decoder, the code/ helpers,
+// catdata.js. Every body in its breed colourway, half as kittens with round pupils and a wearable,
+// a walking cat (a clip after update), and a row of props. Logs problems to window.problems;
+// ?save=<name> posts a screenshot and <name>.json with the problems.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { loadClipLibrary, setupDog, attachWear } from './library/code/catclips.js';
+import { loadCoats, loadClothPatterns, tintCloth } from './library/code/catcoat.js';
+import { BREEDS, BODIES, COLOURWAYS, COATS, SIZES, KITTEN } from './library/code/catdata.js';
+
+const q = new URLSearchParams(location.search), problems = [];
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+const lib = await loadClipLibrary(loader, 'library/cats/cat-clips.glb');
+const coats = await loadCoats(COATS, 'library/cats/coats/');
+const cloth = await loadClothPatterns('library/wear/cloth-patterns.png');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight); renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0xeceae4);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a917f, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(2, 4, 4); scene.add(sun);
+const kinds = ['collar', 'bandana', 'bell_collar', 'neckerchief'];
+const dogs = [];
+for (const [i, body] of BODIES.entries()) {
+  for (const kitten of [false, true]) {
+    const breed = BREEDS.find(b => b.body === body);
+    const root = SkeletonUtils.clone((await loader.loadAsync(`library/cats/${body}.glb`)).scene);
+    scene.add(root);
+    const d = setupDog(root, lib);
+    d.grow(kitten ? 0 : 1, SIZES[breed.size], KITTEN);
+    root.position.set((i - 3.5) * 0.75, 0, kitten ? 0.7 : 0);
+    const coat = await coats.apply(root, body);
+    coat.set(coats.palette(body, COLOURWAYS[breed.slug]));
+    if (kitten) {
+      d.pupils = 1;
+      const kind = kinds[i % 4];
+      for (const m of attachWear(root, (await loader.loadAsync(`library/wear/${body}--${kind}.glb`)).scene)) {
+        if (m.material.name === 'bandana') tintCloth(m.material, cloth, '#e46a8c', '#f6f0e4', 'dots');
+        else if (m.material.name === 'collar') m.material.color.set('#2f6fb5');
+      }
+    }
+    d.play(kitten ? 'sit_loop' : (i % 2 ? 'walk' : 'idle'));
+    dogs.push(d);
+    let morph = false; root.traverse(o => { if (o.morphTargetDictionary?.dilate !== undefined) morph = true; });
+    if (!morph) problems.push(`${body}: no dilate morph`);
+    if (!d.lib.meta.walk) problems.push('no walk clip meta');
+  }
+}
+const props = ['pineapple-house', 'fruit-tart-bed', 'mushroom-tree', 'cat-tree', 'litter-tray', 'yarn-ball'];
+for (const [i, p] of props.entries()) {
+  const m = (await loader.loadAsync(`library/props/${p}.glb`)).scene;
+  m.scale.setScalar(0.45);
+  m.position.set((i - 2.5) * 1.0, 0, -1.4);
+  scene.add(m);
+}
+for (const d of dogs) d.update(0.4);
+const cam = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 50);
+cam.position.set(0, 3.2, 7.5); cam.lookAt(0, 0.2, 0);
+renderer.render(scene, cam);
+window.problems = problems;
+if (q.get('save')) {
+  await fetch('/save?name=' + q.get('save'), { method: 'POST', body: renderer.domElement.toDataURL('image/png') });
+  await fetch('/save?name=' + q.get('save') + '.json', { method: 'POST', body: 'data:,' + btoa(JSON.stringify(problems)) });
+}
+</script>
+</body></html>
