@@ -32,7 +32,7 @@ PACKS = {  # pack key -> (stage dir, theme dir, file prefix, ground colour)
     "apocalypse": ("run-voxel-post-apocalypse", "post-apocalypse", "apocalypse", (0.30, 0.22, 0.13)),
 }
 
-DRAGON_T = float(os.environ.get("DRAGON_T", 0.667))  # the fantasy hero mid-lunge, jaw open (fire breath at frame 20)
+DRAGON_T = float(os.environ.get("DRAGON_T", 0.633))  # the fantasy hero roaring at the camera: head still up, jaw open (fire breath at frame 20)
 # World scenes are a little town: buildings along the back (they may crop at the top),
 # creatures hanging out in the middle (the hero in the centre, posed mid-attack), and
 # props with the smallest critters in front. The camera frames the front two rows.
@@ -245,7 +245,7 @@ def main() -> None:
         scene = os.path.join(work, f"{pack}-world.png")
         if want("world"):
             w = WORLD[pack]
-            render({"ground": list(ground), "yaw": 14, "pitch": 10, "lens": 60, "overflow": WORLD_OVERFLOW.get(pack, 1.15), "bottom": 0.16, **({"align": "feet", "bottom": 0.2} if pack == "fantasy" else {}),
+            render({"ground": list(ground), "yaw": 14, "pitch": 10, "lens": 60, "overflow": WORLD_OVERFLOW.get(pack, 1.15), "bottom": 0.16, **({"align": "feet", "bottom": 0.2, "key_turn": 165, "key_tilt": 55} if pack == "fantasy" else {}),  # fantasy: key from the front, on the dragon's face
                     "rows": [{"items": row(pack, w["front"]), "gap": WORLD_GAP.get(pack, 0.25), "stagger": 0.25, "behind": WORLD_BEHIND.get(pack, 0.5),
                               **({"gap_widths": FRONT_GAP_WIDTHS[pack]} if pack in FRONT_GAP_WIDTHS else {})},
                              {"items": row(pack, w["mid"]), "gap": 0.35, "stagger": 0.45, "behind": 1.2},
