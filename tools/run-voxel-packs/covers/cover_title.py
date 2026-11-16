@@ -4,8 +4,9 @@
     python3 covers/cover_title.py --flat <bg.png> <theme> <subtitle> <out.png>   (a 2D background, no sky)
 
 No scrim: the logo reads through its own outline, drop shadow and halo (see the
-pack-cover direction). The logo is the pack word in Lilita One with a gradient fill
-and a heavy ink outline, a voxel cube as its mark, and a letter-spaced subtitle.
+pack-cover direction). The logo is pixel lettering to match the voxel models: the pack
+word in Pixelify Sans Bold with a stepped gradient fill and a square-cornered ink
+outline, a voxel cube at each end of a letter-spaced Silkscreen subtitle.
 """
 from __future__ import annotations
 
@@ -15,7 +16,32 @@ import sys
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FONT = os.path.join(HERE, "fonts", "LilitaOne-Regular.ttf")  # SIL Open Font License, see fonts/LilitaOne-OFL.txt
+# SIL Open Font License: see fonts/PixelifySans-OFL.txt and fonts/Silkscreen-OFL.txt
+WORD_FONT = os.path.join(HERE, "fonts", "PixelifySans.ttf")
+SMALL_FONT = os.path.join(HERE, "fonts", "Silkscreen-Bold.ttf")
+
+
+def font(path: str, size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
+    f = ImageFont.truetype(path, size)
+    if bold and path == WORD_FONT:
+        f.set_variation_by_name("Bold")  # a variable font
+    return f
+
+
+def stepped(size, top, bottom, steps: int = 5):
+    """A top-to-bottom gradient in a few flat bands, like a pixel-art ramp."""
+    g = Image.new("RGB", size)
+    d = ImageDraw.Draw(g)
+    for i in range(steps):
+        k = i / (steps - 1)
+        c = tuple(int(a + (b - a) * k) for a, b in zip(top, bottom))
+        d.rectangle([0, round(size[1] * i / steps), size[0], round(size[1] * (i + 1) / steps)], fill=c)
+    return g
+
+
+def grow(mask: Image.Image, r: int) -> Image.Image:
+    """Grow a mask by r pixels with square corners (a blocky outline, not a round stroke)."""
+    return mask.filter(ImageFilter.MaxFilter(2 * r + 1))
 
 THEMES = {
     "fantasy": dict(word="Fantasy", ink=(40, 22, 70), sky=((92, 168, 255), (214, 238, 255)), 
@@ -59,70 +85,68 @@ def cube_layers(s: int, faces):
 
 
 def logo(W: int, theme: dict, subtitle: str) -> Image.Image:
-    S = 2
     word = theme["word"]
-    size = 200 if len(word) <= 7 else 160
-    f_big, f_small = ImageFont.truetype(FONT, size * S), ImageFont.truetype(FONT, 58 * S)
-    LW, LH = W * S, 300 * S
-    stroke = 15 * S
-    ww = f_big.getbbox(word)[2]
-    x0, ybase = (LW - ww) // 2, 10 * S
-    text, outline = Image.new("L", (LW, LH), 0), Image.new("L", (LW, LH), 0)
+    LW, LH = W, 290
+    # the word as large as fits 88% of the width, rendered at a pixel-font-friendly size
+    size = 190
+    while font(WORD_FONT, size).getbbox(word)[2] > LW * 0.88 and size > 60:
+        size -= 6
+    f_big, f_small = font(WORD_FONT, size), font(SMALL_FONT, 54)
+    bb = f_big.getbbox(word)
+    x0, ybase = (LW - (bb[2] - bb[0])) // 2 - bb[0], 6 - bb[1] + 6
+    text = Image.new("L", (LW, LH), 0)
     ImageDraw.Draw(text).text((x0, ybase), word, font=f_big, fill=255)
-    ImageDraw.Draw(outline).text((x0, ybase), word, font=f_big, fill=255, stroke_width=stroke, stroke_fill=255)
+    top, bot = bb[1] + ybase, bb[3] + ybase
     # the subtitle, letter-spaced, with a voxel cube at each end
-    spacing = 9 * S
+    spacing = 3
     widths = [f_small.getbbox(ch)[2] for ch in subtitle]
     sw = sum(widths) + spacing * (len(subtitle) - 1)
-    cs = 52 * S
-    gap = 22 * S
+    cs, gap = 50, 16
     total = cs + gap + sw + gap + cs
     sx = (LW - total) // 2
-    sy = ybase + int(size * 0.98) * S
-    sub, sub_out = Image.new("L", (LW, LH), 0), Image.new("L", (LW, LH), 0)
+    sy = bot + 22
+    sub = Image.new("L", (LW, LH), 0)
     x = sx + cs + gap
     for ch, w in zip(subtitle, widths):
         ImageDraw.Draw(sub).text((x, sy), ch, font=f_small, fill=255)
-        ImageDraw.Draw(sub_out).text((x, sy), ch, font=f_small, fill=255, stroke_width=11 * S, stroke_fill=255)
         x += w + spacing
+    sbb = sub.getbbox() or (0, sy, 1, sy + 30)
     cm, ccol = cube_layers(cs, theme["cube"])
     cubes, cube_col = Image.new("L", (LW, LH), 0), Image.new("RGB", (LW, LH))
-    cy = sy + f_small.getbbox("V")[1] + (f_small.getbbox("V")[3] - f_small.getbbox("V")[1] - cm.height) // 2
+    cy = (sbb[1] + sbb[3]) // 2 - cm.height // 2
     for cx in (sx, sx + cs + gap + sw + gap):
         cubes.paste(cm, (cx, cy), cm)
         cube_col.paste(ccol, (cx, cy), cm)
-    cube_out = cubes.filter(ImageFilter.MaxFilter(2 * (9 * S // 2) + 1))
-    edge = ImageChops.lighter(ImageChops.lighter(outline, sub_out), cube_out)
+    edge = ImageChops.lighter(ImageChops.lighter(grow(text, 9), grow(sub, 6)), grow(cubes, 5))
 
     out = Image.new("RGBA", (LW, LH), (0, 0, 0, 0))
     halo = Image.new("RGBA", (LW, LH), theme["halo"] + (0,))
-    halo.putalpha(edge.filter(ImageFilter.GaussianBlur(24 * S)).point(lambda v: int(v * 0.8)))
+    halo.putalpha(edge.filter(ImageFilter.GaussianBlur(18)).point(lambda v: int(v * 0.7)))
     out.alpha_composite(halo)
     shadow = Image.new("RGBA", (LW, LH), theme["ink"] + (0,))
-    shadow.putalpha(ImageChops.offset(edge, 0, 8 * S))
+    shadow.putalpha(ImageChops.offset(edge, 0, 7))
     out.alpha_composite(shadow)
     ink = Image.new("RGBA", (LW, LH), theme["ink"] + (0,))
     ink.putalpha(edge)
     out.alpha_composite(ink)
-    # the word: a top-to-bottom gradient over its own height, with a light band near the top
-    top, bot = f_big.getbbox(word)[1] + ybase, f_big.getbbox(word)[3] + ybase
     wf = Image.new("RGB", (LW, LH), theme["fill"][1])
-    wf.paste(gradient((LW, bot - top), *theme["fill"]), (0, top))
+    wf.paste(stepped((LW, bot - top), *theme["fill"]), (0, top))
     wf = wf.convert("RGBA")
     wf.putalpha(text)
     out.alpha_composite(wf)
+    # a one-band highlight across the top of the letters
+    hi = Image.new("L", (LW, LH), 0)
+    ImageDraw.Draw(hi).rectangle([0, top + (bot - top) * 0.1, LW, top + (bot - top) * 0.2], fill=110)
     shine = Image.new("RGBA", (LW, LH), (255, 255, 255, 0))
-    band = Image.new("L", (LW, LH), 0)
-    ImageDraw.Draw(band).rectangle([0, top + (bot - top) * 0.12, LW, top + (bot - top) * 0.24], fill=90)
-    shine.putalpha(ImageChops.multiply(band, text))
+    shine.putalpha(ImageChops.multiply(hi, text))
     out.alpha_composite(shine)
-    sf = gradient((LW, LH), *theme["sub"]).convert("RGBA")
+    sf = stepped((LW, LH), *theme["sub"], steps=3).convert("RGBA")
     sf.putalpha(sub)
     out.alpha_composite(sf)
     cc = cube_col.convert("RGBA")
     cc.putalpha(cubes)
     out.alpha_composite(cc)
-    return out.resize((W, LH // S), Image.LANCZOS)
+    return out.crop((0, 0, LW, (edge.getbbox() or (0, 0, LW, LH))[3] + 10))
 
 
 def main() -> None:

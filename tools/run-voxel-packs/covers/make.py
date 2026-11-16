@@ -1,6 +1,6 @@
 """Build the 16 pack covers (4 packs x world, characters, icons, ui) into covers/out/.
 
-    python3 covers/make.py [--only fantasy-world,space-icons] [--blender out/blender1.sh]
+    python3 covers/make.py [--only fantasy-world,space-icons] [--blender out/blender1.sh] [--reuse]
 
 World and characters covers are Blender scenes of the pack's own staged GLBs
 (cover_scene.py); icons and ui covers lay the pack's own PNGs over a softened copy of
@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOL = os.path.dirname(HERE)
@@ -26,7 +26,7 @@ sys.path.insert(0, HERE)
 import cover_title as T  # noqa: E402
 
 PACKS = {  # pack key -> (stage dir, theme dir, file prefix, ground colour)
-    "fantasy": ("run-voxel-fantasy", "fantasy", "fantasy", (0.10, 0.22, 0.07)),
+    "fantasy": ("run-voxel-fantasy", "fantasy", "fantasy", (0.16, 0.32, 0.09)),
     "space": ("run-voxel-space", "space-scifi", "space", (0.16, 0.14, 0.24)),
     "monster": ("run-voxel-monster", "monster", "monster", (0.09, 0.12, 0.08)),
     "apocalypse": ("run-voxel-post-apocalypse", "post-apocalypse", "apocalypse", (0.30, 0.22, 0.13)),
@@ -89,7 +89,12 @@ def row(pack, items, leaf="world"):
     return out
 
 
+REUSE = "--reuse" in sys.argv  # keep the last scene renders (to redo logos and 2D covers quickly)
+
+
 def render(spec: dict, png: str, blender: str) -> None:
+    if REUSE and os.path.exists(png):
+        return
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
         json.dump(spec, f)
     if os.path.exists(png):
@@ -100,13 +105,31 @@ def render(spec: dict, png: str, blender: str) -> None:
         raise SystemExit(f"render failed for {png}:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
 
 
-def backdrop(pack: str, scene_png: str) -> Image.Image:
-    """The world scene over its sky, softened, as the backdrop of the 2D covers."""
-    theme = T.THEMES[pack]
-    fg = Image.open(scene_png).convert("RGBA")
-    img = T.gradient(fg.size, *theme["sky"]).convert("RGBA")
-    img.alpha_composite(fg)
-    return img.filter(ImageFilter.GaussianBlur(7))
+def backdrop(pack: str, size: int = 1024) -> Image.Image:
+    """A plain sky in the pack's colours: the 2D covers show their pieces on it, nothing behind."""
+    return T.gradient((size, size), *T.THEMES[pack]["sky"]).convert("RGBA")
+
+
+def label(img: Image.Image, text: str, centre, size: int, fill=(255, 255, 255), big: bool = False) -> None:
+    """Pixel-font text with a square ink outline, centred on a point."""
+    f = T.font(T.WORD_FONT if big else T.SMALL_FONT, size)
+    bb = f.getbbox(text)
+    m = Image.new("L", img.size, 0)
+    x, y = centre[0] - (bb[0] + bb[2]) // 2, centre[1] - (bb[1] + bb[3]) // 2
+    ImageDraw.Draw(m).text((x, y), text, font=f, fill=255)
+    ink = Image.new("RGBA", img.size, (24, 16, 40, 0))
+    ink.putalpha(T.grow(m, max(2, size // 10)))
+    img.alpha_composite(ink)
+    col = Image.new("RGBA", img.size, fill + (0,))
+    col.putalpha(m)
+    img.alpha_composite(col)
+
+
+def icon_fit(stage: str, prefix: str, name: str, box: int) -> Image.Image:
+    icon = Image.open(os.path.join(STAGE, stage, "icons", f"icon-{prefix}-{name}.png")).convert("RGBA")
+    icon = icon.crop(icon.getchannel("A").getbbox())  # the icon files are padded
+    k = box / max(icon.size)
+    return icon.resize((round(icon.width * k), round(icon.height * k)), Image.LANCZOS)
 
 
 def up(img: Image.Image, k: float) -> Image.Image:
@@ -116,7 +139,7 @@ def up(img: Image.Image, k: float) -> Image.Image:
 def icons_cover(pack: str, bg: Image.Image) -> Image.Image:
     stage, _, prefix, _ = PACKS[pack]
     out = bg.copy()
-    size, gap = 224, 18
+    size, gap = 230, 16
     x0 = (out.width - 3 * size - 2 * gap) // 2
     for i, name in enumerate(ICONS[pack]):
         icon = Image.open(os.path.join(STAGE, stage, "icons", f"icon-{prefix}-{name}.png")).convert("RGBA")
@@ -132,44 +155,57 @@ def icons_cover(pack: str, bg: Image.Image) -> Image.Image:
     return out
 
 
+UI_WORDS = {"fantasy": ("INVENTORY", "BACK", "EQUIP"), "space": ("CARGO BAY", "BACK", "EQUIP"),
+            "monster": ("CRYPT LOOT", "BACK", "EQUIP"), "apocalypse": ("STASH", "BACK", "EQUIP")}
+
+
 def ui_cover(pack: str, bg: Image.Image) -> Image.Image:
+    """A game screen built from the pack's UI pieces: a titled dialog with labelled bars,
+    inventory slots and rarity frames holding the pack's icons, and labelled buttons."""
     stage, _, prefix, _ = PACKS[pack]
 
     def ui(name: str) -> Image.Image:
         return Image.open(os.path.join(STAGE, stage, "ui", f"ui-{prefix}-{name}.png")).convert("RGBA")
 
+    title, back, ok = UI_WORDS[pack]
     out = bg.copy()
     W = out.width
     dialog = up(ui("general-dialog"), 3)
-    dx, dy = (W - dialog.width) // 2, 96
+    dx, dy = (W - dialog.width) // 2 + 30, 92
     out.alpha_composite(dialog, (dx, dy))
     banner = up(ui("general-header-banner"), 2)
-    out.alpha_composite(banner, ((W - banner.width) // 2, 40))
+    bx, by = dx + (dialog.width - banner.width) // 2, 34
+    out.alpha_composite(banner, (bx, by))
+    label(out, title, (bx + banner.width // 2, by + banner.height // 2 - 4), 54, big=True)
+    close = up(ui("general-icon-close"), 1)
+    out.alpha_composite(close, (dx + dialog.width - close.width + 14, dy - 14))
     frame = up(ui("general-progress-frame"), 2)
-    for k, (fill, share) in enumerate((("health", 0.8), ("energy", 0.55), ("xp", 0.35))):
-        fx, fy = (W - frame.width) // 2, 216 + k * 76
+    for k, (fill, share, name) in enumerate((("health", 0.8, "HP"), ("energy", 0.55, "MP"), ("xp", 0.35, "XP"))):
+        fx, fy = dx + (dialog.width - frame.width) // 2 + 34, 210 + k * 70
         out.alpha_composite(frame, (fx, fy))
         bar = up(ui(f"general-progress-fill-{fill}"), 2)
-        bar = bar.crop((0, 0, round(bar.width * share), bar.height))
-        out.alpha_composite(bar, (fx + 16, fy + 16))
-    slots = ["general-slot-empty", "general-slot-filled", "general-slot-selected", "general-slot-locked"]
+        out.alpha_composite(bar.crop((0, 0, round(bar.width * share), bar.height)), (fx + 16, fy + 16))
+        label(out, name, (fx - 40, fy + frame.height // 2), 34)
+    slots = ["general-slot-filled", "general-slot-selected", "general-slot-filled", "general-slot-locked"]
     s0 = up(ui(slots[0]), 2)
-    sx0 = (W - 4 * s0.width - 3 * 22) // 2
+    sx0 = dx + (dialog.width - 4 * s0.width - 3 * 20) // 2
     for k, name in enumerate(slots):
-        sx = sx0 + k * (s0.width + 22)
-        out.alpha_composite(up(ui(name), 2), (sx, 452))
-        if name in ("general-slot-filled", "general-slot-selected"):  # an item in the slot, from the pack's icons
-            icon = Image.open(os.path.join(STAGE, stage, "icons", f"icon-{prefix}-{ICONS[pack][k + 2]}.png")).convert("RGBA")
-            icon = icon.crop(icon.getchannel("A").getbbox())
-            kk = (s0.width - 30) / max(icon.size)
-            icon = icon.resize((round(icon.width * kk), round(icon.height * kk)), Image.LANCZOS)
-            out.alpha_composite(icon, (sx + (s0.width - icon.width) // 2, 452 + (s0.height - icon.height) // 2))
-    for k, name in enumerate(("buttons-secondary-wide-default", "buttons-primary-wide-default")):
+        sx = sx0 + k * (s0.width + 20)
+        out.alpha_composite(up(ui(name), 2), (sx, 430))
+        if name != "general-slot-locked":
+            icon = icon_fit(stage, prefix, ICONS[pack][3 + k], s0.width - 28)
+            out.alpha_composite(icon, (sx + (s0.width - icon.width) // 2, 430 + (s0.height - icon.height) // 2))
+    for k, (name, text) in enumerate((("buttons-secondary-wide-default", back), ("buttons-primary-wide-default", ok))):
         b = ui(name)
-        out.alpha_composite(b, (W // 2 - b.width - 12 + k * (b.width + 24), 600))
+        x = dx + dialog.width // 2 - b.width - 12 + k * (b.width + 24)
+        out.alpha_composite(b, (x, 572))
+        label(out, text, (x + b.width // 2, 572 + b.height // 2 - 3), 36)
     for k, r in enumerate(("common", "uncommon", "rare", "epic", "legendary")):
         g = up(ui(f"rarities-rarity-{r}"), 1.5)
-        out.alpha_composite(g, (dx - g.width // 2, dy + 30 + k * (g.height + 10)))
+        gx, gy = dx - g.width // 2 - 6, dy + 24 + k * (g.height + 10)
+        out.alpha_composite(g, (gx, gy))
+        icon = icon_fit(stage, prefix, ICONS[pack][k], g.width - 26)
+        out.alpha_composite(icon, (gx + (g.width - icon.width) // 2, gy + (g.height - icon.height) // 2))
     return out
 
 
@@ -194,7 +230,7 @@ def main() -> None:
     for pack, (stage, theme, prefix, ground) in PACKS.items():
         want = lambda leaf: only is None or f"{pack}-{leaf}" in only  # noqa: E731
         scene = os.path.join(work, f"{pack}-world.png")
-        if want("world") or ((want("icons") or want("ui")) and not os.path.exists(scene)):
+        if want("world"):
             w = WORLD[pack]
             render({"ground": list(ground), "yaw": 14, "pitch": 11, "lens": 70, "overflow": 1.1,
                     "rows": [{"items": row(pack, w["front"]), "gap": 0.25, "stagger": 0.25, "behind": 0.5},
@@ -207,7 +243,7 @@ def main() -> None:
             chars = os.path.join(work, f"{pack}-characters.png")
             c = CHARACTER_SET[pack]
             skin = lambda f: {"path": os.path.join(STAGE, stage, "3D", "characters", "characters-skins", f), "turn": SKIN_TURN, "arms": 65}  # noqa: E731
-            render({"ground": list(ground), "yaw": 12, "pitch": 8, "lens": 70, "overflow": 1.05, "logo_band": 0.3,
+            render({"ground": list(ground), "yaw": 12, "pitch": 8, "lens": 70, "overflow": 1.25, "logo_band": 0.26,
                     "rows": [{"items": [skin(f) for f in skins[:3]], "gap": 0.3, "stagger": 0.08, "behind": 0.2},
                              {"items": [skin(f) for f in skins[3:]], "gap": 0.3, "stagger": 0.08, "behind": 0.4, "shift": 0.42},
                              # the avatars are built far smaller than the world models: size the set to them
@@ -215,9 +251,9 @@ def main() -> None:
                              {"items": [dict(i, height=2.6) for i in row(pack, c["back"])], "gap": 0.15, "stagger": 0.3, "frame": False}]}, chars, blender)
             finish(Image.open(chars), pack, "characters", os.path.join(OUT, leaf_name(pack, "characters") + ".png"), flat=False)
         if want("icons"):
-            finish(icons_cover(pack, backdrop(pack, scene)), pack, "icons", os.path.join(OUT, leaf_name(pack, "icons") + ".png"), flat=True)
+            finish(icons_cover(pack, backdrop(pack)), pack, "icons", os.path.join(OUT, leaf_name(pack, "icons") + ".png"), flat=True)
         if want("ui"):
-            finish(ui_cover(pack, backdrop(pack, scene)), pack, "ui", os.path.join(OUT, leaf_name(pack, "ui") + ".png"), flat=True)
+            finish(ui_cover(pack, backdrop(pack)), pack, "ui", os.path.join(OUT, leaf_name(pack, "ui") + ".png"), flat=True)
         print(pack, "done")
 
 
