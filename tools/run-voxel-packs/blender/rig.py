@@ -142,15 +142,26 @@ def build_clips(arm, asset: Asset) -> None:
             chans = clip.keys.get(bone, {})
             for channel in ("rot", "loc"):
                 keys = chans.get(channel) or [(first / fps, (0, 0, 0)), (last / fps, (0, 0, 0))]
-                for t, value in keys:
+                prev = None
+                for t, value in sorted(keys, key=lambda k: k[0]):
                     frame = round(t * fps)
                     if channel == "rot":
-                        pb.rotation_quaternion = world_axis_rotation(arm, bone, value)
+                        q = world_axis_rotation(arm, bone, value)
+                        if prev is not None:
+                            q.make_compatible(prev)  # see export.build_clips
+                        prev = q
+                        pb.rotation_quaternion = q
                         pb.keyframe_insert("rotation_quaternion", frame=frame)
                     else:
                         pb.location = world_offset(arm, bone, value)
                         pb.keyframe_insert("location", frame=frame)
             pb.location, pb.rotation_quaternion = Vector(), Quaternion()
+        if clip.loop:
+            export.seamless_loop(action, first, last)
+        impact = round(clip.impact * fps) if clip.impact is not None else None
+        if impact is not None:
+            export.snap_impact(action, impact)
+        export.ease_strokes(action, first, last, clip.loop, impact, export.clip_ease(clip))
         slot = anim.action_slot
         track = anim.nla_tracks.new()
         track.name = clip.name

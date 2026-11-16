@@ -178,15 +178,25 @@ def build() -> Asset:
     hopper(g)
     wheels = [wheel_grid(g.shape, x0, x0 + TW, az, R, rim=("steel", 6), hub=("gold", 5), spokes=6, tyre=("gray", 3))
               for az in AXLES for x0 in (BX0 - 6, BX1 - TW + 6)]
-    swing = [(0.0, (0.0, 0.0, 0.0)), (0.9, (-44.0, 0.0, 0.0)), (2.1, (-44.0, 0.0, 0.0)),
-             (2.7, (-6.0, 0.0, 0.0)), (2.9, (0.0, 0.0, 0.0)), (3.4, (0.0, 0.0, 0.0))]
+    # One key a frame (ease 0): the rams heave the tailgate up, gathering
+    # speed, and it bangs into its stop (f25) and settles; it hangs open,
+    # then drops shut, accelerating all the way, slams (f84) and jolts.
+    marks = [(0, 0.0), (3, 0.0), (25, -44.0, "acc"), (26, -41.0), (27, -43.5), (28, -42.5), (63, -42.5), (84, 0.0, "acc"), (85, -3.0), (86, -1.0), (87, 0.0), (102, 0.0)]
+    angles = []
+    for fr in range(103):
+        for a, b in zip(marks, marks[1:]):
+            if a[0] <= fr <= b[0]:
+                u = (fr - a[0]) / (b[0] - a[0])
+                angles.append(a[1] + (b[1] - a[1]) * (u * u if len(b) > 2 else u))
+                break
+    swing = [(fr / 30, (a, 0.0, 0.0)) for fr, a in enumerate(angles)]
     parts = [("tailgate", tailgate(), HINGE, (0.0, 0.0, 0.0), None, None)]
     root, clips, socks = rig("garbage-truck", g, wheels, (BX1 + 2.5, 84.0, HOP0 + 6), spin_s=0.9,
                              body_parts=parts, bounce=0.5,
                              extra_sockets=[("socket-stack", (BX0 - 2.5, 84.0, HOP0 + 6))])
     rp = root.pivot
     socks.append(Socket("socket-mouth", at=(0.0, 30.0 - rp[1], float(TAIL1) - rp[2]), parent="tailgate"))
-    clips.append(Clip("active", {"tailgate": {"rot": [(t, v) for t, v in swing]}}))
+    clips.append(Clip("active", {"tailgate": {"rot": [(t, v) for t, v in swing]}}, impact=84 / 30, ease=0))
     return Asset(id="apocalypse-vehicles-garbage-truck", pack="apocalypse", category="vehicles",
                  name="Scavenger Garbage Truck", root=root, clips=clips, sockets=socks,
                  pfx=[{"effectId": "rvx-apocalypse-engine-smoke", "socket": "socket-exhaust", "trigger": "clip:move", "size": 26, "aim": [0.0, 1.0, 0.0]},

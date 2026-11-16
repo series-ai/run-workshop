@@ -12,10 +12,19 @@ import numpy as np
 
 import paint as P
 import pnglyph
+from _fall import fall_back, hit_back
 from _kit import keys, pfx, world
+from _move_rigid import mummy_move, sole_points
 from _life import assemble, chunk, coords, limb, octo, plan, side
 from pnkit import box
 from voxgrid import C, Clip, Grid, Socket
+
+Z3 = (0.0, 0.0, 0.0)
+
+
+def fr(n: float) -> float:
+    """Seconds of frame `n` at 30 fps (impact keys sit on whole frames)."""
+    return n / 30.0
 
 S = (40, 46, 40)
 CX = 20
@@ -142,17 +151,45 @@ def build():
             "arm-l": {"rot": keys((0, (-6, 0, 0)), (1.3, (4, 0, 0)), (2.6, (-6, 0, 0)))},
             "arm-r": {"rot": keys((0, (4, 0, 0)), (1.3, (-6, 0, 0)), (2.6, (4, 0, 0)))},
             "head": {"rot": keys((0, (0, 0, -10)), (1.3, (0, 0, 10)), (2.6, (0, 0, -10)))}}
-    attack = {"arm-l": {"rot": keys((0, (0, 0, 0)), (0.3, (12, -12, -12)), (0.55, (10, -20, -16)), (0.72, (45, -10, -8)), (1.1, (0, 0, 0)))},
-              "arm-r": {"rot": keys((0, (0, 0, 0)), (0.3, (100, 15, 12)), (0.55, (20, 25, 8)), (0.72, (12, 10, 0)), (1.1, (0, 0, 0)))},
-              "torso": {"rot": keys((0, (0, 0, 0)), (0.3, (0, -18, -4)), (0.55, (14, 24, 6)), (0.72, (8, 12, 4)), (1.1, (0, 0, 0)))},
-              "head": {"rot": keys((0, (0, 0, 0)), (0.3, (-8, 15, 0)), (0.55, (15, -15, 0)), (1.1, (0, 0, 0)))}}
-    hit = {"torso": {"rot": keys((0, (0, 0, 0)), (0.1, (-18, -10, 0)), (0.5, (0, 0, 0)))},
-           "head": {"rot": keys((0, (0, 0, 0)), (0.1, (-20, 12, 0)), (0.5, (0, 0, 0)))}}
-    death = {"hips": {"loc": keys((0, (0, 0, 0)), (1.2, (0, -9, 0)))},
-             "torso": {"rot": keys((0, (0, 0, 0)), (1.2, (30, 40, 0)))}, "head": {"rot": keys((0, (0, 0, 0)), (1.2, (40, 0, 30)))},
-             "arm-l": {"rot": keys((0, (0, 0, 0)), (1.2, (60, 0, -30)))}, "arm-r": {"rot": keys((0, (0, 0, 0)), (1.2, (60, 0, 30)))}}
+    # Attack, a double-fisted hammer blow: it rocks back, leans away and
+    # heaves both wrapped arms overhead (frames 0-15), steps in on the front
+    # foot and clubs them down in 4 frames to the blow on frame 19, sags past
+    # it, holds, and recovers by frame 44; the head settles last. The back
+    # foot stays planted (the leg counter-swings under the moving hips).
+    attack = {"hips": {"loc": keys((0, Z3), (fr(15), (0, 0.1, 1.5)), (fr(19), (0, 0.3, -3)), (fr(22), (0, 0.2, -4.5)),
+                                   (fr(25), (0, 0.1, -5.8)), (fr(33), Z3))},
+              "leg-r": {"rot": keys((0, Z3), (fr(15), (5.7, 0, 0)), (fr(19), (-11.5, 0, 0)), (fr(22), (-17.5, 0, 0)),
+                                    (fr(25), (-22.7, 0, 0)), (fr(33), Z3))},
+              "leg-l": {"rot": keys((0, Z3), (fr(15), (5.7, 0, 0)), (fr(17), (18, 0, 0)), (fr(19), (19.5, 0, 0)),
+                                    (fr(22), (13.5, 0, 0)), (fr(25), (12.3, 0, 0)), (fr(28), (12.3, 0, 0)), (fr(33), Z3)),
+                        "loc": keys((0, Z3), (fr(15), Z3), (fr(17), (0, 1.8, 0)), (fr(19), Z3), (fr(29), Z3), (fr(31), (0, 1.5, 0)), (fr(33), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(15), (14, 6, 0)), (fr(19), (-24, -4, 0)), (fr(22), (-30, -6, 0)),
+                                    (fr(25), (-33, -7, 0)), (fr(33), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(8), (70, 0, 6)), (fr(15), (125, 0, 10)), (fr(19), (-30, 0, 4)),
+                                    (fr(22), (-40, 0, 2)), (fr(24), (-30, 0, -8)), (fr(26), (-48, 0, 4)), (fr(33), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(8), (70, 0, -6)), (fr(15), (125, 0, -10)), (fr(19), (-30, 0, -4)),
+                                    (fr(22), (-40, 0, -2)), (fr(25), (-32, 0, 8)), (fr(27), (-48, 0, -4)), (fr(33), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(15), (16, 0, 0)), (fr(20), (-12, 0, 0)), (fr(22), (-22, 0, 4)), (fr(24), (-18, 12, 0)), (fr(26), (-20, -12, 2)),
+                                   (fr(28), (-8, 4, 2)), (fr(30), (3, 0, 0)), (fr(33), Z3))}}
+    # Hit: the blow snaps the torso back on frame 3 (the hips give a voxel,
+    # the legs counter-swing so the feet stay put), it sways forward past
+    # rest and settles; the head and the arms lag behind.
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("hips", foot=(-15, 4.5, -6.5), push=3.0, pop=1.2, tilt=12, head=("head", 22), arms={"arm-l": (24, -1), "arm-r": (28, 1)},
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (10, -6, 0)), (fr(9), (6, -3, 0)), (fr(t["O"]), (-5, 0, 0)), (fr(t["E"]), Z3))})
+    # Death: it rocks forward over its toes, teeters back onto its heels with
+    # the arms thrown up, catches itself for a beat, then topples over
+    # backwards (away from the attacker), fastest at the floor on the impact
+    # frame, thuds, bounces once and settles on its back; the arms, the legs
+    # and the head land late. See _fall.py for the beats.
+    death, death_hit = fall_back("hips", D=9.5, F=10.0, bounce=2.3, bspan=3, R=86.0, roll=-5.0, torso="torso",
+                                 legs={"leg-l": (-14, 0, -6), "leg-r": (0, 0, 8)},
+                                 arms={"arm-l": ((-97, 0, -40), -1, 10.0), "arm-r": ((-85, 0, 40), 1, 10.0)},
+                                 head=("head", (5, 0, -15)), settle=-1.0)
     eye = (3.5, 37.5 - HIP[1], 14.0 - HIP[2])  # the glowing eye is on the viewer's left (+x)
     return world("mummy", "creatures", "Bandaged Mummy", root,
-                 clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
+                 clips=[Clip("attack", attack, loop=False, impact=fr(19)), Clip("hit", hit, loop=False, impact=hit_hit), Clip("death", death, loop=False, impact=death_hit), Clip("idle", idle), Clip("move", mummy_move({n: sole_points(parts[n], LEG[n]) for n in LEG}), ease=0)],
                  sockets=[Socket("socket-eye", at=eye, parent="head")],
                  pfx=[pfx("rvx-monster-curse-cloud", "socket-eye", "clip:attack", size=26, at=0.4)])

@@ -16,7 +16,7 @@ import paint as P
 import pnshapes as S
 from _bld import coffin_poly, coords, parts
 from pnkit import box, edges
-from voxgrid import C, Asset, Clip, Grid, Socket, _inside_polygon, turn
+from voxgrid import C, Asset, Clip, Grid, Socket, _inside_polygon
 
 G = (60, 92, 112)
 CX = 30.0
@@ -29,6 +29,74 @@ SHOULDER, HIP = 16.0, 34.0  # horse leg z
 LEG_TOP = 28.0
 NECK = (CX, 38.0, 14.0)
 LAMP = (CX - 17.0, 46.0, 49.0)
+
+
+# ---------------------------------------------------------------- the trot
+# `move` is a 3.6 s loop of six trot strides. The wheels roll at the ground
+# speed: the rear wheel (r 13) turns 3 times and the front wheel (r 10) 4
+# times (2.6% fast, the nearest whole number of turns, so the loop closes).
+# The horse trots in diagonal pairs (front-left with back-right), each hoof
+# on the ground for half a stride, sliding back at exactly the ground speed.
+FPS = 30
+MOVE_FRAMES = 108  # 3.6 s
+STRIDES = 6
+MOVE_TURNS = {"b": 3, "f": 4}
+GROUND = 3 * 2 * np.pi * RR / MOVE_FRAMES  # voxels per frame under the rear wheel
+STRIDE_F = MOVE_FRAMES // STRIDES  # 18 frames a stride, 9 on the ground
+REACH = GROUND * STRIDE_F / 4  # the hoof's travel either side of the hip
+LEG = LEG_TOP  # hip to hoof sole
+HOOF = (-2.5, 2.0)  # the hoof's sole, front and back edge, from the leg line
+LIFT = 6.0  # the swing leg tucks up into the body this far, voxels (it clears the floor by about 3)
+GIVE = 3.0  # the stance leg gives this much at mid-stance (it slides into the body): the bounce
+
+
+def spin_keys(turns: int):
+    """A wheel rolling forward (-Z), one key every 3 frames, whole turns."""
+    return [(f / FPS, (-360.0 * turns * f / MOVE_FRAMES, 0.0, 0.0)) for f in range(0, MOVE_FRAMES + 1, 3)]
+
+
+def _leg_pose(u: float):
+    """One leg at stride phase u (0-1): its swing angle (degrees, + = the hoof
+    forward), its slide up into the body (voxels) and the drop of its hoof
+    sole below the hip-to-floor rest height. 0-0.5 on the ground, the hoof
+    moving back at the ground speed; 0.5-1 in the air, a cubic that leaves
+    and arrives at that same speed, lifting the hoof."""
+    if u < 0.5:
+        w = u / 0.5
+        z = REACH * (1 - 2 * w)  # hoof forward of the hip
+        slide = GIVE * np.sin(np.pi * w)
+    else:
+        w = (u - 0.5) / 0.5
+        z = REACH * (-8 * w ** 3 + 12 * w ** 2 - 2 * w - 1)
+        slide = LIFT * np.sin(np.pi * w)
+    a = np.arcsin(np.clip(z / LEG, -1, 1))
+    sole = min(-LEG * np.cos(a) - dz * np.sin(a) for dz in HOOF)  # lowest sole edge
+    return np.degrees(a), slide, -LEG - sole
+
+
+def trot_keys() -> dict:
+    """Key the trot on every frame: legs, the horse body's bounce (set so the
+    stance hooves stand on the floor, lowest at mid-stance) and a nod that
+    trails the bounce by two frames."""
+    pairs = {"leg-fl": 0.0, "leg-br": 0.0, "leg-fr": 0.5, "leg-bl": 0.5}
+    out = {name: {"rot": [], "loc": []} for name in pairs}
+    body = []
+    for f in range(MOVE_FRAMES + 1):
+        u0 = (f % STRIDE_F) / STRIDE_F
+        lows = []
+        for name, ph in pairs.items():
+            u = (u0 + ph) % 1.0
+            a, slide, drop = _leg_pose(u)
+            out[name]["rot"].append((f / FPS, (float(a), 0.0, 0.0)))
+            out[name]["loc"].append((f / FPS, (0.0, float(slide), 0.0)))
+            if u <= 0.5:  # on the ground (both pairs at the changeover)
+                lows.append(slide - drop)  # the sole's height with the body at rest
+        body.append(-max(lows))
+    out["horse"] = {"loc": [(f / FPS, (0.0, float(b), 0.0)) for f, b in enumerate(body)]}
+    lo, hi = min(body), max(body)
+    nod = [6.0 * ((body[(f - 2) % MOVE_FRAMES] - lo) / (hi - lo) - 0.5) for f in range(MOVE_FRAMES + 1)]
+    out["neck"] = {"rot": [(f / FPS, (float(n), 0.0, 0.0)) for f, n in enumerate(nod)]}
+    return out
 
 
 def hearse() -> Grid:
@@ -174,17 +242,11 @@ def build() -> Asset:
             name = f"wheel-{side}{end}"
             grids[name] = wheel(side, az, r)
             joints.append((name, "hearse", ((WX[side][0] + WX[side][1]) / 2, r, az)))
-            wheels[name] = {"rot": turn(1.2, "x", -300)}
+            wheels[name] = {"rot": spin_keys(MOVE_TURNS[end])}
     root = parts(grids, joints)
 
-    def trot(phase):
-        k = [(0.0, 22.0), (0.3, 0.0), (0.6, -22.0), (0.9, 0.0), (1.2, 22.0)]
-        return {"rot": [(t, (a if phase == 0 else -a, 0.0, 0.0)) for t, a in k]}
-
-    move = dict(wheels)
-    move.update({"leg-fl": trot(0), "leg-br": trot(0), "leg-fr": trot(1), "leg-bl": trot(1)})
-    move["horse"] = {"loc": [(t, (0.0, y, 0.0)) for t, y in ((0, 0.0), (0.3, 1.5), (0.6, 0.0), (0.9, 1.5), (1.2, 0.0))]}
-    move["neck"] = {"rot": [(t, (a, 0.0, 0.0)) for t, a in ((0, 0.0), (0.3, 8.0), (0.6, 0.0), (0.9, 8.0), (1.2, 0.0))]}
+    move = trot_keys()
+    move.update(wheels)
     idle = {
         "horse": {"scale": [(t, (1.0, s, 1.0)) for t, s in ((0, 1.0), (1.0, 1.03), (2.0, 1.0), (3.0, 1.03), (4.0, 1.0))]},
         "neck": {"rot": [(t, (a, 0.0, 0.0)) for t, a in ((0, 0.0), (1.2, 12.0), (1.8, 10.0), (2.4, 0.0), (4.0, 0.0))]},
@@ -193,7 +255,7 @@ def build() -> Asset:
     rel = lambda p: (p[0] - CX, p[1] - RR, p[2] - RZ)  # noqa: E731
     return Asset(
         id="monster-vehicles-hearse-carriage", pack="monster", category="vehicles", name="Funeral Hearse", root=root,
-        clips=[Clip("move", move), Clip("idle", idle)],
+        clips=[Clip("move", move, ease=0), Clip("idle", idle)],
         sockets=[Socket("socket-lamp", at=rel(LAMP), parent="hearse"), Socket("socket-horse", at=rel((CX, 44.0, 26.0)), parent="horse")],
         pfx=[{"effectId": "rvx-monster-ghost-wisps", "socket": "socket-horse", "trigger": "idle", "size": 40}],
     )

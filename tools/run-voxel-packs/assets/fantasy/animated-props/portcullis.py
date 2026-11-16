@@ -180,9 +180,30 @@ def build():
     open_k = {"grille": {"loc": keys((0, 0, 0, 0), (0.3, 0, 3, 0), (1.6, 0, RISE, 0), (1.72, 0, RISE - 1.2, 0), (1.85, 0, RISE, 0))},
               "wheel-l": {"rot": keys((0, 0, 0, 0), (0.4, 0, 0, 120), (0.8, 0, 0, 240), (1.2, 0, 0, 360), (1.6, 0, 0, 480), (1.85, 0, 0, 470))},
               "wheel-r": {"rot": keys((0, 0, 0, 0), (0.4, 0, 0, -120), (0.8, 0, 0, -240), (1.2, 0, 0, -360), (1.6, 0, 0, -480), (1.85, 0, 0, -470))}}
-    close_k = {"grille": {"loc": keys((0, 0, RISE, 0), (0.55, 0, 0, 0), (0.63, 0, 2.0, 0), (0.72, 0, 0, 0), (0.78, 0, 0.6, 0), (0.84, 0, 0, 0))},
-               "wheel-l": {"rot": keys((0, 0, 0, 0), (0.2, 0, 0, -160), (0.4, 0, 0, -320), (0.55, 0, 0, -420))},
-               "wheel-r": {"rot": keys((0, 0, 0, 0), (0.2, 0, 0, 160), (0.4, 0, 0, 320), (0.55, 0, 0, 420))}}
+    # close: the catch lets go and the grille DROPS: one frame of slack,
+    # then free fall (gravity, one key a frame) that hits the sill at full
+    # speed on f10 and stops dead; it jumps a voxel and a half, lands
+    # again, and a last tiny tick. The chain wheels unwind with the drop
+    # and jerk to a stop with it.
+    F = 1 / 30
+    LAND, last = 10, 22
+
+    def drop(fr):
+        if fr <= 1:
+            return RISE + 0.4 * fr  # the slack: a hair up as the catch lets go
+        if fr <= LAND:
+            u = (fr - 1) / (LAND - 1)
+            return (RISE + 0.4) * (1 - u * u)
+        for f0, f1, h in ((LAND, 16, 1.5), (16, 19, 0.35)):  # ballistic hops
+            if fr <= f1:
+                u = (fr - f0) / (f1 - f0)
+                return 4 * h * u * (1 - u)
+        return 0.0
+    ys = [drop(fr) for fr in range(last + 1)]
+    turn_l = [-430 * (1 - min(y, RISE) / RISE) for y in ys]
+    close_k = {"grille": {"loc": [(fr * F, (0, y, 0)) for fr, y in enumerate(ys)]},
+               "wheel-l": {"rot": [(fr * F, (0, 0, a)) for fr, a in enumerate(turn_l)]},
+               "wheel-r": {"rot": [(fr * F, (0, 0, -a)) for fr, a in enumerate(turn_l)]}}
     idle_k = {"grille": {"loc": keys((0, 0, 0, 0), (1.0, 0, 0.6, 0), (2.0, 0, 0, 0))}}
     return asset("animated-props", "portcullis", "Portcullis Gate", root,
-                 clips=[Clip("idle", idle_k), Clip("open", open_k, loop=False), Clip("close", close_k, loop=False)])
+                 clips=[Clip("idle", idle_k), Clip("open", open_k, loop=False), Clip("close", close_k, loop=False, ease=0)])

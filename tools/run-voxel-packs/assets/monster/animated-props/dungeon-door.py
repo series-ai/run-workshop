@@ -15,6 +15,7 @@ import numpy as np
 
 import paint as P
 from _kit import keys, world
+from _slam import slam
 from _props import pn_flame
 from _pn import assemble, coords, last
 from pnkit import box
@@ -222,7 +223,11 @@ def build():
     ])
     z3 = (0, 0, 0)
     return world("dungeon-door", "animated-props", "Dungeon Door", root, clips=[
-        Clip("open", {"door": {"rot": keys((0, z3), (0.15, (0, -6, 0)), (0.55, (0, -98, 0)), (0.7, (0, -88, 0)), (0.85, (0, -93, 0)), (0.95, (0, -92, 0)))}}, loop=False),
-        Clip("close", {"door": {"rot": keys((0, (0, -92, 0)), (0.4, z3), (0.46, (0, -4, 0)), (0.54, z3))}}, loop=False),
+        # Heavy oak: unlatched with a jolt, then it swings accelerating into its
+        # stop and slams; shutting, it slams into the frame (see _slam). It
+        # swings inward: hinged at the back of the leaf, inside the thick wall
+        # with its proud arch ring, an outward swing would cut the ring.
+        Clip("open", {"door": {"rot": [(0.0, z3)] + slam((0, -6, 0), (0, -92, 0), frames=11, power=2.5, rebound=0.05, start=4, hold_from=4)[0]}}, loop=False, ease=0),
+        Clip("close", {"door": {"rot": slam((0, -92, 0), z3, frames=12, power=3.5, rebound=0.04)[0]}}, loop=False, ease=0),
         Clip("idle", {"grate": {"loc": keys((0, z3), (1.0, z3), (1.25, (7, 0, 0)), (2.4, (7, 0, 0)), (2.65, z3), (3.6, z3))}}),
     ])

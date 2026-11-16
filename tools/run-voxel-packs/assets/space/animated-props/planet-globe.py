@@ -90,7 +90,8 @@ def build():
     rig.add("globe", globe(), (CX, GY, CZ), "orrery")
     rig.add("rings", rings(), (CX, GY, CZ), "orrery", rot=(TILT, 0.0, -8.0))
     rig.add("moon", moon(), (CX, 6, CZ), "orrery")
-    clip = {"globe": {"rot": spin(6.0, "y", 360)}, "rings": {"rot": spin(12.0, "y", 360)}, "moon": {"rot": spin(4.0, "y", -360)}}
+    # every part turns for the whole 12 s loop: two globe turns, one ring turn, three moon turns
+    clip = {"globe": {"rot": spin(12.0, "y", 720)}, "rings": {"rot": spin(12.0, "y", 360)}, "moon": {"rot": spin(12.0, "y", -1080)}}
     return asset("animated-props", "planet-globe", "Ringed Planet Orrery", rig.root, clips=[Clip("spin", clip)])
 
 

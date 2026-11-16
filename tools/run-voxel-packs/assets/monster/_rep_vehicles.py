@@ -190,12 +190,155 @@ def _sled() -> Grid:
 WS_LAMP: list[float] = [0.0, 0.0, 0.0]
 
 
+# A rotary gallop, as a dog runs: the hind feet land one after the other,
+# then the fronts, then a gathered flight with all four tucked under. Each
+# stance paw slides back at the ground speed; the body's height and pitch
+# are solved every frame so the stance paws stand on the floor (it rocks
+# nose-down onto the fronts, nose-up as the hinds reach under), and it
+# stretches and bunches along its length with the stride (the spine flex).
+GAL_FPS = 30
+GAL_STRIDE = 14  # frames a stride; `move` is three strides (1.4 s)
+GAL_STRIDES = 3
+GAL_DUTY = 0.32  # share of the stride each paw is on the ground
+GAL_TOUCH = {("b", "l"): 0.0, ("b", "r"): 0.1, ("f", "r"): 0.42, ("f", "l"): 0.52}
+GAL_REACH = 5.6  # stance paw travel either side of its hip or shoulder
+GAL_LIFT = 2.5  # the swing leg tucks up into the body this far
+GAL_FLEX = 0.06  # body stretch along its length, ±
+GAL_EXTENDED = 0.45  # stride phase of the longest stretch (fronts reach, hinds push)
+GAL_FLIGHT = 1.2  # extra rise of the body in the gathered flight, voxels
+GAL_WOLF_PHASE = {0: 0.55, 1: 0.85}  # the right wolf runs a little out of step; no landing on the loop point
+GAL_PAW = {False: (12.0, (-1.9, 1.9)), True: (15.0, (-2.3, 1.7))}  # leg length, sole front/back edge
+
+
+def _gal_point(b, p, sz, piv, slide, a, L, dz):
+    """Body-joint-relative (y, z) of a sole edge for body lift b, pitch p
+    (radians, + = nose up), length scale sz and leg angle a (+ = paw forward)."""
+    y = piv[0] + slide - L * np.cos(a) - dz * np.sin(a)
+    z = (piv[1] - L * np.sin(a) + dz * np.cos(a)) * sz
+    return b + y * np.cos(p) - z * np.sin(p), y * np.sin(p) + z * np.cos(p)
+
+
+def _gal_swing(w, reach, ratio):
+    """A swing paw's forward offset at w (0-1): from behind to in front, as a
+    cubic that leaves and lands at the stance speed (a kick back, a reach)."""
+    m = -2 * reach * ratio * 0.55  # a little under the full speed keeps the reach sane
+    h00, h10, h01, h11 = 2 * w ** 3 - 3 * w ** 2 + 1, w ** 3 - 2 * w ** 2 + w, -2 * w ** 3 + 3 * w ** 2, w ** 3 - w ** 2
+    return -reach * h00 + m * h10 + reach * h01 + m * h11
+
+
+def _gallop(legs, pivots) -> dict:
+    n = GAL_STRIDE * GAL_STRIDES
+    move = {}
+    for k, name in enumerate(WOLF_X):
+        wx = WOLF_X[name]
+        body_j = (12.0, WOLF_Z0 + 20)
+        mine = {leg: (hind, "l" if s < 0 else "r") for leg, (hind, s, kk) in legs.items() if kk == k}
+        piv = {leg: (pivots[leg][1] - body_j[0], pivots[leg][2] - body_j[1]) for leg in mine}
+        phase = {leg: (GAL_TOUCH[("b" if h else "f", sl)] + GAL_WOLF_PHASE[k]) % 1.0 for leg, (h, sl) in mine.items()}
+        ratio = (1 - GAL_DUTY) / GAL_DUTY
+        frames = []
+        for f in range(n):
+            t = f / GAL_STRIDE
+            sz = 1 + GAL_FLEX * np.cos(2 * np.pi * (t - GAL_EXTENDED))
+            st, sw = {}, {}
+            for leg, (h, sl) in mine.items():
+                u = (t - phase[leg]) % 1.0
+                L, _ = GAL_PAW[h]
+                if u < GAL_DUTY:
+                    st[leg] = GAL_REACH * (1 - 2 * u / GAL_DUTY)  # world forward offset of the paw
+                else:
+                    w = (u - GAL_DUTY) / (1 - GAL_DUTY)
+                    hz = _gal_swing(w, GAL_REACH, ratio)
+                    sw[leg] = (float(np.arcsin(np.clip(hz / L, -0.95, 0.95))), GAL_LIFT * np.sin(np.pi * w))
+            frames.append((sz, st, sw))
+
+        def solve_stance(p, sz, st):
+            """Leg angles that put each stance paw on its world track, and the
+            lift that stands the lowest one on the floor; return (b, float, angles)."""
+            angles, need = {}, []
+            for leg, fwd in st.items():
+                L, edges = GAL_PAW[mine[leg][0]]
+                target = piv[leg][1] - fwd  # z of the paw (−z is forward)
+                lo, hi = -1.2, 1.2
+                for _ in range(40):  # bisection: z falls as the angle grows
+                    a = (lo + hi) / 2
+                    if _gal_point(0, p, sz, piv[leg], 0, a, L, 0)[1] > target:
+                        lo = a
+                    else:
+                        hi = a
+                angles[leg] = a
+                need.append(-min(_gal_point(0, p, sz, piv[leg], 0, a, L, dz)[0] + 12.0 for dz in edges))
+            if not need:
+                return None, 0.0, angles
+            b = max(need)
+            return b, sum(b - x for x in need), angles
+
+        # pitch: per frame, the one that best stands every stance paw, smoothed
+        cand = np.radians(np.arange(-10, 10.01, 0.5))
+        pitch = []
+        for sz, st, sw in frames:
+            if len(st) < 2:
+                pitch.append(None)
+                continue
+            best = min(cand, key=lambda p: solve_stance(p, sz, st)[1] + 0.02 * abs(p))
+            pitch.append(float(best))
+        known = [i for i, p in enumerate(pitch) if p is not None]
+        for i in range(n):  # frames with one paw or none: ease between neighbours
+            if pitch[i] is None:
+                a = max([j for j in known if j < i] or [known[-1] - n])
+                c = min([j for j in known if j > i] or [known[0] + n])
+                w = (i - a) / (c - a)
+                w = w * w * (3 - 2 * w)
+                pitch[i] = pitch[a % n] * (1 - w) + pitch[c % n] * w
+        pitch = [(pitch[i - 1] + 2 * pitch[i] + pitch[(i + 1) % n]) / 4 for i in range(n)]
+        lift, rows = [], []
+        for i, (sz, st, sw) in enumerate(frames):
+            b, _, angles = solve_stance(pitch[i], sz, st)
+            lift.append(b)
+            rows.append(angles)
+        known = [i for i, b in enumerate(lift) if b is not None]
+        for i in range(n):  # the flight: a ballistic hop between the last push and the next landing
+            if lift[i] is None:
+                a = max([j for j in known if j < i] or [known[-1] - n])
+                c = min([j for j in known if j > i] or [known[0] + n])
+                w = (i - a) / (c - a)
+                lift[i] = lift[a % n] * (1 - w) + lift[c % n] * w + 4 * GAL_FLIGHT * w * (1 - w)
+        # take the hard steps out of the body's rise and fall (a landing, the
+        # next paw taking the weight); the stance legs give or reach the
+        # difference below, so their paws still stand on the floor
+        for _ in range(2):
+            lift = [(lift[i - 1] + 2 * lift[i] + lift[(i + 1) % n]) / 4 for i in range(n)]
+        keys_body = {"loc": [], "rot": [], "scale": []}
+        keys_leg = {leg: {"rot": [], "loc": []} for leg in mine}
+        for i in range(n + 1):
+            j = i % n
+            sz, st, sw = frames[j]
+            tt = i / GAL_FPS
+            keys_body["loc"].append((tt, (0.0, float(lift[j]), 0.0)))
+            keys_body["rot"].append((tt, (float(np.degrees(pitch[j])), 0.0, 0.0)))
+            keys_body["scale"].append((tt, (1.0, 1.0, float(sz))))
+            for leg in mine:
+                a, sl = (rows[j][leg], 0.0) if leg in st else sw[leg]
+                L, edges = GAL_PAW[mine[leg][0]]
+                if leg in st:  # slide the leg so its paw meets the floor exactly
+                    low = min(_gal_point(lift[j], pitch[j], sz, piv[leg], 0.0, a, L, dz)[0] for dz in edges) + 12.0
+                    sl = -low / np.cos(pitch[j])
+                else:  # a swing paw tucks up further if the body's rock would scuff it
+                    low = min(_gal_point(lift[j], pitch[j], sz, piv[leg], sl, a, L, dz)[0] for dz in edges) + 12.0
+                    sl += max(0.0, 0.5 - low) / np.cos(pitch[j])
+                keys_leg[leg]["rot"].append((tt, (float(np.degrees(a)), 0.0, 0.0)))
+                keys_leg[leg]["loc"].append((tt, (0.0, float(sl), 0.0)))
+        move[name] = keys_body
+        move.update(keys_leg)
+    return move
+
+
 def _wolf_sled():
     slug = "wolf-sled"
     grids = {"sled": _sled()}
     root_j = (WS_CX, 0.0, WS_G[2] / 2)
     joints = [("sled", None, root_j)]
-    legs = {}
+    legs, pivots = {}, {}
     for k, (name, wx) in enumerate(WOLF_X.items()):
         grids[name] = _wolf_body(wx, seed=20 + k * 10)
         joints.append((name, "sled", (wx, 12.0, WOLF_Z0 + 20)))
@@ -205,27 +348,16 @@ def _wolf_sled():
                 grids[leg], pivot = _wolf_leg(wx, s, hind)
                 joints.append((leg, name, pivot))
                 legs[leg] = (hind, s, k)
+                pivots[leg] = pivot
     root = assemble(grids, joints)
 
-    # A gallop: the front and hind pairs swing in opposite phase and the
-    # body rises while the legs swing. The paws stay on or above y = 0.
-    t = (0.0, 0.175, 0.35, 0.525, 0.7, 0.875, 1.05, 1.225, 1.4)
-    move = {}
-    for leg, (hind, s, k) in legs.items():
-        a = 26.0 if (hind == (k == 1)) else -26.0
-        a += 2.0 * s  # a small offset between left and right paws
-        seq = (0, a, 0, -a, 0, a, 0, -a, 0)
-        move[leg] = {"rot": [(tt, (v, 0.0, 0.0)) for tt, v in zip(t, seq)]}
-    for k, name in enumerate(WOLF_X):
-        lift = (0, 2.0, 0, 2.0, 0, 2.0, 0, 2.0, 0)
-        move[name] = {"loc": [(tt, (0.0, v, 0.0)) for tt, v in zip(t, lift)]}
-    move["sled"] = {"loc": keys((0, (0, 0, 0)), (0.7, (0, 0.6, 0)), (1.4, (0, 0, 0)))}
+    move = _gallop(legs, pivots)
     idle = {"sled": {"loc": keys((0, (0, 0, 0)), (1.3, (0, 0.4, 0)), (2.6, (0, 0, 0)))},
             "wolf-left": {"loc": keys((0, (0, 0, 0)), (0.65, (0, 0.5, 0)), (1.3, (0, 0, 0)), (1.95, (0, 0.5, 0)), (2.6, (0, 0, 0)))},
             "wolf-right": {"loc": keys((0, (0, 0.5, 0)), (0.65, (0, 0, 0)), (1.3, (0, 0.5, 0)), (1.95, (0, 0, 0)), (2.6, (0, 0.5, 0)))}}
     harness = (WS_CX - root_j[0], 16.0 - root_j[1], WOLF_Z0 + 16 - root_j[2])
     return world(slug, "vehicles", "Wolf Sled", root,
-                 clips=[Clip("move", move), Clip("idle", idle)],
+                 clips=[Clip("move", move, ease=0), Clip("idle", idle)],
                  sockets=[Socket("socket-harness", at=harness, parent="sled")],
                  pfx=[pfx("rvx-monster-ghost-wisps", "socket-harness", "clip:move", size=22, at=0.55)])
 

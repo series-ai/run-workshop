@@ -6,7 +6,9 @@ clear above the chest, so the face reads from the front: two red eyes and
 a bone jaw. A rounded olive helmet sits on the head with a chin strap.
 The right hand holds the rifle at the hip, pointed forward; the left arm
 reaches out. Clips: idle (head turn), move
-(march), attack (rifle recoil), hit (stagger), death (falls on its side).
+(march), attack (lurches a step in and fires
+point-blank, the recoil flipping the muzzle), hit (stagger), death (shot, knees give, topples backwards
+onto its back, bounces and settles).
 Faces -Z.
 """
 import numpy as np
@@ -14,7 +16,8 @@ import numpy as np
 import paint as P
 import pnpaint as PP
 import pnshapes as S
-from _life import Rig, ctr, fx, keys, limb, make, plan, skin
+import _zombie_falls as zf
+from _life import Rig, ctr, fx, keys, limb, make, plan, seq, skin
 from _rep_creatures import ground, tube
 from pnkit import box
 from voxgrid import Clip, Grid
@@ -146,23 +149,65 @@ def _build():
         "leg-r": {"rot": keys((0, (-18, 0, 0)), (0.45, (18, 0, 0)), (0.9, (-18, 0, 0)))},
         "head": {"rot": keys((0, (0, 0, -4)), (0.45, (0, 0, 4)), (0.9, (0, 0, -4)))},
     }
+    # attack: a lurching point-blank shot. It sags back on its heels and
+    # draws the rifle back to the hip, the free claw raised to grab (f0-9,
+    # still drawing through f11), then lurches a long step in on the left
+    # foot, the claw raking down onto the victim as it rams the muzzle
+    # into them and fires (impact f14). The recoil flips the muzzle up and
+    # kicks the rifle back, the head jolts, and the body leans on into the
+    # victim in a moving hold before it steps back, sways back past upright
+    # and settles. The right boot stays planted (legs solved against the
+    # torso's pitch so the boots sit on the floor).
+    f = 1 / 30
+    fire = imp = 14 * f
+    T = zf.fr
+    R = "zombie-soldier"
     attack = {
-        "arm-r": {"rot": keys((0, (0, 0, 0)), (0.2, (8, 0, 0)), (0.4, (-4, 0, 0)), (0.7, (0, 0, 0)))},
-        "arm-l": {"rot": keys((0, (0, 0, 0)), (0.2, (8, 0, 0)), (0.4, (-4, 0, 0)), (0.7, (0, 0, 0)))},
-        "rifle": {"loc": keys((0, (0, 0, 0)), (0.2, (0, 0, 0)), (0.25, (0, 0, 2)), (0.4, (0, 0, 0)), (0.7, (0, 0, 0)))},
-        "head": {"rot": keys((0, (0, 0, 0)), (0.25, (8, 0, 0)), (0.5, (0, 0, 0)))},
+        R: {"rot": T((0, 0, 0, 0), (5, 3.5, 0, 0), (9, 7, 0, 0), (11, 8.2, 0, 0), (12, 5.5, 0, 0), (13, 0, 0, 0), (14, -11, 0, 0), (16, -13, 0, 0), (17, -7, 0, 0), (19, -11.5, 0, 0), (22, -6.5, 0, 0), (25, -11, 0, 0), (27, -8, 0, 0), (30, -2, 0, 0), (31, 0, 0, 0), (32, 1.6, 0, 0), (33, 2.5, 0, 0), (35, 1.2, 0, 0), (36, 0.3, 0, 0), (37, -0.5, 0, 0), (41, 0, 0, 0)),
+            "loc": T((0, 0, 0.0, 0), (5, 0, 0.45, 0.8), (9, 0, 0.75, 1.6), (11, 0, 0.82, 2.0), (12, 0, 0.62, 1.0), (13, 0, 0.52, -1.5), (14, 0, 1.0, -5), (16, 0, 0.93, -7), (17, 0, 0.71, -6.8), (19, 0, 0.66, -6.1), (22, 0, 0.68, -7.0), (25, 0, 0.69, -6.1), (27, 0, 1.0, -5.4), (30, 0, 0.77, -2.0), (31, 0, 0.3, -0.8), (32, 0, 0.14, 0.0), (33, 0, 0.3, 0.4), (35, 0, 0.15, 0.2), (36, 0, 0.04, 0.05), (37, 0, 0.08, -0.1), (41, 0, 0.0, 0))},
+        "leg-l": {"rot": T((0, 0.0, 0, 0), (5, 3.06, 0, 0), (9, 6.18, 0, 0), (11, -8.2, 0, 0), (12, -5.5, 0, 0), (13, 0.0, 0, 0), (14, 11.46, 0, 0), (16, 3.79, 0, 0), (17, 4.57, 0, 0), (19, 7.25, 0, 0), (22, 3.81, 0, 0), (25, 7.25, 0, 0), (27, 9.92, 0, 0), (30, 2.0, 0, 0), (31, 0.0, 0, 0), (32, -0.0, 0, 0), (33, 1.53, 0, 0), (35, 0.76, 0, 0), (36, 0.19, 0, 0), (37, -0.38, 0, 0), (41, 0.0, 0, 0)),
+                  "loc": T((0, 0, 0.0, 0), (5, 0, 0.0, 0), (9, 0, 0.0, 0), (11, 0, 2.0, 0), (12, 0, 2.2, 0), (13, 0, 1.6, 0), (14, 0, -0.88, 0), (16, 0, 0.0, 0), (17, 0, -0.48, 0), (19, 0, -0.16, 0), (22, 0, -0.43, 0), (25, 0, -0.25, 0), (27, 0, -0.87, 0), (30, 0, 1.6, 0), (31, 0, 0.8, 0), (32, 0, 0.0, 0), (33, 0, 0.0, 0), (35, 0, 0.0, 0), (36, 0, 0.0, 0), (37, 0, 0.0, 0), (41, 0, 0.0, 0))},
+        "leg-r": {"rot": T((0, 0.0, 0, 0), (5, 3.06, 0, 0), (9, 6.18, 0, 0), (11, 7.78, 0, 0), (12, 3.83, 0, 0), (13, -5.74, 0, 0), (14, -20.69, 0, 0), (16, -30.89, 0, 0), (17, -28.15, 0, 0), (19, -25.9, 0, 0), (22, -28.97, 0, 0), (25, -25.78, 0, 0), (27, -21.99, 0, 0), (30, -7.69, 0, 0), (31, -3.06, 0, 0), (32, -0.0, 0, 0), (33, 1.53, 0, 0), (35, 0.76, 0, 0), (36, 0.19, 0, 0), (37, -0.38, 0, 0), (41, 0.0, 0, 0)),
+                  "loc": T((0, 0, 0.0, 0), (5, 0, 0.0, 0), (9, 0, 0.0, 0), (11, 0, 0.0, 0), (12, 0, 0.0, 0), (13, 0, 0.0, 0), (14, 0, 0.0, 0), (16, 0, -0.8, 0), (17, 0, 0.0, 0), (19, 0, 0.0, 0), (22, 0, 0.0, 0), (25, 0, 0.0, 0), (27, 0, 0.0, 0), (30, 0, 0.0, 0), (31, 0, 0.0, 0), (32, 0, 0.0, 0), (33, 0, 0.0, 0), (35, 0, 0.0, 0), (36, 0, 0.0, 0), (37, 0, 0.0, 0), (41, 0, 0.0, 0))},
+        "arm-r": {"rot": T((0, 0, 0, 0), (5, -7, 0, 0), (9, -14, 0, 0), (11, -17, 0, 0), (14, 24, 0, 2), (15, 36, 0, 5), (17, 30, 0, 3), (20, 22, 0, 1),
+                           (23, 27, 0, 2), (26, 22, 0, 1), (30, 6, 0, 0), (34, -3, 0, 0), (38, 0.5, 0, 0), (41, 0, 0, 0))},
+        "rifle": {"rot": T((0, 0, 0, 0), (9, 7, 0, 0), (11, 8, 0, 0), (14, -17, 0, 0), (15, 12, 0, -4), (17, 4, 0, -1), (19, -12, 0, 1), (22, -16, 0, 0),
+                           (25, -13, 0, 0), (30, -4, 0, 0), (34, 1, 0, 0), (41, 0, 0, 0)),
+                  "loc": T((0, 0, 0, 0), (14, 0, 0, 0), (15, 0, 0.5, 3.0), (17, 0, 0.2, 1.6), (20, 0, 0, 0.3), (24, 0, 0, 0))},
+        "arm-l": {"rot": T((0, 0, 0, 0), (5, 28, 0, -5), (9, 54, 0, -10), (11, 60, 0, -11), (14, -12, 0, 6), (16, -24, 0, 9), (18, -8, 0, 3),
+                           (21, -26, 0, 9), (24, -12, 0, 4), (28, -4, 0, 2), (33, 6, 0, -1), (37, -1, 0, 0), (41, 0, 0, 0))},
+        "head": {"rot": T((0, 0, 0, 0), (5, 6, 0, 0), (10, 12, 4, 0), (12, 13, 5, 0), (14, -8, 0, 0), (15, 16, -6, 4), (17, 8, -4, 2), (19, -6, 5, -3),
+                          (22, 2, -3, 1), (25, -5, 2, 0), (28, -3, 0, 0), (33, 5, 0, 0), (37, -1, 0, 0), (41, 0, 0, 0))},
     }
-    hit = {
-        "zombie-soldier": {"rot": keys((0, (0, 0, 0)), (0.1, (0, 0, 12)), (0.55, (0, 0, 0)))},
-        "head": {"rot": keys((0, (0, 0, 0)), (0.1, (12, 0, 9)), (0.55, (0, 0, 0)))},
-    }
-    death = {"zombie-soldier": {"rot": keys((0, (0, 0, 0)), (0.5, (0, 0, 28)), (1.1, (0, 0, 82)))},
-             "head": {"rot": keys((0, (0, 0, 0)), (1.1, (0, 0, -15)))}}
+    R = "zombie-soldier"
+    hit = {R: zf.hit_body(push=2.8, pop=1.4, lean=11, side=0.7, heel=5.0, toe=-5.0),
+           "head": {"rot": zf.lag((22, 8, 8))},
+           "arm-l": {"rot": zf.lag((26, 0, -12), delay=0)}, "arm-r": {"rot": zf.lag((20, 0, 8), delay=1)},
+           "rifle": {"rot": zf.lag((-18, 0, 0), delay=2)}}
+    # death: shot through, it jerks back and its rifle arm flies up (f4),
+    # rocks forward over its toes as the knees give (f9-12), then topples
+    # backwards, away from the shooter, gathering speed into a heavy thud on
+    # its back (impact f25). One small bounce and a settle; the arms slap
+    # down out to the sides, the rifle clatters, the head whips back last and
+    # rolls aside, the legs kick up and drop.
+    dimp = 24 * f
+    death = {R: {"rot": seq((0, 0, 0, 0), (4 * f, 6, 0, -3), (9 * f, -5, 0, -2), (13 * f, 10, 0, -0.5), *[((13 + k) * f, 10 + 80 * (0.3 * k / 11 + 0.7 * (k / 11) ** 6), 0, -0.5) for k in range(1, 11)], (dimp, 90, 0, -0.5), (26 * f, 88.5, 0, -0.5), (28 * f, 90, 0, -0.5), (52 * f, 90, 0, -0.5)),
+                 "loc": seq((0, 0, 0, 0), (4 * f, 0, 0.5, 1), (9 * f, 0, -0.6, 0.5), (13 * f, 0, -1.2, 1), (23 * f, 0, -0.6, 2.3), (dimp, 0, 0, 2.5), (26 * f, 0, 0.35, 2.7), (28 * f, 0, 0, 2.8), (34 * f, 0, 0, 2.8), (37 * f, 0, 0, 2.8), (52 * f, 0, 0, 2.8)),
+                 # the whole body squashes flat on the thud (lying on its back, its forward axis is world up)
+                 "scale": seq((0, 1, 1, 1), (13 * f, 1, 1, 1), (22 * f, 1.005, 1.004, 0.985), (dimp, 1.04, 1.03, 0.9), (26 * f, 0.99, 0.99, 1.01), (29 * f, 1, 1, 1))},
+             "head": {"rot": seq((0, 0, 0, 0), (3 * f, -6, 0, 0), (6 * f, 20, 0, 6), (11 * f, -14, 0, 0), (20 * f, -14, 0, 0), (dimp, -2, 4, 0), (26 * f, 5, 12, 0), (29 * f, -1, 20, 0), (33 * f, -0.5, 24, 0), (52 * f, -0.5, 25, 0))},
+             "arm-l": {"rot": seq((0, 0, 0, 0), (4 * f, 50, 0, 0), (13 * f, 45, 0, 0), (20 * f, 60, 0, 14), (dimp, 94, 0, 34), (26 * f, 104, 0, 42), (29 * f, 103, 0, 41), (52 * f, 103, 0, 41))},
+             "arm-r": {"rot": seq((0, 0, 0, 0), (4 * f, 60, 0, 15), (13 * f, 40, 0, 10), (20 * f, 36, 0, 30), (dimp, -12, 0, 62), (26 * f, -28, 0, 72), (29 * f, -26, 0, 71), (52 * f, -26, 0, 71))},
+             "rifle": {"rot": seq((0, 0, 0, 0), (4 * f, -20, 0, 0), (20 * f, -20, 0, 0), (dimp, -60, 0, 0), (27 * f, -52, 0, 6), (30 * f, -57, 0, 3), (33 * f, -55, 0, 4), (52 * f, -55, 0, 4))}}
+    for name, s in (("leg-l", -1), ("leg-r", 1)):  # the knees give, kick up at the thud, drop flat
+        death[name] = {"rot": seq((0, 0, 0, 0), (4 * f, -4, 0, 0), (9 * f, 10, 0, 0), (13 * f, 20, 0, 0), (20 * f, 17, 0, s * 2), (22 * f, 18, 0, s * 4), (dimp, 30, 0, s * 6), ((26 + (s > 0)) * f, 20, 0, s * 8), ((29 + (s > 0)) * f, 5, 0, s * 8), ((32 + (s > 0)) * f, 6, 0, s * 8), (52 * f, 6, 0, s * 8))}
     return make("creatures", "zombie-soldier", "Zombie Soldier", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False, impact=dimp)],
                 sockets=[rig.socket("socket-rifle", (30.5, 22, 0.5), parent="rifle")],
-                pfx=[fx("rvx-apocalypse-shotgun-blast", "socket-rifle", "clip:attack", at=0.22, size=9)])
+                pfx=[fx("rvx-apocalypse-shotgun-blast", "socket-rifle", "clip:attack", at=fire, size=9)])
 
 
 def build():
-    return ground(_build(), names=("move", "hit", "death"))
+    # The exporter keeps the death on the floor; densifying its keys here
+    # would smooth away the impact.
+    return ground(zf.pin_rest(_build(), trim=0.1), names=("move",))

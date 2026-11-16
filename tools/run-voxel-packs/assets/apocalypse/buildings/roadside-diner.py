@@ -180,4 +180,4 @@ def build() -> Asset:
     on, off = (1.0, 1.0, 1.0), (0.001, 0.001, 0.001)
     fl = [(0.0, on), (1.2, on), (1.22, off), (1.3, off), (1.32, on), (1.45, on), (1.47, off), (1.7, off), (1.72, on), (3.0, on)]
     return Asset(id="apocalypse-buildings-roadside-diner", pack="apocalypse", category="buildings", name="Roadside Diner", root=root,
-                 clips=[Clip("idle", {"neon": {"scale": fl}})])
+                 clips=[Clip("idle", {"neon": {"scale": fl}}, ease=0)])  # a switch, not a swing

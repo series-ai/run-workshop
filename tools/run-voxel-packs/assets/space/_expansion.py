@@ -13,13 +13,15 @@ import numpy as np
 import paint as P
 import pnglyph
 from _bld import beacon, blast_door, corner_posts, crate, fuel_drum, hull_box, sign, steel_box, steel_roof, window
+from _motion import DEATH_FLOOR, back_fall, curve, topple
+from _slam import slam
+from _trim import squeeze
 from _life import (
     Clip, Grid, Rig, asset, band, box, coords, edges, facet_paint, front, gem,
     hazard, light_top, loft, mask_of, ngon_y, plan, plated, rock, side, spin, wave,
 )
 from pnshapes import bar, cone, disc, dome, pipe, pyramid, quad, wheel
 from voxgrid import C, Part
-from _repair_motion import ground_death
 
 
 def _plate(g: Grid, m: np.ndarray, ramp: str, base: int = 5, seed: int = 0, size=(8, 6)) -> np.ndarray:
@@ -126,16 +128,26 @@ def _drone_dock() -> object:
     rig.add("arm-r", arm(1), (cx + 14, 28, cz), "dock")
     rig.add("drone", drone_grid(), (cx, 35, cz), "dock")
     z = (0.0, 0.0, 0.0)
-    open_clip = {"arm-l": {"rot": [(0.0, z), (0.3, (0, -10, -22)), (1.0, (0, -8, -42))]},
-                 "arm-r": {"rot": [(0.0, z), (0.3, (0, 10, 22)), (1.0, (0, 8, 42))]},
-                 "drone": {"loc": [(0.0, z), (1.0, (0, 8, 0))]}}
-    close_clip = {"arm-l": {"rot": [(0.0, (0, -8, -42)), (0.7, (0, 4, 10)), (1.0, z)]},
-                  "arm-r": {"rot": [(0.0, (0, 8, 42)), (0.7, (0, -4, -10)), (1.0, z)]},
-                  "drone": {"loc": [(0.0, (0, 8, 0)), (1.0, z)]}}
+    # The clamp arms move like every door in the pack (see _slam): they
+    # creep, accelerate (power 3.5, keyed once a frame) and slam into their
+    # stops, dead stop, tiny rebound. On `open` the freed drone then lifts
+    # off (fast out, settling into its hover); on `close` it drops onto the
+    # deck first and the arms slam shut on it.
+    F = 1 / 30
+    wide_l, wide_r, hover = (0, -8, -42), (0, 8, 42), (0, 8, 0)
+    arm_l, hit = slam(z, wide_l, frames=12, rebound=0.05, end=26)
+    arm_r, _ = slam(z, wide_r, frames=12, rebound=0.05, end=26)
+    h0 = round(hit * 30)
+    lift = [(0.0, z), (h0 * F, z)] + [((h0 + k) * F, (0, 8 * (1 - (1 - k / 10) ** 3), 0)) for k in range(1, 11)] + [(26 * F, hover)]
+    open_clip = {"arm-l": {"rot": arm_l}, "arm-r": {"rot": arm_r}, "drone": {"loc": lift}}
+    drop = [((k) * F, (0, 8 * (1 - (k / 7) ** 2), 0)) for k in range(8)] + [(8 * F, (0, 0.4, 0)), (9 * F, (0, 0.4, 0)), (10 * F, z), (24 * F, z)]
+    close_clip = {"arm-l": {"rot": slam(wide_l, z, frames=12, start=4, rebound=0.04, end=24)[0]},
+                  "arm-r": {"rot": slam(wide_r, z, frames=12, start=4, rebound=0.04, end=24)[0]},
+                  "drone": {"loc": drop}}
     idle = {"drone": {"rot": wave(4.0, "y", 8), "loc": wave(2.0, "y", 0.7, base=(0, 4, 0))}}
     sock = rig.sock("socket-scan", (cx, 39, cz - 12), parent="drone")
     return asset("animated-props", "drone-dock", "Drone Dock", rig.root,
-                 clips=[Clip("idle", idle), Clip("open", open_clip, loop=False), Clip("close", close_clip, loop=False)],
+                 clips=[Clip("idle", idle), Clip("open", open_clip, loop=False, ease=0), Clip("close", close_clip, loop=False, ease=0)],
                  sockets=[sock], pfx=[{"effectId": "rvx-space-holo-scan", "socket": "socket-scan", "trigger": "clip:open", "size": 12, "aim": [0, 0, -1], "at": 0.55}])
 
 
@@ -310,15 +322,36 @@ def _escape_pod() -> object:
     rig.add("pod", capsule(), (cx, 0, cz))
     rig.add("hatch", hatch(), (cx, 30, 11), "pod")
     z = (0.0, 0.0, 0.0)
-    open_clip = {"hatch": {"rot": [(0.0, z), (0.35, (-30, 0, 0)), (1.0, (-88, 0, 0))]}}
-    close_clip = {"hatch": {"rot": [(0.0, (-88, 0, 0)), (0.7, (-6, 0, 0)), (1.0, z)]}}
-    move = {"pod": {"loc": [(0.0, (0, 0, 0)), (0.4, (0, 8, 0)),
-                             (1.2, (0, 10, 0)), (1.6, (0, 8, 0)), (2.0, (0, 0, 0))],
-                    "rot": wave(2.0, "x", 5)}}
+    F = 1 / 30
+    up = (-88.0, 0.0, 0.0)
+    one = (1.0, 1.0, 1.0)
+    # Open / close: like every door in the pack (see _slam) the hatch
+    # creeps off its seal, accelerates (power 3.5, keyed once a frame) and
+    # slams into its open stop / shut: dead stop, a tiny rebound, still. On
+    # the shut slam the pod jolts back and squats on its struts (a squash,
+    # never up off the floor).
+    open_clip = {"hatch": {"rot": slam(z, up, frames=14, rebound=0.05)[0]}}
+    hatch_close, slam_t = slam(up, z, frames=13, rebound=0.04, end=26)
+    h = round(slam_t * 30)
+    close_clip = {"hatch": {"rot": hatch_close},
+                  "pod": {"loc": [(0.0, z), (h * F, z), ((h + 2) * F, (0, 0, 0.6)), ((h + 4) * F, (0, 0, -0.3)), ((h + 6) * F, (0, 0, 0.15)),
+                                  ((h + 8) * F, z), (26 * F, z)],
+                          "scale": [(0.0, one), (h * F, one), ((h + 1) * F, (1.03, 0.95, 1.03)), ((h + 4) * F, (0.99, 1.015, 0.99)),
+                                    ((h + 7) * F, (1.005, 0.995, 1.005)), ((h + 10) * F, one), (26 * F, one)]}}
+    # Lift-off loop: the pod crouches on its struts, launches up stretched,
+    # overshoots its hover height and settles into a bob, then sinks back
+    # down and touches down with a squash.
+    move = {"hatch": {"rot": [(0.0, z), (60 * F, z)]},
+            "pod": {"loc": [(0.0, z), (5 * F, z), (11 * F, (0, 9, 0)), (17 * F, (0, 11.5, 0)), (25 * F, (0, 9.5, 0)), (32 * F, (0, 10.6, 0)),
+                            (39 * F, (0, 10, 0)), (46 * F, (0, 7, 0)), (52 * F, z), (60 * F, z)],
+                    "scale": [(0.0, one), (5 * F, (1.05, 0.92, 1.05)), (11 * F, (0.95, 1.08, 0.95)), (17 * F, one), (46 * F, one),
+                              (49 * F, (0.97, 1.04, 0.97)), (52 * F, (1.05, 0.93, 1.05)), (56 * F, (0.98, 1.02, 0.98)), (60 * F, one)],
+                    "rot": [(0.0, z), (5 * F, z), (11 * F, (4, 0, 0)), (17 * F, (-2, 0, 0)), (25 * F, (2, 0, 1)), (32 * F, (-1.5, 0, -1)),
+                            (39 * F, (1, 0, 0)), (46 * F, (-1, 0, 0)), (52 * F, z), (60 * F, z)]}}
     idle = {"pod": {"rot": wave(3.0, "y", 2)}}
     sock = rig.sock("socket-engine", (cx, 3, cz + 16), parent="pod")
     return asset("animated-props", "escape-pod", "Escape Pod", rig.root,
-                 clips=[Clip("idle", idle), Clip("open", open_clip, loop=False), Clip("close", close_clip, loop=False), Clip("move", move)],
+                 clips=[Clip("idle", idle), Clip("open", open_clip, loop=False, ease=0), Clip("close", close_clip, loop=False, ease=0), Clip("move", move)],
                  sockets=[sock], pfx=[{"effectId": "rvx-space-engine-exhaust", "socket": "socket-engine", "trigger": "clip:move", "size": 12, "aim": [0, -0.5, 1], "at": 0.2}])
 
 
@@ -922,8 +955,11 @@ def _humanoid_creature(slug: str, kind: str) -> object:
     else:
         sockets.append(rig.sock("socket-psionic", (cx + 15, 54 * factor, cz - 6), parent="orb"))
         pfx.append({"effectId": "rvx-space-teleport-beam", "socket": "socket-psionic", "trigger": "clip:attack", "size": 15, "aim": [0, 0, -1], "at": 0.5})
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False)]
     return asset("creatures", slug, slug.replace("-", " ").title(), rig.root, clips=clips, sockets=sockets, pfx=pfx)
+
+
+GOLEM_LIE, GOLEM_ARM = 83.0, 0.0
 
 
 def _crystal_golem() -> object:
@@ -982,15 +1018,67 @@ def _crystal_golem() -> object:
     idle = {"body": {"rot": wave(3.2, "y", 2)}, "arm-l": {"rot": wave(3.2, "z", 2)}, "arm-r": {"rot": wave(3.2, "z", -2)}}
     move = {"leg-l": {"rot": wave(1.4, "x", 18)}, "leg-r": {"rot": wave(1.4, "x", -18)},
             "arm-l": {"rot": wave(1.4, "x", -12)}, "arm-r": {"rot": wave(1.4, "x", 12)}, "body": {"loc": wave(1.4, "y", 1)}}
-    attack = {"arm-r": {"rot": [(0, z), (0.25, (-15, 0, -20)), (0.55, (50, 0, 4)), (1.0, z)],
-                        "loc": [(0, z), (0.25, (0, 1, 0)), (0.55, (0, -2, 0)), (1.0, z)]}}
-    hit = {"body": {"rot": [(0, z), (0.12, (10, 0, -12)), (0.5, z)]}}
-    death = {"body": {"rot": [(0, z), (0.45, (0, 0, 16)), (1.0, (0, 0, 72))], "loc": [(0, z), (1.0, (0, -12, 0))]},
-             "arm-l": {"rot": [(0, z), (1.0, (0, 0, 28))]}, "arm-r": {"rot": [(0, z), (1.0, (0, 0, -34))]}}
+    # Hammer fist: the golem leans back and twists the right shoulder away
+    # with the fist climbing high over its head, brings it down in 3 frames
+    # onto the target in front (impact 0.4 s) as the whole body bows and
+    # steps into it, drives on past the contact, grinds there with the off
+    # arm and shoulders still working, then heaves back up past rest and
+    # settles. The legs counter the bow so the feet stay flat.
+    F = 1 / 30
+    hit_t = 12 * F
+    bow = [(0, 0), (9, 10), (12, -18), (14, -24), (17, -18), (20, -23), (23, -14), (27, 6), (31, -1), (34, 0)]
+    attack = {"arm-r": {"rot": curve((0, z), (4, (70, 0, 12)), (8, (150, 0, 14)), (9, (160, 0, 14)), (12, (64, 0, 0)), (14, (78, 0, -6)), (17, (66, 0, -2)),
+                                     (20, (74, 0, -5)), (23, (56, 0, -2)), (27, (-18, 0, 4)), (31, (4, 0, 0)), (34, z))},
+              "arm-l": {"rot": curve((0, z), (9, (34, 0, -8)), (13, (-24, 0, -6)), (16, (-34, 0, -10)), (19, (-20, 0, -4)), (22, (-30, 0, -8)), (27, (14, 0, 2)),
+                                     (31, (-3, 0, 0)), (34, z))},
+              "body": {"rot": curve(*[(f, (b, y, r)) for (f, b), y, r in zip(bow, (0, -16, 14, 18, 12, 16, 8, -5, 1, 0), (0, 0, 0, 0, 0, 0, 0, 0, 0, 0))])},
+              "golem": {"loc": curve((0, z), (9, (0, 0, 3)), (12, (0, 0, -7)), (14, (0, 0, -8.6)), (17, (0, 0, -7.6)), (20, (0, 0, -8.2)), (23, (0, 0, -5)),
+                                     (27, (0, 0, 0.9)), (31, (0, 0, -0.2)), (34, z))}}
+    for leg in ("leg-l", "leg-r"):
+        attack[leg] = {"rot": curve(*[(f, (-b, 0, 0)) for f, b in bow])}
+    # Heavy knockback: the blow shoves the golem back and lifts it clear of
+    # the floor for a beat, the torso rocks back and the stone arms swing
+    # up, it lands with a heavy sag, holds, and rocks forward past rest.
+    hit = {"golem": {"rot": curve((0, z), (3, (1.0, 0, 0)), (7, (1.5, 0, 0)), (11, (0.5, 0, 0)), (15, (1.5, 0, 0)), (21, (1, 0, 0)), (27, (-1, 0, 0)), (33, z)),
+                     "loc": curve((0, z), (3, (0, 2.4, 1.8)), (7, (0, 3.6, 3.2)), (11, (0, 0, 3.0)), (19, (0, 0, 2.6)), (27, (0, 0, 0.3)), (33, z))},
+           "body": {"rot": curve((0, z), (2, (1.5, 0, 3)), (7, (2, 0, 3.5)), (12, (-2, 0, 1)), (18, (-1.5, 0, 0)), (25, (1, 0, 0)), (33, z))},
+           "leg-l": {"rot": curve((0, z), (4, (-6, 0, 0)), (9, (2, 0, 0)), (14, z), (33, z))},
+           "leg-r": {"rot": curve((0, z), (5, (-4, 0, 0)), (10, (2, 0, 0)), (15, z), (33, z))},
+           "arm-l": {"rot": curve((0, z), (3, (24, 0, -8)), (7, (30, 0, -12)), (12, (-10, 0, -3)), (18, (5, 0, -1)), (33, z))},
+           "arm-r": {"rot": curve((0, z), (4, (24, 0, 8)), (8, (30, 0, 12)), (13, (-10, 0, 3)), (19, (5, 0, 1)), (33, z))}}
+    # Heavy fall onto its back: the golem cracks and reels back, rocks
+    # forward against it with its stone arms swinging, then with no pause
+    # goes over backwards hinging on its heels, slow at first and fastest at
+    # the floor, into a huge thud (impact 0.933 s) with a big squash, almost
+    # no bounce and a hard settle; the stone arms slam down two frames
+    # later, the legs kick last.
+    f_hit = 28
+    rot, loc, die_t = topple((2.0, 9.06), beats=[(0, 0.0), (4, 6.0), (10, -5.0)], f_hit=f_hit, lie=GOLEM_LIE, lead=0.24, power=2.6,
+                             bounce_up=0.2, bounce_deg=0.3, end=56, roll=0)
+    one = (1.0, 1.0, 1.0)
+    death = {"golem": {"rot": rot, "loc": loc},
+             "body": {"rot": curve((0, z), (4, (0, 4, 0)), (10, (0, -4, 0)), (16, (0, 3, 0)), (22, (0, -2, 0)), (f_hit, z), (56, z)),
+                      "scale": curve((0, one), (f_hit - 1, one), (f_hit, (1.16, 0.86, 1.0)), (f_hit + 3, (0.97, 1.03, 1.0)), (f_hit + 6, (1.03, 0.98, 1.0)),
+                                     (f_hit + 9, one), (56, one))},
+             "arm-l": {"rot": curve((0, z), (4, (-20, 0, -10)), (10, (14, 0, -6)), (16, (30, 0, -12)), (22, (56, 0, -22)), (f_hit + 2, (GOLEM_ARM, 0, -34)),
+                                    (f_hit + 5, (GOLEM_ARM + 1.5, 0, -33)), (f_hit + 8, (GOLEM_ARM, 0, -33)), (56, (GOLEM_ARM, 0, -33)))},
+             "arm-r": {"rot": curve((0, z), (4, (-20, 0, 10)), (10, (14, 0, 6)), (16, (30, 0, 12)), (23, (58, 0, 24)), (f_hit + 3, (GOLEM_ARM, 0, 35)),
+                                    (f_hit + 6, (GOLEM_ARM + 1.5, 0, 34)), (f_hit + 9, (GOLEM_ARM, 0, 34)), (56, (GOLEM_ARM, 0, 34)))},
+             "leg-l": {"rot": curve((0, z), (f_hit, z), (f_hit + 4, (10, 0, 0)), (f_hit + 9, (1, 0, 0)), (f_hit + 13, (3, 0, 0)), (56, (2, 0, 0)))},
+             "leg-r": {"rot": curve((0, z), (f_hit + 1, z), (f_hit + 5, (8, 0, 0)), (f_hit + 10, (1, 0, 0)), (f_hit + 14, (3, 0, 0)), (56, (2, 0, 0)))}}
+    # Sterf's rules: a hit is over in 0.6 s, a death is still a few frames
+    # after its last flop. The blow and the fall keep their timing; only the
+    # recovery / the still tail is shortened.
+    hit = squeeze(hit, keep=11, old_end=33, new_end=18)
+    death = squeeze(death, keep=f_hit + 14, old_end=56, new_end=f_hit + 17)
     sock = rig.sock("socket-impact", (cx + 32, 13, cz - 3), parent="arm-r")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t, floor=True), Clip("hit", hit, loop=False, floor=True),
+             Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR)]
     return asset("creatures", "crystal-golem", "Crystal Golem", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-impact", "trigger": "clip:attack", "size": 24, "aim": [0, -1, 0], "at": 0.55}])
+                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-impact", "trigger": "clip:attack", "size": 24, "aim": [0, -1, 0], "at": round(hit_t, 3)}])
+
+
+JELLY_FLOOR = -25.4  # death: the root drop that seats the splatted bell on the floor
 
 
 def _space_jelly() -> object:
@@ -1033,16 +1121,67 @@ def _space_jelly() -> object:
     z = (0.0, 0.0, 0.0)
     idle = {"bell": {"rot": wave(2.8, "z", 3)}, "jelly": {"loc": wave(2.8, "y", 1.2)}}
     move = {f"tentacle-{i}": {"rot": wave(1.8, "z", 12, phase=i * 0.7)} for i in range(4)}
-    attack = {f"tentacle-{i}": {"rot": [(0, z), (0.28, (0, 0, 42 if i % 2 else -42)), (0.54, (0, 0, -8)), (1, z)]} for i in (0, 1)}
-    hit = {"bell": {"rot": [(0, z), (0.1, (12, 0, 0)), (0.48, z)]}, "jelly": {"loc": [(0, z), (0.1, (0, 0, 2)), (0.48, z)]}}
-    death = {"bell": {"rot": [(0, z), (1, (72, 0, 0))], "loc": [(0, z), (1, (0, -14, 0))]},
-             **{f"tentacle-{i}": {"rot": [(0, z), (1, (0, 0, 34 if i % 2 else -34))]} for i in range(4)}}
+    # The swaying tentacles dip their tips: the jelly rides high enough that they brush the floor.
+    move["jelly"] = {"loc": [(0.0, (0.0, 3.7, 0.0)), (1.8, (0.0, 3.7, 0.0))]}
+    # Lash and spit: the jelly rises and rears its bell back while the side
+    # and front tentacles coil up (0-0.33 s), then in 2 frames the bell
+    # snaps forward to spit acid and the tentacles whip down as the whole
+    # jelly lunges (impact 0.4 s). The two rear tentacles trail a frame
+    # behind; everything drifts back after a short hold.
+    F = 1 / 30
+    hit_t = 12 * F
+
+    def lash(i: int, up: float, down: float, lag: int = 0):
+        sg = 1 if i % 2 else -1
+        return {"rot": [(0, z), ((10 + lag) * F, (0, 0, sg * up)), (hit_t + lag * F, (0, 0, -sg * down)),
+                        ((14 + lag) * F, (0, 0, -sg * (down + 6))), ((19 + lag) * F, (0, 0, -sg * down)), (30 * F, z)]}
+
+    attack = {"tentacle-0": lash(0, 50, 10), "tentacle-1": lash(1, 62, 12),
+              "tentacle-2": lash(2, 34, 8, lag=1), "tentacle-3": lash(3, 30, 8, lag=2),
+              "bell": {"rot": [(0, z), (10 * F, (22, 0, 0)), (hit_t, (-20, 0, 0)), (14 * F, (-25, 0, 0)), (19 * F, (-20, 0, 0)), (30 * F, z)]},
+              "jelly": {"loc": [(0, z), (10 * F, (0, 7, 5)), (hit_t, (0, 4, -7)), (14 * F, (0, 3.5, -8)), (19 * F, (0, 4, -7)), (30 * F, z)]}}
+    # Knockback: the blow pops the jelly up and back, the bell squashes and
+    # tips back while the tentacles flare and trail, it drifts down a beat
+    # and wobbles back to its spot.
+    hit = {"jelly": {"loc": [(0, z), (2 * F, (0, 2.4, 2.5)), (4 * F, (0, 3.4, 4)), (6 * F, (0, 2.4, 4.2)), (8 * F, (0, 0.3, 3.8)), (12 * F, (0, 0.9, 3.2)),
+                             (18 * F, (0, 0.2, 2.2)), (24 * F, (0, 0, 0.4)), (30 * F, z)]},
+           "bell": {"rot": [(0, z), (2 * F, (14, 0, 4)), (5 * F, (18, 0, 6)), (10 * F, (-8, 0, -2)), (16 * F, (4, 0, 0)), (23 * F, (-2, 0, 0)), (30 * F, z)],
+                    "scale": [(0, (1, 1, 1)), (2 * F, (1.12, 0.85, 1.12)), (6 * F, (0.92, 1.1, 0.92)), (11 * F, (1.06, 0.94, 1.06)), (17 * F, (0.98, 1.02, 0.98)),
+                              (24 * F, (1, 1, 1)), (30 * F, (1, 1, 1))]},
+           **{f"tentacle-{i}": {"rot": [(0, z), ((4 + i % 2) * F, (0, 0, (1 if i % 2 else -1) * 5)), ((10 + i % 2) * F, (0, 0, (1 if i % 2 else -1) * -3)),
+                                        ((16 + i % 2) * F, (0, 0, (1 if i % 2 else -1) * -6)), (24 * F, z), (30 * F, z)]} for i in range(4)}}
+    # Loses its float: one short convulsion (a squash, then the bell
+    # stretches up as it gasps and hangs a beat, 8 frames), then it drops like a stone,
+    # stretched in the fall and accelerating, and splats onto the floor
+    # (impact 0.6 s) squashed wide; one small rebound, a second splat and
+    # it lies flat. The tentacles curl in on the gasp, trail up in the fall
+    # and slap out flat a frame after the bell lands.
+    die_f = 18
+    die_t = die_f * F
+    one = (1.0, 1.0, 1.0)
+    end = 31
+
+    def limp(i: int):
+        sg = 1 if i % 2 else -1
+        lag = i % 2
+        return {"rot": curve((0, z), (2, (0, 0, -sg * 14)), (5, (0, 0, -sg * 30)), (8, (0, 0, -sg * 26)), (11, (0, 0, sg * 10)), (14, (0, 0, sg * 42)),
+                             (die_f, (0, 0, sg * 62)), (die_f + 2 + lag, (0, 0, sg * 70)), (die_f + 5 + lag, (0, 0, sg * 54)), (die_f + 8 + lag, (0, 0, sg * 58)), (end, (0, 0, sg * 58)))}
+
+    death = {"bell": {"scale": curve((0, one), (2, (1.16, 0.82, 1.16)), (5, (0.86, 1.2, 0.86)), (8, (0.88, 1.18, 0.88)), (die_f - 1, (0.9, 1.14, 0.9)),
+                                     (die_f, (1.38, 0.56, 1.38)), (die_f + 3, (1.06, 0.94, 1.06)), (die_f + 5, (1.24, 0.72, 1.24)), (die_f + 8, (1.18, 0.78, 1.18)),
+                                     (end, (1.18, 0.78, 1.18))),
+                      "rot": curve((0, z), (2, (8, 0, -6)), (5, (-8, 0, 5)), (8, (-6, 0, 4)), (die_f - 1, (2, 0, 1)), (die_f, (6, 0, 4)), (die_f + 3, (3, 0, 3)),
+                                   (die_f + 5, (8, 0, 6)), (end, (8, 0, 6)))},
+             "jelly": {"loc": curve((0, z), (2, (0, -1.5, 0)), (5, (0, 6.5, 0)), (8, (0, 7.0, 0)), (die_f, (0, JELLY_FLOOR, 0)), (die_f + 3, (0, JELLY_FLOOR + 2.0, 0)),
+                                    (die_f + 5, (0, JELLY_FLOOR, 0)), (end, (0, JELLY_FLOOR, 0)))},
+             **{f"tentacle-{i}": limp(i) for i in range(4)}}
     sock = rig.sock("socket-spores", (cx, 52, cz - 14), parent="bell")
     spit = rig.sock("socket-acid", (cx, 37, cz - 20), parent="bell")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False, floor=True),
+             Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR)]
     return asset("creatures", "space-jelly", "Space Jelly", rig.root, clips=clips, sockets=[sock, spit],
                  pfx=[{"effectId": "rvx-space-spore-drift", "socket": "socket-spores", "trigger": "idle", "size": 13},
-                      {"effectId": "rvx-space-acid-spray", "socket": "socket-acid", "trigger": "clip:attack", "size": 12, "aim": [0, 0, -1], "at": 0.5}])
+                      {"effectId": "rvx-space-acid-spray", "socket": "socket-acid", "trigger": "clip:attack", "size": 12, "aim": [0, 0, -1], "at": round(hit_t, 3)}])
 
 
 def _astro_crab() -> object:
@@ -1098,15 +1237,72 @@ def _astro_crab() -> object:
     z = (0.0, 0.0, 0.0)
     idle = {"shell": {"rot": wave(3.2, "y", 2)}, "claw-l": {"rot": wave(3.2, "z", 3)}, "claw-r": {"rot": wave(3.2, "z", -3)}}
     move = {f"leg-{i}": {"rot": wave(1.2, "x", 16, phase=i * math.pi / 3)} for i in range(6)}
-    attack = {"claw-l": {"rot": [(0, z), (0.3, (0, 0, 24)), (0.55, (0, 0, -12)), (0.9, z)]},
-              "claw-r": {"rot": [(0, z), (0.3, (0, 0, -24)), (0.55, (0, 0, 12)), (0.9, z)]}}
-    hit = {"shell": {"rot": [(0, z), (0.12, (0, 0, 10)), (0.5, z)]}}
-    death = {"shell": {"rot": [(0, z), (1.0, (42, 0, 0))], "loc": [(0, z), (1.0, (0, -8, 0))]},
-             "claw-l": {"rot": [(0, z), (1.0, (0, 0, 35))]}, "claw-r": {"rot": [(0, z), (1.0, (0, 0, -35))]}}
+    # One-two claw smash: the crab rears up and back on its legs with both
+    # claws raised high over the shell, hangs, then in 2 frames lunges and
+    # hammers the left claw down onto the floor in front (impact 0.4 s), the
+    # shell dipping into the blow; the right claw follows 5 frames later
+    # (0.567 s) with a second push and dip; it grinds there, then backs off
+    # past rest to its spot.
+    F = 1 / 30
+    hit_t = 12 * F
+    hit2 = 17  # the right claw's blow
+    attack = {"claw-l": {"rot": curve((0, z), (5, (72, 0, 16)), (9, (126, 0, 26)), (10, (130, 0, 26)), (12, (-40, 0, -8)), (14, (-46, 0, -10)), (18, (-38, 0, -8)),
+                                      (21, (-42, 0, -8)), (26, (12, 0, 4)), (32, z)),
+                         "loc": curve((0, z), (10, (0, 5, 0)), (12, (0, -6, -2)), (14, (0, -7, -2.5)), (21, (0, -6.5, -2)), (26, z), (32, z))},
+              # one-two: the right claw stays cocked while the left lands,
+              # then smashes down 5 frames later (Sterf: clawed brawlers swipe
+              # one-two)
+              "claw-r": {"rot": curve((0, z), (5, (72, 0, -16)), (9, (126, 0, -26)), (13, (132, 0, -28)), (15, (136, 0, -28)), (hit2, (-40, 0, 8)),
+                                      (19, (-46, 0, 10)), (22, (-40, 0, 8)), (26, (12, 0, -4)), (32, z)),
+                         "loc": curve((0, z), (10, (0, 5, 0)), (15, (0, 5.5, 0)), (hit2, (0, -6, -2)), (19, (0, -7, -2.5)), (22, (0, -6.5, -2)), (26, z), (32, z))},
+              "shell": {"rot": curve((0, z), (5, (10, 0, 0)), (9, (20, 0, 0)), (10, (22, 0, 0)), (12, (-6, 0, -3)), (14, (-8, 0, -3)), (hit2, (-7, 0, 3)),
+                                     (19, (-8, 0, 3)), (22, (-5, 0, 0)), (26, (3, 0, 0)), (32, z)),
+                        "scale": curve((0, (1, 1, 1)), (10, (0.97, 1.04, 0.97)), (12, (1.06, 0.92, 1.06)), (15, (0.99, 1.01, 0.99)), (hit2, (1.05, 0.93, 1.05)),
+                                       (21, (0.99, 1.01, 0.99)), (24, (1, 1, 1)), (32, (1, 1, 1)))},
+              "crab": {"loc": curve((0, z), (5, (0, 2.5, 2.5)), (9, (0, 4.2, 5)), (10, (0, 4.4, 5.2)), (12, (0, 0.5, -10)), (14, (0, 0, -10.5)), (hit2, (0, 0.3, -12)),
+                                    (19, (0, 0, -12.5)), (22, (0, 0.3, -11)), (26, (0, 0, 1.0)), (32, z))},
+              **{f"leg-{i}": {"rot": curve((0, z), (9, (0, 0, (-14 if i < 3 else 14))), (11 + i % 3, (-8, 0, (-10 if i < 3 else 10))), (14 + i % 3, (10, 0, 0)), (20, (4, 0, 0)),
+                                    (26, (-3, 0, 0)), (32, z))} for i in range(6)}}
+    # Knockback: the blow pops the crab up off its feet and back, the shell
+    # tips back, the claws fly up and the legs scramble in the air, it lands
+    # with a dip, holds a beat and settles.
+    hit = {"crab": {"loc": curve((0, z), (2, (0, 2.4, 2)), (5, (0, 3.6, 3.4)), (9, (0, 0, 3.2)), (16, (0, 0, 2.8)), (23, (0, 0, 0.3)), (28, z))},
+           "shell": {"rot": curve((0, z), (2, (1.5, 0, 1.0)), (5, (2, 0, 1.5)), (9, (-2, 0, -1)), (14, (1, 0, 0)), (21, (-0.5, 0, 0)), (28, z))},
+           "claw-l": {"rot": curve((0, z), (3, (30, 0, 10)), (6, (36, 0, 12)), (11, (-12, 0, -4)), (17, (4, 0, 0)), (28, z))},
+           "claw-r": {"rot": curve((0, z), (3, (30, 0, -10)), (6, (36, 0, -12)), (11, (-12, 0, 4)), (17, (4, 0, 0)), (28, z))},
+           **{f"leg-{i}": {"rot": curve((0, z), (3 + i % 3, (-14, 0, (-6 if i < 3 else 6))), (7 + i % 3, (-2, 0, (6 if i < 3 else -6))), (12 + i % 3, (2, 0, 0)), (20, z), (28, z))} for i in range(6)}}
+    # Legs give out: the crab spasms and trembles, rises a little on stiff
+    # legs that stay planted, then the legs splay flat and the shell crashes
+    # down onto the floor (impact 0.8 s), one small bounce and a settle at
+    # the floor; the claws slam down a beat later, pop and settle, one leg
+    # twitches last.
+    die_t = 24 * F
+    death = {"shell": {"rot": curve((0, z), (2, (-3, 0, 2)), (5, (2, 0, -1.5)), (9, (-1.5, 0, 1)), (13, (-2, 0, 0.5)), (18, (-2, 0, 0)), (24, (6, 0, -1)),
+                                    (26, (5, 0, -1)), (29, (6, 0, -1)), (34, (5.8, 0, -1)), (50, (6, 0, -1))),
+                       "loc": curve((0, z), (2, (0, 1.0, 0)), (5, (0, 0.4, 0)), (9, (0, 1.6, 0)), (13, (0, 1.9, 0)), (18, (0, 1.5, 0)), (24, (0, -10.9, 0)),
+                                    (26, (0, -10.3, 0)), (29, (0, -10.9, 0)), (50, (0, -10.9, 0)))},
+             "claw-l": {"rot": curve((0, z), (5, (16, 0, 10)), (13, (20, 0, 10)), (18, (8, 0, 8)), (24, (-14, 0, 12)), (28, (-16, 0, -6)), (32, (-6, 0, -2)),
+                                     (37, (-10, 0, -4)), (50, (-10, 0, -4))),
+                        "loc": curve((0, z), (13, z), (18, (0, 3, 0)), (24, (0, 8, 0)), (28, z), (50, z))},
+             "claw-r": {"rot": curve((0, z), (5, (16, 0, -10)), (13, (20, 0, -10)), (18, (8, 0, -8)), (24, (-14, 0, -12)), (29, (-16, 0, 6)), (33, (-6, 0, 2)),
+                                     (38, (-10, 0, 4)), (50, (-10, 0, 4))),
+                        "loc": curve((0, z), (13, z), (18, (0, 3, 0)), (24, (0, 8, 0)), (29, z), (50, z))}}
+    for i, s in enumerate((-1, -1, -1, 1, 1, 1)):
+        tw = 3 if i % 2 else -3
+        sp = (59, 57, 68, 62, 70, 61)[i]  # each leg's flop, so every claw tip ends near the floor
+        death[f"leg-{i}"] = {"rot": curve((0, z), (2, (tw, 0, -s * 5)), (5, (-tw, 0, -s * 4)), (9, (0, 0, -s * 11)), (13, (0, 0, -s * 14)), (18, (0, 0, -s * 12)),
+                                          (24, (0, 0, s * (sp - 2))), (26, (0, 0, s * (sp + 2))), (29, (0, 0, s * (sp - 1))), (50, (0, 0, s * sp)))}
+    # Sterf's rules: a hit is over in 0.6 s, a death is still a few frames
+    # after its last flop. The blow and the fall keep their timing; only the
+    # recovery / the still tail is shortened.
+    # (the late leg twitch at f40-47 is gone: it lingered after the settle)
+    hit = squeeze(hit, keep=9, old_end=28, new_end=18)
+    death = squeeze(death, keep=38, old_end=50, new_end=41)
     sock = rig.sock("socket-claw-impact", (cx + 35, 11, cz - 25), parent="claw-r")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t, floor=True), Clip("hit", hit, loop=False, floor=True),
+             Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR)]
     return asset("creatures", "astro-crab", "Astro Crab", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-claw-impact", "trigger": "clip:attack", "size": 16, "aim": [0, -1, 0], "at": 0.58}])
+                 pfx=[{"effectId": "rvx-space-gravity-slam", "socket": "socket-claw-impact", "trigger": "clip:attack", "size": 16, "aim": [0, -1, 0], "at": round(hit2 * F, 3)}])
 
 
 def _void_stalker() -> object:
@@ -1153,15 +1349,54 @@ def _void_stalker() -> object:
     z = (0.0, 0.0, 0.0)
     idle = {"body": {"rot": wave(2.8, "y", 2)}, "leg-0": {"rot": wave(2.8, "z", 3)}, "leg-1": {"rot": wave(2.8, "z", -3)}}
     move = {f"leg-{i}": {"rot": wave(0.8, "x", 24, phase=i * math.pi / 2)} for i in range(4)}
-    attack = {"body": {"loc": [(0, z), (0.2, (0, 0, -3)), (0.42, (0, 2, 4)), (0.85, z)],
-                       "rot": [(0, z), (0.2, (-8, 0, 0)), (0.42, (14, 0, 0)), (0.85, z)]}}
-    hit = {"body": {"rot": [(0, z), (0.1, (0, 0, 14)), (0.5, z)]}}
-    death = {"body": {"rot": [(0, z), (1.0, (0, 0, 78))], "loc": [(0, z), (1.0, (0, -8, 0))]},
-             **{f"leg-{i}": {"rot": [(0, z), (1.0, (0, 0, 18 if i % 2 else -18))]} for i in range(4)}}
+    # Pounce and rake: the stalker sinks back on its haunches, the head up
+    # and the front-right claw cocked high and wide, then springs forward in
+    # 3 frames, raking the claw across in front (impact 0.433 s) and on past
+    # it with the body pitched into the blow; it holds the lunge with the
+    # claw still working, then slinks back past rest to its spot.
+    F = 1 / 30
+    hit_t = 13 * F
+    attack = {"body": {"rot": curve((0, z), (6, (8, 4, 0)), (10, (13, 7, 0)), (13, (-2, -8, 0)), (15, (-4, -12, 0)), (18, (-1, -7, 3)), (21, (-3, -10, -3)),
+                                    (24, (-1, -4, 1)), (27, (6, 4, 0)), (30, (-1, -1, 0)), (33, z))},
+              "stalker": {"loc": curve((0, z), (6, (0, 1.0, 4)), (10, (0, 2.0, 7)), (13, (0, 0.6, -10)), (15, (0, 0.3, -12.5)), (18, (0, 0.2, -10.5)), (21, (0, 0.2, -11.5)),
+                                       (24, (0, 1.6, -6)), (27, (0, 0.2, 1.4)), (30, (0, 0, -0.3)), (33, z))},
+              "leg-1": {"rot": curve((0, z), (6, (0, -30, 40)), (10, (0, -48, 58)), (13, (0, 55, -8)), (15, (0, 72, -14)), (18, (0, 58, -4)), (21, (0, 66, -10)),
+                                     (24, (0, 30, -2)), (27, (0, -14, 6)), (30, (0, 3, -1)), (33, z))},
+              "leg-0": {"rot": curve((0, z), (10, (0, 0, -18)), (14, (0, 10, 6)), (18, (0, 4, 8)), (21, (0, 9, 5)), (24, (0, 3, 2)), (27, (0, -3, -2)), (33, z))},
+              "leg-2": {"rot": curve((0, z), (10, (-14, 0, 0)), (14, (-4, 0, 0)), (18, (-7, 0, 0)), (21, (-5, 0, 0)), (24, (-6, 0, 0)), (28, (2, 0, 0)), (33, z))},
+              "leg-3": {"rot": curve((0, z), (10, (-14, 0, 0)), (14, (-4, 0, 0)), (18, (-7, 0, 0)), (21, (-5, 0, 0)), (24, (-6, 0, 0)), (28, (2, 0, 0)), (33, z))}}
+    # Knockback: the blow pops the stalker up off its feet and back, the
+    # head snaps up and the front legs fly forward, it lands with its weight
+    # dropping forward, holds a beat and settles.
+    hit = {"stalker": {"loc": curve((0, z), (2, (0, 2.0, 2.4)), (5, (0, 3.2, 4)), (9, (0, 0, 3.6)), (16, (0, 0, 3)), (23, (0, 0, 0.3)), (28, z))},
+           "body": {"rot": curve((0, z), (2, (2, 0, 1)), (5, (2.5, 0, 1.5)), (9, (-2, 0, -1)), (14, (1.5, 0, 0)), (21, (-1, 0, 0)), (28, z))},
+           **{f"leg-{i}": {"rot": curve((0, z), (3 + i // 2, ((14 if i < 2 else 8), 0, 0)), (9 + i // 2, (-4, 0, 0)), (14 + i // 2, z), (28, z))}
+              for i in range(4)}}
+    # Crumple: the stalker rears from the blow, sways and wobbles on
+    # trembling legs and braces (anticipation), then the legs splay out flat
+    # and the body crashes down onto the ground (impact 0.867 s), bounces off
+    # it and settles; the legs flail up and flop down late.
+    die_t = 26 * F
+    death = {"body": {"rot": [(0, z), (3 * F, (8, 0, -5)), (8 * F, (-4, 0, 6)), (12 * F, (-2, 0, -6)), (16 * F, (0, 0, 3)), (die_t, (0, 0, 0)),
+                              (30 * F, (1, 0, 0)), (34 * F, (0, 0, 0)), (40 * F, (0, 0, 0)), (52 * F, (0, 0, 0))],
+                      "loc": [(0, z), (3 * F, (0, 2, 1)), (8 * F, (0, 0.5, 0.5)), (12 * F, (0, 0.5, 0)), (16 * F, (0, 1.2, 0)), (die_t, (0, -8.9, 0)),
+                              (30 * F, (0, -7.6, 0)), (34 * F, (0, -8.9, 0)), (52 * F, (0, -8.9, 0))]}}
+    for i in range(4):
+        s = 1 if i % 2 else -1
+        fx = 18 if i < 2 else -18
+        death[f"leg-{i}"] = {"rot": [(0, z), ((3 + i % 2) * F, (-6 if i % 2 else 6, 0, 0)), ((8 + i % 2) * F, (6 if i % 2 else -6, 0, -s * 4)),
+                                     (16 * F, (0, 0, -s * 8)), (die_t, (fx, 0, s * 31)), ((30 + i % 2) * F, (fx, 0, s * 35)),
+                                     ((34 + i % 2) * F, (fx, 0, s * 29)), ((40 + i % 2) * F, (fx, 0, s * 31)), (52 * F, (fx, 0, s * 30))]}
+    # Sterf's rules: a hit is over in 0.6 s, a death is still a few frames
+    # after its last flop. The blow and the fall keep their timing; only the
+    # recovery / the still tail is shortened.
+    hit = squeeze(hit, keep=9, old_end=28, new_end=18)
+    death = squeeze(death, keep=41, old_end=52, new_end=44)
     sock = rig.sock("socket-slash", (cx + 18, 15, 16), parent="leg-1")
-    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+    clips = [Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t, floor=True), Clip("hit", hit, loop=False, floor=True),
+             Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR)]
     return asset("creatures", "void-stalker", "Void Stalker", rig.root, clips=clips, sockets=[sock],
-                 pfx=[{"effectId": "rvx-space-plasma-slash", "socket": "socket-slash", "trigger": "clip:attack", "size": 14, "aim": [0, 0, -1], "at": 0.42}])
+                 pfx=[{"effectId": "rvx-space-plasma-slash", "socket": "socket-slash", "trigger": "clip:attack", "size": 14, "aim": [0, 0, -1], "at": round(hit_t - 2 / 30, 3)}])
 
 
 def make_creature(slug: str) -> object:
@@ -1169,13 +1404,13 @@ def make_creature(slug: str) -> object:
         from _ad_creatures import make_humanoid
         return make_humanoid(slug)
     if slug == "crystal-golem":
-        return ground_death(_crystal_golem())
+        return _crystal_golem()
     if slug == "space-jelly":
         return _space_jelly()
     if slug == "astro-crab":
-        return ground_death(_astro_crab())
+        return _astro_crab()
     if slug == "void-stalker":
-        return ground_death(_void_stalker())
+        return _void_stalker()
     raise KeyError(slug)
 
 
@@ -1191,6 +1426,7 @@ def _vehicle_grid(kind: str) -> tuple[Grid, dict, dict, list, list]:
     }
     S = specs[kind]
     cx, cz = S[0] // 2, S[2] // 2
+    F = 1 / 30
     body = Grid(*S)
     X, Y, Z = coords(body)
     parts: dict[str, Grid] = {}
@@ -1340,11 +1576,21 @@ def _vehicle_grid(kind: str) -> tuple[Grid, dict, dict, list, list]:
             joints[f"hover-pad-{s}"] = (cx + s * 28, 5, cz)
         pfx.extend([
             {"effectId": "rvx-space-hover-thrust", "socket": "socket-thrust", "trigger": "clip:move", "size": 18, "aim": [0, -1, 0]},
-            {"effectId": "rvx-space-cannon-blast", "socket": "socket-muzzle", "trigger": "clip:attack", "size": 18, "aim": [0, 0, -1], "at": 0.45},
+            {"effectId": "rvx-space-cannon-blast", "socket": "socket-muzzle", "trigger": "clip:attack", "size": 18, "aim": [0, 0, -1], "at": 0.4},
         ])
         clips = [Clip("idle", {"turret": {"rot": spin(8.0, "y", 360)}}),
                  Clip("move", {"hover-pad--1": {"loc": wave(1.4, "y", 1.1)}, "hover-pad-1": {"loc": wave(1.4, "y", 1.1, phase=math.pi)}, "body": {"rot": wave(1.4, "x", 2)}}),
-                 Clip("attack", {"turret": {"rot": [(0, z0), (0.22, (0, 4, 0)), (0.6, (0, -3, 0)), (1, z0)], "loc": [(0, z0), (0.2, (0, 0, -2)), (0.55, (0, 0, 1)), (1, z0)]}}, loop=False)]
+                 # Cannon shot: the tank squats on its pads, nose down, and the
+                 # turret draws back and lifts the barrel (0-0.37 s); it fires
+                 # at 0.4 s and in one frame the barrel slams back, the muzzle
+                 # flips up and the whole hull is kicked back nose-up, then it
+                 # floats forward to rest.
+                 Clip("attack", {"turret": {"rot": [(0, z0), (11 * F, (5, 0, 0)), (12 * F, (4, 0, 0)), (13 * F, (14, 0, 0)), (16 * F, (9, 0, 0)), (22 * F, (3, 0, 0)), (30 * F, z0)],
+                                            "loc": [(0, z0), (11 * F, (0, 0, 1.5)), (12 * F, (0, 0, -1.0)), (13 * F, (0, 0.5, 5.0)), (16 * F, (0, 0, 3.5)), (22 * F, (0, 0, 1.0)), (30 * F, z0)]},
+                                 "body": {"rot": [(0, z0), (11 * F, (-2.5, 0, 0)), (12 * F, (-2.5, 0, 0)), (13 * F, (5, 0, 0)), (16 * F, (6, 0, 0)), (22 * F, (1.5, 0, 0)), (30 * F, z0)],
+                                          "loc": [(0, z0), (11 * F, (0, -0.5, 0)), (12 * F, (0, -0.5, 0)), (13 * F, (0, 2.0, 4.0)), (16 * F, (0, 2.5, 5.5)), (22 * F, (0, 1.0, 2.0)), (30 * F, z0)]},
+                                 **{f"hover-pad-{s}": {"loc": [(0, z0), (11 * F, (0, 0.8, 0)), (13 * F, (0, -0.5, 0)), (17 * F, (0, 0.6, 0)), (30 * F, z0)]} for s in (-1, 1)}},
+                      loop=False, impact=12 * F)]
     elif kind == "mining-crawler":
         # Six large wheels, a glazed driver cab, and a powered front drill.
         hull = plan(body, [(12, 8), (56, 8), (63, 20), (63, 75), (55, 88), (13, 88), (5, 72), (5, 22)], 13, 30, "steel", 5,
@@ -1420,7 +1666,14 @@ def _vehicle_grid(kind: str) -> tuple[Grid, dict, dict, list, list]:
         ])
         clips = [Clip("idle", {"body": {"loc": wave(2.4, "y", 0.4)}}),
                  Clip("move", {"body": {"rot": wave(0.8, "z", 12)}, "flare--1": {"loc": wave(0.8, "z", 1)}, "flare-1": {"loc": wave(0.8, "z", 1, phase=math.pi)}}),
-                 Clip("attack", {"body": {"rot": [(0, z0), (0.2, (-3, 0, 0)), (0.45, (4, 0, 0)), (0.8, z0)]}}, loop=False)]
+                 # Strafing shot: the speeder rises, pulls back and banks
+                 # (0-0.37 s), dips its nose onto the target and fires at 0.4 s
+                 # with a short lunge; the recoil kicks it back nose-up in one
+                 # frame and the engines flare, then it settles.
+                 Clip("attack", {"body": {"rot": [(0, z0), (11 * F, (10, 0, 16)), (12 * F, (-7, 0, 4)), (13 * F, (11, 0, -5)), (16 * F, (12, 0, -6)), (22 * F, (3, 0, -2)), (30 * F, z0)],
+                                          "loc": [(0, z0), (11 * F, (0, 6.0, 7)), (12 * F, (0, 5.0, -7)), (13 * F, (0, 6.0, 1.0)), (16 * F, (0, 6.0, 3.0)), (22 * F, (0, 3.0, 1.0)), (30 * F, z0)]},
+                                 **{f"flare-{s}": {"loc": [(0, z0), (11 * F, (0, 0, -1.5)), (12 * F, (0, 0, 2.5)), (15 * F, (0, 0, 1.5)), (22 * F, z0), (30 * F, z0)]} for s in (-1, 1)}},
+                      loop=False, impact=12 * F)]
     return body, parts, joints, clips, pfx
 
 

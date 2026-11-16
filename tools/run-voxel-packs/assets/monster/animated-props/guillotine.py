@@ -19,6 +19,7 @@ import numpy as np
 import paint as P
 import pnshapes as S
 from _kit import keys, pfx, world
+from _slam import slam
 from _pn import assemble, coords, last
 from _props import union
 from pnkit import box, edges
@@ -177,11 +178,12 @@ def build():
     open_ = Clip("open", {
         "blade": {"loc": keys((0, down), (0.2, down), (0.6, (0.0, DROP * 0.55, 0.0)), (0.75, (0.0, DROP * 0.6, 0.0)), (1.2, (0.0, DROP * 0.12, 0.0)), (1.4, z3), (1.6, z3))},
         "lever": {"rot": keys((0, (-50, 0, 0)), (0.3, (-50, 0, 0)), (0.7, z3), (1.6, z3))},
-        "yoke": {"rot": keys((0, z3), (0.3, (-78, 0, 0)), (0.45, (-70, 0, 0)), (0.6, (-74, 0, 0)), (1.6, (-74, 0, 0)))},
-    }, loop=False)
+        # the lunette board flips up, accelerating into its stop (see _slam)
+        "yoke": {"rot": slam(z3, (-74, 0, 0), frames=8, power=2.5, rebound=0.06, end=48)[0]},
+    }, loop=False, ease=0)
     close = Clip("close", {
-        "yoke": {"rot": keys((0, (-74, 0, 0)), (0.35, z3), (0.44, (-7, 0, 0)), (0.55, z3))},
-    }, loop=False)
+        "yoke": {"rot": slam((-74, 0, 0), z3, frames=9, power=3.5, rebound=0.06)[0]},  # slams down
+    }, loop=False, ease=0)
     idle = Clip("idle", {
         "blade": {"loc": keys((0, z3), (1.4, z3), (1.6, (0.0, -0.6, 0.0)), (1.8, z3), (2.0, (0.0, -0.3, 0.0)), (2.2, z3), (3.6, z3))},
         "lever": {"rot": keys((0, z3), (1.5, z3), (1.7, (-6, 0, 0)), (1.95, z3), (3.6, z3))},

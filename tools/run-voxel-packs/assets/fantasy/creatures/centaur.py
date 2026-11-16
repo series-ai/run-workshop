@@ -13,18 +13,22 @@ on the back. The detail is paint (S1): hide patches on the coat, hair
 strands, leather wraps.
 
 Clips: idle (breathe, look round, swish the tail, paw the ground), attack
-(draw the string back, loose the arrow: the PFX at the bow socket, the
-arrow leaves the string, then a new one is nocked), hit (the torso and
-head snap back), death (the legs buckle and it rolls onto its left side).
+(shift the weight back and draw the string to the cheek, hold, loose the
+arrow: the PFX at the bow socket, the arrow leaves the string, the bow
+kicks and the body jolts back, then a new one is nocked), hit (shoved, the horse rears up
+on its hind legs, the man snaps back, the front hooves slam down), death (the legs buckle and it rolls onto its left side).
 Faces -Z.
 """
 import math
 
 import numpy as np
 
+from _quad_falls import quad_roll
+
 import paint as P
 import pnglyph
 from _fcreature_beasts import frame_seams, paint_solids, strands
+from _fmove import Rig, gait, lerp, quick_lift, wave_keys
 from _life import C, Clip, Grid, Socket, asset, chamfer_rect, coords, front, keys, last, pfx, plan, rig, side
 from pnshapes import quad
 
@@ -42,6 +46,8 @@ HAND_L = (CX - 10.0, 49.5, 25.5)
 BOW_X = CX - 10.0
 STRING_Z = 29.6
 TAIL_HINGE = (CX, 36.0, 90.0)
+ARROW_REACH = 15.0  # how far the arrow tip sits in front of the grip at rest (a full draw pulls it back to the bow)
+ARROW_NOCK = (BOW_X + 0.9, HAND_L[1] + 0.6, STRING_Z)
 LEGS = {"leg-fl": (-1, 45.0, True), "leg-fr": (1, 45.0, False), "leg-bl": (-1, 84.0, False), "leg-br": (1, 84.0, True)}
 
 
@@ -371,9 +377,10 @@ def arrow() -> Grid:
     X, Y, Z = coords(g)
     ay = HAND_L[1] + 0.6
     x0, x1 = BOW_X + 0.4, BOW_X + 1.4
-    side(g, quad((ay, STRING_Z + 1.2), (ay, HAND_L[2] - 8.0), 0.55), x0, x1, "wood", 6)
-    head = side(g, [(ay - 1.4, HAND_L[2] - 8.0), (ay + 1.4, HAND_L[2] - 8.0), (ay, HAND_L[2] - 11.0)], x0, x1, "steel", 5)
-    P.flat(g, head & (Z < HAND_L[2] - 9.6), "steel", 6)
+    tip = HAND_L[2] - ARROW_REACH
+    side(g, quad((ay, STRING_Z + 1.2), (ay, tip + 3.0), 0.55), x0, x1, "wood", 6)
+    head = side(g, [(ay - 1.4, tip + 3.0), (ay + 1.4, tip + 3.0), (ay, tip)], x0, x1, "steel", 5)
+    P.flat(g, head & (Z < tip + 1.4), "steel", 6)
     fl = side(g, [(ay, STRING_Z + 1.4), (ay + 1.8, STRING_Z + 0.6), (ay + 1.8, STRING_Z - 3.8), (ay, STRING_Z - 3.2)], x0, x1, "red", 5)
     P.flat(g, fl & (Y > ay + 1.0), "red", 6)
     return g
@@ -389,6 +396,43 @@ def keyed(root, clip: dict) -> dict:
     return clip
 
 
+def move(root, to_root):
+    """A springy trot in 0.8 s (one stride, keyed a frame at a time): the
+    diagonal pairs (front-left with hind-right, then front-right with
+    hind-left) strike together, the hooves planted and sliding back at the
+    ground speed, a short lift with the knees snapping the hooves up. The
+    horse body dips 2 frames after each diagonal strikes and springs up
+    off it, rocking a little nose-down onto the forehand; the rider's torso
+    stays upright over it (counter-pitched, a frame late, so the bounce
+    reads through the man), the bow arm held steady at the ready, the head
+    level, and the tail lifts and swings with the bounce."""
+    N = 24
+    q = N // 4
+    legs = {"leg-fl": (0.25, 1), "leg-br": (0.25, 1), "leg-fr": (0.75, 1), "leg-bl": (0.75, 1)}
+    half = N // 2
+    dip = [(0, 0.0), (1, -0.8), (2, -1.4), (3, -1.2), (5, -0.5), (8, 0.3), (10, 0.3), (half, 0.0)]
+    rock = [(0, 0.0), (2, -1.6), (5, -0.6), (9, 0.6), (half, 0.0)]
+    centre = to_root((CX, 31.0, 64.0))
+
+    def body(f, _):
+        d = (f - q) % half
+        side = 1 if (f - q) % N < half else -1  # a small roll toward the striking front leg
+        return {"rot": (lerp(rock, d), 1.2 * side * math.sin(math.pi * d / half), 1.0 * side * math.sin(math.pi * d / half)), "pivot": centre, "dy": lerp(dip, d)}
+
+    rig = Rig(root, "body", list(legs))
+    keys, info = gait(rig, N, legs, stride=14.0, duty=0.46, lift=quick_lift(6.0), body=body, lean=1.0, xlock=True)
+    brot = keys["body"]["rot"]
+
+    def lag(f, k=1):
+        return lerp(dip, (f - k - q) % half) / 1.4  # 0 .. -1, a frame or two behind the body
+    keys["torso"] = {"rot": wave_keys(N, lambda f: (-brot[(f - 1) % N][1][0] - 2.0 * lag(f, 1), -brot[f % N][1][1] * 0.6, -brot[f % N][1][2]))}
+    keys["head"] = {"rot": wave_keys(N, lambda f: (2.5 * lag(f, 2), 0.0, 0.0))}
+    keys["arm-l"] = {"rot": wave_keys(N, lambda f: (-2.0 * lag(f, 2), 0.0, 1.0 * lag(f, 2)))}
+    keys["arm-r"] = {"rot": wave_keys(N, lambda f: (-2.5 * lag(f, 2), 0.0, -1.5 * lag(f, 2)))}
+    keys["tail"] = {"rot": wave_keys(N, lambda f: (-10.0 + 10.0 * lag(f, 2), 9.0 * math.sin(2 * math.pi * (f - 3 - q) / N), 0.0))}
+    return keys
+
+
 def build():
     parts = [("centaur", None, None, None),
              ("body", body(), BODY_HINGE, None),
@@ -401,7 +445,8 @@ def build():
               ("bow", bow(), HAND_L, "arm-l"),
               ("arm-r", arm_r(), SHOULDER[1], "torso"),
               ("forearm-r", forearm_r(), ELBOW_R, "arm-r"),
-              ("arrow", arrow(), (BOW_X + 0.9, HAND_L[1] + 0.6, STRING_Z), "forearm-r")]
+              # the arrow rests on the bow (its aim follows the bow); its nock is keyed to ride the string hand
+              ("arrow", arrow(), ARROW_NOCK, "bow")]
     root, to_root = rig(parts)
     z = (0, 0, 0, 0)
     idle = {"body": {"scale": keys((0, 1, 1, 1), (1.2, 1.015, 1.03, 1.0), (2.4, 1, 1, 1))},
@@ -410,33 +455,118 @@ def build():
             "tail": {"rot": keys(z, (0.6, 0, 16, 0), (1.8, 0, -16, 0), (2.4, 0, 0, 0))},
             "leg-fr": {"rot": keys(z, (1.0, 0, 0, 0), (1.25, 26, 0, 0), (1.5, 0, 0, 0), (2.4, 0, 0, 0)),
                        "loc": keys(z, (1.0, 0, 0, 0), (1.05, 0, 0.6, 0), (1.45, 0, 0.6, 0), (1.5, 0, 0, 0), (2.4, 0, 0, 0))}}
-    # draw: the elbow swings back and the forearm pulls the string hand back
-    # to the chest; loose at 0.35 (the arrow is gone), nock again by 1.2
-    attack = {"arm-r": {"rot": keys(z, (0.28, 0, 18, 0), (0.35, 0, 24, 0), (0.6, 0, 22, 0), (1.2, 0, 0, 0))},
-              "forearm-r": {"rot": keys(z, (0.28, 0, 30, 0), (0.35, 0, 40, 0), (0.6, 0, 36, 0), (1.2, 0, 0, 0))},
-              "arrow": {"scale": keys((0, 1, 1, 1), (0.34, 1, 1, 1), (0.36, 0.05, 0.05, 0.05), (1.0, 0.05, 0.05, 0.05), (1.1, 1, 1, 1))},
-              "torso": {"rot": keys(z, (0.28, 0, -10, 0), (0.35, -4, -12, 0), (0.6, 0, -8, 0), (1.2, 0, 0, 0))},
-              "bow": {"rot": keys(z, (0.34, 0, 0, 0), (0.4, -8, 0, 0), (0.6, 0, 0, 0))},
-              "leg-fl": {"rot": keys(z, (0.3, 10, 0, 0), (0.45, 0, 0, 0)), "loc": keys(z, (0.05, 0, 0.5, 0), (0.4, 0, 0.5, 0), (0.45, 0, 0, 0))},
-              "tail": {"rot": keys(z, (0.35, -18, 0, 0), (0.8, 0, 0, 0))}}
-    hit = {"torso": {"rot": keys(z, (0.1, 16, 8, 0), (0.35, 12, 6, 0), (0.7, 0, 0, 0))},
-           "head": {"rot": keys(z, (0.1, 18, -10, 6), (0.35, 12, -6, 4), (0.7, 0, 0, 0))},
-           "body": {"loc": keys(z, (0.1, 0, 0, 2.0), (0.35, 0, 0, 1.4), (0.7, 0, 0, 0))},
-           "tail": {"rot": keys(z, (0.1, -20, 0, 0), (0.7, 0, 0, 0))}}
+    f = 1 / 30
+    # A leg is a rigid 31-voxel post from hip to hoof: when the barrel moves
+    # back by dz the planted legs turn forward by asin(dz / 31), so the
+    # hooves stay put.
+    def plant(dz):
+        return math.degrees(math.asin(dz / 31.0))
+
+    # The shot. Reach (f0-4): the torso leans in and the string hand settles
+    # on the string. Draw (f4-16, the anticipation): the elbow swings back,
+    # the forearm hauls the string to the cheek, the torso twists and leans
+    # back and the horse shifts its weight back onto its haunches (hooves
+    # planted). A held beat of tension with a slight creep (f16-22), then
+    # the loose (impact f23): the arrow is gone, the string hand snaps back
+    # past the ear, the bow kicks, the torso and the barrel are rocked back;
+    # follow-through, the weight rolls forward past rest, the head and tail
+    # settle last and a new arrow is nocked by f44.
+    REL = 23 * f
+    bx = [(0, 0), (4, -0.5), (16, 2.4), (22, 2.6), (23, 3.0), (27, 3.8), (36, -0.8), (44, 0.2), (52, 0)]
+    # (frame, x, y) torso lean and twist. The bow arm turns against the
+    # twist and the lean, so the bow (and the arrow on it) stays aimed at
+    # the target while the chest turns side-on.
+    torso_k = [(0, 0, 0), (4, -5, 4), (16, 11, -25), (22, 12, -27), (23, 16, -26), (27, 19, -24), (36, 4, -10), (44, -3, 2), (52, 0, 0)]
+    kick = {23: 5, 27: 8, 36: -2}  # the bow arm jolts up on the loose
+    arm_l_k = [(fr, -x + 2 * (fr > 0 and fr < 44) + kick.get(fr, 0), -y, 0) for fr, x, y in torso_k]
+    bow_k = [(0, 0, 0, 0), (16, 4, 0, 0), (22, 5, 0, 0), (23, -18, 0, 0), (26, -24, 0, 0), (32, -6, 0, 0), (38, 4, 0, 0), (46, 0, 0, 0)]
+    # the draw: the elbow swings back and the forearm hauls the string hand
+    # back to the jaw (about 13 voxels), creeping a little in the hold
+    arm_r_k = [(0, 0, 0, 0), (4, 0, -2, 0), (16, 0, 5, 0), (22, 0, 7, 0), (23, 0, 30, 0), (28, 0, 38, 0), (36, 0, 28, 0), (46, 0, -3, 0), (52, 0, 0, 0)]
+    fore_k = [(0, 0, 0, 0), (4, 0, -1, 0), (16, 0, 40, 0), (22, 0, 42, 0), (23, 0, 20, 0), (28, 0, 12, 0), (36, 0, 18, 0), (46, 0, 3, 0), (52, 0, 0, 0)]
+
+    def at(rows, fr):
+        """A keyed (x, y, z) rotation at frame fr, linear between keys."""
+        for (f0, *a0), (f1, *a1) in zip(rows, rows[1:]):
+            if f0 <= fr <= f1:
+                u = (fr - f0) / max(1, f1 - f0)
+                return [p + (q - p) * u for p, q in zip(a0, a1)]
+        return list(rows[-1][1:])
+
+    def rmat(deg):
+        x, y, w = (math.radians(v) for v in deg)
+        rx = np.array([[1, 0, 0], [0, math.cos(x), -math.sin(x)], [0, math.sin(x), math.cos(x)]])
+        ry = np.array([[math.cos(y), 0, math.sin(y)], [0, 1, 0], [-math.sin(y), 0, math.cos(y)]])
+        rz = np.array([[math.cos(w), -math.sin(w), 0], [math.sin(w), math.cos(w), 0], [0, 0, 1]])
+        return rz @ ry @ rx  # XYZ euler, as the export reads it
+
+    sr, sl, el, hl, nock = (np.array(v) for v in (SHOULDER[1], SHOULDER[-1], ELBOW_R, HAND_L, ARROW_NOCK))
+    aim = np.array([nock[0], nock[1], HAND_L[2] - 30.0])  # a point ahead on the rest line: the shaft stays on the target line
+
+    def arrow_pose(fr, fly=0.0):
+        """The arrow in the bow's frame: its nock on the string hand, its
+        shaft laid from there along the bow's aim (fly: voxels shot forward)."""
+        hand = sr + rmat(at(arm_r_k, fr)) @ (el - sr + rmat(at(fore_k, fr)) @ (nock - el))  # torso frame
+        in_arm = sl + rmat(at(arm_l_k, fr)).T @ (hand - sl)
+        n = hl + rmat(at(bow_k, fr)).T @ (in_arm - hl)  # bow frame
+        d = aim - n
+        d = d / np.linalg.norm(d)
+        n = n + d * fly
+        return (tuple(float(v) for v in n - nock),
+                (math.degrees(math.asin(d[1])), math.degrees(math.atan2(-d[0], -d[2])), 0.0))
+
+    arrow_loc, arrow_rot = [], []
+    for fr, fly in ((0, 0), (4, 0), (16, 0), (22, 0), (23, 26.0), (24, 40.0), (40, 0), (44, 0), (46, 0), (52, 0)):
+        loc, rot = arrow_pose(fr, fly)
+        arrow_loc.append((fr * f, loc))
+        arrow_rot.append((fr * f, rot))
+    attack = {"arm-r": {"rot": [(fr * f, (x, y, w)) for fr, x, y, w in arm_r_k]},
+              "forearm-r": {"rot": [(fr * f, (x, y, w)) for fr, x, y, w in fore_k]},
+              # loosed: it leaves the string at full speed (impact f23), gone a frame later; a new one is nocked by f44
+              "arrow": {"loc": arrow_loc, "rot": arrow_rot,
+                        "scale": keys((0, 1, 1, 1), (22 * f, 1, 1, 1), (REL, 1, 1, 1), (24 * f, 0.05, 0.05, 0.05), (40 * f, 0.05, 0.05, 0.05), (44 * f, 1, 1, 1))},
+              "torso": {"rot": [(fr * f, (x, y, 0)) for fr, x, y in torso_k]},
+              "head": {"rot": keys(z, (4 * f, 4, -2, 0), (16 * f, -6, 9, 0), (22 * f, -7, 9, 0), (25 * f, 10, 4, 0), (30 * f, 12, 3, 0), (40 * f, -4, 1, 0), (50 * f, 1, 0, 0), (56 * f, 0, 0, 0))},
+              "arm-l": {"rot": [(fr * f, (x, y, w)) for fr, x, y, w in arm_l_k]},
+              "bow": {"rot": [(fr * f, (x, y, w)) for fr, x, y, w in bow_k]},
+              "body": {"loc": keys(*[(t * f, 0, 0, d) for t, d in bx])},
+              "tail": {"rot": keys(z, (16 * f, 14, 0, 0), (22 * f, 16, 0, 0), (26 * f, -24, 0, 0), (31 * f, -32, 0, 0), (42 * f, 8, 0, 0), (50 * f, -2, 0, 0), (56 * f, 0, 0, 0))}}
+    for leg_name in LEGS:
+        attack[leg_name] = {"rot": keys(*[(t * f, plant(d), 0, 0) for t, d in bx])}
+    # hit: the blow shoves it back and the horse rears up off its front
+    # hooves (pivoting on the hind hooves) with the forelegs pawing, the man
+    # snapped back; a beat up there, then the front comes down hard (impact
+    # f16), the barrel absorbs it and the torso and head pitch forward past
+    # rest and settle.
+    BACK = (LEGS["leg-bl"][1] - BODY_HINGE[2])  # hind hooves behind the body hinge
+
+    def rear(deg, dz=0.0, dy=0.0):
+        """Body loc for a pitch of `deg` about the hind hooves."""
+        a = math.radians(deg)
+        return (0.0, BACK * math.sin(a) + dy, BACK - BACK * math.cos(a) + dz)
+
+    HOOF = 16
+    rows = [(0, 0, 0.0), (3, 6, 1.6), (7, 10.5, 2.1), (11, 13.0, 2.4), (HOOF, 0, 2.0), (19, -0.4, 1.8), (24, 0.3, 0.6), (30, 0, 0.0)]
+    hit = {"body": {"rot": [(fr * f, (a, 0, 0)) for fr, a, _ in rows],
+                    "loc": [(fr * f, rear(a, dz, 0.11 * max(0.0, a))) for fr, a, dz in rows],  # the hind hooves rock onto their toes
+                    "scale": keys((0, 1, 1, 1), (11 * f, 1, 1, 1), (HOOF * f, 1.02, 0.95, 1.01), (20 * f, 0.99, 1.02, 1.0), (25 * f, 1, 1, 1))},
+           "torso": {"rot": keys(z, (3 * f, 18, 9, 0), (7 * f, 10, 6, 0), (11 * f, 8, 5, 0), (HOOF * f, 2, 2, 0), (20 * f, -9, -2, 0), (25 * f, 2, 0, 0), (30 * f, 0, 0, 0))},
+           "head": {"rot": keys(z, (4 * f, 22, -12, 6), (8 * f, 12, -8, 4), (12 * f, 12, -6, 4), (17 * f, 2, 0, 0), (21 * f, -10, 2, -2), (26 * f, 2, 0, 0), (30 * f, 0, 0, 0))},
+           "arm-l": {"rot": keys(z, (4 * f, 14, 0, 0), (9 * f, 6, 0, 0), (HOOF * f, 0, 0, 0), (20 * f, -6, 0, 0), (26 * f, 0, 0, 0))},
+           "leg-fl": {"rot": keys(z, (3 * f, 14, 0, 0), (7 * f, 36, 0, 0), (11 * f, 22, 0, 0), (HOOF * f, 0, 0, 0), (19 * f, -2, 0, 0), (24 * f, 0, 0, 0))},
+           "leg-fr": {"rot": keys(z, (3 * f, 6, 0, 0), (7 * f, 22, 0, 0), (11 * f, 38, 0, 0), (HOOF * f, 0, 0, 0), (19 * f, -2, 0, 0), (24 * f, 0, 0, 0))},
+           "tail": {"rot": keys(z, (4 * f, -30, 0, 0), (9 * f, -22, 6, 0), (13 * f, -24, -4, 0), (18 * f, 10, 0, 0), (23 * f, -6, 0, 0), (30 * f, 0, 0, 0))}}
     q = (CX - 10.0, 0.0, BODY_HINGE[2])
-    roll = [(0.0, 0.0), (0.3, 0.0), (0.8, 55.0), (1.05, 86.0), (1.25, 82.0), (1.6, 84.0)]
-    death = {"body": {"rot": keys(*[(t, 0, 0, a) for t, a in roll]),
-                      "loc": keys(*[(t, *about(q, BODY_HINGE, a)) for t, a in roll])},
-             "torso": {"rot": keys(z, (0.3, 14, 0, 0), (1.05, -10, 0, -20), (1.6, -8, 0, -22))},
-             "head": {"rot": keys(z, (0.3, 10, 0, 0), (1.05, -20, 0, -10), (1.6, -18, 0, -12))},
-             "arm-l": {"rot": keys(z, (1.05, 30, 0, 0), (1.6, 28, 0, 0))},
-             "leg-fl": {"rot": keys(z, (0.3, 50, 0, 0), (1.05, 20, 0, 8), (1.6, 18, 0, 8)), "loc": keys(z, (0.05, 0, 0.6, 0), (1.6, 0, 0.6, 0))},
-             "leg-fr": {"rot": keys(z, (0.3, 50, 0, 0), (1.05, 30, 0, -10), (1.6, 28, 0, -10)), "loc": keys(z, (0.05, 0, 0.6, 0), (1.6, 0, 0.6, 0))},
-             "leg-bl": {"rot": keys(z, (0.3, -40, 0, 0), (1.05, -15, 0, 8), (1.6, -14, 0, 8)), "loc": keys(z, (0.05, 0, 0.6, 0), (1.6, 0, 0.6, 0))},
-             "leg-br": {"rot": keys(z, (0.3, -40, 0, 0), (1.05, -20, 0, -10), (1.6, -18, 0, -10)), "loc": keys(z, (0.05, 0, 0.6, 0), (1.6, 0, 0.6, 0))},
-             "tail": {"rot": keys(z, (1.05, 0, -20, 0), (1.6, 0, -18, 0))}}
+    # death: it flinches from the blow, the legs buckle and it rolls onto its
+    # left side, landing at full speed; rolls back once and settles, the
+    # torso, head, bow arm and tail landing late and flopping
+    death, LAND = quad_roll("body", lambda a: about(q, BODY_HINGE, a), roll=86.0, bounce=0.8, leg_loc=(0, 0.6, 0), sink=(-9.5, -2.5), hold_legs=True,
+                            legs={"leg-fl": ((38, 0, 0), (20, 0, 8)), "leg-fr": ((38, 0, 0), (30, 0, -10)),
+                                  "leg-bl": ((-30, 0, 0), (-15, 0, 8)), "leg-br": ((-30, 0, 0), (-20, 0, -10))},
+                            loose={"torso": ((14, 0, 6), (-10, 0, -20)), "head": ((18, 0, 0), (-20, 0, -10)),
+                                   "arm-l": ((-10, 0, 0), (30, 0, 0)), "tail": ((-20, 0, 0), (0, -20, 0))})
     rest = to_root((BOW_X, HAND_L[1] + 0.6, HAND_L[2] - 2.0))
     return asset("creatures", "centaur", "Centaur", root,
-                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", keyed(root, attack), loop=False), Clip("hit", keyed(root, hit), loop=False), Clip("death", keyed(root, death), loop=False)],
+                 clips=[Clip("idle", keyed(root, idle)), Clip("move", keyed(root, move(root, to_root)), ease=0, floor=False), Clip("attack", keyed(root, attack), loop=False, impact=REL), Clip("hit", keyed(root, hit), loop=False, impact=HOOF * f), Clip("death", keyed(root, death), loop=False, impact=LAND)],
                  sockets=[Socket("socket-function", at=rest, parent="bow")],
-                 fx=[pfx("rvx-fantasy-bow-release", "socket-function", "clip:attack", size=20, at=0.35)])
+                 fx=[pfx("rvx-fantasy-bow-release", "socket-function", "clip:attack", size=20, aim=(0.0, 0.0, -1.0), at=REL)])

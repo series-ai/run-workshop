@@ -8,7 +8,7 @@ big bulging yellow eyes with slit pupils under angry brows on the lid, and
 stubby clawed feet. A few bait coins lie on the ground in front. All teeth,
 brows, claws and the tongue are true-slope prisms; the rest is paint.
 Clips: idle (chomp and breathe), attack (lunge and snap), hit (recoil),
-death (tips over, lid flops open). Faces -Z.
+death (topples over backward onto its back). Faces -Z.
 """
 import math
 
@@ -186,12 +186,62 @@ def build():
                     "rot": keys((0, 0, 0, 0), (0.1, -10, 0, 7), (0.45, 0, 0, 0))},
            "lid": {"rot": keys((0, 0, 0, 0), (0.1, 32, 0, 0), (0.3, 0, 0, 0), (0.38, 6, 0, 0), (0.45, 0, 0, 0))},
            "tongue": {"rot": keys((0, 0, 0, 0), (0.1, 0, 0, 15), (0.45, 0, 0, 0))}}
-    death = {"body": {"rot": keys((0, 0, 0, 0), (0.3, 0, 0, 14), (0.75, 0, 0, 88), (0.9, 0, 0, 82), (1.2, 0, 0, 85)),
-                      "loc": keys((0, 0, 0, 0), (0.3, 0, 2, 0), (0.75, -2, 12, 0), (1.2, -2, 12, 0))},
-             "lid": {"rot": keys((0, 0, 0, 0), (0.5, 60, 0, 0), (0.8, 105, 0, 0), (1.0, 95, 0, 0), (1.2, 100, 0, 0))},
-             "tongue": {"rot": keys((0, 0, 0, 0), (0.8, 0, 0, -30), (1.2, -20, 0, -35))}}
+    # death: the blow from the front rocks it back with a yelp (the lid
+    # snaps open), it teeters on its back edge a beat, then topples over
+    # BACKWARD in one accelerating stroke, the lid slamming shut as it goes,
+    # and lands flat on its back at full speed (f15): a heavy thud, one
+    # small rock up off its back edge, and the tongue flops out. One key a
+    # frame, pivoting about the back bottom edge so nothing slides or sinks.
+    LAND, END = 15, 26
+    # the body and closed lid as points from the body pivot: each frame it
+    # turns about whichever edge is on the floor (the feet's back edge, then
+    # the body's back), so nothing slides, floats or sinks
+    vox = np.argwhere((b.a > 0) | (lg.a > 0))
+    corners = np.array([(i, j, k) for i in (0, 1) for j in (0, 1) for k in (0, 1)])
+    pts = np.unique((vox[:, None, :] + corners[None]).reshape(-1, 3), axis=0).astype(float) - np.array(base)
+    floor0 = pts[:, 1].min()
+
+    def tip(fr):
+        if fr <= 3:
+            return 9 * (1 - (1 - fr / 3) ** 2)  # the jolt back
+        if fr <= 6:
+            return 9 + 2 * (fr - 3) / 3  # the teeter
+        if fr <= LAND:
+            u = (fr - 6) / (LAND - 6)
+            return 11 + 79 * u ** 2.2  # gravity: slow off the balance point, fastest at contact
+        for f0, f1, a0, a1, out in ((LAND, 18, 90, 84, True), (18, 21, 84, 90, False)):
+            if fr <= f1:
+                u = (fr - f0) / (f1 - f0)
+                return a0 + (a1 - a0) * (1 - (1 - u) ** 2 if out else u * u)
+        return 90.0
+    rot, loc, lid_rot = [], [], []
+    t, prev = np.zeros(3), 0.0
+
+    def rx(deg):
+        c, sn = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+        return np.array([[1, 0, 0], [0, c, -sn], [0, sn, c]])
+    for fr in range(END + 1):
+        th = tip(fr)
+        world = pts @ rx(prev).T + t
+        low = world[world[:, 1] < world[:, 1].min() + 0.05]
+        c = low[low[:, 2].argmax()] if th >= prev else low[low[:, 2].argmin()]
+        t = rx(th - prev) @ (t - c) + c
+        t[1] -= (pts @ rx(th).T + t)[:, 1].min() - floor0  # the feet's rest height
+        prev = th
+        rot.append((fr / 30, (th, 0.0, 0.0)))
+        loc.append((fr / 30, tuple(float(v) for v in t)))
+        if fr <= 3:
+            gape = 40 * (1 - (1 - fr / 3) ** 2)
+        elif fr <= LAND:
+            gape = 40 * max(0.0, (90 - th) / 79)  # shut by the floor as it goes over
+        else:
+            gape = 0.0
+        lid_rot.append((fr / 30, (gape, 0.0, 0.0)))
+    death = {"body": {"rot": rot, "loc": loc}, "lid": {"rot": lid_rot},
+             "tongue": {"rot": keys((0, 0, 0, 0), (3 / 30, 18, 0, 0), (LAND / 30, 10, 0, 0), (18 / 30, -34, 0, -24), (21 / 30, -22, 0, -18),
+                                    (END / 30, -24, 0, -20))}}
     mouth = to_root((CX, H + 1.0, Z0 - 1.0))
     return asset("animated-props", "mimic-chest", "Mimic Chest", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False, ease=0)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="body")],
                  fx=[pfx("rvx-fantasy-metal-clang", "socket-mouth", "clip:attack", size=20, at=0.36)])

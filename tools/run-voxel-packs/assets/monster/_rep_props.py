@@ -14,6 +14,7 @@ import paint as P
 import pnshapes as S
 from pnpaint import blotch
 from _kit import C, Grid, Clip, Socket, keys, pfx, single, world
+from _slam import slam
 from _pn import assemble
 from _props import idx, union, tufts
 from pnkit import box, edges
@@ -317,15 +318,19 @@ def trap():
     for part in root.children:
         part.rot = (-TRAP_OPEN, 0.0, 0.0) if part.name == "jaw" else (TRAP_OPEN, 0.0, 0.0)
     o = TRAP_OPEN
-    close = Clip("close", {"jaw": {"rot": keys((0, (0, 0, 0)), (.5, (o, 0, 0)), (.8, (o, 0, 0)))},
-                           "jaw-back": {"rot": keys((0, (0, 0, 0)), (.5, (-o, 0, 0)), (.8, (-o, 0, 0)))}}, loop=False)
-    open_ = Clip("open", {"jaw": {"rot": keys((0, (o, 0, 0)), (.7, (0, 0, 0)))},
-                          "jaw-back": {"rot": keys((0, (-o, 0, 0)), (.7, (0, 0, 0)))}}, loop=False)
+    # The jaws snap shut: a hair of give, then 4 accelerating frames into
+    # each other, a rebound off the teeth, still. Setting it, they are forced
+    # open into the catch and lock with a clack (see _slam).
+    snap_shut, SNAP = slam((0, 0, 0), (o, 0, 0), frames=4, power=2.0, rebound=0.08, start=2, end=14)
+    close = Clip("close", {"jaw": {"rot": snap_shut},
+                           "jaw-back": {"rot": slam((0, 0, 0), (-o, 0, 0), frames=4, power=2.0, rebound=0.08, start=2, end=14)[0]}}, loop=False, ease=0)
+    open_ = Clip("open", {"jaw": {"rot": slam((o, 0, 0), (0, 0, 0), frames=12, power=2.5, rebound=0.04, end=22)[0]},
+                          "jaw-back": {"rot": slam((-o, 0, 0), (0, 0, 0), frames=12, power=2.5, rebound=0.04, end=22)[0]}}, loop=False, ease=0)
     idle = Clip("idle", {"jaw": {"rot": keys((0, (0, 0, 0)), (1, (2, 0, 0)), (2, (0, 0, 0)))},
                          "jaw-back": {"rot": keys((0, (0, 0, 0)), (1, (-2, 0, 0)), (2, (0, 0, 0)))}})
     return world("werewolf-trap", "props", "Werewolf Trap", root, clips=[open_, close, idle],
                  sockets=[Socket("socket-teeth", at=(0, hy + 4.0, 0), parent="base")],
-                 pfx=[pfx("rvx-monster-blood-splat", "socket-teeth", "clip:close", size=18, at=.42)])
+                 pfx=[pfx("rvx-monster-blood-splat", "socket-teeth", "clip:close", size=18, at=SNAP)])
 
 
 # ---------------------------------------------------------------- slab

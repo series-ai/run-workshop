@@ -13,10 +13,19 @@ attack (lunging double swipe), hit, death. Faces -Z.
 import numpy as np
 
 import paint as P
+from _fall import fall_back, hit_back
+from _gait_loops import cyc, hop_height, per_frame, shift
 from _kit import keys, pfx, world
 from _pn import assemble, coords, last, quad, stamp
 from pnkit import box
 from voxgrid import C, Clip, Grid, Socket
+
+Z3 = (0.0, 0.0, 0.0)
+
+
+def fr(n: float) -> float:
+    """Seconds of frame `n` at 30 fps (impact keys sit on whole frames)."""
+    return n / 30.0
 
 S = (52, 62, 48)
 CX = 26
@@ -158,6 +167,50 @@ def arm(s: int) -> Grid:
     return g
 
 
+def _move() -> dict:
+    """Move: a bounding lope, 24 frames (0.8 s), two bounds. The legs are
+    part of the hips, so it travels in hops: it lands flat (frame 0 of a
+    bound), sinks into the landing with the torso and the arms slamming
+    down, pushes back up for 2 frames with the feet planted, and leaves the
+    floor on a ballistic arc (8 frames, G = 30 m/s^2) that lands at full
+    speed. On the floor the feet slide back at ground speed (the root moves
+    back); in the air the body pitches forward with the legs trailing and
+    the lead claw reaching, alternating arms each bound (a one-two). The
+    head counters the pitch a frame late; the jaw pants open in the air."""
+    T, B, GND, AIR = 24, 12, 4, 8
+    V = 0.8  # ground speed while planted, voxels a frame
+    slide = V * GND
+
+    def z(f):
+        d = f % B
+        return -slide / 2 + V * d if d <= GND else slide / 2 - slide * (d - GND) / AIR
+
+    pitch = lambda f: cyc(f % B, B, [(0, 0.0), (GND, 0.0), (6, -8.0), (8, -10.0), (10, -3.0), (11.99, 0.0)]) if f % B > GND else 0.0  # noqa: E731
+    tdrop = {0: -0.8, 1: -1.9, 2: -1.3, 3: 0.4, 4: 0.8, 5: 0.6, 6: 0.4, 7: 0.2, 8: 0.0, 9: -0.1, 10: -0.2, 11: -0.4}
+    tpitch = {0: -3.0, 1: -6.0, 2: -5.0, 3: 2.0, 4: 4.0, 5: 0.0, 6: -4.0, 7: -6.0, 8: -6.0, 9: -5.0, 10: -3.0, 11: -1.0}
+
+    def arm(lead_bound, side):
+        def fn(f):
+            b, d = (f // B) % 2, f % B
+            lead = b == lead_bound
+            # on the floor the claws brace forward (the landing sinks and
+            # pitches the torso, which would put them through the floor)
+            reach = {0: 22.0, 1: 24.0, 2: 20.0, 3: 18.0, 4: 24.0, 5: 34.0, 6: 42.0, 7: 48.0, 8: 50.0, 9: 46.0, 10: 38.0, 11: 28.0}
+            trail = {0: 20.0, 1: 22.0, 2: 19.0, 3: 16.0, 4: 14.0, 5: 14.0, 6: 16.0, 7: 18.0, 8: 18.0, 9: 18.0, 10: 18.0, 11: 19.0}
+            spread = {0: 5.0, 1: 7.0, 2: 6.0, 3: 4.0, 4: 3.0}
+            return ((reach if lead else trail)[d], 0.0, side * spread.get(d, 2.0 + 0.5 * (d - 5) if d > 7 else 2.0))
+        return fn
+
+    return {"hips": {"loc": per_frame(T, lambda f: (0.0, hop_height(f % B, GND, AIR), z(f))),
+                     "rot": per_frame(T, lambda f: (pitch(f), 0.0, 0.0))},
+            "torso": {"loc": per_frame(T, lambda f: (0.0, tdrop[f % B], 0.0)),
+                      "rot": per_frame(T, lambda f: (tpitch[f % B], cyc(f, T, [(7, 5.0), (19, -5.0)]), 0.0))},
+            "head": {"rot": per_frame(T, lambda f: (-0.6 * (pitch(f - 1) + tpitch[(f - 1) % B]) + {2: -6.0, 3: -4.0, 4: -1.0}.get(f % B, 0.0), 0.0, 0.0))},
+            "jaw": {"rot": per_frame(T, lambda f: (6.0 if f % B < GND else 20.0, 0.0, 0.0))},
+            "arm-l": {"rot": per_frame(T, arm(0, -1))},
+            "arm-r": {"rot": per_frame(T, arm(1, 1))}}
+
+
 def build():
     parts = {"hips": hips(), "torso": torso(), "head": head(), "jaw": jaw(), "arm-l": arm(-1), "arm-r": arm(1)}
     root = assemble(parts, [
@@ -173,21 +226,48 @@ def build():
             "jaw": {"rot": keys((0, (0, 0, 0)), (1.2, (8, 0, 0)), (2.4, (0, 0, 0)))},
             "arm-l": {"rot": keys((0, (0, 0, 0)), (1.2, (-6, 0, -4)), (2.4, (0, 0, 0)))},
             "arm-r": {"rot": keys((0, (0, 0, 0)), (1.2, (-6, 0, 4)), (2.4, (0, 0, 0)))}}
-    attack = {"torso": {"rot": keys((0, (0, 0, 0)), (0.2, (-12, 0, 0)), (0.4, (22, 0, 0)), (0.9, (0, 0, 0)))},
-              "jaw": {"rot": keys((0, (0, 0, 0)), (0.2, (30, 0, 0)), (0.5, (30, 0, 0)), (0.9, (0, 0, 0)))},
-              "arm-r": {"rot": keys((0, (0, 0, 0)), (0.12, (65, 0, 8)), (0.22, (125, 0, 15)), (0.4, (42, 0, -10)), (0.57, (20, 0, -4)), (0.9, (0, 0, 0)))},
-              "arm-l": {"rot": keys((0, (0, 0, 0)), (0.18, (60, 0, -8)), (0.31, (125, 0, -15)), (0.55, (42, 0, 10)), (0.72, (15, 0, 4)), (0.9, (0, 0, 0)))}}
-    hit = {"torso": {"rot": keys((0, (0, 0, 0)), (0.12, (-18, 8, 0)), (0.5, (0, 0, 0)))},
-           "head": {"rot": keys((0, (0, 0, 0)), (0.12, (-20, -10, 0)), (0.5, (0, 0, 0)))}}
-    death = {"hips": {"rot": keys((0, (0, 0, 0)), (0.3, (-10, 0, 0)), (0.9, (-80, 0, 0)), (1.2, (-75, 0, 0))),
-                      "loc": keys((0, (0, 0, 0)), (0.9, (0, -14, 7)), (1.2, (0, -14, 7)))},
-             "head": {"rot": keys((0, (0, 0, 0)), (0.5, (-30, 0, 0)), (1.2, (-10, 20, 0)))},
-             "arm-l": {"rot": keys((0, (0, 0, 0)), (1.0, (-60, 0, -40)))}, "arm-r": {"rot": keys((0, (0, 0, 0)), (1.0, (-60, 0, 40)))}}
+    # Attack, a double claw rip: it coils back and twists away with the right
+    # claw cocked high behind its head and the jaw open (frames 0-12), lunges
+    # in and rips the right claw down across in 3 frames to the blow on
+    # frame 15, whips straight into a left backhand on frame 20 as the body
+    # twists back, sags over it, snarls with a head shake (to 30), and
+    # recovers by frame 44; the head, jaw and the free arm settle last.
+    attack = {"hips": {"loc": keys((0, Z3), (fr(12), (0, 0.2, 2)), (fr(15), (0, 1.0, -5)), (fr(19), (0, 1.2, -6)), (fr(22), (0, 1.4, -6.8)),
+                                   (fr(27), (0, 0.8, -7.2)), (fr(36), Z3)),
+                       "rot": keys((0, Z3), (fr(12), (4, -10, 0)), (fr(15), (-6, 10, 0)), (fr(19), (-6, -8, 0)), (fr(22), (-8, -6, 0)),
+                                   (fr(27), (-5, 0, 0)), (fr(36), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(7), (8, -16, 0)), (fr(12), (14, -28, -4)), (fr(15), (-22, 26, 6)), (fr(19), (-24, -24, -6)),
+                                    (fr(22), (-22, -18, -4)), (fr(27), (-14, -6, 0)), (fr(32), (2, 2, 0)), (fr(36), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(6), (80, 0, 20)), (fr(12), (155, 0, 28)), (fr(15), (48, 0, -22)), (fr(18), (40, 0, -30)),
+                                    (fr(21), (48, 0, -18)), (fr(26), (36, 0, -8)), (fr(32), (-6, 0, 2)), (fr(36), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(10), (30, 0, -10)), (fr(14), (110, 0, -26)), (fr(17), (130, 0, -30)), (fr(19), (50, 0, 24)),
+                                    (fr(21), (52, 0, 30)), (fr(26), (38, 0, 12)), (fr(32), (-6, 0, -2)), (fr(36), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(12), (18, 16, 0)), (fr(15), (-14, -16, 0)), (fr(19), (-18, 14, 0)), (fr(23), (-20, -12, 0)),
+                                   (fr(25), (-16, 12, 0)), (fr(28), (-10, -4, 0)), (fr(34), (4, 0, 0)), (fr(36), Z3))},
+              "jaw": {"rot": keys((0, Z3), (fr(10), (34, 0, 0)), (fr(15), (16, 0, 0)), (fr(19), (36, 0, 0)), (fr(26), (38, 0, 0)),
+                                  (fr(31), (10, 0, 0)), (fr(36), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("hips", foot=(-20, -1.5, -13.5), push=3.5, pop=1.6, tilt=12, head=("head", 26), arms={"arm-l": (34, -1), "arm-r": (34, 1)},
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (12, 8, 0)), (fr(9), (7, 4, 0)), (fr(t["O"]), (-6, 0, 0)), (fr(t["E"]), Z3)),
+                                   "jaw": lambda t: keys((0, Z3), (fr(4), (30, 0, 0)), (fr(12), (10, 0, 0)), (fr(t["E"]), Z3))})
+    # Death: the torso rocks forward and teeters back with a yelp, the arms
+    # thrown up (the feet stay planted), catches itself, then it falls over
+    # backwards (away from the attacker), fastest at the floor on the
+    # impact frame, thuds, bounces once and settles on its back; the arms,
+    # the head and the jaw land late. See _fall.py.
+    jaw_k = lambda t: keys((0, Z3), (fr(t["B"]), (34, 0, 0)), (fr(t["I"]), (8, 0, 0)), (fr(t["L"]), (30, 0, 0)),  # noqa: E731
+                         (fr(t["L"] + 5), (12, 0, 0)), (fr(t["E"]), (18, 0, 0)))
+    death, death_hit = fall_back("hips", D=2.0, F=12.0, bounce=1.2, lead=3, bspan=3, R=100.0, roll=5.0, torso="torso", tee=0.25, torso_fin=(5, 0, 0),
+                                 arms={"arm-l": ((-42, 0, -15), -1), "arm-r": ((-52, 0, 15), 1)},
+                                 head=("head", (90, 0, 15)), extra={"jaw": jaw_k}, settle=-1.0)
     # sockets in root (hips joint) space: the mouth tip and the right claw tips
     mouth = (0.0, 40.0 - HIP[1], 1.0 - HIP[2])
     claw = (CX + 19.0 - HIP[0], 2.0 - HIP[1], 8.0 - HIP[2])
     # The claw effect starts when the right hand moves down in front of the body.
     return world("werewolf", "creatures", "Werewolf", root,
-                 clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
+                 clips=[Clip("attack", attack, loop=False, impact=fr(15)), Clip("hit", hit, loop=False, impact=hit_hit), Clip("death", death, loop=False, impact=death_hit), Clip("idle", idle),
+                        Clip("move", shift(_move(), 24, 10), ease=0)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="head"), Socket("socket-claw-r", at=claw, parent="arm-r")],
-                 pfx=[pfx("rvx-monster-howl", "socket-mouth", "clip:attack", size=30, offset=(0.0, 2.0, -12.0), at=0.6), pfx("rvx-monster-claw-slash", "socket-claw-r", "clip:attack", size=30, at=0.36)])
+                 pfx=[pfx("rvx-monster-howl", "socket-mouth", "clip:attack", size=30, offset=(0.0, 2.0, -12.0), at=fr(26)), pfx("rvx-monster-claw-slash", "socket-claw-r", "clip:attack", size=30, at=fr(13))])

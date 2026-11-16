@@ -514,6 +514,19 @@ class Clip:
     name: str
     keys: dict[str, dict[str, list[tuple[float, tuple[float, float, float]]]]]
     loop: bool = True
+    # Seconds of the blow in a one-shot (attack): every channel keyed at this
+    # moment accelerates into it instead of easing in, so the blow lands at
+    # full speed (see export.snap_impact).
+    impact: float | None = None
+    # How much each stroke between turning points lingers at its ends and
+    # speeds through its middle (see export.ease_strokes): 0 keeps Blender's
+    # even Bezier timing, for machines; 1 is the strongest hang. None: 0.6
+    # for loops (swings, bobs), 0.3 for one-shots, whose keyed holds would
+    # otherwise stretch into freezes.
+    ease: float | None = None
+    # Lift the model wherever a pose would sink into the floor (see
+    # export.keep_on_floor). None: on for every creature clip.
+    floor: bool | None = None
 
 
 @dataclass

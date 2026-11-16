@@ -93,16 +93,40 @@ def lamp() -> Grid:
     return g
 
 
+def slam(n: int, keys) -> list:
+    """Per-frame values 0..n through (frame, value[, "acc"]) keys: a key
+    tagged "acc" is reached accelerating from the previous key (quadratic,
+    fastest on arrival, then a dead stop); other spans are linear."""
+    out = []
+    for f in range(n + 1):
+        for a, b in zip(keys, keys[1:]):
+            if a[0] <= f <= b[0]:
+                u = (f - a[0]) / (b[0] - a[0]) if b[0] > a[0] else 1.0
+                if len(b) > 2 and b[2] == "acc":
+                    u = u * u
+                out.append(a[1] + (b[1] - a[1]) * u)
+                break
+        else:
+            out.append(keys[-1][1])
+    return out
+
+
 def build():
     rig = Rig("garage-door", (35, 0, 12), wall())
     rig.add("shutter", shutter(), ((OX0 + OX1) / 2, OY1, WZ0 + 1))
     rig.add("lamp", lamp(), LAMP)
-    up = keys((0, (1, 1, 1)), (1.2, (1, 0.06, 1)), (1.3, (1, 0.07, 1)))
-    down = keys((0, (1, 0.07, 1)), (1.0, (1, 1, 1)), (1.08, (1, 0.97, 1)), (1.15, (1, 1, 1)))
+    # One key a frame (ease 0): the shutter jerks into motion, rolls up at a
+    # steady rate and stops dead at the top with a tiny knock back; it
+    # drops shut under its weight, accelerating all the way into the sill
+    # (f24), bounces a little and sits.
+    rise = slam(37, [(0, 1.0), (4, 0.94, "acc"), (34, 0.06), (35, 0.08), (36, 0.07), (37, 0.07)])
+    fall = slam(30, [(0, 0.07), (1, 0.07), (24, 1.0, "acc"), (25, 0.95), (26, 0.98), (27, 1.0), (30, 1.0)])
+    up = [(f / 30, (1, v, 1)) for f, v in enumerate(rise)]
+    down = [(f / 30, (1, v, 1)) for f, v in enumerate(fall)]
     blink = keys((0, (1, 1, 1)), (0.15, (1.35, 1.35, 1.35)), (0.3, (1, 1, 1)), (0.45, (1.35, 1.35, 1.35)), (0.6, (1, 1, 1)))
     idle = keys((0, (1, 1, 1)), (0.75, (1.2, 1.2, 1.2)), (1.5, (1, 1, 1)))
     return make("animated-props", "garage-door", "Garage Roller Door", rig.root,
-                clips=[Clip("open", {"shutter": {"scale": up}, "lamp": {"scale": blink}}, loop=False),
-                       Clip("close", {"shutter": {"scale": down}, "lamp": {"scale": blink}}, loop=False),
+                clips=[Clip("open", {"shutter": {"scale": up}, "lamp": {"scale": blink}}, loop=False, ease=0),
+                       Clip("close", {"shutter": {"scale": down}, "lamp": {"scale": blink}}, loop=False, impact=24 / 30, ease=0),
                        Clip("idle", {"lamp": {"scale": idle}})],
                 sockets=[rig.socket("socket-lamp", (LAMP[0], LAMP[1] + 2, LAMP[2]), parent="lamp")])

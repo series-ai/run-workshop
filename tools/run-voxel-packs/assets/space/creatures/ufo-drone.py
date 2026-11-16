@@ -8,14 +8,17 @@ the drone's head: a white hull pod with one big dark-framed cyan sensor
 eye (lens, pupil and glint) under a steel brow, a side ear sensor and two
 antennae (one bent, with orange tips). A copper tractor emitter with a
 cyan glow hangs underneath. Faceted frustums (true slopes); detail is
-paint. Clips: idle (hover, the saucer spins), attack (tilt and zap from
-the beam socket, plasma impact PFX), hit (wobble), death (drop and flip).
+paint. Clips: idle (hover, the saucer spins), move (cruise nose-down),
+attack (tilt and zap from
+the beam socket, plasma impact PFX), hit (wobble), death (power
+failure, drop, crash and settle on its rim).
 Faces -Z.
 """
 import math
 
 import numpy as np
 
+from _motion import DEATH_FLOOR, curve
 from _life import C, P, Clip, Grid, Rig, asset, coords, keys, ngon_y, spin, wave
 from pnshapes import bar, flat_ngon, ngon_radius, seams
 
@@ -127,6 +130,9 @@ def saucer() -> Grid:
     return g
 
 
+REST_TILT, LAND, BOUNCE, REST = 29.5, 1.0, 1.0, 0.5  # death: the resting tilt and heights
+
+
 def build():
     rig = Rig()
     rig.add("ufo-drone", core(), (CX, 0, CZ))
@@ -134,12 +140,48 @@ def build():
     beam = rig.sock("socket-beam", (CX, 0, CZ), "ufo-drone")
     z = (0.0, 0.0, 0.0)
     idle = {"ufo-drone": {"loc": wave(2.0, "y", 1.2), "rot": wave(2.0, "z", 4, phase=0.7)}, "saucer": {"rot": spin(2.0, "y", 360)}}
-    attack = {"ufo-drone": {"rot": keys((0, z), (0.2, (-18, 0, 0)), (0.6, (-18, 0, 0)), (0.9, z)), "loc": keys((0, z), (0.2, (0, 1, 0)), (0.9, z))},
-              "saucer": {"rot": spin(0.9, "y", 720)}}
-    hit = {"ufo-drone": {"rot": keys((0, z), (0.08, (0, 0, 18)), (0.2, (0, 0, -12)), (0.34, (0, 0, 6)), (0.5, z)), "loc": keys((0, z), (0.08, (1.5, 0, 1.5)), (0.5, z))}}
-    death = {"ufo-drone": {"rot": keys((0, z), (0.3, (0, 0, 30)), (0.7, (0, 90, 150)), (1.0, (0, 120, 175))),
-                           "loc": keys((0, z), (0.3, (0, 1, 0)), (0.7, (0, -2, 0)), (1.0, (0, 2, 0)))},
-             "saucer": {"rot": spin(1.0, "y", 360)}}
+    # Charge and zap: the drone surges up and rears back while the saucer
+    # spins up hard, hangs there, then snaps forward and dives at the
+    # target and fires the beam (impact 0.4 s); the recoil kicks it back up
+    # and over, it holds the zap with a shudder, then floats home as the
+    # spin winds down.
+    F = 1 / 30
+    fire_t = 12 * F
+    attack = {"ufo-drone": {"rot": curve((0, z), (5, (18, 0, 0)), (9, (30, 0, 0)), (10, (31, 0, 0)), (12, (-34, 0, 0)), (13, (-40, 0, 0)), (15, (-16, 0, 6)),
+                                         (18, (-26, 0, -6)), (21, (-18, 0, 5)), (24, (-22, 0, -3)), (28, (8, 0, 0)), (32, (-2, 0, 0)), (36, z)),
+                            "loc": curve((0, z), (5, (0, 5, 3)), (9, (0, 8, 4.5)), (10, (0, 8.2, 4.6)), (12, (0, 4.4, -6)), (13, (0, 4.2, -7)), (15, (0, 5.5, -2)),
+                                         (18, (0, 3.2, -3.4)), (21, (0, 4.0, -2.4)), (24, (0, 3.4, -2.8)), (28, (0, 0.8, 1.2)), (32, (0, 0, -0.3)), (36, z))},
+              "saucer": {"rot": curve((0, z), (10, (0, 460, 0)), (12, (0, 580, 0)), (24, (0, 980, 0)), (36, (0, 1080, 0)))}}
+    # Knockback: the blow pops the drone up and back and tips it over, it
+    # wobbles, sinks a beat and floats back level.
+    hit = {"ufo-drone": {"rot": keys((0, z), (2 * F, (14, 0, 16)), (5 * F, (18, 0, 20)), (10 * F, (-8, 0, -10)), (15 * F, (4, 0, 6)), (21 * F, (-2, 0, -2)), (28 * F, z)),
+                         "loc": keys((0, z), (2 * F, (1, 1.5, 2)), (5 * F, (1.5, 2.5, 3.5)), (10 * F, (0.5, 0.5, 3)), (16 * F, (0, 1, 2.4)), (23 * F, (0, 0, 0.3)),
+                                     (28 * F, z))},
+           "saucer": {"loc": keys((0, z), (3 * F, (0, -0.6, 0)), (7 * F, (0, 0.3, 0)), (11 * F, z), (28 * F, z))}}
+    # Power failure: the engine coughs and surges, lurching the drone high
+    # up and tipping it while the saucer spin falters; it sputters (drops a
+    # little, catches, surges again) and wobbles at the top, then the power
+    # dies and it falls with gravity (impact 1.033 s), crashes onto its rim
+    # edge, bounces a little and tips over to rest with its rim and belly on
+    # the floor.
+    die_t = 31 * F
+    death = {"ufo-drone": {"rot": curve((0, z), (3, (0, 0, 16)), (6, (-12, 0, -14)), (9, (10, 0, 12)), (12, (-8, 0, -10)), (15, (6, 0, 8)), (18, (-6, 0, -6)),
+                                        (21, (4, 0, 6)), (24, (-3, 0, 2)), (31, (4, 0, 26)), (34, (3, 0, 20)), (38, (2, 0, REST_TILT + 2)), (42, (2, 0, REST_TILT - 1)),
+                                        (47, (2, 0, REST_TILT)), (56, (2, 0, REST_TILT))),
+                           "loc": curve((0, z), (3, (0, 5, 0)), (6, (0, 3, 0)), (9, (0, 10, 0)), (12, (0, 8.5, 0)), (15, (0, 15, 0)), (18, (0, 17.5, 0)),
+                                        (21, (0.6, 16.5, 0)), (24, (0, 18.5, 0)), (31, (-1.0, LAND, 0)), (34, (-1.4, LAND + BOUNCE, 0)), (38, (-2.0, REST, 0)),
+                                        (56, (-2.0, REST, 0)))},
+             "saucer": {"rot": curve((0, z), (3, (0, 40, 0)), (6, (0, 50, 0)), (9, (0, 90, 0)), (12, (0, 100, 0)), (15, (0, 140, 0)), (18, (0, 170, 0)),
+                                     (24, (0, 190, 0)), (31, (0, 205, 0)), (38, (0, 214, 0)), (48, (0, 218, 0)), (56, (0, 218, 0))),
+                        "loc": curve((0, z), (31, z), (33, (0, -0.4, 0)), (36, (0, 0.3, 0)), (40, z), (56, z))}}
+    # Move: the drone cruises nose-down, riding a little higher than its
+    # hover, bobbing once a loop with the bank rocking a quarter-beat behind
+    # and the nose dipping on each sink; the saucer spins twice as fast as
+    # in idle (2 turns a loop). Loops seamlessly.
+    move = {"ufo-drone": {"loc": wave(1.2, "y", 0.8, base=(0.0, 2.6, 0.0)),
+                          "rot": [(t, (-12.0 + 2.0 * math.sin(2 * math.pi * t / 1.2 + 0.6), 0.0, 3.0 * math.sin(2 * math.pi * t / 1.2 - math.pi / 2)))
+                                  for t in (k * 1.2 / 8 for k in range(9))]},
+            "saucer": {"rot": spin(1.2, "y", 720)}}
     return asset("creatures", "ufo-drone", "UFO Drone", rig.root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
-                 sockets=[beam], pfx=[{"effectId": "rvx-space-ray-zap", "socket": "socket-beam", "trigger": "clip:attack", "size": 16, "aim": [0.0, -1.0, 0.0], "at": 0.36}])
+                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=fire_t), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR)],
+                 sockets=[beam], pfx=[{"effectId": "rvx-space-ray-zap", "socket": "socket-beam", "trigger": "clip:attack", "size": 16, "aim": [0.0, -1.0, 0.0], "at": round(fire_t, 3)}])

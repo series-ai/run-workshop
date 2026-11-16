@@ -10,7 +10,8 @@ Faces -Z.
 """
 import numpy as np
 
-from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, hazard, keys, light_top, octo, plan, plate_facets, side, front
+from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, hazard, light_top, octo, plan, plate_facets, side, front
+from _slam import slam
 from pnshapes import arch, pipe
 
 W, H, L = 28, 26, 50
@@ -80,8 +81,12 @@ def build():
     rig.add("cryo-pod", pod(), (CX, 0, (Z0 + Z1) / 2))
     rig.add("canopy", canopy(), HINGE, "cryo-pod")
     z = (0.0, 0.0, 0.0)
-    open_ = {"canopy": {"rot": keys((0, z), (0.2, (3, 0, 0)), (0.9, (62, 0, 0)), (1.1, (58, 0, 0)))}}
-    close = {"canopy": {"rot": keys((0, (58, 0, 0)), (0.7, (4, 0, 0)), (0.85, z), (0.95, (1.5, 0, 0)), (1.1, z))}}
+    # The canopy creeps off its seal, accelerates (power 3.5, keyed once a
+    # frame, see _slam) and slams into its open stop / onto the tub: dead
+    # stop, a tiny rebound, still.
+    up = (58.0, 0.0, 0.0)
+    open_ = {"canopy": {"rot": slam(z, up, frames=14, rebound=0.05)[0]}}
+    close = {"canopy": {"rot": slam(up, z, frames=13, rebound=0.04)[0]}}
     mist = rig.sock("socket-mist", (CX, YT + 1, Z0 + 3), "cryo-pod")
     return asset("animated-props", "cryo-pod", "Cryo Pod", rig.root,
-                 clips=[Clip("open", open_, loop=False), Clip("close", close, loop=False)], sockets=[mist])
+                 clips=[Clip("open", open_, loop=False, ease=0), Clip("close", close, loop=False, ease=0)], sockets=[mist])

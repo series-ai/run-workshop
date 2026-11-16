@@ -79,14 +79,37 @@ def strobe() -> Grid:
     return g
 
 
+def slam(n: int, keys) -> list:
+    """Per-frame values 0..n through (frame, value[, "acc"]) keys: a key
+    tagged "acc" is reached accelerating from the previous key (quadratic,
+    fastest on arrival, then a dead stop); other spans are linear."""
+    out = []
+    for f in range(n + 1):
+        for a, b in zip(keys, keys[1:]):
+            if a[0] <= f <= b[0]:
+                u = (f - a[0]) / (b[0] - a[0]) if b[0] > a[0] else 1.0
+                if len(b) > 2 and b[2] == "acc":
+                    u = u * u
+                out.append(a[1] + (b[1] - a[1]) * u)
+                break
+        else:
+            out.append(keys[-1][1])
+    return out
+
+
 def build():
     rig = Rig("supply-crate", (17, 0, 18), crate())
     rig.add("lid", lid(), HINGE)
     rig.add("beacon", strobe(), (BX0 - 1.5, 15.0, 18.0))
-    openk = {"lid": {"rot": keys((0, (0, 0, 0)), (0.25, (118, 0, 0)), (0.4, (100, 0, 0)), (0.5, (106, 0, 0)))}}
-    closek = {"lid": {"rot": keys((0, (106, 0, 0)), (0.3, (0, 0, 0)), (0.36, (5, 0, 0)), (0.42, (0, 0, 0)))}}
+    # One key a frame (ease 0): the lid is flung open, accelerating into its
+    # stop (f7) and knocking back off it; it slams shut accelerating all
+    # the way (f8) and jolts up a little.
+    lid_open = slam(15, [(0, 0.0), (1, 0.0), (7, 118.0, "acc"), (8, 108.0), (9, 102.0), (11, 106.0), (15, 106.0)])
+    lid_shut = slam(13, [(0, 106.0), (1, 106.0), (8, 0.0, "acc"), (9, 5.0), (10, 2.0), (11, 0.0), (13, 0.0)])
+    openk = {"lid": {"rot": [(f / 30, (a, 0, 0)) for f, a in enumerate(lid_open)]}}
+    closek = {"lid": {"rot": [(f / 30, (a, 0, 0)) for f, a in enumerate(lid_shut)]}}
     idle = {"beacon": {"scale": keys((0, (1, 1, 1)), (0.1, (1.5, 1.6, 1.5)), (0.2, (1, 1, 1)), (1.0, (1, 1, 1)))}}
     return make("animated-props", "supply-crate", "Air-Drop Supply Crate", rig.root,
-                clips=[Clip("open", openk, loop=False), Clip("close", closek, loop=False), Clip("idle", idle)],
+                clips=[Clip("open", openk, loop=False, impact=7 / 30, ease=0), Clip("close", closek, loop=False, impact=8 / 30, ease=0), Clip("idle", idle)],
                 sockets=[rig.socket("socket-loot", (17, BY1 - 1, 18))],
-                pfx=[fx("rvx-apocalypse-crate-dust", "socket-loot", "clip:open", size=30, at=0.12)])
+                pfx=[fx("rvx-apocalypse-crate-dust", "socket-loot", "clip:open", size=30, at=0.1)])
