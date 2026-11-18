@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="game-id" content="procedural-paintings" />
+    <title>Twenty-One Paintings — Procedural Three.js</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="stage"></div>
+      <div id="veil"><span id="veil-text"></span></div>
+      <div class="row top">
+        <div id="tabs-shell" class="glass tabs-shell">
+          <button id="btn-prev" type="button" class="nav-btn" title="Previous painting">‹</button>
+          <div id="scene-tabs" class="tabs"></div>
+          <button id="btn-next" type="button" class="nav-btn" title="Next painting">›</button>
+          <select id="scene-select" class="scene-select" title="Jump to any painting"></select>
+        </div>
+        <div class="glass stats" title="Live renderer telemetry">
+          <div class="stat"><b id="stat-fps">--</b><span>FPS</span></div>
+          <div class="stat"><b><span id="stat-ms" style="all:unset">--</span><small>ms</small></b><span>Frame</span></div>
+          <div class="stat"><b id="stat-calls">--</b><span>Draw calls</span></div>
+          <div class="stat"><b id="stat-tris">--</b><span>Triangles</span></div>
+        </div>
+      </div>
+      <div class="row bottom">
+        <div class="glass placard">
+          <div id="art-title"></div>
+          <div id="art-artist"></div>
+          <div id="art-tech"></div>
+        </div>
+        <div class="glass bar">
+          <div id="preset-pills"></div>
+          <div class="sep"></div>
+          <button id="btn-drift" type="button" class="pill active">Auto-Drift · On</button>
+          <span class="hint">Drag orbit · Scroll zoom · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <kbd>Q</kbd><kbd>E</kbd> fly</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
