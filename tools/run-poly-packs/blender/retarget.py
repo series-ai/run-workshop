@@ -836,3 +836,177 @@ def retarget_kaykit_ranged_clips(u1: Ual1SkeletonState, kaykit_path: Path) -> li
         out_clips.append(_pack_clip_tracks(u1, clip_name, out_times, frame_rots, frame_pelvis))
 
     return out_clips
+
+
+# --------------------------------------------------------------------------
+# UAL1 Pistol_* two-handed support grip fix
+# --------------------------------------------------------------------------
+
+PISTOL_CLIP_NAMES = (
+    'Pistol_Aim_Down',
+    'Pistol_Aim_Neutral',
+    'Pistol_Aim_Up',
+    'Pistol_Idle_Loop',
+    'Pistol_Reload',
+    'Pistol_Shoot',
+)
+
+
+def fix_ual1_pistol_clips(u1: Ual1SkeletonState, rig_path: Path) -> list[dict]:
+    """Fix crossed forearms in UAL1's Pistol_* clips by solving left-arm IK into a two-handed support grip.
+
+    In Quaternius's `ual1-base.glb`, `hand_l` overshoots ~11 cm past `hand_r` to `-X`, causing the left
+    and right forearms to cross in an X from top-down view. Keeping right-arm, torso, leg, and finger-curl
+    tracks intact, this solves `upperarm_l`, `lowerarm_l`, and `hand_l` to cup the left/bottom of `hand_r`
+    and the pistol grip cleanly, while smoothly blending out/in during `Pistol_Reload`'s mag swap.
+    """
+    src = SourceRig(rig_path)
+    u1_pelvis_idx = u1.index['pelvis']
+    src_pelvis_idx = src.by_name['pelvis']
+    q_root_inv = u1.rest_q[u1.index['root']].inverted()
+    u1_hand_l_rest_q = u1.rest_q[u1.index['hand_l']]
+
+    l1_l = (u1.rest_pos[u1.index['lowerarm_l']] - u1.rest_pos[u1.index['upperarm_l']]).length
+    l2_l = (u1.rest_pos[u1.index['hand_l']] - u1.rest_pos[u1.index['lowerarm_l']]).length
+    rest_u_dir_l = (u1.rest_pos[u1.index['lowerarm_l']] - u1.rest_pos[u1.index['upperarm_l']]).normalized()
+    rest_l_dir_l = (u1.rest_pos[u1.index['hand_l']] - u1.rest_pos[u1.index['lowerarm_l']]).normalized()
+
+    sock_r = pk.RIG_CONTRACT['heldSockets']['hand_r']
+    rx, ry, rz = sock_r['rotationEuler']
+    q_sock_r = (
+        Quaternion((1.0, 0.0, 0.0), rx)
+        @ Quaternion((0.0, 1.0, 0.0), ry)
+        @ Quaternion((0.0, 0.0, 1.0), rz)
+    ).normalized()
+    palm_r_local = Vector(sock_r['palmOffset'])
+
+    hr_si = src.by_name['hand_r']
+    clav_l_si = src.by_name['clavicle_l']
+    ul_si = src.by_name['upperarm_l']
+    ll_si = src.by_name['lowerarm_l']
+    hl_si = src.by_name['hand_l']
+
+    ul_idx = u1.index['upperarm_l']
+    ll_idx = u1.index['lowerarm_l']
+    hl_idx = u1.index['hand_l']
+
+    out_clips: list[dict] = []
+    for clip_name in PISTOL_CLIP_NAMES:
+        duration, by_node = src.clip_samplers(clip_name)
+        times = None
+        for tracks in by_node.values():
+            for ts, _ in tracks.values():
+                if times is None or len(ts) > len(times):
+                    times = ts
+        if times is None or len(times) == 0:
+            continue
+
+        frame_rots: list[dict[int, Quaternion]] = []
+        frame_pelvis: list[Vector] = []
+
+        for t_raw in times:
+            t = float(t_raw)
+            src_pos, src_q = src.sample_world_at(by_node, t)
+
+            local_rot: dict[int, Quaternion] = {}
+            for j, jname in enumerate(u1.names):
+                pj = u1.parent[j]
+                if pj is None:
+                    local_rot[j] = u1.rest_local[j][1]
+                else:
+                    p_si = src.by_name[u1.names[pj]]
+                    c_si = src.by_name[jname]
+                    local_rot[j] = (src_q[p_si].inverted() @ src_q[c_si]).normalized()
+
+            p_local = q_root_inv @ src_pos[src_pelvis_idx]
+
+            if clip_name == 'Pistol_Reload' and duration > 1e-6:
+                f = max(0.0, min(1.0, t / duration))
+                smooth = lambda a: 0.5 - 0.5 * math.cos(math.pi * max(0.0, min(1.0, a)))
+            else:
+                f = 0.0
+                smooth = lambda a: 0.0
+
+            palm_r_world = src_pos[hr_si] + (src_q[hr_si] @ palm_r_local)
+            q_sock_r_world = (src_q[hr_si] @ q_sock_r).normalized()
+            barrel_world = q_sock_r_world @ Vector((0.0, 0.0, 1.0))
+            down_blend = max(0.0, -barrel_world.y) ** 1.5
+
+            # Cup the left/underside of hand_r and the pistol grip without crossing past hand_r.
+            target_hand_l_aim = palm_r_world + (
+                q_sock_r_world @ Vector((0.080 + 0.015 * down_blend, -0.048 + 0.025 * down_blend, -0.074))
+            )
+            shoulder_l = src_pos[ul_si]
+            pole_l_aim = (
+                shoulder_l
+                + (q_sock_r_world @ Vector((0.30 + 0.18 * down_blend, -0.32 * (1.0 - 0.70 * down_blend), -0.05)))
+                + Vector((0.0, 0.0, 0.24 * down_blend))
+            )
+
+            f_dir_aim = (q_sock_r_world @ Vector((-0.28, -0.15, 0.95))).normalized()
+            b_dir_aim = (q_sock_r_world @ Vector((0.90, -0.32, 0.29))).normalized()
+            q_hl_aim = (_quat_from_axes(f_dir_aim, b_dir_aim, f_dir_aim.cross(b_dir_aim)) @ u1_hand_l_rest_q).normalized()
+
+            if clip_name == 'Pistol_Reload' and duration > 1e-6:
+                pouch_target = shoulder_l + Vector((0.125, -0.385, -0.005))
+                mag_target = palm_r_world + (q_sock_r_world @ Vector((0.055, -0.125, -0.068)))
+                seat_target = palm_r_world + (q_sock_r_world @ Vector((0.062, -0.088, -0.068)))
+                pole_l_pouch = shoulder_l + Vector((0.36, -0.18, -0.26))
+                q_hl_pouch = (
+                    _quat_from_axes(
+                        Vector((-0.20, -0.86, 0.47)).normalized(),
+                        Vector((0.93, -0.28, -0.24)).normalized(),
+                        Vector((-0.20, -0.86, 0.47)).normalized().cross(Vector((0.93, -0.28, -0.24)).normalized()),
+                    )
+                    @ u1_hand_l_rest_q
+                ).normalized()
+
+                if f < 0.25:
+                    u = smooth(f / 0.25)
+                    target_hand_l = target_hand_l_aim.lerp(pouch_target, u)
+                    pole_l = pole_l_aim.lerp(pole_l_pouch, u)
+                    q_hl = q_hl_aim.slerp(q_hl_pouch, u).normalized()
+                elif f < 0.50:
+                    u = smooth((f - 0.25) / 0.25)
+                    target_hand_l = pouch_target.lerp(mag_target, u)
+                    pole_l = pole_l_pouch.lerp(pole_l_aim, u)
+                    q_hl = q_hl_pouch.slerp(q_hl_aim, u).normalized()
+                elif f < 0.68:
+                    u = smooth((f - 0.50) / 0.18)
+                    target_hand_l = mag_target.lerp(seat_target, u)
+                    pole_l = pole_l_aim
+                    q_hl = q_hl_aim
+                else:
+                    u = smooth((f - 0.68) / 0.32)
+                    target_hand_l = seat_target.lerp(target_hand_l_aim, u)
+                    pole_l = pole_l_aim
+                    q_hl = q_hl_aim
+            else:
+                target_hand_l = target_hand_l_aim
+                pole_l = pole_l_aim
+                q_hl = q_hl_aim
+
+            q_ul, q_ll, _ = _solve_2bone_arm_ik(
+                shoulder_l,
+                target_hand_l,
+                l1_l,
+                l2_l,
+                pole_l,
+                rest_u_dir_l,
+                rest_l_dir_l,
+                u1.rest_q[ul_idx],
+                u1.rest_q[ll_idx],
+            )
+
+            clav_q = src_q[clav_l_si]
+            local_rot[ul_idx] = (clav_q.inverted() @ q_ul).normalized()
+            local_rot[ll_idx] = (q_ul.inverted() @ q_ll).normalized()
+            local_rot[hl_idx] = (q_ll.inverted() @ q_hl).normalized()
+
+            frame_rots.append(local_rot)
+            frame_pelvis.append(p_local)
+
+        out_clips.append(_pack_clip_tracks(u1, clip_name, times, frame_rots, frame_pelvis))
+
+    return out_clips
+

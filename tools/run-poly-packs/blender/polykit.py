@@ -249,7 +249,20 @@ class GlbBuilder:
             self._shared[key] = len(self.doc['accessors']) - 1
         return self._shared[key]
 
-    def add_rig(self, rig, with_clips):
+    def _build_clip(self, clip):
+        """Build a glTF animation dict from {'name', 'times', 'tracks'} onto the 53-joint UAL1 rig."""
+        times = np.asarray(clip['times'], dtype=np.float32)
+        time_acc = self._accessor(times, 'SCALAR', bounds=True)
+        samplers, channels = [], []
+        for joint_idx, tracks in sorted(clip['tracks'].items()):
+            for path, values in sorted(tracks.items()):
+                kind = 'VEC4' if path == 'rotation' else 'VEC3'
+                out_acc = self._accessor(np.asarray(values, dtype=np.float32), kind)
+                samplers.append({'input': time_acc, 'output': out_acc, 'interpolation': 'LINEAR'})
+                channels.append({'sampler': len(samplers) - 1, 'target': {'node': int(joint_idx), 'path': path}})
+        return {'name': clip['name'], 'samplers': samplers, 'channels': channels}
+
+    def add_rig(self, rig, with_clips, replace_clips=None):
         """Add the 53 joints in skin order, the exact inverse bind matrices and (optionally) all clips."""
         if self.doc['nodes']:
             raise ValueError('Add the rig before the meshes.')
@@ -268,8 +281,12 @@ class GlbBuilder:
         self.doc['skins'] = [{'name': 'UAL1_Rig', 'joints': list(range(len(rig.joint_nodes))),
                               'inverseBindMatrices': self._copy_accessor(rig, rig.skin['inverseBindMatrices'])}]
         if with_clips:
+            replacements = dict(replace_clips or {})
             clips = []
             for clip in rig.doc['animations']:
+                if clip['name'] in replacements:
+                    clips.append(self._build_clip(replacements[clip['name']]))
+                    continue
                 samplers = [{'input': self._copy_accessor(rig, sampler['input']),
                              'output': self._copy_accessor(rig, sampler['output']),
                              'interpolation': sampler.get('interpolation', 'LINEAR')} for sampler in clip['samplers']]
@@ -283,16 +300,7 @@ class GlbBuilder:
         """Append a retargeted clip dict {'name', 'times', 'tracks'} onto the 53-joint UAL1 rig."""
         if 'animations' not in self.doc:
             self.doc['animations'] = []
-        times = np.asarray(clip['times'], dtype=np.float32)
-        time_acc = self._accessor(times, 'SCALAR', bounds=True)
-        samplers, channels = [], []
-        for joint_idx, tracks in sorted(clip['tracks'].items()):
-            for path, values in sorted(tracks.items()):
-                kind = 'VEC4' if path == 'rotation' else 'VEC3'
-                out_acc = self._accessor(np.asarray(values, dtype=np.float32), kind)
-                samplers.append({'input': time_acc, 'output': out_acc, 'interpolation': 'LINEAR'})
-                channels.append({'sampler': len(samplers) - 1, 'target': {'node': int(joint_idx), 'path': path}})
-        self.doc['animations'].append({'name': clip['name'], 'samplers': samplers, 'channels': channels})
+        self.doc['animations'].append(self._build_clip(clip))
 
     def add_custom_rig(self, contract, animations=None, rig_name='Creature_Rig'):
         """Add a procedural creature rig from a contract JSON + optional sampled animations."""

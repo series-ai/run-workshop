@@ -327,8 +327,9 @@ def check_sockets(sockets):
 # Main
 # --------------------------------------------------------------------------
 
-def verify_core(path, rig, expected_clips):
+def verify_core(path, rig, expected_clips, modified_clips=()):
     """Verify joints, inverse bind matrices, byte-exact UAL1 clips, and structural integrity of all clips."""
+    modified = set(modified_clips)
     built = pk.Rig(path)
     built.check_contract()
     if not np.array_equal(built.inverse_bind, rig.inverse_bind):
@@ -337,6 +338,12 @@ def verify_core(path, rig, expected_clips):
         raise ValueError(f'The clip list changed: got {len(built.clips)}, expected {len(expected_clips)}.')
     source_joint = {node: joint for joint, node in enumerate(rig.joint_nodes)}
     for ours, theirs in zip(built.doc['animations'][:len(rig.doc['animations'])], rig.doc['animations']):
+        if ours['name'] != theirs['name']:
+            raise ValueError(f'{ours["name"]}: expected {theirs["name"]}.')
+        if ours['name'] in modified:
+            if not ours['channels']:
+                raise ValueError(f'{ours["name"]}: modified clip has no channels.')
+            continue
         if len(ours['channels']) != len(theirs['channels']):
             raise ValueError(f'{ours["name"]}: the channel count changed.')
         for mine, source in zip(ours['channels'], theirs['channels']):
@@ -380,10 +387,12 @@ def main():
     rig.check_contract(check_clips=False)
     solver = pk.WeightSolver(rig)
 
-    builder = pk.GlbBuilder()
-    builder.add_rig(rig, with_clips=True)
-
     u1_state = retarget.Ual1SkeletonState(rig)
+    fixed_pistol = {clip['name']: clip for clip in retarget.fix_ual1_pistol_clips(u1_state, args.source)}
+
+    builder = pk.GlbBuilder()
+    builder.add_rig(rig, with_clips=True, replace_clips=fixed_pistol)
+
     ual2_path = args.ual2 or (args.source.parent / 'ual2-standard.glb')
     kaykit_path = args.kaykit_ranged or (args.source.parent / 'kaykit-combat-ranged.glb')
     if ual2_path.exists():
@@ -438,7 +447,7 @@ def main():
 
     path = pk.leaf_dir(args.stage, PACK, 'characters') / RIG_FILE
     size = builder.write(path)
-    verify_core(path, rig, all_clip_names)
+    verify_core(path, rig, all_clip_names, modified_clips=fixed_pistol.keys())
 
     default_props = {'height': 1.0, 'shoulderWidth': 1.0, 'torsoBulk': 1.0, 'waistScale': 1.0, 'headScale': 1.0, 'limbThickness': 1.0}
     core_presets = [

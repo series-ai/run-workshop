@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   AnimationClip,
+  AnimationMixer,
   Quaternion,
   QuaternionKeyframeTrack,
   Vector3,
@@ -284,4 +285,70 @@ describe.skipIf(!HAS_BUILT_MANIFEST)('geometry-accurate animation audit engine',
     expect(sit.errors).toBeGreaterThan(0)
     expect(sit.findings.some((f) => f.kind === 'self_collision' && f.severity === 'error')).toBe(true)
   })
+
+  it('keeps Pistol_* forearms uncrossed with support hand on the +X side on Field Officer (ww2_officer)', async () => {
+    const packs = loadBuiltPacks()
+    const officer = findPreset(packs, 'ww2_officer')
+    const loaded = await loadPresetForAudit(officer, packs, STAGE_DIR, cache)
+    const pistolNames = [
+      'Pistol_Aim_Down',
+      'Pistol_Aim_Neutral',
+      'Pistol_Aim_Up',
+      'Pistol_Idle_Loop',
+      'Pistol_Reload',
+      'Pistol_Shoot',
+    ]
+    const pistolClips = loaded.clips.filter((c) => pistolNames.includes(c.name))
+    expect(pistolClips.map((c) => c.name).sort()).toEqual([...pistolNames].sort())
+
+    const reports = auditRigClips(loaded.root, loaded.meshes, pistolClips, {
+      rigId: 'ual1',
+      ragdoll: loaded.ragdoll,
+      proportions: officer.proportions,
+      sampleHz: 24,
+    })
+    for (const report of reports) {
+      expect(report.errors, `Officer clip ${report.clip}: ${JSON.stringify(report.findings)}`).toBe(0)
+    }
+
+    const fresh = await loadPresetForAudit(officer, packs, STAGE_DIR, cache)
+    const lowerarmL = fresh.root.getObjectByName('lowerarm_l')!
+    const lowerarmR = fresh.root.getObjectByName('lowerarm_r')!
+    const handL = fresh.root.getObjectByName('hand_l')!
+    const handR = fresh.root.getObjectByName('hand_r')!
+    const pLL = new Vector3()
+    const pLR = new Vector3()
+    const pHL = new Vector3()
+    const pHR = new Vector3()
+
+    const mixer = new AnimationMixer(fresh.root)
+    try {
+      for (const clip of pistolClips) {
+        const steps = clip.duration > 0.2 ? 16 : 2
+        for (let s = 0; s <= steps; s++) {
+          mixer.stopAllAction()
+          mixer.clipAction(clip).reset().play()
+          mixer.setTime((clip.duration * s) / steps)
+          fresh.root.updateMatrixWorld(true)
+          lowerarmL.getWorldPosition(pLL)
+          lowerarmR.getWorldPosition(pLR)
+          handL.getWorldPosition(pHL)
+          handR.getWorldPosition(pHR)
+
+          expect(pLL.x, `${clip.name}@${s}: lowerarm_l.x should stay left (+X) of lowerarm_r.x`).toBeGreaterThan(
+            pLR.x + 0.08,
+          )
+          if (clip.name !== 'Pistol_Reload') {
+            expect(pHL.x, `${clip.name}@${s}: hand_l.x should stay left (+X) of hand_r.x`).toBeGreaterThan(
+              pHR.x + 0.06,
+            )
+            expect(pHL.distanceTo(pHR), `${clip.name}@${s}: support hand proximity`).toBeLessThan(0.22)
+          }
+        }
+      }
+    } finally {
+      mixer.stopAllAction()
+    }
+  })
 })
+
