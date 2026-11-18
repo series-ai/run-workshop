@@ -25,21 +25,21 @@ export function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-badge">RUN Poly Packs</span>
-          <h1>Synty-Style Modular Avatar &amp; Context Workshop</h1>
+          <span className="brand-badge">RUN Poly<span className="hide-compact"> Packs</span></span>
+          <h1>Modular Avatar &amp; Context Workshop</h1>
         </div>
-        <nav className="tabs">
+        <nav className="tabs" aria-label="Workshop sections">
           <button className={`tab-btn ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
-            Architecture &amp; Spec
+            <span className="hide-compact">Architecture &amp; </span>Spec
           </button>
           <button className={`tab-btn ${tab === 'lab' ? 'active' : ''}`} onClick={() => setTab('lab')}>
-            Parametric Avatar Lab
+            <span className="hide-compact">Parametric </span>Avatar Lab
           </button>
           <button className={`tab-btn ${tab === 'stage' ? 'active' : ''}`} onClick={() => setTab('stage')}>
-            3-Context Stage (Medieval · WW2 · Sim)
+            Context Stage<span className="hide-compact"> (Medieval · WW2 · Sim · Monsters)</span>
           </button>
           <button className={`tab-btn ${tab === 'perf' ? 'active' : ''}`} onClick={() => setTab('perf')}>
-            S23 Ultra Perf Bench
+            <span className="hide-compact">S23 Ultra </span>Perf Bench
           </button>
         </nav>
       </header>

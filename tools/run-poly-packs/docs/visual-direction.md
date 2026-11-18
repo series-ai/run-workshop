@@ -1,8 +1,8 @@
-# Visual Direction & Performance Law — RUN Poly Packs (Synty-Inspired)
+# Visual Direction & Performance Law — RUN Poly Packs (Faceted Low-Poly)
 
-Every asset in `run-poly-*` shares one unmistakable visual language inspired by **Synty POLYGON** packs and one hard runtime envelope designed for **120 Hz (<= 8.33 ms) on Samsung Galaxy S23 Ultra (Adreno 740)** and better mobile devices.
+Every asset in `run-poly-*` shares one cohesive stylized faceted low-poly visual language and one hard runtime envelope designed for **120 Hz (<= 8.33 ms) on Samsung Galaxy S23 Ultra (Adreno 740)** and better mobile devices.
 
-Every rule has a stable ID (`F1..F6`, `S1..S4`, `C1..C3`, `P1..P6`, `M1..M4`). Future agents authoring new outfits, heads, props, or genre packs MUST obey these rules and pass `npm run validate`.
+Every rule has a stable ID (`F1..F6`, `S1..S5`, `C1..C3`, `P1..P6`, `M1..M4`). Future agents authoring new outfits, heads, props, or genre packs MUST obey these rules and pass `npm run validate`.
 
 ---
 
@@ -32,22 +32,26 @@ Every rule has a stable ID (`F1..F6`, `S1..S4`, `C1..C3`, `P1..P6`, `M1..M4`). F
 ## 2. Surface & Shading (`S`)
 
 - **S1 — Crisp Split-Normal Faceting**:
-  - All `run-poly` meshes use **hard/flat face normals** (`sharp_edges` / per-face split normals) so every polygon catches light with Synty's signature faceted shading.
+  - All `run-poly` meshes use **hard/flat face normals** (`sharp_edges` / per-face split normals) so every polygon catches light with crisp planar faceted shading.
   - Smooth shading is forbidden on exterior armor, cloth, hair, or props (it blurs low-poly planes into mush).
 - **S2 — Single Material Per Asset (`Poly_Atlas_Mat`)**:
   - Every character part and prop uses **1 shared material** (`Poly_Atlas_Mat`, `metallic = 0.0` base, `roughness = 0.82` matte stylized finish, `metal` region modulated cleanly in shader).
   - Zero per-part textures, zero normal maps, zero roughness maps on mobile tier.
-- **S3 — 6-Region Palette UV Encoding**:
-  - Instead of UV-unwrapping photographic textures, every face's UVs map directly into **6 horizontal region bands (`u`) × vertical Synty gradient/AO ramp (`v`)**:
-    - Band `0` (`u ∈ [0.02, 0.14]`): **Skin** (`skinColor`)
-    - Band `1` (`u ∈ [0.18, 0.30]`): **Hair** (`hairColor`)
-    - Band `2` (`u ∈ [0.35, 0.47]`): **Primary** (`primaryColor` — tunic, uniform, hoodie, main wood/hull)
-    - Band `3` (`u ∈ [0.52, 0.64]`): **Secondary** (`secondaryColor` — trousers, leather, webbing, trim)
-    - Band `4` (`u ∈ [0.68, 0.80]`): **Accent** (`accentColor` — faction banner, stripe, insignia, glow/scarf)
-    - Band `5` (`u ∈ [0.85, 0.97]`): **Metal / Hardware** (`metalColor` — steel plate, buckles, helmet rim, barrel)
+- **S3 — 7-Region Palette UV Encoding**:
+  - Instead of UV-unwrapping photographic textures, every face's UVs map directly into **7 horizontal region bands (`u`) × vertical baked gradient/AO ramp (`v`)**:
+    - Band `0`: **Skin** (`skinColor`)
+    - Band `1`: **Hair** (`hairColor`)
+    - Band `2`: **Primary** (`primaryColor` — tunic, uniform, hoodie, main wood/hull)
+    - Band `3`: **Secondary** (`secondaryColor` — trousers, leather, webbing, trim)
+    - Band `4`: **Accent** (`accentColor` — faction banner, stripe, insignia, glow/scarf)
+    - Band `5`: **Metal / Hardware** (`metalColor` — steel plate, buckles, helmet rim, barrel)
+    - Band `6`: **Eye** (`eyeColor` — sclera/iris planes with crisp specular response)
   - `v ∈ [0.15, 0.85]` encodes subtle **baked vertex/part shading gradient** (brighter top/facing surfaces `v ≈ 0.80`, darker undersides/creases/belts `v ≈ 0.25`) so assets have rich depth even under unshadowed mobile lighting!
 - **S4 — Clean Facial Planes Without Texture Bloat**:
   - Faces use faceted geometry for nose bridge, brow ridge, eye sockets, and chin, plus crisp low-poly eye/brow wedges mapped to `Hair`/`Secondary` bands (`4–12` tris) — readable from 3rd-person distance without fragile alpha decals.
+- **S5 — Dark Values Keep Their Facets**:
+  - Dark leather, iron, fur and chitin must show each plane against a dark background. The shared shader lifts very dark palette colors, adds a view-space rim and gives the `metal` region a studio reflection (`polyMaterial.ts`).
+  - Keep palette values at `V >= 0.22` (rule C1). Do not use baked AO below `-0.2` on a large dark surface such as a boot.
 
 ---
 

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "pack": "core",
+      "label": "Core Rig & Bodies",
+      "path": "core/catalog.json"
+    },
+    {
+      "pack": "medieval",
+      "label": "Medieval Kingdom",
+      "path": "medieval/catalog.json"
+    },
+    {
+      "pack": "ww2",
+      "label": "WW2 Frontline",
+      "path": "ww2/catalog.json"
+    },
+    {
+      "pack": "sim",
+      "label": "Sim City Life",
+      "path": "sim/catalog.json"
+    },
+    {
+      "pack": "monsters",
+      "label": "Monsters & Beasts",
+      "path": "monsters/catalog.json"
+    }
+  ]
+}

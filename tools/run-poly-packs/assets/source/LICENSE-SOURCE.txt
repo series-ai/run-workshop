@@ -1,6 +1,13 @@
-Source provenance for tools/run-poly-packs/assets/source/ual1-base.glb:
+Source provenance for tools/run-poly-packs/assets/source/:
 
-- Base rig & bind reference: BodyMech Jill (Vin Chau, CC0 1.0 Universal, BlendSwap #19110), used strictly at build time for 53-joint UAL1 bind pose and KDTree skin-weight transfer. Never shipped directly in run-poly-core output.
-- 43 Motion clips: Quaternius Universal Animation Library Standard (CC0 1.0 Universal, https://quaternius.com/packs/universalanimationlibrary.html).
+1. ual1-base.glb:
+   - Base rig & bind reference: BodyMech Jill (Vin Chau, CC0 1.0 Universal, BlendSwap #19110), used strictly at build time for 53-joint UAL1 bind pose and KDTree skin-weight transfer. Never shipped directly in run-poly-core output.
+   - 43 Motion clips: Quaternius Universal Animation Library Standard (CC0 1.0 Universal, https://quaternius.com/packs/universalanimationlibrary.html).
+
+2. ual2-standard.glb:
+   - 42 unique motion clips retargeted onto UAL1 at build time: Quaternius Universal Animation Library 2 (CC0 1.0 Universal, https://quaternius.com/packs/universalanimationlibrary2.html / https://github.com/quaternius/Universal-Animation-Library-2).
+
+3. kaykit-combat-ranged.glb:
+   - 4 two-handed rifle clips (Ranged_2H_Aiming, Ranged_2H_Reload, Ranged_2H_Shoot, Ranged_2H_Shooting) retargeted onto UAL1 at build time: KayKit Character Animations - CombatRanged by Kay Lousberg (CC0 1.0 Universal, https://kaylousberg.itch.io/kaykit-animations).
 
 License: CC0 1.0 Universal (https://creativecommons.org/publicdomain/zero/1.0/).

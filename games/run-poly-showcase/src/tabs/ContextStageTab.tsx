@@ -3,20 +3,19 @@ import { Canvas } from '@react-three/fiber'
 import { Suspense, useState } from 'react'
 import { BUDGETS } from '@poly/contracts/budgets'
 import type { PackCatalog } from '@poly/contracts/catalog'
+import { CONTEXT_PACK_KEYS, type ContextPackKey } from '@poly/contracts/packs'
 import type { PolyPartIndex } from '../avatar/composePolyAvatar'
 import { MultiContextStage } from '../scenes/MultiContextStage'
+import { STUDIO_GL, StudioLights } from '../scenes/studio'
 
 export function ContextStageTab({ catalogs, index }: { catalogs: PackCatalog[]; index: PolyPartIndex }) {
-  const [activeContext, setActiveContext] = useState<'all' | 'medieval' | 'ww2' | 'sim'>('all')
+  const [activeContext, setActiveContext] = useState<'all' | ContextPackKey>('all')
   const [shadowMode, setShadowMode] = useState<'blob' | 'none'>('blob')
 
   return (
-    <div className="viewport-wrap" style={{ height: 'calc(100vh - 58px)' }}>
-      <Canvas dpr={[1, BUDGETS.mobilePolicy.maxDpr]} camera={{ position: [0, 4.2, 10.5], fov: 40 }}>
-        <color attach="background" args={['#0b1019']} />
-        <hemisphereLight args={['#e2edff', '#28303e', 0.95]} />
-        <directionalLight position={[6, 10, 6]} intensity={1.35} />
-        <directionalLight position={[-6, 4, -5]} intensity={0.45} color="#7bb4f0" />
+    <div className="viewport-wrap stage-full">
+      <Canvas dpr={[1, BUDGETS.mobilePolicy.maxDpr]} gl={STUDIO_GL} camera={{ position: [0, 4.0, 12.6], fov: 40 }}>
+        <StudioLights reach={2} />
         <Suspense fallback={null}>
           <MultiContextStage
             catalogs={catalogs}
@@ -25,27 +24,27 @@ export function ContextStageTab({ catalogs, index }: { catalogs: PackCatalog[]; 
             shadowMode={shadowMode}
           />
         </Suspense>
-        <OrbitControls target={[0, 1.0, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={3} maxDistance={22} />
+        <OrbitControls target={[0, 0.35, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={3} maxDistance={24} />
       </Canvas>
 
-      <div className="hud-overlay">
-        <div className="hud-card" style={{ alignItems: 'center' }}>
-          <span style={{ fontWeight: 700, color: 'var(--accent)' }}>Context Filter:</span>
-          {(['all', 'medieval', 'ww2', 'sim'] as const).map((ctx) => (
+      <div className="hud-overlay hud-dock-bottom">
+        <div className="hud-card hud-strip" style={{ alignItems: 'center' }}>
+          <span className="hud-strip-label">Context:</span>
+          {(['all', ...CONTEXT_PACK_KEYS] as const).map((ctx) => (
             <button
               key={ctx}
               className={`pill-btn ${activeContext === ctx ? 'active' : ''}`}
               onClick={() => setActiveContext(ctx)}
             >
-              {ctx === 'all' ? 'All 3 Contexts' : ctx.toUpperCase()}
+              {ctx === 'all' ? `All ${CONTEXT_PACK_KEYS.length}` : ctx.toUpperCase()}
             </button>
           ))}
-          <span style={{ width: 8 }} />
+          <span className="hud-sep" />
           <button
             className="pill-btn"
             onClick={() => setShadowMode((s) => (s === 'blob' ? 'none' : 'blob'))}
           >
-            Shadows: {shadowMode === 'blob' ? 'Blob (Mobile)' : 'Off'}
+            Shadows: {shadowMode === 'blob' ? 'Blob' : 'Off'}
           </button>
         </div>
       </div>

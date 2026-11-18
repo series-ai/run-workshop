@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "license": "SEE LICENSE IN ../../LICENSE.md",
-  "description": "RUN Poly Packs Showcase: Synty-inspired parametric low-poly avatar lab, multi-context dioramas (Medieval, WW2, Sim) on one shared Quaternius UAL1 rig, and S23 Ultra 120Hz performance bench.",
+  "description": "RUN Poly Packs Showcase: stylized faceted parametric low-poly avatar lab, multi-context dioramas (Medieval, WW2, Sim, Monsters) on one shared Quaternius UAL1 rig, and S23 Ultra 120Hz performance bench.",
   "keywords": [
     "RUN.game"
   ],

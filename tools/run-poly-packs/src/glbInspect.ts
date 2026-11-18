@@ -9,17 +9,19 @@ export interface GlbNode {
   rotation?: [number, number, number, number]
   scale?: [number, number, number]
   matrix?: number[]
+  extras?: unknown
 }
 
 export interface GlbPrimitive {
   attributes: Record<string, number>
   indices?: number
   material?: number
+  targets?: Record<string, number>[]
 }
 
 export interface GlbDocument {
   nodes?: GlbNode[]
-  meshes?: { name?: string; primitives: GlbPrimitive[] }[]
+  meshes?: { name?: string; primitives: GlbPrimitive[]; extras?: { targetNames?: string[] } }[]
   skins?: { name?: string; joints: number[]; inverseBindMatrices?: number }[]
   animations?: { name?: string }[]
   materials?: { name?: string }[]

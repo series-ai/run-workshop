@@ -1,6 +1,6 @@
 import { BUDGETS } from '@poly/contracts/budgets'
 import { POLY_PACKS } from '@poly/contracts/packs'
-import { UAL1_CLIPS, UAL1_JOINTS } from '@poly/contracts/rig'
+import { RIG_SPECS, UAL1_CLIPS, UAL1_JOINTS } from '@poly/contracts/rig'
 import type { PackCatalog } from '@poly/contracts/catalog'
 
 export function OverviewTab({
@@ -21,10 +21,11 @@ export function OverviewTab({
         <h2>RUN Poly Packs — Configurable Low-Poly Avatar & Context System</h2>
         <p>
           One canonical <strong>{UAL1_JOINTS.length}-joint Quaternius UAL1 CC0 skeleton</strong> with{' '}
-          <strong>{UAL1_CLIPS.length} animation clips</strong> driving Synty-inspired faceted characters,
-          parametric outfits, held weapons/tools, and world props across <strong>Medieval</strong>,{' '}
-          <strong>WW2</strong>, and <strong>Sim</strong> contexts — engineered for{' '}
-          <strong>120 Hz on Samsung Galaxy S23 Ultra</strong> and staged for{' '}
+          <strong>{UAL1_CLIPS.length} animation clips</strong> plus procedural{' '}
+          <strong>23-joint Quadruped</strong> and <strong>28-joint Arachnid</strong> rigs driving faceted characters,
+          non-uniform monsters, parametric outfits, held weapons/tools, and world props across{' '}
+          <strong>Medieval</strong>, <strong>WW2</strong>, <strong>Sim</strong>, and <strong>Monsters</strong>{' '}
+          contexts — engineered for <strong>120 Hz on Samsung Galaxy S23 Ultra</strong> and staged for{' '}
           <code>jam-ready-assets</code> + <code>@series-inc/rundot-game-sdk</code>.
         </p>
         <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
@@ -32,7 +33,7 @@ export function OverviewTab({
             Open Parametric Avatar Lab
           </button>
           <button className="btn-secondary" onClick={() => onNavigate('stage')}>
-            View 3-Context Stage
+            View 4-Context Stage
           </button>
           <button className="btn-secondary" onClick={() => onNavigate('perf')}>
             Run S23 Ultra Perf Bench
@@ -44,20 +45,23 @@ export function OverviewTab({
         <div className="info-card">
           <h3>PoC Inventory ({totalParts + totalHeld + totalProps} Assets)</h3>
           <ul>
-            <li><strong>{totalParts}</strong> modular rigged avatar parts across 7 slots</li>
+            <li><strong>{totalParts}</strong> modular rigged avatar &amp; creature parts</li>
             <li><strong>{totalHeld}</strong> canonical-grip handheld items (<code>hand_r</code> / <code>hand_l</code>)</li>
             <li><strong>{totalProps}</strong> grounded world props</li>
-            <li><strong>{totalPresets}</strong> cross-context character presets</li>
-            <li><strong>{UAL1_CLIPS.length}</strong> shared CC0 animation clips</li>
+            <li><strong>{totalPresets}</strong> cross-context character &amp; monster presets</li>
+            <li>
+              <strong>{UAL1_CLIPS.length}</strong> UAL1 clips + <strong>{RIG_SPECS.quadruped.clips.length}</strong> Quadruped &amp;{' '}
+              <strong>{RIG_SPECS.arachnid.clips.length}</strong> Arachnid clips
+            </li>
           </ul>
         </div>
 
         <div className="info-card">
-          <h3>Synty Visual Direction</h3>
+          <h3>Faceted Visual Direction</h3>
           <ul>
             <li><strong>F1–F2</strong>: Faceted heroic silhouettes (8–10 sided limbs, beveled plates)</li>
             <li><strong>S1–S2</strong>: Hard split-normal shading, 1 shared <code>Poly_Atlas_Mat</code></li>
-            <li><strong>S3</strong>: 6-region UV palette + AO ramp (Skin/Hair/Primary/Secondary/Accent/Metal)</li>
+            <li><strong>S3</strong>: 7-region UV palette + AO ramp (Skin, Hair, Eye, Primary, Secondary, Accent, Metal)</li>
             <li><strong>C1–C3</strong>: Controlled value/saturation envelope with crisp accent pops</li>
           </ul>
         </div>

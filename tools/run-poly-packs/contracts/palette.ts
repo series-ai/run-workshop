@@ -1,21 +1,22 @@
 import { z } from 'zod'
 
 /**
- * 6-region UV palette encoding used by both Blender (`polykit.py`) and
+ * 7-region UV palette encoding used by both Blender (`polykit.py`) and
  * Three.js (`polyMaterial.ts`):
- *   u in [0..1] selects the semantic material region (6 horizontal bands)
+ *   u in [0..1] selects the semantic material region (7 horizontal bands)
  *   v in [0..1] supplies a baked shading/AO ramp (0.15 dark underside -> 0.85 bright highlight)
  */
-export const PALETTE_REGIONS = ['skin', 'hair', 'primary', 'secondary', 'accent', 'metal'] as const
+export const PALETTE_REGIONS = ['skin', 'hair', 'primary', 'secondary', 'accent', 'metal', 'eye'] as const
 export type PaletteRegion = (typeof PALETTE_REGIONS)[number]
 
 export const PALETTE_REGION_U: Readonly<Record<PaletteRegion, number>> = {
-  skin: 0.08,
-  hair: 0.24,
-  primary: 0.41,
-  secondary: 0.58,
-  accent: 0.74,
-  metal: 0.91,
+  skin: 0.0714,
+  hair: 0.2143,
+  primary: 0.3571,
+  secondary: 0.5,
+  accent: 0.6429,
+  metal: 0.7857,
+  eye: 0.9286,
 }
 
 export const paletteColorsSchema = z.object({
@@ -25,6 +26,7 @@ export const paletteColorsSchema = z.object({
   secondary: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   metal: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  eye: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#1f2634'),
 })
 export type PaletteColors = z.infer<typeof paletteColorsSchema>
 
@@ -46,6 +48,15 @@ export const HAIR_PRESETS = [
   { name: 'Indigo', hex: '#384b7a' },
 ] as const
 
+export const EYE_PRESETS = [
+  { name: 'Charcoal', hex: '#1f2634' },
+  { name: 'Steel Blue', hex: '#2e5d8c' },
+  { name: 'Emerald', hex: '#346b4c' },
+  { name: 'Hazel', hex: '#63462c' },
+  { name: 'Amber', hex: '#8a5628' },
+  { name: 'Violet', hex: '#5a4673' },
+] as const
+
 export const CONTEXT_DEFAULT_PALETTES = {
   medieval: {
     skin: '#d8a67e',
@@ -54,6 +65,7 @@ export const CONTEXT_DEFAULT_PALETTES = {
     secondary: '#593e29',
     accent: '#d49d3b',
     metal: '#8a94a0',
+    eye: '#2e5d8c',
   },
   ww2: {
     skin: '#d8a67e',
@@ -62,6 +74,7 @@ export const CONTEXT_DEFAULT_PALETTES = {
     secondary: '#8a7c5a',
     accent: '#b8503c',
     metal: '#454c52',
+    eye: '#1f2634',
   },
   sim: {
     skin: '#bc8358',
@@ -70,5 +83,15 @@ export const CONTEXT_DEFAULT_PALETTES = {
     secondary: '#9c8b70',
     accent: '#db6e48',
     metal: '#a2aab4',
+    eye: '#3c2a21',
   },
-} as const satisfies Record<'medieval' | 'ww2' | 'sim', PaletteColors>
+  monsters: {
+    skin: '#4f6b3a',
+    hair: '#232022',
+    primary: '#6b492e',
+    secondary: '#3d332c',
+    accent: '#dfd3b2',
+    metal: '#646d75',
+    eye: '#8a5628',
+  },
+} as const satisfies Record<'medieval' | 'ww2' | 'sim' | 'monsters', PaletteColors>

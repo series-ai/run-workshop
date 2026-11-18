@@ -4,7 +4,7 @@
     "core": {
       "dir": "run-poly-core",
       "label": "Core Rig & Bodies",
-      "description": "Canonical 53-joint Quaternius UAL1 rig, 43 CC0 clips, and Synty-inspired faceted parametric base bodies, heads, and hair.",
+      "description": "Canonical 53-joint Quaternius UAL1 rig, 89 CC0 clips (UAL1 + UAL2 + KayKit 2H Rifle), and stylized faceted parametric base bodies, heads, and hair.",
       "hasWorldLeaf": false,
       "license": "CC0-1.0"
     },
@@ -29,6 +29,14 @@
       "worldTheme": "sim",
       "label": "Sim City Life",
       "description": "Modern hoodies, tailored blazers, varsity jackets, caps, daypacks, coffee/phones, cafe tables, and benches.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "monsters": {
+      "dir": "run-poly-monsters",
+      "worldTheme": "monsters",
+      "label": "Monsters & Beasts",
+      "description": "Orc warlords, long-armed trolls, dire wolves on a 23-joint quadruped rig, and giant spiders on a 28-joint arachnid rig.",
       "hasWorldLeaf": true,
       "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
     }

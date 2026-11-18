@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => ({
   },
   esbuild: { target: 'es2022' },
   optimizeDeps: { esbuildOptions: { target: 'es2022' }, exclude: ['@series-inc/rundot-game-sdk'] },
-  server: { port: 5194, strictPort: true, fs: { allow: [ROOT, CONTRACTS] } },
+  server: { host: true, port: 5194, strictPort: true, fs: { allow: [ROOT, CONTRACTS] } },
   preview: { port: 4194, strictPort: true },
   build: { target: 'es2022', outDir: 'dist', emptyOutDir: true },
   test: { include: ['src/**/*.test.{ts,tsx}'], environment: 'node' },
