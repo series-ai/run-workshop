@@ -447,7 +447,6 @@ SPINE = ('pelvis', 'spine_01', 'spine_02', 'spine_03', 'neck_01')
 SKIN_HEAD = Skin(rigid={'Head': 1.0})
 SKIN_TORSO = Skin(allowed=SPINE + ('clavicle_l', 'clavicle_r'))
 SKIN_ARM_L = Skin(allowed=('clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l'))
-SKIN_SHOULDER_ROOT_L = Skin(rigid={'clavicle_l': 0.96, 'spine_03': 0.04})
 SKIN_SHOULDER_CAP_L = Skin(rigid={'clavicle_l': 0.42, 'upperarm_l': 0.58})
 SKIN_ELBOW_HI_L = Skin(rigid={'upperarm_l': 0.90, 'lowerarm_l': 0.10})
 SKIN_ELBOW_LO_L = Skin(rigid={'lowerarm_l': 0.90, 'upperarm_l': 0.10})
@@ -731,7 +730,7 @@ class Part:
 
     def loft(self, rings, region, *, refs=None, closed=True, cap_start=False, cap_end=False,
              tip_start=None, tip_end=None, ao=0.0, band_regions=None, band_ao=None, band_tags=None, toward=None,
-             ring_skins=None, cell_skins=None, cell_tags=None, start_cap_tag=None, end_cap_tag=None,
+             ring_skins=None, cell_skins=None, cell_tags=None, omitted_cells=(), start_cap_tag=None, end_cap_tag=None,
              two_sided=False, thickness=0.005, inner_ao=-0.18, inner_region=None):
         """Join a list of rings with quads. Optional flat caps or pointed tips close the ends.
 
@@ -770,6 +769,8 @@ class Part:
             middle = (centers[row] + centers[row + 1]) / 2
             for column in range(sides):
                 following = (column + 1) % count
+                if (row, column) in omitted_cells:
+                    continue
                 bands.append((row, column, middle,
                               (ids[row][column], ids[row][following], ids[row + 1][following], ids[row + 1][column])))
         # All quads of a loft share one winding, so one decision sets the outward side of the full loft.
@@ -809,15 +810,11 @@ class Part:
                         b_row.append(self.vert(point - offset, ref_pt))
                 b_ids.append(b_row)
             back_group = self.group()
-            for row in range(len(rings) - 1):
-                band_region = inner_region or (band_regions[row] if band_regions else region)
-                for column in range(sides):
-                    following = (column + 1) % count
-                    tag = front_faces[row * sides + column][3]
-                    f_ordered = front_faces[row * sides + column][4]
-                    f_norm = polygon_normal([self.pos[idx] for idx in f_ordered])
-                    b_quad = (b_ids[row][column], b_ids[row + 1][column], b_ids[row + 1][following], b_ids[row][following])
-                    self.face(b_quad, band_region, ao=inner_ao, group=back_group, toward=-f_norm, tag=tag)
+            for row, column, band_region, tag, ordered in front_faces:
+                following = (column + 1) % count
+                f_norm = polygon_normal([self.pos[idx] for idx in ordered])
+                b_quad = (b_ids[row][column], b_ids[row + 1][column], b_ids[row + 1][following], b_ids[row][following])
+                self.face(b_quad, inner_region or band_region, ao=inner_ao, group=back_group, toward=-f_norm, tag=tag)
         first_region = band_regions[0] if band_regions else region
         last_region = band_regions[-1] if band_regions else region
         first_tag = band_tags[0] if band_tags else None
@@ -1227,13 +1224,13 @@ def make_body(body_id, label, *, chest=1.0, waist=1.0, belly=1.0, hips=1.0, dept
         'waist': Station(1.235, 0.088 * waist, 0.074 * depth * belly, 0.051 * depth, 0.016),
         'ribs': Station(1.355, 0.077 * chest, 0.066 * depth, 0.035 * depth, 0.028),
         'chest': Station(1.465, 0.091 * chest, 0.0715 * depth, 0.042 * depth, 0.032),
-        'shoulder': Station(1.556, 0.096 * sh_width, 0.060 * depth, 0.042 * depth, 0.035),
+        'shoulder': Station(1.582, 0.096 * sh_width, 0.060 * depth, 0.042 * depth, 0.035),
         'neck_base': Station(1.615, 0.052 * base_neck, 0.048 * base_neck, 0.046 * base_neck, 0.026),
         'neck_top': Station(1.712, 0.044 * top_neck, 0.042 * top_neck, 0.040 * top_neck, HEAD_Z),
     }
     arms = (
         (0.082, 0.030 * arm, 0.027 * arm, 0.003),
-        (0.130, 0.0335 * arm * shoulder, 0.033 * max(arm * shoulder, depth), 0.005),
+        (SHOULDER.x + 0.030, 0.038 * arm * shoulder, 0.039 * max(arm * shoulder, depth), 0.006),
         (0.255, 0.028 * arm, 0.0295 * arm, 0.0165),
         (0.392, 0.030 * arm, 0.031 * arm, 0.002),
         (0.448, 0.034 * arm, 0.035 * arm, 0.001),
@@ -1332,13 +1329,27 @@ def neck_ring(body, key, grow=0.0, *, y=None, inset=1.0):
                 rv_neg=station.zb * inset + grow, squareness=HEAD_SQUARENESS, phase=math.pi / HEAD_SIDES)
 
 
+def loft_sleeved_torso(part, rings, refs, chest_row, region, **options):
+    """Open both armholes. Return the left rim and its weight sample points."""
+    holes = {(chest_row, col) for col in (9, 0, 4, 5)}
+    part.loft(rings, region, refs=refs, omitted_cells=holes, **options)
+
+    def rim(rows):
+        chest, shoulder = rows[chest_row:chest_row + 2]
+        return [shoulder[1], shoulder[0], shoulder[9], chest[9], chest[0], chest[1]]
+
+    return rim(rings), rim(refs)
+
+
 def arm_ring(body, index, grow=0.0, *, x=None, scale=1.0):
-    """Left arm section in the T pose at a station index (fractions interpolate). Facet 1 is the flat top."""
+    """Left arm section in the T pose at a station index (fractions interpolate). The cap turns to match the armhole rim."""
     along, ry, rz, lift = _lerp_rows(body.arm, index)
     t = max(0.0, min(1.0, (along - 0.45) / 0.11))
     cz = (SHOULDER.z - 0.006) * (1.0 - t) + WRIST.z * t
+    cap = max(0.0, min(1.0, 2.0 - index))
+    cz += cap * (body.torso['shoulder'].zc - BODIES[BASE_BODY].torso['shoulder'].zc)
     center = Vector((along if x is None else x, SHOULDER.y + lift, cz))
-    return ring(center, Z, Y, rz * scale + grow, ry * scale + grow, ARM_SIDES)
+    return ring(center, Z, Y, rz * scale + grow, ry * scale + grow, ARM_SIDES, phase=cap * math.pi / 6)
 
 
 def leg_ring(body, index, grow=0.0, *, y=None, scale=1.0, squareness=0.9):

@@ -298,15 +298,14 @@ def torso_troll_hide(part, body):
     spec = [
         (1.372, 0.038, -0.125, {'widen': -0.030, 'front': 0.010, 'back': 0.008}),
         (1.405, 0.038, -0.125, {'widen': -0.038, 'front': 0.012, 'back': 0.008}),
-        (1.500, 0.044, -0.045, {'widen': -0.042, 'front': 0.012, 'back': 0.008}),
         (shoulder, 0.040, 0.0, {'widen': -0.036, 'front': 0.010, 'back': 0.008}),
         (neck, 0.022, 0.0, {}),
     ]
     rings = [tilted_torso_ring(b, height, grow, tilt, **opts) for height, grow, tilt, opts in spec]
     refs = [tilted_torso_ring(b, height, 0.0, tilt) for height, _, tilt, _ in spec]
     with part.skinned(pk.SKIN_TORSO):
-        part.loft(rings, 'primary', refs=refs, ring_skins=[None, None, None, None, SKIN_NECK],
-                  band_regions=['hair', 'primary', 'primary', 'primary'], band_ao=[0.06, -0.04, 0.0, -0.06])
+        part.loft(rings, 'primary', refs=refs, ring_skins=[None, None, None, SKIN_NECK],
+                  band_regions=['hair', 'primary', 'primary'], band_ao=[0.06, -0.04, -0.06])
         # Fur tufts that hang from the hem on the left side (front, side and back).
         for column, drop in ((2, 0.060), (1, 0.085), (0, 0.100), (9, 0.085), (8, 0.060)):
             hem, inner = rings[0][column], refs[0][column]
@@ -332,8 +331,8 @@ def torso_troll_hide(part, body):
 
     # 3. Leather cross-strap: right hip, over the chest, over the left shoulder, down the back.
     torso_strap(part, b, [('front', 1.200, -0.66, 0.012), ('front', 1.330, -0.26, 0.016), ('front', 1.455, 0.22, 0.046),
-                          ('front', 1.535, 0.50, 0.050), ('front', shoulder, 0.54, 0.050), ('top', shoulder, 0.56, 0.046),
-                          ('back', shoulder, 0.48, 0.050), ('back', 1.500, 0.44, 0.050),
+                          ('front', shoulder, 0.54, 0.050), ('top', shoulder, 0.56, 0.046),
+                          ('back', shoulder, 0.48, 0.050),
                           ('back', 1.360, -0.08, 0.016), ('back', 1.200, -0.62, 0.012)], 'secondary')
     # Forged iron ring where the strap crosses the chest, and two rivets.
     with part.skinned(pk.SKIN_TORSO):

@@ -222,6 +222,29 @@ async function main() {
       await snap(name)
     }
 
+    // Use the real composer with empty clothing slots for the body seam checks.
+    const bareShots = ['Athletic', 'Heavy', 'Slim'].flatMap((body) =>
+      ['A_TPose', 'Idle_Loop'].map((clip) => ({
+        name: `11-bare-${body.toLowerCase()}-${clip}`, body, clip,
+      })),
+    ).filter(({ name }) => !only || only.test(name))
+    if (bareShots.length) {
+      await page.route('**/catalog/core/catalog.json', async (route) => {
+        const response = await route.fetch()
+        const catalog = await response.json()
+        for (const preset of catalog.presets) {
+          preset.torso = null
+          preset.legs = null
+        }
+        await route.fulfill({ response, json: catalog })
+      })
+      await page.reload({ waitUntil: 'networkidle' })
+      for (const { name, body, clip } of bareShots) {
+        await lab(`Core ${body}`, { clip, hold: 0.3 })
+        await snap(name)
+      }
+    }
+
     const report = {
       capturedAt: new Date().toISOString(),
       consoleErrors,

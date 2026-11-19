@@ -286,6 +286,16 @@ function assertChestFrontAppliqueClearance(glb: ParsedGlb, part: AvatarPartEntry
     .sort((a, b) => b.tris.length - a.tris.length)[0]
   if (!shell) throw new Error(`Torso "${part.id}" missing main torso shell island`)
 
+  // The sleeves share the armhole edges with the chest. Cast only against the chest wall.
+  const skin = glb.doc.skins![node.skin!]!
+  const armBones = new Set(skin.joints.flatMap((n, i) =>
+    /^(upperarm|lowerarm|hand)_/.test(glb.doc.nodes![n]!.name ?? '') ? [i] : [],
+  ))
+  const joints = readAccessor(glb, prim.attributes.JOINTS_0!)
+  const weights = readAccessor(glb, prim.attributes.WEIGHTS_0!)
+  const onArm = joints.map((row, i) => row.some((j, k) => armBones.has(j) && weights[i]![k]! > 0))
+  const chestTris = shell.tris.filter((t) => indices.slice(t * 3, t * 3 + 3).every((v) => !onArm[v]))
+
   const frontAppliques = measured.filter(
     (i) =>
       i !== shell &&
@@ -331,7 +341,7 @@ function assertChestFrontAppliqueClearance(glb: ParsedGlb, part: AvatarPartEntry
       let hits = 0
       for (let x = x0; x <= x1 + 1e-5; x += 0.006) {
         for (let y = y0; y <= y1 + 1e-5; y += 0.006) {
-          const sz = maxFrontRaycastZ(pose.triVerts, shell.tris, x, y)
+          const sz = maxFrontRaycastZ(pose.triVerts, chestTris, x, y)
           const az = maxFrontRaycastZ(pose.triVerts, app.tris, x, y)
           if (sz !== null && az !== null) {
             hits++
@@ -570,6 +580,29 @@ function assertShoulderSocketUniformity(glb: ParsedGlb, part: AvatarPartEntry): 
   const positions = readAccessor(glb, prim.attributes.POSITION!)
   const joints = readAccessor(glb, prim.attributes.JOINTS_0!)
   const weights = readAccessor(glb, prim.attributes.WEIGHTS_0!)
+  if (part.slot === 'body') {
+    // Flat shading splits vertices. Match both position and weights at each edge.
+    const keys = positions.map((p, i) => [p, joints[i], weights[i]].join('/'))
+    const indices = prim.indices === undefined ? positions.map((_, i) => i) : readAccessor(glb, prim.indices).map((r) => r[0]!)
+    const regions = partExtrasSchema.parse(node.extras ?? {}).polyRegions
+    const edges = (region: string) => {
+      const [start, length] = regions?.[region] ?? [0, 0]
+      const result = new Set<string>()
+      for (let t = start; t < start + length; t += 3) {
+        for (let j = 0; j < 3; j++) {
+          const a = keys[indices[t + j]!]!
+          const b = keys[indices[t + (j + 1) % 3]!]!
+          result.add(a < b ? a + '|' + b : b + '|' + a)
+        }
+      }
+      return result
+    }
+    const chestEdges = edges('chest')
+    const socketEdges = [...edges('upperarm')].filter((edge) => chestEdges.has(edge))
+    if (socketEdges.length !== 12) {
+      throw new Error(`Body "${part.id}" has an open or split shoulder seam`)
+    }
+  }
   const rings = new Map<string, number[]>()
   for (let i = 0; i < positions.length; i++) {
     const [x, y] = positions[i]!
@@ -2128,6 +2161,49 @@ function assertRigSkeleton(glb: ParsedGlb, fileLabel: string, rigId: RigId): voi
   }
 }
 
+interface BudgetPart {
+  part: AvatarPartEntry
+  triangles: number
+  covers: string[]
+  regions: [string, number][]
+}
+
+function assertComposedSlotBudget(parts: BudgetPart[], held: HeldItemEntry[]): void {
+  const slots = ['body', 'headwear', 'hair', 'head', 'torso', 'legs', 'back']
+  const options = slots.map((slot) => parts.filter((p) => p.part.slot === slot))
+  const heldTriangles = ['hand_l', 'hand_r'].reduce(
+    (sum, hand) => sum + Math.max(0, ...held.filter((h) => h.hand === hand).map((h) => h.triangles)), 0,
+  )
+  const chosen: BudgetPart[] = []
+  let worst = 0
+  let worstParts: string[] = []
+  function visit(slot: number, covered: Set<string>, hideHair: boolean): void {
+    if (slot === slots.length) {
+      let total = heldTriangles
+      for (const p of chosen) {
+        total += p.triangles
+        for (const [tag, triangles] of p.regions) if (covered.has(tag)) total -= triangles
+      }
+      if (total > worst) {
+        worst = total
+        worstParts = chosen.map((p) => p.part.id)
+      }
+      return
+    }
+    if (slots[slot] !== 'body') visit(slot + 1, covered, hideHair)
+    if (hideHair && slots[slot] === 'hair') return
+    for (const p of options[slot]!) {
+      chosen.push(p)
+      visit(slot + 1, new Set([...covered, ...p.covers]), hideHair || p.part.rules.hidesHair)
+      chosen.pop()
+    }
+  }
+  visit(0, new Set(), false)
+  const limit = BUDGETS.mobilePolicy.maxTrianglesPerComposedAvatar
+  if (worst > limit) throw new Error(`Composed slot mix exceeds ${limit}: ${worst} triangles (${worstParts.join(', ')})`)
+  console.log(`Worst visible UAL1 slot mix with both hands: ${worst} / ${limit} triangles`)
+}
+
 async function main(): Promise<void> {
   const manifestPath = join(META_DIR, 'manifest.json')
   if (!existsSync(manifestPath)) throw new Error(`Missing build manifest: ${manifestPath}. Run npm run build first.`)
@@ -2144,6 +2220,7 @@ async function main(): Promise<void> {
     }
   }
 
+  const budgetParts: BudgetPart[] = []
   const allParts = manifest.packs.flatMap((p) => p.parts)
   const allHeld = manifest.packs.flatMap((p) => p.heldItems)
 
@@ -2178,7 +2255,6 @@ async function main(): Promise<void> {
       }
     }
 
-    const partsBySlot = new Map<string, AvatarPartEntry[]>()
     const glbCache = new Map<string, ParsedGlb>()
     const loadCached = (leafKind: 'characters' | 'world', rel: string): ParsedGlb => {
       const leafDir = join(STAGE_DIR, leavesFor(cat.pack).find((l) => l.kind === leafKind)!.id)
@@ -2225,9 +2301,16 @@ async function main(): Promise<void> {
       if (tris > budget.maxTriangles) {
         throw new Error(`Part "${part.id}" has ${tris} tris > budget ${budget.maxTriangles}`)
       }
-      const arr = partsBySlot.get(part.slot) ?? []
-      arr.push(part)
-      partsBySlot.set(part.slot, arr)
+      if (rigId === 'ual1') {
+        const extras = partExtrasSchema.parse(node.extras ?? {})
+        const covers = extras.polyCovers ?? []
+        if (part.rules.hidesLegsUpper) covers.push('legs_waist')
+        if (part.rules.hidesHair) covers.push('hair')
+        budgetParts.push({
+          part, triangles: tris, covers,
+          regions: Object.entries(extras.polyRegions ?? {}).map(([tag, [, count]]) => [tag, count / 3]),
+        })
+      }
     }
 
     for (const held of cat.heldItems) {
@@ -2309,6 +2392,8 @@ async function main(): Promise<void> {
       }
     }
   }
+
+  assertComposedSlotBudget(budgetParts, allHeld)
 
   // Geometry-accurate animation audits on creature clips and UAL1 presets
   const auditCache = new Map<string, Awaited<ReturnType<typeof import('../src/animationAudit').loadGlbHeadless>>>()

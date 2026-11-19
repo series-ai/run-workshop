@@ -30,7 +30,7 @@ def build_body(part, body):
     torso_keys = pk.TORSO_KEYS[:-1]
     rings = [pk.torso_ring(body, key) for key in torso_keys]
     t_refs = [pk.torso_ring(ref, key) for key in torso_keys]
-    part.loft(rings, 'skin', refs=t_refs, cap_start=True, cap_end=False,
+    armhole = pk.loft_sleeved_torso(part, rings, t_refs, torso_keys.index('chest'), 'skin', cap_start=True, cap_end=False,
               ring_skins=[pk.SKIN_TORSO] * len(rings),
               band_tags=['pelvis', 'pelvis', 'chest', 'chest', 'chest', 'chest', 'chest'])
     nb_y = body.torso['neck_base'].y - 0.004
@@ -44,7 +44,7 @@ def build_body(part, body):
         )
     with part.mirrored():
         arm_skins = [
-            pk.SKIN_SHOULDER_ROOT_L,
+            pk.SKIN_TORSO,
             pk.SKIN_SHOULDER_CAP_L,
             pk.SKIN_ARM_L,
             pk.SKIN_ELBOW_HI_L,
@@ -55,6 +55,7 @@ def build_body(part, body):
         with part.skinned(pk.SKIN_ARM_L):
             a_rings = [pk.arm_ring(body, index) for index in range(len(body.arm))]
             a_refs = [pk.arm_ring(ref, index) for index in range(len(body.arm))]
+            a_rings[0], a_refs[0] = armhole
             part.loft(a_rings, 'skin', refs=a_refs, cap_start=False, cap_end=True,
                       ring_skins=arm_skins, band_tags=['upperarm'] * 3 + ['forearm'] * 3)
         pk.build_hand(part, body)
@@ -261,7 +262,7 @@ def torso_core_tee(part, body):
             t_rings.append(pk.torso_ring(body, key, grow, **extra))
         t_refs.append(pk.torso_ring(body, key, 0.0, y=extra.get('y')))
     with part.skinned(pk.SKIN_TORSO):
-        part.loft(t_rings, 'primary', refs=t_refs,
+        armhole = pk.loft_sleeved_torso(part, t_rings, t_refs, 4, 'primary',
                   band_regions=['primary'] * 6 + ['accent'],
                   band_ao=[-0.08, 0.0, 0.0, 0.02, 0.02, 0.0, 0.06])
         center, normal, _ = pk.facet(pk.torso_ring(body, 1.44, 0.022), 2)
@@ -270,13 +271,14 @@ def torso_core_tee(part, body):
 
     sleeve_spec = [(0, 0.011), (1, 0.012), (2.0, 0.012), (2.08, 0.014), (2.08, 0.002), (1.90, 0.002)]
     s_skins = [
-        pk.SKIN_SHOULDER_ROOT_L if index <= 0.05
+        pk.SKIN_TORSO if index <= 0.05
         else (pk.SKIN_SHOULDER_CAP_L if index <= 1.05 else pk.SKIN_ARM_L)
         for index, _ in sleeve_spec
     ]
     with part.mirrored(), part.skinned(pk.SKIN_ARM_L):
         s_rings = [pk.arm_ring(body, index, grow) for index, grow in sleeve_spec]
         s_refs = [pk.arm_ring(body, index, 0.0) for index, _ in sleeve_spec]
+        s_rings[0], s_refs[0] = armhole
         part.loft(s_rings, 'primary', refs=s_refs, ring_skins=s_skins,
                   band_regions=['primary', 'primary', 'accent', 'primary', 'primary'],
                   band_ao=[0.0, 0.0, 0.05, -0.18, -0.18])
