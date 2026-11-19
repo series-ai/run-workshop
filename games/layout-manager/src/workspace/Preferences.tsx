@@ -656,6 +656,16 @@ function AISettings({
         onChange={(v) => onChange('unityProjectPath', v)}
         placeholder="Blank = auto-detect the running Editor (set only if several are open)"
       />
+      <SelectSetting
+        label="Unity connection"
+        description="Headless uses the remote service configured on the Layout Manager dev server; no local Editor or project path is needed."
+        value={draft.unityBackend}
+        onChange={(v) => onChange('unityBackend', v === 'headless' ? 'headless' : 'local')}
+        options={[
+          { value: 'local', label: 'Local Editor' },
+          { value: 'headless', label: 'Headless server' },
+        ]}
+      />
     </div>
   );
 }
