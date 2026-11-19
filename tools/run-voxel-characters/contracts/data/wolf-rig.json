@@ -1,0 +1,419 @@
+{
+  "version": 1,
+  "rigId": "quaternius-wolf-51",
+  "source": "Quaternius Wolf Rig (CC0-1.0)",
+  "jointCount": 51,
+  "joints": [
+    "Body",
+    "Back",
+    "Torso",
+    "Torso2",
+    "Torso3",
+    "Neck1",
+    "Neck2",
+    "Neck3",
+    "Head",
+    "Ear1.L",
+    "Ear2.L",
+    "Ear3.L",
+    "Ear4.L",
+    "Ear1.R",
+    "Ear2.R",
+    "Ear3.R",
+    "Ear4.R",
+    "FrontShoulder.L",
+    "FrontUpperLeg.L",
+    "FrontLowerLeg.L",
+    "FrontShoulder.R",
+    "FrontUpperLeg.R",
+    "FrontLowerLeg.R",
+    "BackShoulder.L",
+    "BackLeg.L",
+    "BackUpperLeg.L",
+    "BackLowerLeg.L",
+    "BackShoulder.R",
+    "BackLeg.R",
+    "BackUpperLeg.R",
+    "BackLowerLeg.R",
+    "Tail1",
+    "Tail2",
+    "Tail3",
+    "Tail4",
+    "Tail5",
+    "Tail6",
+    "Tail7",
+    "Tail8",
+    "PoleTargetBack.L",
+    "PoleTarget.L",
+    "PoleTargetBack.R",
+    "PoleTarget.R",
+    "IKBackLeg.L",
+    "FFB.L",
+    "IKFrontLeg.L",
+    "FF.L",
+    "IKBackLeg.R",
+    "FFB.R",
+    "IKFrontLeg.R",
+    "FF.R"
+  ],
+  "parents": {
+    "Body": null,
+    "Back": "Body",
+    "Torso": "Back",
+    "Torso2": "Torso",
+    "Torso3": "Torso2",
+    "Neck1": "Torso3",
+    "Neck2": "Neck1",
+    "Neck3": "Neck2",
+    "Head": "Neck3",
+    "Ear1.L": "Neck3",
+    "Ear2.L": "Ear1.L",
+    "Ear3.L": "Ear2.L",
+    "Ear4.L": "Ear3.L",
+    "Ear1.R": "Neck3",
+    "Ear2.R": "Ear1.R",
+    "Ear3.R": "Ear2.R",
+    "Ear4.R": "Ear3.R",
+    "FrontShoulder.L": "Torso2",
+    "FrontUpperLeg.L": "FrontShoulder.L",
+    "FrontLowerLeg.L": "FrontUpperLeg.L",
+    "FrontShoulder.R": "Torso2",
+    "FrontUpperLeg.R": "FrontShoulder.R",
+    "FrontLowerLeg.R": "FrontUpperLeg.R",
+    "BackShoulder.L": "Back",
+    "BackLeg.L": "BackShoulder.L",
+    "BackUpperLeg.L": "BackLeg.L",
+    "BackLowerLeg.L": "BackUpperLeg.L",
+    "BackShoulder.R": "Back",
+    "BackLeg.R": "BackShoulder.R",
+    "BackUpperLeg.R": "BackLeg.R",
+    "BackLowerLeg.R": "BackUpperLeg.R",
+    "Tail1": "Back",
+    "Tail2": "Tail1",
+    "Tail3": "Tail2",
+    "Tail4": "Tail3",
+    "Tail5": "Tail4",
+    "Tail6": "Tail5",
+    "Tail7": "Tail6",
+    "Tail8": "Tail7",
+    "PoleTargetBack.L": "Body",
+    "PoleTarget.L": "Body",
+    "PoleTargetBack.R": "Body",
+    "PoleTarget.R": "Body",
+    "IKBackLeg.L": null,
+    "FFB.L": "IKBackLeg.L",
+    "IKFrontLeg.L": null,
+    "FF.L": "IKFrontLeg.L",
+    "IKBackLeg.R": null,
+    "FFB.R": "IKBackLeg.R",
+    "IKFrontLeg.R": null,
+    "FF.R": "IKFrontLeg.R"
+  },
+  "worldPositions": {
+    "Body": [
+      0.0,
+      0.19223,
+      0.00348
+    ],
+    "Back": [
+      -0.0,
+      0.82552,
+      -0.26856
+    ],
+    "Torso": [
+      -0.0,
+      0.78451,
+      -0.05363
+    ],
+    "Torso2": [
+      0.0,
+      0.77662,
+      0.11
+    ],
+    "Torso3": [
+      0.0,
+      0.76185,
+      0.35523
+    ],
+    "Neck1": [
+      0.0,
+      0.78061,
+      0.47762
+    ],
+    "Neck2": [
+      -0.00046,
+      0.8141,
+      0.5841
+    ],
+    "Neck3": [
+      -0.00243,
+      0.84127,
+      0.65531
+    ],
+    "Head": [
+      -0.00612,
+      0.88642,
+      0.78941
+    ],
+    "Ear1.L": [
+      0.08891,
+      0.96369,
+      0.8029
+    ],
+    "Ear2.L": [
+      0.10062,
+      1.01758,
+      0.82186
+    ],
+    "Ear3.L": [
+      0.11392,
+      1.04683,
+      0.83304
+    ],
+    "Ear4.L": [
+      0.12806,
+      1.08019,
+      0.84847
+    ],
+    "Ear1.R": [
+      -0.10238,
+      0.96286,
+      0.79791
+    ],
+    "Ear2.R": [
+      -0.11553,
+      1.01665,
+      0.81623
+    ],
+    "Ear3.R": [
+      -0.12847,
+      1.04561,
+      0.82852
+    ],
+    "Ear4.R": [
+      -0.14205,
+      1.07862,
+      0.84514
+    ],
+    "FrontShoulder.L": [
+      0.09369,
+      0.60291,
+      0.39705
+    ],
+    "FrontUpperLeg.L": [
+      0.13721,
+      0.60858,
+      0.39702
+    ],
+    "FrontLowerLeg.L": [
+      0.14014,
+      0.46682,
+      0.34505
+    ],
+    "FrontShoulder.R": [
+      -0.09369,
+      0.60291,
+      0.39705
+    ],
+    "FrontUpperLeg.R": [
+      -0.13721,
+      0.60858,
+      0.39702
+    ],
+    "FrontLowerLeg.R": [
+      -0.14014,
+      0.46682,
+      0.34505
+    ],
+    "BackShoulder.L": [
+      0.09009,
+      0.72648,
+      -0.25529
+    ],
+    "BackLeg.L": [
+      0.14339,
+      0.73225,
+      -0.25436
+    ],
+    "BackUpperLeg.L": [
+      0.14141,
+      0.55364,
+      -0.15158
+    ],
+    "BackLowerLeg.L": [
+      0.1462,
+      0.34244,
+      -0.52339
+    ],
+    "BackShoulder.R": [
+      -0.09009,
+      0.72648,
+      -0.25529
+    ],
+    "BackLeg.R": [
+      -0.14339,
+      0.73225,
+      -0.25436
+    ],
+    "BackUpperLeg.R": [
+      -0.14141,
+      0.55364,
+      -0.15158
+    ],
+    "BackLowerLeg.R": [
+      -0.1462,
+      0.34244,
+      -0.52339
+    ],
+    "Tail1": [
+      -0.0,
+      0.77653,
+      -0.33993
+    ],
+    "Tail2": [
+      -0.0,
+      0.82352,
+      -0.40813
+    ],
+    "Tail3": [
+      0.0,
+      0.72833,
+      -0.52024
+    ],
+    "Tail4": [
+      0.0,
+      0.62306,
+      -0.62737
+    ],
+    "Tail5": [
+      -0.0,
+      0.55273,
+      -0.69932
+    ],
+    "Tail6": [
+      -0.0,
+      0.49709,
+      -0.81018
+    ],
+    "Tail7": [
+      -0.0,
+      0.48335,
+      -0.90077
+    ],
+    "Tail8": [
+      -0.0,
+      0.47949,
+      -1.01102
+    ],
+    "PoleTargetBack.L": [
+      0.09115,
+      0.34706,
+      1.53885
+    ],
+    "PoleTarget.L": [
+      0.09126,
+      0.34716,
+      1.41786
+    ],
+    "PoleTargetBack.R": [
+      -0.09115,
+      0.34706,
+      1.53885
+    ],
+    "PoleTarget.R": [
+      -0.09126,
+      0.34716,
+      1.41786
+    ],
+    "IKBackLeg.L": [
+      0.1434,
+      0.08562,
+      -0.4301
+    ],
+    "FFB.L": [
+      0.1434,
+      0.02889,
+      -0.3701
+    ],
+    "IKFrontLeg.L": [
+      0.13721,
+      0.09093,
+      0.4401
+    ],
+    "FF.L": [
+      0.13721,
+      0.03008,
+      0.49055
+    ],
+    "IKBackLeg.R": [
+      -0.1434,
+      0.08562,
+      -0.4301
+    ],
+    "FFB.R": [
+      -0.1434,
+      0.02889,
+      -0.3701
+    ],
+    "IKFrontLeg.R": [
+      -0.13721,
+      0.09093,
+      0.4401
+    ],
+    "FF.R": [
+      -0.13721,
+      0.03008,
+      0.49055
+    ]
+  },
+  "clips": [
+    {
+      "name": "AnimalArmature|Attack",
+      "duration": 1.3333
+    },
+    {
+      "name": "AnimalArmature|Death",
+      "duration": 1.0417
+    },
+    {
+      "name": "AnimalArmature|Eating",
+      "duration": 2.5
+    },
+    {
+      "name": "AnimalArmature|Gallop",
+      "duration": 0.5417
+    },
+    {
+      "name": "AnimalArmature|Gallop_Jump",
+      "duration": 0.9167
+    },
+    {
+      "name": "AnimalArmature|Idle",
+      "duration": 3.3333
+    },
+    {
+      "name": "AnimalArmature|Idle_2",
+      "duration": 3.3333
+    },
+    {
+      "name": "AnimalArmature|Idle_2_HeadLow",
+      "duration": 4.0
+    },
+    {
+      "name": "AnimalArmature|Idle_HitReact_Left",
+      "duration": 0.6667
+    },
+    {
+      "name": "AnimalArmature|Idle_HitReact_Right",
+      "duration": 0.6667
+    },
+    {
+      "name": "AnimalArmature|Jump_ToIdle",
+      "duration": 1.3333
+    },
+    {
+      "name": "AnimalArmature|Walk",
+      "duration": 1.0417
+    }
+  ]
+}

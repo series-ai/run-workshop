@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "packs": {
+    "core": {
+      "dir": "run-voxchar-core",
+      "label": "Core Rig & Voxel Bodies",
+      "description": "Canonical 53-joint Quaternius UAL1 rig, 43 CC0 clips, and Teardown-style rigid-segment voxel bodies, sculpted voxel heads, and layered voxel hairstyles.",
+      "hasWorldLeaf": false,
+      "license": "CC0-1.0"
+    },
+    "heist": {
+      "dir": "run-voxchar-heist",
+      "worldTheme": "heist",
+      "label": "Heist & Demolition",
+      "description": "Urban demolitionists, open jackets with scarves, belted tunics, tattoo vests, backpacks, sledgehammers, detonators, crowbars, and rubble props.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "industrial": {
+      "dir": "run-voxchar-industrial",
+      "worldTheme": "industrial",
+      "label": "Workshop & Industrial",
+      "description": "Weathered work shirts, waist packs, work gloves, cargo pants, knit beanies, hard hats, pipe wrenches, blowtorches, drums, and crates.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "security": {
+      "dir": "run-voxchar-security",
+      "worldTheme": "security",
+      "label": "Security & Cyber-Tech",
+      "description": "Collared guard uniforms, utility belts, knee-pad trousers, peaked caps, cyber-tech strap vests, riot helmets, pistols, and security terminals.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "creatures": {
+      "dir": "run-voxchar-creatures",
+      "worldTheme": "creatures",
+      "label": "Voxel Beasts & Bots",
+      "description": "Teardown-style voxel guard hounds on a 23-joint quadruped rig, scrapyard spiders on a 28-joint arachnid rig, and heavy industrial scrap-bots.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    }
+  }
+}
