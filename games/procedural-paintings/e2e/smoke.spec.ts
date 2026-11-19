@@ -286,5 +286,48 @@ test('loads CC0 Gymnopédie No. 1 MP3 cleanly and handles click, KeyM, gesture s
     supported: true,
   })
 
+  // Keyboard activation (Enter / Space) on focused #btn-audio starts armed audio cleanly without double-toggling.
+  await page.goto('/?scene=starry')
+  await page.waitForFunction(() => Boolean(window.__DEMO_API__), null, { timeout: 20_000 })
+  await page.evaluate(() => (window.__DEMO_API__ as DemoApi).ready)
+
+  const kbAudioBtn = page.locator('#btn-audio')
+  await expect(kbAudioBtn).toHaveClass(/\barmed\b/)
+  await expect(kbAudioBtn).toHaveText('♪Chill')
+  await kbAudioBtn.focus()
+  await page.keyboard.press('Enter')
+  await expect(kbAudioBtn).toHaveClass(/\bactive\b/)
+  await expect(kbAudioBtn).not.toHaveClass(/\barmed\b/)
+  await expect(kbAudioBtn).toHaveAttribute('aria-pressed', 'true')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: true,
+    playing: true,
+    paused: false,
+    supported: true,
+  })
+
+  await page.keyboard.press('Space')
+  await expect(kbAudioBtn).not.toHaveClass(/\bactive\b/)
+  await expect(kbAudioBtn).not.toHaveClass(/\barmed\b/)
+  await expect(kbAudioBtn).toHaveAttribute('aria-pressed', 'false')
+  await expect(kbAudioBtn).toHaveText('♪Muted')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: false,
+    playing: false,
+    paused: false,
+    supported: true,
+  })
+
+  await page.keyboard.press('Space')
+  await expect(kbAudioBtn).toHaveClass(/\bactive\b/)
+  await expect(kbAudioBtn).toHaveAttribute('aria-pressed', 'true')
+  await expect(kbAudioBtn).toHaveText('♪Chill')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: true,
+    playing: true,
+    paused: false,
+    supported: true,
+  })
+
   expect(errors, `Unexpected browser errors: ${errors.join('\n')}`).toEqual([])
 })

@@ -119,10 +119,9 @@ export class ChillAudio {
 
   private readonly onFirstGesture = (e: Event): void => {
     if (this.disposed || !this.enabled || this.paused || !this.supported || !this.el.paused) return;
-    if (e.type === 'pointerdown') {
-      const target = e.target;
-      if (target instanceof Element && target.closest('#btn-audio')) return;
-    } else if (e instanceof KeyboardEvent) {
+    const target = e.target;
+    if (target instanceof Element && target.closest('#btn-audio')) return;
+    if (e instanceof KeyboardEvent) {
       if (e.code === 'KeyM' || e.metaKey || e.ctrlKey || e.altKey) return;
     }
     this.tryStart();
