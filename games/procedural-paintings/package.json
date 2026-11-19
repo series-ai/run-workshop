@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "license": "SEE LICENSE IN ../../LICENSE.md",
-  "description": "21 pure-procedural WebGL Three.js painting scenes — 16 pre-1910 public-domain works and 5 original style studies, built with zero external assets.",
+  "description": "21 pure-procedural WebGL Three.js painting scenes (TypeScript/GLSL, zero external texture or mesh assets) accompanied by a CC0 solo piano recording of Erik Satie's Gymnopédie No. 1.",
   "keywords": [
     "RUN.game"
   ],

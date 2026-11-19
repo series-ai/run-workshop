@@ -1,5 +1,6 @@
 import './styles.css';
 import RundotGameAPI from '@series-inc/rundot-game-sdk/api';
+import { ChillAudio, type ChillAudioState } from './audio';
 import { DemoHost, type DemoMetrics, type PaintingScene, type SceneFactory } from './host';
 import { createStarryNight } from './scenes/starryNight';
 import { createGreatWave } from './scenes/greatWave';
@@ -91,12 +92,26 @@ function init(): void {
   }
 
   const host = new DemoHost(el('stage'));
+  const audio = new ChillAudio();
+  let hostPaused = false;
+  const syncPaused = (): void => {
+    const paused = hostPaused || document.hidden;
+    host.setPaused(paused);
+    audio.setPaused(paused);
+  };
   try {
-    RundotGameAPI.lifecycles.onPause(() => host.setPaused(true));
-    RundotGameAPI.lifecycles.onResume(() => host.setPaused(false));
+    RundotGameAPI.lifecycles.onPause(() => {
+      hostPaused = true;
+      syncPaused();
+    });
+    RundotGameAPI.lifecycles.onResume(() => {
+      hostPaused = false;
+      syncPaused();
+    });
   } catch {
     // Standalone mode without host lifecycle events.
   }
+  document.addEventListener('visibilitychange', syncPaused);
 
   const built = new Map<string, PaintingScene>();
   const tabsShell = document.getElementById('tabs-shell');
@@ -106,8 +121,41 @@ function init(): void {
   const nextBtn = document.getElementById('btn-next') as HTMLButtonElement | null;
   const presets = el('preset-pills');
   const driftBtn = el<HTMLButtonElement>('btn-drift');
+  const audioBtn = el<HTMLButtonElement>('btn-audio');
+  const audioLabel = audioBtn.querySelector<HTMLElement>('.audio-label');
   const veil = el('veil');
   let currentId = '';
+
+  const renderAudioState = (state: ChillAudioState): void => {
+    const active = state.supported && state.enabled && state.playing;
+    const armed = state.supported && state.enabled && !state.playing;
+    audioBtn.classList.toggle('active', active);
+    audioBtn.classList.toggle('armed', armed);
+    audioBtn.disabled = !state.supported;
+    audioBtn.setAttribute('aria-pressed', String(state.supported && state.enabled));
+    if (audioLabel) {
+      audioLabel.textContent = !state.supported ? 'No Audio' : state.enabled ? 'Chill' : 'Muted';
+    }
+  };
+  audio.onStateChange = renderAudioState;
+  renderAudioState(audio.getState());
+  audioBtn.addEventListener('click', () => audio.toggleFromButton());
+
+  window.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.code !== 'KeyM') return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+    const target = e.target;
+    if (
+      target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT')
+    ) {
+      return;
+    }
+    audio.toggleFromButton();
+  });
 
   host.onMetrics = (m: DemoMetrics) => {
     el('stat-fps').textContent = m.fps.toFixed(0);
@@ -146,6 +194,7 @@ function init(): void {
     }
     currentId = entry.id;
     host.load(entry.id, scene);
+    audio.setSceneMood(entry.id);
     evictOldestIfNeeded(entry.id);
     host.setDrift(entry.id !== 'impossible-aqueduct');
     el('art-title').textContent = scene.meta.title;
@@ -269,7 +318,12 @@ function init(): void {
       markPreset(index);
     },
     setDrift: (on: boolean) => host.setDrift(on),
-    setPaused: (paused: boolean) => host.setPaused(paused),
+    setPaused: (paused: boolean) => {
+      hostPaused = paused;
+      syncPaused();
+    },
+    audioState: () => audio.getState(),
+    toggleAudio: () => audio.toggleFromButton(),
     renderFrameNow: (t: number) => host.renderFrameNow(t),
     benchmark: (frames = 120) => host.benchmark(frames),
     getMetrics: () => window.__DEMO_METRICS__,

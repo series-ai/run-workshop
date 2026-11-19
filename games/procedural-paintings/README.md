@@ -1,6 +1,6 @@
 # Procedural Paintings
 
-Twenty-one real-time procedural WebGL painting scenes built with Three.js and custom GLSL shaders — **16 pre-1910 public-domain works** and **5 original style studies** — with **zero external assets** (every brush stroke, canvas weave, impasto height field, SDF sculpture, and architectural silhouette is synthesized in code).
+Twenty-one real-time 3D WebGL painting worlds built in pure procedural TypeScript and custom GLSL shaders — **16 pre-1910 public-domain works** and **5 original style studies** — with **zero external texture or mesh assets** (every brush stroke, canvas weave, impasto height field, SDF sculpture, and architectural silhouette is synthesized in code), accompanied by a CC0 solo piano soundtrack (`public/audio/gymnopedie-1.mp3`).
 
 ## Run it
 
@@ -64,4 +64,10 @@ npm run deploy                                  # builds, then uploads
 
 - **Drag** to orbit, **Scroll** to zoom
 - **WASD / Arrow keys + Q / E** to fly (`Shift` for 3× speed)
+- **`M`** or **`#btn-audio` (`Chill`)** in the bottom bar to start, mute, or resume the piano soundtrack (armed on load and begins gently on first interaction)
 - **Camera Presets** & **Auto-Drift** toggle in the bottom bar
+
+## Credits
+
+- **Soundtrack:** Erik Satie, *Gymnopédie No. 1* (1888, public domain), solo piano recording by **Teknopazzo**, Wikimedia Commons [`curid=10216700`](https://commons.wikimedia.org/w/index.php?curid=10216700) (Openverse ID `c6d22207-a725-4a08-ba2c-a5874bd125ce`), released under **CC0 1.0 Universal** (`https://creativecommons.org/publicdomain/zero/1.0/`). Bundled as `public/audio/gymnopedie-1.mp3`.
+
