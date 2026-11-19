@@ -1,0 +1,954 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>RUN Cat Pack — breed gallery</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #e9e9ec; font-family: system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .label { font-size: 10px; color: #333; background: #ffffffcc; padding: 1px 4px; border-radius: 3px; white-space: nowrap; }
+  .label.sel { background: #4a7cff; color: #fff; }
+  .section { font-size: 13px; font-weight: 700; color: #222; background: #fff; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  #top { z-index: 2; position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 8px; padding: 6px 10px; box-shadow: 0 2px 10px #0002; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+  #panel { z-index: 2; position: fixed; left: 12px; top: 12px; width: 260px; background: #fff; border-radius: 10px; padding: 12px 14px; box-shadow: 0 2px 10px #0002; font-size: 13px; }
+  #panel h2 { margin: 0 0 2px; font-size: 15px; }
+  #notes { color: #888; font-size: 11px; margin-bottom: 6px; min-height: 13px; }
+  .row { display: flex; justify-content: space-between; align-items: center; margin: 6px 0; gap: 6px; }
+  .row span { width: 56px; }
+  #panel select { width: 118px; }
+  #panel input[type=color] { width: 44px; height: 24px; border: none; padding: 0; background: none; }
+  #panel input[type=range] { width: 118px; }
+  #stats { margin-top: 10px; color: #777; font-size: 11px; line-height: 1.5; }
+  #nowPlaying { position: fixed; bottom: 44px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 10px;
+    padding: 8px 16px; box-shadow: 0 2px 10px #0002; font: 600 20px system-ui, sans-serif; display: none; z-index: 2; }
+  #nowPlaying small { font-weight: 400; color: #888; font-size: 13px; margin-left: 8px; }
+  #hint { position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; color: #888; font-size: 12px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="top">Show <select id="filter"></select> <label><input type="checkbox" id="showLabels" checked> labels</label>
+  Palette <select id="palette"><option>natural</option><option>papercraft</option></select>
+  Anim <button id="animPrev" title="previous clip (←)">◀</button><select id="anim"><option value="">(rest)</option></select><button id="animNext" title="next clip (→)">▶</button>
+  <button id="animCycle" title="play every clip in turn (space)">Play all</button>
+  <label><input type="checkbox" id="animAll"> all shown</label>
+  <label><input type="checkbox" id="toy"> toy</label> <select id="toyKind"></select></div>
+<div id="nowPlaying"></div>
+<div id="panel">
+  <div class="row"><h2 id="name">—</h2><button id="focus">Focus</button></div>
+  <div id="notes"></div>
+  <div class="row"><span>Build</span><select id="build"></select><b id="len"></b></div>
+  <div class="row"><span>Size</span><input type="range" id="size" min="0.2" max="1.5" step="0.01"></div>
+  <div class="row"><span>Ears</span><select id="ears"></select></div>
+  <div class="row"><span>Tail</span><select id="tail"></select></div>
+  <div class="row"><span>Head</span><select id="head"></select></div>
+  <div class="row"><span>Coat</span><select id="fur"></select></div>
+  <div class="row"><span>Base</span><select disabled><option>coat</option></select><input type="color" id="c0"></div>
+  <div class="row"><span>Layer 1</span><select id="p1"></select><input type="color" id="c1"></div>
+  <div class="row"><span>Layer 2</span><select id="p2"></select><input type="color" id="c2"></div>
+  <div class="row"><span>Layer 3</span><select id="p3"></select><input type="color" id="c3"></div>
+  <div class="row" style="display:none"><span>Eyes</span><select id="eyesP"></select><input type="color" id="eyes"></div>
+  <div class="row"><span>Nose</span><select id="noseP"></select><input type="color" id="nose"></div>
+  <div class="row" style="display:none"><span>Wear</span><div id="wearBoxes"></div></div>
+  <div id="stats"></div>
+</div>
+<div id="labels"></div>
+<div id="hint">Click a cat to edit it · drag to orbit · scroll to zoom · ← → step clips · space plays them all</div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// Parts and colours come from catalog.json (shared with scripts/build_breeds.py and catkit.js).
+const CAT = await (await fetch(`catalog.json?t=${Date.now()}`)).json();
+// Builds in gallery order (see BREEDS.md). All share one body topology.
+const BUILDS = CAT.builds;
+// Heads are swappable parts (scripts/build_heads.py); any head fits any body.
+const HEAD_FILES = CAT.heads;
+const HEADS = HEAD_FILES;
+const HEAD_FOR_BUILD = CAT.headForBuild;
+const headFile = dog => dog.head;
+const EARS = CAT.ears;
+const TAILS = CAT.tails;
+// Coat shells, and which shell each coat type in breeds.csv uses.
+const FURS = CAT.furs;
+const COAT_SHELL = CAT.coatShell;
+// Pattern names used in breeds.csv. region = UV2 projection mask, tile = UV surface texture.
+const PATTERNS = { none: null, ...CAT.patterns };
+// Named coat colours used in breeds.csv (cat genetics: black/blue/chocolate/lilac/
+// cinnamon/fawn, red/cream, white, plus tabby grounds and skin tones for hairless cats).
+const COLOURS = CAT.colours;
+const NOSES = Object.keys(CAT.noseColours);
+const NOSE_COLOURS = CAT.noseColours;
+// Eye colour is breed data; eyes render dark like the dogs' (CAT.fixedColours.eye).
+const EYES = CAT.eyeColours;
+// Body length (nose to rump) in metres by size class.
+const SIZE = CAT.sizes;
+const BUILD_LENGTH = {};
+
+const vert = /* glsl */`
+  #include <common>
+  #include <skinning_pars_vertex>
+  attribute vec4 color;
+  attribute vec2 uv1;                      // baked dog-space projection (TEXCOORD_1)
+  uniform float uvScale;                   // parts: socket scale so spots match the body
+  varying vec2 vUv;
+  varying vec2 vUv1;
+  varying vec3 vNormal;
+  varying vec3 vTag;
+  void main() {
+    #include <beginnormal_vertex>
+    #include <skinbase_vertex>
+    #include <skinnormal_vertex>
+    #include <begin_vertex>
+    #include <skinning_vertex>
+    vUv = uv * uvScale;
+    vUv1 = uv1;
+    vNormal = normalize(mat3(modelMatrix) * objectNormal);
+    vTag = color.rgb;                      // tag code, see catkit.TAG_RGB
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+  }`;
+const frag = /* glsl */`
+  uniform vec3 coat, color1, color2, color3, noseColor, eyeColor;
+  const vec3 mouthColor = vec3(0.36, 0.13, 0.14);   // inside of the mouth (head back faces)
+  uniform sampler2D tex1, tex2, tex3;
+  uniform float mode1, mode2, mode3;     // 0 off, 1 region (UV2 projection), 2 tile (UV)
+  uniform float isPart;                  // parts take region colours at their socket
+  uniform vec2 partUv;
+  varying vec2 vUv;
+  varying vec2 vUv1;
+  varying vec3 vNormal;
+  varying vec3 vTag;
+
+  float layer(sampler2D tex, float mode) {
+    if (mode < 0.5) return 0.0;
+    float t = texture2D(tex, mode < 1.5 ? mix(vUv1, partUv, isPart) : vUv).r;
+    float aa = fwidth(t);
+    return smoothstep(0.5 - aa, 0.5 + aa, t);
+  }
+
+  void main() {
+    vec3 c = coat;
+    c = mix(c, color1, layer(tex1, mode1));
+    c = mix(c, color2, layer(tex2, mode2));
+    c = mix(c, color3, layer(tex3, mode3));
+    // Tags: nose (1,0,0), iris (0,1,0), ink (0,0,1), shine (1,1,1), inner ear (1,0,1).
+    vec3 t = step(vec3(0.5), vTag);
+    float shine = t.r * t.g * t.b;
+    float inner = t.r * t.b * (1.0 - t.g);
+    float nose = t.r * (1.0 - t.g) * (1.0 - t.b);
+    float iris = t.g * (1.0 - t.r);
+    float ink = t.b * (1.0 - t.r) * (1.0 - t.g);
+    c = mix(c, noseColor, nose);
+    c = mix(c, vec3(0.93, 0.66, 0.66), inner);   // inner ears: always soft pink
+    c = mix(c, eyeColor, iris);
+    c = mix(c, vec3(0.09, 0.07, 0.08), ink);
+    c = mix(c, vec3(1.0), shine);
+    if (!gl_FrontFacing) c = mouthColor;
+    vec3 n = normalize(vNormal) * (gl_FrontFacing ? 1.0 : -1.0);
+    float sun = max(dot(n, normalize(vec3(0.5, 0.9, 0.6))), 0.0);
+    float sky = 0.5 + 0.5 * n.y;
+    gl_FragColor = vec4(c * (0.42 + 0.22 * sky + 0.55 * sun), 1.0);
+    #include <colorspace_fragment>
+  }`;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeeeef1);
+// Dogs light themselves in their shader; these lights are for props (toys).
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a96, 1.6));
+const propSun = new THREE.DirectionalLight(0xffffff, 1.8);
+propSun.position.set(3, 5, 4);
+scene.add(propSun);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 400);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+let needsRender = true;
+const redraw = () => { needsRender = true; };
+THREE.DefaultLoadingManager.onLoad = redraw;
+
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.46, 40), new THREE.MeshBasicMaterial({ color: 0x4a7cff }));
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = 0.003;
+scene.add(ring);
+
+// Local dev tool: always fetch fresh assets so rebuilt patterns/models show on refresh.
+const BUST = `?t=${Date.now()}`;
+const texLoader = new THREE.TextureLoader();
+const tex = {};
+for (const p of Object.values(PATTERNS)) {
+  if (!p) continue;
+  const key = p.region || p.tile;
+  const t = texLoader.load(`patterns/${p.region ? 'region' : 'tile'}-${key}.png${BUST}`);
+  // Region masks are read through the glTF UV2 set, so use glTF's convention (no vertical flip).
+  if (p.region) t.flipY = false;
+  else t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  tex[key] = t;
+}
+const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+blank.needsUpdate = true;
+
+// ---- data ----
+function parseCsv(text) {
+  const [head, ...rows] = text.trim().split('\n').map(l => l.split(','));
+  return rows.map(r => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
+}
+let rows = parseCsv(await (await fetch(`../breeds.csv${BUST}`)).text());
+// ?compare=Pug,Pembroke Welsh Corgi shows those breeds twice: the previous revision
+// (head built into the body, kit/builds-legacy) and the current one (head parts).
+const COMPARE = new URLSearchParams(location.search).get('compare')?.split(',').map(s => s.trim());
+if (COMPARE) {
+  const picked = COMPARE.map(n => rows.find(r => r.breed === n)).filter(Boolean);
+  rows = [...picked.map(r => ({ ...r, section: 'previous', legacy: true })),
+          ...picked.map(r => ({ ...r, section: 'new' }))];
+}
+
+// Deterministic random for the Mixed Breed wildcard.
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const pick = list => list[Math.floor(rand() * list.length)];
+
+function toSpec(r) {
+  if (r.build === 'any') {
+    const layers = [['piebald', pick(Object.keys(COLOURS))]];
+    return { name: r.breed, notes: r.notes, build: pick(BUILDS), length: SIZE[r.size], ears: pick(EARS),
+             tail: pick(TAILS), fur: pick(FURS), head: pick(HEADS), coat: COLOURS[pick(Object.keys(COLOURS))],
+             layers: layers.map(([p, c]) => [p, COLOURS[c]]), nose: NOSE_COLOURS[pick(NOSES)],
+             eyes: EYES[pick(Object.keys(EYES))] };
+  }
+  const layers = r.layers ? r.layers.split('|').map(l => l.split(':')).map(([p, c]) => [p, COLOURS[c]]) : [];
+  return { name: r.breed, notes: [r.coat !== 'smooth' ? `${r.coat} coat` : '', r.notes].filter(Boolean).join(' · '),
+           build: r.legacy ? `legacy:${r.build}` : r.build, legacy: !!r.legacy,
+           length: SIZE[r.size] * (BUILD_LENGTH[r.build] || 1), ears: r.ears, tail: r.tail,
+           fur: COAT_SHELL[r.coat] || 'none', head: r.head || HEAD_FOR_BUILD[r.build] || 'domestic',
+           coat: COLOURS[r.base], layers, nose: NOSE_COLOURS[r.nose] || NOSE_COLOURS.pink,
+           eyes: EYES[r.eyes] || EYES.gold };
+}
+
+// ---- assets ----
+const gltf = new GLTFLoader();
+const firstMesh = g => { let m; g.scene.traverse(o => { if (o.isMesh && !m) m = o; }); return m.geometry; };
+const builds = {}, parts = {}, heads = {};
+let bodyTris = 0;
+await Promise.all([
+  ...[...BUILDS, ...(COMPARE ? BUILDS.map(b => `legacy:${b}`) : [])].map(name =>
+    gltf.loadAsync(`${name.startsWith('legacy:') ? 'builds-legacy/' + name.slice(7) : 'builds/' + name}.glb${BUST}`).then(g => {
+    const sockets = {};
+    g.scene.traverse(o => { if (o.name.startsWith('socket_')) sockets[o.name.slice(7)] = o; });
+    const geo = n => g.scene.getObjectByName(n)?.geometry;
+    builds[name] = { scene: g.scene, clips: g.animations, sockets,
+                     looping: g.scene.getObjectByName('rig')?.userData.looping_clips || [] };
+    if (!name.startsWith('legacy:')) bodyTris = geo('body').index.count / 3;
+  })),
+  ...HEAD_FILES.map(name => gltf.loadAsync(`heads/${name}.glb${BUST}`).then(g => {
+    const sockets = {};
+    g.scene.traverse(o => { if (o.name.startsWith('socket_')) sockets[o.name.slice(7)] = o; });
+    const geo = n => g.scene.getObjectByName(n)?.geometry;
+    const jaw = g.scene.getObjectByName('jaw');
+    const eyes = g.scene.getObjectByName('eyes');
+    heads[name] = { geo: geo('head'), eyes: eyes && { geo: eyes.geometry, at: eyes.position.clone() }, jaw: jaw && { geo: jaw.geometry, hinge: jaw.position.clone() },
+                    coats: Object.fromEntries(FURS.slice(1).map(c => [c, geo(`coat_${c}`)])), sockets };
+  })),
+  ...EARS.flatMap(e => [`ear-${e}-L`, `ear-${e}-R`]).map(name =>
+    gltf.loadAsync(`parts/${name}.glb${BUST}`).then(g => { parts[name] = firstMesh(g); })),
+]);
+
+// Props and wearables live in the dog pack for now: cats get the plain ball.
+const WEARABLES = [];
+const wear = {}, toys = {}, addons = {};
+const sanitize = THREE.PropertyBinding.sanitizeNodeName;
+const TOY_ORDER = ['ball'];
+
+function makeUniforms() {
+  const u = { eyeColor: { value: new THREE.Color('#151313') }, coat: { value: new THREE.Color() },
+              noseColor: { value: new THREE.Color() } };
+  for (const i of [1, 2, 3]) {
+    u[`color${i}`] = { value: new THREE.Color() };
+    u[`tex${i}`] = { value: blank };
+    u[`mode${i}`] = { value: 0 };
+  }
+  return u;
+}
+// Body and parts share the colour uniforms; only the part-specific ones differ.
+function material(shared, part) {
+  return new THREE.ShaderMaterial({
+    vertexShader: vert, fragmentShader: frag,
+    uniforms: { ...shared, isPart: { value: part ? 1 : 0 }, partUv: { value: new THREE.Vector2() },
+                uvScale: { value: 1 } },
+  });
+}
+
+// A dog is a clone of its build's rig (skinned body + coat shells + sockets on
+// bones), with parts hung on the sockets: tail on socket_tail, the head group
+// on socket_head (head, head fluff, ears on the head's own sockets, and an
+// optional toy on socket_mouth). Every piece shares one set of colour uniforms.
+const toyGeo = new THREE.IcosahedronGeometry(0.2, 1);
+function makeDog(spec) {
+  const group = new THREE.Group();
+  const shared = makeUniforms();
+  const mesh = part => new THREE.Mesh(undefined, material(shared, part));
+  const tail = mesh(true), head = mesh(false), headFur = mesh(false), earL = mesh(true), earR = mesh(true);
+  const jaw = mesh(false), eyes = mesh(false);
+  head.material.side = jaw.material.side = THREE.DoubleSide;   // back faces = inside of the mouth
+  const toy = new THREE.Mesh(toyGeo, new THREE.MeshLambertMaterial({ color: 0xe8573c, flatShading: true }));
+  const headGroup = new THREE.Group();
+  headGroup.add(head, eyes, jaw, headFur, earL, earR, toy);
+  const el = document.createElement('div');
+  el.className = 'label';
+  el.textContent = spec.name;
+  const label = new CSS2DObject(el);
+  scene.add(label);
+  const dog = { ...spec, layers: spec.layers.map(l => [...l]), group, bodyMat: material(shared, false),
+                tail: spec.tail, tailMesh: tail, headGroup, head: spec.head, headMesh: head, headFur, ears: spec.ears,
+                earMeshes: { L: earL, R: earR }, eyesMesh: eyes, jawMesh: jaw, toyMesh: toy, toy: false, held: true, shared, label,
+                rig: null, rigBuild: null, toyMat: toy.material,
+                toyKind: new URLSearchParams(location.search).get('toyKind') || 'ball',
+                wear: new Set((new URLSearchParams(location.search).get('wear') || '').split(',').filter(Boolean)),
+                wearObjs: [] };
+  for (const m of [tail, head, eyes, jaw, headFur, earL, earR, toy]) m.userData.dog = dog;
+  return dog;
+}
+
+function place(mesh, socket, extraScale = 1) {
+  mesh.position.copy(socket.position);
+  mesh.scale.copy(socket.scale).multiplyScalar(extraScale);
+}
+
+function attachTo(socket, obj, scale = 1) {
+  socket.add(obj);
+  obj.position.set(0, 0, 0);
+  obj.quaternion.identity();
+  obj.scale.setScalar(scale);
+}
+
+function buildRig(dog) {
+  if (dog.rig) dog.group.remove(dog.rig);
+  const rig = SkeletonUtils.clone(builds[dog.build].scene);
+  dog.sockets = {};
+  dog.coatMeshes = {};
+  dog.tailMeshes = {};
+  rig.traverse(o => {
+    if (o.name.startsWith('socket_')) dog.sockets[o.name.slice(7)] = o;
+    if (o.isMesh) {
+      o.material = dog.bodyMat;
+      o.frustumCulled = false;
+      o.userData.dog = dog;
+      if (o.name.startsWith('coat_')) dog.coatMeshes[o.name.slice(5)] = o;
+      if (o.name.startsWith('tail_')) dog.tailMeshes[o.name.slice(5)] = o;
+    }
+  });
+  dog.jawBone = rig.getObjectByName('jaw');
+  dog.jawRest = dog.jawBone?.quaternion.clone();
+  dog.gripBone = rig.getObjectByName('grip');
+  dog.lidsBone = rig.getObjectByName('lids');   // its Y scale opens / closes the eyes
+  // Ear bones (no skin): their rotation is copied onto the ear parts.
+  dog.earBones = {};
+  for (const side of ['L', 'R']) {
+    const b = rig.getObjectByName(sanitize(`ear.${side}`));
+    if (b) dog.earBones[side] = { bone: b, rest: b.quaternion.clone() };
+  }
+  dog.group.add(rig);
+  dog.rig = rig;
+  dog.rigBuild = dog.build;
+  dog.mixer = null;
+}
+
+function apply(dog) {
+  if (dog.rigBuild !== dog.build) buildRig(dog);
+  const b = builds[dog.build], h = heads[headFile(dog)], sk = dog.sockets;
+  for (const [name, m] of Object.entries(dog.coatMeshes)) m.visible = name === dog.fur;
+
+  // Tails are skinned meshes inside the build (tail_<type>), riding the tail bones.
+  dog.tailMesh.visible = false;
+  for (const [name, m] of Object.entries(dog.tailMeshes)) m.visible = name === dog.tail;
+
+  if (!sk.head) {   // previous revision: head is part of the body, ears sit on the body
+    for (const side of ['L', 'R']) {
+      const m = dog.earMeshes[side], s = sk[`ear_${side}`];
+      m.geometry = parts[`ear-${dog.ears}-${side}`];
+      attachTo(s, m);
+      m.material.uniforms.partUv.value.fromArray(s.userData.uv2);
+      m.material.uniforms.uvScale.value = s.scale.x;
+    }
+    dog.toyMesh.visible = false;
+  } else {
+    const hs = sk.head, headScale = hs.scale.x;
+    attachTo(hs, dog.headGroup);
+    dog.headMesh.geometry = h.geo;
+    dog.eyesMesh.visible = !!h.eyes;
+    if (h.eyes) { dog.eyesMesh.geometry = h.eyes.geo; dog.eyesMesh.position.copy(h.eyes.at); }
+    dog.eyesMesh.material.uniforms.uvScale.value = headScale;
+    dog.jawMesh.visible = !!h.jaw;
+    if (h.jaw) { dog.jawMesh.geometry = h.jaw.geo; dog.jawMesh.position.copy(h.jaw.hinge); }
+    dog.jawMesh.material.uniforms.uvScale.value = headScale;
+    dog.headMesh.material.uniforms.uvScale.value = headScale;
+    dog.headFur.visible = dog.fur !== 'none' && !!h.coats[dog.fur];
+    if (dog.headFur.visible) dog.headFur.geometry = h.coats[dog.fur];
+    dog.headFur.material.uniforms.uvScale.value = headScale;
+    for (const side of ['L', 'R']) {
+      const m = dog.earMeshes[side], s = h.sockets[`ear_${side}`];
+      m.geometry = parts[`ear-${dog.ears}-${side}`];
+      place(m, s, hs.userData.ear_scale ?? 1);
+      m.material.uniforms.partUv.value.fromArray(s.userData.uv2);
+      m.material.uniforms.uvScale.value = headScale * m.scale.x;
+    }
+    dog.mouth = h.sockets.mouth;
+    const kind = toys[dog.toyKind];
+    dog.toyMesh.geometry = kind ? kind.geo : toyGeo;
+    dog.toyMesh.material = kind ? kind.mats : dog.toyMat;
+    if (dog.toyMesh.parent === dog.headGroup || !dog.toy) holdToy(dog);
+    dog.toyMesh.visible = dog.toy && !!h.sockets.mouth;
+  }
+
+  dog.group.scale.setScalar(dog.length);
+  applyWear(dog);
+  dog.label.position.set(dog.group.position.x, -0.12, dog.group.position.z + 0.35);
+  const u = dog.shared, pal = paletteFn();
+  u.coat.value.set(pal(dog.coat));
+  u.noseColor.value.set(dog.nose);
+  u.eyeColor.value.set('#151313');   // eyes are dark like the dogs' (breeds.csv keeps eye colour as data)
+  for (const i of [1, 2, 3]) {
+    const [name, color] = dog.layers[i - 1] || ['none', '#ffffff'];
+    const p = PATTERNS[name];
+    u[`color${i}`].value.set(pal(color));
+    u[`tex${i}`].value = p ? tex[p.region || p.tile] : blank;
+    u[`mode${i}`].value = !p ? 0 : p.region ? 1 : 2;
+  }
+  redraw();
+}
+
+// ---- props: jaw + held toy ----
+// Rig protocol: the `jaw` bone's rotation (relative to rest) opens the head
+// part's jaw; the `grip` bone's scale says whether the mouth holds the toy
+// (1 = held, 0 = let go). Engines can read these two bones the same way.
+const _q = new THREE.Quaternion(), _v = new THREE.Vector3();
+const toyFloor = dog => (toys[dog.toyKind] ? -toys[dog.toyKind].geo.boundingBox.min.y : 0.2);
+
+// ---- wearables: skinned to the dog's own skeleton ----
+// The wearable files carry the build's skeleton; their meshes are rebound to the
+// dog's bones by name (same bind pose), so they follow every clip. Coat refits
+// (`collar@ruff`) are used when the dog wears that coat shell.
+function rebind(src, skeleton) {
+  const key = skeleton.bones.map(b => b.name).join();
+  src.userData.remap ??= {};
+  if (!src.userData.remap[key]) {
+    const map = src.skeleton.bones.map(b => skeleton.bones.findIndex(x => x.name === b.name));
+    const geo = src.geometry.clone(), si = geo.attributes.skinIndex;
+    for (let i = 0; i < si.count; i++) for (let c = 0; c < 4; c++) si.setComponent(i, c, Math.max(0, map[si.getComponent(i, c)]));
+    src.userData.remap[key] = geo;
+  }
+  return src.userData.remap[key];
+}
+// Rest-pose point in dog space -> a child of `bone` at that point.
+function hangOnBone(dog, body, obj, pos, boneName) {
+  const i = body.skeleton.bones.findIndex(b => b.name === sanitize(boneName));
+  if (i < 0) return;
+  const inv = body.skeleton.boneInverses[i];
+  obj.position.copy(pos).applyMatrix4(inv);
+  obj.quaternion.setFromRotationMatrix(inv);
+  body.skeleton.bones[i].add(obj);
+  dog.wearObjs.push(obj);
+}
+function applyWear(dog) {
+  for (const o of dog.wearObjs) o.removeFromParent();
+  dog.wearObjs = [];
+  const src = wear[dog.build], body = dog.rig?.getObjectByName('dog');
+  if (!src || !body?.isSkinnedMesh) return;
+  const items = [...dog.wear].filter(w => w !== 'bags');
+  if (dog.wear.has('bags') && !items.some(w => w === 'harness' || w === 'vest')) items.push('harness');
+  for (const item of items) {
+    const name = src.getObjectByName(`${item}@${dog.fur}`) ? `${item}@${dog.fur}` : item;
+    src.getObjectByName(name)?.traverse(o => {
+      if (!o.isSkinnedMesh) return;
+      const m = new THREE.SkinnedMesh(rebind(o, body.skeleton), o.material);
+      m.frustumCulled = false;
+      m.userData.dog = dog;
+      body.parent.add(m);
+      m.bind(body.skeleton, body.bindMatrix);
+      dog.wearObjs.push(m);
+    });
+  }
+  // Add-ons on the wearables' sockets, sized for a 0.72 m dog (dog space is length 1).
+  const k = 1 / 0.72;
+  const socket = (item, point) => {
+    const name = src.getObjectByName(`${item}@${dog.fur}`) ? `${item}@${dog.fur}` : item;
+    return src.getObjectByName(sanitize(`socket_${name}.${point}`));
+  };
+  const hang = (id, s) => {
+    if (!s || !addons[id]) return;
+    const m = new THREE.Mesh(addons[id].geo, addons[id].mats);
+    m.scale.setScalar(k);
+    m.userData.dog = dog;
+    const g = new THREE.Group();
+    g.add(m);
+    hangOnBone(dog, body, g, s.position, s.userData.bone);
+  };
+  if (items.includes('collar')) hang('tag_bone', socket('collar', 'tag'));
+  if (dog.wear.has('bags')) {
+    const holder = items.includes('vest') ? 'vest' : 'harness';
+    hang('saddlebag_L', socket(holder, 'pack_L'));
+    hang('saddlebag_R', socket(holder, 'pack_R'));
+  }
+}
+
+function holdToy(dog) {
+  dog.headGroup.add(dog.toyMesh);
+  if (dog.mouth) dog.toyMesh.position.copy(dog.mouth.position);
+  // Prop toys are real size: undo the dog's scale and the head-part units.
+  dog.toyMesh.scale.setScalar(toys[dog.toyKind] && dog.sockets.head ? 1 / (dog.length * dog.sockets.head.scale.x) : 1);
+  dog.held = true;
+  dog.toyFly = dog.toyFall = dog.toyThrow = null;
+}
+function releaseToy(dog) {
+  dog.toyMesh.getWorldPosition(_v);
+  const s = dog.toyMesh.getWorldScale(new THREE.Vector3()).x;
+  scene.attach(dog.toyMesh);
+  dog.held = false;
+  dog.toyFall = { vy: 0, radius: toyFloor(dog) * s, floor: dog.group.position.y };
+}
+// Bone-local axes of an ear bone (X right, Y up, Z back) -> head-part space
+// (X forward, Y up, Z right): (x, y, z) -> (-z, y, x).
+const _eq = new THREE.Quaternion();
+function updateEars(dog) {
+  for (const [side, e] of Object.entries(dog.earBones || {})) {
+    _eq.copy(e.rest).invert().multiply(e.bone.quaternion);
+    dog.earMeshes[side].quaternion.set(-_eq.z, _eq.y, _eq.x, _eq.w);
+  }
+}
+function updateProps(dog, dt) {
+  updateEars(dog);
+  if (dog.lidsBone) dog.eyesMesh.scale.y = Math.min(1, dog.lidsBone.scale.y);
+  if (dog.jawBone && dog.jawRest) {
+    _q.copy(dog.jawRest).invert().multiply(dog.jawBone.quaternion);
+    dog.jawMesh.rotation.z = 2 * Math.atan2(_q.x + _q.y + _q.z, _q.w) * JAW_SIGN;
+  }
+  if (!dog.toy) return;
+  const grip = dog.gripBone ? dog.gripBone.scale.x > 0.5 : true;
+  if (dog.toyThrow && !dog.held) {   // thrown toy: arc that lands in the mouth at the grab
+    const th = dog.toyThrow;
+    th.t += dt;
+    const u = Math.min(1, th.t / th.T);
+    dog.toyMesh.position.lerpVectors(th.from, th.to, u);
+    dog.toyMesh.position.y += Math.sin(Math.PI * u) * th.peak;
+    if (u >= 1) dog.toyThrow = null;
+  }
+  if (grip && !dog.held && !dog.toyFly && !dog.toyThrow) {
+    dog.toyFly = { t: 0, from: dog.toyMesh.position.clone() };   // fly/snap into the mouth
+  }
+  if (!grip && dog.held) releaseToy(dog);
+  if (dog.toyFly) {
+    dog.toyFly.t += dt / 0.12;
+    const target = dog.headGroup.localToWorld(dog.mouth.position.clone());
+    dog.toyMesh.position.lerpVectors(dog.toyFly.from, target, Math.min(1, dog.toyFly.t));
+    if (dog.toyFly.t >= 1) holdToy(dog);
+  } else if (dog.toyFall) {
+    const f = dog.toyFall;
+    f.vy -= 9.8 * dt;
+    dog.toyMesh.position.y = Math.max(f.floor + f.radius, dog.toyMesh.position.y + f.vy * dt);
+    if (dog.toyMesh.position.y <= f.floor + f.radius) f.vy = -f.vy * 0.35;
+  }
+}
+const JAW_SIGN = 1;
+
+// Clips that start with the mouth empty and grab later (pick_up, jump_catch):
+// put the toy where the mouth will be at the grab, on the floor or thrown.
+function gripTimes(clip) {
+  const tr = clip.tracks.find(t => t.name.startsWith('grip') && t.name.endsWith('.scale'));
+  if (!tr) return null;
+  const v = i => tr.values[i * 3];
+  for (let i = 1; i < tr.times.length; i++) if (v(i - 1) < 0.5 && v(i) >= 0.5) return { start: v(0), grab: tr.times[i] };
+  return { start: v(0), grab: null };
+}
+function stageToy(dog, clip) {
+  if (!dog.toy || !dog.mouth) return;
+  const g = gripTimes(clip);
+  if (!g || g.start >= 0.5 || g.grab == null) { if (!g || g.start >= 0.5) holdToy(dog); return; }
+  dog.mixer.setTime(g.grab);
+  dog.rig.updateMatrixWorld(true);
+  updateProps(dog, 0);
+  const at = dog.headGroup.localToWorld(dog.mouth.position.clone());
+  dog.mixer.setTime(0);
+  scene.attach(dog.toyMesh);
+  dog.held = false;
+  dog.toyFall = dog.toyFly = null;
+  const r = toyFloor(dog) * dog.toyMesh.getWorldScale(new THREE.Vector3()).x;
+  if (clip.name.includes('catch')) {
+    const from = at.clone().add(new THREE.Vector3(dog.length * 1.6, -at.y + dog.group.position.y + r, 0));
+    dog.toyThrow = { from, to: at, t: 0, T: g.grab, peak: dog.length * 0.9 };
+    dog.toyMesh.position.copy(from);
+  } else {
+    dog.toyThrow = null;
+    dog.toyMesh.position.set(at.x, dog.group.position.y + r, at.z);
+  }
+}
+
+// ---- animation ----
+const clock = new THREE.Clock();
+let playing = new Set();
+function play(dog, name) {
+  const b = builds[dog.build];
+  const clip = b.clips.find(c => c.name === name);
+  if (!dog.mixer) dog.mixer = new THREE.AnimationMixer(dog.rig);
+  dog.mixer.stopAllAction();
+  if (!clip) { playing.delete(dog); dog.mixer.update(0); redraw(); return; }
+  const action = dog.mixer.clipAction(clip);
+  action.setLoop(b.looping.includes(name) ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+  action.clampWhenFinished = true;
+  action.reset().play();
+  stageToy(dog, clip);
+  playing.add(dog);
+  clock.getDelta();
+}
+
+// Papercraft palette: coat colours pushed toward soft pastels (lighter, less
+// saturated), like the concepts. Breed data stays in natural colours.
+function paletteFn() {
+  if (document.getElementById('palette').value !== 'papercraft') return c => c;
+  return c => {
+    const col = new THREE.Color(c), hsl = {};
+    col.getHSL(hsl);
+    // Soften mid and light tones; darks (black, liver, chocolate) stay deep.
+    const lift = 0.22 * THREE.MathUtils.smoothstep(hsl.l, 0.15, 0.55);
+    col.setHSL(hsl.h, hsl.s * (1 - 0.28 * lift / 0.22), hsl.l + (1 - hsl.l) * lift);
+    return `#${col.getHexString()}`;
+  };
+}
+
+// ---- layout: one section per build (rows of up to 10), sections packed into 3 columns ----
+const COLS = 10, SECTION_COLS = 3;
+// Grid cell grows with the biggest dog so giant breeds don't overlap.
+const cellFor = list => Math.max(1.6, Math.max(...list.map(d => d.length)) * 1.55);
+const SECTION_W = COMPARE ? 0 : COLS * cellFor([{ length: SIZE.XL }]) + 2.5;
+const dogs = [], sections = {};
+const colZ = new Array(COMPARE ? 1 : SECTION_COLS).fill(0);
+// ?review=sit&breeds=A,B&n=6 : review sheet. Rows = breeds, columns = moments of
+// the clip, all seen exactly from the side on their own floor line, so one
+// screenshot shows a clip across very different builds.
+const P = new URLSearchParams(location.search);
+const REVIEW = P.get('review');
+const REVIEW_BREEDS = (P.get('breeds') || 'Domestic Shorthair (ginger),Domestic Shorthair (tuxedo),Siamese,Maine Coon,'
+  + 'Persian,British Shorthair').split(',').map(x => x.trim());
+const SECTION_KEYS = COMPARE ? ['previous', 'new'] : REVIEW ? [] : [...BUILDS, 'any'];
+if (REVIEW) {
+  // review=a,b,c (several clips): one breed, a row per clip, columns at even
+  // fractions of each clip. review=a: a row per breed, columns in seconds.
+  const CLIPS_R = REVIEW.split(',');
+  const MULTI = CLIPS_R.length > 1;
+  const breedSpecs = REVIEW_BREEDS.map(n => rows.find(r => r.breed === n)).filter(Boolean).map(toSpec);
+  const picked = MULTI ? CLIPS_R.map(c => ({ ...breedSpecs[0], clipName: c, name: c })) : breedSpecs.map(b => ({ ...b, clipName: REVIEW }));
+  const clipLen = builds.domestic.clips.find(c => c.name === CLIPS_R[0])?.duration || 1;
+  const n = +(P.get('n') || 6);
+  const times = (P.get('times') || '').split(',').filter(Boolean).map(Number);
+  const T = MULTI ? [...Array(n)].map((_, j) => j / (n - 1)) : times.length ? times : [...Array(n)].map((_, j) => (clipLen * j) / (n - 1));
+  const CELLX = 1.7, ROWH = 1.6;
+  const members = [];
+  picked.forEach((spec, i) => {
+    const y = -i * ROWH;
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(T.length * CELLX, 0.01, 0.6), new THREE.MeshBasicMaterial({ color: 0xc9c9d2 }));
+    bar.position.set((T.length - 1) * CELLX / 2, y - 0.005, 0);
+    scene.add(bar);
+    const el = document.createElement('div');
+    el.className = 'section';
+    el.textContent = spec.name;
+    const lab = new CSS2DObject(el);
+    lab.position.set(-1.3, y + 0.3, 0);
+    scene.add(lab);
+    T.forEach((t0, j) => {
+      let t = t0;
+      const dog = makeDog({ ...spec, name: `${spec.name} @${t.toFixed(2)}` });
+      dog.label.element.style.display = 'none';
+      dog.group.position.set(j * CELLX, y, 0);
+      scene.add(dog.group);
+      apply(dog);
+      dog.group.scale.setScalar(Math.min(1.1, dog.length) * (+P.get('zoom') || 1.8));   // cats are small: zoom to fill the cell
+      // &cam=top / &cam=front turn each dog so the camera sees its back / its face.
+      if (P.get('cam') === 'top') dog.group.rotation.x = Math.PI / 2;
+      if (P.get('cam') === 'front') dog.group.rotation.y = -Math.PI / 2;
+      if (P.get('cam') === 'q') dog.group.rotation.y = -(+P.get('rot') || 0.75);   // three-quarter view (&rot= to turn more)
+      const clip = builds[dog.build].clips.find(c => c.name === spec.clipName);
+      if (MULTI && clip) t = t * clip.duration;
+      if (clip && P.get('toy')) {
+        // Simulate from the start so dropped/thrown toys are where they'd be at t.
+        dog.toy = true;
+        apply(dog);
+        dog.mixer = new THREE.AnimationMixer(dog.rig);
+        const a = dog.mixer.clipAction(clip);
+        a.setLoop(THREE.LoopOnce, 1);
+        a.clampWhenFinished = true;
+        a.play();
+        stageToy(dog, clip);
+        const dt = 1 / 60;
+        for (let k = 0; k * dt < t; k++) { dog.mixer.update(dt); dog.rig.updateMatrixWorld(true); updateProps(dog, dt); }
+      } else if (clip) {
+        dog.mixer = new THREE.AnimationMixer(dog.rig);
+        dog.mixer.clipAction(clip).play();
+        dog.mixer.setTime(Math.min(t, clip.duration - 1e-3));
+        dog.rig.updateMatrixWorld(true);
+        updateProps(dog, 0);
+      }
+      dogs.push(dog);
+      members.push(dog);
+    });
+  });
+  T.forEach((t, j) => {
+    const el = document.createElement('div');
+    el.className = 'section';
+    el.textContent = MULTI ? `${Math.round(t * 100)}%` : `${t.toFixed(2)}s`;
+    const lab = new CSS2DObject(el);
+    lab.position.set(j * CELLX, 1.25, 0);
+    scene.add(lab);
+  });
+  sections.review = { head: new THREE.Object3D(), members };
+  camera.fov = 14;
+  const w = T.length * CELLX + 2.5, h = picked.length * ROWH + 1.2;
+  const cx = (T.length - 1) * CELLX / 2 - 0.5, cy = -(picked.length - 1) * ROWH / 2 + 0.4;
+  const dist = Math.max(w / (innerWidth / innerHeight), h) / (2 * Math.tan(THREE.MathUtils.degToRad(7))) * 1.02;
+  camera.position.set(cx, cy, dist);
+  controls.target.set(cx, cy, 0);
+}
+for (const build of SECTION_KEYS) {
+  const list = rows.filter(r => (COMPARE ? r.section : r.build) === build).map(toSpec);
+  if (!list.length) continue;
+  const CELL = cellFor(list);
+  const col = colZ.indexOf(Math.min(...colZ));
+  const x0 = COMPARE ? 0 : (col - (SECTION_COLS - 1) / 2) * SECTION_W, z = colZ[col];
+  const title = document.createElement('div');
+  title.className = 'section';
+  title.textContent = build === 'any' ? 'mixed' : build;
+  const head = new CSS2DObject(title);
+  head.position.set(x0, 0, z - 0.9);
+  scene.add(head);
+  const members = [];
+  list.forEach((spec, i) => {
+    const dog = makeDog(spec);
+    const n = COMPARE ? list.length : COLS;
+    dog.group.position.set(x0 + ((i % n) - (Math.min(n, list.length) - 1) / 2) * CELL, 0, z + Math.floor(i / n) * CELL);
+    dog.group.rotation.y = -0.45;
+    scene.add(dog.group);
+    apply(dog);
+    dogs.push(dog);
+    members.push(dog);
+  });
+  sections[build] = { head, members };
+  colZ[col] += Math.ceil(list.length / COLS) * CELL + 2;
+}
+const depth = Math.max(...colZ);
+const floor = REVIEW ? new THREE.Object3D() : new THREE.Mesh(new THREE.PlaneGeometry(COMPARE ? 40 : SECTION_COLS * SECTION_W + 2, depth + 3),
+  new THREE.MeshBasicMaterial({ color: 0xe2e2e7 }));
+floor.rotation.x = -Math.PI / 2;
+floor.position.set(0, 0, depth / 2 - 1.5);
+scene.add(floor);
+
+// ---- filter + camera framing ----
+const $ = id => document.getElementById(id);
+const opts = list => list.map(v => `<option>${v}</option>`).join('');
+$('filter').innerHTML = `<option value="all">all ${dogs.length} breeds</option>`
+  + Object.entries(sections).map(([b, s]) => `<option value="${b}">${b === 'any' ? 'mixed' : b} (${s.members.length})</option>`).join('');
+function frame(members) {
+  const box = new THREE.Box3();
+  members.forEach(d => box.expandByObject(d.group));
+  const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+  const d = Math.max(size.x, size.z) * 1.1 + 2;
+  controls.target.copy(c);
+  camera.position.set(c.x + d * 0.05, c.y + d * 0.75, c.z + d * 0.8);
+  redraw();
+}
+let lastFilter;
+// Close-up of one dog; pressing Focus again alternates side and 3/4-front views.
+let focusView = 0;
+function focus(dog, view = focusView) {
+  const box = new THREE.Box3().expandByObject(dog.group);
+  const c = box.getCenter(new THREE.Vector3());
+  const d = dog.length * 3.2;
+  controls.target.copy(c);
+  if (view === 0) camera.position.set(c.x - d * 0.42, c.y + d * 0.18, c.z + d * 0.9);   // side
+  else camera.position.set(c.x + d * 0.33, c.y + d * 0.22, c.z + d * 0.94);           // 3/4 front
+  redraw();
+}
+function applyFilter() {
+  const f = $('filter').value;
+  if (f !== lastFilter) $('showLabels').checked = f !== 'all' || !!COMPARE;   // too dense to read in the overview
+  lastFilter = f;
+  const labels = $('showLabels').checked;
+  for (const [b, s] of Object.entries(sections)) {
+    const on = f === 'all' || f === b;
+    s.head.visible = on;
+    for (const d of s.members) { d.group.visible = on; d.label.visible = on && labels; }
+  }
+  if (!REVIEW) frame(f === 'all' ? dogs : sections[f].members);
+  if (selected && f !== 'all') select(sections[f].members[0]);
+}
+$('filter').addEventListener('input', applyFilter);
+$('palette').addEventListener('input', () => dogs.forEach(apply));
+$('showLabels').addEventListener('input', applyFilter);
+
+// ---- editor panel ----
+$('build').innerHTML = opts(BUILDS);
+$('ears').innerHTML = opts(EARS);
+$('tail').innerHTML = opts(TAILS);
+$('fur').innerHTML = opts(FURS);
+$('head').innerHTML = opts(HEADS);
+for (const i of [1, 2, 3]) $(`p${i}`).innerHTML = opts(Object.keys(PATTERNS));
+$('noseP').innerHTML = NOSES.map(n => `<option value="${NOSE_COLOURS[n]}">${n}</option>`).join('');
+let selected;
+function select(dog) {
+  if (selected) selected.label.element.classList.remove('sel');
+  selected = dog;
+  dog.label.element.classList.add('sel');
+  $('name').textContent = dog.name;
+  $('notes').textContent = dog.notes || '';
+  $('build').value = dog.build; $('ears').value = dog.ears; $('tail').value = dog.tail; $('fur').value = dog.fur; $('head').value = dog.head;
+  $('size').value = dog.length; $('len').textContent = `${dog.length.toFixed(2)} m`;
+  $('c0').value = dog.coat;
+  for (const i of [1, 2, 3]) {
+    const [name, color] = dog.layers[i - 1] || ['none', '#ffffff'];
+    $(`p${i}`).value = name;
+    $(`c${i}`).value = color;
+  }
+  $('nose').value = dog.nose;
+  $('eyes').value = dog.eyes; $('eyesP').value = dog.eyes;
+  document.querySelectorAll('[data-wear]').forEach(b => { b.checked = dog.wear.has(b.dataset.wear); });
+  $('noseP').value = [...$('noseP').options].some(o => o.value === dog.nose) ? dog.nose : '';
+  ring.position.set(dog.group.position.x, 0.003, dog.group.position.z);
+  ring.scale.setScalar(Math.max(0.6, dog.length));
+  redraw();
+}
+function edit() {
+  Object.assign(selected, { build: $('build').value, ears: $('ears').value, tail: $('tail').value, fur: $('fur').value, head: $('head').value,
+                            length: +$('size').value, coat: $('c0').value, nose: $('nose').value, eyes: $('eyes').value });
+  selected.layers = [1, 2, 3].map(i => [$(`p${i}`).value, $(`c${i}`).value]);
+  $('len').textContent = `${selected.length.toFixed(2)} m`;
+  apply(selected);
+}
+for (const id of ['build', 'head', 'ears', 'tail', 'fur', 'size', 'c0', 'p1', 'c1', 'p2', 'c2', 'p3', 'c3', 'nose']) $(id).addEventListener('input', edit);
+$('noseP').addEventListener('input', e => { $('nose').value = e.target.value; edit(); });
+$('eyesP').innerHTML = Object.entries(EYES).map(([n, c]) => `<option value="${c}">${n}</option>`).join('');
+$('eyesP').addEventListener('input', e => { $('eyes').value = e.target.value; edit(); });
+$('eyes').addEventListener('input', edit);
+$('focus').addEventListener('click', () => { focus(selected); focusView = 1 - focusView; });
+select(dogs[0]);
+$('stats').innerHTML = `${dogs.length} cats · ${BUILDS.length} builds · ${EARS.length} ears · ${TAILS.length} tails<br>`
+  + `body ${bodyTris} tris (shared topology) + head/ears/tail<br>coat shells: semilong, long, rex`;
+
+const ray = new THREE.Raycaster();
+let down;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 4) return;
+  ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  const hit = ray.intersectObjects(dogs.filter(d => d.group.visible).map(d => d.group), true)[0];
+  if (hit) select(hit.object.userData.dog);
+});
+
+// Draw only when something changed, so an idle tab costs almost no battery.
+controls.addEventListener('change', redraw);
+addEventListener('resize', redraw);
+// ?dog=Name opens straight onto one breed (handy for sharing a link).
+const wanted = dogs.find(d => d.name === new URLSearchParams(location.search).get('dog'));
+$('filter').value = COMPARE || REVIEW ? 'all' : wanted ? (wanted.build in sections ? wanted.build : 'all') : 'domestic';
+applyFilter();
+if (REVIEW) for (const id of ['panel', 'top', 'hint']) $(id).style.display = 'none';
+// Animation picker: plays on the selected dog, or on every shown dog.
+$('anim').innerHTML += builds.domestic.clips.map(c => `<option>${c.name}</option>`).join('');
+const targets = () => ($('animAll').checked ? dogs.filter(d => d.group.visible && d.rig) : [selected]);
+$('anim').addEventListener('input', () => {
+  if (!$('animAll').checked) for (const d of playing) if (d !== selected) play(d, '');
+  for (const d of targets()) play(d, $('anim').value);
+});
+$('toy').addEventListener('input', () => { for (const d of targets()) { d.toy = $('toy').checked; apply(d); } });
+// Which toy: the plain ball or any prop with a socket_grip (props/props.json).
+$('toyKind').innerHTML = TOY_ORDER.map(id => `<option value="${id}">${toys[id]?.label || 'ball'}</option>`).join('');
+$('toyKind').addEventListener('input', () => {
+  for (const d of targets()) { d.toyKind = $('toyKind').value; d.toy = true; apply(d); }
+  $('toy').checked = true;
+});
+// Wearables on the selected dog (or every shown dog with "all shown").
+$('wearBoxes').innerHTML = WEARABLES.map(w => `<label><input type="checkbox" data-wear="${w}"${selected.wear.has(w) ? ' checked' : ''}> ${w}</label>`).join(' ');
+document.querySelectorAll('[data-wear]').forEach(b => b.addEventListener('input', () => {
+  for (const d of targets()) { d.wear[b.checked ? 'add' : 'delete'](b.dataset.wear); apply(d); }
+}));
+// ---- clip stepping and "Play all" ----
+// The caption shows the clip playing; Play all steps through every clip in
+// turn (looping clips play a couple of cycles), ◀ ▶ or the arrow keys step by hand.
+const clipNames = builds.domestic.clips.map(c => c.name);
+const clipLen = name => builds.domestic.clips.find(c => c.name === name)?.duration || 1;
+function showNow() {
+  const name = $('anim').value, i = clipNames.indexOf(name);
+  $('nowPlaying').style.display = name ? 'block' : 'none';
+  $('nowPlaying').innerHTML = `${name.replaceAll('_', ' ')}<small>${i + 1} / ${clipNames.length}`
+    + `${builds.domestic.looping.includes(name) ? ' · loop' : ''}${cycling ? ' · playing all' : ''}</small>`;
+}
+function setClip(name) {
+  $('anim').value = name;
+  $('anim').dispatchEvent(new Event('input'));
+}
+function stepClip(d) {
+  const i = clipNames.indexOf($('anim').value);
+  setClip(clipNames[(i + d + clipNames.length) % clipNames.length]);
+}
+let cycling = false, cycleTimer = 0;
+function cycleNext(first) {
+  clearTimeout(cycleTimer);
+  if (!cycling) return;
+  if (!first) stepClip(1);
+  else if (!$('anim').value) setClip(clipNames[0]);
+  else setClip($('anim').value);
+  const name = $('anim').value, T = clipLen(name);
+  const hold = builds.domestic.looping.includes(name) ? Math.max(2 * T, 2.5) : T + 0.6;
+  cycleTimer = setTimeout(() => cycleNext(false), hold * 1000);
+}
+function setCycling(on) {
+  cycling = on;
+  $('animCycle').textContent = on ? 'Stop' : 'Play all';
+  if (on) cycleNext(true); else clearTimeout(cycleTimer);
+  showNow();
+}
+$('anim').addEventListener('input', showNow);
+$('animPrev').addEventListener('click', () => { setCycling(false); stepClip(-1); });
+$('animNext').addEventListener('click', () => { setCycling(false); stepClip(1); });
+$('animCycle').addEventListener('click', () => setCycling(!cycling));
+addEventListener('keydown', e => {
+  if (e.target.closest('input, select, textarea')) return;
+  if (e.key === 'ArrowRight') { setCycling(false); stepClip(1); }
+  else if (e.key === 'ArrowLeft') { setCycling(false); stepClip(-1); }
+  else if (e.key === ' ') { e.preventDefault(); setCycling(!cycling); }
+});
+const anim = new URLSearchParams(location.search).get('anim');
+if (anim) { $('anim').value = anim; $('anim').dispatchEvent(new Event('input')); }
+const view = new URLSearchParams(location.search).get('view') === 'front' ? 1 : 0;
+if (wanted) { select(wanted); focus(wanted, view); focusView = 1 - view; }
+function loop() {
+  if (renderer.domElement.width !== innerWidth * devicePixelRatio) {
+    renderer.setSize(innerWidth, innerHeight);
+    labelRenderer.setSize(innerWidth, innerHeight);
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+  }
+  controls.update();
+  if (playing.size) {   // animate only while a clip is playing, then go back to idle rendering
+    const dt = Math.min(clock.getDelta(), 0.1);
+    for (const d of playing) { d.mixer.update(dt); updateProps(d, dt); }
+    needsRender = true;
+  }
+  if (needsRender) {
+    needsRender = false;
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+  }
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>

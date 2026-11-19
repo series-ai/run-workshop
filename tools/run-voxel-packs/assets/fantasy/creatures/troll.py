@@ -297,14 +297,16 @@ def build():
             "arm-l": {"rot": keys((0, 0, 0, 0), (1.0, 7, 0, -5), (2.0, 0, 0, 0))},
             "arm-r": {"rot": keys((0, 0, 0, 0), (1.0, -5, 0, 4), (2.0, 0, 0, 0))},
             "club": {"rot": keys((0, 0, 0, 0), (1.0, 4, 0, 0), (2.0, 0, 0, 0))}}
-    # Lift the club, strike down, then recover. Keep the shoulder within one arc.
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.16, 45, 0, -12), (0.34, 105, 0, -25), (0.44, 120, 0, -28),
-                                    (0.52, 95, 0, -22), (0.62, 0, 0, -8), (0.70, 8, 0, -4), (0.86, 4, 0, 0), (1.15, 0, 0, 0))},
-              "club": {"rot": keys((0, 0, 0, 0), (0.34, 5, 0, 0), (0.44, 5, 0, 0), (0.62, 0, 0, 0), (1.15, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.44, 22, 0, -12), (0.62, -12, 0, 8), (1.15, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.34, -9, 0, 0), (0.44, -12, 0, 0), (0.62, 16, 0, 0), (0.70, 12, 0, 0), (1.15, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.44, -8, 0, 0), (0.62, 12, 0, 0), (1.15, 0, 0, 0))},
-              "troll": {"loc": keys((0, 0, 0, 0), (0.44, 0, 0, 1.5), (0.62, 0, 0, -2.5), (0.70, 0, 0, -1.0), (1.15, 0, 0, 0))}}
+    # Wind-up (0-0.43 s): the troll rears back, the club cocked high over the shoulder. Strike
+    # (4 frames) down into the ground at 0.567 s with the whole body lunging in, a short
+    # follow-through and hold on contact, then the recovery.
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 70, 0, -16), (0.3667, 136, 0, -28), (0.4333, 140, 0, -28),
+                                    (0.5667, 24, 0, -6), (0.6333, 31, 0, -4), (0.7667, 28, 0, -4), (1.1333, 0, 0, 0))},
+              "club": {"rot": keys((0, 0, 0, 0), (0.3667, 14, 0, 0), (0.4333, 20, 0, 0), (0.5667, 0, 0, 0), (0.6333, -3, 0, 0), (0.7667, 0, 0, 0), (1.1333, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, 30, 0, -16), (0.6, -16, 0, 10), (0.7, -20, 0, 12), (1.1333, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.3667, 14, -6, 0), (0.4333, 16, -8, 0), (0.5667, -20, 6, 0), (0.6333, -23, 7, 0), (0.7667, -19, 5, 0), (1.1333, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4667, 12, 0, 0), (0.6, -14, 0, 0), (0.6667, -18, 0, 0), (0.8, -12, 0, 0), (1.1333, 0, 0, 0))},
+              "troll": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 2.5), (0.4333, 0, 0, 3), (0.5667, 0, 0, -6), (0.6333, 0, 0, -7), (0.7667, 0, 0, -6), (1.1333, 0, 0, 0))}}
     hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 16, 0, 7), (0.50, 0, 0, 0))},
            "head": {"rot": keys((0, 0, 0, 0), (0.10, 14, -10, 5), (0.50, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.10, -18, 0, -22), (0.50, 0, 0, 0))},
@@ -321,6 +323,6 @@ def build():
              "leg-r": {"rot": keys((0, 0, 0, 0), (0.90, -48, 0, 10))}}
     head_pt = (WRIST_R[0], 10.0, WRIST_R[2] - 24.0)
     return asset("creatures", "troll", "Cave Troll", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  sockets=[Socket("socket-club", at=to_root(head_pt), parent="club")],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-club", "clip:attack", size=32, at=0.62)])
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-club", "clip:attack", size=32, at=0.5667)])

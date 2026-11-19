@@ -186,10 +186,16 @@ def _new_animated(slug):
         P.flat(g, last(g), "bone", 6)
         joints.append(("action", "base", (19, 67, 13)))
         swing = Clip("active", {"action": {"rot": keys((0, (0, 0, 0)), (0.5, (42, 0, 0)), (1.0, (-42, 0, 0)), (1.5, (0, 0, 0)))}})
-        hit = Clip("attack", {"action": {"rot": keys((0, (0, 0, 0)), (0.25, (0, 0, 26)), (0.5, (0, 0, -26)), (0.75, (0, 0, 0)))}}, loop=False)
+        # Attack: the blade is hauled back 55° (frames 0-12, with a small
+        # settle at the top), swings 80° forward in 3 frames and bites at 25°
+        # in front on frame 15, drives on, holds in the cut, sways back to rest.
+        hit = Clip("attack", {"action": {"rot": keys((0, (0, 0, 0)), (6 / 30, (-40, 0, 0)), (10 / 30, (-58, 0, 0)), (12 / 30, (-55, 0, 0)),
+                                                    (15 / 30, (25, 0, 0)), (17 / 30, (31, 0, 0)), (22 / 30, (26, 0, 0)),
+                                                    (28 / 30, (-6, 0, 0)), (32 / 30, (2, 0, 0)), (35 / 30, (0, 0, 0)))}},
+                   loop=False, impact=15 / 30)
         clips = [swing, hit]
         sockets = [Socket("socket-blade", at=(0, 20, -1), parent="action")]
-        effects = [pfx("rvx-monster-blood-splat", "socket-blade", "clip:attack", size=24, at=0.45)]
+        effects = [pfx("rvx-monster-blood-splat", "socket-blade", "clip:attack", size=24, at=15 / 30)]
 
     elif slug == "ouija-table":
         _base(base, cx, cz, 17, 13, 4, "stone")

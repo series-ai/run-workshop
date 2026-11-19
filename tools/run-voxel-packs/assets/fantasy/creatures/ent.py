@@ -165,11 +165,13 @@ def build():
             "crown": {"rot": keys((0, 0, 0, 0), (1.5, 0, 0, -4), (3.0, 0, 0, 0), (4.5, 0, 0, 4), (6.0, 0, 0, 0))},
             "arm-l": {"rot": keys((0, 0, 0, 0), (3.0, 8, 0, 0), (6.0, 0, 0, 0))},
             "arm-r": {"rot": keys((0, 0, 0, 0), (3.0, -8, 0, 0), (6.0, 0, 0, 0))}}
-    attack = {"arm-l": {"rot": keys((0, 0, 0, 0), (0.5, 150, 0, 20), (0.75, 45, 0, 0), (0.9, 40, 0, 0), (1.3, 0, 0, 0))},
-              "arm-r": {"rot": keys((0, 0, 0, 0), (0.5, 150, 0, -20), (0.75, 45, 0, 0), (0.9, 40, 0, 0), (1.3, 0, 0, 0))},
-              "trunk": {"rot": keys((0, 0, 0, 0), (0.5, 10, 0, 0), (0.75, -14, 0, 0), (1.3, 0, 0, 0))},
-              "crown": {"rot": keys((0, 0, 0, 0), (0.5, 6, 0, 0), (0.8, -10, 0, 0), (1.3, 0, 0, 0))},
-              "ent": {"loc": keys((0, 0, 0, 0), (0.5, 0, 1.5, 0), (0.75, 0, -1, 0), (1.0, 0, 0, 0))}}
+    # Both arms swing up behind the crown while the trunk rears back (0-0.5 s), then hammer
+    # down in 4 frames; the whole tree pitches forward into the slam at 0.633 s, holds, recovers.
+    attack = {"arm-l": {"rot": keys((0, 0, 0, 0), (0.3, 120, 0, 16), (0.4333, 165, 0, 22), (0.5, 170, 0, 24), (0.6333, 72, 0, 4), (0.7, 66, 0, 2), (0.8333, 70, 0, 4), (1.2333, 0, 0, 0))},
+              "arm-r": {"rot": keys((0, 0, 0, 0), (0.3, 120, 0, -16), (0.4333, 165, 0, -22), (0.5, 170, 0, -24), (0.6333, 72, 0, -4), (0.7, 66, 0, -2), (0.8333, 70, 0, -4), (1.2333, 0, 0, 0))},
+              "trunk": {"rot": keys((0, 0, 0, 0), (0.4333, 14, 0, 0), (0.5, 16, 0, 0), (0.6333, -22, 0, 0), (0.7, -25, 0, 0), (0.8333, -21, 0, 0), (1.2333, 0, 0, 0))},
+              "crown": {"rot": keys((0, 0, 0, 0), (0.5333, 10, 0, 0), (0.7, -14, 0, 0), (0.7667, -16, 0, 0), (0.9, -8, 0, 0), (1.0667, 3, 0, 0), (1.2333, 0, 0, 0))},
+              "ent": {"loc": keys((0, 0, 0, 0), (0.4333, 0, 1.5, 3), (0.5, 0, 1.5, 3.5), (0.6333, 0, 0, -8), (0.7, 0, 0, -9), (0.8333, 0, 0, -8), (1.2333, 0, 0, 0))}}
     hit = {"trunk": {"rot": keys((0, 0, 0, 0), (0.15, 8, 0, -5), (0.6, 0, 0, 0))},
            "crown": {"rot": keys((0, 0, 0, 0), (0.2, 8, 0, 6), (0.7, 0, 0, 0))},
            "arm-l": {"rot": keys((0, 0, 0, 0), (0.15, -15, 0, -10), (0.6, 0, 0, 0))},
@@ -180,7 +182,7 @@ def build():
              "arm-l": {"rot": keys((0, 0, 0, 0), (1.4, 0, 0, -50))}, "arm-r": {"rot": keys((0, 0, 0, 0), (1.4, 0, 0, 50))},
              "leg-l": {"rot": keys((0, 0, 0, 0), (1.4, -20, 0, 0))}}
     return asset("creatures", "ent", "Elder Ent", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.6333), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                  # leaves fall from under the canopy, which they follow as it sways
                  sockets=[Socket("socket-slam", at=to_root((CX, 1.0, CZ - 16))), Socket("socket-canopy", at=to_root((CX, CROWN_Y + 4, CZ)), parent="crown")],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-slam", "clip:attack", size=44, at=0.52), pfx("rvx-fantasy-leaf-fall", "socket-canopy", "idle", size=40)])
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-slam", "clip:attack", size=44, at=0.6333), pfx("rvx-fantasy-leaf-fall", "socket-canopy", "idle", size=40)])

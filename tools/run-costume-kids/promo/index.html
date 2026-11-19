@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Boo Brigade trailer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #140e22; display: grid; place-items: center; overflow: hidden; }
+  canvas#out { height: 100vh; aspect-ratio: 9 / 16; display: block; }
+</style>
+<style>
+  /* Creepster by Font Diner (SIL Open Font License 1.1, see fonts/Creepster-OFL.txt), loaded locally */
+  @font-face { font-family: "Creepster"; src: url("fonts/Creepster-Regular.ttf") format("truetype"); font-display: block; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../previewer/vendor/three-build/three.module.js", "three/addons/": "../previewer/vendor/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="module">
+// Boo Brigade: the trailer, choreographed shot by shot with the real costume-kid
+// GLBs and clips, the dusk street (from previewer/street.js) and the live house
+// parts kit (from previewer/houses.js).
+//   live:              plays in real time and loops
+//   ?at=12.5&save=1    a full-size still at that time, posted to promo/server.py
+//   ?sheet=1,4,9&save=1  a contact sheet of moments
+//   ?record=1          steps exactly 1/30 s per frame, posts every frame and the
+//                      sound cues to promo/server.py
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { clone as skinnedClone } from "three/addons/utils/SkeletonUtils.js";
+
+const Q = new URLSearchParams(location.search);
+const W = 1080, H = 1920, FPS = 30;
+const RECORD = Q.has("record");
+const TITLE = Q.get("title") || "BOO BRIGADE";
+const FONT = `"Creepster", Impact, sans-serif`;
+const BPM = 140, BEAT = 60 / BPM, BAR = 4 * BEAT;   // every cut and pop lands on this grid
+const A = "../previewer/";
+
+// ------------------------------------------------------------------ renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const gl = renderer.domElement;
+const out = document.getElementById("out");
+const ctx = out.getContext("2d");
+const camera = new THREE.PerspectiveCamera(30, W / H, 0.3, 900);
+
+// ------------------------------------------------------------------ the kids' look
+// The kids read at dusk but sit in the mood of the scene. ?look=toon (default): a soft
+// five-step toon ramp on the kids (no pure-white top step), a warm lamp-coloured light from the
+// camera, a small cool blue-purple self-light (the dusk ambient) and a cool grade on the kids
+// only; the street gets the moodier settings, the stage close-ups a lighter touch. Each knob is
+// a query param for comparing variants (ramp, lift/liftc/grade/fill/fillc for the street,
+// slift/sliftc/sgrade/sfill/sfillc for the stage). ?look=fill: the original shading plus the
+// camera light. ?look=plain: draft 1.
+const LOOK = Q.get("look") || "toon";
+const RAMP = (Q.get("ramp") || "105,150,185,215,235").split(",").map(Number);
+const TOON_RAMP = (() => {
+  const t = new THREE.DataTexture(new Uint8Array(RAMP), RAMP.length, 1, THREE.RedFormat);
+  t.minFilter = t.magFilter = THREE.NearestFilter;
+  t.needsUpdate = true;
+  return t;
+})();
+const hexC = (q, d) => new THREE.Color(+("0x" + (Q.get(q) || d)));
+// per scene, set before each render: a self-light (tinted) and a grade multiplied over the kids' lit colour
+const kidLift = { value: new THREE.Color() }, kidGrade = { value: new THREE.Color(1, 1, 1) };
+const LIFT = { street: +(Q.get("lift") ?? 0.2), stage: +(Q.get("slift") ?? 0.08) };
+const LIFT_C = { street: hexC("liftc", "aaa6ff"), stage: hexC("sliftc", "d0ccff") };
+const GRADE = { street: hexC("grade", "eee8ff"), stage: hexC("sgrade", "f6f2ff") };
+const FILL = { street: +(Q.get("fill") ?? 0.42), stage: +(Q.get("sfill") ?? 0.45) };
+const FILL_C = { street: hexC("fillc", "ffcc98"), stage: hexC("sfillc", "fff1e2") };
+function liftShader(sh) {
+  sh.uniforms.kidLift = kidLift;
+  sh.uniforms.kidGrade = kidGrade;
+  sh.fragmentShader = "uniform vec3 kidLift;\nuniform vec3 kidGrade;\n" + sh.fragmentShader.replace("#include <opaque_fragment>",
+    "outgoingLight = outgoingLight * kidGrade + diffuseColor.rgb * kidLift;\n#include <opaque_fragment>");
+}
+function kidMaterial(m) {
+  if (LOOK === "plain") return m;
+  const k = LOOK === "toon"
+    ? new THREE.MeshToonMaterial({ name: m.name, color: m.color.clone(), vertexColors: m.vertexColors, gradientMap: TOON_RAMP, side: m.side })
+    : m.clone();
+  if (LOOK === "toon") k.onBeforeCompile = liftShader;
+  return k;
+}
+
+// a seeded random, so a recording is the same every time
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const lerp = (a, b, u) => a + (b - a) * u;
+const clamp01 = u => Math.max(0, Math.min(1, u));
+const smooth = u => { u = clamp01(u); return u * u * (3 - 2 * u); };
+const easeOut = u => 1 - (1 - clamp01(u)) ** 3;
+const easeOutBack = u => { u = clamp01(u); const c = 1.7; return 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2; };
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
+let T = 0, events = [];
+// a sound cue at an exact time (default: now). Cues tied to the music go through sfxB, which puts
+// them exactly on the beat grid of the current shot (every shot starts on a bar line).
+const sfx = (type, gain = 1, at = T, extra = {}) => events.push({ t: +at.toFixed(4), type, gain, ...extra });
+const sfxB = (type, gain, beat, extra) => sfx(type, gain, STARTS[shotIx] + beat * BEAT, extra);
+const titlePops = (b0, n, gain) => { for (let i = 0; i < n; i++) sfxB("pop", gain, b0 + i / 8, { pitch: i }); };
+
+const loader = new GLTFLoader();
+const cache = new Map();
+const load = url => { if (!cache.has(url)) cache.set(url, loader.loadAsync(url)); return cache.get(url); };
+
+function gradientTexture(stops, extra) {
+  const c = document.createElement("canvas");
+  c.width = 270; c.height = 480;
+  const g = c.getContext("2d"), grad = g.createLinearGradient(0, 0, 0, 480);
+  for (const [t, col] of stops) grad.addColorStop(t, col);
+  g.fillStyle = grad; g.fillRect(0, 0, 270, 480);
+  if (extra) extra(g);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// ------------------------------------------------------------------ kids
+const SKIN_TONES = [[0.99, 0.86, 0.74], [0.95, 0.78, 0.62], [0.88, 0.66, 0.48], [0.74, 0.50, 0.32], [0.56, 0.35, 0.21], [0.38, 0.23, 0.14]];
+const KSRC = new Map();
+const KIDS = [];        // every kid made, so one loop updates their mixers
+function makeKid(slug, { scale = 1, skin = 1, parent } = {}) {
+  const g = KSRC.get(slug);
+  const obj = skinnedClone(g.scene);
+  obj.scale.setScalar(scale);
+  const k = { slug, obj, skinMats: [], expr: {}, face: null, clip: null, current: null, path: [], x: 0, y: 0, z: 0, yaw: 0 };
+  obj.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.frustumCulled = false;
+      const mats = [o.material].flat().map(m => {
+        if (!m.name.startsWith("SKIN")) return m;
+        const c = m.clone();
+        c.onBeforeCompile = m.onBeforeCompile;
+        return c;
+      });
+      o.material = Array.isArray(o.material) ? mats : mats[0];
+      for (const m of mats) if (m.name.startsWith("SKIN")) k.skinMats.push(m);
+    }
+    const nm = o.userData.name || o.name;   // GLTFLoader strips the dots from node names; the original is kept here
+    if (nm && nm.startsWith("expr.")) k.expr[nm] = o;
+  });
+  if (!g.foot) {   // the bind-pose footprint (half width across, half depth front to back), for spacing
+    const b = new THREE.Box3();
+    g.scene.traverse(o => { if (o.isMesh) { o.geometry.computeBoundingBox(); b.union(o.geometry.boundingBox); } });
+    g.foot = [Math.max(-b.min.x, b.max.x), Math.max(-b.min.z, b.max.z)];
+  }
+  k.hw = g.foot[0] * scale; k.hd = g.foot[1] * scale;
+  k.mixer = new THREE.AnimationMixer(obj);
+  k.actions = Object.fromEntries(g.animations.map(c => [c.name, k.mixer.clipAction(c)]));
+  setSkin(k, skin);
+  parent.add(obj);
+  KIDS.push(k);
+  return k;
+}
+function setSkin(k, i) {
+  const [r, g, b] = SKIN_TONES[i];
+  for (const m of k.skinMats) m.color.setRGB(r, g, b, THREE.SRGBColorSpace);
+}
+function play(k, name, { ts = 1, at = 0, once = false, fade = 0, force = false } = {}) {
+  if (k.clip === name && !force) { if (k.current) k.current.timeScale = ts; return; }
+  const next = k.actions[name] || k.actions.idle;
+  if (fade > 0 && k.current && k.current !== next) {
+    next.reset();
+    next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
+    next.clampWhenFinished = true;
+    next.fadeIn(fade).play();
+    k.current.fadeOut(fade);
+  } else {
+    k.mixer.stopAllAction();
+    next.reset();
+    next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
+    next.clampWhenFinished = true;
+    next.play();
+  }
+  next.time = at;
+  next.timeScale = ts;
+  k.current = next;
+  k.clip = name;
+}
+// expressions: each expr.<group>.<name> node is shown at scale 1 or hidden at 0. A face
+// override ({ eyes, brow, mouth }; "none" hides the group) is applied after the clip.
+function applyFace(k) {
+  if (!k.face) return;
+  for (const [name, node] of Object.entries(k.expr)) {
+    const [, group, val] = name.split(".");
+    const want = k.face[group];
+    if (want === undefined) continue;
+    node.scale.setScalar(want === val ? 1 : 0);
+  }
+}
+function place3(k, x, y, z, yaw) {
+  k.x = x; k.y = y; k.z = z; k.yaw = yaw;
+  k.obj.position.set(x, y, z);
+  k.obj.rotation.y = yaw;
+}
+const show = (list, on) => { for (const k of list) k.obj.visible = on; };
+
+// ================================================================== the street
+// Adapted from previewer/street.js: the same layout, instancing, light pools, candy
+// and kid packs, on a fixed timestep with a seeded random.
+const STREET = new THREE.Scene();
+const LOT = 24, LOTS = 6, X0 = -(LOT * LOTS) / 2, X1 = -X0;
+const FENCE_Z = 11.6, WALK_Z0 = 12, ROAD_Z1 = 24;
+const WALK_Y = 0.38, GRASS_Y = 0.37;
+const HOUSE_Z = -3;
+const LANES = [12.8, 14.0];                 // as previewer/street.js: kids on the inner sidewalk,
+const KERB_Z = 15.8, FURNITURE_Z = 15.55;  // lamps on the kerb edge, hydrants and the sign just inside
+const HOUSES = [
+  { slug: "house-a", fence: "white" }, { slug: "house-06", fence: "dark" }, { slug: "house-b", fence: "white" },
+  { slug: "house-07", fence: "white" }, { slug: "house-c", fence: "dark" }, { slug: "house-10", fence: "white" },
+];
+const SIM_KIDS = ["witch", "cupcake", "cardboard-robot", "knight", "ghost", "pumpkin-clown", "dracula", "princess", "superhero",
+  "mummy", "skeleton-onesie", "black-cat", "frankenstein", "wizard", "bumblebee", "ninja", "candy-corn", "inflatable-trex"];
+const CANDY = ["candy-wrapped", "candy-lollipop", "candy-corn", "candy-chocolate", "candy-gumdrop", "candy-apple"];
+
+const shemi = new THREE.HemisphereLight(0x8a86c8, 0x3a3048, 1.25);
+const ssun = new THREE.DirectionalLight(0xff9a55, 1.5);
+ssun.castShadow = true;
+ssun.shadow.mapSize.set(2048, 2048);
+ssun.shadow.bias = -0.0006;
+ssun.shadow.normalBias = 0.04;
+const sfill = new THREE.DirectionalLight(0xb9a8ff, 0.55);   // a soft front fill so faces read at dusk
+sfill.position.set(30, 40, 90);
+STREET.add(shemi, ssun, ssun.target, sfill);
+const camFill = { street: new THREE.DirectionalLight(FILL_C.street, LOOK === "plain" ? 0 : FILL.street),
+  stage: new THREE.DirectionalLight(FILL_C.stage, LOOK === "plain" ? 0 : FILL.stage) };
+STREET.add(camFill.street, camFill.street.target);
+function aimFill(scene, look) {   // a light from just above the camera, so every face reads
+  const l = scene === STREET ? camFill.street : camFill.stage;
+  l.position.copy(camera.position).add(V3(0, 2, 0));
+  l.target.position.copy(look);
+  l.target.updateMatrixWorld();
+  const st = scene === STREET ? "street" : "stage";
+  kidLift.value.copy(LIFT_C[st]).multiplyScalar(LOOK === "toon" ? LIFT[st] : 0);
+  kidGrade.value.copy(LOOK === "toon" ? GRADE[st] : new THREE.Color(1, 1, 1));
+}
+STREET.background = gradientTexture([[0, "#24244f"], [0.45, "#43407a"], [0.75, "#8a5f86"], [1, "#e0905f"]]);
+STREET.fog = new THREE.Fog(0x55467a, 160, 420);
+function aimSun(cx, cz, half = 95) {   // keep the shadow map tight around what the camera sees
+  ssun.target.position.set(cx, 0, cz);
+  ssun.position.set(cx - 60, 40, cz - 40);
+  Object.assign(ssun.shadow.camera, { left: -half, right: half, top: half * 0.65, bottom: -half * 0.65, near: 1, far: 400 });
+  ssun.shadow.camera.updateProjectionMatrix();
+}
+aimSun(0, 0);
+
+const grassMat = new THREE.MeshStandardMaterial({ color: 0x4f6e38, roughness: 1 });
+function plane(w, d, x, y, z, mat, parent = STREET) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);
+  m.rotation.x = -Math.PI / 2;
+  m.position.set(x, y, z);
+  m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+plane(400, 200, 0, GRASS_Y, WALK_Z0 - 100, grassMat);
+plane(400, 120, 0, GRASS_Y, ROAD_Z1 + 4 + 60, grassMat);
+plane(1200, 1200, 0, -0.05, 0, new THREE.MeshStandardMaterial({ color: 0x4a5434, roughness: 1 }));
+
+const glowMats = new Set();
+async function propParts(slug) {
+  const g = await load(`${A}street-assets/${slug}.glb`);
+  g.scene.updateMatrixWorld(true);
+  const parts = [];
+  g.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const geo = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    const mat = o.material;
+    if (mat.name === "GLOW") { glowMats.add(mat); mat.userData.base ??= mat.emissiveIntensity; }
+    parts.push({ geo, mat });
+  });
+  return parts;
+}
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3();
+function matrixOf(t) {
+  _q.setFromEuler(_e.set(t.rx || 0, t.ry || 0, t.rz || 0));
+  const s = t.s ?? 1;
+  _s.set(t.sx ?? s, t.sy ?? s, t.sz ?? s);
+  return _m.compose(_p.set(t.x, t.y ?? GRASS_Y, t.z), _q, _s);
+}
+const placements = new Map();
+const place = (slug, t) => { if (!placements.has(slug)) placements.set(slug, []); placements.get(slug).push(t); };
+const instanced = new Map();
+async function buildInstances() {
+  for (const [slug, list] of placements) {
+    const parts = await propParts(slug);
+    instanced.set(slug, parts.map(({ geo, mat }) => {
+      const im = new THREE.InstancedMesh(geo, mat, list.length);
+      list.forEach((t, i) => im.setMatrixAt(i, matrixOf(t)));
+      im.castShadow = !slug.startsWith("road") && !slug.startsWith("sidewalk");
+      im.receiveShadow = true;
+      im.computeBoundingSphere();
+      im.frustumCulled = false;
+      STREET.add(im);
+      return im;
+    }));
+  }
+}
+
+const ray = new THREE.Raycaster();
+async function houseInfo(slug) {
+  const parts = await propParts(slug);
+  const pal = parts.find(p => p.mat.name !== "GLOW");
+  const glowMat = parts.find(p => p.mat.name === "GLOW")?.mat;
+  const pos = pal.geo.getAttribute("position");
+  let maxZ = -Infinity;
+  for (let i = 0; i < pos.count; i++) maxZ = Math.max(maxZ, pos.getZ(i));
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i < pos.count; i++) if (pos.getZ(i) > maxZ - 0.3 && pos.getY(i) < 1) { lo = Math.min(lo, pos.getX(i)); hi = Math.max(hi, pos.getX(i)); }
+  const doorX = (lo + hi) / 2;
+  const meshes = parts.map(p => new THREE.Mesh(p.geo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide })));
+  const prof = [];
+  let deck = 0;
+  for (let z = maxZ + 0.6; z > maxZ - 9; z -= 0.2) {
+    ray.set(new THREE.Vector3(doorX, 5.2, z), new THREE.Vector3(0, -1, 0));
+    const hit = ray.intersectObjects(meshes, false)[0];
+    const y = hit ? 5.2 - hit.distance : 0;
+    if (y - deck > 0.6) break;
+    prof.push({ z, y });
+    deck = Math.max(deck, y);
+  }
+  ray.set(new THREE.Vector3(doorX, deck + 1.6, maxZ + 1), new THREE.Vector3(0, 0, -1));
+  const wall = ray.intersectObjects(meshes, false)[0];
+  const doorZ = wall ? maxZ + 1 - wall.distance : maxZ - 4;
+  return { doorX, maxZ, deck, doorZ, glowMat, prof: prof.filter(p => p.z > doorZ) };
+}
+function profileY(h, zLocal) {
+  const p = h.info.prof;
+  if (zLocal >= p[0].z) return 0;
+  for (let i = 1; i < p.length; i++) if (p[i].z <= zLocal) return Math.max(p[i - 1].y, p[i].y);
+  return p[p.length - 1].y;
+}
+
+const houses = [];
+async function layout() {
+  const infos = await Promise.all(HOUSES.map(h => houseInfo(h.slug)));
+  HOUSES.forEach((h, i) => {
+    const x0 = X0 + i * LOT, gateX = x0 + 10, info = infos[i];
+    const hx = gateX - info.doorX;
+    houses.push({ ...h, info, x0, gateX, hx });
+    place(h.slug, { x: hx, z: HOUSE_Z });
+    for (let k = 0; k < 6; k++) {
+      const cx = x0 + 2 + 4 * k;
+      if (k === 2) {
+        place(`fence-${h.fence}-post`, { x: cx - 1.9, z: FENCE_Z });
+        place(`fence-${h.fence}-post`, { x: cx + 1.9, z: FENCE_Z });
+      } else place(`fence-${h.fence}`, { x: cx, z: FENCE_Z });
+    }
+    const z0 = HOUSE_Z + info.maxZ, len = FENCE_Z - z0;
+    place("sidewalk", { x: gateX, y: GRASS_Y - 0.07, z: z0 + len / 2, sx: 0.72, sy: 0.25, sz: len / 4 });
+    const dz = HOUSE_Z + info.doorZ;
+    place(i % 2 ? "jack-small" : "jack-medium", { x: gateX + 2.3, y: GRASS_Y + info.deck, z: dz + 1.1, ry: -0.3 + rnd() * 0.6, s: 0.8 });
+    place(["jack-medium", "jack-large", "jack-small"][i % 3], { x: gateX - 3.0, z: z0 + 1.2, ry: 0.4 - rnd() * 0.5 });
+    place(i % 2 ? "hedge" : "bush", { x: hx + (info.doorX > 0 ? -4.5 : 4.5), z: HOUSE_Z + info.maxZ - 3.4, ry: (rnd() - 0.5) * 0.4 });
+  });
+  place("fence-white-post", { x: X1, z: FENCE_Z });
+  place("fence-white-post", { x: X0 - 0.01, z: FENCE_Z });
+  const L = i => X0 + i * LOT;
+  place("mailbox", { x: L(0) + 6.5, z: FENCE_Z - 1.0 });
+  place("leaf-pile", { x: L(0) + 18.5, z: 8.2, ry: 0.4 });
+  place("tombstone-round", { x: L(1) + 3.6, z: 8.6, ry: 0.15 });
+  place("tombstone-cross", { x: L(1) + 6.6, z: 7.4, ry: -0.2 });
+  place("tombstone-round", { x: L(1) + 19.5, z: 8.8, ry: -0.25, s: 0.85 });
+  place("crow-post", { x: L(1) + 22.6, z: 9.8, ry: -0.6 });
+  place("hay-bale", { x: L(2) + 18, z: 8.4, ry: -0.25 });
+  place("mailbox", { x: L(2) + 6.5, z: FENCE_Z - 1.0 });
+  place("leaf-pile", { x: L(3) + 4.6, z: 8.6, ry: -0.5, s: 0.9 });
+  place("mailbox", { x: L(3) + 13.5, z: FENCE_Z - 1.0 });
+  place("tombstone-cross", { x: L(4) + 17.0, z: 8.2, ry: 0.3 });
+  place("tombstone-round", { x: L(4) + 20.2, z: 7.4, ry: -0.1 });
+  place("crow-post", { x: L(4) + 4.0, z: 9.6, ry: 0.5 });
+  place("hay-bale", { x: L(5) + 4.4, z: 8.4, ry: 0.3 });
+  place("leaf-pile", { x: L(5) + 19, z: 8.4, ry: 1.1 });
+  place("hydrant", { x: L(1) + 15, y: WALK_Y, z: FURNITURE_Z });
+  place("hydrant", { x: L(4) + 6, y: WALK_Y, z: FURNITURE_Z });
+  place("street-sign", { x: X1 - 1.5, y: WALK_Y, z: FURNITURE_Z, ry: -0.3 });
+  const TREES = ["tree-gnarled", "tree-leaning", "tree-forked"];
+  for (let i = 0; i <= LOTS; i++) place(TREES[i % 3], { x: X0 + i * LOT + (rnd() - 0.5) * 2, z: 5 + rnd() * 3, ry: rnd() * 6.28, s: 0.85 + rnd() * 0.2 });
+  for (let i = 0; i < LOTS; i++) place(TREES[(i + 1) % 3], { x: X0 + i * LOT + 14 + rnd() * 6, z: -16 - rnd() * 4, ry: rnd() * 6.28, s: 0.9 + rnd() * 0.2 });
+  for (let i = 0; i <= LOTS; i++) place(i % 3 === 1 ? "lamp-double" : "lamp-single", { x: X0 + i * LOT + 4, y: WALK_Y, z: KERB_Z });
+  for (let x = X0 - 24 + 2; x < X1 + 24; x += 4) {
+    place("sidewalk", { x, y: 0, z: 14 });
+    place("sidewalk", { x, y: 0, z: 26, ry: Math.PI });
+  }
+  for (let x = X0 - 24 + 8; x < X1 + 24; x += 16) place("road", { x, y: 0, z: 20, ry: Math.PI / 2 });
+  place("car-sedan", { x: X0 + 40, y: 0, z: 18.1, ry: Math.PI / 2 });
+  place("car-wagon", { x: X0 + 88, y: 0, z: 18.1, ry: Math.PI / 2 });
+  place("car-bug", { x: X0 + 128, y: 0, z: 18.1, ry: -Math.PI / 2 });   // (street.js: X0 + 136; here nudged so it frames the patrol shot without hiding the kids)
+}
+
+// fake light pools under the lamps and at the gates (an additive glow: UI-like light, not an asset)
+function buildPools() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d"), grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, "rgba(255,190,110,0.55)"); grad.addColorStop(0.5, "rgba(255,150,70,0.18)"); grad.addColorStop(1, "rgba(255,140,60,0)");
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const spots = [];
+  for (let i = 0; i <= LOTS; i++) spots.push([X0 + i * LOT + 4, WALK_Y + 0.03, KERB_Z - 1.2, 13]);
+  for (const h of houses) spots.push([h.gateX, GRASS_Y + 0.04, HOUSE_Z + h.info.maxZ + 1.5, 9]);
+  const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const pools = new THREE.InstancedMesh(geo, mat, spots.length);
+  spots.forEach(([x, y, z, s], i) => pools.setMatrixAt(i, matrixOf({ x, y, z, s })));
+  pools.renderOrder = 2;
+  STREET.add(pools);
+}
+
+const candies = [];
+function buildCandy() {
+  for (let i = 0; i < 14; i++) {
+    const slug = CANDY[i % CANDY.length];
+    candies.push({ slug, x: X0 + 8 + i * ((X1 - X0 - 16) / 13) + (rnd() - 0.5) * 3, z: LANES[i % 2] + (rnd() - 0.5) * 0.6, ph: rnd() * 6.28 });
+    place(slug, { x: 0, z: 0 });
+  }
+}
+function updateCandy(t, cam) {   // (candy right under the camera would fill the frame: those stay hidden)
+  const idx = {};
+  for (const c of candies) {
+    const i = (idx[c.slug] = (idx[c.slug] ?? -1) + 1);
+    const near = cam && Math.hypot(c.x - cam.x, c.z - cam.z) < 16;
+    const m = matrixOf({ x: c.x, y: WALK_Y + 0.35 + 0.25 * Math.sin(t * 2.2 + c.ph), z: c.z, ry: t * 1.6 + c.ph, s: near ? 0 : 1.5 });
+    for (const im of instanced.get(c.slug)) { im.setMatrixAt(i, m); im.instanceMatrix.needsUpdate = true; }
+  }
+}
+
+// ---- the kid packs (street.js): walk the sidewalk, queue at a door, one at a time up the steps
+const sim = [], packs = [];
+const KID_SCALE = 0.4, WALK_SPEED = 1.3, RUN_SPEED = 2.7, GAP = 1.15;
+const PACK_SIZES = [5, 5, 4, 4];
+let simFrozen = true;       // the street sim from street.js is kept but parked: every street shot is staged
+function groundY(x, z) {
+  if (z >= WALK_Z0) return WALK_Y;
+  for (const h of houses) if (Math.abs(x - h.gateX) < 1.6) return GRASS_Y + 0.04 + profileY(h, z - HOUSE_Z);
+  return GRASS_Y;
+}
+function setClip(k, name, fade = 0.25) {
+  if (k.clip === name) return;
+  play(k, name, { fade });
+}
+function locomote(k, speed) {
+  if (speed < 0.12) { setClip(k, k.restClip || "idle"); k.current.timeScale = 1; return; }
+  const mid = (WALK_SPEED + RUN_SPEED) / 2;
+  const run = k.clip === "run" ? speed > mid - 0.35 : speed > mid + 0.35;
+  setClip(k, run ? "run" : "walk");
+  k.current.timeScale = Math.min(1.5, Math.max(0.6, speed / (run ? RUN_SPEED : WALK_SPEED)));
+}
+function stepToward(k, tx, tz, speed, dt) {
+  const dx = tx - k.x, dz = tz - k.z, d = Math.hypot(dx, dz), st = speed * dt;
+  if (d < 1e-3) return true;
+  k.yawTo = Math.atan2(dx, dz);
+  if (d <= st) { k.x = tx; k.z = tz; return true; }
+  k.x += (dx / d) * st; k.z += (dz / d) * st;
+  return false;
+}
+function followPath(k, speed, dt) {
+  while (k.path.length) {
+    const [tx, tz] = k.path[0];
+    if (!stepToward(k, tx, tz, speed, dt)) { locomote(k, speed); return false; }
+    k.path.shift();
+  }
+  return true;
+}
+const footZ = h => HOUSE_Z + h.info.maxZ + 0.45;
+const doorZ = h => HOUSE_Z + h.info.doorZ + 0.7;
+const mouthZ = FENCE_Z + 0.7;
+const IN_X = 0.6, OUT_X = -0.65;
+function queueSpot(h, i) {
+  const z = footZ(h) + i * GAP;
+  if (z < FENCE_Z - 0.4) return [h.gateX + IN_X, z];
+  const j = Math.round((z - (FENCE_Z - 0.4)) / GAP) + 1;
+  return [h.gateX - h.pack.dir * j * GAP, mouthZ];
+}
+function waitSpot(h, k) {
+  const n = h.pack.kids.indexOf(k);
+  return [h.gateX + h.pack.dir * (1.6 + (n % 3) * 1.2), LANES[0] + 0.2 + Math.floor(n / 3) * 1.3];
+}
+function nextHouse(pack) {
+  const ahead = houses.filter(h => !h.pack && !pack.visited.has(h) && (h.gateX - pack.x) * pack.dir > -0.5);
+  ahead.sort((a, b) => (a.gateX - b.gateX) * pack.dir);
+  return ahead[0] || null;
+}
+function startVisit(pack, h) {
+  h.pack = pack; pack.house = h; pack.state = "visit"; pack.visited.add(h);
+  h.line = [...pack.kids].sort(() => rnd() - 0.5);
+  h.atDoor = null;
+  h.line.forEach((k, i) => { k.state = "queue"; k.restClip = "idle"; k.delay = i * 0.5; k.path = [[h.gateX + IN_X, mouthZ + 0.4]]; });
+}
+function updatePack(pack, dt) {
+  if (pack.state === "travel") {
+    pack.x += pack.dir * pack.speed * dt;
+    const h = nextHouse(pack);
+    if (h && (h.gateX - pack.x) * pack.dir <= 0) startVisit(pack, h);
+    if ((pack.timer -= dt) <= 0) {
+      pack.timer = 4 + rnd() * 5;
+      pack.speed = rnd() < 0.35 ? RUN_SPEED * 0.9 : WALK_SPEED * (0.85 + rnd() * 0.3);
+    }
+    if (pack.x > X1 + 18 || pack.x < X0 - 18) {
+      const shift = pack.x > 0 ? -(X1 - X0 + 36) : X1 - X0 + 36;
+      pack.x += shift; pack.visited.clear();
+      for (const k of pack.kids) k.x += shift;
+    }
+  } else if (pack.state === "visit") {
+    const h = pack.house;
+    if (h.line.length === 0 && pack.kids.every(k => k.state === "wait" && !k.path.length)) {
+      h.pack = null; pack.house = null; pack.state = "travel"; pack.x = h.gateX + pack.dir * 2;
+      pack.timer = 0;
+      for (const k of pack.kids) { k.state = "pack"; k.restClip = null; k.vx = k.vz = 0; }
+    }
+  }
+}
+function slotOf(pack, k) {
+  const i = pack.kids.indexOf(k);
+  return [pack.x - pack.dir * (Math.floor(i / 2) * 1.3 + k.jx), LANES[0] + 0.5 + (i % 2) * 1.2 + k.jz];
+}
+function updateKid(k, dt) {
+  const pack = k.pack, h = pack.house;
+  switch (k.state) {
+    case "pack": {
+      if ((k.fidget -= dt) <= 0) {
+        k.fidget = 2 + rnd() * 4;
+        k.jx = (rnd() - 0.5) * (k.bouncy ? 3.5 : 1.2); k.jz = (rnd() - 0.5) * 0.6;
+      }
+      const [tx, tz] = slotOf(pack, k);
+      let vx = pack.dir * pack.speed + (tx - k.x) * 1.6, vz = (tz - k.z) * 1.6;
+      let v = Math.hypot(vx, vz);
+      const vmax = RUN_SPEED * 1.15;
+      if (v > vmax) { vx *= vmax / v; vz *= vmax / v; v = vmax; }
+      k.vx = k.vx === undefined ? vx : k.vx + (vx - k.vx) * Math.min(1, dt * 4);
+      k.vz = k.vz === undefined ? vz : k.vz + (vz - k.vz) * Math.min(1, dt * 4);
+      k.x += k.vx * dt; k.z += k.vz * dt;
+      const sp = Math.hypot(k.vx, k.vz);
+      if (sp > 0.1) k.yawTo = Math.atan2(k.vx, k.vz);
+      locomote(k, sp);
+      break;
+    }
+    case "queue": {
+      const i = h.line.indexOf(k);
+      if (k.delay > 0) { k.delay -= dt; locomote(k, 0); break; }
+      if (!followPath(k, WALK_SPEED, dt)) break;
+      const [tx, tz] = queueSpot(h, i);
+      if (!stepToward(k, tx, tz, WALK_SPEED, dt)) { locomote(k, WALK_SPEED); break; }
+      k.yawTo = Math.atan2(h.gateX - k.x, footZ(h) - 3 - k.z);
+      locomote(k, 0);
+      if (i === 0 && !h.atDoor) { h.atDoor = k; k.state = "up"; k.path = [[h.gateX + IN_X * 0.5, footZ(h) - 0.4], [h.gateX, doorZ(h)]]; }
+      break;
+    }
+    case "up":
+      if (followPath(k, WALK_SPEED * 1.25, dt)) { k.state = "knock"; k.t = 0.8; }
+      break;
+    case "knock":
+      setClip(k, "wave"); k.current.timeScale = 1.3; k.yawTo = Math.PI;
+      if ((k.t -= dt) <= 0) { k.state = "treat"; k.t = 1.6; }
+      break;
+    case "treat":
+      setClip(k, "trick-or-treat"); k.current.timeScale = 1; k.yawTo = Math.PI;
+      if ((k.t -= dt) <= 0) {
+        k.state = "leave";
+        h.line.shift(); h.atDoor = null;
+        k.path = [[h.gateX + OUT_X, footZ(h)], [h.gateX + OUT_X, mouthZ + 0.2], waitSpot(h, k)];
+      }
+      break;
+    case "leave":
+      if (followPath(k, WALK_SPEED * 1.3, dt)) { k.state = "wait"; k.t = 0; k.path = []; }
+      break;
+    case "wait":
+      if ((k.t -= dt) <= 0) {
+        k.t = 2 + rnd() * 3;
+        k.restClip = ["idle", "eat-candy", "idle-look", "wave", "idle-peek"][Math.floor(rnd() * 5)];
+        k.yawTo = Math.atan2(h.gateX - k.x, footZ(h) - k.z) + (rnd() - 0.5) * 1.2;
+      }
+      locomote(k, 0);
+      break;
+  }
+  turnAndGround(k, dt);
+}
+function turnAndGround(k, dt) {
+  if (k.yawTo !== undefined) {
+    let d = k.yawTo - k.yaw;
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    k.yaw += d * Math.min(1, dt * 8);
+  }
+  const y = groundY(k.x, k.z);
+  k.y = k.y === undefined ? y : k.y + (y - k.y) * Math.min(1, dt * 12);
+  k.obj.position.set(k.x, k.y, k.z);
+  k.obj.rotation.y = k.yaw;
+}
+function spawnSim() {
+  let n = 0;
+  PACK_SIZES.forEach((size, p) => {
+    const dir = p % 2 ? -1 : 1;
+    const pack = { kids: [], dir, x: X0 + 14 + p * ((X1 - X0 - 28) / PACK_SIZES.length), speed: WALK_SPEED,
+      state: "travel", timer: rnd() * 3, house: null, visited: new Set() };
+    packs.push(pack);
+    for (let j = 0; j < size && n < SIM_KIDS.length; j++, n++) {
+      const k = makeKid(SIM_KIDS[n], { scale: KID_SCALE, parent: STREET, skin: n % 6 });
+      Object.assign(k, { pack, state: "pack", path: [], t: 0, jx: 0, jz: 0, fidget: rnd() * 2, bouncy: rnd() < 0.35,
+        yaw: dir > 0 ? Math.PI / 2 : -Math.PI / 2, y: undefined });
+      pack.kids.push(k);
+      [k.x, k.z] = slotOf(pack, k);
+      play(k, "walk");
+      k.current.time = rnd() * k.current.getClip().duration;
+      sim.push(k);
+    }
+  });
+}
+function updateSim(dt) {
+  if (simFrozen) return;
+  for (const pk of packs) updatePack(pk, dt);
+  for (const k of sim) updateKid(k, dt);
+}
+
+// ================================================================== the stage
+// A dusk backdrop with a moon for the close-ups (roll call, skin, faces, moves, build).
+const STAGE = new THREE.Scene();
+STAGE.background = gradientTexture([[0, "#1d1640"], [0.5, "#4a2f6e"], [0.78, "#9a4f74"], [1, "#e8834c"]], g => {
+  g.fillStyle = "#fff3d6";
+  g.beginPath(); g.arc(205, 92, 30, 0, 7); g.fill();
+  g.fillStyle = "#f2e2bd";
+  for (const [x, y, r] of [[196, 84, 5], [214, 101, 4], [203, 106, 3]]) { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+  let s = 3;
+  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  g.fillStyle = "#e9defc";
+  for (let i = 0; i < 60; i++) { const x = r() * 270, y = r() * 230; g.fillRect(x, y, 1.4, 1.4); }
+});
+STAGE.add(new THREE.HemisphereLight(0xe6dcff, 0x4a3560, 1.45));
+const key = new THREE.DirectionalLight(0xffe2c4, 2.4);
+key.position.set(7, 15, 18);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 90 });
+key.shadow.bias = -0.0005;
+const rim = new THREE.DirectionalLight(0xb48cff, 1.6);
+rim.position.set(-9, 10, -14);
+STAGE.add(key, key.target, rim, camFill.stage, camFill.stage.target);
+const stageFloor = plane(200, 200, 0, 0, 0, new THREE.MeshStandardMaterial({ color: 0x3a2a58, roughness: 1 }), STAGE);
+STAGE.fog = new THREE.Fog(0x4a2f6e, 60, 160);
+const STAGE_SETS = {};
+const STAGE_KIDS = [];
+function stageSet(name, kids = []) {   // one set and its own kids on the stage at a time
+  for (const [n, g] of Object.entries(STAGE_SETS)) g.visible = n === name;
+  for (const k of STAGE_KIDS) k.obj.visible = kids.includes(k);
+}
+
+// ================================================================== the house parts kit
+// Adapted from previewer/houses.js: the same rules, part loading and palette recolouring;
+// here each part stays its own mesh so it can drop in on the beat.
+let HM = null;
+const matchCond = (cond, spec) => Object.entries(cond).every(([k, vals]) => vals.includes(spec[k]));
+function partsFor(spec) {
+  const out = [];
+  for (const p of HM.parts) {
+    if (p.width !== null && p.width !== spec.width) continue;
+    if (p.when.some(c => matchCond(c, spec))) out.push({ def: p, mirror: false });
+    if (p.when_mirror && p.when_mirror.some(c => matchCond(c, spec))) out.push({ def: p, mirror: true });
+  }
+  return out;
+}
+const toLin = c => Math.pow(c, 2.2);
+const hexRGB = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+const ROLES = ["body", "trim", "roof", "porch"];
+function roleOf(r, g, b) {
+  const s = [r, g, b].map(c => Math.pow(Math.max(c, 0), 1 / 2.2));
+  let best = -1, bd = 0.02;
+  HM.roles.table.forEach((e, i) => {
+    const d = Math.max(...e.srgb.map((v, j) => Math.abs(v - s[j])));
+    if (d < bd) { bd = d; best = i; }
+  });
+  return best;
+}
+async function loadPart(file) {
+  const g = await load(`${A}house-parts/${file}`);
+  g.scene.updateMatrixWorld(true);
+  const outp = { pal: [], glow: [] };
+  g.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const src = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    const geo = new THREE.BufferGeometry();
+    geo.setIndex(src.index);
+    geo.setAttribute("position", src.getAttribute("position"));
+    geo.setAttribute("normal", src.getAttribute("normal"));
+    const isGlow = o.material.name === "GLOW";
+    if (!isGlow) {
+      const col = src.getAttribute("color");
+      const n = geo.getAttribute("position").count;
+      const base = new Float32Array(n * 3), role = new Int16Array(n);
+      for (let i = 0; i < n; i++) {
+        base[i * 3] = col.getX(i); base[i * 3 + 1] = col.getY(i); base[i * 3 + 2] = col.getZ(i);
+        role[i] = roleOf(base[i * 3], base[i * 3 + 1], base[i * 3 + 2]);
+      }
+      geo.userData = { base, role };
+    }
+    (isGlow ? outp.glow : outp.pal).push(geo);
+  });
+  return outp;
+}
+function recolour(geo, colours) {   // write the house's role colours into the geometry's colour attribute
+  const P = Object.fromEntries(ROLES.map(r => [r, hexRGB(colours[r])])), { base, role } = geo.userData;
+  const n = role.length;
+  let col = geo.getAttribute("color");
+  if (!col) { col = new THREE.BufferAttribute(new Float32Array(n * 3), 3); geo.setAttribute("color", col); }
+  for (let i = 0; i < n; i++) {
+    if (role[i] < 0) { col.array.set(base.subarray(i * 3, i * 3 + 3), i * 3); continue; }
+    const e = HM.roles.table[role[i]], c = P[e.role];
+    for (let j = 0; j < 3; j++) col.array[i * 3 + j] = toLin(Math.min(1, c[j] * e.k));
+  }
+  col.needsUpdate = true;
+}
+function mirrored(g) {
+  const m = g.clone().applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+  const idx = m.index.array.slice();
+  for (let i = 0; i < idx.length; i += 3) { const t = idx[i + 1]; idx[i + 1] = idx[i + 2]; idx[i + 2] = t; }
+  m.setIndex(new THREE.BufferAttribute(idx, 1));
+  if (g.userData.base) m.userData = g.userData;
+  return m;
+}
+const presetColours = name => Object.fromEntries(ROLES.map(r => [r, HM.palettes[name][r]]));
+const BUILD_SPEC = { width: "medium", roof: "gable", porch: "left", palette: "lavender", rail: "fancy", gingerbread: "sunburst",
+  frieze: "scallop", siding: "clapboard", gable_window: "round", cross_style: "pointy", turret: "right", bay: "none", wing: "left",
+  chimney: "right", dormer: true, balcony: false, boxes: true };
+const BUILD_STEPS = [   // one beat each
+  { label: "WALLS", slots: ["walls", "siding", "side-windows"] },
+  { label: "STEEP ROOF", slots: ["roof", "cross", "hip-gable", "gable-window"] },
+  { label: "GINGERBREAD", slots: ["gable"] },
+  { label: "PORCH", slots: ["porch"] },
+  { label: "RAILS", slots: ["rail", "frieze"] },
+  { label: "TURRET", slots: ["turret"] },
+  { label: "WING", slots: ["wing", "wing-siding", "wing-gable", "wing-gable-window", "wing-side-window"] },
+  { label: "TRIMMINGS", slots: ["chimney", "dormer", "bay", "boxes", "balcony", "balcony-rail"] },
+];
+const BUILD_PALETTES = ["mustard", "teal", "rose", "charcoal"];
+const build = { group: new THREE.Group(), steps: [], palGeos: [], offset: new THREE.Vector3() };
+async function buildHouse() {
+  HM = await (await fetch(`${A}house-parts/manifest.json`)).json();
+  BUILD_SPEC.colours = presetColours(BUILD_SPEC.palette);
+  const use = partsFor(BUILD_SPEC);
+  const loaded = await Promise.all(use.map(u => loadPart(u.def.file)));
+  const PAL = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 });
+  const glowC = new THREE.Color().setRGB(...HM.glow.rgb, THREE.SRGBColorSpace);
+  const GLOWM = new THREE.MeshStandardMaterial({ color: glowC, emissive: glowC, emissiveIntensity: HM.glow.strength, roughness: 0.9 });
+  build.steps = BUILD_STEPS.map(s => ({ ...s, group: new THREE.Group() }));
+  const box = new THREE.Box3();
+  use.forEach((u, i) => {
+    let si = BUILD_STEPS.findIndex(s => s.slots.includes(u.def.slot));
+    if (si < 0) si = 0;
+    const f = g => (u.mirror ? mirrored(g) : g.clone());
+    for (const g0 of loaded[i].pal) {
+      const g = f(g0);
+      g.userData = g0.userData;
+      recolour(g, BUILD_SPEC.colours);
+      const m = new THREE.Mesh(g, PAL); m.castShadow = true; m.receiveShadow = true;
+      build.steps[si].group.add(m);
+      build.palGeos.push(g);
+      box.union(new THREE.Box3().setFromBufferAttribute(g.getAttribute("position")));
+    }
+    for (const g0 of loaded[i].glow) {
+      const m = new THREE.Mesh(f(g0), GLOWM);
+      build.steps[si].group.add(m);
+    }
+  });
+  build.steps = build.steps.filter(s => s.group.children.length);
+  console.log("build steps: " + build.steps.map(s => s.label).join(", "));
+  build.offset.set(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2);
+  build.size = box.getSize(new THREE.Vector3());
+  const inner = new THREE.Group();
+  inner.position.copy(build.offset);
+  for (const s of build.steps) inner.add(s.group);
+  build.group.add(inner);
+  build.inner = inner;
+}
+
+// ================================================================== text
+// Spooky display letters (Creepster): acid green and purple, orange accents (digits, &, !),
+// a heavy near-black outline, a dark extrusion and a neon glow; each letter pops in and bobs.
+const SPOOK = {
+  green: ["#b6ff1c", "#2f6e00", "#e6ff9a"],
+  purple: ["#b64dff", "#3d0a78", "#e0b3ff"],
+  orange: ["#ff7a0d", "#8f3200", "#ffc27a"],
+};
+const LINE_COLS = ["green", "purple"];
+const ACCENTS = ["#ff7a0d", "#b64dff", "#b6ff1c"];
+const INK = "#0b0412";
+const glyph = document.createElement("canvas");
+const gctx = glyph.getContext("2d");
+const colourOf = (ch, line) => (/[0-9&!?]/.test(ch) ? "orange" : line);
+function balloonLetter(ch, size, col) {
+  const [fill, side, hi] = SPOOK[col];
+  const pad = size * 0.55;
+  gctx.font = `${size}px ${FONT}`;
+  const w = Math.ceil(gctx.measureText(ch).width + pad * 2), h = Math.ceil(size * 1.7 + pad);
+  glyph.width = w; glyph.height = h;
+  const g = gctx;
+  g.font = `${size}px ${FONT}`;
+  g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round"; g.miterLimit = 2;
+  const cx = w / 2, cy = h / 2 - size * 0.06, depth = size * 0.1;
+  // the neon glow and the extrusion, both in the outline's shape
+  g.save();
+  g.shadowColor = fill; g.shadowBlur = size * 0.32;
+  g.lineWidth = size * 0.24; g.strokeStyle = INK;
+  g.strokeText(ch, cx, cy + depth);
+  g.restore();
+  for (let k = depth; k > 0; k -= 2) { g.lineWidth = size * 0.24; g.strokeStyle = INK; g.strokeText(ch, cx, cy + k); }
+  for (let k = depth; k > 0; k -= 2) { g.fillStyle = side; g.fillText(ch, cx, cy + k); }
+  g.lineWidth = size * 0.22; g.strokeStyle = INK; g.strokeText(ch, cx, cy);
+  const grad = g.createLinearGradient(0, cy - size * 0.5, 0, cy + size * 0.5);
+  grad.addColorStop(0, hi); grad.addColorStop(0.35, fill); grad.addColorStop(1, fill);
+  g.fillStyle = grad; g.fillText(ch, cx, cy);
+  return glyph;
+}
+function balloon(text, yFrac, size, lt, { stagger = 0.045, ci0 = 0, out = Infinity } = {}) {
+  if (lt <= 0) return;
+  const lines = text.split("|");
+  ctx.font = `${size}px ${FONT}`;
+  let n = 0;
+  const fade = clamp01((out - lt) / 0.12);
+  if (fade <= 0) return;
+  lines.forEach((line, li) => {
+    const lc = LINE_COLS[(ci0 + li) % LINE_COLS.length];
+    const widths = [...line].map(c => ctx.measureText(c).width + size * 0.06);
+    const total = widths.reduce((a, b) => a + b, 0);
+    let x = W / 2 - total / 2;
+    const y = H * yFrac + (li - (lines.length - 1) / 2) * size * 1.02;
+    [...line].forEach((c, i) => {
+      const u = (lt - n * stagger) / 0.3;
+      const cx = x + widths[i] / 2;
+      x += widths[i];
+      n++;
+      if (c === " " || u <= 0) return;
+      const s = easeOutBack(u) * fade;
+      const bob = Math.sin(lt * 2 * Math.PI / (BEAT * 2) + n * 0.7) * size * 0.04;
+      const tilt = Math.sin(n * 2.3) * 0.08;
+      const g = balloonLetter(c, size, colourOf(c, lc));
+      ctx.save();
+      ctx.translate(cx, y + bob);
+      ctx.rotate(tilt);
+      ctx.scale(s, s);
+      ctx.drawImage(g, -g.width / 2, -g.height / 2);
+      ctx.restore();
+    });
+  });
+}
+function balloonWord(text, x, y, size, lt, col = "green", life = 1.6) {   // a popping word at a point (BOO!)
+  if (lt <= 0 || lt > life) return;
+  const s = easeOutBack(lt / 0.18) * (lt > life - 0.25 ? (life - lt) / 0.25 : 1);
+  ctx.save();
+  ctx.translate(x, y - lt * 30);
+  ctx.rotate(-0.1);
+  ctx.scale(s, s);
+  ctx.font = `${size}px ${FONT}`;
+  const widths = [...text].map(c => ctx.measureText(c).width + size * 0.06);
+  let off = -widths.reduce((a, b) => a + b, 0) / 2;
+  [...text].forEach((c, i) => {
+    const g = balloonLetter(c, size, colourOf(c, col));
+    const jig = Math.sin(lt * 30 + i) * size * 0.02;
+    ctx.drawImage(g, off + widths[i] / 2 - g.width / 2, -g.height / 2 + jig);
+    off += widths[i];
+  });
+  ctx.restore();
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function pill(text, x, y, size, u, { bg = "rgba(14,5,24,0.92)", fg = "#b6ff1c", accent = "#ff7a0d" } = {}) {
+  if (u <= 0) return;
+  const s = easeOutBack(u);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.font = `${size}px ${FONT}`;
+  ctx.letterSpacing = `${Math.round(size * 0.06)}px`;
+  const w = ctx.measureText(text).width + size * 1.4, h = size * 1.55;
+  roundRect(-w / 2, -h / 2, w, h, h / 2);
+  ctx.fillStyle = bg;
+  ctx.fill();
+  if (accent) { ctx.lineWidth = size * 0.14; ctx.strokeStyle = accent; ctx.stroke(); }
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  if (fg !== INK) { ctx.lineWidth = size * 0.16; ctx.strokeStyle = INK; ctx.strokeText(text, 0, size * 0.04); }
+  ctx.fillStyle = fg;
+  ctx.fillText(text, 0, size * 0.04);
+  ctx.restore();
+}
+function screenOf(v) {
+  const p = v.clone().project(camera);
+  return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H];
+}
+const worldOf = (k, name) => k.obj.getObjectByName(name).getWorldPosition(new THREE.Vector3());
+
+// ================================================================== cell grids (moves, skin tones)
+function renderCells(cells, scene, aimCam) {
+  ctx.fillStyle = "#1a1230";
+  ctx.fillRect(0, 0, W, H);
+  renderer.setScissorTest(true);
+  const all = new Set(cells.flatMap(c => c.kids));
+  for (const c of cells) {
+    for (const k of all) k.obj.visible = c.kids.includes(k);
+    renderer.setViewport(c.x, H - c.y - c.h, c.w, c.h);
+    renderer.setScissor(c.x, H - c.y - c.h, c.w, c.h);
+    camera.aspect = c.w / c.h;
+    aimCam(c);
+    aimFill(scene, V3(0, 2.6, 0));
+    camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+  }
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, W, H);
+  camera.aspect = W / H;
+  for (const c of cells) {
+    ctx.save();
+    roundRect(c.x, c.y, c.w, c.h, 40);
+    ctx.clip();
+    ctx.drawImage(gl, c.x, c.y, c.w, c.h, c.x, c.y, c.w, c.h);
+    ctx.restore();
+    ctx.save();
+    roundRect(c.x, c.y, c.w, c.h, 40);
+    ctx.lineWidth = 10; ctx.strokeStyle = c.border || "#ff8a2b"; ctx.stroke();
+    ctx.restore();
+  }
+}
+function grid(cols, rows, top, bottom, gap = 30, margin = 44) {
+  const w = (W - 2 * margin - (cols - 1) * gap) / cols, h = (bottom - top - (rows - 1) * gap) / rows;
+  const cells = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++)
+    cells.push({ x: Math.round(margin + c * (w + gap)), y: Math.round(top + r * (h + gap)), w: Math.round(w), h: Math.round(h) });
+  return cells;
+}
+
+// ================================================================== shots
+// each: { bars, scene, setup(), update(lt, dt), cam(lt) -> {pos, look, fov}, render(lt)?, text(lt)?, flash }
+const shots = [];
+const fired = new Set();
+const once = (key, fn) => { if (!fired.has(key)) { fired.add(key); fn(); } };
+const onBeat = (lt, b, key, fn) => { if (lt >= b * BEAT - 1e-6) once(key + b, fn); };
+let kick = 0, flash = 0, flashCol = "255,240,220";
+const punch = a => { kick = Math.max(kick, a); };
+const humanize = s => ({ "inflatable-trex": "T-REX", "vending-machine": "VENDING MACHINE", "marie-antoinette": "MARIE ANTOINETTE" }[s]
+  || s.replace(/-/g, " ").toUpperCase());
+
+let hero, witch, crew;     // the knock-knock house and kids
+// 1. Knock knock (2 bars): a tiny witch climbs the steps, knocks twice on the beat, holds up her bucket.
+shots.push({
+  bars: 2, scene: STREET,
+  setup() {
+    show(sim, false);
+    show([witch], true);
+    show(crew, false);
+    const h = hero;
+    this.path = [[h.gateX + 0.25, footZ(h) + 1.2], [h.gateX + 0.2, footZ(h) - 0.4], [h.gateX, doorZ(h)]];
+    witch.x = this.path[0][0]; witch.z = this.path[0][1]; witch.y = undefined; witch.yaw = Math.PI;
+
+    witch.face = null;
+    aimSun(h.gateX, footZ(h), 14);
+    hero.info.glowMat.emissiveIntensity = hero.info.glowMat.userData.base * 1.6;
+  },
+  update(lt, dt) {
+    const h = hero;
+    // walk the path up to the door by beat 3.4, at walking pace
+    const L = [0, 1].map(i => Math.hypot(this.path[i + 1][0] - this.path[i][0], this.path[i + 1][1] - this.path[i][1]));
+    const total = L[0] + L[1], u = clamp01(lt / (BEAT * 3.4)) * total;
+    let x, z;
+    if (u < L[0]) { const v = u / L[0]; x = lerp(this.path[0][0], this.path[1][0], v); z = lerp(this.path[0][1], this.path[1][1], v); }
+    else { const v = (u - L[0]) / L[1]; x = lerp(this.path[1][0], this.path[2][0], v); z = lerp(this.path[1][1], this.path[2][1], v); }
+    witch.x = x; witch.z = z; witch.yawTo = Math.PI;
+    if (lt < BEAT * 3.4) play(witch, "walk", { ts: 1.25 });
+    else if (lt < BEAT * 6) play(witch, "wave", { ts: 1.0 });
+    else play(witch, "trick-or-treat", { ts: 1.1 });
+    if (lt >= BEAT * 6) witch.face = { mouth: "grin" };
+    onBeat(lt, 4, "knock", () => { sfxB("knock", 1, 4); punch(0.25); });
+    onBeat(lt, 5, "knock", () => { sfxB("knock", 1, 5); sfxB("creak", 0.55, 5.5); punch(0.25); });
+    onBeat(lt, 6, "treat", () => sfxB("candy", 0.7, 6));
+    for (const k of [witch, ...crew]) turnAndGround(k, dt);
+    const knockGlow = [4, 5].reduce((a, b) => a + Math.max(0, 1 - Math.abs(lt - b * BEAT) / 0.12), 0);
+    h.info.glowMat.emissiveIntensity = h.info.glowMat.userData.base * (1.6 + knockGlow * 0.6);
+  },
+  cam(lt) {
+    const h = hero, u = smooth(lt / (2 * BAR));
+    const d = doorZ(h), y = GRASS_Y + h.info.deck;
+    return { pos: V3(h.gateX + lerp(3.2, 2.4, u), y + lerp(4.4, 3.6, u), d + lerp(17, 14, u)), look: V3(h.gateX + 0.1, y + 1.0, d + 1.0), fov: 32 };
+  },
+});
+
+// 2. Title (2 bars): the door glows; the whole pack spins round to camera, grinning.
+shots.push({
+  bars: 2, scene: STREET, flash: true,
+  setup() {
+    punch(1);
+    sfxB("title", 1, 0);
+    titlePops(0.5, TITLE.replace(/ /g, "").length, 0.35);
+    // the pack, in two rows at the foot of the steps, backs to camera, then all spin round
+    show(crew, true);
+    const h = hero, spots = [[0, 2.4], [-1.1, 0.5], [-1.35, 3.9], [1.1, 0.5], [1.5, 4.1]];   // witch front and centre
+    [witch, ...crew].forEach((k, i) => {
+      k.x = h.gateX + spots[i][0]; k.z = footZ(h) + spots[i][1]; k.y = undefined; k.yaw = Math.PI;
+      k.spinAt = [0.0, 0.08, 0.04, 0.12, 0.06][i];
+    });
+  },
+  update(lt, dt) {
+    const h = hero;
+    h.info.glowMat.emissiveIntensity = h.info.glowMat.userData.base * lerp(2.2, 3.4, smooth(lt / 0.4));
+    for (const k of [witch, ...crew]) {
+      const t = lt - k.spinAt;
+      if (t < 0.32) { play(k, "jump", { ts: 1.4 }); k.yaw = Math.PI * (1 - easeOut(t / 0.32)); }
+      else { play(k, k === witch ? "trick-or-treat" : ["celebrate", "dance-wiggle", "celebrate", "wave"][crew.indexOf(k)], { ts: 1.1 }); k.yaw = 0; }
+      k.yawTo = undefined;
+      k.face = { mouth: "grin", eyes: "open", brow: "none" };
+      turnAndGround(k, dt);
+    }
+  },
+  cam(lt) {
+    const h = hero, u = easeOut(lt / (BAR * 1.2));
+    const y = GRASS_Y + h.info.deck;
+    return { pos: V3(h.gateX + lerp(1.4, 0.9, u), lerp(5.6, 6.4, u), footZ(h) + lerp(14.5, 17, u)), look: V3(h.gateX + 0.1, 1.3, footZ(h) - 0.2), fov: 32 };
+  },
+  text(lt) {
+    balloon(TITLE.replace(" ", "|"), 0.17, 230, lt - 0.5 * BEAT, { stagger: BEAT / 8 });
+    pill("trick-or-treat costume kids", W / 2, H * 0.315, 50, (lt - BEAT * 3) / 0.25);
+  },
+});
+
+// 3. Roll call (4 bars): a costume every two beats. Each kid hops in on the beat, strikes a
+//    pose and holds it for a beat so it reads, then slides off as the next one hops in.
+const ROLL = ["inflatable-trex", "vending-machine", "marie-antoinette", "octopus", "taco", "mummy", "rocket", "unicorn"];
+const ROLL_POSE = ["attack", "dance-robot", "spin", "dance-wiggle", "celebrate", "attack", "jump", "celebrate"];
+const ROLL_BEATS = 2;
+let rollKids = [];
+shots.push({
+  name: "roll", bars: 4, scene: STAGE, flash: true,
+  setup() {
+    stageSet("roll");
+  },
+  update(lt) {
+    const span = ROLL_BEATS * BEAT;
+    rollKids.forEach((k, i) => {
+      // t: time since this kid's beat. It hops in over the 0.22 s before the beat and lands on it;
+      // it slides off over the 0.2 s before the next kid lands.
+      const t = lt - i * span, last = i === rollKids.length - 1, HOP = 0.22;
+      if (t < -HOP || (!last && t > span)) { k.obj.visible = false; return; }
+      k.obj.visible = true;
+      const inU = smooth((t + HOP) / HOP), outU = last ? 0 : smooth((t - span + 0.2) / 0.2);
+      const x = lerp(7.5, 0, inU) - outU * 8.5;
+      const hop = Math.sin(Math.PI * clamp01((t + HOP) / HOP)) * 2.4;
+      const sq = t >= 0 ? Math.max(0, 1 - t / 0.12) : 0;   // a little squash on landing
+      place3(k, x, hop, 0, -0.3 + outU * -0.6);
+      k.obj.scale.set(1 + 0.06 * sq, 1 - 0.08 * sq, 1 + 0.06 * sq);
+      once("pose" + i, () => play(k, ROLL_POSE[i], { force: true, ts: 1.0 }));
+      if (t > 0.1) k.face = { mouth: "grin" };
+      onBeat(lt, i * ROLL_BEATS, "roll", () => { sfxB("pop", 0.9, i * ROLL_BEATS, { pitch: i }); });
+    });
+  },
+  cam(lt) { return { pos: V3(lerp(-0.6, 0.6, lt / (4 * BAR)), 4.6, 23.5), look: V3(0, 3.7, 0), fov: 30 }; },
+  text(lt) {
+    balloon("96 COSTUMES", 0.105, 150, lt - 0.05, { ci0: 0 });
+    const i = Math.min(ROLL.length - 1, Math.floor(lt / (ROLL_BEATS * BEAT) + 1e-6));
+    pill(humanize(ROLL[i]), W / 2, H * 0.86, 66, ((lt - i * ROLL_BEATS * BEAT) - 0.12) / 0.16, { accent: ACCENTS[i % 3] });
+  },
+});
+
+// 4. Any skin tone (2 bars): one kid through the six tones, then six kids, one tone each.
+let toneKid, toneSix = [];
+const TONE_SIX = ["cowboy", "princess", "superhero", "viking", "angel", "firefighter"];   // faces drawn in SKIN
+shots.push({
+  bars: 2, scene: STAGE, flash: true,
+  setup() { stageSet("plain", [toneKid]); play(toneKid, "idle-look", { force: true }); },
+  update(lt) {
+    const b = Math.min(5, Math.floor(lt / BEAT + 1e-6));
+    setSkin(toneKid, b);
+    place3(toneKid, 0, 0, 0, -0.25);
+    toneKid.obj.scale.setScalar(1 + 0.05 * Math.max(0, 1 - (lt - b * BEAT) / 0.12));
+    onBeat(lt, b, "tone", () => { if (b > 0) sfxB("tick", 0.9, b); });
+    onBeat(lt, 6, "six", () => {
+      sfxB("pop", 0.9, 6);
+      toneSix.forEach((k, i) => { setSkin(k, i); place3(k, 0, 0, 0, -0.3); play(k, ["wave", "celebrate", "dance-wiggle", "wave", "celebrate", "dance-robot"][i], { force: true, at: 0.1 * i }); });
+    });
+  },
+  cam(lt) { return { pos: V3(0.3, 3.9, lerp(20.5, 19, lt / (2 * BAR))), look: V3(0, 3.1, 0), fov: 30 }; },
+  render(lt) {
+    if (lt < BEAT * 6) return false;
+    toneKid.obj.visible = false;
+    const cells = grid(2, 3, 330, 1840, 26, 40);
+    cells.forEach((c, i) => { c.kids = [toneSix[i]]; c.border = `rgb(${SKIN_TONES[i].map(v => Math.round(v * 255)).join(",")})`; });
+    renderCells(cells, STAGE, () => { camera.position.set(0, 3.2, 12.5); camera.lookAt(0, 2.9, 0); camera.fov = 30; });
+    return true;
+  },
+  text(lt) {
+    balloon("ANY SKIN TONE", 0.085, 116, lt - 0.05, { ci0: 4 });
+    if (lt < BEAT * 6) {
+      const b = Math.min(5, Math.floor(lt / BEAT + 1e-6));
+      const x0 = W / 2 - 5 * 70 / 2;   // the six swatches, the current one big
+      for (let i = 0; i < 6; i++) {
+        const on = i === b, r = on ? 40 : 26;
+        ctx.save();
+        ctx.beginPath(); ctx.arc(x0 + i * 70, H * 0.9, r, 0, 7);
+        ctx.fillStyle = `rgb(${SKIN_TONES[i].map(v => Math.round(v * 255)).join(",")})`;
+        ctx.fill(); ctx.lineWidth = on ? 9 : 6; ctx.strokeStyle = on ? "#b6ff1c" : INK; ctx.stroke();
+        ctx.restore();
+      }
+    }
+  },
+});
+
+// 5. Faces (2 bars): tight on a face on a held pose; a new expression every beat.
+const FACES = [
+  [{ eyes: "open", brow: "none", mouth: "smile" }, "SMILE"],
+  [{ eyes: "open", brow: "none", mouth: "o" }, "OOH!"],
+  [{ eyes: "open", brow: "none", mouth: "grin" }, "GRIN"],
+  [{ eyes: "open", brow: "angry", mouth: "frown" }, "GRR"],
+  [{ eyes: "open", brow: "worried", mouth: "o" }, "EEK"],
+  [{ eyes: "dizzy", brow: "none", mouth: "o" }, "DIZZY"],
+  [{ eyes: "closed", brow: "none", mouth: "grin" }, "HEE HEE"],
+  [{ eyes: "closed", brow: "worried", mouth: "frown" }, "SULK"],
+];
+let faceKid;
+shots.push({
+  bars: 2, scene: STAGE, flash: true,
+  setup() {
+    stageSet("plain", [faceKid]);
+    place3(faceKid, 0, 0, 0, -0.18);
+    play(faceKid, "idle", { force: true, ts: 0, at: 0.3 });
+    this.eye = null;
+  },
+  update(lt) {
+    const b = Math.min(FACES.length - 1, Math.floor(lt / BEAT + 1e-6));
+    faceKid.face = FACES[b][0];
+    const p = Math.max(0, 1 - (lt - b * BEAT) / 0.14);
+    faceKid.obj.scale.setScalar(1 + 0.04 * p);
+    faceKid.obj.rotation.z = Math.sin(b * 2.1) * 0.05 * p;
+    onBeat(lt, b, "face", () => { if (b > 0) sfxB("blip", 0.9, b); });
+  },
+  cam(lt) {
+    if (!this.eye) { faceKid.obj.updateMatrixWorld(true); this.eye = faceKid.expr["expr.eyes.open"].getWorldPosition(new THREE.Vector3()); }
+    const e = this.eye, u = lt / (2 * BAR);
+    return { pos: V3(e.x + 0.5, e.y + 0.5, e.z + lerp(12.5, 11.2, u)), look: V3(e.x, e.y - 0.55, e.z), fov: 30 };
+  },
+  text(lt) {
+    balloon("EXPRESSIONS", 0.1, 124, lt - 0.05, { ci0: 1 });
+    const b = Math.min(FACES.length - 1, Math.floor(lt / BEAT + 1e-6));
+    pill(FACES[b][1], W / 2, H * 0.875, 64, (lt - b * BEAT) / 0.14, { accent: ACCENTS[b % 3] });
+  },
+});
+
+// 6. Moves (3 bars): a 2 x 2 grid of kids, a new clip in every cell every two beats.
+const MOVES = [
+  ["wave", "spin", "sneak", "dance-robot"], ["dance-wiggle", "eat-candy", "scared", "attack"],
+  ["jump", "celebrate", "trick-or-treat", "idle-yawn"], ["run", "pick-up", "hit", "sad"],
+  ["idle-peek", "run-jump", "idle-look", "walk"], ["death", "idle", "dance-wiggle", "celebrate"],
+];
+const MOVE_KIDS = ["dracula", "cupcake", "superhero", "unicorn"];
+let moveKids = [];
+shots.push({
+  bars: 3, scene: STAGE, flash: true,
+  setup() { stageSet("plain", moveKids); this.burst = -1; },
+  update(lt) {
+    const burst = Math.min(MOVES.length - 1, Math.floor(lt / (2 * BEAT) + 1e-6));
+    if (burst !== this.burst) {
+      this.burst = burst;
+      moveKids.forEach((k, i) => { place3(k, 0, 0, 0, -0.3); play(k, MOVES[burst][i], { force: true, ts: 1.35, once: MOVES[burst][i] === "death" }); });
+      sfxB("swap", 0.8, burst * 2);
+    }
+  },
+  cam() { return { pos: V3(0, 5.6, 30), look: V3(0, 4.8, 0), fov: 30 }; },
+  render(lt) {
+    const cells = grid(2, 2, 330, 1700, 28, 40);
+    cells.forEach((c, i) => { c.kids = [moveKids[i]]; c.border = ACCENTS[i % 3]; });
+    renderCells(cells, STAGE, () => { camera.position.set(0, 3.4, 14); camera.lookAt(0, 2.6, 0); camera.fov = 30; });
+    this.cells = cells;
+    return true;
+  },
+  text(lt) {
+    balloon("22 ANIMATIONS", 0.088, 116, lt - 0.05, { ci0: 3 });
+    const burst = Math.min(MOVES.length - 1, Math.floor(lt / (2 * BEAT) + 1e-6)), u = (lt - burst * 2 * BEAT) / 0.15;
+    this.cells.forEach((c, i) => pill(MOVES[burst][i].replace(/-/g, " "), c.x + c.w / 2, c.y + c.h - 52, 38, u));
+    pill("idle · walk · run · jump · scared · dance · eat candy…", W / 2, 1790, 34, (lt - 0.3) / 0.2);
+  },
+});
+
+// 7. Boo! (2 bars): a kid in the ghost costume pops up from behind a fence beside a little
+//    trick-or-treater, who jumps in fright (the scared clip) on the downbeat.
+let booKid, ghostKid;
+const BOO_X = X0 + LOT * 1 + 19;    // lot 1, in front of a fence section by a tombstone and the crow post
+shots.push({
+  bars: 2, scene: STREET, flash: false,
+  setup() {
+    show(sim, false); show([witch, ...crew], false);
+    show([booKid, ghostKid], true);
+    hero.info.glowMat.emissiveIntensity = hero.info.glowMat.userData.base;
+    aimSun(BOO_X, 12, 14);
+    booKid.face = null; ghostKid.face = null;
+  },
+  update(lt, dt) {
+    const tPop = 4 * BEAT;
+    // the trick-or-treater ambles along the sidewalk toward the camera, then stops by the fence
+    const walkEnd = BEAT * 3.3;
+    const x = BOO_X - 4.6 + 4.6 * easeOut(Math.min(1, lt / walkEnd) * 0.98) ;
+    if (lt < walkEnd) { play(booKid, "walk", { ts: 1.0 }); place3(booKid, x, WALK_Y, 12.9, Math.PI / 2); }
+    else if (lt < tPop) { play(booKid, "idle-look", { at: 0.4 }); place3(booKid, BOO_X, WALK_Y, 12.9, lerp(Math.PI / 2, 0.8, smooth((lt - walkEnd) / 0.25))); }
+    else {
+      play(booKid, "scared", { once: true, ts: 1.0 });
+      const tt = lt - tPop;
+      booKid.face = tt > 1.2 ? { eyes: "open", brow: "worried", mouth: "o" } : null;   // stay spooked after the clip
+      place3(booKid, BOO_X + easeOut(tt / 0.5) * 0.7, WALK_Y, 12.9 + easeOut(tt / 0.5) * 0.4, 0.8 - 0.3 * easeOut(tt / 0.3));
+    }
+    // the ghost: hidden under the yard, then up from behind the fence on the downbeat
+    const g = lt - tPop + 0.06;
+    const rise = g < 0 ? -4 : lerp(-4, GRASS_Y + 1.7, easeOutBack(g / 0.2)) + (g > 0.3 ? 0.15 * Math.sin((g - 0.3) * 5) : 0);
+    place3(ghostKid, BOO_X - 1.7, rise, FENCE_Z - 1.0, 0.6);
+    if (g < 0) play(ghostKid, "idle");
+    else if (lt < 6 * BEAT) play(ghostKid, "attack", { ts: 1.1, once: true });
+    else play(ghostKid, "celebrate", { ts: 1.2 });
+    if (lt >= tPop - 1e-6) once("boo", () => { sfxB("boo", 1, 4); sfxB("eek", 0.9, 4); punch(1); flash = 0.6; flashCol = "190,255,170"; });
+    onBeat(lt, 6, "cackle", () => sfxB("cackle", 0.8, 6));
+  },
+  cam(lt) {
+    const u = smooth(lt / (2 * BAR)), s = lt > 4 * BEAT ? 1 : 0;
+    return { pos: V3(BOO_X + lerp(7.4, 6.6, u) - s * 0.5, lerp(4.6, 4.2, u), lerp(27.5, 26, u) - s * 1.2), look: V3(BOO_X - 1.0, 2.0, 11.9), fov: 32 };
+  },
+  text(lt) {
+    const tPop = 4 * BEAT;
+    if (lt > tPop - 0.02) {
+      const p = worldOf(ghostKid, "head");
+      const [sx, sy] = screenOf(p.add(V3(0, 1.4, 0)));
+      balloonWord("BOO!", Math.max(300, Math.min(W - 300, sx)), Math.max(260, sy - 220), 230, lt - tPop + 0.02, "green", 3);
+    }
+  },
+});
+
+// 8. Build a house (3 bars): the parts kit, a part group per beat, then the palettes flick.
+let buildKid;
+const SNAP_ARP = [[0, 2, 4, 7], [0, 2, 5, 7], [3, 5, 7, 10], [4, 6, 8, 11]];   // sfx.py SCALE steps: Dm, Bb, Gm, A
+shots.push({
+  bars: 3, scene: STAGE, flash: true,
+  setup() {
+    stageSet("build");
+    BUILD_SPEC.colours = presetColours("lavender");
+    for (const g of build.palGeos) recolour(g, BUILD_SPEC.colours);
+    this.pal = -1;
+  },
+  update(lt) {
+    // each part group falls (accelerating) and hits exactly on its beat, with its snap on the beat
+    const FALL = 0.16;
+    build.steps.forEach((s, i) => {
+      const land = i * BEAT, t = lt - (land - FALL);
+      s.group.visible = t > 0;
+      const u = clamp01(t / FALL);
+      s.group.position.y = (1 - u * u) * 9;
+      const sq = lt >= land ? Math.max(0, 1 - (lt - land) / 0.14) : 0;
+      s.group.scale.set(1 + sq * 0.04, 1 - sq * 0.06, 1 + sq * 0.04);
+      onBeat(lt, i, "snap", () => {   // tuned up the chord of the bar it lands in (the music's Dm Bb Gm A)
+        const bar = Math.round(STARTS[shotIx] / BAR) + Math.floor(i / 4);
+        sfxB("snap", 0.9, i, { pitch: SNAP_ARP[bar % 4][i % 4] }); punch(0.12);
+      });
+    });
+    const pb = Math.floor(lt / BEAT + 1e-6) - 8;
+    if (pb >= 0 && pb < BUILD_PALETTES.length && pb !== this.pal) {
+      this.pal = pb;
+      const cols = presetColours(BUILD_PALETTES[pb]);
+      for (const g of build.palGeos) recolour(g, cols);
+      sfxB("swap", 0.9, pb + 8); punch(0.2);
+    }
+    // a kid hops onto the porch for scale once the porch is built (on the and of beat 3)
+    const kidIn = 3.5 * BEAT;
+    onBeat(lt, 3.5, "kidin", () => sfxB("pop", 0.5, 3.5, { pitch: 5 }));
+    buildKid.obj.visible = lt > kidIn;
+    if (lt > kidIn) {
+      const [x, y, z] = HM.kid_spot.by_width[BUILD_SPEC.width][BUILD_SPEC.porch];
+      const p = V3(x, z, -y).add(build.offset).applyMatrix4(build.group.matrixWorld);
+      place3(buildKid, p.x, p.y + Math.sin(Math.PI * clamp01((lt - kidIn) / 0.25)) * 1.2, p.z + 0.4, build.group.rotation.y);
+      play(buildKid, lt < 8 * BEAT ? "wave" : "celebrate", { ts: 1.1 });
+      buildKid.face = { mouth: "grin" };
+    }
+  },
+  cam(lt) {
+    const a = lerp(-0.62, -0.18, smooth(lt / (3 * BAR))), d = 54, ty = build.size.y * 0.45;
+    return { pos: V3(Math.sin(a) * d, ty + 10, Math.cos(a) * d), look: V3(0, ty + 0.6, 0), fov: 30 };
+  },
+  text(lt) {
+    balloon("MIX & MATCH|HOUSES", 0.105, 120, lt - 0.05, { ci0: 0 });
+    const b = Math.floor(lt / BEAT + 1e-6);
+    if (b < 8) { const s = build.steps[Math.min(build.steps.length - 1, b)]; pill(s.label, W / 2, H * 0.875, 56, (lt - b * BEAT) / 0.14, { accent: ACCENTS[b % 3] }); }
+    else pill(BUILD_PALETTES[Math.min(3, b - 8)].toUpperCase(), W / 2, H * 0.875, 56, (lt - b * BEAT) / 0.14, { accent: HM.palettes[BUILD_PALETTES[Math.min(3, b - 8)]].body });
+  },
+});
+
+// 9. On patrol (3 bars): the street at dusk, a slow crane down the sidewalk: a pack marching
+//    up the sidewalk past a house where one kid is up the steps trick-or-treating while two
+//    queue down the path, another cluster at the next door, a car at the kerb. Staged like the
+//    crowd shots (below), so nobody walks through anybody.
+const PATROL_LOT = 5;   // the last house on the street, away from the crowd shots' stretch
+shots.push({
+  name: "patrol", bars: 3, scene: STREET, flash: true,
+  setup() {
+    show([booKid, ghostKid, witch, ...crew], false);
+    show(sim, false);
+    crowdStop = Infinity; crowdCam = null;
+    stagePatrol();
+    crowdT0 = STARTS[shotIx];
+    aimSun(houses[PATROL_LOT].gateX + 8, 14, 40);
+  },
+  update(lt, dt) { crowdAt(T - crowdT0, dt); },
+  cam(lt) {
+    const u = smooth(lt / (3 * BAR)), gx = houses[PATROL_LOT].gateX;
+    return { pos: V3(gx + lerp(14, 9.5, u), lerp(17, 7.5, u), lerp(36, 27.5, u)), look: V3(gx + lerp(0, 1, u), lerp(0.6, 1.6, u), lerp(7, 9.5, u)), fov: 32 };
+  },
+  text(lt) {
+    balloon("PROPS · CARS|CANDY", 0.1, 140, lt - 0.05, { ci0: 1 });
+    pill("houses · fences · lamps · trees · jack-o'-lanterns", W / 2, H * 0.9, 40, (lt - 0.4) / 0.2);
+  },
+});
+
+// 10 + 11. The crowd: fifty kids staged across the street, every one on its own lane and
+// spaced so each reads: a line walking the far sidewalk (inside the lamps), two lines running
+// the road (clear of the parked cars, in opposite directions), a line on the near sidewalk,
+// and little clusters at the doors. Positions are a pure function of time, so nobody ever
+// overlaps (?check=1 verifies it). On the end card they stop, turn to the camera and cheer.
+const PARADE = [];
+const PARADE_KIDS = ["taco", "octopus", "rocket", "shark", "unicorn", "vending-machine", "marie-antoinette", "gumball-machine",
+  "jellyfish", "dragon", "devil", "angel", "scarecrow", "spider", "bumblebee", "donut", "ice-cream-cone", "pineapple", "sunflower",
+  "medusa", "clown", "bride-of-frankenstein", "statue-of-liberty", "mad-scientist", "viking", "pirate-ghost", "werewolf", "zombie",
+  "alien-green", "hot-dog", "cowboy-horse", "disco-snail"];
+const CX = -6;                         // the stretch of street the crowd shots look at
+const CROWD_LANES = {                  // z, direction, speed, clip, the widest kid it takes, where the line starts
+  far: { z: 13.3, dir: 1, v: WALK_SPEED, clip: "walk", rmax: 1.12, x0: CX - 2 },
+  roadA: { z: 21.2, dir: -1, v: RUN_SPEED, clip: "run", rmax: 0.9, x0: CX - 4 },
+  roadB: { z: 23.2, dir: 1, v: RUN_SPEED * 0.92, clip: "run", rmax: 0.9, x0: CX + 4 },
+  near: { z: 26.0, dir: 1, v: WALK_SPEED * 0.9, clip: "walk", rmax: 1.4, x0: CX - 3 },
+};
+const CROWD_DOORS = [-1, 0, 1];      // lots (offsets from the lot at CX) with a cluster at the door
+const crowd = [];                      // { k, L, x0 } on a lane, { k, door: [x, z, yaw, clip] } or { k, script(t) }
+let crowdT0 = 0, crowdStop = Infinity, crowdCam = null;
+const footR = k => Math.max(k.hw, k.hd);
+function stageCrowd() {
+  crowd.length = 0;
+  const pool = [...sim, ...PARADE];
+  // the door clusters: one kid at the door, two queueing down the path
+  const lot0 = Math.floor((CX - X0) / LOT);
+  const doorKids = pool.splice(0, CROWD_DOORS.length * 3);
+  CROWD_DOORS.forEach((o, j) => doorCluster(houses[lot0 + o], doorKids.slice(j * 3, j * 3 + 3)));
+  // the lines: the narrow kids run the road, the widest walk the near sidewalk
+  const lines = Object.fromEntries(Object.keys(CROWD_LANES).map(n => [n, []]));
+  const want = { roadA: 8, roadB: 8, far: 9, near: 99 };
+  const order = ["roadA", "roadB", "far", "near"];
+  for (const k of pool) {
+    const r = footR(k);
+    const n = order.find(n => r <= CROWD_LANES[n].rmax && lines[n].length < want[n]
+      && (n !== "roadB" || lines.roadA.length > lines.roadB.length || lines.roadA.length >= want.roadA)) || "near";
+    lines[n].push(k);
+  }
+  for (const [n, list] of Object.entries(lines)) laneLine(CROWD_LANES[n], list, CROWD_LANES[n].x0);
+}
+function crowdAt(t, dt) {   // t: seconds since the crowd shot began
+  const stopped = t >= crowdStop;
+  for (const c of crowd) {
+    const k = c.k;
+    k.obj.visible = true;
+    if (c.script) {
+      c.script(t);
+    } else if (c.door) {
+      const [x, z, yaw, clip] = c.door;
+      k.x = x; k.z = z;
+      if (!stopped) { k.yaw = yaw; play(k, clip, { ts: 1 }); }
+    } else {
+      const L = c.L;
+      k.x = c.x0 + L.dir * L.v * Math.min(t, crowdStop);
+      k.z = L.z;
+      if (!stopped) {
+        k.yaw = L.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+        play(k, L.clip, { at: c.ph * 0.8 });
+      }
+    }
+    if (stopped && crowdCam) {   // turn to face the camera
+      const want = Math.atan2(crowdCam.x - k.x, crowdCam.z - k.z);
+      let d = want - k.yaw;
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      k.yaw += d * Math.min(1, dt * 14);
+    }
+    k.yawTo = undefined;
+    k.y = undefined;   // straight onto the ground (the porch steps for the door kids)
+    turnAndGround(k, dt);
+  }
+}
+function doorCluster(h, kids) {
+  const spots = [[h.gateX, doorZ(h), Math.PI, "trick-or-treat"], [h.gateX + IN_X, footZ(h) + 1.0, Math.PI, "idle-look"],
+    [h.gateX + IN_X, footZ(h) + 3.2, Math.PI - 0.2, "wave"]];
+  kids.forEach((k, i) => crowd.push({ k, door: spots[i] }));
+}
+function laneLine(L, kids, x0, gap = 0.7) {
+  let x = x0, prev = null;
+  kids.forEach((k, i) => {
+    if (prev) x -= L.dir * (footR(prev) + footR(k) + gap + ((i * 0.618) % 1) * 1.1);
+    crowd.push({ k, L, x0: x, ph: (i * 0.37) % 1 });
+    prev = k;
+  });
+}
+function stagePatrol() {
+  crowd.length = 0;
+  const h = houses[PATROL_LOT], gx = h.gateX;
+  const pool = sim.filter(k => footR(k) <= 1.12);
+  const take = n => pool.splice(0, n);
+  // one kid at a time up the steps: walk up, knock, trick-or-treat, then turn round with the candy
+  const [up, q1, q2] = take(3);
+  const path = [[gx + IN_X, footZ(h) + 0.2], [gx + IN_X * 0.5, footZ(h) - 0.4], [gx, doorZ(h)]];
+  crowd.push({ k: up, script(t) {
+    const segs = [Math.hypot(path[1][0] - path[0][0], path[1][1] - path[0][1]), Math.hypot(path[2][0] - path[1][0], path[2][1] - path[1][1])];
+    const tUp = 3 * BEAT, d = clamp01(t / tUp) * (segs[0] + segs[1]);   // at the door on beat 3: knock, knock (3, 4), treat (5)
+    onBeat(t, 3, "pknock", () => sfxB("knock", 0.45, 3));
+    onBeat(t, 4, "pknock", () => sfxB("knock", 0.45, 4));
+    onBeat(t, 5, "pcandy", () => sfxB("candy", 0.4, 5));
+    const [a, b2, v] = d < segs[0] ? [path[0], path[1], d / segs[0]] : [path[1], path[2], (d - segs[0]) / segs[1]];
+    up.x = lerp(a[0], b2[0], v); up.z = lerp(a[1], b2[1], v);
+    if (t < tUp) { up.yaw = Math.atan2(b2[0] - a[0], b2[1] - a[1]); play(up, "walk", { ts: 1.1 }); }
+    else if (t < 5 * BEAT) { up.yaw = Math.PI; play(up, "wave", { ts: 1.3 }); }
+    else if (t < 9 * BEAT) { up.yaw = Math.PI; play(up, "trick-or-treat"); }
+    else { up.yaw += (0 - up.yaw) * 0.15; play(up, "eat-candy"); }
+  } });
+  crowd.push({ k: q1, door: [gx + IN_X, footZ(h) + 2.3, Math.PI, "idle-look"] });
+  crowd.push({ k: q2, door: [gx + IN_X, footZ(h) + 4.5, Math.PI - 0.25, "wave"] });
+  doorCluster(houses[PATROL_LOT - 1], take(3));
+  // a pack walking the sidewalk on to the next house
+  laneLine({ z: 13.3, dir: 1, v: WALK_SPEED, clip: "walk" }, take(5), gx - 2, 0.5);
+}
+const CROWD_END_CAM = { pos: V3(CX + 15, 10.5, 40), look: V3(CX - 7, 2.4, 19.5) };
+
+shots.push({
+  name: "brigade", bars: 2, scene: STREET, flash: true,
+  setup() {
+    show([booKid, ghostKid, witch, ...crew], false);
+    crowdStop = Infinity; crowdCam = null;
+    for (const k of [...sim, ...PARADE]) { k.face = null; k.clip = null; }
+    stageCrowd();
+    crowdT0 = STARTS[shotIx];
+    aimSun(CX, 18, 40);
+    sfxB("march", 0.8, 0);
+  },
+  update(lt, dt) { crowdAt(T - crowdT0, dt); },
+  cam(lt) {
+    const u = smooth(lt / (2 * BAR));
+    return { pos: V3(CX + lerp(9, 14, u), lerp(6, 10, u), lerp(46, 41, u)), look: V3(CX - lerp(5, 7, u), lerp(1.8, 2.4, u), lerp(20.5, 19.5, u)), fov: 34 };
+  },
+  text(lt) {
+    balloon("BUILT FOR|MOBILE", 0.11, 150, lt - 0.1, { ci0: 0 });
+    pill("2 draw calls a kid · 50 at once", W / 2, H * 0.225, 48, (lt - BEAT * 2) / 0.2);
+  },
+});
+
+shots.push({
+  name: "end", bars: 2, scene: STREET, flash: true,
+  setup() {
+    crowdStop = T - crowdT0;
+    crowdCam = CROWD_END_CAM.pos;
+    const CHEER = ["celebrate", "wave", "dance-wiggle", "celebrate", "jump", "wave"];
+    crowd.forEach((c, i) => {
+      c.k.face = { mouth: "grin", eyes: "open", brow: "none" };
+      play(c.k, CHEER[i % CHEER.length], { force: true, at: (i * 0.13) % 0.6, ts: 1.1 });
+    });
+    punch(0.8);
+    titlePops(0.25, TITLE.replace(/ /g, "").length, 0.3);
+    sfxB("cheer", 0.9, 0);
+  },
+  update(lt, dt) {
+    crowdAt(T - crowdT0, dt);
+    onBeat(lt, 4, "sting", () => {
+      punch(1); sfxB("sparkle", 0.9, 4);
+      crowd.forEach((c, i) => play(c.k, "jump", { force: true, ts: 1.2, at: (i % 3) * 0.05 }));
+    });
+  },
+  cam(lt) {
+    const u = easeOut(lt / (2 * BAR));
+    const p = CROWD_END_CAM.pos;
+    return { pos: V3(p.x - u * 1.0, p.y - u * 0.8, p.z - u * 2.0), look: CROWD_END_CAM.look, fov: 34 };
+  },
+  text(lt) {
+    balloon(TITLE.replace(" ", "|"), 0.15, 230, lt - BEAT / 4, { stagger: BEAT / 8 });
+    pill("96 kids · houses · cars · props", W / 2, H * 0.3, 52, (lt - BEAT * 2) / 0.25);
+    pill("animated glTF / GLB", W / 2, H * 0.355, 46, (lt - BEAT * 2.5) / 0.25, { bg: "rgba(255,122,13,0.96)", fg: INK, accent: INK });
+  },
+});
+
+const SHOT_NAMES = ["knock", "title", "roll", "skin", "faces", "moves", "boo", "build", "patrol", "brigade", "end"];
+shots.forEach((s, i) => { s.name ??= SHOT_NAMES[i]; });
+const STARTS = [];
+let acc = 0;
+for (const s of shots) { s.dur = s.bars * BAR; STARTS.push(acc); acc += s.dur; }
+const TOTAL = acc;
+// the bar each shot starts on, for music.py (so the arrangement follows the cut)
+const CUES = Object.fromEntries(shots.map((s, i) => [s.name, Math.round(STARTS[i] / BAR)]));
+CUES.bars = Math.round(TOTAL / BAR);
+
+// ------------------------------------------------------------------ ?check=1: nobody clips
+// Steps the whole trailer without drawing and, in every street frame, tests each visible kid's
+// footprint (an oriented box, 85% of the bind pose) against every other kid and the solid props.
+function footprintTest(a, b) {   // oriented boxes {x, z, hw, hd, yaw}: the overlap depth, or <= 0
+  const axes = [];
+  for (const o of [a, b]) axes.push([Math.cos(o.yaw), -Math.sin(o.yaw)], [Math.sin(o.yaw), Math.cos(o.yaw)]);
+  const dx = b.x - a.x, dz = b.z - a.z;
+  let best = Infinity;
+  for (const [ax, az] of axes) {
+    const proj = o => o.hw * Math.abs(Math.cos(o.yaw) * ax - Math.sin(o.yaw) * az) + o.hd * Math.abs(Math.sin(o.yaw) * ax + Math.cos(o.yaw) * az);
+    best = Math.min(best, proj(a) + proj(b) - Math.abs(dx * ax + dz * az));
+    if (best <= 0) return best;
+  }
+  return best;
+}
+function solidProps() {
+  const SOLID = /^(car|lamp|hydrant|street-sign|mailbox|jack|tombstone|crow|hay|bush|hedge|tree)/;
+  const out = [];
+  for (const [slug, list] of placements) {
+    if (!SOLID.test(slug) || !instanced.has(slug)) continue;
+    const b = new THREE.Box3();
+    for (const im of instanced.get(slug)) { im.geometry.computeBoundingBox(); b.union(im.geometry.boundingBox); }
+    const slim = slug.startsWith("lamp") || slug.startsWith("tree") ? 0.5 : 1;   // lamps and trees: only the post / trunk is solid
+    for (const t of list) {
+      const sx = (t.sx ?? t.s ?? 1) * slim, sz = (t.sz ?? t.s ?? 1) * slim;
+      out.push({ slug, x: t.x + (b.min.x + b.max.x) / 2, z: t.z + (b.min.z + b.max.z) / 2, hw: (b.max.x - b.min.x) / 2 * sx, hd: (b.max.z - b.min.z) / 2 * sz, yaw: t.ry || 0 });
+    }
+  }
+  return out;
+}
+async function clipCheck() {
+  const props = solidProps(), worst = {};
+  const note = (key, depth, t) => { if (depth > 0.05 && (!worst[key] || worst[key].depth < depth)) worst[key] = { depth: +depth.toFixed(2), t: +t.toFixed(2) }; };
+  const N = Math.round(TOTAL * FPS);
+  step(0, false);
+  for (let f = 1; f < N; f++) {
+    step(1 / FPS, false);
+    const sh = shots[shotIx];
+    if (sh.scene !== STREET) continue;
+    const c = sh.cam.call(sh, T - STARTS[shotIx]);   // only what the camera sees counts
+    camera.position.copy(c.pos); camera.lookAt(c.look); camera.fov = c.fov || 30; camera.aspect = W / H;
+    camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+    const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+    const ks = KIDS.filter(k => k.obj.parent === STREET && k.obj.visible && fr.containsPoint(k.obj.position.clone().setY(k.obj.position.y + 0.5))).map(k => ({ k, x: k.obj.position.x, z: k.obj.position.z, hw: k.hw * 0.85, hd: k.hd * 0.85, yaw: k.obj.rotation.y }));
+    for (let i = 0; i < ks.length; i++) {
+      for (let j = i + 1; j < ks.length; j++) note(`${sh.name}: ${ks[i].k.slug} x ${ks[j].k.slug}`, footprintTest(ks[i], ks[j]), T);
+      for (const p of props) note(`${sh.name}: ${ks[i].k.slug} x ${p.slug}`, footprintTest(ks[i], p), T);
+    }
+  }
+  const report = Object.entries(worst).sort((a, b) => b[1].depth - a[1].depth);
+  console.log("clip check: " + (report.length ? report.map(([k, v]) => `${k} ${v.depth} @${v.t}`).join(" | ") : "no overlaps"));
+  await fetch("/still/check", { method: "POST", body: JSON.stringify(report, null, 1) });
+}
+
+// ------------------------------------------------------------------ the frame step
+let shotIx = -1;
+function step(dt, render = true) {
+  T += dt;
+  let ix = 0;
+  while (ix + 1 < shots.length && T >= STARTS[ix + 1] - 1e-6) ix++;
+  if (ix !== shotIx) {
+    shotIx = ix;
+    fired.clear();
+    if (shots[ix].flash) { flash = 1; flashCol = "255,236,214"; }
+    shots[ix].setup.call(shots[ix]);
+  }
+  const s = shots[ix], lt = T - STARTS[ix];
+  updateSim(dt);
+  s.update.call(s, lt, dt);
+  for (const k of KIDS) { k.mixer.update(dt); applyFace(k); }
+  if (!render) { kick *= 0.86; flash *= 0.6; return; }
+  const c = s.cam.call(s, lt);
+  updateCandy(T, c.pos);
+  camera.position.copy(c.pos);
+  camera.lookAt(c.look);
+  aimFill(s.scene, c.look);
+  camera.fov = (c.fov || 30) * (1 - kick * 0.08);
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  kick *= 0.86;
+  const custom = s.render && s.render.call(s, lt);
+  if (!custom) {
+    renderer.render(s.scene, camera);
+    ctx.drawImage(gl, 0, 0, W, H);
+  }
+  if (s.text) s.text.call(s, lt);
+  if (flash > 0.01) {
+    ctx.fillStyle = `rgba(${flashCol},${flash * 0.8})`;
+    ctx.fillRect(0, 0, W, H);
+    flash *= 0.6;
+  }
+}
+
+// ------------------------------------------------------------------ load and go
+async function main() {
+  ctx.fillStyle = "#140e22"; ctx.fillRect(0, 0, W, H);
+  await document.fonts.load(`100px "Creepster"`);
+  const slugs = [...new Set([...SIM_KIDS, ...ROLL, ...TONE_SIX, ...MOVE_KIDS, ...PARADE_KIDS, "witch", "kid-puffs", "kid-curly",
+    "princess", "ghost", "pumpkin-clown", "superhero", "cupcake", "inflatable-trex", "kid-spiky", "baker", "sports-player", "angel"])];
+  const gltfs = await Promise.all(slugs.map(s => load(`${A}chars/${s}.glb`)));
+  slugs.forEach((s, i) => KSRC.set(s, gltfs[i]));
+  const conv = new Map();
+  for (const g of gltfs) g.scene.traverse(o => {
+    if (!o.isMesh) return;
+    const f = m => { if (!conv.has(m)) conv.set(m, kidMaterial(m)); return conv.get(m); };
+    o.material = Array.isArray(o.material) ? o.material.map(f) : f(o.material);
+  });
+  await layout();
+  buildCandy();
+  await buildInstances();
+  buildPools();
+  for (const m of glowMats) m.emissiveIntensity = m.userData.base * 1.6;   // the dusk mode
+  spawnSim();
+  await buildHouse();
+
+  // the scripted kids
+  hero = houses[2];
+  witch = makeKid("witch", { scale: KID_SCALE, parent: STREET, skin: 1 });
+  crew = ["pumpkin-clown", "superhero", "cupcake", "inflatable-trex"].map((s, i) => makeKid(s, { scale: KID_SCALE, parent: STREET, skin: [3, 0, 5, 2][i] }));
+  booKid = makeKid("princess", { scale: KID_SCALE, parent: STREET, skin: 4 });
+  ghostKid = makeKid("ghost", { scale: KID_SCALE, parent: STREET });
+  PARADE_KIDS.forEach((s, i) => PARADE.push(makeKid(s, { scale: KID_SCALE, parent: STREET, skin: (i * 5) % 6 })));
+  show(PARADE, false);
+  show([booKid, ghostKid], false);
+
+  // the stage sets
+  const roll = new THREE.Group(), plain = new THREE.Group(), bset = new THREE.Group();
+  STAGE_SETS.roll = roll; STAGE_SETS.plain = plain; STAGE_SETS.build = bset;
+  const jack = async (slug, x, z, s, ry, parent) => {
+    const g = await load(`${A}street-assets/${slug}.glb`);
+    const m = g.scene.clone(true);
+    m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    m.position.set(x, 0, z); m.scale.setScalar(s); m.rotation.y = ry;
+    parent.add(m);
+  };
+  await jack("jack-large", -4.2, -6, 1.7, 0.5, roll);
+  await jack("jack-medium", 4.4, -7, 1.7, -0.5, roll);
+  await jack("tombstone-round", -6.4, -16, 2.2, 0.3, roll);
+  await jack("tombstone-cross", 6.6, -17, 2.2, -0.2, roll);
+  await jack("jack-small", -9, 6, 2.5, 0.2, bset);
+  await jack("jack-medium", 10, 5, 2.5, -0.4, bset);
+  await jack("tombstone-round", -13, -6, 2.5, 0.3, bset);
+  await jack("tree-gnarled", 16, -10, 1.8, 1.2, bset);
+  bset.add(build.group);
+  STAGE.add(roll, plain, bset);
+  stageSet("roll");
+  rollKids = ROLL.map((s, i) => makeKid(s, { parent: STAGE, skin: (i * 2 + 1) % 6 }));
+  show(rollKids, false);
+  toneKid = makeKid("baker", { parent: STAGE, skin: 0 });
+  toneSix = TONE_SIX.map(s => makeKid(s, { parent: STAGE }));
+  faceKid = makeKid("sports-player", { parent: STAGE, skin: 2 });
+  moveKids = MOVE_KIDS.map((s, i) => makeKid(s, { parent: STAGE, skin: [1, 3, 0, 4][i] }));
+  buildKid = makeKid("kid-spiky", { scale: KID_SCALE, parent: STAGE, skin: 3 });
+  STAGE_KIDS.push(...rollKids, toneKid, ...toneSix, faceKid, ...moveKids, buildKid);
+  stageSet("roll");
+  for (const k of [witch, ...crew]) k.obj.visible = false;
+
+  if (RECORD) {
+    const N = Math.round(TOTAL * FPS);
+    for (let f = 0; f < N; f++) {
+      step(f === 0 ? 0 : 1 / FPS);
+      const blob = await new Promise(r => out.toBlob(r, "image/jpeg", 0.93));
+      await fetch(`/frame/${f}`, { method: "POST", body: blob });
+    }
+    await fetch("/events", { method: "POST", body: JSON.stringify({ fps: FPS, bpm: BPM, total: TOTAL, cues: CUES, events }) });
+    document.title = "DONE";
+    return;
+  }
+  const save = async name => {
+    if (!Q.has("save")) return;
+    await fetch(`/still/${name}`, { method: "POST", body: await new Promise(r => out.toBlob(r, "image/jpeg", 0.9)) });
+  };
+  if (Q.has("check")) { await clipCheck(); document.title = "CHECKED"; return; }
+  if (Q.has("events")) {   // the sound cues only, without drawing (for checking the beat grid)
+    const N = Math.round(TOTAL * FPS);
+    step(0, false);
+    for (let f = 1; f < N; f++) step(1 / FPS, false);
+    await fetch("/still/events", { method: "POST", body: JSON.stringify({ fps: FPS, bpm: BPM, total: TOTAL, cues: CUES, events }) });
+    return;
+  }
+  if (Q.has("sheet")) {
+    const ts = Q.get("sheet").split(",").map(Number).sort((a, b) => a - b);
+    const cols = 6, cw = W / 4, ch = H / 4;
+    const sheet = document.createElement("canvas");
+    sheet.width = cw * Math.min(cols, ts.length); sheet.height = ch * Math.ceil(ts.length / cols);
+    const sc = sheet.getContext("2d");
+    step(0, false);
+    for (let i = 0; i < ts.length; i++) {
+      while (T + 1 / FPS <= ts[i] + 1e-6) step(1 / FPS, T + 2 / FPS > ts[i]);
+      sc.drawImage(out, (i % cols) * cw, Math.floor(i / cols) * ch, cw, ch);
+      sc.fillStyle = "#fff"; sc.font = "bold 22px sans-serif"; sc.fillText(ts[i].toFixed(2) + "s", (i % cols) * cw + 8, Math.floor(i / cols) * ch + 26);
+    }
+    out.width = sheet.width; out.height = sheet.height;
+    ctx.drawImage(sheet, 0, 0);
+    await save("sheet");
+    document.title = "SHEET";
+    return;
+  }
+  if (Q.has("at")) {
+    const target = +Q.get("at");
+    step(0, false);
+    while (T + 1 / FPS <= target + 1e-6) step(1 / FPS, T + 2 / FPS > target);
+    await save("at");
+    document.title = "AT " + T.toFixed(2);
+    return;
+  }
+  let last = performance.now();
+  step(0);
+  const loop = now => {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (T + dt >= TOTAL) location.reload();
+    else step(dt);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+main();
+</script>
+</body>
+</html>

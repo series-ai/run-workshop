@@ -6,8 +6,8 @@ two small glowing gold eyes, a bare bone jaw full of teeth, a torn red
 hoodie with a pocket and drawstrings, ripped blue jeans, sneakers, one
 bandaged forearm and long arms thrust forward with big clawed hands. The
 chest leans forward (true slopes); cloth, bandage, rips and face are
-paint. Clips: idle (twitchy crouch), move (sprint), attack (lunge and
-double claw), hit, death (pitches forward). Faces -Z.
+paint. Clips: idle (twitchy crouch), move (sprint), attack (rears back with both claws
+overhead, leaps into a double claw rake), hit, death (pitches forward). Faces -Z.
 """
 import numpy as np
 
@@ -134,16 +134,26 @@ def build():
             "head": {"rot": wave(0.7, (5, -6, 0), phase=0.9)},
             "arm-l": {"rot": wave(0.7, (-28, 0, 0))},
             "arm-r": {"rot": wave(0.7, (28, 0, 0))}}
-    attack = {"body": {"rot": seq((0, 0, 0, 0), (0.2, 10, 0, 0), (0.4, -22, 0, 0), (0.8, 0, 0, 0)), "loc": seq((0, 0, 0, 0), (0.4, 0, 0, -4), (0.8, 0, 0, 0))},
-              "arm-l": {"rot": seq((0, 0, 0, 0), (0.2, 60, 0, -10), (0.4, -30, 0, 10), (0.8, 0, 0, 0))},
-              "arm-r": {"rot": seq((0, 0, 0, 0), (0.25, 60, 0, 10), (0.45, -30, 0, -10), (0.8, 0, 0, 0))},
-              "head": {"rot": seq((0, 0, 0, 0), (0.2, 14, 0, 0), (0.4, -8, 0, 0), (0.8, 0, 0, 0))}}
+    # attack: rear back with both claws thrown up overhead (f0-10), leap 2
+    # frames into the double claw rake (impact f12: lunge onto the front
+    # foot, torso whipped forward, both claws raked down past the knees),
+    # follow through, hold, then straighten and step back to the spot.
+    f = 1 / 30
+    imp = 12 * f
+    R = rig.root.name
+    attack = {R: {"loc": seq((0, 0, 0, 0), (8 * f, 0, 1.0, 3), (10 * f, 0, 1.0, 3.5), (imp, 0, 1.6, -8), (14 * f, 0, 1.8, -9), (19 * f, 0, 1.6, -8), (23 * f, 0, 0.6, -4), (28 * f, 0, 0, 0))},
+              "body": {"rot": seq((0, 0, 0, 0), (8 * f, 16, 0, 0), (10 * f, 18, 0, 0), (imp, -28, 0, 0), (14 * f, -34, 0, 0), (19 * f, -28, 0, 0), (28 * f, 0, 0, 0))},
+              "arm-l": {"rot": seq((0, 0, 0, 0), (8 * f, 90, 0, -14), (10 * f, 96, 0, -16), (imp, -48, 0, -24), (14 * f, -62, 0, -30), (19 * f, -50, 0, -26), (23 * f, -24, 0, -18), (28 * f, 0, 0, 0))},
+              "arm-r": {"rot": seq((0, 0, 0, 0), (9 * f, 88, 0, 14), (11 * f, 94, 0, 16), (imp, -46, 0, 24), (15 * f, -62, 0, 30), (20 * f, -50, 0, 26), (24 * f, -24, 0, 18), (28 * f, 0, 0, 0))},
+              "head": {"rot": seq((0, 0, 0, 0), (9 * f, 20, 0, 0), (11 * f, 22, 0, 0), (13 * f, -14, 0, 0), (16 * f, -18, 0, 0), (21 * f, -10, 0, 0), (28 * f, 0, 0, 0))},
+              "leg-l": {"rot": seq((0, 0, 0, 0), (8 * f, -4, 0, 0), (imp, 24, 0, 0), (14 * f, 26, 0, 0), (19 * f, 22, 0, 0), (28 * f, 0, 0, 0))},
+              "leg-r": {"rot": seq((0, 0, 0, 0), (8 * f, 6, 0, 0), (imp, -14, 0, 0), (14 * f, -16, 0, 0), (19 * f, -12, 0, 0), (28 * f, 0, 0, 0))}}
     hit = {"body": {"rot": seq((0, 0, 0, 0), (0.1, 18, 8, 0), (0.45, 0, 0, 0))},
            "head": {"rot": seq((0, 0, 0, 0), (0.1, 20, -12, 0), (0.45, 0, 0, 0))}}
     death = {rig.root.name: {"rot": seq((0, 0, 0, 0), (0.25, 10, 0, 0), (0.8, -82, 0, 0), (0.95, -76, 0, 0), (1.3, -80, 0, 0))},
              "head": {"rot": seq((0, 0, 0, 0), (0.8, -20, 20, 0), (1.3, -15, 25, 0))},
              "arm-l": {"rot": seq((0, 0, 0, 0), (0.8, 60, 0, -40))}, "arm-r": {"rot": seq((0, 0, 0, 0), (0.8, 70, 0, 30))}}
     return make("creatures", "zombie-runner", "Zombie Runner", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-chest", (CX, HIP_Y + 8, CZ - 6), parent="body")],
                 pfx=[fx("rvx-apocalypse-gore-burst", "socket-chest", "clip:death", size=30, at=0.26)])

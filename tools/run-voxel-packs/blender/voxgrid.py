@@ -514,6 +514,10 @@ class Clip:
     name: str
     keys: dict[str, dict[str, list[tuple[float, tuple[float, float, float]]]]]
     loop: bool = True
+    # Seconds of the blow in a one-shot (attack): every channel keyed at this
+    # moment accelerates into it instead of easing in, so the blow lands at
+    # full speed (see export.snap_impact).
+    impact: float | None = None
 
 
 @dataclass

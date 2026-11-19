@@ -205,24 +205,28 @@ def chain(zc: float) -> Grid:
     return g
 
 
-def swing(phi_keys, seconds: float):
+def eased(phi_keys):
+    """phi(t) from (t, degrees) keys, eased between keys."""
+    def phi(t: float) -> float:
+        for (t0, a0), (t1, a1) in zip(phi_keys, phi_keys[1:]):
+            if t0 <= t <= t1:
+                f = (t - t0) / (t1 - t0)
+                return a0 + (a1 - a0) * f * f * (3 - 2 * f)
+        raise ValueError(f"swing: no key span covers t={t}")
+    return phi
+
+
+def swing(phi, seconds: float):
     """Per-frame pendulum keys for the log ('loc') and the chains ('rot')
-    from (t, degrees) keys, eased between keys."""
+    from the swing angle phi(t) in degrees."""
     frames = round(seconds * 30)
     log, chains = [], []
     for i in range(frames + 1):
         t = seconds * i / frames
-        for (t0, a0), (t1, a1) in zip(phi_keys, phi_keys[1:]):
-            if t0 <= t <= t1:
-                f = (t - t0) / (t1 - t0)
-                f = f * f * (3 - 2 * f)
-                phi = a0 + (a1 - a0) * f
-                break
-        else:
-            raise ValueError(f"swing: no key span covers t={t}")
-        r = math.radians(phi)
+        a = phi(t)
+        r = math.radians(a)
         log.append((t, (0.0, L * (1 - math.cos(r)), -L * math.sin(r))))
-        chains.append((t, (phi, 0.0, 0.0)))
+        chains.append((t, (a, 0.0, 0.0)))
     return log, chains
 
 
@@ -251,8 +255,9 @@ def build() -> Asset:
     for name, cg in chains.items():
         hinge = (CX, BEAM0, CHAIN_Z[0] if name.endswith("f") else CHAIN_Z[1])
         root.add(Part(name, cg, pivot=hinge, at=rel(hinge)))
-    idle_log, idle_ch = swing([(0.0, 0.0), (1.0, 2.0), (2.0, 0.0), (3.0, -2.0), (4.0, 0.0)], 4.0)
-    att_log, att_ch = swing([(0.0, 0.0), (0.22, -25.0), (0.42, 16.0), (0.6, 6.0), (0.9, 0.0)], 0.9)
+    # a pendulum: fastest through the bottom, so a sine, not eased keys (which stop it there)
+    idle_log, idle_ch = swing(lambda t: 2.0 * math.sin(2 * math.pi * t / 4.0), 4.0)
+    att_log, att_ch = swing(eased([(0.0, 0.0), (0.22, -25.0), (0.42, 16.0), (0.6, 6.0), (0.9, 0.0)]), 0.9)
     idle = {"ram-head": {"loc": idle_log}, "chain-f": {"rot": idle_ch}, "chain-b": {"rot": idle_ch}}
     attack = {"ram-head": {"loc": att_log}, "chain-f": {"rot": att_ch}, "chain-b": {"rot": att_ch}}
     return Asset(id="fantasy-vehicles-battering-ram", pack="fantasy", category="vehicles", name="Battering Ram", root=root,

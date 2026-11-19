@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Avatar kit check</title>
+<style>html, body { margin: 0; background: #ece5d8; overflow: hidden; } canvas { display: block; }</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three-build/three.module.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+// A frozen grid of kit kids for checking fits: every combination listed in ?looks= (or the ones
+// below), at one moment of one clip, from the front-3/4 or the back.
+//   kit-check.html?clip=run&t=0.3&view=back&set=layers&fix=bottom:overalls
+//   &h=2&y=1 zooms in: h is the height the cell shows, y the height it looks at
+import * as THREE from "three";
+import { loadKidKit } from "./kit/kidkit.js";
+
+const q = new URLSearchParams(location.search);
+const clip = q.get("clip") ?? "idle", t = +(q.get("t") ?? 0), back = q.get("view") === "back";
+const kit = await loadKidKit("./kit/");
+const all = (slot) => Object.keys(kit.items[slot]);
+const base = { skin: 2, hair: { item: "crop" }, face: { item: "none" }, top: { item: "tee" }, bottom: { item: "pants" }, shoes: { item: "sneakers" }, prop: { item: "none" } };
+const SETS = {
+  // every top over every bottoms
+  layers: all("top").flatMap((top) => all("bottom").map((bottom) => ({ ...base, top: { item: top }, bottom: { item: bottom } }))),
+  hair: all("hair").flatMap((hair) => ["none", "round-glasses", "square-glasses"].map((face) => ({ ...base, hair: { item: hair }, face: { item: face } }))),
+  feet: all("shoes").flatMap((shoes) => all("bottom").map((bottom) => ({ ...base, shoes: { item: shoes }, bottom: { item: bottom } }))),
+  props: all("prop").flatMap((prop) => ["tee", "raincoat", "puffer"].map((top) => ({ ...base, prop: { item: prop }, top: { item: top } }))),
+  looks: Object.values(kit.looks),
+};
+// fix=bottom:overalls,face:none keeps only the combinations wearing those items
+const fix = (q.get("fix") ?? "").split(",").filter(Boolean).map((f) => f.split(":"));
+const looks = SETS[q.get("set") ?? "looks"].filter((l) => fix.every(([slot, item]) => l[slot].item === item));
+const cols = +(q.get("cols") ?? Math.ceil(Math.sqrt(looks.length * 1.4)));
+const rows = Math.ceil(looks.length / cols), GAP = 40, VIEW_H = +(q.get("h") ?? 5.4), AIM = +(q.get("y") ?? 2.3);
+
+// one kid per cell: the kids stand far apart and the camera visits each in turn (scissor)
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("c"), antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.setScissorTest(true);
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xfff6ea, 0xb9a98f, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(4, 10, back ? -7 : 7);
+scene.add(sun);
+const kids = await Promise.all(looks.map((l) => kit.makeKid(structuredClone(l))));
+kids.forEach((k, i) => {
+  k.object.position.set(i * GAP, 0, 0);
+  const a = k.play(clip, { fade: 0 });
+  a.time = t;
+  k.update(0);
+  scene.add(k.object);
+});
+const cw = innerWidth / cols, ch = innerHeight / rows, aspect = cw / ch;
+const vh = Math.max(VIEW_H, (VIEW_H * 0.8) / aspect);  // the kid fits, however the cells are shaped
+const cam = new THREE.OrthographicCamera(-vh * aspect / 2, vh * aspect / 2, vh / 2, -vh / 2, 0.1, 400);
+const dir = new THREE.Vector3(back ? -0.62 : 0.62, 0.3, back ? -1 : 1).normalize();
+const bgs = [new THREE.Color(0xf3ede3), new THREE.Color(0xe9e1d3)];
+const draw = () => kids.forEach((k, i) => {
+  const x = (i % cols) * cw, y = innerHeight - (Math.floor(i / cols) + 1) * ch;
+  renderer.setViewport(x, y, cw, ch);
+  renderer.setScissor(x, y, cw, ch);
+  renderer.setClearColor(bgs[(i + Math.floor(i / cols)) % 2]);
+  const target = new THREE.Vector3(i * GAP, AIM, 0);
+  cam.position.copy(target).addScaledVector(dir, 100);
+  cam.lookAt(target);
+  renderer.render(scene, cam);
+});
+renderer.setAnimationLoop(draw);  // redrawn every frame so a screenshot always finds it
+document.title = "ready";
+setTimeout(() => document.body.insertAdjacentHTML("beforeend", '<p style="position:absolute;top:0;opacity:0">kit-ready</p>'), 500);
+</script>
+</body>
+</html>

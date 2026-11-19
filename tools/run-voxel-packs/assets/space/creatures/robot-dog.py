@@ -2,7 +2,7 @@
 
 A small boxy patrol bot with a white and steel hull, copper armor, a framed
 cyan face, mounted radar ears, plated piston legs, and a lit antenna tail.
-Clips: idle, move, attack, hit, death. Faces -Z.
+Clips: idle, move, attack (pounce and bite), hit, death. Faces -Z.
 """
 import numpy as np
 
@@ -138,10 +138,20 @@ def build():
             "leg-fr": {"rot": keys((0, back), (t / 2, fwd), (t, back))}, "leg-bl": {"rot": keys((0, back), (t / 2, fwd), (t, back))},
             "body": {"loc": keys((0, z0), (t / 4, (0, 1, 0)), (t / 2, z0), (t * 0.75, (0, 1, 0)), (t, z0))},
             "tail": {"rot": wave(t, "z", 20)}}
-    attack = {"body": {"loc": keys((0, z0), (0.15, (0, 0, 2)), (0.3, (0, 1, -4)), (0.6, z0)), "rot": keys((0, z0), (0.15, (8, 0, 0)), (0.3, (-10, 0, 0)), (0.6, z0))},
-              "head": {"rot": keys((0, z0), (0.3, (-15, 0, 0)), (0.4, (5, 0, 0)), (0.5, (-15, 0, 0)), (0.7, z0))}}
+    # Pounce bite: the dog crouches back with its nose up and tail high
+    # (0-0.33 s), springs forward in 2 frames and snaps its head down on the
+    # target (impact 0.4 s), holds the bite with a shake, then backs off.
+    F = 1 / 30
+    hit_t = 12 * F
+    attack = {"robot-dog": {"loc": keys((0, z0), (10 * F, (0, 1.0, 3.5)), (hit_t, (0, 1.6, -6.5)), (14 * F, (0, 1.4, -7.5)), (19 * F, (0, 1.2, -6.5)), (30 * F, z0))},
+              "body": {"rot": keys((0, z0), (10 * F, (10, 0, 0)), (hit_t, (-10, 0, 0)), (14 * F, (-12, 0, 0)), (19 * F, (-9, 0, 0)), (30 * F, z0))},
+              "head": {"rot": keys((0, z0), (10 * F, (28, 0, 0)), (hit_t, (-26, 0, 0)), (14 * F, (-32, 0, 0)), (16 * F, (-24, 8, 0)), (18 * F, (-28, -8, 0)),
+                                   (20 * F, (-24, 0, 0)), (30 * F, z0))},
+              "tail": {"rot": keys((0, z0), (11 * F, (-40, 0, 0)), (hit_t + 2 * F, (20, 0, 0)), (20 * F, (-10, 0, 0)), (30 * F, z0))},
+              **{name: {"rot": keys((0, z0), (10 * F, (-14 if name[-2] == "f" else 14, 0, 0)), (hit_t + F, (16 if name[-2] == "f" else -22, 0, 0)),
+                                    (20 * F, (6 if name[-2] == "f" else -8, 0, 0)), (30 * F, z0))} for name in LEGS}}
     hit = {"body": {"rot": keys((0, z0), (0.1, (0, 0, 15)), (0.4, z0))}, "head": {"rot": keys((0, z0), (0.1, (10, 0, -15)), (0.4, z0))}}
     death = {"body": {"rot": keys((0, z0), (0.4, (0, 0, 40)), (0.8, (0, 0, 88))), "loc": keys((0, z0), (0.8, (0, -5, 0)))},
              "head": {"rot": keys((0, z0), (0.8, (20, 0, 0)))}, "tail": {"rot": keys((0, z0), (0.8, (-60, 0, 0)))}}
     return asset("creatures", "robot-dog", "Robot Dog", rig.root,
-                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)])
+                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False), Clip("death", death, loop=False)])

@@ -9,7 +9,8 @@ spot. It wears a torn, stained white vest with bare ribs in a rip, and
 torn jeans: the left leg drags a lost-shoe foot, the right leg ends in a
 torn stump with bone. Torso, head, jaw and limbs are true-slope prisms;
 cloth, ribs, stains and face are paint. Clips: idle (look round), move
-(arm-over-arm crawl), attack (lunging bite), hit, death (rolls on its
+(arm-over-arm crawl), attack (rears up with a claw raised,
+lunges into a bite as the claw slams down), hit, death (rolls on its
 side). Faces -Z.
 """
 import numpy as np
@@ -155,18 +156,28 @@ def _build():
             "head": {"rot": wave(crawl, (0, 6, 4))},
             "leg-l": {"rot": wave(crawl, (0, 6, 0))}, "leg-r": {"rot": wave(crawl, (0, -5, 0), phase=0.6)},
             "zombie-crawler": {"rot": wave(crawl, (0, 4, 0))}}
-    attack = {"head": {"rot": seq((0, 0, 0, 0), (0.2, 16, 0, 0), (0.45, -10, 0, 0), (0.8, 0, 0, 0))},
-              "zombie-crawler": {"loc": seq((0, 0, 0, 0), (0.2, 0, 0, 2), (0.45, 0, 0, -4), (0.8, 0, 0, 0))},
-              "arm-l": {"rot": seq((0, 0, 0, 0), (0.25, 30, 0, -10), (0.5, 4, 0, 0), (0.8, 0, 0, 0))}}
+    # attack: drag back and rear up on the left arm with the right claw
+    # raised high and the head thrown back (f0-10), lunge 3 frames into
+    # the bite (impact f13) as the claw slams down ahead, worry the bite,
+    # hold, then drag back to the spot.
+    f = 1 / 30
+    imp = 13 * f
+    attack = {"head": {"rot": seq((0, 0, 0, 0), (9 * f, 26, 0, 0), (11 * f, 30, 0, -4), (imp, -22, 0, 0), (15 * f, -28, 0, 6), (17 * f, -18, 0, -6), (19 * f, -26, 0, 4), (22 * f, -18, 0, 0), (31 * f, 0, 0, 0))},
+              "zombie-crawler": {"loc": seq((0, 0, 0, 0), (8 * f, 0, 2.5, 4), (10 * f, 0, 3, 5), (imp, 0, -1.2, -9), (15 * f, 0, 0.2, -10), (21 * f, 0, -1.2, -9), (31 * f, 0, 0, 0)),
+                                 "rot": seq((0, 0, 0, 0), (8 * f, 6, 0, 0), (10 * f, 7, 0, 0), (imp, -6, 0, 0), (15 * f, -8, 0, 0), (21 * f, -5, 0, 0), (31 * f, 0, 0, 0))},
+              "arm-r": {"rot": seq((0, 0, 0, 0), (8 * f, 80, 0, 10), (10 * f, 88, 0, 12), (imp, 22, 0, 0), (15 * f, 16, 0, -4), (21 * f, 20, 0, 0), (31 * f, 0, 0, 0))},
+              "arm-l": {"rot": seq((0, 0, 0, 0), (8 * f, -10, 0, -6), (imp, 18, 0, 0), (15 * f, 22, 0, 0), (21 * f, 16, 0, 0), (31 * f, 0, 0, 0))},
+              "leg-l": {"rot": seq((0, 0, 0, 0), (10 * f, 0, 10, 0), (14 * f, 0, -14, 0), (20 * f, 0, 6, 0), (31 * f, 0, 0, 0))},
+              "leg-r": {"rot": seq((0, 0, 0, 0), (10 * f, 0, -8, 0), (15 * f, 0, 12, 0), (21 * f, 0, -5, 0), (31 * f, 0, 0, 0))}}
     hit = {"head": {"rot": seq((0, 0, 0, 0), (0.1, 18, 10, 8), (0.55, 0, 0, 0))},
            "zombie-crawler": {"loc": seq((0, 0, 0, 0), (0.1, 0, 0, 2.5), (0.55, 0, 0, 0))}}
     death = {"zombie-crawler": {"rot": seq((0, 0, 0, 0), (0.5, 0, 0, 18), (1.2, 0, 0, 72))},
              "head": {"rot": seq((0, 0, 0, 0), (1.2, -20, 0, -25))},
              "arm-r": {"rot": seq((0, 0, 0, 0), (1.2, 30, 0, 0))}}
     return make("creatures", "zombie-crawler", "Zombie Crawler", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-jaw", (CX, 20, 2.5), parent="head")],
-                pfx=[fx("rvx-apocalypse-vomit-spray", "socket-jaw", "clip:attack", at=0.28, size=10, aim=(0, 0, -1))])
+                pfx=[fx("rvx-apocalypse-vomit-spray", "socket-jaw", "clip:attack", at=imp, size=10, aim=(0, 0, -1))])
 
 
 def build():
