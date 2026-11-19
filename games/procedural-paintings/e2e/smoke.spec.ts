@@ -12,6 +12,13 @@ interface DemoMetrics {
   frames: number
 }
 
+interface AudioState {
+  enabled: boolean
+  playing: boolean
+  paused: boolean
+  supported: boolean
+}
+
 interface DemoApi {
   ready: Promise<void>
   scenes: string[]
@@ -21,6 +28,8 @@ interface DemoApi {
   setPreset(index: number): void
   setDrift(on: boolean): void
   setPaused(paused: boolean): void
+  audioState(): AudioState
+  toggleAudio(): void
   renderFrameNow(t: number): { calls: number; triangles: number }
   getMetrics(): DemoMetrics | undefined
   glError(): number
@@ -162,6 +171,120 @@ test('728x520 embed/responsive layout keeps top bar and telemetry on one row cle
   expect(apart(layout.placard, layout.bar)).toBe(true)
   expect(apart(layout.placard, layout.tabs)).toBe(true)
   expect(apart(layout.placard, layout.stats)).toBe(true)
+
+  expect(errors, `Unexpected browser errors: ${errors.join('\n')}`).toEqual([])
+})
+
+test('loads CC0 Gymnopédie No. 1 MP3 cleanly and handles click, KeyM, gesture start, and pause/resume', async ({ page }) => {
+  const errors: string[] = []
+  attachErrorWatchers(page, errors, 'audio')
+
+  const audioStatuses: number[] = []
+  page.on('response', (res) => {
+    if (res.url().includes('/audio/gymnopedie-1.mp3')) {
+      audioStatuses.push(res.status())
+    }
+  })
+
+  await page.setViewportSize({ width: 1280, height: 760 })
+  await page.goto('/?scene=starry')
+  await page.waitForFunction(() => Boolean(window.__DEMO_API__), null, { timeout: 20_000 })
+  await page.evaluate(() => (window.__DEMO_API__ as DemoApi).ready)
+
+  // Verify the bundled MP3 is served cleanly with HTTP 200 (or 206 range).
+  const fetchStatus = await page.evaluate(async () => {
+    const res = await fetch('./audio/gymnopedie-1.mp3')
+    return res.status
+  })
+  expect(fetchStatus).toBe(200)
+  expect(audioStatuses.length).toBeGreaterThan(0)
+  expect(audioStatuses.every((s) => s === 200 || s === 206)).toBe(true)
+
+  const audioBtn = page.locator('#btn-audio')
+  await expect(audioBtn).toBeVisible()
+  await expect(audioBtn).toHaveAttribute(
+    'title',
+    'Erik Satie · Gymnopédie No. 1 (CC0) — starts on interaction or click (M)',
+  )
+  await expect(audioBtn).toHaveClass(/\barmed\b/)
+  await expect(audioBtn).not.toHaveClass(/\bactive\b/)
+  await expect(audioBtn).toHaveAttribute('aria-pressed', 'true')
+
+  const initial = await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())
+  expect(initial).toEqual({ enabled: true, playing: false, paused: false, supported: true })
+
+  // Clicking #btn-audio starts playback directly from the armed state.
+  await audioBtn.click()
+  await expect(audioBtn).toHaveClass(/\bactive\b/)
+  await expect(audioBtn).not.toHaveClass(/\barmed\b/)
+  const afterClick = await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())
+  expect(afterClick).toEqual({ enabled: true, playing: true, paused: false, supported: true })
+
+  // Let playback ramp up and confirm no audio element error occurred.
+  await page.waitForTimeout(450)
+  const afterRamp = await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())
+  expect(afterRamp).toEqual({ enabled: true, playing: true, paused: false, supported: true })
+
+  // RUN pause/resume sync stops playing synchronously and resumes cleanly.
+  const pausedState = await page.evaluate(() => {
+    const api = window.__DEMO_API__ as DemoApi
+    api.setPaused(true)
+    return api.audioState()
+  })
+  expect(pausedState).toEqual({ enabled: true, playing: false, paused: true, supported: true })
+
+  await page.evaluate(() => (window.__DEMO_API__ as DemoApi).setPaused(false))
+  const resumedState = await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())
+  expect(resumedState).toEqual({ enabled: true, playing: true, paused: false, supported: true })
+
+  // KeyM mutes and unmutes; modified KeyM (Meta/Control) and editable/select targets are ignored.
+  await page.keyboard.press('Control+KeyM')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState().enabled)).toBe(true)
+
+  await page.locator('#scene-select').focus()
+  await page.keyboard.press('KeyM')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState().enabled)).toBe(true)
+  await page.locator('#stage').click({ position: { x: 400, y: 300 } })
+
+  await page.keyboard.press('KeyM')
+  await expect(audioBtn).not.toHaveClass(/\bactive\b/)
+  await expect(audioBtn).not.toHaveClass(/\barmed\b/)
+  await expect(audioBtn).toHaveAttribute('aria-pressed', 'false')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: false,
+    playing: false,
+    paused: false,
+    supported: true,
+  })
+
+  await page.keyboard.press('KeyM')
+  await expect(audioBtn).toHaveClass(/\bactive\b/)
+  await expect(audioBtn).toHaveAttribute('aria-pressed', 'true')
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: true,
+    playing: true,
+    paused: false,
+    supported: true,
+  })
+
+  // Fresh page load: first pointer interaction on the stage starts audio automatically.
+  await page.goto('/?scene=wave&single=1')
+  await page.waitForFunction(() => Boolean(window.__DEMO_API__), null, { timeout: 20_000 })
+  await page.evaluate(() => (window.__DEMO_API__ as DemoApi).ready)
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: true,
+    playing: false,
+    paused: false,
+    supported: true,
+  })
+  await page.locator('#stage').click({ position: { x: 400, y: 300 } })
+  await expect(page.locator('#btn-audio')).toHaveClass(/\bactive\b/)
+  expect(await page.evaluate(() => (window.__DEMO_API__ as DemoApi).audioState())).toEqual({
+    enabled: true,
+    playing: true,
+    paused: false,
+    supported: true,
+  })
 
   expect(errors, `Unexpected browser errors: ${errors.join('\n')}`).toEqual([])
 })
