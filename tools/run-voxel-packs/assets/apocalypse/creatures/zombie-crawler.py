@@ -9,8 +9,9 @@ spot. It wears a torn, stained white vest with bare ribs in a rip, and
 torn jeans: the left leg drags a lost-shoe foot, the right leg ends in a
 torn stump with bone. Torso, head, jaw and limbs are true-slope prisms;
 cloth, ribs, stains and face are paint. Clips: idle (look round), move
-(arm-over-arm crawl), attack (lunging bite), hit, death (rolls on its
-side). Faces -Z.
+(arm-over-arm crawl), attack (rears up with a claw raised,
+lunges into a bite as the claw slams down), hit, death (the arms give
+way and the chest slams flat). Faces -Z.
 """
 import numpy as np
 
@@ -18,8 +19,8 @@ import paint as P
 import pnglyph as G
 import pnpaint as PP
 import pnshapes as S
+import _zombie_falls as zf
 from _life import Rig, ctr, front, fx, limb, make, seq, side, skin, wave
-from _rep_creatures import ground
 from pnkit import box
 from voxgrid import C, Clip, Grid
 
@@ -155,19 +156,89 @@ def _build():
             "head": {"rot": wave(crawl, (0, 6, 4))},
             "leg-l": {"rot": wave(crawl, (0, 6, 0))}, "leg-r": {"rot": wave(crawl, (0, -5, 0), phase=0.6)},
             "zombie-crawler": {"rot": wave(crawl, (0, 4, 0))}}
-    attack = {"head": {"rot": seq((0, 0, 0, 0), (0.2, 16, 0, 0), (0.45, -10, 0, 0), (0.8, 0, 0, 0))},
-              "zombie-crawler": {"loc": seq((0, 0, 0, 0), (0.2, 0, 0, 2), (0.45, 0, 0, -4), (0.8, 0, 0, 0))},
-              "arm-l": {"rot": seq((0, 0, 0, 0), (0.25, 30, 0, -10), (0.5, 4, 0, 0), (0.8, 0, 0, 0))}}
-    hit = {"head": {"rot": seq((0, 0, 0, 0), (0.1, 18, 10, 8), (0.55, 0, 0, 0))},
-           "zombie-crawler": {"loc": seq((0, 0, 0, 0), (0.1, 0, 0, 2.5), (0.55, 0, 0, 0))}}
-    death = {"zombie-crawler": {"rot": seq((0, 0, 0, 0), (0.5, 0, 0, 18), (1.2, 0, 0, 72))},
-             "head": {"rot": seq((0, 0, 0, 0), (1.2, -20, 0, -25))},
-             "arm-r": {"rot": seq((0, 0, 0, 0), (1.2, 30, 0, 0))}}
+    # attack: it drags itself back and rears up on the left arm, the right
+    # claw cocked high and the head thrown back, mouth gaping (f0-10, still
+    # coiling), then hurls itself forward 3 frames into the bite (impact
+    # f13): the chest drives down and ahead, the claw slams down on the
+    # victim and the left hand slaps down beside it. It drives on past the
+    # bite (f15), then worries it in a moving hold: the head wrenches side
+    # to side, the body tugs back and forth and the claw rakes, before it
+    # drags back to its spot, sliding a little past it, and settles. The
+    # torso pitches about its hips and the legs counter it, so the dragging
+    # legs stay on the floor.
+    f = 1 / 30
+    imp = 13 * f
+    T = zf.fr
+    R = "zombie-crawler"
+    pitch = T((0, 0, 0, 0), (4, 4, 0, -1), (8, 8, 0, -2), (10, 9, 0, -2), (13, -4, 0, 1), (15, -5.5, 0, 2), (17, -3.5, 0, -2), (19, -5, 0, 2),
+              (21, -3.5, 0, -1.5), (23, -4.5, 0, 0.5), (27, -1.5, 0, 0), (31, 1.5, 0, 0), (35, 0, 0, 0))
+    slide = T((0, 0, 0, 0), (4, 0, -0.03, 1.8), (8, 0, -0.04, 3.2), (10, 0, -0.04, 3.5), (13, 0, 0, -8.5), (15, 0, 0, -10.0), (17, 0, -0.15, -8.8), (19, 0, 0, -9.9),
+              (21, 0, -0.09, -8.9), (23, 0, 0, -9.5), (27, 0, 0, -5.0), (31, 0, 0, 0.7), (35, 0, 0, 0))
+    attack = {R: {"rot": pitch, "loc": zf.pivot_x(pitch, slide, 7.0, 7.0, y0=3.0)},
+              "head": {"rot": T((0, 0, 0, 0), (5, 14, 0, 0), (9, 28, 0, -4), (11, 31, 0, -5), (13, -20, 0, 0), (15, -28, 6, 6), (17, -18, -14, -8),
+                                (19, -26, 12, 7), (21, -18, -10, -5), (23, -22, 5, 3), (27, -8, 0, 0), (31, 4, 0, 0), (35, 0, 0, 0))},
+              "arm-r": {"rot": T((0, 0, 0, 0), (4, 40, 0, 6), (8, 84, 0, 10), (10, 90, 0, 12), (13, 22, 0, 0), (15, 15, 0, -4), (17, 23, 0, 2),
+                                 (19, 16, 0, -5), (21, 22, 0, 1), (23, 17, 0, -2), (27, 10, 0, 0), (31, -3, 0, 0), (35, 0, 0, 0))},
+              "arm-l": {"rot": T((0, 0, 0, 0), (4, -6, 0, -3), (8, -11, 0, -6), (10, -12, 0, -6), (12, 18, 0, 0), (13, 11.5, 0, 0), (15, 14.5, 0, 2),
+                                 (17, 10, 0, 0), (19, 14, 0, 2), (21, 10, 0, 0), (23, 12, 0, 1), (27, 4, 0, 0), (31, -2, 0, 0), (35, 0, 0, 0))},
+              "leg-l": {"rot": T((0, 0, 0, 0), (4, -4, 4, 0), (8, -8, 8, 0), (10, -9, 10, 0), (13, 4, -6, 0), (15, 5.5, -7.5, 0), (17, 3.5, -3, 0),
+                                 (19, 5, 3, 0), (21, 3.5, -1, 0), (23, 4.5, 1, 0), (27, 1.5, 0, 0), (31, -1.5, 0, 0), (35, 0, 0, 0))},
+              "leg-r": {"rot": T((0, 0, 0, 0), (4, -4, -3, 0), (8, -8, -7, 0), (10, -9, -8, 0), (13, 4, 5, 0), (15, 5.5, 6.5, 0), (17, 3.5, 2, 0),
+                                 (19, 5, -3, 0), (21, 3.5, 1, 0), (23, 4.5, -1, 0), (27, 1.5, 0, 0), (31, -1.5, 0, 0), (35, 0, 0, 0))}}
+    # hit: the blow rears the chest up about the hips (20-25 degrees by f2-4)
+    # and shoves the whole body back along the floor; the hands are thrown
+    # clear, then slap back down at f7-8 as the chest drops, dipping below
+    # rest (f15-17) before it settles. The legs counter the pitch so they
+    # stay on the floor.
+    T = zf.fr
+    pitch = T((0, 0, 0, 0), (1, 13, 0, 3), (2, 21, 0, 5), (4, 24, 0, 6), (6, 17, 0, 4), (8, 4, 0, 1), (12, -2, 0, -1), (16, -5, 0, 0), (21, 1, 0, 0), (26, 0, 0, 0))
+    shove = T((0, 0, 0, 0), (1, 0.3, 0.8, 4.2), (2, 0.5, 1.3, 6.2), (4, 0.6, 1.6, 7.3), (6, 0.6, 1.0, 7.6), (8, 0.5, 0, 7.4), (12, 0.3, 0, 5.8),
+               (17, 0.1, 0, 1.8), (22, 0, 0, -0.3), (26, 0, 0, 0))
+    hit = {"zombie-crawler": {"rot": pitch, "loc": zf.pivot_x(pitch, shove, 7.0, 7.0, y0=3.0)},
+           "head": {"rot": T((0, 0, 0, 0), (1, -8, 4, 3), (3, -12, 9, 6), (6, 10, 12, 8), (9, 16, 6, 4), (13, 4, -3, -2), (17, -6, 1, 0), (22, 1, 0, 0), (26, 0, 0, 0))},
+           "leg-l": {"rot": T((0, 0, 0, 0), (1, -13, 3, 0), (2, -21, 6, 0), (4, -24, 9, 0), (6, -17, 8, 0), (8, -4, 3, 0), (12, 2, -3, 0), (16, 5, -1, 0), (21, -1, 0, 0), (26, 0, 0, 0))},
+           "leg-r": {"rot": T((0, 0, 0, 0), (1, -13, -2, 0), (2, -21, -5, 0), (4, -24, -8, 0), (6, -17, -8, 0), (8, -4, -3, 0), (12, 2, 3, 0), (16, 5, 1, 0), (21, -1, 0, 0), (26, 0, 0, 0))}}
+    for name, s in (("arm-l", -1), ("arm-r", 1)):  # thrown clear, slapped back down on f7-8
+        d = 0 if s < 0 else 1
+        hit[name] = {"rot": T((0, 0, 0, 0), (1, 8, 0, s * 6), (3 + d, 22, 0, s * 18), (5 + d, 16, 0, s * 20), (7 + d, -4, 0, s * 6), (9 + d, 2, 0, s * 2),
+                              (12, 4, 0, 0), (16, 11, 0, 0), (21, -1, 0, 0), (26, 0, 0, 0))}
+    # death: shot, it rears up high on straightened arms with the head
+    # thrown back and struggles there, wobbling side to side as it tries to
+    # hold itself up (f0-11, a moving hold). Then the arms buckle out and
+    # the chest drops, gathering speed, and slams flat onto the floor at
+    # full speed (impact f16, the flattest frame, squashed). One small
+    # bounce and a hard settle; the heavy head smacks down a frame later and
+    # lolls aside, the arms flop out flat to the sides, the legs kick once.
+    dimp = 16 * f
+    R = "zombie-crawler"
+    T = zf.fr
+    # the torso pitches about its hips (they stay on the floor): hip_lock
+    # adds the root shift that keeps the hip point fixed
+    rot = T((0, 0, 0, 0), (3, 8, 0, 0), (6, 14, 0, 2), (8, 15, 0, -4), (10, 11, 0, 5), (12, 13, 0, 1), (13, 9, 0, -4), (14, 1, 0, -7),
+            (15, -10, 0, -5), (16, -28, 0, -2), (18, -27, 0, -2), (21, -28, 0, -2), (40, -28, 0, -2))
+    loc = T((0, 0, 0, 0), (3, 0, 0, 2.0), (6, 0, 0, 3.6), (8, -0.6, 0, 4.0), (10, 0.6, 0, 3.6), (12, 0, 0, 3.4), (13, -0.4, 0, 3.0), (14, -0.8, 0, 2.2),
+            (15, -0.6, 0, 1.2), (16, -0.3, 0, 0.4), (18, -0.3, 0.35, 0.4), (21, -0.3, 0, 0.4), (40, -0.3, 0, 0.4))
+    death = {R: {"rot": rot, "loc": zf.pivot_x(rot, loc, 7.0, 7.0, y0=3.0),
+                 "scale": T((0, 1, 1, 1), (12, 1, 1, 1), (15, 1.01, 0.98, 1.0), (16, 1.07, 0.86, 1.03), (19, 0.98, 1.04, 0.99), (22, 1.01, 0.99, 1), (25, 1, 1, 1))},
+             "head": {"rot": T((0, 0, 0, 0), (3, 12, 0, 0), (6, 24, 0, 0), (8, 22, -6, -3), (10, 17, 6, 4), (12, 20, 2, 0), (14, 12, -4, 0), (15, 4, 2, 1), (16, 0, 8, 2),
+                               (17, -6, 16, 4), (19, -2, 20, 3), (22, -4, 20, 3), (40, -4, 20, 3))}}
+    # the arms lock and push the chest up (the hands stay planted while the
+    # torso rears back over them), teeter, then the left arm buckles out
+    # (f12-13) and the right a frame later, and both splay out flat as the
+    # chest slams down
+    for name, s, b in (("arm-l", -1, 0), ("arm-r", 1, 1)):
+        buckle = [(13, -14, 0, s * 10), (14, 6, 0, s * 26), (15, 30, 0, s * 44)] if b == 0 else [(13, -12, 0, s * 6), (14, 10, 0, s * 20), (15, 32, 0, s * 40)]
+        death[name] = {"rot": T((0, 0, 0, 0), (3, -18, 0, 0), (6, -30, 0, s * 2), (8, -33, 0, -s * 3), (10, -26, 0, s * 4), (12, -28, 0, s * 4),
+                                *buckle, (16, 50, 0, s * 58), (18, 46, 0, s * 61), (21, 50, 0, s * 60), (40, 50, 0, s * 60))}
+    for name, lag in (("leg-l", 0), ("leg-r", 1)):  # they counter the torso's pitch so they stay on the floor, kick once on the slam
+        death[name] = {"rot": T((0, 0, 0, 0), (3, -8, 0, 0), (6, -14, 0, 0), (8, -15, 0, 0), (10, -11, 0, 0), (12, -13, 0, 0), (13, -9, 0, 0), (14, -1, 0, 0),
+                                (15, 10, 0, 0), (16, 28, 0, 0), (18 + lag, 16, 0, 0), (21 + lag, 28.5, 0, 0), (24 + lag, 27, 0, 0), (40, 27, 0, 0))}
     return make("creatures", "zombie-crawler", "Zombie Crawler", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False, impact=dimp)],
                 sockets=[rig.socket("socket-jaw", (CX, 20, 2.5), parent="head")],
-                pfx=[fx("rvx-apocalypse-vomit-spray", "socket-jaw", "clip:attack", at=0.28, size=10, aim=(0, 0, -1))])
+                pfx=[fx("rvx-apocalypse-vomit-spray", "socket-jaw", "clip:attack", at=imp, size=10, aim=(0, 0, -1))])
 
 
 def build():
-    return ground(_build())
+    # Key the death's resting pose on the floor so its bounce leaves it.
+    return zf.pin_rest(_build())

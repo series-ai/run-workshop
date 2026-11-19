@@ -7,15 +7,21 @@ its back, piston legs with gold knee joints and big hazard-capped feet,
 a pincer claw on the left arm and a huge buzzsaw on the right. Limbs,
 claws, saw teeth and antennas are true-slope prisms; plates, rivets, the
 face and stripes are paint. Clips: idle (scan and hum), move (stomp),
-attack (buzzsaw swing, the saw spins), hit (spark jolt), death (collapse).
+attack (overhead buzzsaw chop, the saw spins), hit (a blow to the chest
+snaps it back on its heels), death (core blows, clanks back in stepped
+robotic jerks and crashes onto its back).
 Faces -Z.
 """
+import math
+
 import numpy as np
 
 import paint as P
 import pnglyph as G
 import pnpaint as PP
 import pnshapes as S
+import _big_falls as B
+from _big_falls import F, track as T
 from _life import Rig, ctr, fx, keys, limb, make, plan, seq, wave
 from pnkit import box, edges
 from voxgrid import C, Clip, Grid, turn
@@ -121,7 +127,107 @@ def saw() -> Grid:
     return g
 
 
-def build():
+HEEL = (0.0, -HIP_Y, 3.0)  # the back of the foot, from the hip
+BLAST = 5  # the core blows (death)
+
+
+def _one_shots(root):
+    """Baked attack, hit and death (see _big_falls)."""
+    R = root.name
+    # attack: twist away and haul the buzzsaw up overhead with a lean back,
+    # weight on the back foot (f0-9, the front foot lifts); a held beat
+    # that keeps coiling (f9-10), then it steps in and chops the saw down
+    # in front in 3 frames, fastest at the cut (impact f13, the sparks). The
+    # blade drives on past the cut, the body follows through over the
+    # planted front foot, the claw arm swings the other way for balance and
+    # the TV head jerks; it grinds in the cut (moving), then winds back to
+    # guard, past rest and settles.
+    I = 13
+    k = {R: {"loc": T((0, (0, 0, 0)), (8, (0, 0, 1)), (10, (0, 0, 1.3)), (I, (0, 0, -3), ">"), (I + 2, (0, 0, -3.6)), (I + 8, (0, 0, -3.1)), (I + 14, (0, 0, -0.8)), (I + 18, (0, 0, 0.3)), (I + 22, (0, 0, 0))),
+             "rot": T((0, (0, 0, 0)), (I + 22, (0, 0, 0)))},
+         "body": {"rot": T((0, (0, 0, 0)), (8, (8, 24, 0)), (10, (9, 28, 0)), (I, (-12, -24, 0), ">"), (I + 2, (-16, -31, 0)), (I + 5, (-12, -24, 1)), (I + 8, (-14, -26, -1)),
+                           (I + 15, (2, 4, 0)), (I + 19, (-1, -1, 0)), (I + 23, (0, 0, 0)))},
+         "arm-r": {"rot": T((0, (0, 0, 0)), (5, (70, 0, 14)), (8, (140, 0, 20)), (10, (152, 0, 22)), (I, (76, 0, -8), ">"), (I + 2, (62, 0, -13)), (I + 5, (69, 0, -9)),
+                            (I + 8, (64, 0, -11)), (I + 14, (-6, 0, 2)), (I + 18, (3, 0, 0)), (I + 22, (0, 0, 0)))},
+         "arm-l": {"rot": T((0, (0, 0, 0)), (8, (-22, 0, -12)), (10, (-25, 0, -14)), (I + 1, (30, 0, -22)), (I + 4, (38, 0, -27)), (I + 8, (26, 0, -18)), (I + 12, (32, 0, -20)),
+                            (I + 18, (-5, 0, 2)), (I + 23, (0, 0, 0)))},
+         "head": {"rot": T((0, (0, 0, 0)), (8, (6, 18, 0)), (11, (8, 21, 0)), (I + 1, (-8, -12, 5)), (I + 4, (-15, -19, 7)), (I + 7, (-6, -10, 2)), (I + 10, (-11, -15, 4)),
+                           (I + 17, (3, 3, -1)), (I + 23, (0, 0, 0)))},
+         "leg-l": {"rot": T((0, (0, 0, 0)), (6, (-6, 0, 0)), (10, (22, 0, 0)), (I, (8, 0, 0), ">"), (I + 8, (8, 0, 0)), (I + 12, (18, 0, 0)), (I + 16, (2, 0, 0)), (I + 19, (0, 0, 0))),
+                   "loc": T((0, (0, 0, 0)), (6, (0, 0.6, 0)), (10, (0, 2.0, -1)), (I, (0, 0, -1.5), ">"), (I + 9, (0, 0, -1.5)), (I + 12, (0, 1.4, -0.6)), (I + 16, (0, 0, 0), ">"), (I + 19, (0, 0, 0)))},
+         "leg-r": {"rot": T((0, (0, 0, 0)), (8, (5, 0, 0)), (10, (6, 0, 0)), (I, (-16, 0, 0)), (I + 2, (-19, 0, 0)), (I + 8, (-16, 0, 0)), (I + 15, (-3, 0, 0)), (I + 19, (0, 0, 0)))}}
+    attack = B.bake(k, I + 24)
+    attack["saw"] = {"rot": B.spin(I + 24, "x", -1600)}
+    B.ground(root, attack, R, height=lambda f: 0.0)
+    B.reach(root, attack, "leg-l", "y", range(I, I + 10), fade_in=2, fade_out=3, channel="loc")  # the front foot plants flat
+    AI = I
+    # hit: a blow to the chest. Frames 0-2 snap the drum straight back
+    # (shoved 2.2 voxels, tipped 14 degrees onto its heels) and stop dead;
+    # the TV head whips back a frame late, the arms are left flung forward.
+    # It holds the jolt (moving, f2-6), then clanks back upright in two
+    # stepped moves with hard stops (f9, f13: one past rest, forward), and
+    # stands. Robotic: every move stops dead, no sway. 0.57 s.
+    hk = {R: {"loc": T((0, (0, 0, 0), "<"), (2, (0.2, 0, 2.2)), (6, (0.2, 0, 2.3)), (9, (0.1, 0, 0.9), ">"), (11, (0.1, 0, 0.9)), (13, (0, 0, -0.2), ">"), (17, (0, 0, 0))),
+              "rot": T((0, (0, 0, 0), "<"), (2, (14, 2, -4)), (6, (14.5, 2, -4)), (9, (5, 0, -1), ">"), (11, (5, 0, -1)), (13, (-3, 0, 0), ">"), (17, (0, 0, 0)))},
+          "body": {"rot": T((0, (0, 0, 0)), (1, (3, 0, 5)), (3, (1, 0, -3)), (5, (0, 0, 0)), (17, (0, 0, 0)))},
+          "head": {"rot": T((0, (0, 0, 0)), (1, (-5, 0, 0)), (3, (18, 6, 10), ">"), (6, (17, 6, 9.5)), (9, (4, 0, 2), ">"), (13, (-4, 0, 0), ">"), (17, (0, 0, 0)))},
+          "arm-l": {"rot": T((0, (0, 0, 0), "<"), (2, (34, 0, -14)), (6, (32, 0, -13)), (9, (8, 0, -3), ">"), (13, (-4, 0, 0), ">"), (17, (0, 0, 0)))},
+          "arm-r": {"rot": T((0, (0, 0, 0), "<"), (3, (28, 0, 12)), (6, (27, 0, 11)), (10, (6, 0, 3), ">"), (13, (-4, 0, 0), ">"), (17, (0, 0, 0)))}}
+    for name in ("leg-l", "leg-r"):
+        hk[name] = {"rot": T((0, (0, 0, 0)), (17, (0, 0, 0)))}
+    hit = B.bake(hk, 17)
+    hit["saw"] = {"rot": B.spin(17, "x", -80)}  # idle speed: a steady spin would blur the jolt
+    B.ground(root, hit, R, height=lambda f: 0.0)  # it tips on its heels: the feet never leave the floor
+    # death: robotic and clunky, every move a stepped pose that stops dead.
+    # The core sputters (f0-4, jerks), blows (f5): the blast knocks the TV
+    # head clean off and clanks the drum back 10 degrees (stop, f7); it
+    # stutters back another 10 (f13, stop), then past the tipping point it
+    # falls backwards about its heels, faster and faster, into a crash on
+    # its back (impact f24: the lowest frame, squashed). One frame up, one
+    # down, dead stop. The arms slam down flat out to the sides two frames
+    # after the drum, the legs kick once and drop; the saw grinds to a halt
+    # on the impact, the head lands off to its left and rolls to a stop.
+    I = 24
+    END = 40
+    tip = T((0, (0, 0, 0)), (1, (-2, 0, 2), ">"), (3, (-1, 0, -2), ">"), (BLAST, (0, 0, 0), ">"), (BLAST + 2, (10, 0, -2), ">"), (11, (10, 0, -2)), (13, (20, 0, 1), ">"), (15, (20, 0, 1)), (16, (20.4, 0, 1)))
+    d = {R: {"rot": B.Fall(tip, 15, I, (65, 0, 0), T((I, (65, 0, 0)), (I + 1, (63.5, 0, 0)), (I + 2, (65.5, 0, 0), "0"), (END, (65.5, 0, 0))), power=2.4)},
+         "body": {"rot": T((0, (0, 0, 0)), (1, (2, 0, 4), ">"), (3, (-2, 0, -4), ">"), (BLAST, (0, 0, 0), ">"), (BLAST + 2, (8, 0, -2), ">"), (11, (8, 0, -2)), (13, (-4, 0, 1), ">"), (I - 2, (-6, 0, 0)),
+                           (I, (4, 0, 0), ">"), (I + 2, (0, 0, 0), ">"), (END, (0, 0, 0))),
+                  "scale": T((0, (1, 1, 1)), (I - 1, (1, 1.02, 1)), (I, (1.08, 0.97, 0.86), ">"), (I + 1, (0.99, 1.01, 1.02)), (I + 2, (1, 1, 1)), (END, (1, 1, 1)))},
+         "head": {"rot": T((0, (0, 0, 0)), (1, (0, 0, 7), ">"), (3, (0, 0, -7), ">"), (BLAST, (0, 0, 0))), "loc": T((0, (0, 0, 0)), (BLAST, (0, 0, 0)))}}
+    for name, s in (("arm-l", -1), ("arm-r", 1)):
+        # jerked up by the blast, clanked to a second pose as it tips, then
+        # slammed down to the floor after the body lands: stepped, no flop
+        lie = (-60, 0, 70) if s > 0 else (-72, 0, -84)
+        land = I + 1 if s > 0 else I + 2
+        d[name] = {"rot": T((0, (0, 0, 0)), (BLAST, (0, 0, 0)), (BLAST + 2, (40, 0, s * 38), ">"), (11, (40, 0, s * 38)), (13 + (s < 0), (26, 0, s * 50), ">"), (I - 3, (26, 0, s * 50)),
+                            (I, (22, 0, s * 54)), (land, lie, ">"), (END, lie))}
+    for name, s in (("leg-l", -1), ("leg-r", 1)):
+        o = s > 0
+        d[name] = {"rot": T((0, (0, 0, 0)), (BLAST, (0, 0, 0)), (BLAST + 2, (-6, 0, 0), ">"), (13, (0, 0, 0), ">"), (I, (6, 0, s * 3)), (I + 2 + o, (18, 0, s * 5), ">"), (I + 5 + o, (-3, 0, s * 4), ">"),
+                            (END, (-3, 0, s * 4)))}
+    death = B.bake(d, END)
+    # the saw idles on, then jams dead on the blast
+    death["saw"] = {"rot": B.spin(END, "x", 0, frames=lambda f: -80 / 30 * min(f, BLAST))}
+    lift = B.arc(I, I + 2, 0.5)
+    B.ground(root, death, R, height=lift, pin=("leg-l", HEEL, (BLAST, I), "z"), skip=("head",))
+    for name in ("leg-l", "leg-r"):  # the legs come to rest on the floor
+        B.reach(root, death, name, "x", range(I + 6, END + 1), height=0.1, fade_in=2, fade_out=0, span=20)
+    # each arm lies on the floor (the saw by its rim, the claw arm by its claw)
+    for name, land in (("arm-r", I + 1), ("arm-l", I + 2)):
+        B.reach(root, death, name, "x", range(land, END + 1), height=0.1, fade_in=0, fade_out=0, span=30, by="saw" if name == "arm-r" else None)
+        r = death[name]["rot"]
+        # it swings down to that contact faster and faster (no one-frame drop)
+        a0, a1 = np.asarray(r[I][1]), np.asarray(r[land][1])
+        for f in range(I + 1, land):
+            u = (f - I) / (land - I)
+            r[f] = (r[f][0], tuple(float(x) for x in a0 + (a1 - a0) * u ** 1.8))
+    B.knock_off(root, death, "head", BLAST, END, up=1.7, side=(-1, 0, 0), axis=(0, 0, 1), total=180, g=0.45, bounce=0.6, roll_to=END - 6, radius=5.5,
+                 centre=(1.7, 7.5, -1.6))  # the TV's visual middle (its mesh centroid: the dials and antennas weigh it up and right)
+    return B.fill(root, attack), AI, B.fill(root, hit), B.fill(root, death), I
+
+
+def _build():
     rig = Rig("raider-bot", (CX, 0, CZ))
     rig.add("leg-l", leg(-1), HIPS["leg-l"])
     rig.add("leg-r", leg(1), HIPS["leg-r"])
@@ -138,18 +244,14 @@ def build():
             "body": {"rot": wave(1.0, (0, 0, 4)), "loc": wave(1.0, (0, 1.0, 0), phase=1.6, double=True)},
             "arm-l": {"rot": wave(1.0, (-14, 0, 0))}, "arm-r": {"rot": wave(1.0, (14, 0, 0))},
             "head": {"rot": wave(1.0, (0, 0, -3), phase=0.5)}, "saw": {"rot": turn(1.0, "x", -360)}}
-    attack = {"arm-r": {"rot": seq((0, 0, 0, 0), (0.3, 80, 0, 20), (0.55, -40, 0, -10), (1.0, 0, 0, 0))},
-              "body": {"rot": seq((0, 0, 0, 0), (0.3, 6, 18, 0), (0.55, -10, -20, 0), (1.0, 0, 0, 0))},
-              "saw": {"rot": turn(1.0, "x", -1440)}}
-    hit = {"body": {"rot": seq((0, 0, 0, 0), (0.08, 10, 0, 6), (0.16, -4, 0, -4), (0.24, 6, 0, 3), (0.5, 0, 0, 0))},
-           "head": {"rot": seq((0, 0, 0, 0), (0.08, 0, 0, 14), (0.16, 0, 0, -12), (0.5, 0, 0, 0))}}
-    death = {"body": {"rot": seq((0, 0, 0, 0), (0.3, 8, 0, 6), (0.8, -35, 0, 20), (1.2, -40, 0, 24)), "loc": seq((0, 0, 0, 0), (0.8, 0, -8, -3), (1.2, 0, -9, -3))},
-             "head": {"rot": seq((0, 0, 0, 0), (0.5, 0, 0, 30), (1.0, -30, 0, 60), (1.2, -30, 0, 55)), "loc": seq((0, 0, 0, 0), (0.5, 0, 3, 0), (1.0, 6, -6, -4))},
-             "arm-l": {"rot": seq((0, 0, 0, 0), (0.8, 30, 0, -50))}, "arm-r": {"rot": seq((0, 0, 0, 0), (0.8, 20, 0, 50))},
-             "leg-l": {"rot": seq((0, 0, 0, 0), (0.8, 45, 0, 0))}, "leg-r": {"rot": seq((0, 0, 0, 0), (0.8, 30, 0, 0))}}
+    attack, imp, hit, death, dimp = _one_shots(rig.root)
     return make("creatures", "raider-bot", "Raider Bot", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp * F, ease=0), Clip("hit", hit, loop=False, ease=0), Clip("death", death, loop=False, impact=dimp * F, ease=0)],
                 sockets=[rig.socket("socket-saw", (SAW[0], SAW[1] + 6.5, SAW[2] - 3), parent="saw"),
                          rig.socket("socket-exhaust", (CX + 4, 36, CZ + 9.5), parent="body"),
                          rig.socket("socket-core", (CX, HIP_Y + 7, CZ - 10), parent="body")],
-                pfx=[fx("rvx-apocalypse-saw-sparks", "socket-saw", "clip:attack", size=38, at=0.4), fx("rvx-apocalypse-exhaust-smoke", "socket-exhaust", "idle", size=16), fx("rvx-apocalypse-explosion", "socket-core", "clip:death", size=44, at=0.24)])
+                pfx=[fx("rvx-apocalypse-saw-sparks", "socket-saw", "clip:attack", size=38, at=imp * F), fx("rvx-apocalypse-exhaust-smoke", "socket-exhaust", "idle", size=16), fx("rvx-apocalypse-explosion", "socket-core", "clip:death", size=44, at=BLAST * F)])
+
+
+def build():
+    return _build()

@@ -16,6 +16,7 @@ import numpy as np
 import paint as P
 import pnshapes as S
 from _bld import coords, parts, rock, stone
+from _slam import slam
 from _props import pn_flame
 from _pn import blotch, pumpkin
 from pnkit import box
@@ -157,11 +158,16 @@ def door() -> Grid:
 
 def build() -> Asset:
     root = parts({"hut": hut(), "door": door()}, [("hut", None, (0.0, 0.0, 0.0)), ("door", "hut", DOOR)])
-    creak = [(0.0, 0.0), (0.6, 0.0), (1.1, 38.0), (1.4, 30.0), (1.7, 40.0), (2.6, 40.0), (3.2, 4.0), (3.4, 0.0), (4.0, 0.0)]
+    # The door bangs open in the wind and slams shut again (Sterf's door rule:
+    # an accelerating swing keyed once a frame into a hard stop, a tiny
+    # rebound, still; see _slam). Outward, toward -Z. A 4 s loop.
+    bang, _ = slam((0.0, 0.0, 0.0), (0.0, 40.0, 0.0), frames=12, power=2.5, rebound=0.06, start=18, end=78)
+    shut, _ = slam((0.0, 40.0, 0.0), (0.0, 0.0, 0.0), frames=10, power=3.5, rebound=0.06, start=78, hold_from=78, end=120)
+    creak = [(t, v[1]) for t, v in bang[:-1] + shut]
     chx, chz = CHIM
     return Asset(
         id="monster-buildings-witch-hut", pack="monster", category="buildings", name="Witch Hut", root=root,
-        clips=[Clip("idle", {"door": {"rot": [(t, (0.0, a, 0.0)) for t, a in creak]}})],
+        clips=[Clip("idle", {"door": {"rot": [(t, (0.0, a, 0.0)) for t, a in creak]}}, ease=0)],
         sockets=[Socket("socket-chimney", at=(chx, WALL + 30, chz), parent="hut")],
         pfx=[{"effectId": "rvx-monster-witch-smoke", "socket": "socket-chimney", "trigger": "idle", "size": 40}],
     )

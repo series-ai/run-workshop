@@ -2,11 +2,12 @@
 
 A small boxy patrol bot with a white and steel hull, copper armor, a framed
 cyan face, mounted radar ears, plated piston legs, and a lit antenna tail.
-Clips: idle, move, attack, hit, death. Faces -Z.
+Clips: idle, move, attack (pounce and bite), hit, death. Faces -Z.
 """
 import numpy as np
 
 import pnglyph
+from _motion import DEATH_FLOOR, curve
 from _life import P, Clip, Grid, Rig, asset, box, coords, edges, front, hazard, keys, light_top, quad, side, wave
 from voxgrid import C
 
@@ -121,6 +122,9 @@ def tail() -> Grid:
     return g
 
 
+LIE, HEAD = 86.0, -24.0  # death: the roll onto the side (the body edge just clears the floor), the head drop
+
+
 def build():
     rig = Rig()
     rig.group("robot-dog", (CX, 0, 13))
@@ -138,10 +142,77 @@ def build():
             "leg-fr": {"rot": keys((0, back), (t / 2, fwd), (t, back))}, "leg-bl": {"rot": keys((0, back), (t / 2, fwd), (t, back))},
             "body": {"loc": keys((0, z0), (t / 4, (0, 1, 0)), (t / 2, z0), (t * 0.75, (0, 1, 0)), (t, z0))},
             "tail": {"rot": wave(t, "z", 20)}}
-    attack = {"body": {"loc": keys((0, z0), (0.15, (0, 0, 2)), (0.3, (0, 1, -4)), (0.6, z0)), "rot": keys((0, z0), (0.15, (8, 0, 0)), (0.3, (-10, 0, 0)), (0.6, z0))},
-              "head": {"rot": keys((0, z0), (0.3, (-15, 0, 0)), (0.4, (5, 0, 0)), (0.5, (-15, 0, 0)), (0.7, z0))}}
-    hit = {"body": {"rot": keys((0, z0), (0.1, (0, 0, 15)), (0.4, z0))}, "head": {"rot": keys((0, z0), (0.1, (10, 0, -15)), (0.4, z0))}}
-    death = {"body": {"rot": keys((0, z0), (0.4, (0, 0, 40)), (0.8, (0, 0, 88))), "loc": keys((0, z0), (0.8, (0, -5, 0)))},
-             "head": {"rot": keys((0, z0), (0.8, (20, 0, 0)))}, "tail": {"rot": keys((0, z0), (0.8, (-60, 0, 0)))}}
+    F = 1 / 30
+
+    def hold(*poses):
+        """Robotic keys: each (frame_in, frame_out, value) arrives at
+        frame_in and stays locked until frame_out (as security-robot)."""
+        out = []
+        for f0, f1, v in poses:
+            out.append((f0, v))
+            if f1 > f0:
+                out.append((f1, v))
+        return curve(*out)
+
+    def legs(*poses):
+        """Per-leg robotic keys from (frame_in, frame_out, front_x, back_x)."""
+        return {name: {"rot": hold(*((f0, f1, (fx if name[-2] == "f" else bx, 0, 0)) for f0, f1, fx, bx in poses))} for name in LEGS}
+
+    # Pounce bite, robotic: move, lock, move, lock. The dog crouches back
+    # with its nose up and tail high in 3 frames and locks there (the
+    # wind-up), lunges forward in 2 frames and snaps its head down on the
+    # target (impact 0.333 s), clamps down once more and locks, then backs
+    # off in two locked steps. No shaking, no tail thrash: a machine.
+    hit_f = 10
+    hit_t = hit_f * F
+    attack = {"robot-dog": {"loc": hold((0, 0, z0), (3, 8, (0, -0.6, 3.0)), (hit_f, 12, (0, 1.0, -11)), (14, 19, (0, 0.4, -12.5)), (22, 24, (0, 0, -5)),
+                                        (27, 28, z0))},
+              "body": {"rot": hold((0, 0, z0), (3, 8, (12, 0, 0)), (hit_f, 12, (-14, 0, 0)), (14, 19, (-17, 0, 0)), (22, 24, (-5, 0, 0)), (27, 28, z0))},
+              "head": {"rot": hold((0, 0, z0), (3, 8, (26, 0, 0)), (hit_f, 12, (-30, 0, 0)), (14, 19, (-40, 0, 0)), (22, 24, (-10, 0, 0)), (27, 28, z0))},
+              "tail": {"rot": hold((0, 0, z0), (3, 8, (-50, 0, 0)), (hit_f, 19, (24, 0, 0)), (22, 24, (6, 0, 0)), (27, 28, z0))},
+              **legs((0, 0, 0, 0), (3, 8, -18, 18), (hit_f, 19, 22, -28), (22, 24, 8, -8), (27, 28, 0, 0))}
+    # Hit from the front, robotic: frames 0-2 the dog jolts back with its
+    # nose thrown up and locks there, snaps forward to correct and locks
+    # again, then resets (0.5 s). Head and tail lock with the body.
+    hit = {"robot-dog": {"loc": hold((0, 0, z0), (2, 5, (0, 0.6, 2.6)), (8, 11, (0, 0, 1.2)), (14, 15, z0))},
+           "body": {"rot": hold((0, 0, z0), (2, 5, (9, 0, 4)), (8, 11, (-3, 0, 0)), (14, 15, z0))},
+           "head": {"rot": hold((0, 0, z0), (2, 5, (16, 8, 0)), (8, 11, (-4, 2, 0)), (14, 15, z0))},
+           "tail": {"rot": hold((0, 0, z0), (2, 5, (24, 0, 0)), (8, 11, (-6, 0, 0)), (14, 15, z0))},
+           **legs((0, 0, 0, 0), (2, 5, 14, -6), (8, 11, -3, 3), (14, 15, 0, 0))}
+    # Shutdown, onto its side, robotic: the blow jolts the dog back (nose
+    # up) and it locks; a glitch snaps its head aside and it sags and locks
+    # again; then the power cuts and it goes over sideways stiff, rolling
+    # about the outer edge of its left paws, slow at first and fastest at
+    # the floor (one key a frame), into a hard thud on its side (impact
+    # 0.667 s), a 2-frame tick off the floor and dead still. The legs lock
+    # out stiff as it goes; the head and tail clunk down a frame after the
+    # body.
+    f0, f_hit, end = 10, 20, 30
+    edge = -4.5  # the outer edge of the paws on the side it falls to (x from the root)
+
+    def pin(a):
+        r = np.radians(a)
+        return (edge - edge * np.cos(r), -edge * np.sin(r))
+
+    roll = [(0, 0.0), (f0, 0.0)]
+    for f in range(f0 + 1, f_hit):
+        u = (f - f0) / (f_hit - f0)
+        roll.append((f, LIE * (0.12 * u + 0.88 * u ** 2.6)))
+    roll += [(f_hit, LIE), (f_hit + 1, LIE - 3.0), (f_hit + 2, LIE - 3.5), (f_hit + 3, LIE - 1.5), (f_hit + 4, LIE), (end, LIE)]
+    back = {0: 0.0, 2: 2.2, 5: 2.2, 7: 2.6, 9: 2.6}
+
+    def back_z(f):
+        ks = sorted(back)
+        for k0, k1 in zip(ks, ks[1:]):
+            if f <= k1:
+                return back[k0] + (back[k1] - back[k0]) * (f - k0) / (k1 - k0)
+        return back[ks[-1]]
+    death = {"robot-dog": {"rot": [(f * F, (0.0, 0.0, a)) for f, a in roll],
+                           "loc": [(f * F, (pin(a)[0], pin(a)[1], back_z(f))) for f, a in roll]},
+             "body": {"rot": hold((0, 0, z0), (2, 5, (9, 0, 0)), (7, 9, (-4, 0, 3)), (f0 + 2, end, z0)),
+                      "loc": hold((0, 0, z0), (2, 5, (0, 0.5, 0)), (7, 9, (0, -0.8, 0)), (f0 + 2, end, z0))},
+             "head": {"rot": hold((0, 0, z0), (2, 5, (18, 0, 0)), (7, 9, (-6, 0, -18)), (f0 + 2, f_hit, (-10, 0, -10)), (f_hit + 2, end, (HEAD, 0, -26)))},
+             "tail": {"rot": hold((0, 0, z0), (2, 5, (24, 0, 0)), (7, 9, (-10, 0, 0)), (f0 + 2, f_hit, (10, 0, 0)), (f_hit + 2, end, (-20, 0, -40)))},
+             **legs((0, 0, 0, 0), (2, 5, 14, -6), (7, 9, 4, -4), (f0 + 2, end, 26, -26))}
     return asset("creatures", "robot-dog", "Robot Dog", rig.root,
-                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)])
+                 clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t, floor=True, ease=0), Clip("hit", hit, loop=False, floor=True, ease=0), Clip("death", death, loop=False, impact=f_hit * F, floor=DEATH_FLOOR, ease=0)])

@@ -15,10 +15,19 @@ import paint as P
 import pnglyph
 import pnshapes
 import pnpaint
+from _fall import fall_back, hit_back
+from _gait_loops import cyc, per_frame, pulse, shift
 from _kit import keys, pfx, world
 from _life import assemble, chunk, claw, coords, limb, side
 from pnkit import box
 from voxgrid import C, Clip, Grid, Socket
+
+Z3 = (0.0, 0.0, 0.0)
+
+
+def fr(n: float) -> float:
+    """Seconds of frame `n` at 30 fps (impact keys sit on whole frames)."""
+    return n / 30.0
 
 S = (40, 46, 36)
 CX = 20
@@ -154,6 +163,108 @@ def arm(s: int) -> Grid:
     return g
 
 
+def _move() -> dict:
+    """Move: a shambling zombie walk, 36 frames (1.2 s), two steps.
+
+    The legs are rigid (one part each, pivoting at the hip), so each stance
+    foot is solved every frame: the heel strikes, rolls flat, then the toe
+    claws carry it to toe-off, and whichever sole point is on the floor
+    slides back at a steady ground speed (D voxels over the stance). The
+    hips drop into every footfall; a leg's loc y lifts it into the hips by
+    whatever its pose needs (the trailing toe would otherwise vault the
+    body). The swing leg leaves and lands at ground speed, lifted clear.
+    Upper body: lurches over the new stance foot, a nod and drop on each
+    footfall, the arms reach out front swinging a little, the head lolls a
+    few frames behind."""
+    import math
+    T, ST = 36, 20  # loop frames; stance frames per foot (2 of double support each side)
+    SW = T - ST
+    D = 10.0  # stance travel, voxels
+    LIFT = 3.0
+    corners = ((-15.0, -5.0), (-15.0, 3.0), (-14.7, -7.2))  # (y, z) from the hip: sole front, heel, toe claw tip
+
+    def pt(c, th):
+        a = math.radians(th)
+        return (c[0] * math.cos(a) - c[1] * math.sin(a), c[0] * math.sin(a) + c[1] * math.cos(a))
+
+    def lowest(th):
+        ps = [pt(c, th) for c in corners]
+        i = min(range(len(ps)), key=lambda k: ps[k][0])
+        return i, ps[i]
+
+    # stance: start at the heel strike and slide the contact point back
+    th = 0.0
+    for _ in range(60):  # heel at z = 3 - D/2
+        z = pt(corners[1], th)[1]
+        dz = (pt(corners[1], th + 1e-3)[1] - z) / 1e-3
+        th -= (z - (3.0 - D / 2)) / dz
+    c, target = 1, 3.0 - D / 2
+    sth, sh = [th], [-15.0 - lowest(th)[1][0]]
+    n = 16
+    for f in range(1, ST + 1):
+        for _ in range(n):
+            target += D / ST / n
+            for _ in range(20):
+                z = pt(corners[c], th)[1]
+                dz = (pt(corners[c], th + 1e-3)[1] - z) / 1e-3
+                th -= (z - target) / dz
+            i, p = lowest(th)
+            if i != c and p[0] < pt(corners[c], th)[0] - 1e-9:
+                c, target = i, p[1]
+        sth.append(th)
+        sh.append(-15.0 - lowest(th)[1][0])
+    m0 = (sth[-1] - sth[-2]) * SW  # leg speed at toe-off / strike, per unit of swing
+    m1 = (sth[1] - sth[0]) * SW
+
+    def leg(p):
+        """(angle, needed root height or None, swing w or None) at phase p."""
+        if p <= ST:
+            return sth[p], sh[p], None
+        w = (p - ST) / SW
+        h00, h10, h01, h11 = 2 * w ** 3 - 3 * w ** 2 + 1, w ** 3 - 2 * w ** 2 + w, -2 * w ** 3 + 3 * w ** 2, w ** 3 - w ** 2
+        return h00 * sth[-1] + h10 * m0 + h01 * sth[0] + h11 * m1, None, w
+
+    half = T // 2
+    drop = {0: -0.5, 1: -1.0, 2: -0.7, 3: -0.3, 4: -0.1}
+    phase = {"leg-l": 0, "leg-r": half}
+    hips = {}
+    for f in range(T + 1):
+        need = [leg((f - o) % T)[1] for o in phase.values()]
+        hips[f] = min(h for h in need if h is not None) + pulse(f % half, drop)
+    for s0 in (half, T):  # fall into each footfall over the last K frames, accelerating
+        K = 5
+        h0, h1 = hips[s0 - K], hips[s0 % T]
+        for k in range(1, K):
+            hips[s0 - K + k] = min(hips[s0 - K + k], h0 + (h1 - h0) * (k / K) ** 2)
+    hips[T] = hips[0]
+    out = {name: {"rot": [], "loc": []} for name in phase}
+    for name, off in phase.items():
+        for f in range(T + 1):
+            p = (f - off) % T
+            a, h, w = leg(p)
+            if w is None:
+                ly = h - hips[f]
+            else:  # blend the lift-in from toe-off to strike, plus the swing lift
+                f0, f1 = (off + ST) % T, off % T
+                y0 = sh[-1] - hips[f0]
+                y1 = sh[0] - hips[f1]
+                ly = y0 + (y1 - y0) * w + LIFT * 16 * w * w * (1 - w) ** 2
+            out[name]["rot"].append((f / 30.0, (a, 0.0, 0.0)))
+            out[name]["loc"].append((f / 30.0, (0.0, ly, 0.0)))
+    # the whole loop (frame T == frame 0) is periodic by construction
+    out["hips"] = {"loc": [(f / 30.0, (0.0, hips[f], 0.0)) for f in range(T + 1)]}
+    # lean over the stance foot: +z rolls the top toward -x (the left leg)
+    roll = lambda f: cyc(f, T, [(0, 0.0), (4, 5.0), (half - 2, 3.5), (half, 0.0), (half + 4, -5.0), (T - 2, -3.5)])  # noqa: E731
+    out["torso"] = {"rot": per_frame(T, lambda f: (-4.0 + pulse(f % half, {1: -3.0, 2: -4.0, 3: -2.5, 4: -1.0}),
+                                                   cyc(f, T, [(0, -6.0), (half, 6.0)]), roll(f))),
+                    "loc": per_frame(T, lambda f: (0.0, pulse(f % half, {1: -0.3, 2: -0.6, 3: -0.4, 4: -0.15}), 0.0))}
+    out["head"] = {"rot": per_frame(T, lambda f: (pulse(f % half, {2: -5.0, 3: -8.0, 4: -6.0, 5: -3.0, 6: -1.0}),
+                                                  cyc(f, T, [(0, 5.0), (half, -5.0)]), -1.8 * roll(f - 3)))}
+    out["arm-l"] = {"rot": per_frame(T, lambda f: (36.0 + cyc(f - 2, T, [(0, -7.0), (half, 7.0)]) + pulse(f % half, {2: -5.0, 3: -7.0, 4: -4.0, 5: -1.5}), 0.0, -6.0))}
+    out["arm-r"] = {"rot": per_frame(T, lambda f: (40.0 + cyc(f - 2, T, [(0, 7.0), (half, -7.0)]) + pulse(f % half, {2: -5.0, 3: -7.0, 4: -4.0, 5: -1.5}), 0.0, 6.0))}
+    return out
+
+
 def build():
     parts = {"hips": hips(), "torso": torso(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1), "leg-l": leg(-1), "leg-r": leg(1)}
     root = assemble(parts, [
@@ -171,19 +282,43 @@ def build():
             "arm-r": {"rot": keys((0, (6, 0, 0)), (1.1, (-10, 0, 0)), (2.2, (6, 0, 0)))},
             "leg-l": {"rot": keys((0, (-10, 0, 0)), (1.1, (10, 0, 0)), (2.2, (-10, 0, 0)))},
             "leg-r": {"rot": keys((0, (10, 0, 0)), (1.1, (-10, 0, 0)), (2.2, (10, 0, 0)))}}
-    attack = {"hips": {"loc": keys((0, (0, 0, 0)), (0.26, (0, 0, 2)), (0.5, (0, 1, -5)), (0.72, (0, 1, -4)), (1.1, (0, 0, 0)))},
-              "torso": {"rot": keys((0, (0, 0, 0)), (0.26, (-8, -18, -4)), (0.5, (18, 24, 8)), (0.72, (10, 12, 4)), (1.1, (0, 0, 0)))},
-              "arm-l": {"rot": keys((0, (0, 0, 0)), (0.26, (12, 0, -15)), (0.5, (5, 0, -18)), (0.72, (40, 0, -8)), (1.1, (0, 0, 0)))},
-              "arm-r": {"rot": keys((0, (0, 0, 0)), (0.26, (95, 0, 18)), (0.5, (20, 0, 12)), (0.72, (8, 0, 6)), (1.1, (0, 0, 0)))},
-              "head": {"rot": keys((0, (0, 0, 0)), (0.26, (-12, 16, 0)), (0.5, (20, -20, 0)), (1.1, (0, 0, 0)))}}
-    hit = {"torso": {"rot": keys((0, (0, 0, 0)), (0.1, (-20, 10, 0)), (0.5, (0, 0, 0)))},
-           "head": {"rot": keys((0, (0, 0, 0)), (0.1, (-30, 0, 20)), (0.5, (0, 0, 0)))}}
-    death = {"hips": {"loc": keys((0, (0, 0, 0)), (0.6, (0, -6, 0)), (1.0, (0, -11, -4))), "rot": keys((0, (0, 0, 0)), (0.6, (10, 0, 0)), (1.0, (80, 0, 0)))},
-             "head": {"rot": keys((0, (0, 0, 0)), (1.0, (20, 0, 35)))},
-             "arm-l": {"rot": keys((0, (0, 0, 0)), (1.0, (-40, 0, -30)))}, "arm-r": {"rot": keys((0, (0, 0, 0)), (1.0, (-40, 0, 30)))},
-             "leg-l": {"rot": keys((0, (0, 0, 0)), (0.6, (-40, 0, 0)), (1.0, (-70, 0, 0)))}, "leg-r": {"rot": keys((0, (0, 0, 0)), (0.6, (-30, 0, 0)), (1.0, (-75, 0, 0)))}}
+    # Attack, an overhead claw smash: it sinks back on its heels, twists away
+    # and cocks the right arm behind its head (frames 0-14), steps in with the
+    # right foot and drives the claw down in 4 frames to the blow on frame 18,
+    # sags past it, holds, and recovers by frame 42; the head and the free
+    # arm settle last. The left foot stays planted (the leg counter-swings).
+    attack = {"hips": {"loc": keys((0, Z3), (fr(14), (0, -0.1, 1.5)), (fr(18), (0, 0.8, -3)), (fr(21), (0, 0.8, -4.5)),
+                                   (fr(24), (0, 0.6, -5.4)), (fr(30), (0, 0.1, 0.6)), (fr(34), Z3))},
+              "leg-l": {"rot": keys((0, Z3), (fr(14), (5.7, 0, 0)), (fr(18), (-11.5, 0, 0)), (fr(21), (-17.5, 0, 0)),
+                                    (fr(24), (-21, 0, 0)), (fr(30), (2.3, 0, 0)), (fr(34), Z3))},
+              "leg-r": {"rot": keys((0, Z3), (fr(14), (5.7, 0, 0)), (fr(16), (18, 0, 0)), (fr(18), (19.5, 0, 0)),
+                                    (fr(21), (13.5, 0, 0)), (fr(24), (10.8, 0, 0)), (fr(26), (10.8, 0, 0)), (fr(31), (2, 0, 0)), (fr(34), Z3)),
+                        "loc": keys((0, Z3), (fr(14), Z3), (fr(16), (0, 1.8, 0)), (fr(18), Z3), (fr(26), Z3), (fr(28), (0, 1.5, 0)), (fr(31), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(14), (12, -26, -4)), (fr(18), (-22, 22, 6)), (fr(21), (-28, 27, 8)),
+                                    (fr(24), (-33, 30, 9)), (fr(30), (5, -4, 0)), (fr(34), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(8), (95, 0, 14)), (fr(14), (150, 0, 18)), (fr(18), (8, 0, 12)),
+                                    (fr(21), (-12, 0, 16)), (fr(24), (-24, 0, 20)), (fr(30), (8, 0, -2)), (fr(34), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(14), (30, 0, -14)), (fr(19), (12, 0, -20)), (fr(22), (4, 0, -22)),
+                                    (fr(26), (14, 0, -12)), (fr(31), (-6, 0, 2)), (fr(34), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(14), (14, 18, 0)), (fr(19), (-10, -14, 4)), (fr(21), (-22, -20, 6)),
+                                   (fr(24), (-16, -10, 2)), (fr(28), (6, 4, 0)), (fr(31), (-3, -1, 0)), (fr(34), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("hips", foot=(-15, 2.5, -6.5), push=3.0, pop=1.4, tilt=14, head=("head", 24), arms={"arm-l": (30, -1), "arm-r": (34, 1)},
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (10, 8, 0)), (fr(9), (6, 4, 0)), (fr(t["O"]), (-5, 0, 0)), (fr(t["E"]), Z3))})
+    # Death: it rocks forward over its toes, teeters back onto its heels with
+    # the arms thrown up, catches itself for a beat, then falls over
+    # backwards (away from the attacker), fastest at the floor on the impact
+    # frame, thuds, bounces once and settles on its back; the arms, the legs
+    # and the head land late. See _fall.py for the beats.
+    death, death_hit = fall_back("hips", D=8.3, F=10.0, R=84.0, roll=5.0, torso="torso",
+                                 legs={"leg-l": (-4, 0, -6), "leg-r": (-6, 0, 8)},
+                                 arms={"arm-l": ((-68, 0, -40), -1), "arm-r": ((-75, 0, 45), 1)},
+                                 head=("head", (55, 0, 15)), settle=-0.9)
     mouth = (0.0, 29.0 - HIP[1], 10.0 - HIP[2])
     return world("zombie-ghoul", "creatures", "Zombie Ghoul", root,
-                 clips=[Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
+                 clips=[Clip("attack", attack, loop=False, impact=fr(18)), Clip("hit", hit, loop=False, impact=hit_hit), Clip("death", death, loop=False, impact=death_hit), Clip("idle", idle),
+                        Clip("move", shift(_move(), 36, 8), ease=0)],
                  sockets=[Socket("socket-mouth", at=mouth, parent="head")],
                  pfx=[pfx("rvx-monster-rot-poof", "socket-mouth", "clip:death", size=32, at=0.2)])

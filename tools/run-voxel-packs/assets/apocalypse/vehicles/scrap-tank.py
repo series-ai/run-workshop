@@ -54,18 +54,58 @@ def turret() -> Grid:
     shell = S.last(g)
     P.plates(g, shell, "rust", 5, size=(10, 8), rivets=True, seed=6)
     P.flat(g, shell & (Y > 66), "steel", 6)
-    # A thick gun barrel points to the front (-Z).
-    S.disc(g, "z", CX, 57, 3.2, 10, 48, "steel", 6, n=8)
-    S.disc(g, "z", CX, 57, 4.2, 7, 11, "iron", 6, n=8)
-
-    # Paint the muzzle and armor edges after all added pieces.
-    P.flat(g, (g.a > 0) & (Z < 15), "steel", 6)
-    P.flat(g,(g.a > 0) & (Z < 8) & (np.hypot(X-CX,Y-57)<2.8),"iron",1)
     hatch = box(g, 33, 69, 52, 47, 72, 66, "steel", 5)
     P.flat(g, edges(hatch), "iron", 4)
     for face, plane in (("+x", 57), ("-x", 23)):
         pnglyph.icon(g, face, plane, 48, 49, "skull", "bone", 5)
     return g
+
+
+def barrel() -> Grid:
+    """The thick gun barrel, its own part so it can kick back on `attack`."""
+    g = Grid(GW, GH, GD)
+    X, Y, Z = S.coords(g)
+    S.disc(g, "z", CX, 57, 3.2, 10, 48, "steel", 6, n=8)
+    S.disc(g, "z", CX, 57, 4.2, 7, 11, "iron", 6, n=8)
+    P.flat(g, (g.a > 0) & (Z < 15), "steel", 6)
+    P.flat(g, (g.a > 0) & (Z < 8) & (np.hypot(X - CX, Y - 57) < 2.8), "iron", 1)
+    return g
+
+
+def rx(deg: float) -> np.ndarray:
+    a = np.radians(deg)
+    return np.array([[1, 0, 0], [0, np.cos(a), -np.sin(a)], [0, np.sin(a), np.cos(a)]])
+
+
+def recoil(body_joint, wheels):
+    """The hull rocks back on its rear road wheel when the gun fires: nose up
+    (+x rotation lifts the -Z front), a slide back (+Z), then it drops
+    forward past rest onto its front wheel and settles. The rocking edge
+    (the rear wheel's floor contact nose-up, the front one nose-down) stays
+    on the floor, and the wheels ride with the hull so nothing separates."""
+    #        seconds  nose-up deg  slide back (voxels)
+    # (Level keys where the rocking edge swaps, so the hull never lifts.)
+    poses = [(0.0, 0.0, 0.0), (0.067, 4.0, 1.8), (0.133, 5.5, 2.2), (0.233, 3.0, 1.2), (0.3, 0.0, 0.5),
+             (0.367, -1.6, 0.0), (0.467, 0.0, 0.0), (0.533, 0.5, 0.0), (0.667, 0.0, 0.0), (0.8, 0.0, 0.0)]
+    bj = np.array(body_joint, dtype=float)
+    zs = [c[2] for _wg, c in wheels]
+    rear = np.array((bj[0], 0.0, max(zs)), dtype=float) - bj
+    front = np.array((bj[0], 0.0, min(zs)), dtype=float) - bj
+    body_rot, body_loc = [], []
+    wheel_loc = [[] for _ in wheels]
+    for t, deg, slide in poses:
+        r = rx(deg)
+        hp = rear if deg >= 0 else front
+        loc = hp - r @ hp + np.array([0.0, 0.0, slide])
+        body_rot.append((t, (deg, 0.0, 0.0)))
+        body_loc.append((t, tuple(float(v) for v in loc)))
+        for i, (_wg, c) in enumerate(wheels):
+            cp = np.array(c, dtype=float) - bj
+            wheel_loc[i].append((t, tuple(float(v) for v in r @ cp + loc - cp)))
+    keys = {"body": {"rot": body_rot, "loc": body_loc}}
+    for i, wl in enumerate(wheel_loc):
+        keys[f"wheel-{i}"] = {"loc": wl}
+    return keys
 
 
 def build() -> Asset:
@@ -80,9 +120,18 @@ def build() -> Asset:
                                extra_sockets=[("socket-track-dust", (8, 7, 105))],
                                body_parts=[("turret", turret_grid, joint, (0.0, 0.0, 0.0),
                                             {"rot": rotate}, {"rot": rotate})], bounce=0.2)
-    sockets.append(Socket("socket-gun-muzzle", at=tuple(point - root.pivot[i] for i, point in enumerate((CX, 57.0, 7.0))), parent="turret"))
-    fire = [(0.0, (0.0, 0.0, 0.0)), (0.08, (-2.0, 0.0, 0.0)), (0.18, (0.0, 0.0, 0.0)), (0.36, (0.0, 0.0, 0.0))]
-    clips.append(Clip("attack", {"turret": {"rot": fire}}, loop=False))
+    turret_part = next(p for p in root.walk() if p.name == "turret")
+    part(turret_part, "barrel", barrel(), (CX, 57.0, 48.0))
+    sockets.append(Socket("socket-gun-muzzle", at=tuple(point - root.pivot[i] for i, point in enumerate((CX, 57.0, 7.0))), parent="barrel"))
+    # Fire: the barrel slams back in 2 frames, holds, then runs out again;
+    # the turret kicks muzzle-up; the hull rocks back hard and settles.
+    body_joint = next(p for p in root.walk() if p.name == "body").pivot
+    attack = recoil(body_joint, wheels)
+    attack["barrel"] = {"loc": [(0.0, (0.0, 0.0, 0.0)), (0.067, (0.0, 0.0, 7.0)), (0.167, (0.0, 0.0, 6.5)),
+                                (0.5, (0.0, 0.0, 0.0)), (0.8, (0.0, 0.0, 0.0))]}
+    attack["turret"] = {"rot": [(0.0, (0.0, 0.0, 0.0)), (0.067, (3.0, 0.0, 0.0)), (0.267, (-0.6, 0.0, 0.0)),
+                                (0.433, (0.0, 0.0, 0.0)), (0.8, (0.0, 0.0, 0.0))]}
+    clips.append(Clip("attack", attack, loop=False, ease=0))
     return Asset(id="apocalypse-vehicles-scrap-tank", pack="apocalypse", category="vehicles", name="Scrap Tank",
                  root=root, clips=clips, sockets=sockets,
                  pfx=[{"effectId": "rvx-apocalypse-engine-smoke", "socket": "socket-exhaust", "trigger": "clip:move", "size": 28},

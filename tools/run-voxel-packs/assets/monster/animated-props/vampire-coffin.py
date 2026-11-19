@@ -15,6 +15,7 @@ import numpy as np
 import paint as P
 import pnglyph
 from _kit import keys, pfx, world
+from _slam import slam
 from _props import pn_flame
 from _pn import assemble, coords, last
 from pnkit import box, edges
@@ -183,14 +184,20 @@ def build():
     hinge = ((X0 + X1) / 2, YS, CZ + HW_SH + 0.5)
     root = assemble(parts, [("bier", None, root_j), ("coffin", "bier", coffin_j), ("lid", "coffin", hinge)])
     z3 = (0, 0, 0)
-    open_k = {"lid": {"rot": keys((0, z3), (0.15, (14, 0, 0)), (0.5, (112, 0, 0)), (0.65, (98, 0, 0)), (0.8, (104, 0, 0)), (0.9, (102, 0, 0)))}}
-    close_k = {"lid": {"rot": keys((0, (102, 0, 0)), (0.35, z3), (0.42, (5, 0, 0)), (0.5, z3))}}
+    # Sterf's door rule: a near-still start, then an accelerating swing keyed
+    # once a frame into a hard stop at full speed, a tiny rebound, still
+    # (see _slam; the clips use ease=0 so the spacing survives the export).
+    # open: a knock from inside jolts the lid up 10 degrees (2 frames), then it
+    # flies open and slams against its stop; close: it drops shut.
+    lid_open, _ = slam((10, 0, 0), (102, 0, 0), frames=10, power=2.5, rebound=0.05, start=2, hold_from=2)
+    open_k = {"lid": {"rot": [(0.0, z3)] + lid_open}}
+    close_k = {"lid": {"rot": slam((102, 0, 0), z3, frames=11, power=3.5, rebound=0.04)[0]}}
     idle_k = {
         "lid": {"rot": keys((0, z3), (0.5, z3), (0.6, (9, 0, 0)), (0.7, (2, 0, 0)), (0.78, (6, 0, 0)), (0.88, z3), (1.6, z3), (1.7, (5, 0, 0)), (1.8, z3), (2.6, z3))},
         "coffin": {"loc": keys((0, z3), (0.5, z3), (0.6, (0, 1, 0)), (0.7, z3), (0.78, (0, 0.5, 0)), (0.88, z3), (2.6, z3))},
     }
     mist = ((X0 + X1) / 2 - CX, YS + 1.0, 0.0)
     return world("vampire-coffin", "animated-props", "Vampire Coffin", root,
-                 clips=[Clip("open", open_k, loop=False), Clip("close", close_k, loop=False), Clip("idle", idle_k)],
+                 clips=[Clip("open", open_k, loop=False, ease=0), Clip("close", close_k, loop=False, ease=0), Clip("idle", idle_k)],
                  sockets=[Socket("socket-mist", at=mist, parent="coffin")],
                  pfx=[pfx("rvx-monster-grave-mist", "socket-mist", "clip:open", size=22)])

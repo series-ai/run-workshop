@@ -19,11 +19,17 @@ import numpy as np
 
 import paint as P
 import pnshapes as S
+from _hitq import quick_hit
 from _kit import keys, pfx, world
 from _life import assemble, coords, front, last, quad, side
 from _pn import fur, pumpkin, stamp
 from pnkit import box, edges
 from voxgrid import C, Clip, Grid, Socket
+
+
+def fr(n: float) -> float:
+    """Seconds of frame `n` at 30 fps (impact keys sit on whole frames)."""
+    return n / 30.0
 
 SZ = (56, 92, 100)
 CX = 28.0
@@ -261,29 +267,89 @@ def build():
             "arm-l": {"rot": keys((0.0, z3), (1.5, (3.0, 0.0, 0.0)), (3.0, z3))},
             "arm-r": {"rot": keys((0.0, z3), (1.0, (-5.0, 0.0, 3.0)), (2.0, (3.0, 0.0, -2.0)), (3.0, z3))},
             "leg-fr": {"rot": keys((0.0, z3), (2.2, z3), (2.45, (-26.0, 0.0, 0.0)), (2.7, z3), (3.0, z3))}}
-    attack = {"arm-r": {"rot": keys((0.0, z3), (0.18, (-40.0, 0.0, -12.0)), (0.42, (120.0, 0.0, 18.0)), (0.62, (96.0, 0.0, 10.0)), (0.9, z3))},
-              "rider": {"rot": keys((0.0, z3), (0.18, (8.0, 10.0, 0.0)), (0.42, (-14.0, -14.0, 0.0)), (0.9, z3))},
-              "body": {"rot": keys((0.0, z3), (0.2, (-10.0, 0.0, 0.0)), (0.5, (6.0, 0.0, 0.0)), (0.9, z3))},
-              "leg-fl": {"rot": keys((0.0, z3), (0.2, (36.0, 0.0, 0.0)), (0.55, z3), (0.9, z3))},
-              "leg-fr": {"rot": keys((0.0, z3), (0.2, (30.0, 0.0, 0.0)), (0.55, z3), (0.9, z3))}}
-    hit = {"body": {"rot": keys((0.0, z3), (0.12, (10.0, -6.0, 0.0)), (0.5, z3))},
-           "neck": {"rot": keys((0.0, z3), (0.12, (-18.0, 8.0, 0.0)), (0.5, z3))},
-           "rider": {"rot": keys((0.0, z3), (0.12, (12.0, 0.0, 6.0)), (0.5, z3))}}
-    death = {"body": {"rot": keys((0.0, z3), (0.35, (-8.0, 0.0, 0.0)), (1.0, (0.0, 0.0, 62.0)), (1.4, (0.0, 0.0, 58.0))),
-                      "loc": keys((0.0, z3), (1.0, (-10.0, -14.0, 0.0)), (1.4, (-10.0, -14.0, 0.0)))},
-             "neck": {"rot": keys((0.0, z3), (0.6, (26.0, 0.0, 0.0)), (1.4, (34.0, -12.0, 0.0)))},
-             "rider": {"rot": keys((0.0, z3), (0.5, (-20.0, 0.0, -10.0)), (1.0, (-70.0, 0.0, -24.0)), (1.4, (-70.0, 0.0, -24.0)))},
-             "arm-l": {"rot": keys((0.0, z3), (1.0, (-50.0, 0.0, 0.0)), (1.4, (-50.0, 0.0, 0.0)))},
-             "arm-r": {"rot": keys((0.0, z3), (1.0, (70.0, 0.0, 0.0)), (1.4, (70.0, 0.0, 0.0)))}}
+    # Attack, a rearing sabre cut (Sterf 2026-11-15b: a real swing, and no
+    # lantern through the neck). The horse rears with the front hooves
+    # pawing while the rider leans back and heaves the sabre up high over
+    # his shoulder (frames 0-12, coiling to 14); the horse crashes forward
+    # onto its front hooves and the rider drives the blade over, forward and
+    # down through the target in 3 frames (keyed a frame at a time) to the
+    # blow on frame 17, cuts on through low (follow-through), holds, and
+    # both settle by frame 34. The lantern arm swings the pumpkin out wide
+    # to the left as a counterweight the whole time, so it stays clear of
+    # the horse's neck; the horse's head turns away from it.
+    attack = {"body": {"rot": keys((0, z3), (fr(6), (10, 0, 0)), (fr(12), (15, 0, 0)), (fr(14), (16, 0, 0)), (fr(17), (-6, 0, -3)),
+                                   (fr(19), (-8, 0, -4)), (fr(24), (-6, 0, -3)), (fr(30), (2, 0, 1)), (fr(34), z3)),
+                       "loc": keys((0, z3), (fr(6), (0, 2.5, 1.2)), (fr(12), (0, 4.0, 2)), (fr(14), (0, 4.2, 2)), (fr(17), (0, 1.4, -6)),
+                                   (fr(19), (0, 1.7, -8)), (fr(24), (0, 1.2, -8.6)), (fr(30), (0, 0.4, -3)), (fr(34), z3))},
+              "leg-fl": {"rot": keys((0, z3), (fr(4), (40, 0, 0)), (fr(8), (20, 0, 0)), (fr(12), (46, 0, 0)), (fr(14), (40, 0, 0)), (fr(17), (8, 0, 0)),
+                                     (fr(19), (10, 0, 0)), (fr(24), (4, 0, 0)), (fr(30), (-6, 0, 0)), (fr(34), z3))},
+              "leg-fr": {"rot": keys((0, z3), (fr(6), (30, 0, 0)), (fr(10), (50, 0, 0)), (fr(14), (38, 0, 0)), (fr(17), (6, 0, 0)),
+                                     (fr(19), (10, 0, 0)), (fr(24), (4, 0, 0)), (fr(30), (-6, 0, 0)), (fr(34), z3))},
+              "leg-bl": {"rot": keys((0, z3), (fr(6), (-12, 0, 0)), (fr(12), (-16, 0, 0)), (fr(17), (-26, 0, 0)), (fr(19), (-28, 0, 0)),
+                                     (fr(24), (-20, 0, 0)), (fr(30), (-8, 0, 0)), (fr(34), z3))},
+              "leg-br": {"rot": keys((0, z3), (fr(6), (-12, 0, 0)), (fr(12), (-16, 0, 0)), (fr(17), (-24, 0, 0)), (fr(19), (-26, 0, 0)),
+                                     (fr(24), (-18, 0, 0)), (fr(30), (-6, 0, 0)), (fr(34), z3))},
+              "neck": {"rot": keys((0, z3), (fr(6), (20, -6, 0)), (fr(12), (26, -8, 0)), (fr(14), (27, -8, 0)), (fr(17), (-14, -2, 0)),
+                                   (fr(20), (-20, -2, 0)), (fr(27), (-6, 0, 0)), (fr(34), z3))},
+              "tail": {"rot": keys((0, z3), (fr(6), (-30, 0, 0)), (fr(14), (-10, 0, 6)), (fr(19), (14, 0, 10)), (fr(25), (-6, 0, -6)),
+                                   (fr(34), z3))},
+              "rider": {"rot": keys((0, z3), (fr(6), (6, -6, -3)), (fr(12), (10, -8, -4)), (fr(14), (11, -9, -4)), (fr(16), (-4, 4, 2)),
+                                    (fr(17), (-10, 8, 4)), (fr(19), (-13, 10, 5)), (fr(25), (-11, 9, 4)), (fr(30), (-2, 1, 0)), (fr(34), z3))},
+              # the sabre: raised high, then over, forward and down through the target
+              "arm-r": {"rot": keys((0, z3), (fr(5), (-15, 0, -4)), (fr(10), (-34, 0, -6)), (fr(14), (-38, 0, -6)), (fr(15), (-80, 0, 4)),
+                                    (fr(16), (-125, 0, 16)), (fr(17), (-165, 0, 26)), (fr(19), (-192, 0, 30)), (fr(21), (-186, 0, 28)),
+                                    (fr(25), (-182, 0, 27)), (fr(28), (-120, 0, 16)), (fr(31), (-40, 0, 2)), (fr(34), z3))},
+              # the lantern held out wide, clear of the neck
+              "arm-l": {"rot": keys((0, z3), (fr(6), (-8, 0, -26)), (fr(12), (-10, 0, -32)), (fr(14), (-10, 0, -33)), (fr(17), (-6, 0, -31)), (fr(20), (-8, 0, -32)),
+                                    (fr(25), (-8, 0, -30)), (fr(31), (-2, 0, -6)), (fr(34), z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail; over in 0.6 s. See _hitq.quick_hit.
+    hit, hit_hit = quick_hit("body", foot=(-30, 15.5, -15.5), push=3.0, pop=1.5, tilt=9, twist=-5, head=("neck", -22),
+                            extra={"rider": lambda t: keys((0, z3), (fr(4), (16, 0, 6)), (fr(9), (8, 0, 3)), (fr(t["O"]), (-6, 0, 0)), (fr(t["E"]), z3)),
+                                   "arm-r": lambda t: keys((0, z3), (fr(4), (30, 0, 10)), (fr(10), (10, 0, 4)), (fr(t["E"]), z3)),
+                                   "arm-l": lambda t: keys((0, z3), (fr(3), (-6, 0, -14)), (fr(9), (-4, 0, -12)), (fr(t["O"]), (0, 0, -4)), (fr(t["E"]), z3)),
+                                   "tail": lambda t: keys((0, z3), (fr(4), (-24, 0, 0)), (fr(10), (10, 0, 6)), (fr(t["E"]), z3))})
+    # Death: the horse rears with a scream, front hooves pawing and the
+    # rider thrown forward (frames 0-7), then without stopping comes down
+    # and all four legs give out and splay flat as the barrel drops, faster
+    # and faster, belly onto the floor on frame 17; one small bounce, then it
+    # lies still. The rider is thrown over backwards onto the rump; the neck,
+    # the arms and the tail land late.
+    D, LEGX, NX, RX = 28.5, 88.0, -50.0, 50.0
+    death = {"body": {"rot": keys((0, z3), (fr(7), (16, 0, 0)), (fr(12), (5, 0, 2)), (fr(17), (2, 0, 3)),
+                                  (fr(19), (1, 0, 2.6)), (fr(21), (2, 0, 3)), (fr(28), (2, 0, 3))),
+                      "loc": keys((0, z3), (fr(7), (0, 2.0, 1.5)), (fr(12), (0, -4.0, -0.6)), (fr(17), (0, -D, -1)),
+                                  (fr(19), (0, -D + 0.6, -1)), (fr(21), (0, -D, -1)), (fr(28), (0, -D, -1)))},
+             "neck": {"rot": keys((0, z3), (fr(7), (12, -6, 0)), (fr(12), (-6, -4, 0)), (fr(17), (14, 0, 6)),
+                                  (fr(22), (NX, 0, 12)), (fr(26), (NX + 4, 0, 13)), (fr(28), (NX, 0, 14)))},
+             "tail": {"rot": keys((0, z3), (fr(7), (-34, 0, 0)), (fr(12), (10, 0, 6)), (fr(17), (-30, 0, -10)),
+                                  (fr(22), (-46, 0, 12)), (fr(27), (-40, 0, 8)), (fr(28), (-40, 0, 10)))},
+             "rider": {"rot": keys((0, z3), (fr(7), (4, 0, 0)), (fr(12), (14, 0, -6)), (fr(17), (24, 0, -6)),
+                                   (fr(22), (RX, 0, 8)), (fr(26), (RX - 3, 0, 7)), (fr(28), (RX, 0, 8))),
+                       "loc": keys((0, z3), (fr(17), z3), (fr(22), (0, 5.0, 0)), (fr(28), (0, 5.0, 0)))},
+             # the lantern swings out wide of the horse and lands beside it
+             "arm-l": {"rot": keys((0, z3), (fr(7), (24, 0, -28)), (fr(12), (-20, 0, -34)), (fr(17), (40, 0, -46)),
+                                   (fr(23), (-90, 0, -40)), (fr(26), (-86, 0, -38)), (fr(28), (-88, 0, -40)))},
+             "arm-r": {"rot": keys((0, z3), (fr(7), (60, 0, 10)), (fr(12), (-20, 0, 6)), (fr(17), (100, 0, 24)),
+                                   (fr(23), (60, 0, 24)), (fr(27), (57, 0, 22)), (fr(28), (60, 0, 24)))}}
+    for name, (s, z0) in LEGS.items():
+        fore = z0 < 50  # the front legs stretch forward, the back legs back
+        fx = LEGX if fore else -LEGX - 4
+        flat = (fx, 0, s * 12)
+        rear = (40, 0, 0) if fore else (-16, 0, 0)
+        death[name] = {"rot": keys((0, z3), (fr(5 if fore else 6), rear), (fr(7), rear if not fore else (30, 0, 0)),
+                                   (fr(12), (fx * 0.35, 0, s * 6)), (fr(17), flat), (fr(19), (fx * 1.04, 0, s * 14)), (fr(21), flat),
+                                   (fr(28), flat))}
     # sockets in each parent's joint space
     lantern = (LANTERN[0] - SHOULDER["arm-l"][0], LANTERN[1] + 6.0 - SHOULDER["arm-l"][1], LANTERN[2] - SHOULDER["arm-l"][2])
     collar = (0.0, 73.0 - SEAT[1], 51.0 - SEAT[2])
     tip = (BLADE_TIP[0] - SHOULDER["arm-r"][0], BLADE_TIP[1] - SHOULDER["arm-r"][1], BLADE_TIP[2] - SHOULDER["arm-r"][2])
     return world("headless-horseman", "creatures", "Headless Horseman", root,
-                 clips=[Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False), Clip("idle", idle)],
+                 clips=[Clip("move", move), Clip("attack", attack, loop=False, impact=fr(17)), Clip("hit", hit, loop=False, impact=hit_hit), Clip("death", death, loop=False, impact=fr(17)), Clip("idle", idle)],
                  sockets=[Socket("socket-lantern", at=lantern, parent="arm-l"),
                           Socket("socket-neck", at=collar, parent="rider"),
                           Socket("socket-blade", at=tip, parent="arm-r")],
                  pfx=[pfx("rvx-monster-candle-flame", "socket-lantern", "idle", size=14),
                       pfx("rvx-monster-ghost-wisps", "socket-neck", "idle", size=22),
-                      pfx("rvx-monster-reaper-slash", "socket-blade", "clip:attack", size=34, at=0.42)])
+                      pfx("rvx-monster-reaper-slash", "socket-blade", "clip:attack", size=34, at=fr(16))])

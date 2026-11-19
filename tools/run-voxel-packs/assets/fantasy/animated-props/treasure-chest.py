@@ -10,7 +10,7 @@ PN chest scale (about 18–22 wide). The lid swings open on `open`, shuts on
 import numpy as np
 
 import paint as P
-from _life import asset, coords, facet_paint, keys, pfx, plan, rig, side
+from _life import asset, coords, facet_paint, pfx, plan, rig, side
 from pnkit import box, edges
 from voxgrid import C, Clip, Grid, Socket
 
@@ -90,10 +90,28 @@ def build():
     b, lg = body(), lid()
     hinge = ((X0 + X1) / 2, float(H), Z1 + 0.5)  # the back bottom edge of the lid
     root, to_root = rig([("chest", b, None, None), ("lid", lg, hinge, None)])
-    open_k = {"lid": {"rot": keys((0, 0, 0, 0), (0.3, 105, 0, 0), (0.42, 92, 0, 0), (0.55, 98, 0, 0))}}
-    close_k = {"lid": {"rot": keys((0, 98, 0, 0), (0.25, 0, 0, 0), (0.32, 5, 0, 0), (0.4, 0, 0, 0))}}
-    idle_k = {"lid": {"rot": keys((0, 0, 0, 0), (0.8, 0, 0, 0), (0.9, 7, 0, 0), (1.0, 0, 0, 0), (1.1, 4, 0, 0), (1.2, 0, 0, 0), (2.0, 0, 0, 0))}}
+    f = 1 / 30
+
+    def swing(a, b, n):
+        """Frames 1..n of a swing from a to b that accelerates all the way
+        into its stop (a slam, no ease into it)."""
+        return [a + (b - a) * (i / n) ** 2 for i in range(1, n + 1)]
+
+    def lid_keys(seq):
+        return {"lid": {"rot": [(i * f, (v, 0.0, 0.0)) for i, v in enumerate(seq)]}}
+    OPEN = 98.0
+    # open: the lid is flung up and back, accelerating into the hinge stop
+    # (a hard stop past the rest angle), one small rebound and it lies open.
+    # Keyed a frame at a time so the stop is exact.
+    open_k = lid_keys([0.0] + swing(0.0, OPEN + 6, 7) + [OPEN - 4, OPEN - 1, OPEN + 1, OPEN, OPEN, OPEN, OPEN])
+    # close: it drops shut under its own weight, accelerating into a slam,
+    # one small bounce off the rim, shut.
+    close_k = lid_keys([OPEN, OPEN + 1] + swing(OPEN + 1, 0.0, 7) + [5.0, 2.0, 0.0, 1.0, 0.0, 0.0])
+    # idle: the treasure rattles the lid: two quick lifts, each dropping back
+    # with a clack (accelerating down, a stop on the rim)
+    idle = [0.0] * 24 + [3.5, 6.0, 7.0, 5.2, 0.0, 1.2, 0.0, 0.0, 2.2, 3.8, 4.0, 2.9, 0.0, 0.6] + [0.0] * 24
+    idle_k = lid_keys(idle[:60] + [0.0])
     return asset("animated-props", "treasure-chest", "Treasure Chest", root,
-                 clips=[Clip("idle", idle_k), Clip("open", open_k, loop=False), Clip("close", close_k, loop=False)],
+                 clips=[Clip("idle", idle_k, ease=0.0), Clip("open", open_k, loop=False, ease=0.0), Clip("close", close_k, loop=False, ease=0.0)],
                  sockets=[Socket("socket-loot", at=to_root(((X0 + X1) / 2, H + 2, (Z0 + Z1) / 2)))],
                  fx=[pfx("rvx-fantasy-loot-burst", "socket-loot", "clip:open", size=22, at=0.13)])

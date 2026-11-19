@@ -19,6 +19,7 @@ import paint as P
 import pnglyph
 import pnshapes as S
 from _kit import keys, pfx, world
+from _slam import slam
 from _pn import assemble, coords, last
 from pnkit import box
 from voxgrid import C, Clip, Grid, Socket
@@ -137,12 +138,13 @@ def build():
     ])
     open_ = Clip("open", {
         "lever": {"rot": keys((0, (0, 0, 0)), (0.25, (-50, 0, 0)), (0.35, (-44, 0, 0)), (0.45, (-48, 0, 0)))},
-        "hatch": {"rot": keys((0, (0, 0, 0)), (0.25, (0, 0, 0)), (0.35, (12, 0, 0)), (0.75, (102, 0, 0)), (0.9, (90, 0, 0)), (1.05, (96, 0, 0)), (1.2, (94, 0, 0)))},
-    }, loop=False)
+        # the lever lets go and the hatch swings up, accelerating, slamming into its stop on frame 19 (see _slam)
+        "hatch": {"rot": slam((0, 0, 0), (94, 0, 0), frames=11, power=2.5, rebound=0.05, start=8)[0]},
+    }, loop=False, ease=0)
     close = Clip("close", {
-        "hatch": {"rot": keys((0, (94, 0, 0)), (0.15, (98, 0, 0)), (0.5, (0, 0, 0)), (0.58, (5, 0, 0)), (0.66, (0, 0, 0)))},
+        "hatch": {"rot": slam((94, 0, 0), (0, 0, 0), frames=10, power=3.5, rebound=0.04, end=23)[0]},  # falls shut
         "lever": {"rot": keys((0, (-48, 0, 0)), (0.5, (-48, 0, 0)), (0.75, (0, 0, 0)))},
-    }, loop=False)
+    }, loop=False, ease=0)
     idle = Clip("idle", {
         "hatch": {"rot": keys((0, (0, 0, 0)), (1.5, (0, 0, 0)), (1.6, (5, 0, 0)), (1.7, (0, 0, 0)), (1.8, (3, 0, 0)), (1.9, (0, 0, 0)), (3.0, (0, 0, 0)))},
         "lever": {"rot": keys((0, (0, 0, 0)), (1.6, (0, 0, 0)), (1.7, (-4, 0, 0)), (1.85, (0, 0, 0)), (3.0, (0, 0, 0)))},

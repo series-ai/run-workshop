@@ -17,17 +17,21 @@ and the face are paint (S1).
 
 Clips: idle (it breathes and snorts, the axe rocks), attack (a diagonal
 axe swing from over the right shoulder down across the body, with a slash
-arc), hit, death (it topples back). Faces -Z.
+arc), hit, death (it teeters and
+topples over backwards). Faces -Z.
 """
 import math
 
 import numpy as np
+
+from _falls_brutes import frames, knock_hit_base, step_in, topple_back
 
 import paint as P
 import pnglyph
 import pnshapes as S
 from _fcreature_giants import frame_edges, fur_strokes, on_facets, patches, seam_frame
 from _life import asset, chamfer_rect, coords, front, keys, ngon, pfx, plan, rig, side
+from _move_gaits import Gait, cyc, per_frame, thump, turn_loop
 from pnkit import box, edges
 from voxgrid import C, Clip, Grid, Socket
 
@@ -39,6 +43,13 @@ TAIL_HINGE = (CX, 30.0, CZ + 9.0)
 CLOTH = "blue"
 HOOF = "iron"
 HIP_Y = 31.0
+LEG_H, TOE, HEEL = 31.0, -8.0, 3.0  # hip height; the hoof's toe and heel z from the hip
+# death rest pose: root height on the floor, arm x angles overhead, head pitch, axe keys, leg rest
+MIN_REST, ARM_UP, HEAD_BACK, LEG_REST = 0.55, (186.0, -30.0), 100.0, -16.0
+W_LAND, W_FALL, W_HOP = (50.0, 0.0, 0.0), (40.0, 0.0, 0.0), (44.0, 0.0, 0.0)
+ARM_SPREAD = (16.0, 20.0)
+T_LAND, T_FALL = (20.0, 0.0, 25.0), (60.0, 0.0, 0.0)
+FLAT, BODY_LAND, LEG_LAG = 90.0, 2.0, 15.5
 WAIST_Y = 32.0
 SHOULDER_Y = 52.0
 SH_X = 20.0
@@ -353,6 +364,36 @@ def axe() -> Grid:
     return g
 
 
+def stomp_move(root) -> dict:
+    """move: a heavy two-beat bull stomp, 40 frames (two steps). Each hoof
+    lifts, carries forward and drops onto the floor accelerating; the body
+    falls into the footfall, keeps sinking 2 frames past it and stops dead
+    (the torso squashes, the head and axe nod a beat late), then heaves up
+    over the passing leg. Planted hooves slide back at one ground speed.
+    The torso rolls its weight over the planted hoof and twists against
+    the free arm's swing; the tail sways a beat behind. Authored with
+    contacts on f10 and f30; turn_loop then starts the loop mid-stroke."""
+    T, CL, CR = 40, 10, 30
+    gait = Gait(root, "minotaur", ["leg-l", "leg-r"])
+    th = thump(T, [CL, CR], depth=2.6, fall=6, past=2)
+    s = gait.walk(T, {"leg-l": CL / T, "leg-r": CR / T}, duty=0.6, stride=18.0, lift=5.0, height=lambda f: 0.6 - th(f), carry=0.75, land=0.3)
+    sq = thump(T, [CL, CR], depth=1.0, fall=1, past=2, rise=5)
+    k = [sq(f) for f in range(T + 1)]  # 0..1: the squash as the weight lands
+    def z(*v):
+        return np.array(v, float)
+    s["body"] = {"rot": [r + z(-2.5 * kk, 0, 0) for r, kk in zip(
+                     cyc([(0, z(-4, 3, -1.5)), (CL + 2, z(-4, 5, 4), "snap"), (20, z(-4, 0, 1.5)), (CR + 2, z(-4, -5, -4), "snap")], T), k)],
+                 "scale": [z(1 + 0.02 * kk, 1 - 0.04 * kk, 1 + 0.02 * kk) for kk in k]}
+    s["head"] = {"rot": [r + z(-5 * kk, 0, 0) for r, kk in zip(cyc([(0, z(0, -2, 0)), (CL + 3, z(2, -3, -2), "snap"), (20, z(0, 2, 0)), (CR + 3, z(2, 3, 2), "snap")], T),
+                                                                 [sq((f - 1) % T) for f in range(T + 1)])]}
+    s["arm-l"] = {"rot": cyc([(0, z(8, 0, -2)), (CL + 2, z(-16, 0, -3), "snap"), (20, z(-4, 0, -2)), (CR + 2, z(20, 0, -1), "snap")], T)}
+    s["arm-r"] = {"rot": cyc([(0, z(-2, 0, 1)), (CL + 2, z(7, 0, 2), "snap"), (20, z(2, 0, 1)), (CR + 2, z(-6, 0, 2), "snap")], T)}
+    s["axe"] = {"rot": [z(5 * sq((f - 2) % T), 0, 0) for f in range(T + 1)]}
+    s["tail"] = {"rot": cyc([(0, z(0, 0, 4)), (CL + 5, z(4, 0, -12)), (20, z(0, 0, -4)), (CR + 5, z(4, 0, 12))], T)}
+    s, _ = turn_loop(s, T)
+    return per_frame(s)
+
+
 # ------------------------------------------------------------------ build
 def build():
     grids = {"minotaur": pelvis(), "body": body(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1),
@@ -380,28 +421,49 @@ def build():
     # a diagonal swing: the arm lifts the axe up and back over the right
     # shoulder, then drives it down and across the body to the left hip.
     # Each key step stays under 150 degrees (the export takes the short way).
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.22, 70, 0, 28), (0.40, 135, 0, 40), (0.50, 95, -10, 10), (0.58, 45, -20, -20), (0.70, 40, -20, -22), (1.10, 0, 0, 0))},
-              "axe": {"rot": keys((0, 0, 0, 0), (0.22, -10, 0, 0), (0.40, -40, 0, 0), (0.50, -80, 0, 0), (0.58, -110, 0, 0), (0.70, -105, 0, 0), (1.10, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.40, 6, -16, 0), (0.58, -10, 22, 0), (0.70, -8, 20, 0), (1.10, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.40, -8, 8, 0), (0.58, 10, -10, 0), (1.10, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.40, 20, 0, -20), (0.58, -16, 0, -6), (1.10, 0, 0, 0))},
-              "minotaur": {"loc": keys((0, 0, 0, 0), (0.40, 0, 0, 1.5), (0.58, 0, 0, -3.0), (0.70, 0, 0, -3.0), (1.10, 0, 0, 0))}}
-    hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 14, 0, 6), (0.45, 0, 0, 0))},
-           "head": {"rot": keys((0, 0, 0, 0), (0.10, 18, -10, 6), (0.45, 0, 0, 0))},
-           "arm-l": {"rot": keys((0, 0, 0, 0), (0.10, -14, 0, -20), (0.45, 0, 0, 0))},
-           "arm-r": {"rot": keys((0, 0, 0, 0), (0.10, -10, 0, 16), (0.45, 0, 0, 0))},
-           "minotaur": {"loc": keys((0, 0, 0, 0), (0.10, 0, 0, 3.0), (0.45, 0, 0, 0))}}
-    death = {"minotaur": {"rot": keys((0, 0, 0, 0), (0.30, -8, 0, 0), (0.90, 80, 0, 5), (1.05, 74, 0, 5), (1.25, 78, 0, 5)),
-                          "loc": keys((0, 0, 0, 0), (0.90, 0, 12, 10), (1.25, 0, 12, 10))},
-             "head": {"rot": keys((0, 0, 0, 0), (0.90, -16, 0, 0), (1.25, -8, 22, 0))},
-             "arm-l": {"rot": keys((0, 0, 0, 0), (0.90, 20, 0, -50))},
-             "arm-r": {"rot": keys((0, 0, 0, 0), (0.90, 20, 0, 50))},
-             "axe": {"rot": keys((0, 0, 0, 0), (0.90, 20, 0, -30))},
-             "leg-l": {"rot": keys((0, 0, 0, 0), (0.90, 14, 0, -8))},
-             "leg-r": {"rot": keys((0, 0, 0, 0), (0.90, 4, 0, 8))},
-             "tail": {"rot": keys((0, 0, 0, 0), (0.90, 70, 0, 0))}}
+    # ... and after the hold it hauls the axe back and rocks a little past
+    # rest (f30) before it settles
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 70, 0, 28), (0.3667, 135, 0, 40), (0.4333, 140, 0, 42), (0.5667, 45, -20, -20), (0.6333, 38, -24, -26), (0.7667, 42, -20, -22),
+                                    (1.0, -7, 3, 4), (1.1333, 0, 0, 0))},
+              "axe": {"rot": keys((0, 0, 0, 0), (0.2, -10, 0, 0), (0.3667, -40, 0, 0), (0.4333, -46, 0, 0), (0.5667, -112, 0, 0), (0.6333, -118, 0, 0), (0.7667, -110, 0, 0), (1.0, 8, 0, 0), (1.1333, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.3667, 10, -20, 0), (0.4333, 12, -24, 0), (0.5667, -14, 24, 0), (0.6333, -17, 28, 0), (0.7667, -13, 22, 0), (1.0, 4, -4, 0), (1.1333, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.4667, -10, 10, 0), (0.6, 12, -12, 0), (0.6667, 14, -14, 0), (0.8, 9, -9, 0), (1.0333, -5, 4, 0), (1.1333, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, 24, 0, -24), (0.6, -20, 0, -6), (0.7, -22, 0, -6), (1.0, 6, 0, 2), (1.1333, 0, 0, 0))},
+              "tail": {"rot": keys((0, 0, 0, 0), (0.4667, 0, 0, 16), (0.6667, 0, 0, -18), (0.8667, 0, 0, 8), (1.0333, 0, 0, -6), (1.1333, 0, 0, 0))},
+              "minotaur": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 2.5), (0.4333, 0, 0, 3), (0.5667, 0, 0, -6.5), (0.6333, 0, 0, -7.5), (0.7667, 0, 0, -6.5), (1.0, 0, 0, 1.0), (1.1333, 0, 0, 0))}}
+    # the chop is a deliberate step: the left hoof lifts on the wind-up's
+    # end, swings forward and plants WITH the blow (the weight lands on it),
+    # the right hoof stays planted (its sole is solved flat on the floor every
+    # frame, so no toe digs in and nothing slides), and it steps home after
+    legs, attack["minotaur"]["loc"] = step_in(attack["minotaur"]["loc"], H=LEG_H, toe=TOE, heel=HEEL, stride=-10.0, lift_t=0.4, plant_t=0.5667, back_t=0.7667, home_t=1.0, lift=4.0)
+    attack.update(legs)
+    # more wind-up and more follow-through in the torso and the head (the
+    # lunge reads deadlier): the body and head swings are pushed 25% further
+    for part in ("body", "head"):
+        attack[part]["rot"] = [(t, (x * 1.25, y * 1.25, z * 1.25)) for t, (x, y, z) in attack[part]["rot"]]
+    # hit: a blow to the head. The head and horns are tossed back and round,
+    # the torso twists away, it is knocked back off its hooves and catches the
+    # weight on a long step back with the right hoof; then it comes back in
+    # angry, head down and horns forward past rest, the tail lashing
+    hit = knock_hit_base("minotaur", LEG_H, TOE, HEEL, k=1.1, push=4.0, pop=1.4, twist=12.0, home="stagger", squash=0.05, end=34)
+    hit.update({
+        "body": {"rot": frames(1.1, [(0, (0, 0, 0)), (1, (12, 10, 4)), (5, (22, 18, 6)), (9, (14, 12, 3)), (13, (16, 8, 2)), (18, (4, 0, 0)), (23, (-10, -4, 0)), (28, (-4, 0, 0)), (33, (0, 0, 0))])},
+        "head": {"rot": frames(1.1, [(0, (0, 0, 0)), (1, (22, -18, 10)), (5, (40, -30, 16)), (9, (20, -16, 6)), (12, (26, -20, 8)), (17, (2, -4, 0)), (22, (-18, 6, -2)), (27, (-8, 2, 0)), (33, (0, 0, 0))])},
+        "arm-l": {"rot": frames(1.1, [(0, (0, 0, 0)), (1, (-14, 0, -16)), (5, (-36, 0, -30)), (9, (-14, 0, -18)), (14, (12, 0, -6)), (20, (-6, 0, -10)), (25, (8, 0, -2)), (33, (0, 0, 0))])},
+        "arm-r": {"rot": frames(1.1, [(0, (0, 0, 0)), (1, (-10, 0, 14)), (5, (-30, 0, 26)), (9, (-10, 0, 14)), (14, (14, 0, 4)), (20, (-4, 0, 8)), (25, (8, 0, 0)), (33, (0, 0, 0))])},
+        "axe": {"rot": frames(1.1, [(0, (0, 0, 0)), (2, (10, 6, 0)), (6, (24, 10, 4)), (11, (-6, -4, 0)), (17, (8, 0, 0)), (24, (-4, 0, 0)), (33, (0, 0, 0))])},
+        "tail": {"rot": frames(1.1, [(0, (0, 0, 0)), (2, (-24, 0, 10)), (7, (-34, 0, 22)), (12, (10, 0, -26)), (18, (-10, 0, 16)), (24, (6, 0, -8)), (33, (0, 0, 0))])},
+    })
+    # death, heavy: the blow rocks it back, a teeter onto its hooves' toes,
+    # then it topples over backwards about its heels and slams flat on its
+    # back; one small heavy bounce; arms flung up, slammed down overhead;
+    # the axe, the head and the tail land last
+    death, LAND = topple_back("minotaur", hip=to_root((CX, HIP_Y, CZ + 1.0))[1:], H=LEG_H, heel=HEEL, k=1.1, bounce=0.9, rest_lift=MIN_REST, squash=0.1, rock=0.3,
+                              flat=FLAT, body_land=BODY_LAND, leg_lag=LEG_LAG, weapon="axe", tail="tail", weapon_land=W_LAND, weapon_fall=W_FALL, weapon_hop=W_HOP,
+                              arm_up=ARM_UP, arm_spread=ARM_SPREAD, head_back=HEAD_BACK, head_yaw=10.0, leg_rest=LEG_REST, tail_land=T_LAND, tail_fall=T_FALL)
     edge = (AXE_HEAD[0] + 10.0, AXE_HEAD[1], (AXE_Z[0] + AXE_Z[1]) / 2)
     return asset("creatures", "minotaur", "Minotaur", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False, impact=LAND),
+                        Clip("move", stomp_move(root), ease=0.0, floor=False)],
                  sockets=[Socket("socket-function", at=to_root(edge), parent="axe")],
-                 fx=[pfx("rvx-fantasy-slash-arc", "socket-function", "clip:attack", size=26, at=0.42)])
+                 fx=[pfx("rvx-fantasy-slash-arc", "socket-function", "clip:attack", size=26, at=0.4667)])

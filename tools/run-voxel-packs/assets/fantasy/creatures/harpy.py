@@ -18,11 +18,14 @@ The talons are the function: the socket sits on the right foot.
 Clips: idle (wings breathe, the head turns), attack (a talon dive: she
 crouches, springs up with the wings raised, beats them down and dives
 forward with both feet thrown out in front, with a slash arc at the
-talons), hit, death (she falls back, the wings slump). Faces -Z.
+talons), hit, death (she flaps hard, stalls,
+then falls over backwards). Faces -Z.
 """
 import math
 
 import numpy as np
+
+from _falls_flyers import flap_fall, shove_hit
 
 import paint as P
 import pnglyph
@@ -31,6 +34,7 @@ from _fcreature_giants import feathers, frame_edges, on_facets, patches, scales,
 from _life import asset, chamfer_rect, coords, front, keys, ngon, pfx, plan, rig, side
 from pnkit import box
 from voxgrid import C, Clip, Grid, Socket
+from _move_gaits import cyc, per_frame, turn_loop
 
 SH = (60, 52, 44)
 CX, CZ = 30.0, 22.0
@@ -44,7 +48,16 @@ HIP_Y = 17.0
 WAIST_Y = 20.5
 SHOULDER = {s: (CX + s * 6.5, 29.5, CZ + 1.5) for s in (-1, 1)}
 NECK = (CX, 31.0, CZ)
+TAIL_HINGE = (CX, 13.5, CZ + 4.0)  # the root of the tail fan, behind the hips
 FACE_Z = CZ - 5.0
+# her death's lying pose: the root's height (keyed at the floor), the wings
+# and the legs (bent so the talons rest on the floor)
+REST_Y = 2.2
+WING_LAND = (-15.0, 0.0, -8.0)
+LEG_LAND = ((4.0, 0.0, -6.0), (2.0, 0.0, 6.0))
+TAIL_LAND = (100.0, 0.0, 0.0)
+BODY_LAND = 10.0  # the torso bends back onto the floor
+HEAD_TUCK = 4.5  # her big head tucks toward her chest so it doesn't prop her up
 
 
 def feathered(g: Grid, start: int, base: int = FEATHER_B, seed: int = 0, width: int = 4, row: int = 3) -> None:
@@ -103,8 +116,8 @@ def leg(s: int) -> Grid:
 
 # ------------------------------------------------------------------ root
 def pelvis() -> Grid:
-    """The root: hips in a skirt of feathers with violet tips, a cord
-    belt with a bone charm, and a fan of tail feathers behind."""
+    """The root: hips in a skirt of feathers with violet tips and a cord
+    belt with a bone charm (the tail fan is its own part)."""
     g = Grid(*SH)
     X, Y, Z = coords(g)
     start = len(g.solids)
@@ -122,6 +135,14 @@ def pelvis() -> Grid:
     P.flat(g, cord & ((U % 3) == 0), "wood", 2)
     charm = box(g, int(CX - 1), 16, int(CZ - 5), int(CX + 1), 19, int(CZ - 4), "bone", 6)
     P.flat(g, charm & (Y < 17), "bone", 4)
+    return g
+
+
+def tail() -> Grid:
+    """A fan of tail feathers behind the hips: its own part so it can flick
+    and fold flat under her when she lies on her back."""
+    g = Grid(*SH)
+    X, Y, Z = coords(g)
     # a fan of five tail feathers spreading back and down from the hips
     fstart = len(g.solids)
     for k, a in enumerate((-34.0, -17.0, 0.0, 17.0, 34.0)):
@@ -296,15 +317,42 @@ def wing(s: int) -> Grid:
 
 
 # ------------------------------------------------------------------ build
+def fly_move() -> dict:
+    """move: flying, one wing beat in 24 frames. She hangs tipped forward
+    with the talons tucked back under the tail. The downstroke is the
+    power: the wings whip down from high over her back in 7 frames,
+    accelerating, and the body is thrown up a beat later; the upstroke
+    takes the other 17 frames, the wings lifting high again while she sinks
+    back. The head stays level on the target (it counters the body's
+    pitch), the legs and the tail fan swing a beat behind the heave."""
+    T = 24
+
+    def z(*v):
+        return np.array(v, float)
+    wing = cyc([(0, z(0, 14, -52)), (7, z(0, -8, 38), "acc"), (10, z(0, -10, 30), "snap"), (16, z(0, 2, -10))], T)
+    s = {"harpy": {"loc": cyc([(0, z(0, 8.5, 0)), (3, z(0, 8.2, 0), "snap"), (10, z(0, 11.0, 0), "snap"), (17, z(0, 10.0, 0))], T),
+                   "rot": cyc([(0, z(-28, 0, 0)), (8, z(-24, 0, 0), "snap"), (16, z(-28, 0, 0))], T)},
+         "body": {"rot": cyc([(0, z(-4, 0, 0)), (8, z(-8, 0, 0), "snap"), (16, z(-4, 0, 0))], T)},
+         "head": {"rot": cyc([(0, z(28, 0, 0)), (9, z(33, 0, 0), "snap"), (17, z(27, 0, 0))], T)},
+         "wing-l": {"rot": wing},
+         "wing-r": {"rot": [w * z(1, -1, -1) for w in wing]},
+         "leg-l": {"rot": cyc([(0, z(-46, 0, -4)), (11, z(-36, 0, -4), "snap"), (18, z(-48, 0, -4))], T)},
+         "leg-r": {"rot": cyc([(0, z(-48, 0, 4)), (12, z(-38, 0, 4), "snap"), (19, z(-50, 0, 4))], T)},
+         "tail": {"rot": cyc([(0, z(14, 0, 0)), (11, z(4, 0, 0), "snap"), (19, z(16, 0, 0))], T)}}
+    s, _ = turn_loop(s, T)
+    return per_frame(s)
+
+
 def build():
     grids = {"harpy": pelvis(), "body": body(), "head": head(), "wing-l": wing(-1), "wing-r": wing(1),
-             "leg-l": leg(-1), "leg-r": leg(1)}
+             "leg-l": leg(-1), "leg-r": leg(1), "tail": tail()}
     waist = (CX, WAIST_Y, CZ)
     hips = {s: (CX + s * 4.0, HIP_Y, CZ + 0.5) for s in (-1, 1)}
     root, to_root = rig([
         ("harpy", grids["harpy"], None, None),
         ("leg-l", grids["leg-l"], hips[-1], None),
         ("leg-r", grids["leg-r"], hips[1], None),
+        ("tail", grids["tail"], TAIL_HINGE, None),
         ("body", grids["body"], waist, None),
         ("head", grids["head"], NECK, "body"),
         ("wing-l", grids["wing-l"], SHOULDER[-1], "body"),
@@ -314,31 +362,64 @@ def build():
             "head": {"rot": keys((0, 0, 0, 0), (0.4, 0, 18, 4), (0.8, -4, 0, 0), (1.2, 0, -18, -4), (1.6, 0, 0, 0))},
             "wing-l": {"rot": keys((0, 0, 0, 0), (0.8, 0, 8, -10), (1.6, 0, 0, 0))},
             "wing-r": {"rot": keys((0, 0, 0, 0), (0.8, 0, -8, 10), (1.6, 0, 0, 0))}}
-    # the talon dive: crouch (0.18), spring up with the wings raised
-    # (0.36), beat the wings down and throw both feet forward (0.52), rake
-    # (0.60), land (0.80) and settle.
-    attack = {"harpy": {"loc": keys((0, 0, 0, 0), (0.18, 0, 0, 1.0), (0.36, 0, 12, 2.0), (0.52, 0, 10, -8.0), (0.60, 0, 7, -12.0), (0.80, 0, 0, -6.0), (1.10, 0, 0, 0)),
-                        "rot": keys((0, 0, 0, 0), (0.18, 0, 0, 0), (0.36, 10, 0, 0), (0.52, 24, 0, 0), (0.60, 20, 0, 0), (0.80, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.18, -16, 0, 0), (0.36, -6, 0, 0), (0.52, -30, 0, 0), (0.60, -30, 0, 0), (0.80, -8, 0, 0), (1.10, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.18, 12, 0, 0), (0.52, 20, 0, 0), (0.80, 4, 0, 0), (1.10, 0, 0, 0))},
-              "leg-l": {"rot": keys((0, 0, 0, 0), (0.18, -10, 0, 0), (0.36, 30, 0, 0), (0.52, 60, 0, -6), (0.60, 70, 0, -6), (0.80, 10, 0, 0), (1.10, 0, 0, 0))},
-              "leg-r": {"rot": keys((0, 0, 0, 0), (0.18, -10, 0, 0), (0.36, 30, 0, 0), (0.52, 64, 0, 6), (0.60, 74, 0, 6), (0.80, 10, 0, 0), (1.10, 0, 0, 0))},
-              "wing-l": {"rot": keys((0, 0, 0, 0), (0.18, 0, 10, 10), (0.36, 0, 20, -40), (0.52, 0, -10, 30), (0.60, 0, -6, 20), (0.80, 0, 0, -10), (1.10, 0, 0, 0))},
-              "wing-r": {"rot": keys((0, 0, 0, 0), (0.18, 0, -10, -10), (0.36, 0, -20, 40), (0.52, 0, 10, -30), (0.60, 0, 6, -20), (0.80, 0, 0, 10), (1.10, 0, 0, 0))}}
-    hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 16, 0, 8), (0.45, 0, 0, 0))},
-           "head": {"rot": keys((0, 0, 0, 0), (0.10, 18, -12, 6), (0.45, 0, 0, 0))},
-           "wing-l": {"rot": keys((0, 0, 0, 0), (0.10, 0, 0, -24), (0.45, 0, 0, 0))},
-           "wing-r": {"rot": keys((0, 0, 0, 0), (0.10, 0, 0, 24), (0.45, 0, 0, 0))},
-           "harpy": {"loc": keys((0, 0, 0, 0), (0.10, 0, 0, 2.5), (0.45, 0, 0, 0))}}
-    death = {"harpy": {"rot": keys((0, 0, 0, 0), (0.25, -8, 0, 0), (0.80, 82, 0, 6), (0.95, 76, 0, 6), (1.15, 80, 0, 6)),
-                       "loc": keys((0, 0, 0, 0), (0.80, 0, 6, 6), (1.15, 0, 6, 6))},
-             "head": {"rot": keys((0, 0, 0, 0), (0.80, -16, 0, 0), (1.15, -8, 24, 0))},
-             "wing-l": {"rot": keys((0, 0, 0, 0), (0.80, 30, 0, 24))},
-             "wing-r": {"rot": keys((0, 0, 0, 0), (0.80, 30, 0, -30))},
-             "leg-l": {"rot": keys((0, 0, 0, 0), (0.80, 20, 0, -8))},
-             "leg-r": {"rot": keys((0, 0, 0, 0), (0.80, 36, 0, 8))}}
+    # the talon dive: she crouches (f5), springs up with the wings raised
+    # (f11) and dives forward with the talons still cocked under her (f15),
+    # then whips both feet out onto the target in 3 frames (impact f18) as
+    # the wings beat down, drives them on past it (f20), drops and lands
+    # (f24), and hops back home with a flap; the head and wings trail.
+    F = 1 / 30
+
+    def fk(*rows):
+        return [(fr * F, tuple(v)) for fr, *v in rows]
+
+    attack = {"harpy": {"loc": fk((0, 0, 0, 0), (5, 0, 0, 1.5), (11, 0, 12, 2.0), (15, 0, 11, -4.0), (18, 0, 8, -12.0), (20, 0, 6.5, -14.0),
+                                  (24, 0, 0, -8.0), (27, 0, 0, -6.0), (31, 0, 4.0, -3.0), (35, 0, 0, 0), (37, 0, 0, 0.8), (41, 0, 0, 0)),
+                        "rot": fk((0, 0, 0, 0), (5, 0, 0, 0), (11, 10, 0, 0), (15, 18, 0, 0), (18, 26, 0, 0), (20, 28, 0, 0), (24, 0, 0, 0), (39, 0, 0, 0))},
+              "body": {"rot": fk((0, 0, 0, 0), (5, -18, 0, 0), (11, -4, 0, 0), (15, -20, 0, 0), (18, -34, 0, 0), (20, -38, 0, 0), (24, -10, 0, 0), (27, -12, 0, 0),
+                                 (31, -4, 0, 0), (34, -6, 0, 0), (37, 5, 0, 0), (41, 0, 0, 0))},
+              "head": {"rot": fk((0, 0, 0, 0), (5, 14, 0, 0), (12, -6, 0, 0), (16, 18, 0, 0), (18, 24, 0, 0), (21, 28, 0, 0), (26, -4, 0, 0), (33, 6, 0, 0), (39, 0, 0, 0))},
+              "leg-l": {"rot": fk((0, 0, 0, 0), (5, 0, 0, 0), (11, 15, 0, 0), (15, 18, 0, -3), (18, 80, 0, -6), (20, 92, 0, -6), (23, 30, 0, 0), (24, 10, 0, 0),
+                                  (27, 0, 0, 0), (31, 24, 0, 0), (35, 0, 0, 0), (39, 0, 0, 0))},
+              "leg-r": {"rot": fk((0, 0, 0, 0), (5, 0, 0, 0), (11, 15, 0, 0), (15, 18, 0, 3), (18, 82, 0, 6), (20, 94, 0, 6), (23, 30, 0, 0), (24, 10, 0, 0),
+                                  (27, 0, 0, 0), (31, 24, 0, 0), (35, 0, 0, 0), (39, 0, 0, 0))},
+              "wing-l": {"rot": fk((0, 0, 0, 0), (5, 0, 10, 14), (11, 0, 22, -48), (15, 0, 18, -40), (18, 0, -12, 36), (20, 0, -14, 40), (24, 0, 0, -14),
+                                   (28, 0, 14, -40), (32, 0, -6, 26), (35, 0, 0, -8), (39, 0, 0, 0))},
+              "wing-r": {"rot": fk((0, 0, 0, 0), (5, 0, -10, -14), (11, 0, -22, 48), (15, 0, -18, 40), (18, 0, 12, -36), (20, 0, 14, -40), (24, 0, 0, 14),
+                                   (28, 0, -14, 40), (32, 0, 6, -26), (35, 0, 0, 8), (39, 0, 0, 0))}}
+    # hit: shoved back and up off her talons with the wings flung open, a
+    # beat, a flap to catch herself, then she steps back in
+    hit, _ = shove_hit("harpy", L=15.0, push=4.0, pop=2.2, arms=("wing-l", "wing-r"))
+    hit["wing-l"]["rot"] = keys((0, 0, 0, 0), (2 / 30, 0, 20, -36), (6 / 30, 0, 26, -52), (10 / 30, 0, -12, 34), (14 / 30, 0, 10, -20), (19 / 30, 0, -4, 10), (26 / 30, 0, 0, 0))
+    hit["wing-r"]["rot"] = keys((0, 0, 0, 0), (2 / 30, 0, -20, 36), (6 / 30, 0, -26, 52), (10 / 30, 0, 12, -34), (14 / 30, 0, -10, 20), (19 / 30, 0, 4, -10), (26 / 30, 0, 0, 0))
+    # death: rocked back by the blow she fights to stay up, three big
+    # frantic wingbeats that heave her higher (the body pitching and
+    # rolling, the head thrashing, the talons kicking), the last beat fails
+    # and she stalls, still drifting up and tipping back, then drops over
+    # backwards (away from the attacker) with gravity onto her back
+    # (impact, a squash), one small bounce and a hard settle; the wings
+    # trail up as she falls and slap the floor late, the head lands late and
+    # lolls, the legs and the tail fan drop last. The lying root is keyed AT
+    # the floor (3.15: how far the lying pose would sink), so the bounce
+    # rises off it.
+    death, LAND = flap_fall("harpy", rest_loc=(0, REST_Y, 2.0), rest_rot=(90, 4, 0), apex=6.8, bounce=0.2, body="body",
+                            legs=("leg-l", "leg-r"), tail="tail", wing_land=WING_LAND, head_land=(-30, 80, 0), body_land=BODY_LAND,
+                            leg_land=LEG_LAND, tail_land=TAIL_LAND, impact_drop=0.45,
+                            wing_after=[(-5, (0, 10, 10)), (0, (-8, 0, 22)), (2, WING_LAND), (4, (WING_LAND[0] * 0.8, 0, WING_LAND[2] + 7)),
+                                        (7, (WING_LAND[0], 0, WING_LAND[2] - 1)), (10, WING_LAND), (24, WING_LAND)])
+    land_f = round(LAND * 30)
+    # the tail fan stays up off the floor through the drop and slaps down
+    # two frames after her back lands
+    tl = TAIL_LAND
+    death["tail"]["rot"] = [(t, v) for t, v in death["tail"]["rot"] if t * 30 <= 27.5] + [
+        ((land_f - 4) / 30, (60, 0, 0)), ((land_f - 1) / 30, (98, 0, 0)), ((land_f + 2) / 30, tl), ((land_f + 5) / 30, (tl[0] + 8, 0, 0)),
+        ((land_f + 9) / 30, tl), ((land_f + 24) / 30, tl)]
+    # (the head lags: still up off the floor as her back lands, it drops two
+    # frames later)
+    death["head"]["loc"] = [(0, (0, 0, 0)), ((land_f - 5) / 30, (0, 0, 0)), (land_f / 30, (0, 0, -HEAD_TUCK - 3.0)), ((land_f + 3) / 30, (0, 0, -HEAD_TUCK)),
+                            ((land_f + 24) / 30, (0, 0, -HEAD_TUCK))]
     talons = (CX + 4.0, 1.0, CZ - 6.5)
     return asset("creatures", "harpy", "Harpy", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.6), Clip("hit", hit, loop=False), Clip("death", death, loop=False, impact=LAND),
+                        Clip("move", fly_move(), ease=0.0, floor=False)],
                  sockets=[Socket("socket-function", at=to_root(talons), parent="leg-r")],
-                 fx=[pfx("rvx-fantasy-slash-arc", "socket-function", "clip:attack", size=18, at=0.46)])
+                 fx=[pfx("rvx-fantasy-slash-arc", "socket-function", "clip:attack", size=18, at=0.5)])

@@ -10,7 +10,7 @@
    "filename": "fantasy-animated-props-alchemy-still.glb",
    "relativePath": "animated-props/fantasy-animated-props-alchemy-still.glb",
    "leaf": "world",
-   "sizeBytes": 44416,
+   "sizeBytes": 44344,
    "bounds": {
     "min": [
      -17,
@@ -57,7 +57,7 @@
    "filename": "fantasy-animated-props-arcane-orrery.glb",
    "relativePath": "animated-props/fantasy-animated-props-arcane-orrery.glb",
    "leaf": "world",
-   "sizeBytes": 59680,
+   "sizeBytes": 59608,
    "bounds": {
     "min": [
      -19,
@@ -104,7 +104,7 @@
    "filename": "fantasy-animated-props-bell-frame.glb",
    "relativePath": "animated-props/fantasy-animated-props-bell-frame.glb",
    "leaf": "world",
-   "sizeBytes": 58516,
+   "sizeBytes": 58444,
    "bounds": {
     "min": [
      -22,
@@ -156,7 +156,7 @@
    "filename": "fantasy-animated-props-bubbling-cauldron.glb",
    "relativePath": "animated-props/fantasy-animated-props-bubbling-cauldron.glb",
    "leaf": "world",
-   "sizeBytes": 72240,
+   "sizeBytes": 72168,
    "bounds": {
     "min": [
      -14,
@@ -203,7 +203,7 @@
    "filename": "fantasy-animated-props-catapult.glb",
    "relativePath": "animated-props/fantasy-animated-props-catapult.glb",
    "leaf": "world",
-   "sizeBytes": 57384,
+   "sizeBytes": 57312,
    "bounds": {
     "min": [
      -15,
@@ -251,7 +251,7 @@
    "filename": "fantasy-animated-props-crystal-pylon.glb",
    "relativePath": "animated-props/fantasy-animated-props-crystal-pylon.glb",
    "leaf": "world",
-   "sizeBytes": 48360,
+   "sizeBytes": 48288,
    "bounds": {
     "min": [
      -15,
@@ -298,7 +298,7 @@
    "filename": "fantasy-animated-props-enchanted-anvil.glb",
    "relativePath": "animated-props/fantasy-animated-props-enchanted-anvil.glb",
    "leaf": "world",
-   "sizeBytes": 21284,
+   "sizeBytes": 21212,
    "bounds": {
     "min": [
      -15.5,
@@ -346,7 +346,7 @@
    "filename": "fantasy-animated-props-enchanted-harp.glb",
    "relativePath": "animated-props/fantasy-animated-props-enchanted-harp.glb",
    "leaf": "world",
-   "sizeBytes": 24464,
+   "sizeBytes": 24392,
    "bounds": {
     "min": [
      -16,
@@ -393,7 +393,7 @@
    "filename": "fantasy-animated-props-forge-bellows.glb",
    "relativePath": "animated-props/fantasy-animated-props-forge-bellows.glb",
    "leaf": "world",
-   "sizeBytes": 32028,
+   "sizeBytes": 31956,
    "bounds": {
     "min": [
      -19,
@@ -452,7 +452,7 @@
    "filename": "fantasy-animated-props-magic-fountain.glb",
    "relativePath": "animated-props/fantasy-animated-props-magic-fountain.glb",
    "leaf": "world",
-   "sizeBytes": 39788,
+   "sizeBytes": 39716,
    "bounds": {
     "min": [
      -18,
@@ -499,7 +499,7 @@
    "filename": "fantasy-animated-props-mimic-chest.glb",
    "relativePath": "animated-props/fantasy-animated-props-mimic-chest.glb",
    "leaf": "world",
-   "sizeBytes": 69660,
+   "sizeBytes": 68948,
    "bounds": {
     "min": [
      -13.6,
@@ -549,7 +549,7 @@
    "filename": "fantasy-animated-props-oracle-hourglass.glb",
    "relativePath": "animated-props/fantasy-animated-props-oracle-hourglass.glb",
    "leaf": "world",
-   "sizeBytes": 30260,
+   "sizeBytes": 30188,
    "bounds": {
     "min": [
      -15,
@@ -597,7 +597,7 @@
    "filename": "fantasy-animated-props-portcullis.glb",
    "relativePath": "animated-props/fantasy-animated-props-portcullis.glb",
    "leaf": "world",
-   "sizeBytes": 95776,
+   "sizeBytes": 95560,
    "bounds": {
     "min": [
      -23.5,
@@ -636,7 +636,7 @@
    "filename": "fantasy-animated-props-quintain.glb",
    "relativePath": "animated-props/fantasy-animated-props-quintain.glb",
    "leaf": "world",
-   "sizeBytes": 13344,
+   "sizeBytes": 13272,
    "bounds": {
     "min": [
      -14.4632,
@@ -684,7 +684,7 @@
    "filename": "fantasy-animated-props-rune-portal.glb",
    "relativePath": "animated-props/fantasy-animated-props-rune-portal.glb",
    "leaf": "world",
-   "sizeBytes": 52424,
+   "sizeBytes": 52352,
    "bounds": {
     "min": [
      -44,
@@ -747,7 +747,7 @@
    "filename": "fantasy-animated-props-scrying-orb.glb",
    "relativePath": "animated-props/fantasy-animated-props-scrying-orb.glb",
    "leaf": "world",
-   "sizeBytes": 53968,
+   "sizeBytes": 53896,
    "bounds": {
     "min": [
      -14,
@@ -794,7 +794,7 @@
    "filename": "fantasy-animated-props-spell-book.glb",
    "relativePath": "animated-props/fantasy-animated-props-spell-book.glb",
    "leaf": "world",
-   "sizeBytes": 27104,
+   "sizeBytes": 27032,
    "bounds": {
     "min": [
      -10.5312,
@@ -843,7 +843,7 @@
    "filename": "fantasy-animated-props-spinning-wheel.glb",
    "relativePath": "animated-props/fantasy-animated-props-spinning-wheel.glb",
    "leaf": "world",
-   "sizeBytes": 60864,
+   "sizeBytes": 60784,
    "bounds": {
     "min": [
      -15,
@@ -883,7 +883,7 @@
    "filename": "fantasy-animated-props-treadwheel-crane.glb",
    "relativePath": "animated-props/fantasy-animated-props-treadwheel-crane.glb",
    "leaf": "world",
-   "sizeBytes": 152312,
+   "sizeBytes": 152240,
    "bounds": {
     "min": [
      -18.8879,
@@ -930,7 +930,7 @@
    "filename": "fantasy-animated-props-treasure-chest.glb",
    "relativePath": "animated-props/fantasy-animated-props-treasure-chest.glb",
    "leaf": "world",
-   "sizeBytes": 14224,
+   "sizeBytes": 13976,
    "bounds": {
     "min": [
      -11,
@@ -979,7 +979,7 @@
    "filename": "fantasy-animated-props-trebuchet.glb",
    "relativePath": "animated-props/fantasy-animated-props-trebuchet.glb",
    "leaf": "world",
-   "sizeBytes": 31584,
+   "sizeBytes": 31512,
    "bounds": {
     "min": [
      -19,
@@ -1027,7 +1027,7 @@
    "filename": "fantasy-animated-props-water-wheel.glb",
    "relativePath": "animated-props/fantasy-animated-props-water-wheel.glb",
    "leaf": "world",
-   "sizeBytes": 103632,
+   "sizeBytes": 103552,
    "bounds": {
     "min": [
      -12.5,
@@ -1081,7 +1081,7 @@
    "filename": "fantasy-animated-props-weather-vane.glb",
    "relativePath": "animated-props/fantasy-animated-props-weather-vane.glb",
    "leaf": "world",
-   "sizeBytes": 57332,
+   "sizeBytes": 57260,
    "bounds": {
     "min": [
      -15.0312,
@@ -1128,7 +1128,7 @@
    "filename": "fantasy-animated-props-well.glb",
    "relativePath": "animated-props/fantasy-animated-props-well.glb",
    "leaf": "world",
-   "sizeBytes": 53944,
+   "sizeBytes": 53872,
    "bounds": {
     "min": [
      -19,
@@ -1166,7 +1166,7 @@
    "filename": "fantasy-buildings-alchemist-shop.glb",
    "relativePath": "buildings/fantasy-buildings-alchemist-shop.glb",
    "leaf": "world",
-   "sizeBytes": 160732,
+   "sizeBytes": 160652,
    "bounds": {
     "min": [
      -45,
@@ -1210,7 +1210,7 @@
    "filename": "fantasy-buildings-bakery.glb",
    "relativePath": "buildings/fantasy-buildings-bakery.glb",
    "leaf": "world",
-   "sizeBytes": 199492,
+   "sizeBytes": 199420,
    "bounds": {
     "min": [
      -70.5312,
@@ -1261,7 +1261,7 @@
    "filename": "fantasy-buildings-blacksmith.glb",
    "relativePath": "buildings/fantasy-buildings-blacksmith.glb",
    "leaf": "world",
-   "sizeBytes": 135696,
+   "sizeBytes": 135624,
    "bounds": {
     "min": [
      -66.5312,
@@ -1312,7 +1312,7 @@
    "filename": "fantasy-buildings-castle-keep.glb",
    "relativePath": "buildings/fantasy-buildings-castle-keep.glb",
    "leaf": "world",
-   "sizeBytes": 229452,
+   "sizeBytes": 229380,
    "bounds": {
     "min": [
      -62,
@@ -1349,7 +1349,7 @@
    "filename": "fantasy-buildings-castle-tower.glb",
    "relativePath": "buildings/fantasy-buildings-castle-tower.glb",
    "leaf": "world",
-   "sizeBytes": 91804,
+   "sizeBytes": 91732,
    "bounds": {
     "min": [
      -26,
@@ -1388,7 +1388,7 @@
    "filename": "fantasy-buildings-castle-wall.glb",
    "relativePath": "buildings/fantasy-buildings-castle-wall.glb",
    "leaf": "world",
-   "sizeBytes": 97188,
+   "sizeBytes": 97108,
    "bounds": {
     "min": [
      -63,
@@ -1423,7 +1423,7 @@
    "filename": "fantasy-buildings-chapel.glb",
    "relativePath": "buildings/fantasy-buildings-chapel.glb",
    "leaf": "world",
-   "sizeBytes": 147868,
+   "sizeBytes": 147788,
    "bounds": {
     "min": [
      -45,
@@ -1460,7 +1460,7 @@
    "filename": "fantasy-buildings-elven-treehouse.glb",
    "relativePath": "buildings/fantasy-buildings-elven-treehouse.glb",
    "leaf": "world",
-   "sizeBytes": 190964,
+   "sizeBytes": 190892,
    "bounds": {
     "min": [
      -35.8056,
@@ -1506,7 +1506,7 @@
    "filename": "fantasy-buildings-gatehouse.glb",
    "relativePath": "buildings/fantasy-buildings-gatehouse.glb",
    "leaf": "world",
-   "sizeBytes": 124080,
+   "sizeBytes": 124008,
    "bounds": {
     "min": [
      -52,
@@ -1543,7 +1543,7 @@
    "filename": "fantasy-buildings-granary.glb",
    "relativePath": "buildings/fantasy-buildings-granary.glb",
    "leaf": "world",
-   "sizeBytes": 170688,
+   "sizeBytes": 170616,
    "bounds": {
     "min": [
      -58.5,
@@ -1587,7 +1587,7 @@
    "filename": "fantasy-buildings-guard-barracks.glb",
    "relativePath": "buildings/fantasy-buildings-guard-barracks.glb",
    "leaf": "world",
-   "sizeBytes": 212108,
+   "sizeBytes": 212036,
    "bounds": {
     "min": [
      -56.5,
@@ -1631,7 +1631,7 @@
    "filename": "fantasy-buildings-mage-academy.glb",
    "relativePath": "buildings/fantasy-buildings-mage-academy.glb",
    "leaf": "world",
-   "sizeBytes": 256424,
+   "sizeBytes": 256352,
    "bounds": {
     "min": [
      -58.5,
@@ -1675,7 +1675,7 @@
    "filename": "fantasy-buildings-market-hall.glb",
    "relativePath": "buildings/fantasy-buildings-market-hall.glb",
    "leaf": "world",
-   "sizeBytes": 252480,
+   "sizeBytes": 252408,
    "bounds": {
     "min": [
      -66.0781,
@@ -1719,7 +1719,7 @@
    "filename": "fantasy-buildings-mine-entrance.glb",
    "relativePath": "buildings/fantasy-buildings-mine-entrance.glb",
    "leaf": "world",
-   "sizeBytes": 93684,
+   "sizeBytes": 93612,
    "bounds": {
     "min": [
      -54,
@@ -1763,7 +1763,7 @@
    "filename": "fantasy-buildings-moon-temple.glb",
    "relativePath": "buildings/fantasy-buildings-moon-temple.glb",
    "leaf": "world",
-   "sizeBytes": 78876,
+   "sizeBytes": 78804,
    "bounds": {
     "min": [
      -30.5,
@@ -1807,7 +1807,7 @@
    "filename": "fantasy-buildings-stables.glb",
    "relativePath": "buildings/fantasy-buildings-stables.glb",
    "leaf": "world",
-   "sizeBytes": 131148,
+   "sizeBytes": 131076,
    "bounds": {
     "min": [
      -64,
@@ -1851,7 +1851,7 @@
    "filename": "fantasy-buildings-tavern.glb",
    "relativePath": "buildings/fantasy-buildings-tavern.glb",
    "leaf": "world",
-   "sizeBytes": 98816,
+   "sizeBytes": 98736,
    "bounds": {
     "min": [
      -46.8437,
@@ -1897,7 +1897,7 @@
    "filename": "fantasy-buildings-thatched-cottage.glb",
    "relativePath": "buildings/fantasy-buildings-thatched-cottage.glb",
    "leaf": "world",
-   "sizeBytes": 150100,
+   "sizeBytes": 150028,
    "bounds": {
     "min": [
      -43,
@@ -1941,7 +1941,7 @@
    "filename": "fantasy-buildings-windmill.glb",
    "relativePath": "buildings/fantasy-buildings-windmill.glb",
    "leaf": "world",
-   "sizeBytes": 75240,
+   "sizeBytes": 75168,
    "bounds": {
     "min": [
      -43.8406,
@@ -1979,7 +1979,7 @@
    "filename": "fantasy-buildings-wizard-tower.glb",
    "relativePath": "buildings/fantasy-buildings-wizard-tower.glb",
    "leaf": "world",
-   "sizeBytes": 102824,
+   "sizeBytes": 102752,
    "bounds": {
     "min": [
      -29.5056,
@@ -2030,7 +2030,7 @@
    "filename": "fantasy-creatures-basilisk.glb",
    "relativePath": "creatures/fantasy-creatures-basilisk.glb",
    "leaf": "world",
-   "sizeBytes": 101812,
+   "sizeBytes": 126324,
    "bounds": {
     "min": [
      -24,
@@ -2054,7 +2054,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-function"
@@ -2065,7 +2066,7 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 20,
-     "at": 0.35
+     "at": 0.6333333333333333
     }
    ],
    "route": "code",
@@ -2080,22 +2081,22 @@
    "filename": "fantasy-creatures-centaur.glb",
    "relativePath": "creatures/fantasy-creatures-centaur.glb",
    "leaf": "world",
-   "sizeBytes": 129668,
+   "sizeBytes": 150824,
    "bounds": {
     "min": [
      -11.8,
      0,
-     -44.5
+     -46.5
     ],
     "max": [
      11.7,
      69.0156,
-     44.5
+     46.5
     ],
     "size": [
      23.5,
      69.0156,
-     89
+     93
     ]
    },
    "normalizedShift": 0,
@@ -2104,7 +2105,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-function"
@@ -2115,7 +2117,12 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 20,
-     "at": 0.35
+     "aim": [
+      0,
+      0,
+      -1
+     ],
+     "at": 0.7666666666666666
     }
    ],
    "route": "code",
@@ -2130,7 +2137,7 @@
    "filename": "fantasy-creatures-cyclops.glb",
    "relativePath": "creatures/fantasy-creatures-cyclops.glb",
    "leaf": "world",
-   "sizeBytes": 99152,
+   "sizeBytes": 126424,
    "bounds": {
     "min": [
      -32,
@@ -2154,6 +2161,7 @@
     "attack",
     "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2165,7 +2173,7 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 34,
-     "at": 0.64
+     "at": 0.7333333333333333
     }
    ],
    "route": "code",
@@ -2180,7 +2188,7 @@
    "filename": "fantasy-creatures-dragon.glb",
    "relativePath": "creatures/fantasy-creatures-dragon.glb",
    "leaf": "world",
-   "sizeBytes": 164888,
+   "sizeBytes": 197864,
    "bounds": {
     "min": [
      -84.8586,
@@ -2204,7 +2212,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-mouth"
@@ -2220,7 +2229,7 @@
       -0.243,
       -0.97
      ],
-     "at": 0.68
+     "at": 0.6666666666666666
     }
    ],
    "route": "code",
@@ -2235,7 +2244,7 @@
    "filename": "fantasy-creatures-ent.glb",
    "relativePath": "creatures/fantasy-creatures-ent.glb",
    "leaf": "world",
-   "sizeBytes": 118492,
+   "sizeBytes": 144856,
    "bounds": {
     "min": [
      -29.6451,
@@ -2259,6 +2268,7 @@
     "attack",
     "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2271,7 +2281,7 @@
      "socket": "socket-slam",
      "trigger": "clip:attack",
      "size": 44,
-     "at": 0.52
+     "at": 0.9666666666666667
     },
     {
      "effectId": "rvx-fantasy-leaf-fall",
@@ -2292,7 +2302,7 @@
    "filename": "fantasy-creatures-forest-wisp.glb",
    "relativePath": "creatures/fantasy-creatures-forest-wisp.glb",
    "leaf": "world",
-   "sizeBytes": 30428,
+   "sizeBytes": 41772,
    "bounds": {
     "min": [
      -11.5,
@@ -2314,9 +2324,10 @@
    "space": "world",
    "clips": [
     "attack",
-    "death",
     "hit",
-    "idle"
+    "idle",
+    "death",
+    "move"
    ],
    "sockets": [
     "socket-core"
@@ -2341,7 +2352,7 @@
    "filename": "fantasy-creatures-goblin.glb",
    "relativePath": "creatures/fantasy-creatures-goblin.glb",
    "leaf": "world",
-   "sizeBytes": 63024,
+   "sizeBytes": 81980,
    "bounds": {
     "min": [
      -21,
@@ -2365,6 +2376,7 @@
     "attack",
     "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2386,7 +2398,7 @@
       -19,
       5
      ],
-     "at": 0.36
+     "at": 0.4
     }
    ],
    "route": "code",
@@ -2401,7 +2413,7 @@
    "filename": "fantasy-creatures-griffin.glb",
    "relativePath": "creatures/fantasy-creatures-griffin.glb",
    "leaf": "world",
-   "sizeBytes": 119400,
+   "sizeBytes": 137664,
    "bounds": {
     "min": [
      -48.6118,
@@ -2425,7 +2437,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-beak"
@@ -2445,7 +2458,8 @@
       0,
       -6.6,
       15.125
-     ]
+     ],
+     "at": 0.5333333333333333
     }
    ],
    "route": "code",
@@ -2460,7 +2474,7 @@
    "filename": "fantasy-creatures-harpy.glb",
    "relativePath": "creatures/fantasy-creatures-harpy.glb",
    "leaf": "world",
-   "sizeBytes": 89892,
+   "sizeBytes": 107760,
    "bounds": {
     "min": [
      -23.9457,
@@ -2484,7 +2498,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-function"
@@ -2495,7 +2510,7 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 18,
-     "at": 0.46
+     "at": 0.5
     }
    ],
    "route": "code",
@@ -2510,7 +2525,7 @@
    "filename": "fantasy-creatures-minotaur.glb",
    "relativePath": "creatures/fantasy-creatures-minotaur.glb",
    "leaf": "world",
-   "sizeBytes": 107020,
+   "sizeBytes": 131700,
    "bounds": {
     "min": [
      -29.2492,
@@ -2534,6 +2549,7 @@
     "attack",
     "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2545,7 +2561,7 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 26,
-     "at": 0.42
+     "at": 0.4667
     }
    ],
    "route": "code",
@@ -2560,7 +2576,7 @@
    "filename": "fantasy-creatures-owlbear.glb",
    "relativePath": "creatures/fantasy-creatures-owlbear.glb",
    "leaf": "world",
-   "sizeBytes": 103948,
+   "sizeBytes": 114632,
    "bounds": {
     "min": [
      -16.8,
@@ -2584,7 +2600,8 @@
     "attack",
     "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-function"
@@ -2595,7 +2612,7 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 24,
-     "at": 0.45
+     "at": 0.6666666666666666
     }
    ],
    "route": "code",
@@ -2610,7 +2627,7 @@
    "filename": "fantasy-creatures-phoenix.glb",
    "relativePath": "creatures/fantasy-creatures-phoenix.glb",
    "leaf": "world",
-   "sizeBytes": 72448,
+   "sizeBytes": 99588,
    "bounds": {
     "min": [
      -38.7675,
@@ -2634,6 +2651,7 @@
     "attack",
     "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2650,7 +2668,7 @@
       -0.243,
       -0.97
      ],
-     "at": 0.35
+     "at": 0.5333333333333333
     }
    ],
    "route": "code",
@@ -2665,7 +2683,7 @@
    "filename": "fantasy-creatures-skeleton-knight.glb",
    "relativePath": "creatures/fantasy-creatures-skeleton-knight.glb",
    "leaf": "world",
-   "sizeBytes": 79620,
+   "sizeBytes": 102240,
    "bounds": {
     "min": [
      -17.1,
@@ -2686,9 +2704,10 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2718,7 +2737,7 @@
       -18,
       12
      ],
-     "at": 0.37
+     "at": 0.4
     }
    ],
    "route": "code",
@@ -2733,7 +2752,7 @@
    "filename": "fantasy-creatures-slime.glb",
    "relativePath": "creatures/fantasy-creatures-slime.glb",
    "leaf": "world",
-   "sizeBytes": 16788,
+   "sizeBytes": 24756,
    "bounds": {
     "min": [
      -11.2708,
@@ -2754,10 +2773,11 @@
    "normalizedShift": 0,
    "space": "world",
    "clips": [
-    "death",
     "attack",
+    "death",
     "hit",
-    "idle"
+    "idle",
+    "move"
    ],
    "sockets": [
     "socket-top"
@@ -2768,7 +2788,7 @@
      "socket": "socket-top",
      "trigger": "clip:death",
      "size": 26,
-     "at": 0.2
+     "at": 0.5666666666666667
     }
    ],
    "route": "code",
@@ -2783,7 +2803,7 @@
    "filename": "fantasy-creatures-troll.glb",
    "relativePath": "creatures/fantasy-creatures-troll.glb",
    "leaf": "world",
-   "sizeBytes": 81312,
+   "sizeBytes": 104916,
    "bounds": {
     "min": [
      -31,
@@ -2807,6 +2827,7 @@
     "attack",
     "death",
     "hit",
+    "move",
     "idle"
    ],
    "sockets": [
@@ -2818,7 +2839,7 @@
      "socket": "socket-club",
      "trigger": "clip:attack",
      "size": 32,
-     "at": 0.62
+     "at": 0.5667
     }
    ],
    "route": "code",
@@ -2833,7 +2854,7 @@
    "filename": "fantasy-creatures-unicorn.glb",
    "relativePath": "creatures/fantasy-creatures-unicorn.glb",
    "leaf": "world",
-   "sizeBytes": 96012,
+   "sizeBytes": 113028,
    "bounds": {
     "min": [
      -9.8,
@@ -2855,9 +2876,10 @@
    "space": "world",
    "clips": [
     "attack",
-    "death",
     "hit",
-    "idle"
+    "idle",
+    "death",
+    "move"
    ],
    "sockets": [
     "socket-horn"
@@ -2868,7 +2890,7 @@
      "socket": "socket-horn",
      "trigger": "clip:attack",
      "size": 44,
-     "at": 0.56
+     "at": 0.7
     }
    ],
    "route": "code",
@@ -2883,7 +2905,7 @@
    "filename": "fantasy-held-items-battle-axe.glb",
    "relativePath": "held-items/fantasy-held-items-battle-axe.glb",
    "leaf": "world",
-   "sizeBytes": 34520,
+   "sizeBytes": 34448,
    "bounds": {
     "min": [
      -0.375,
@@ -2936,7 +2958,7 @@
    "filename": "fantasy-held-items-crossbow.glb",
    "relativePath": "held-items/fantasy-held-items-crossbow.glb",
    "leaf": "world",
-   "sizeBytes": 68272,
+   "sizeBytes": 68200,
    "bounds": {
     "min": [
      -0.305,
@@ -2985,7 +3007,7 @@
    "filename": "fantasy-held-items-dagger.glb",
    "relativePath": "held-items/fantasy-held-items-dagger.glb",
    "leaf": "world",
-   "sizeBytes": 27924,
+   "sizeBytes": 27852,
    "bounds": {
     "min": [
      -0.205,
@@ -3038,7 +3060,7 @@
    "filename": "fantasy-held-items-elven-bow.glb",
    "relativePath": "held-items/fantasy-held-items-elven-bow.glb",
    "leaf": "world",
-   "sizeBytes": 29312,
+   "sizeBytes": 29240,
    "bounds": {
     "min": [
      -0.28,
@@ -3087,7 +3109,7 @@
    "filename": "fantasy-held-items-flail.glb",
    "relativePath": "held-items/fantasy-held-items-flail.glb",
    "leaf": "world",
-   "sizeBytes": 68968,
+   "sizeBytes": 68896,
    "bounds": {
     "min": [
      -0.295,
@@ -3131,7 +3153,7 @@
    "filename": "fantasy-held-items-flanged-mace.glb",
    "relativePath": "held-items/fantasy-held-items-flanged-mace.glb",
    "leaf": "world",
-   "sizeBytes": 71224,
+   "sizeBytes": 71152,
    "bounds": {
     "min": [
      -0.295,
@@ -3175,7 +3197,7 @@
    "filename": "fantasy-held-items-frost-wand.glb",
    "relativePath": "held-items/fantasy-held-items-frost-wand.glb",
    "leaf": "world",
-   "sizeBytes": 72732,
+   "sizeBytes": 72660,
    "bounds": {
     "min": [
      -0.345,
@@ -3219,7 +3241,7 @@
    "filename": "fantasy-held-items-greatsword.glb",
    "relativePath": "held-items/fantasy-held-items-greatsword.glb",
    "leaf": "world",
-   "sizeBytes": 39216,
+   "sizeBytes": 39144,
    "bounds": {
     "min": [
      -0.535,
@@ -3273,7 +3295,7 @@
    "filename": "fantasy-held-items-kite-shield.glb",
    "relativePath": "held-items/fantasy-held-items-kite-shield.glb",
    "leaf": "world",
-   "sizeBytes": 54980,
+   "sizeBytes": 54908,
    "bounds": {
     "min": [
      -0.19,
@@ -3317,7 +3339,7 @@
    "filename": "fantasy-held-items-lantern-staff.glb",
    "relativePath": "held-items/fantasy-held-items-lantern-staff.glb",
    "leaf": "world",
-   "sizeBytes": 30888,
+   "sizeBytes": 30816,
    "bounds": {
     "min": [
      -0.265,
@@ -3366,7 +3388,7 @@
    "filename": "fantasy-held-items-longsword.glb",
    "relativePath": "held-items/fantasy-held-items-longsword.glb",
    "leaf": "world",
-   "sizeBytes": 18916,
+   "sizeBytes": 18844,
    "bounds": {
     "min": [
      -0.415,
@@ -3420,7 +3442,7 @@
    "filename": "fantasy-held-items-mage-staff.glb",
    "relativePath": "held-items/fantasy-held-items-mage-staff.glb",
    "leaf": "world",
-   "sizeBytes": 105512,
+   "sizeBytes": 105440,
    "bounds": {
     "min": [
      -0.415,
@@ -3469,7 +3491,7 @@
    "filename": "fantasy-held-items-spear.glb",
    "relativePath": "held-items/fantasy-held-items-spear.glb",
    "leaf": "world",
-   "sizeBytes": 19800,
+   "sizeBytes": 19728,
    "bounds": {
     "min": [
      -0.415,
@@ -3522,7 +3544,7 @@
    "filename": "fantasy-held-items-spellbook.glb",
    "relativePath": "held-items/fantasy-held-items-spellbook.glb",
    "leaf": "world",
-   "sizeBytes": 18372,
+   "sizeBytes": 18300,
    "bounds": {
     "min": [
      -0.17,
@@ -3571,7 +3593,7 @@
    "filename": "fantasy-held-items-torch.glb",
    "relativePath": "held-items/fantasy-held-items-torch.glb",
    "leaf": "world",
-   "sizeBytes": 34196,
+   "sizeBytes": 34124,
    "bounds": {
     "min": [
      -0.25,
@@ -3620,7 +3642,7 @@
    "filename": "fantasy-held-items-war-hammer.glb",
    "relativePath": "held-items/fantasy-held-items-war-hammer.glb",
    "leaf": "world",
-   "sizeBytes": 88152,
+   "sizeBytes": 88080,
    "bounds": {
     "min": [
      -0.385,
@@ -3664,7 +3686,7 @@
    "filename": "fantasy-props-alchemy-table.glb",
    "relativePath": "props/fantasy-props-alchemy-table.glb",
    "leaf": "world",
-   "sizeBytes": 35160,
+   "sizeBytes": 35088,
    "bounds": {
     "min": [
      -15,
@@ -3708,7 +3730,7 @@
    "filename": "fantasy-props-anvil.glb",
    "relativePath": "props/fantasy-props-anvil.glb",
    "leaf": "world",
-   "sizeBytes": 12452,
+   "sizeBytes": 12380,
    "bounds": {
     "min": [
      -14,
@@ -3743,7 +3765,7 @@
    "filename": "fantasy-props-apple-cart.glb",
    "relativePath": "props/fantasy-props-apple-cart.glb",
    "leaf": "world",
-   "sizeBytes": 130568,
+   "sizeBytes": 130496,
    "bounds": {
     "min": [
      -16.9,
@@ -3778,7 +3800,7 @@
    "filename": "fantasy-props-archery-target.glb",
    "relativePath": "props/fantasy-props-archery-target.glb",
    "leaf": "world",
-   "sizeBytes": 20640,
+   "sizeBytes": 20568,
    "bounds": {
     "min": [
      -11.5,
@@ -3813,7 +3835,7 @@
    "filename": "fantasy-props-armor-stand.glb",
    "relativePath": "props/fantasy-props-armor-stand.glb",
    "leaf": "world",
-   "sizeBytes": 27516,
+   "sizeBytes": 27444,
    "bounds": {
     "min": [
      -14,
@@ -3848,7 +3870,7 @@
    "filename": "fantasy-props-arrow-barrel.glb",
    "relativePath": "props/fantasy-props-arrow-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 19960,
+   "sizeBytes": 19888,
    "bounds": {
     "min": [
      -10.5,
@@ -3883,7 +3905,7 @@
    "filename": "fantasy-props-banner-stand.glb",
    "relativePath": "props/fantasy-props-banner-stand.glb",
    "leaf": "world",
-   "sizeBytes": 15020,
+   "sizeBytes": 14948,
    "bounds": {
     "min": [
      -11,
@@ -3918,7 +3940,7 @@
    "filename": "fantasy-props-banquet-table.glb",
    "relativePath": "props/fantasy-props-banquet-table.glb",
    "leaf": "world",
-   "sizeBytes": 41444,
+   "sizeBytes": 41372,
    "bounds": {
     "min": [
      -19,
@@ -3953,7 +3975,7 @@
    "filename": "fantasy-props-bard-stool.glb",
    "relativePath": "props/fantasy-props-bard-stool.glb",
    "leaf": "world",
-   "sizeBytes": 22616,
+   "sizeBytes": 22544,
    "bounds": {
     "min": [
      -15.6175,
@@ -3988,7 +4010,7 @@
    "filename": "fantasy-props-barrel.glb",
    "relativePath": "props/fantasy-props-barrel.glb",
    "leaf": "world",
-   "sizeBytes": 7728,
+   "sizeBytes": 7656,
    "bounds": {
     "min": [
      -8,
@@ -4023,7 +4045,7 @@
    "filename": "fantasy-props-beehive.glb",
    "relativePath": "props/fantasy-props-beehive.glb",
    "leaf": "world",
-   "sizeBytes": 62028,
+   "sizeBytes": 61956,
    "bounds": {
     "min": [
      -15,
@@ -4067,7 +4089,7 @@
    "filename": "fantasy-props-bench.glb",
    "relativePath": "props/fantasy-props-bench.glb",
    "leaf": "world",
-   "sizeBytes": 18192,
+   "sizeBytes": 18120,
    "bounds": {
     "min": [
      -17.5403,
@@ -4102,7 +4124,7 @@
    "filename": "fantasy-props-bolt-crate.glb",
    "relativePath": "props/fantasy-props-bolt-crate.glb",
    "leaf": "world",
-   "sizeBytes": 26088,
+   "sizeBytes": 26016,
    "bounds": {
     "min": [
      -11,
@@ -4137,7 +4159,7 @@
    "filename": "fantasy-props-bookshelf.glb",
    "relativePath": "props/fantasy-props-bookshelf.glb",
    "leaf": "world",
-   "sizeBytes": 31956,
+   "sizeBytes": 31884,
    "bounds": {
     "min": [
      -15,
@@ -4172,7 +4194,7 @@
    "filename": "fantasy-props-brazier.glb",
    "relativePath": "props/fantasy-props-brazier.glb",
    "leaf": "world",
-   "sizeBytes": 28612,
+   "sizeBytes": 28540,
    "bounds": {
     "min": [
      -10,
@@ -4216,7 +4238,7 @@
    "filename": "fantasy-props-candelabra.glb",
    "relativePath": "props/fantasy-props-candelabra.glb",
    "leaf": "world",
-   "sizeBytes": 39288,
+   "sizeBytes": 39216,
    "bounds": {
     "min": [
      -11,
@@ -4251,7 +4273,7 @@
    "filename": "fantasy-props-cheese-shelf.glb",
    "relativePath": "props/fantasy-props-cheese-shelf.glb",
    "leaf": "world",
-   "sizeBytes": 36896,
+   "sizeBytes": 36816,
    "bounds": {
     "min": [
      -16,
@@ -4286,7 +4308,7 @@
    "filename": "fantasy-props-chicken-coop.glb",
    "relativePath": "props/fantasy-props-chicken-coop.glb",
    "leaf": "world",
-   "sizeBytes": 43124,
+   "sizeBytes": 43052,
    "bounds": {
     "min": [
      -16,
@@ -4321,7 +4343,7 @@
    "filename": "fantasy-props-crate.glb",
    "relativePath": "props/fantasy-props-crate.glb",
    "leaf": "world",
-   "sizeBytes": 19320,
+   "sizeBytes": 19248,
    "bounds": {
     "min": [
      -9,
@@ -4356,7 +4378,7 @@
    "filename": "fantasy-props-dragon-egg-nest.glb",
    "relativePath": "props/fantasy-props-dragon-egg-nest.glb",
    "leaf": "world",
-   "sizeBytes": 66544,
+   "sizeBytes": 66472,
    "bounds": {
     "min": [
      -15,
@@ -4400,7 +4422,7 @@
    "filename": "fantasy-props-elf-statue.glb",
    "relativePath": "props/fantasy-props-elf-statue.glb",
    "leaf": "world",
-   "sizeBytes": 39540,
+   "sizeBytes": 39468,
    "bounds": {
     "min": [
      -10.5,
@@ -4444,7 +4466,7 @@
    "filename": "fantasy-props-fence.glb",
    "relativePath": "props/fantasy-props-fence.glb",
    "leaf": "world",
-   "sizeBytes": 20748,
+   "sizeBytes": 20676,
    "bounds": {
     "min": [
      -16,
@@ -4479,7 +4501,7 @@
    "filename": "fantasy-props-flower-cart.glb",
    "relativePath": "props/fantasy-props-flower-cart.glb",
    "leaf": "world",
-   "sizeBytes": 70864,
+   "sizeBytes": 70784,
    "bounds": {
     "min": [
      -17,
@@ -4514,7 +4536,7 @@
    "filename": "fantasy-props-grindstone.glb",
    "relativePath": "props/fantasy-props-grindstone.glb",
    "leaf": "world",
-   "sizeBytes": 18012,
+   "sizeBytes": 17940,
    "bounds": {
     "min": [
      -10.1247,
@@ -4549,7 +4571,7 @@
    "filename": "fantasy-props-hay-bales.glb",
    "relativePath": "props/fantasy-props-hay-bales.glb",
    "leaf": "world",
-   "sizeBytes": 13172,
+   "sizeBytes": 13100,
    "bounds": {
     "min": [
      -15.5,
@@ -4584,7 +4606,7 @@
    "filename": "fantasy-props-heraldic-shield.glb",
    "relativePath": "props/fantasy-props-heraldic-shield.glb",
    "leaf": "world",
-   "sizeBytes": 17036,
+   "sizeBytes": 16964,
    "bounds": {
     "min": [
      -13.92,
@@ -4619,7 +4641,7 @@
    "filename": "fantasy-props-herb-drying-rack.glb",
    "relativePath": "props/fantasy-props-herb-drying-rack.glb",
    "leaf": "world",
-   "sizeBytes": 93352,
+   "sizeBytes": 93280,
    "bounds": {
     "min": [
      -17.5,
@@ -4654,7 +4676,7 @@
    "filename": "fantasy-props-hitching-post.glb",
    "relativePath": "props/fantasy-props-hitching-post.glb",
    "leaf": "world",
-   "sizeBytes": 51180,
+   "sizeBytes": 51108,
    "bounds": {
     "min": [
      -19,
@@ -4689,7 +4711,7 @@
    "filename": "fantasy-props-iron-cage.glb",
    "relativePath": "props/fantasy-props-iron-cage.glb",
    "leaf": "world",
-   "sizeBytes": 47316,
+   "sizeBytes": 47244,
    "bounds": {
     "min": [
      -12.5,
@@ -4724,7 +4746,7 @@
    "filename": "fantasy-props-keg-rack.glb",
    "relativePath": "props/fantasy-props-keg-rack.glb",
    "leaf": "world",
-   "sizeBytes": 32612,
+   "sizeBytes": 32540,
    "bounds": {
     "min": [
      -18.5,
@@ -4759,7 +4781,7 @@
    "filename": "fantasy-props-knight-statue.glb",
    "relativePath": "props/fantasy-props-knight-statue.glb",
    "leaf": "world",
-   "sizeBytes": 29288,
+   "sizeBytes": 29216,
    "bounds": {
     "min": [
      -13.1406,
@@ -4794,7 +4816,7 @@
    "filename": "fantasy-props-knight-tent.glb",
    "relativePath": "props/fantasy-props-knight-tent.glb",
    "leaf": "world",
-   "sizeBytes": 30412,
+   "sizeBytes": 30340,
    "bounds": {
     "min": [
      -30.5,
@@ -4829,7 +4851,7 @@
    "filename": "fantasy-props-lance-rack.glb",
    "relativePath": "props/fantasy-props-lance-rack.glb",
    "leaf": "world",
-   "sizeBytes": 26680,
+   "sizeBytes": 26608,
    "bounds": {
     "min": [
      -16,
@@ -4864,7 +4886,7 @@
    "filename": "fantasy-props-lantern-post.glb",
    "relativePath": "props/fantasy-props-lantern-post.glb",
    "leaf": "world",
-   "sizeBytes": 23656,
+   "sizeBytes": 23584,
    "bounds": {
     "min": [
      -13,
@@ -4903,7 +4925,7 @@
    "filename": "fantasy-props-lectern.glb",
    "relativePath": "props/fantasy-props-lectern.glb",
    "leaf": "world",
-   "sizeBytes": 19044,
+   "sizeBytes": 18972,
    "bounds": {
     "min": [
      -10,
@@ -4938,7 +4960,7 @@
    "filename": "fantasy-props-map-table.glb",
    "relativePath": "props/fantasy-props-map-table.glb",
    "leaf": "world",
-   "sizeBytes": 62824,
+   "sizeBytes": 62752,
    "bounds": {
     "min": [
      -16,
@@ -4982,7 +5004,7 @@
    "filename": "fantasy-props-market-stall.glb",
    "relativePath": "props/fantasy-props-market-stall.glb",
    "leaf": "world",
-   "sizeBytes": 53768,
+   "sizeBytes": 53696,
    "bounds": {
     "min": [
      -24.6575,
@@ -5019,7 +5041,7 @@
    "filename": "fantasy-props-millstone.glb",
    "relativePath": "props/fantasy-props-millstone.glb",
    "leaf": "world",
-   "sizeBytes": 29404,
+   "sizeBytes": 29332,
    "bounds": {
     "min": [
      -16.0312,
@@ -5054,7 +5076,7 @@
    "filename": "fantasy-props-notice-board.glb",
    "relativePath": "props/fantasy-props-notice-board.glb",
    "leaf": "world",
-   "sizeBytes": 14864,
+   "sizeBytes": 14792,
    "bounds": {
     "min": [
      -18.1719,
@@ -5089,7 +5111,7 @@
    "filename": "fantasy-props-potion-shelf.glb",
    "relativePath": "props/fantasy-props-potion-shelf.glb",
    "leaf": "world",
-   "sizeBytes": 45768,
+   "sizeBytes": 45696,
    "bounds": {
     "min": [
      -15.5,
@@ -5124,7 +5146,7 @@
    "filename": "fantasy-props-pottery-shelf.glb",
    "relativePath": "props/fantasy-props-pottery-shelf.glb",
    "leaf": "world",
-   "sizeBytes": 49028,
+   "sizeBytes": 48956,
    "bounds": {
     "min": [
      -17.5,
@@ -5159,7 +5181,7 @@
    "filename": "fantasy-props-quench-trough.glb",
    "relativePath": "props/fantasy-props-quench-trough.glb",
    "leaf": "world",
-   "sizeBytes": 22336,
+   "sizeBytes": 22264,
    "bounds": {
     "min": [
      -20,
@@ -5203,7 +5225,7 @@
    "filename": "fantasy-props-royal-coffer.glb",
    "relativePath": "props/fantasy-props-royal-coffer.glb",
    "leaf": "world",
-   "sizeBytes": 36312,
+   "sizeBytes": 36240,
    "bounds": {
     "min": [
      -13,
@@ -5247,7 +5269,7 @@
    "filename": "fantasy-props-rune-stone.glb",
    "relativePath": "props/fantasy-props-rune-stone.glb",
    "leaf": "world",
-   "sizeBytes": 37108,
+   "sizeBytes": 37036,
    "bounds": {
     "min": [
      -14.5,
@@ -5282,7 +5304,7 @@
    "filename": "fantasy-props-sack-pile.glb",
    "relativePath": "props/fantasy-props-sack-pile.glb",
    "leaf": "world",
-   "sizeBytes": 39612,
+   "sizeBytes": 39532,
    "bounds": {
     "min": [
      -17.5,
@@ -5317,7 +5339,7 @@
    "filename": "fantasy-props-scroll-rack.glb",
    "relativePath": "props/fantasy-props-scroll-rack.glb",
    "leaf": "world",
-   "sizeBytes": 83704,
+   "sizeBytes": 83632,
    "bounds": {
     "min": [
      -16,
@@ -5352,7 +5374,7 @@
    "filename": "fantasy-props-shield-wall.glb",
    "relativePath": "props/fantasy-props-shield-wall.glb",
    "leaf": "world",
-   "sizeBytes": 29368,
+   "sizeBytes": 29296,
    "bounds": {
     "min": [
      -19,
@@ -5387,7 +5409,7 @@
    "filename": "fantasy-props-signpost.glb",
    "relativePath": "props/fantasy-props-signpost.glb",
    "leaf": "world",
-   "sizeBytes": 25024,
+   "sizeBytes": 24952,
    "bounds": {
     "min": [
      -18.9844,
@@ -5424,7 +5446,7 @@
    "filename": "fantasy-props-star-chart-easel.glb",
    "relativePath": "props/fantasy-props-star-chart-easel.glb",
    "leaf": "world",
-   "sizeBytes": 14880,
+   "sizeBytes": 14808,
    "bounds": {
     "min": [
      -13,
@@ -5459,7 +5481,7 @@
    "filename": "fantasy-props-stone-altar.glb",
    "relativePath": "props/fantasy-props-stone-altar.glb",
    "leaf": "world",
-   "sizeBytes": 27992,
+   "sizeBytes": 27920,
    "bounds": {
     "min": [
      -15,
@@ -5494,7 +5516,7 @@
    "filename": "fantasy-props-stone-fountain.glb",
    "relativePath": "props/fantasy-props-stone-fountain.glb",
    "leaf": "world",
-   "sizeBytes": 52968,
+   "sizeBytes": 52896,
    "bounds": {
     "min": [
      -15,
@@ -5538,7 +5560,7 @@
    "filename": "fantasy-props-sundial.glb",
    "relativePath": "props/fantasy-props-sundial.glb",
    "leaf": "world",
-   "sizeBytes": 18768,
+   "sizeBytes": 18696,
    "bounds": {
     "min": [
      -13.5,
@@ -5573,7 +5595,7 @@
    "filename": "fantasy-props-tapestry-frame.glb",
    "relativePath": "props/fantasy-props-tapestry-frame.glb",
    "leaf": "world",
-   "sizeBytes": 24064,
+   "sizeBytes": 23992,
    "bounds": {
     "min": [
      -19,
@@ -5608,7 +5630,7 @@
    "filename": "fantasy-props-throne.glb",
    "relativePath": "props/fantasy-props-throne.glb",
    "leaf": "world",
-   "sizeBytes": 22612,
+   "sizeBytes": 22540,
    "bounds": {
     "min": [
      -14,
@@ -5643,7 +5665,7 @@
    "filename": "fantasy-props-training-dummy.glb",
    "relativePath": "props/fantasy-props-training-dummy.glb",
    "leaf": "world",
-   "sizeBytes": 19860,
+   "sizeBytes": 19788,
    "bounds": {
     "min": [
      -13.0561,
@@ -5678,7 +5700,7 @@
    "filename": "fantasy-props-treasure-pile.glb",
    "relativePath": "props/fantasy-props-treasure-pile.glb",
    "leaf": "world",
-   "sizeBytes": 71228,
+   "sizeBytes": 71156,
    "bounds": {
     "min": [
      -17.3,
@@ -5722,7 +5744,7 @@
    "filename": "fantasy-props-weapon-rack.glb",
    "relativePath": "props/fantasy-props-weapon-rack.glb",
    "leaf": "world",
-   "sizeBytes": 28316,
+   "sizeBytes": 28244,
    "bounds": {
     "min": [
      -17,
@@ -5757,7 +5779,7 @@
    "filename": "fantasy-props-wine-press.glb",
    "relativePath": "props/fantasy-props-wine-press.glb",
    "leaf": "world",
-   "sizeBytes": 36060,
+   "sizeBytes": 35988,
    "bounds": {
     "min": [
      -17,
@@ -5792,7 +5814,7 @@
    "filename": "fantasy-props-wizard-desk.glb",
    "relativePath": "props/fantasy-props-wizard-desk.glb",
    "leaf": "world",
-   "sizeBytes": 39944,
+   "sizeBytes": 39872,
    "bounds": {
     "min": [
      -17,
@@ -5836,7 +5858,7 @@
    "filename": "fantasy-props-woodpile.glb",
    "relativePath": "props/fantasy-props-woodpile.glb",
    "leaf": "world",
-   "sizeBytes": 42684,
+   "sizeBytes": 42612,
    "bounds": {
     "min": [
      -18.5,
@@ -5871,7 +5893,7 @@
    "filename": "fantasy-terrain-nature-ancient-oak.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-ancient-oak.glb",
    "leaf": "world",
-   "sizeBytes": 98712,
+   "sizeBytes": 98640,
    "bounds": {
     "min": [
      -35.42,
@@ -5908,7 +5930,7 @@
    "filename": "fantasy-terrain-nature-berry-bush.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-berry-bush.glb",
    "leaf": "world",
-   "sizeBytes": 74980,
+   "sizeBytes": 74908,
    "bounds": {
     "min": [
      -19.8456,
@@ -5952,7 +5974,7 @@
    "filename": "fantasy-terrain-nature-birch-grove.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-birch-grove.glb",
    "leaf": "world",
-   "sizeBytes": 72284,
+   "sizeBytes": 72212,
    "bounds": {
     "min": [
      -22.5312,
@@ -5996,7 +6018,7 @@
    "filename": "fantasy-terrain-nature-cliff-ledge.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-cliff-ledge.glb",
    "leaf": "world",
-   "sizeBytes": 86628,
+   "sizeBytes": 86556,
    "bounds": {
     "min": [
      -31.4029,
@@ -6040,7 +6062,7 @@
    "filename": "fantasy-terrain-nature-cliff-waterfall.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-cliff-waterfall.glb",
    "leaf": "world",
-   "sizeBytes": 72488,
+   "sizeBytes": 72416,
    "bounds": {
     "min": [
      -45.1094,
@@ -6086,7 +6108,7 @@
    "filename": "fantasy-terrain-nature-crystal-cave-mouth.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-crystal-cave-mouth.glb",
    "leaf": "world",
-   "sizeBytes": 122580,
+   "sizeBytes": 122508,
    "bounds": {
     "min": [
      -37.375,
@@ -6130,7 +6152,7 @@
    "filename": "fantasy-terrain-nature-crystal-formation.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-crystal-formation.glb",
    "leaf": "world",
-   "sizeBytes": 45080,
+   "sizeBytes": 45008,
    "bounds": {
     "min": [
      -21.2344,
@@ -6181,7 +6203,7 @@
    "filename": "fantasy-terrain-nature-elven-tree.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-elven-tree.glb",
    "leaf": "world",
-   "sizeBytes": 107768,
+   "sizeBytes": 107696,
    "bounds": {
     "min": [
      -32.3333,
@@ -6227,7 +6249,7 @@
    "filename": "fantasy-terrain-nature-fairy-ring.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-fairy-ring.glb",
    "leaf": "world",
-   "sizeBytes": 104148,
+   "sizeBytes": 104076,
    "bounds": {
     "min": [
      -23.5294,
@@ -6273,7 +6295,7 @@
    "filename": "fantasy-terrain-nature-flower-meadow.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-flower-meadow.glb",
    "leaf": "world",
-   "sizeBytes": 71540,
+   "sizeBytes": 71468,
    "bounds": {
     "min": [
      -31.8119,
@@ -6317,7 +6339,7 @@
    "filename": "fantasy-terrain-nature-giant-mushrooms.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-giant-mushrooms.glb",
    "leaf": "world",
-   "sizeBytes": 139212,
+   "sizeBytes": 139140,
    "bounds": {
     "min": [
      -33.4915,
@@ -6354,7 +6376,7 @@
    "filename": "fantasy-terrain-nature-hedge-maze-corner.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-hedge-maze-corner.glb",
    "leaf": "world",
-   "sizeBytes": 8488,
+   "sizeBytes": 8416,
    "bounds": {
     "min": [
      -24,
@@ -6398,7 +6420,7 @@
    "filename": "fantasy-terrain-nature-hollow-log.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-hollow-log.glb",
    "leaf": "world",
-   "sizeBytes": 51404,
+   "sizeBytes": 51332,
    "bounds": {
     "min": [
      -18.9588,
@@ -6433,7 +6455,7 @@
    "filename": "fantasy-terrain-nature-lily-pond.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-lily-pond.glb",
    "leaf": "world",
-   "sizeBytes": 57920,
+   "sizeBytes": 57848,
    "bounds": {
     "min": [
      -25.1246,
@@ -6477,7 +6499,7 @@
    "filename": "fantasy-terrain-nature-mossy-boulder.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-mossy-boulder.glb",
    "leaf": "world",
-   "sizeBytes": 58784,
+   "sizeBytes": 58712,
    "bounds": {
     "min": [
      -23.347,
@@ -6512,7 +6534,7 @@
    "filename": "fantasy-terrain-nature-pine-tree.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-pine-tree.glb",
    "leaf": "world",
-   "sizeBytes": 101692,
+   "sizeBytes": 101612,
    "bounds": {
     "min": [
      -18.72,
@@ -6547,7 +6569,7 @@
    "filename": "fantasy-terrain-nature-rock-cluster.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-rock-cluster.glb",
    "leaf": "world",
-   "sizeBytes": 37048,
+   "sizeBytes": 36976,
    "bounds": {
     "min": [
      -19.1094,
@@ -6582,7 +6604,7 @@
    "filename": "fantasy-terrain-nature-ruined-arch.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-ruined-arch.glb",
    "leaf": "world",
-   "sizeBytes": 46932,
+   "sizeBytes": 46860,
    "bounds": {
     "min": [
      -42.0312,
@@ -6617,7 +6639,7 @@
    "filename": "fantasy-terrain-nature-standing-stones.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-standing-stones.glb",
    "leaf": "world",
-   "sizeBytes": 62928,
+   "sizeBytes": 62856,
    "bounds": {
     "min": [
      -31.1845,
@@ -6661,7 +6683,7 @@
    "filename": "fantasy-terrain-nature-stone-bridge.glb",
    "relativePath": "terrain-nature/fantasy-terrain-nature-stone-bridge.glb",
    "leaf": "world",
-   "sizeBytes": 41072,
+   "sizeBytes": 41000,
    "bounds": {
     "min": [
      -52,
@@ -6696,7 +6718,7 @@
    "filename": "fantasy-vehicles-ballista-cart.glb",
    "relativePath": "vehicles/fantasy-vehicles-ballista-cart.glb",
    "leaf": "world",
-   "sizeBytes": 110112,
+   "sizeBytes": 110040,
    "bounds": {
     "min": [
      -32,
@@ -6754,7 +6776,7 @@
    "filename": "fantasy-vehicles-battering-ram.glb",
    "relativePath": "vehicles/fantasy-vehicles-battering-ram.glb",
    "leaf": "world",
-   "sizeBytes": 141976,
+   "sizeBytes": 143052,
    "bounds": {
     "min": [
      -26.7818,
@@ -6787,7 +6809,7 @@
      "socket": "socket-function",
      "trigger": "clip:attack",
      "size": 30,
-     "at": 0.42
+     "at": 0.4
     }
    ],
    "route": "code",
@@ -6802,7 +6824,7 @@
    "filename": "fantasy-vehicles-covered-wagon.glb",
    "relativePath": "vehicles/fantasy-vehicles-covered-wagon.glb",
    "leaf": "world",
-   "sizeBytes": 87644,
+   "sizeBytes": 87572,
    "bounds": {
     "min": [
      -23,
@@ -6841,7 +6863,7 @@
    "filename": "fantasy-vehicles-elven-swan-boat.glb",
    "relativePath": "vehicles/fantasy-vehicles-elven-swan-boat.glb",
    "leaf": "world",
-   "sizeBytes": 55824,
+   "sizeBytes": 55752,
    "bounds": {
     "min": [
      -41.6562,
@@ -6888,7 +6910,7 @@
    "filename": "fantasy-vehicles-flying-carpet.glb",
    "relativePath": "vehicles/fantasy-vehicles-flying-carpet.glb",
    "leaf": "world",
-   "sizeBytes": 34008,
+   "sizeBytes": 33936,
    "bounds": {
     "min": [
      -23.2828,
@@ -6934,7 +6956,7 @@
    "filename": "fantasy-vehicles-hay-cart.glb",
    "relativePath": "vehicles/fantasy-vehicles-hay-cart.glb",
    "leaf": "world",
-   "sizeBytes": 178248,
+   "sizeBytes": 178176,
    "bounds": {
     "min": [
      -24.8281,
@@ -6980,7 +7002,7 @@
    "filename": "fantasy-vehicles-mine-cart.glb",
    "relativePath": "vehicles/fantasy-vehicles-mine-cart.glb",
    "leaf": "world",
-   "sizeBytes": 66968,
+   "sizeBytes": 66896,
    "bounds": {
     "min": [
      -15,
@@ -7026,7 +7048,7 @@
    "filename": "fantasy-vehicles-rowboat.glb",
    "relativePath": "vehicles/fantasy-vehicles-rowboat.glb",
    "leaf": "world",
-   "sizeBytes": 57208,
+   "sizeBytes": 57136,
    "bounds": {
     "min": [
      -39.5469,
@@ -7073,7 +7095,7 @@
    "filename": "fantasy-vehicles-royal-carriage.glb",
    "relativePath": "vehicles/fantasy-vehicles-royal-carriage.glb",
    "leaf": "world",
-   "sizeBytes": 90424,
+   "sizeBytes": 90344,
    "bounds": {
     "min": [
      -22,
@@ -7113,7 +7135,7 @@
    "filename": "fantasy-vehicles-siege-tower.glb",
    "relativePath": "vehicles/fantasy-vehicles-siege-tower.glb",
    "leaf": "world",
-   "sizeBytes": 104336,
+   "sizeBytes": 104264,
    "bounds": {
     "min": [
      -36,
@@ -7166,7 +7188,7 @@
    "filename": "fantasy-vehicles-sky-airship.glb",
    "relativePath": "vehicles/fantasy-vehicles-sky-airship.glb",
    "leaf": "world",
-   "sizeBytes": 81512,
+   "sizeBytes": 81440,
    "bounds": {
     "min": [
      -45.1452,
@@ -7213,7 +7235,7 @@
    "filename": "fantasy-vehicles-war-chariot.glb",
    "relativePath": "vehicles/fantasy-vehicles-war-chariot.glb",
    "leaf": "world",
-   "sizeBytes": 78352,
+   "sizeBytes": 78280,
    "bounds": {
     "min": [
      -22.4,
@@ -7261,7 +7283,7 @@
    "filename": "fantasy-avatar-parts.glb",
    "relativePath": "avatar/fantasy-avatar-parts.glb",
    "leaf": "characters",
-   "sizeBytes": 1181264,
+   "sizeBytes": 1185260,
    "bounds": {
     "min": [
      -0.1624,
@@ -7305,7 +7327,7 @@
    "filename": "fantasy-characters-skins-dark-knight.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-dark-knight.glb",
    "leaf": "characters",
-   "sizeBytes": 260384,
+   "sizeBytes": 260272,
    "bounds": {
     "min": [
      -0.08,
@@ -7340,7 +7362,7 @@
    "filename": "fantasy-characters-skins-druid.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-druid.glb",
    "leaf": "characters",
-   "sizeBytes": 467832,
+   "sizeBytes": 467724,
    "bounds": {
     "min": [
      -0.11,
@@ -7375,7 +7397,7 @@
    "filename": "fantasy-characters-skins-dwarf.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-dwarf.glb",
    "leaf": "characters",
-   "sizeBytes": 459272,
+   "sizeBytes": 459164,
    "bounds": {
     "min": [
      -0.08,
@@ -7410,7 +7432,7 @@
    "filename": "fantasy-characters-skins-elf-mage.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-elf-mage.glb",
    "leaf": "characters",
-   "sizeBytes": 327096,
+   "sizeBytes": 326984,
    "bounds": {
     "min": [
      -0.09,
@@ -7445,7 +7467,7 @@
    "filename": "fantasy-characters-skins-elf-ranger.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-elf-ranger.glb",
    "leaf": "characters",
-   "sizeBytes": 365916,
+   "sizeBytes": 365804,
    "bounds": {
     "min": [
      -0.13,
@@ -7480,7 +7502,7 @@
    "filename": "fantasy-characters-skins-paladin.glb",
    "relativePath": "characters-skins/fantasy-characters-skins-paladin.glb",
    "leaf": "characters",
-   "sizeBytes": 294600,
+   "sizeBytes": 294488,
    "bounds": {
     "min": [
      -0.08,

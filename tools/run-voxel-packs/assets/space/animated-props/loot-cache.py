@@ -12,6 +12,7 @@ import numpy as np
 
 import pnglyph
 from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, facet_paint, hazard, keys, light_top, octo, plan, side
+from _slam import slam
 from voxgrid import C
 
 S = (28, 24, 24)
@@ -74,12 +75,16 @@ def build():
     z = (0.0, 0.0, 0.0)
     one = (1.0, 1.0, 1.0)
     idle = {"lock": {"scale": keys((0, one), (0.5, one), (0.6, (1.25, 1.25, 1.25)), (0.8, one), (1.6, one))}}
-    open_ = {"lid": {"rot": keys((0, z), (0.15, (-3, 0, 0)), (0.7, (110, 0, 0)), (0.85, (100, 0, 0)), (1.0, (104, 0, 0)))},
-             "lock": {"scale": keys((0, one), (0.12, (1.3, 1.3, 1.3)), (0.3, one))}}
-    close = {"lid": {"rot": keys((0, (104, 0, 0)), (0.55, (0, 0, 0)), (0.65, (4, 0, 0)), (0.8, z))}}
+    # The lock pops, then the lid creeps, accelerates (power 3.5, keyed once
+    # a frame, see _slam) and slams back onto its stop / down onto the box:
+    # dead stop, a tiny rebound, still.
+    back = (104.0, 0.0, 0.0)
+    open_ = {"lid": {"rot": slam(z, back, frames=12, start=3, rebound=0.05)[0]},
+             "lock": {"scale": keys((0, one), (0.1, (1.3, 1.3, 1.3)), (0.233, one))}}
+    close = {"lid": {"rot": slam(back, z, frames=12, rebound=0.04)[0]}}
     loot = rig.sock("socket-loot", (CX, YB + 1, CZ), "cache")
     return asset("animated-props", "loot-cache", "Loot Cache", rig.root,
-                 clips=[Clip("idle", idle), Clip("open", open_, loop=False), Clip("close", close, loop=False)], sockets=[loot],
+                 clips=[Clip("idle", idle), Clip("open", open_, loop=False, ease=0), Clip("close", close, loop=False, ease=0)], sockets=[loot],
                  pfx=[{"effectId": "rvx-space-data-burst", "socket": "socket-loot", "trigger": "clip:open", "size": 22, "at": 0.25}])
 
 

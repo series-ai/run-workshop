@@ -14,12 +14,15 @@ arms rise over the shoulders and hang their blades in front. Four thick
 jointed legs come out of her flanks: thighs up and out to bone knees,
 shins down on the diagonal to bone claws. Every mass is a loft of
 octagonal frustums or a prism (true slopes); the detail is painted.
-Clips: idle (breathe, look, jaw), attack (rear, double slash, jaw wide,
+Clips: idle (breathe, look, jaw), move (a heavy march on diagonal leg
+pairs, the body dropping on every plant), attack (rear, double slash, jaw wide,
 goo from the mouth socket), hit (recoil), death (collapse). Faces -Z.
 """
 import numpy as np
 
 from voxgrid import C
+from _motion import DEATH_FLOOR, curve
+from _trim import squeeze
 from _life import P, Clip, Grid, Rig, asset, coords, front, keys, light_top, loft, plan, quad, seams, side, wave
 from pnshapes import _owners
 import pnpaint
@@ -371,6 +374,112 @@ def leg(s: int, hx: float, lz: float, hy: float, kx: float, ky: float, fx: float
     return g
 
 
+def march(T: int = 48, stride: float = 14.0, lift: float = 9.0) -> dict:
+    """The move clip: a heavy boss march on diagonal leg pairs, keyed every frame.
+
+    The front-left and back-right legs plant together on frame 0, the other
+    pair on frame 24. Each rigid leg is solved (yaw about the hip, then a
+    tilt about its own long axis) so its claw tip stays on the floor and
+    slides back at a constant ground speed through the stance; the swing pair
+    rips up in 2 frames, carries forward high and slams down in 3 frames,
+    accelerating. Every plant thunders: the whole body drops hard (2 frames)
+    and rises slowly, the thorax, jaw, head and scythes follow a frame or
+    two late. The body sways sideways over the planted pair (that sway also
+    keeps the planted claws from skating sideways, since a rigid leg swept
+    about its hip draws an arc). Loops seamlessly."""
+    import math
+
+    def ry(a, v):
+        c, sn = math.cos(a), math.sin(a)
+        return (v[0] * c + v[2] * sn, v[1], -v[0] * sn + v[2] * c)
+
+    def rz(a, v):
+        c, sn = math.cos(a), math.sin(a)
+        return (v[0] * c - v[1] * sn, v[0] * sn + v[1] * c, v[2])
+
+    def claw(s, k, b, a):
+        hx, lz, hy, kx, ky, fx, splay = LEGS[k]
+        return ry(math.radians(s * splay), rz(a, ry(b, (s * (fx + 4 - hx), 1.0 - hy, 0.0))))
+
+    def solve(s, k, ty, tz):
+        b = a = 0.0
+        for _ in range(60):
+            x, y, zz = claw(s, k, b, a)
+            ey, ez = y - ty, zz - tz
+            if abs(ey) + abs(ez) < 1e-9:
+                break
+            h = 1e-6
+            _, yb, zb = claw(s, k, b + h, a)
+            _, ya, za = claw(s, k, b, a + h)
+            j00, j01, j10, j11 = (yb - y) / h, (ya - y) / h, (zb - zz) / h, (za - zz) / h
+            det = j00 * j11 - j01 * j10
+            b -= (j11 * ey - j01 * ez) / det
+            a -= (-j10 * ey + j00 * ez) / det
+        return b, a, claw(s, k, b, a)[0]
+
+    drop_keys = [(0, 0.0), (1, -1.4), (2, -2.2), (4, -1.8), (11, -0.5), (17, 0.4), (21, 0.3), (24, 0.0)]
+
+    def drop(q):
+        for (q0, v0), (q1, v1) in zip(drop_keys, drop_keys[1:]):
+            if q0 <= q <= q1:
+                u = (q - q0) / (q1 - q0)
+                if q0 >= 2:
+                    u = u * u * (3 - 2 * u)
+                return v0 + (v1 - v0) * u
+        return 0.0
+
+    rise = 0.23  # the built claws sit this much below the claw-tip estimate (measured with clip_probe)
+    half = T // 2
+    v = stride / half
+    pairs = {0: [(1, 0), (-1, 1)], 1: [(-1, 0), (1, 1)]}
+    rows = []
+    for f in range(T):
+        ph, q = (0 if f < half else 1), f % half
+        d = drop(q)
+        legs, slip = {}, []
+        for s, k in pairs[ph]:
+            hy = LEGS[k][2]
+            z0 = claw(s, k, 0.0, 0.0)[2]
+            b, a, x = solve(s, k, 1.0 - hy - d + rise, z0 - stride / 2 + v * q)
+            slip.append(x - solve(s, k, 1.0 - hy + rise, z0)[2])
+            legs[(s, k)] = (b, a)
+        for s, k in pairs[1 - ph]:
+            hy = LEGS[k][2]
+            z0 = claw(s, k, 0.0, 0.0)[2]
+            if q <= 2:
+                zz, up = z0 + stride / 2 + v * q * 0.5, (lift * (q / 2) ** 0.7 if q else 0.0)
+            elif q <= half - 3:
+                zz, up = z0 + stride / 2 + v - (stride + v) * (q - 2) / (half - 5), lift
+            else:
+                u = (q - (half - 3)) / 3
+                zz, up = z0 - stride / 2, lift * (1 - u * u)
+            b, a, _ = solve(s, k, 1.0 - hy - d + rise + up, zz)
+            legs[(s, k)] = (b, a)
+        rows.append((d, -sum(slip) / 2, legs))
+    out = {n: {"rot": []} for n in ("head", "jaw", "crest", "scythe-l", "scythe-r")}
+    out["xeno-queen"] = {"loc": []}
+    out["body"] = {"loc": [], "rot": []}
+    for s in (-1, 1):
+        for k in range(len(LEGS)):
+            out[f"leg-{'rl'[s > 0]}{k}"] = {"rot": []}
+    for f in range(T + 1):
+        t = f / 30
+        g = f + 19  # the loop point falls mid-stance, between plants
+        d, sway, legs = rows[g % T]
+        d1, d2, d3 = rows[(g - 1) % T][0], rows[(g - 2) % T][0], rows[(g - 3) % T][0]
+        out["xeno-queen"]["loc"].append((t, (sway, d, 0.0)))
+        for (s, k), (b, a) in legs.items():
+            out[f"leg-{'rl'[s > 0]}{k}"]["rot"].append((t, (0.0, math.degrees(b), math.degrees(a))))
+        out["body"]["loc"].append((t, (0.0, 0.6 * (d1 - d), 0.0)))
+        out["body"]["rot"].append((t, (0.8 * d1, 0.35 * sway, -0.5 * sway)))
+        out["head"]["rot"].append((t, (1.6 * d2, -0.5 * sway, 0.0)))
+        out["jaw"]["rot"].append((t, (1.5 * d1, 0.0, 0.0)))
+        out["crest"]["rot"].append((t, (1.5 * d3, 0.0, 0.0)))
+        out["scythe-l"]["rot"].append((t, (2.2 * d2 + 0.8 * sway, 0.0, 0.0)))
+        out["scythe-r"]["rot"].append((t, (2.2 * d2 - 0.8 * sway, 0.0, 0.0)))
+    return out
+
+
 # ------------------------------------------------------------------ rig
 def build():
     rig = Rig()
@@ -391,25 +500,75 @@ def build():
             "jaw": {"rot": keys((0, z), (0.6, (-8, 0, 0)), (1.2, z), (2.1, (-5, 0, 0)), (3.0, z))},
             "crest": {"rot": wave(3.0, "x", 4, phase=1.0)},
             "scythe-l": {"rot": wave(3.0, "x", 5, phase=0.6)}, "scythe-r": {"rot": wave(3.0, "x", 5, phase=2.1)}}
-    attack = {"body": {"rot": keys((0, z), (0.4, (14, 0, 0)), (0.65, (-8, 0, 0)), (0.9, (-6, 0, 0)), (1.3, z))},
-              "head": {"rot": keys((0, z), (0.4, (-10, 0, 0)), (0.65, (12, 0, 0)), (1.3, z))},
-              "jaw": {"rot": keys((0, z), (0.4, (-6, 0, 0)), (0.6, (-30, 0, 0)), (0.9, (-28, 0, 0)), (1.3, z))},
-              "crest": {"rot": keys((0, z), (0.4, (-12, 0, 0)), (0.65, (8, 0, 0)), (1.3, z))},
-              "scythe-r": {"rot": keys((0, z), (0.4, (45, 0, -10)), (0.62, (-40, 0, 8)), (0.9, (-36, 0, 6)), (1.3, z))},
-              "scythe-l": {"rot": keys((0, z), (0.45, (45, 0, 10)), (0.7, (-40, 0, -8)), (0.95, (-36, 0, -6)), (1.3, z))}}
-    hit = {"body": {"rot": keys((0, z), (0.12, (-8, 6, 0)), (0.25, (-9, 6, 0)), (0.5, z))},
-           "head": {"rot": keys((0, z), (0.12, (14, -12, 6)), (0.25, (14, -12, 6)), (0.5, z))},
-           "jaw": {"rot": keys((0, z), (0.12, (-22, 0, 0)), (0.5, z))},
-           "scythe-l": {"rot": keys((0, z), (0.12, (20, 0, 14)), (0.5, z))}, "scythe-r": {"rot": keys((0, z), (0.12, (20, 0, -14)), (0.5, z))}}
-    death = {"body": {"rot": keys((0, z), (0.5, (10, 0, 4)), (1.2, (-18, 0, 8)), (1.6, (-17, 0, 8)))},
-             "head": {"rot": keys((0, z), (1.2, (-22, 18, 0)))},
-             "jaw": {"rot": keys((0, z), (1.2, (-24, 0, 0)))},
-             "crest": {"rot": keys((0, z), (1.2, (-20, 0, 0)))},
-             "scythe-l": {"rot": keys((0, z), (1.2, (-55, 0, -20)))}, "scythe-r": {"rot": keys((0, z), (1.2, (-55, 0, 20)))},
-             "xeno-queen": {"loc": keys((0, z), (0.5, z), (1.2, (0, -14, 0)), (1.6, (0, -13, 0)))}}
+    # Scythe slash and spit: the queen rears her thorax up and back,
+    # twisting, both scythes raised high and the jaw cocked, hangs, then
+    # lunges the thorax down and forward, slashing both scythes down (the
+    # left a beat behind) and spitting acid from the gaping jaw (impact
+    # 0.533 s); she drives on past it, holds the lunge with the scythes
+    # still working, then rears back past rest and settles. The abdomen and
+    # the legs stay planted.
+    F = 1 / 30
+    hit_t = 16 * F
+    attack = {"body": {"rot": curve((0, z), (6, (8, 0, 0)), (12, (18, 0, -4)), (14, (19, 0, -4)), (16, (-12, 0, 4)), (18, (-16, 0, 5)), (21, (-9, 0, 7)),
+                                    (24, (-14, 0, -1)), (27, (-6, 0, 1)), (31, (5, 0, -1)), (35, (-1, 0, 0)), (38, z)),
+                       "loc": curve((0, z), (12, (0, 1, 3)), (14, (0, 1.2, 3.2)), (16, (0, -1, -6)), (18, (0, -1.5, -7)), (21, (0, -1.2, -6.2)), (24, (0, -1.4, -6.6)),
+                                    (30, (0, 0, 1)), (38, z))},
+              "head": {"rot": curve((0, z), (12, (-14, 0, 0)), (14, (-15, 0, 0)), (16, (16, 0, 0)), (18, (20, 0, 0)), (21, (10, 12, 0)), (24, (20, -10, 0)),
+                                    (27, (8, 4, 0)), (31, (-8, 0, 0)), (35, (2, 0, 0)), (38, z))},
+              "jaw": {"rot": curve((0, z), (12, (-8, 0, 0)), (15, (-40, 0, 0)), (18, (-42, 0, 0)), (24, (-30, 0, 0)), (30, (-10, 0, 0)), (38, z))},
+              "crest": {"rot": curve((0, z), (12, (-16, 0, 0)), (16, (12, 0, 0)), (19, (16, 0, 0)), (24, (8, 0, 0)), (30, (-6, 0, 0)), (38, z))},
+              "scythe-r": {"rot": curve((0, z), (6, (30, 0, -8)), (12, (62, 0, -12)), (14, (64, 0, -12)), (16, (-46, 0, 10)), (18, (-58, 0, 12)), (21, (-38, 0, 4)),
+                                        (24, (-54, 0, 12)), (27, (-30, 0, 6)), (31, (12, 0, -3)), (35, (-2, 0, 0)), (38, z))},
+              "scythe-l": {"rot": curve((0, z), (8, (30, 0, 8)), (14, (62, 0, 12)), (17, (64, 0, 12)), (19, (-46, 0, -10)), (21, (-58, 0, -12)), (24, (-38, 0, -4)),
+                                        (27, (-54, 0, -12)), (30, (-28, 0, -6)), (34, (12, 0, 3)), (38, z))}}
+    # Knockback: the blow shoves the queen back with a small hop, the
+    # thorax and head snap back, the jaw gapes and the scythes fly up; she
+    # lands with her weight dropping forward, holds a beat and settles.
+    hit = {"xeno-queen": {"loc": keys((0, z), (2 * F, (0, 2.0, 2.6)), (4 * F, (0, 2.8, 4.2)), (6 * F, (0, 2.0, 4.7)), (8 * F, (0, 0, 4.4)), (12 * F, (0, -0.4, 4.0)),
+                                      (18 * F, (0, 0, 3.4)), (26 * F, (0, 0, 0.4)), (32 * F, z))},
+           "body": {"rot": keys((0, z), (2 * F, (10, 6, 0)), (6 * F, (14, 8, 0)), (11 * F, (-6, 0, 0)), (17 * F, (3, 0, 0)), (24 * F, (-2, 0, 0)), (32 * F, z))},
+           "head": {"rot": keys((0, z), (4 * F, (14, -12, 6)), (8 * F, (20, -14, 6)), (13 * F, (-10, 0, 0)), (19 * F, (4, 0, 0)), (32 * F, z))},
+           "jaw": {"rot": keys((0, z), (3 * F, (-24, 0, 0)), (8 * F, (-30, 0, 0)), (14 * F, (-6, 0, 0)), (20 * F, (-12, 0, 0)), (32 * F, z))},
+           "crest": {"rot": keys((0, z), (4 * F, (-16, 0, 0)), (10 * F, (10, 0, 0)), (16 * F, (-4, 0, 0)), (24 * F, z), (32 * F, z))},
+           "scythe-l": {"rot": keys((0, z), (3 * F, (24, 0, 14)), (7 * F, (30, 0, 18)), (12 * F, (-10, 0, -4)), (18 * F, (5, 0, 0)), (32 * F, z))},
+           "scythe-r": {"rot": keys((0, z), (4 * F, (24, 0, -14)), (8 * F, (30, 0, -18)), (13 * F, (-10, 0, 4)), (19 * F, (5, 0, 0)), (32 * F, z))}}
     for s in (-1, 1):
         for k in range(len(LEGS)):
-            death[f"leg-{'rl'[s > 0]}{k}"] = {"rot": keys((0, z), (0.5, z), (1.2, (0, 0, s * 14)), (1.6, (0, 0, s * 13)))}
+            hit[f"leg-{'rl'[s > 0]}{k}"] = {"rot": keys((0, z), (4 * F, (0, 0, s * 0.8)), (8 * F, z), (11 * F, (0, 0, -s * 0.3)), (18 * F, z), (32 * F, z))}
+    # Death: the queen screeches with her head snapped back, rocks with the
+    # scythes raised, then her legs splay out flat, the feet sliding
+    # outward along the floor while the body drops onto its belly (impact
+    # 1.067 s); one small bounce, then the thorax and head crash forward
+    # onto the ground a beat later, the scythes slap down and the jaw and
+    # crest settle last. The leg angles are solved so the claws stay on
+    # the floor while the body drops.
+    die_t = 32 * F
+    BOW, JAW, FRONT, SINK, SCY = -10.0, 4.0, 16.0, 11.0, -38.0
+    SCY_R = -80.0  # the raised right scythe flops down late  # the thorax, jaw and splayed front legs at rest
+    drop = [(0, 0.0), (4, 0.4), (14, 1.5), (20, 2.0), (23, 1.2), (26, -2.5), (29, -9.5), (32, -20.5), (35, -19.3), (38, -20.5), (64, -20.5)]
+    leg_angles = {0: [(0, 0.0), (4, -0.32), (14, -1.2), (20, -1.61), (23, -0.96), (26, 1.97), (29, 7.27), (32, 15.16), (35, 14.32), (37, 16.0), (40, FRONT + 0.6), (44, FRONT + 1.4), (48, FRONT + 0.3), (64, FRONT)], 1: [(0, 0.0), (4, -0.35), (14, -1.31), (20, -1.76), (23, -1.05), (26, 2.14), (29, 7.89), (32, 16.4), (35, 15.49), (38, 16.4), (64, 16.4)]}
+    death = {"xeno-queen": {"loc": curve(*[(f, (0, y, 0)) for f, y in drop])},
+             "body": {"rot": curve((0, z), (4, (8, 4, 0)), (11, (-10, 0, 4)), (15, (-4, 0, -4)), (19, (-13, 0, 3)), (23, (-6, 0, 0)), (31, (6, 0, 4)), (36, (-2, 0, 6)), (40, (BOW + 6, 0, 5)), (43, (BOW + 1, 0, 6)),
+                                   (47, (BOW + 0.5, 0, 6)), (64, (BOW, 0, 6))),
+                      "loc": curve((0, z), (35, z), (40, (0, -SINK, -2)), (43, (0, -SINK + 1.0, -2)), (46, (0, -SINK, -2)), (64, (0, -SINK, -2)))},
+             "head": {"rot": curve((0, z), (4, (24, -10, 0)), (11, (-14, 8, 0)), (15, (-4, -10, 0)), (19, (-18, 6, 0)), (23, (-8, 0, 0)), (31, (-10, 6, 0)), (39, (-2, 18, 0)), (44, (8, 16, 0)),
+                                   (50, (4, 18, 0)), (64, (4, 18, 0)))},
+             "jaw": {"rot": curve((0, z), (4, (-34, 0, 0)), (14, (-36, 0, 0)), (20, (-38, 0, 0)), (31, (-20, 0, 0)), (36, (6, 0, 0)), (41, (JAW - 6, 0, 0)),
+                                  (47, (JAW, 0, 0)), (64, (JAW, 0, 0)))},
+             "crest": {"rot": curve((0, z), (4, (10, 0, 0)), (14, (-14, 0, 0)), (31, (6, 0, 0)), (39, (-28, 0, 0)), (44, (-12, 0, 0)), (50, (-20, 0, 0)),
+                                    (64, (-20, 0, 0)))},
+             "scythe-l": {"rot": curve((0, z), (4, (14, 0, 6)), (11, (50, 0, 10)), (15, (38, 0, 4)), (19, (56, 0, 12)), (23, (40, 0, 6)), (31, (-20, 0, -14)), (37, (SCY - 4, 0, -20)), (41, (SCY + 8, 0, -18)),
+                                       (47, (SCY, 0, -20)), (64, (SCY, 0, -20)))},
+             "scythe-r": {"rot": curve((0, z), (4, (14, 0, -6)), (12, (50, 0, -10)), (16, (36, 0, -4)), (20, (56, 0, -12)), (24, (40, 0, -6)), (31, (-22, 0, 14)), (38, (SCY - 4, 0, 20)), (42, (SCY + 8, 0, 18)),
+                                       (48, (SCY, 0, 20)), (51, (SCY_R - 4, 0, 26)), (54, (SCY_R + 3, 0, 25)), (58, (SCY_R, 0, 26)), (64, (SCY_R, 0, 26)))}}
+    for s in (-1, 1):
+        for k in range(len(LEGS)):
+            death[f"leg-{'rl'[s > 0]}{k}"] = {"rot": curve(*[(f, (0, 0, s * a)) for f, a in leg_angles[k]])}
+    # Sterf's rules: a hit is over in 0.6 s, a death is still a few frames
+    # after its last flop. The blow, the belly drop and the thorax crash keep
+    # their timing; the recovery and the late settles are tightened.
+    hit = squeeze(hit, keep=8, old_end=32, new_end=18)
+    death = squeeze(death, keep=41, old_end=64, new_end=52)
     return asset("creatures", "xeno-queen", "Xeno Queen", rig.root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
-                 sockets=[mouth], pfx=[{"effectId": "rvx-space-acid-spray", "socket": "socket-mouth", "trigger": "clip:attack", "size": 70, "aim": [-0.288, -0.242, -0.927], "at": 0.52}])
+                 clips=[Clip("idle", idle), Clip("move", march(), ease=0, floor=False), Clip("attack", attack, loop=False, impact=hit_t), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR)],
+                 sockets=[mouth], pfx=[{"effectId": "rvx-space-acid-spray", "socket": "socket-mouth", "trigger": "clip:attack", "size": 70, "aim": [-0.288, -0.242, -0.927], "at": round(hit_t, 3)}])

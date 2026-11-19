@@ -14,6 +14,7 @@ import math
 
 from _life import P, Clip, Grid, Rig, asset, edges, front, hazard, keys, light_top, loft, mask_of, ngon_y, plan, plate_facets, plated, section8, side, spin, wave
 from _life import box as _box, coords as _coords
+from _slam import slam
 from pnshapes import bar, disc, facets, ngon_radius as _ngon_radius
 import pnglyph
 from voxgrid import C
@@ -253,8 +254,12 @@ def build():
         "nacelle-r": {"rot": keys((0, z), (0.8, (-24, 0, 0)), (2.8, (-24, 0, 0)), (3.6, z))},
     }
     # Clip rotation 0 stows the ramp. Rotation 88 lowers it to the pad.
-    open_ = {"ramp": {"rot": keys((0, z), (0.3, (-8, 0, 0)), (1.2, (88, 0, 0)), (1.5, (88, 0, 0)))}}
-    close_ = {"ramp": {"rot": keys((0, (88, 0, 0)), (0.3, (88, 0, 0)), (1.2, (-8, 0, 0)), (1.5, z))}}
+    # Like every door in the pack (see _slam): the ramp creeps for a few
+    # frames, accelerates (power 3.5, keyed once a frame) and slams onto the
+    # pad / up into its stowed stop: dead stop, a tiny rebound, still.
+    down = (88.0, 0.0, 0.0)
+    open_ = {"ramp": {"rot": slam(z, down, frames=15, rebound=0.04)[0]}}
+    close_ = {"ramp": {"rot": slam(down, z, frames=15, rebound=0.04)[0]}}
     socks = []
     pfx = []
     for s, name in ((-1, "l"), (1, "r")):
@@ -264,6 +269,6 @@ def build():
         pfx.append({"effectId": "rvx-space-hover-thrust", "socket": f"socket-thrust-{name}", "trigger": "idle", "size": 20, "aim": [0.0, -1.0, 0.0]})
     return asset(
         "vehicles", "dropship", "Troop Dropship", rig.root,
-        clips=[Clip("move", move), Clip("open", open_, loop=False), Clip("close", close_, loop=False), Clip("idle", idle)],
+        clips=[Clip("move", move), Clip("open", open_, loop=False, ease=0), Clip("close", close_, loop=False, ease=0), Clip("idle", idle)],
         sockets=socks, pfx=pfx,
     )
