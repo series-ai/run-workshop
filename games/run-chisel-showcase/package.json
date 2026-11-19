@@ -15,7 +15,7 @@
     "preview": "vite preview --mode local-preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "thumbnails": "../../tools/run-chisel-packs/node_modules/.bin/tsx scripts/render-thumbnails.ts",
+    "thumbnails": "node --import tsx scripts/render-thumbnails.ts",
     "deploy": "npm run build && rundot deploy"
   },
   "dependencies": {
@@ -25,7 +25,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "~0.170.0",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
@@ -34,6 +34,8 @@
     "@types/three": "~0.170.0",
     "@vitejs/plugin-react": "^4.7.0",
     "jsdom": "^25.0.1",
+    "playwright": "^1.59.1",
+    "tsx": "^4.23.15",
     "typescript": "~5.7.0",
     "vite": "^6.4.3",
     "vitest": "^3.2.7"

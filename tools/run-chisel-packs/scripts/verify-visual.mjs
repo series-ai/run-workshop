@@ -21,18 +21,18 @@ const require = createRequire(import.meta.url)
 
 function findPlaywright() {
   for (const candidate of [
+    process.env.PLAYWRIGHT_PATH,
     'playwright',
+    'playwright-core',
     resolve(dirname(process.execPath), '../lib/node_modules/@playwright/cli/node_modules/playwright'),
-    '/Users/pany/.local/share/mise/installs/node/24.19.0/lib/node_modules/@playwright/cli/node_modules/playwright',
-    '/Users/pany/.npm/_npx/e41f203b7505f1fb/node_modules/playwright',
-  ]) {
+  ].filter(Boolean)) {
     try {
       return require(candidate)
     } catch {
       // try next
     }
   }
-  throw new Error('Playwright not found. Install playwright or adjust findPlaywright paths.')
+  throw new Error('Playwright not found. Install playwright or set PLAYWRIGHT_PATH.')
 }
 
 function parseArgs(argv) {

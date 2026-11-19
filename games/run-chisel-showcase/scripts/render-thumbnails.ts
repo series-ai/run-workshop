@@ -8,28 +8,11 @@
  *   npm run thumbnails -- --pack medieval [--force]
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
+import { chromium } from 'playwright'
 import { createServer } from 'vite'
 import { packCatalogSchema } from '../../../tools/run-chisel-packs/contracts/catalog'
 import { leafFor, POLY_PACK_KEYS, type PolyLeafKind, type PolyPackKey } from '../../../tools/run-chisel-packs/contracts/packs'
-
-const require = createRequire(import.meta.url)
-
-function findPlaywright() {
-  for (const candidate of [
-    'playwright',
-    resolve(dirname(process.execPath), '../lib/node_modules/@playwright/cli/node_modules/playwright'),
-    '/Users/pany/.local/share/mise/installs/node/24.19.0/lib/node_modules/@playwright/cli/node_modules/playwright',
-  ]) {
-    try {
-      return require(candidate)
-    } catch {
-      // try next
-    }
-  }
-  throw new Error('Playwright not found. Install playwright or @playwright/cli.')
-}
 
 const ROOT = resolve(import.meta.dirname, '..')
 const STAGE = process.env.VITE_POLY_STAGE_DIR ?? resolve(ROOT, '../../tools/run-chisel-packs/out/jam-stage')
@@ -73,7 +56,6 @@ async function main(): Promise<void> {
 
   const server = await createServer({ root: ROOT, mode: 'development', server: { port: PORT, strictPort: true } })
   await server.listen()
-  const { chromium } = findPlaywright()
   const chromeBin = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
   const browser = await chromium.launch({
     headless: true,
