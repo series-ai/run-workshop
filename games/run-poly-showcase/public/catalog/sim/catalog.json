@@ -899,13 +899,13 @@
       "heldRight": "held_coffee_cup",
       "heldLeft": "held_phone",
       "palette": {
-        "skin": "#bc8358",
-        "hair": "#25262b",
-        "primary": "#35668c",
-        "secondary": "#9c8b70",
-        "accent": "#db6e48",
-        "metal": "#a2aab4",
-        "eye": "#2b2420"
+        "skin": "#bc7751",
+        "hair": "#32273d",
+        "primary": "#fb6655",
+        "secondary": "#3348a1",
+        "accent": "#73e5be",
+        "metal": "#a3bfca",
+        "eye": "#426757"
       },
       "proportions": {
         "height": 0.96,
@@ -1753,13 +1753,13 @@
       "heldRight": null,
       "heldLeft": "held_briefcase",
       "palette": {
-        "skin": "#d8a67e",
-        "hair": "#4a2e1f",
-        "primary": "#34425c",
-        "secondary": "#56606e",
-        "accent": "#b5483a",
-        "metal": "#c9cfd6",
-        "eye": "#2e5d8c"
+        "skin": "#e9ad81",
+        "hair": "#693c39",
+        "primary": "#3348a1",
+        "secondary": "#d8e1eb",
+        "accent": "#fb6655",
+        "metal": "#b6ccda",
+        "eye": "#305774"
       },
       "proportions": {
         "height": 1.03,
@@ -2607,13 +2607,13 @@
       "heldRight": null,
       "heldLeft": null,
       "palette": {
-        "skin": "#945d3b",
-        "hair": "#384b7a",
-        "primary": "#6f8f6b",
-        "secondary": "#4b5563",
-        "accent": "#d9a441",
-        "metal": "#d3cfc2",
-        "eye": "#3c2a21"
+        "skin": "#895639",
+        "hair": "#514fa2",
+        "primary": "#2db58b",
+        "secondary": "#f2c56a",
+        "accent": "#fb6655",
+        "metal": "#e6ecef",
+        "eye": "#49352f"
       },
       "proportions": {
         "height": 1,

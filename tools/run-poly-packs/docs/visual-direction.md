@@ -58,12 +58,14 @@ Every rule has a stable ID (`F1..F6`, `S1..S5`, `C1..C3`, `P1..P6`, `M1..M4`). F
 ## 3. Color & Context Cohesion (`C`)
 
 - **C1 — Cohesive Saturation & Value Envelope**:
-  - Keep base primary/secondary colors in **medium-value, controlled saturation** (`S ∈ [0.18, 0.62]`, `V ∈ [0.22, 0.78]`), reserving high saturation (`S > 0.70`) strictly for small **Accent** details (`<= 15%` surface area).
+  - Keep base primary/secondary colors in **medium-value, controlled saturation** (`S ∈ [0.18, 0.62]`, `V ∈ [0.22, 0.78]`) for grounded packs (`Medieval`, `WW2`, `Monsters`), reserving high saturation (`S > 0.70`) for small **Accent** details (`<= 15%` surface area).
+  - Stylized packs (`Sim`, `Cyberpunk`) may pair **one vivid painted primary or secondary block** with a contrasting dark/neutral partner so silhouettes pop cleanly at 128 px.
   - Never use pure `#000000` (shadows crush to muddy flat blobs) or pure `#FFFFFF` (blows out under key light).
 - **C2 — Genre Palettes on One Rig**:
   - **Medieval**: Warm iron/steel (`#8c96a3`), heraldic crimson/cobalt/forest primary, rich saddle leather secondary (`#5c3c24`), brass/gold accent (`#d9a441`).
   - **WW2**: Olive drab (`#545e43`), field grey (`#5c635f`), khaki webbing (`#8c7d5b`), gunmetal (`#3a4046`), subdued unit insignia accent (`#b84a39` / `#d4a24c`).
-  - **Sim / Modern**: Crisp denim/slate/coral/sage/mustard streetwear, warm neutral chinos (`#9e8c72`), clean sneakers & espresso/teal accents.
+  - **Sim / Modern**: Bright coral/teal/royal streetwear paired with crisp denim/cream neutrals and mint/coral sneaker accents.
+  - **Cyberpunk**: Vivid violet/cyan/crimson-magenta blocks over ice-slate or deep indigo panels with crisp neon cyan/gold accents and subdued terminal props.
 - **C3 — Instant Cross-Context Compatibility**:
   - Because `u` selects semantic role rather than fixed RGB, any Medieval helmet or WW2 trenchcoat automatically adopts a Sim or Faction color palette if desired, or uses its authored default palette from the pack catalog.
 

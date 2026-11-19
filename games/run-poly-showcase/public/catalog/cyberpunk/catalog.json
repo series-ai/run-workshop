@@ -899,13 +899,13 @@
       "heldRight": "held_cyber_katana",
       "heldLeft": null,
       "palette": {
-        "skin": "#d8a67e",
-        "hair": "#d93878",
-        "primary": "#1e293b",
-        "secondary": "#141824",
-        "accent": "#00e5ff",
-        "metal": "#8d99ae",
-        "eye": "#00e5ff"
+        "skin": "#744535",
+        "hair": "#f64c87",
+        "primary": "#5845bd",
+        "secondary": "#b9cfe2",
+        "accent": "#40f5ce",
+        "metal": "#889dca",
+        "eye": "#40f5ce"
       },
       "proportions": {
         "height": 1.02,
@@ -1753,13 +1753,13 @@
       "heldRight": null,
       "heldLeft": "held_holo_deck",
       "palette": {
-        "skin": "#ecc8aa",
-        "hair": "#b8bec7",
-        "primary": "#252042",
-        "secondary": "#12131c",
-        "accent": "#22f3b8",
-        "metal": "#9aa4b2",
-        "eye": "#22f3b8"
+        "skin": "#f2c8b2",
+        "hair": "#c6cfda",
+        "primary": "#2b9db8",
+        "secondary": "#2b2b54",
+        "accent": "#f64c87",
+        "metal": "#a3bfca",
+        "eye": "#40f5ce"
       },
       "proportions": {
         "height": 0.97,
@@ -2607,13 +2607,13 @@
       "heldRight": "held_smart_smg",
       "heldLeft": null,
       "palette": {
-        "skin": "#945d3b",
-        "hair": "#25262b",
-        "primary": "#cfd6e0",
-        "secondary": "#1a1f29",
-        "accent": "#ff2e55",
-        "metal": "#475261",
-        "eye": "#ff2e55"
+        "skin": "#895639",
+        "hair": "#32273d",
+        "primary": "#e2ebf3",
+        "secondary": "#394578",
+        "accent": "#f54345",
+        "metal": "#6b7ea4",
+        "eye": "#f54345"
       },
       "proportions": {
         "height": 1.04,
@@ -3461,13 +3461,13 @@
       "heldRight": "held_cyber_katana",
       "heldLeft": null,
       "palette": {
-        "skin": "#bc8358",
-        "hair": "#25262b",
-        "primary": "#8f2438",
-        "secondary": "#141720",
-        "accent": "#f5b727",
-        "metal": "#a8b3c2",
-        "eye": "#f5b727"
+        "skin": "#bc7751",
+        "hair": "#32273d",
+        "primary": "#e03b6a",
+        "secondary": "#2e2b4f",
+        "accent": "#ffe188",
+        "metal": "#b6ccda",
+        "eye": "#ffe188"
       },
       "proportions": {
         "height": 1.01,
