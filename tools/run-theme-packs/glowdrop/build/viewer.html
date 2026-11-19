@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Glowdrop Critters viewer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #12142a; color: #dfe4ff; font: 13px/1.4 Helvetica, sans-serif; overflow: hidden; }
+  #ui { position: fixed; top: 10px; left: 10px; z-index: 2; background: #1c2044cc; padding: 8px 10px; border-radius: 8px; max-width: 46vw; }
+  #ui select, #ui input, #ui button { font: inherit; background: #262b58; color: #dfe4ff; border: 1px solid #3a4180; border-radius: 4px; padding: 2px 6px; }
+  #clips button.on { background: #5866d8; }
+  #hint { opacity: .7; margin-top: 4px; }
+  canvas { display: block; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "/run-voxel-packs/node_modules/three/build/three.module.js",
+               "three/addons/": "/run-voxel-packs/node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="ui">
+  <b>Glowdrop</b>
+  <input id="q" placeholder="filter, e.g. creatures/sea" size="22">
+  <select id="pick"></select>
+  <span id="clips"></span>
+  <button id="step">step ▸</button>
+  <div id="hint">gallery: <code>?q=prefix</code> · one asset: <code>?a=path</code> · <code>&amp;clip=name</code> · space pauses</div>
+</div>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
+const P = new URLSearchParams(location.search);
+const OUT = P.get("out") || "out";
+const report = await (await fetch(`${OUT}/report.json`)).json();
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x12142a);
+scene.add(new THREE.HemisphereLight(0x8090ff, 0x202040, 1.1));
+const sun = new THREE.DirectionalLight(0xc8d0ff, 1.4); sun.position.set(3, 6, 4); scene.add(sun);
+const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.7, 0.5, 0.82));
+composer.addPass(new OutputPass());
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
+
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+const mixers = []; let paused = false;
+const holder = new THREE.Group(); scene.add(holder);
+
+function label(text, x, z) {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 64;
+  const g = c.getContext("2d"); g.fillStyle = "#aab4ff"; g.font = "28px Helvetica"; g.textAlign = "center"; g.fillText(text, 256, 40);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+  s.scale.set(1.6, 0.2, 1); s.position.set(x, -0.12, z); holder.add(s);
+}
+
+async function place(entry, x, z, clipName) {
+  const g = await loader.loadAsync(`${OUT}/${entry.path}.glb`);
+  const root = g.scene; root.position.set(x, 0, z); holder.add(root);
+  if (g.animations.length) {
+    const m = new THREE.AnimationMixer(root);
+    const clip = g.animations.find(a => a.name === clipName) || g.animations[0];
+    m.clipAction(clip).play(); mixers.push(m);
+  }
+  return g;
+}
+
+function clear() { holder.clear(); mixers.length = 0; }
+
+async function gallery(q) {
+  clear();
+  const list = report.filter(r => r.path.startsWith(q));
+  const cols = Math.ceil(Math.sqrt(list.length * 1.6)), gap = 1.6;
+  await Promise.all(list.map((r, i) => {
+    const x = (i % cols) * gap, z = Math.floor(i / cols) * gap;
+    label(r.path.split("/").pop(), x, z + 0.5);
+    return place(r, x, z, P.get("clip"));
+  }));
+  const w = (cols - 1) * gap, d = Math.floor((list.length - 1) / cols) * gap;
+  controls.target.set(w / 2, 0.2, d / 2);
+  camera.position.set(w / 2 + w * 0.35, Math.max(w, d) * 0.75 + 1, d / 2 + Math.max(w, d) * 0.9 + 1.5);
+}
+
+let current = null;
+async function single(path, clipName) {
+  clear();
+  const entry = report.find(r => r.path === path);
+  const g = await place(entry, 0, 0, clipName);
+  current = { entry, g };
+  const box = new THREE.Box3().setFromObject(g.scene), size = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(box.getCenter(new THREE.Vector3()));
+  camera.position.copy(controls.target).add(new THREE.Vector3(size * 0.9, size * 0.6, size * 1.4));
+  const cb = document.getElementById("clips"); cb.innerHTML = "";
+  for (const a of g.animations) {
+    const b = document.createElement("button"); b.textContent = a.name; b.className = a.name === (clipName || g.animations[0].name) ? "on" : "";
+    b.onclick = () => { const u = new URL(location); u.searchParams.set("clip", a.name); location = u; };
+    cb.appendChild(b);
+  }
+}
+
+// KIT.pose(clip, t) for scripted contact sheets
+window.KIT = { pose(clip, t) { paused = true; for (const m of mixers) { m.stopAllAction();
+  const root = m.getRoot(); const a = current.g.animations.find(x => x.name === clip); const act = m.clipAction(a); act.play(); m.setTime(t); }
+  composer.render(); } };
+
+const pick = document.getElementById("pick");
+for (const r of report) { const o = document.createElement("option"); o.value = o.textContent = r.path; pick.appendChild(o); }
+pick.onchange = () => { location.search = `?a=${pick.value}`; };
+document.getElementById("q").onkeydown = e => { if (e.key === "Enter") location.search = `?q=${e.target.value}`; };
+document.getElementById("step").onclick = () => { paused = true; for (const m of mixers) m.update(1 / 30); };
+addEventListener("keydown", e => { if (e.code === "Space") paused = !paused; });
+
+// sheet mode: every clip of every matching asset as a row of frames (for review screenshots)
+async function sheet(q, n) {
+  document.getElementById("ui").style.display = "none";
+  renderer.domElement.style.display = "none";
+  document.body.style.overflow = "auto";
+  const W = 150, list = report.filter(r => r.path.startsWith(q) && r.clips.length);
+  const off = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); off.setSize(W, W);
+  off.toneMapping = THREE.ACESFilmicToneMapping;
+  const comp = new EffectComposer(off); const cam = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+  comp.addPass(new RenderPass(scene, cam)); comp.addPass(new UnrealBloomPass(new THREE.Vector2(W, W), 0.7, 0.5, 0.82)); comp.addPass(new OutputPass());
+  for (const r of list) {
+    const g = await loader.loadAsync(`${OUT}/${r.path}.glb`); holder.clear(); holder.add(g.scene);
+    const box = new THREE.Box3().setFromObject(g.scene), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()).length();
+    for (const a of g.animations) {
+      const row = document.createElement("div"); row.style.cssText = "display:flex;align-items:center;gap:2px;margin:2px 6px";
+      const lab = document.createElement("div"); lab.style.cssText = "width:230px;font-size:12px"; lab.textContent = `${r.path.split("/").pop()} · ${a.name} ${a.duration.toFixed(2)}s`; row.appendChild(lab);
+      const m = new THREE.AnimationMixer(g.scene); m.clipAction(a).play();
+      for (let i = 0; i < n; i++) {
+        m.setTime(a.duration * i / n);
+        cam.position.copy(c).add(new THREE.Vector3(s * 0.55, s * 0.35, s * 1.25)); cam.lookAt(c);
+        comp.render();
+        const img = new Image(); img.src = off.domElement.toDataURL(); img.width = W; row.appendChild(img);
+      }
+      m.stopAllAction(); document.body.appendChild(row);
+    }
+  }
+  document.title = "sheet-done";
+}
+
+if (P.get("sheet") !== null) { await sheet(P.get("sheet"), +(P.get("n") || 8)); }
+else if (P.get("a")) { pick.value = P.get("a"); await single(P.get("a"), P.get("clip"));
+  if (P.get("t") !== null) { paused = true; for (const m of mixers) m.setTime(+P.get("t")); } }
+else await gallery(P.get("q") || "");
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (!paused) for (const m of mixers) m.update(dt);
+  controls.update(); composer.render();
+});
+</script>
+</body>
+</html>
