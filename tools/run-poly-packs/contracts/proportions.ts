@@ -40,6 +40,8 @@ const UAL1_PELVIS_H = 0.19297 // spine_01.y (1.27649) - thigh_l.y (1.08352)
 const UAL1_UPPER_TORSO_H = 0.42932 // Head.y (1.70581) - spine_01.y (1.27649)
 const UAL1_NECK_H = 0.09287 // Head.y (1.70581) - neck_01.y (1.61294)
 const UAL1_UPPER_SPINE_H = UAL1_UPPER_TORSO_H - UAL1_NECK_H
+const UAL1_LOWER_UPPER_SPINE_H = 0.18940 // spine_03.y (1.46589) - spine_01.y (1.27649)
+const UAL1_SHOULDER_ZONE_H = UAL1_UPPER_SPINE_H - UAL1_LOWER_UPPER_SPINE_H // neck_01.y (1.61294) - spine_03.y (1.46589)
 const UAL1_BODY_H = UAL1_LEG_H + UAL1_TORSO_H
 const UAL1_TOTAL_H = UAL1_BODY_H + UAL1_FIXED_H
 
@@ -224,6 +226,10 @@ export function boneScaleFor<T extends Vec3Out>(
   const upperTorsoY = clamp((torsoY * UAL1_TORSO_H - UAL1_PELVIS_H * pelvisY) / UAL1_UPPER_TORSO_H, 0.35, 2.25)
   const neckY = clamp(1 + 0.35 * (upperTorsoY - 1), 0.8, 1.35)
   const upperSpineY = (upperTorsoY * UAL1_UPPER_TORSO_H - neckY * UAL1_NECK_H) / UAL1_UPPER_SPINE_H
+  // Keep the upper chest/clavicle socket zone close to 1.0x so short-leg presets don't stretch the neck-to-arm drop.
+  const shoulderZoneY = clamp(1 + 0.35 * (upperSpineY - 1), 0.72, 1.28)
+  const lowerUpperSpineY =
+    (upperSpineY * UAL1_UPPER_SPINE_H - shoulderZoneY * UAL1_SHOULDER_ZONE_H) / UAL1_LOWER_UPPER_SPINE_H
   const handScale = (1 + 0.35 * (limbThickness - 1)) * handScaleOverride
   const footXZ = (1 + 0.25 * (limbThickness - 1)) * footScaleOverride
   const upperMass = 1 + 1.05 * (limbThickness - 1)
@@ -247,13 +253,13 @@ export function boneScaleFor<T extends Vec3Out>(
       return setVec(
         out,
         1 + 0.85 * (waistScale - 1) + 0.15 * (torsoBulk - 1),
-        upperSpineY,
+        lowerUpperSpineY,
         1 + 0.85 * (waistScale - 1) + 0.15 * (torsoBulk - 1),
       ) as T
     case 'spine_02':
-      return setVec(out, spine02X, upperSpineY, 0.65 * torsoBulk + 0.35 * waistScale) as T
+      return setVec(out, spine02X, lowerUpperSpineY, 0.65 * torsoBulk + 0.35 * waistScale) as T
     case 'spine_03':
-      return setVec(out, spine03X, upperSpineY, torsoBulk) as T
+      return setVec(out, spine03X, shoulderZoneY, torsoBulk) as T
     case 'clavicle': {
       const minClavX =
         1.196 * Math.max(spine03X, spine02X * 0.96) -
@@ -264,7 +270,7 @@ export function boneScaleFor<T extends Vec3Out>(
       return setVec(
         out,
         Math.max(1 + 1.45 * (shoulderWidth - 1), minClavX),
-        upperSpineY,
+        1,
         1 + 0.55 * (torsoBulk - 1),
       ) as T
     }

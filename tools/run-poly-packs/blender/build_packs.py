@@ -246,8 +246,8 @@ def torso_medieval_knight(part, body):
                              ('neck_base', 0.016, {'y': neck + 0.040, 'skin': SKIN_NECK})], 'metal', sleeves=True,
                 band_ao=[-0.06, 0, 0.03, 0.03, 0, 0.05])
     # Tabard strip and brass emblem on the breastplate.
-    front_strip(part, body, [(1.10, 0.052, 0.022), (1.235, 0.046, 0.024), (1.355, 0.052, 0.028), (1.465, 0.058, 0.034)],
-                'primary')
+    front_strip(part, body, [(1.10, 0.052, 0.022), (1.235, 0.046, 0.024), (1.355, 0.052, 0.028),
+                             (body.torso['chest'].y, 0.058, 0.034)], 'primary')
     torso_plate(part, body, 1.405, 2, 0.040, 0.058, 0.070, 0.010, 'accent', shrink=0.7)
     belt(part, body, 1.135, 0.015, 0.050, 'secondary', bulge=0.006, flat=False)
     torso_plate(part, body, 1.135, 2, 0.028, 0.050, 0.046, 0.012, 'accent')
@@ -331,7 +331,7 @@ def headwear_great_helm(part, shape=ENVELOPE):
     def lifted(height, scale):
         return [V(point.x * scale, height, pk.HEAD_Z + (point.z - pk.HEAD_Z) * scale) for point in wide]
 
-    part.loft([pk.head_ring(shape, 1.698, grow + 0.008), pk.head_ring(shape, 1.716, grow + 0.006),
+    part.loft([pk.head_ring(shape, pk.HEAD_Y['plug'], grow + 0.008), pk.head_ring(shape, pk.HEAD_Y['chin'], grow + 0.006),
                wide, lifted(1.992, 0.98), lifted(2.012, 0.86)], 'metal',
               cap_end=True, band_regions=['accent', 'metal', 'metal', 'metal'])
     eye = pk.HEAD_Y['cheek'] + 0.026
@@ -561,10 +561,11 @@ def torso_ww2_trenchcoat(part, body):
     w_chest = body.torso['chest'].w
     w_sh = body.torso['shoulder'].w
     w_top = pk.station_at(body, neck - 0.008).w
+    chest_y = body.torso['chest'].y
     sh_y = body.torso['shoulder'].y
     lapel_rows = [
         (1.355, min(0.064, w_ribs * 0.44), 0.008, 0.019, 0.029),
-        (1.465, min(0.084, w_chest * 0.48), 0.018, 0.021, 0.031),
+        (chest_y, min(0.084, w_chest * 0.48), 0.018, 0.021, 0.031),
         (sh_y, min(0.088, w_sh * 0.52), 0.028, 0.019, 0.029),
         (neck - 0.008, min(0.046, w_top * 0.72), 0.022, 0.014, 0.023),
     ]
@@ -825,8 +826,9 @@ def torso_sim_blazer(part, body):
     torso_stack(part, body, [('neck_base', 0.010, {'y': neck - 0.004}), ('neck_base', 0.009, {'y': neck + 0.026, 'skin': SKIN_NECK})],
                 'metal', ao=0.12)
     # Curved V-front shirt panel conforming across ribs/chest/shoulder proud of the blazer shell.
+    chest_y = body.torso['chest'].y
     sh_y = body.torso['shoulder'].y
-    shirt_spec = [(1.355, 0.024, 0.022), (1.465, 0.042, 0.025), (sh_y, 0.048, 0.024), (neck - 0.004, 0.030, 0.018)]
+    shirt_spec = [(1.355, 0.024, 0.022), (chest_y, 0.042, 0.025), (sh_y, 0.048, 0.024), (neck - 0.004, 0.030, 0.018)]
     shirt_rings = [
         [pk.torso_point(body, y, hw, grow), pk.torso_point(body, y, 0.0, grow), pk.torso_point(body, y, -hw, grow)]
         for y, hw, grow in shirt_spec
@@ -841,9 +843,9 @@ def torso_sim_blazer(part, body):
     # 3D bevelled tie with knot and pointed blade sitting cleanly proud of the shirt at every chest station.
     front_bevel_panel(part, body, [
         (1.365, 0.016, -0.016, 0.028, 0.037),
-        (1.465, 0.015, -0.015, 0.032, 0.041),
+        (chest_y, 0.015, -0.015, 0.032, 0.041),
         (sh_y, 0.012, -0.012, 0.030, 0.039),
-        (1.592, 0.015, -0.015, 0.026, 0.035),
+        (sh_y + 0.008, 0.015, -0.015, 0.026, 0.035),
         (neck - 0.004, 0.011, -0.011, 0.022, 0.030),
     ], 'accent', inset=0.003, tip_start=pk.torso_point(body, 1.315, 0.0, 0.032), cap_end=True)
     # Mirrored multi-station blazer lapels framing the V-opening outside the tie up to the collar.
@@ -853,7 +855,7 @@ def torso_sim_blazer(part, body):
     w_top = pk.station_at(body, neck - 0.006).w
     lapel_rows = [
         (1.355, min(0.060, w_ribs * 0.40), 0.020, 0.022, 0.030),
-        (1.465, min(0.078, w_chest * 0.44), 0.032, 0.024, 0.033),
+        (chest_y, min(0.078, w_chest * 0.44), 0.032, 0.024, 0.033),
         (sh_y, min(0.082, w_sh * 0.50), 0.036, 0.025, 0.033),
         (neck - 0.006, min(0.046, w_top * 0.72), 0.024, 0.019, 0.026),
     ]
@@ -879,9 +881,9 @@ def torso_sim_varsity(part, body):
                              ('neck_base', 0.010, {'y': neck + 0.028, 'skin': SKIN_NECK})], 'primary', sleeves=True,
                 band_regions=['accent'] + ['primary'] * 6 + ['accent'])
     front_strip(part, body, [(1.085, 0.014, 0.023), (1.135, 0.014, 0.019), (1.235, 0.014, 0.017),
-                             (1.355, 0.014, 0.018), (1.465, 0.014, 0.019), (body.torso['shoulder'].y, 0.014, 0.018),
-                             (1.596, 0.014, 0.016)], 'metal', ao=0.08)
-    torso_plate(part, body, 1.440, 1, 0.022, 0.064, 0.078, 0.009, 'accent', shrink=0.8, corner=0.014)
+                             (1.355, 0.014, 0.018), (body.torso['chest'].y, 0.014, 0.019), (body.torso['shoulder'].y, 0.014, 0.018),
+                             (body.torso['shoulder'].y + 0.008, 0.014, 0.016)], 'metal', ao=0.08)
+    torso_plate(part, body, 1.440, 1, 0.025, 0.064, 0.078, 0.009, 'accent', shrink=0.8, corner=0.014)
     with part.mirrored():
         arm_stack(part, body, [(0, 0.010), (1, 0.011), (2, 0.011), (3, 0.009), (4, 0.010), (5.5, 0.010), (5.6, 0.008),
                                (6.0, 0.009), (6.0, 0.000, 0.654)], 'metal', armhole=armhole,
@@ -1044,7 +1046,7 @@ def torso_cyber_edgerunner(part, body):
     torso_plate(part, body, 1.132, 2, 0.026, 0.048, 0.036, 0.010, 'metal')
     # Central neon data strip and asymmetric tech-plate on left chest.
     front_strip(part, body, [(1.170, 0.011, 0.019), (1.235, 0.011, 0.018), (1.355, 0.012, 0.020),
-                             (1.465, 0.012, 0.022), (body.torso['shoulder'].y, 0.012, 0.021), (neck - 0.004, 0.011, 0.017)],
+                             (body.torso['chest'].y, 0.012, 0.022), (body.torso['shoulder'].y, 0.012, 0.021), (neck - 0.004, 0.011, 0.017)],
                 'accent', ao=0.14)
     torso_plate(part, body, 1.445, 1, 0.026, 0.058, 0.066, 0.010, 'secondary', shrink=0.84, ao=0.02)
     torso_plate(part, body, 1.445, 1, 0.034, 0.042, 0.020, 0.008, 'metal', shrink=0.88)
@@ -1066,7 +1068,7 @@ def torso_cyber_netrunner(part, body):
                 band_regions=['secondary', 'secondary', 'secondary', 'primary', 'primary', 'secondary', 'accent'],
                 band_ao=[-0.06, 0, 0, 0.04, 0.04, -0.04, 0.14])
     front_strip(part, body, [(1.140, 0.012, 0.017), (1.235, 0.014, 0.016), (1.355, 0.016, 0.017),
-                             (1.465, 0.018, 0.019), (body.torso['shoulder'].y, 0.014, 0.017), (neck - 0.004, 0.010, 0.014)],
+                             (body.torso['chest'].y, 0.018, 0.019), (body.torso['shoulder'].y, 0.014, 0.017), (neck - 0.004, 0.010, 0.014)],
                 'accent', ao=0.16)
     torso_plate(part, body, 1.455, 2, 0.021, 0.056, 0.046, 0.010, 'metal', shrink=0.86, ao=0.08)
     with part.mirrored():
@@ -1080,6 +1082,7 @@ def torso_cyber_netrunner(part, body):
 def torso_cyber_enforcer(part, body):
     part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
     neck = body.torso['neck_base'].y
+    chest_y = body.torso['chest'].y
     sh_y = body.torso['shoulder'].y
     armhole = torso_stack(part, body, [('hips', 0.017, {'y': 1.072, 'hem': 0.012}), ('belt', 0.015), ('waist', 0.014),
                              ('ribs', 0.018), ('chest', 0.022), ('shoulder', 0.018), ('neck_base', 0.011),
@@ -1089,10 +1092,10 @@ def torso_cyber_enforcer(part, body):
                 band_ao=[-0.08, -0.04, 0.04, 0.06, 0.04, 0.02, 0.12])
     front_bevel_panel(part, body, [
         (1.320, 0.048, -0.048, 0.022, 0.032),
-        (1.465, 0.058, -0.058, 0.026, 0.036),
+        (chest_y, 0.058, -0.058, 0.026, 0.036),
         (sh_y, 0.044, -0.044, 0.022, 0.031),
     ], 'metal', inset=0.006, ao=0.06, cap_start=True, cap_end=True)
-    front_strip(part, body, [(1.355, 0.013, 0.034), (1.465, 0.013, 0.038), (sh_y, 0.012, 0.033)], 'accent', ao=0.18)
+    front_strip(part, body, [(1.355, 0.013, 0.034), (chest_y, 0.013, 0.038), (sh_y, 0.012, 0.033)], 'accent', ao=0.18)
     belt(part, body, 1.132, 0.016, 0.050, 'secondary', bulge=0.007, flat=False)
     torso_plate(part, body, 1.132, 2, 0.028, 0.052, 0.042, 0.011, 'metal')
     with part.mirrored():
@@ -1141,7 +1144,7 @@ def headwear_cyber_helm(part, shape=ENVELOPE):
     def lifted(height, scale):
         return [V(point.x * scale, height, pk.HEAD_Z + (point.z - pk.HEAD_Z) * scale) for point in wide]
 
-    part.loft([pk.head_ring(shape, 1.704, grow + 0.008), pk.head_ring(shape, 1.772, grow + 0.005),
+    part.loft([pk.head_ring(shape, pk.HEAD_Y['plug'] + 0.006, grow + 0.008), pk.head_ring(shape, pk.HEAD_Y['jaw'], grow + 0.005),
                wide, lifted(1.984, 0.96), lifted(2.010, 0.80)],
               'primary', cap_end=True, band_regions=['secondary', 'primary', 'primary', 'primary'])
     eye = pk.HEAD_Y['cheek'] + 0.022
@@ -1149,7 +1152,7 @@ def headwear_cyber_helm(part, shape=ENVELOPE):
         center, normal, _ = head_facet(eye, index, grow, shape)
         part.plate(center, normal, Y, width, 0.024, 0.008, 'accent', shrink=0.88, ao=0.22)
     # Angular respirator chin plate and twin cybernetic ear comms fins.
-    center, normal, _ = head_facet(1.772, 1, grow + 0.004, shape)
+    center, normal, _ = head_facet(pk.HEAD_Y['jaw'], 1, grow + 0.004, shape)
     part.plate(center, normal, Y, 0.076, 0.068, 0.012, 'secondary', shrink=0.8, ao=-0.06)
     for index in (0, 3):
         center, normal, _ = head_facet(1.880, index, grow, shape)

@@ -231,7 +231,9 @@ def head_troll(part):
         for z_offset, height, lean in ((0.050, 0.085, 0.020), (-0.006, 0.110, 0.045), (-0.062, 0.080, 0.070)):
             spike(part, V(0, 1.962, pk.HEAD_Z + z_offset), V(0, 1.962 + height, pk.HEAD_Z + z_offset - lean), 0.030, 'hair',
                   n=3, flat=0.55, up=Z)
-    spike(part, V(0, 1.716, front(1.716) - 0.034), V(0, 1.628, front(1.716) + 0.012), 0.030, 'hair', n=3, flat=0.6, up=Z)
+    chin_y = pk.HEAD_Y['chin'] + 0.008
+    spike(part, V(0, chin_y, front(chin_y) - 0.034), V(0, chin_y - 0.088, front(chin_y) + 0.012), 0.030, 'hair', n=3,
+          flat=0.6, up=Z)
 
 
 def hair_orc_mohawk(part, shape=pk.HEAD_ENVELOPE):
@@ -267,7 +269,7 @@ def torso_orc_harness(part, body):
         spike(part, boss, boss + V(0, 0.006, 0.062), 0.026, 'metal', n=4, up=Y, ao=0.1)
     # Studded leather strap from the left shoulder to the right hip (follows ribs & chest stations).
     strap = [('front', 1.215, -0.70, 0.026), ('front', 1.355, -0.20, 0.029),
-             ('front', 1.465, 0.21, 0.034), ('front', 1.548, 0.52, 0.029)]
+             ('front', b.torso['chest'].y, 0.21, 0.034), ('front', 1.548, 0.52, 0.029)]
     torso_strap(part, b, strap, 'secondary', half=0.024, thick=0.012, ao=-0.08)
     with part.skinned(pk.SKIN_TORSO):
         for height, fraction in ((1.262, -0.55), (1.355, -0.20), (1.515, 0.40)):

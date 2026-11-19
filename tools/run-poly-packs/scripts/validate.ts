@@ -2051,13 +2051,13 @@ async function assertNeckHeadAlignment(
 
   const outerHeadBaseTris = (headMesh: SkinnedMesh) => {
     const pos = headMesh.geometry.getAttribute('position')
-    return collectRestYBandTriangles(headMesh, 1.690, 1.780).filter(([a, b, c]) => {
+    return collectRestYBandTriangles(headMesh, 1.676, 1.770).filter(([a, b, c]) => {
       const y0 = pos.getY(a)
       const y1 = pos.getY(b)
       const y2 = pos.getY(c)
       const minY = Math.min(y0, y1, y2)
       const maxY = Math.max(y0, y1, y2)
-      return maxY >= 1.705 || maxY - minY > 0.003
+      return maxY >= 1.690 || maxY - minY > 0.003
     })
   }
 
@@ -2086,7 +2086,7 @@ async function assertNeckHeadAlignment(
         const headMesh = loaded.meshes.find((m) => m.name === headId)
         if (!bodyMesh || !headMesh) throw new Error(`Missing ${bodyId} or ${headId} in neck-head alignment audit`)
 
-        const neckTris = collectRestYBandTriangles(bodyMesh, 1.608, 1.716)
+        const neckTris = collectRestYBandTriangles(bodyMesh, 1.608, 1.700)
         const headTris = outerHeadBaseTris(headMesh)
         const jawIdx = headMesh.morphTargetDictionary?.['jaw']
 
@@ -2114,7 +2114,7 @@ async function assertNeckHeadAlignment(
     const headMesh = loaded.meshes.find((m) => m.name.startsWith('head_'))
     if (!bodyMesh || !headMesh) continue
 
-    const neckTris = collectRestYBandTriangles(bodyMesh, 1.608, 1.716)
+    const neckTris = collectRestYBandTriangles(bodyMesh, 1.608, 1.700)
     const headTris = outerHeadBaseTris(headMesh)
     const restBones = new Map<string, Object3D>()
     loaded.root.traverse((obj) => {

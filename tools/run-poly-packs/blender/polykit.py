@@ -1223,14 +1223,14 @@ def make_body(body_id, label, *, chest=1.0, waist=1.0, belly=1.0, hips=1.0, dept
         'belt': Station(1.135, 0.103 * waist, 0.080 * depth * belly, 0.074 * depth, 0.000),
         'waist': Station(1.235, 0.088 * waist, 0.074 * depth * belly, 0.051 * depth, 0.016),
         'ribs': Station(1.355, 0.077 * chest, 0.066 * depth, 0.035 * depth, 0.028),
-        'chest': Station(1.465, 0.091 * chest, 0.0715 * depth, 0.042 * depth, 0.032),
-        'shoulder': Station(1.582, 0.096 * sh_width, 0.060 * depth, 0.042 * depth, 0.035),
+        'chest': Station(1.488, 0.092 * chest, 0.0715 * depth, 0.042 * depth, 0.032),
+        'shoulder': Station(1.594, 0.098 * sh_width, 0.060 * depth, 0.042 * depth, 0.035),
         'neck_base': Station(1.615, 0.052 * base_neck, 0.048 * base_neck, 0.046 * base_neck, 0.026),
-        'neck_top': Station(1.712, 0.044 * top_neck, 0.042 * top_neck, 0.040 * top_neck, HEAD_Z),
+        'neck_top': Station(1.696, 0.044 * top_neck, 0.042 * top_neck, 0.040 * top_neck, HEAD_Z),
     }
     arms = (
         (0.082, 0.030 * arm, 0.027 * arm, 0.003),
-        (SHOULDER.x + 0.030, 0.038 * arm * shoulder, 0.039 * max(arm * shoulder, depth), 0.006),
+        (SHOULDER.x + 0.030, 0.039 * arm * shoulder, 0.039 * max(arm * shoulder, depth), 0.021),
         (0.255, 0.028 * arm, 0.0295 * arm, 0.0165),
         (0.392, 0.030 * arm, 0.031 * arm, 0.002),
         (0.448, 0.034 * arm, 0.035 * arm, 0.001),
@@ -1787,7 +1787,7 @@ def build_foot(part, body, region='skin', grow=0.0, *, sole=0.0, toe=0.0, sole_r
 HEAD_SIDES = 8
 HEAD_SQUARENESS = 0.88
 HEAD_STATION_KEYS = ('plug', 'chin', 'jaw', 'cheek', 'brow', 'upper', 'crown')
-HEAD_Y = {'plug': 1.698, 'chin': 1.716, 'jaw': 1.772, 'cheek': 1.842, 'brow': 1.906, 'upper': 1.956, 'crown': 1.984}
+HEAD_Y = {'plug': 1.684, 'chin': 1.700, 'jaw': 1.760, 'cheek': 1.842, 'brow': 1.906, 'upper': 1.956, 'crown': 1.984}
 # Fraction of the half width / depth where the flat side and front planes sit.
 HEAD_PLANE = math.cos(math.pi / HEAD_SIDES) ** HEAD_SQUARENESS
 

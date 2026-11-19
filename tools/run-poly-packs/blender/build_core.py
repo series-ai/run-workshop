@@ -137,7 +137,8 @@ def build_head(part, spec, *, jaw=0.0, nose=0.0, brow=0.0, smile=0.0, blink=0.0)
         # Beard: a faceted band around the jaw in the hair colour.
         columns = [7, 0, 1, 2, 3, 4]
         rings = []
-        for height_y, grow in ((1.704, 0.006), (1.740, 0.012), (1.796, 0.008)):
+        for height_y, grow in ((pk.HEAD_Y['plug'] + 0.008, 0.006), (pk.HEAD_Y['chin'] + 0.026, 0.012),
+                               (pk.HEAD_Y['jaw'] + 0.026, 0.008)):
             points = pk.head_ring(shape, height_y, grow)
             rings.append([points[column] for column in columns])
         part.loft(rings, 'hair', closed=False, ao=-0.04)
