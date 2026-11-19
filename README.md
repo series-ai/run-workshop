@@ -22,6 +22,7 @@ first game starter. Each sub-project then documents its own specifics in its
 - [RUN Chisel Packs Showcase](games/run-chisel-showcase/) — stylized faceted low-poly modular avatar, creature, and world-prop workshop on one shared 53-joint Quaternius UAL1 rig (89 CC0 clips) plus 7 Mesh2Motion creature rigs across Core, Medieval, WW2, Sim, Cyberpunk, and Monsters: searchable Asset Gallery, Parametric Avatar Lab, 5-Context Stage, and S23 Ultra 120 Hz Perf Bench. See [games/run-chisel-showcase/README.md](games/run-chisel-showcase/README.md).
 - [Dither Playground](games/dither-playground/) — apply retro dithering algorithms and palettes to 3D scenes, images, and video. Includes a split-screen algorithm comparison grid, a static-vs-animated crawl test, and a cursor-following resolve mask. See [games/dither-playground/README.md](games/dither-playground/README.md).
 - [Clubhouse Demo](games/clubhouse-demo/) — showroom for the Clubhouse Games pack: playing cards, dominoes, dice, mahjong tiles, checkers, chess, and betting chips as procedural R3F pieces (Vite + React + R3F). Includes a `rundot generate image` pipeline for authoring card backs. See [games/clubhouse-demo/README.md](games/clubhouse-demo/README.md).
+- [Procedural Paintings](games/procedural-paintings/) — 21 real-time procedural WebGL Three.js painting scenes (16 pre-1910 public-domain works + 5 original style studies) built with custom GLSL shaders, impasto strokes, and SDF meshes with zero external assets. See [games/procedural-paintings/README.md](games/procedural-paintings/README.md).
 
 ## Tools
 
