@@ -457,9 +457,14 @@ describe('scaleAnimatedPelvis', () => {
     expect(orc.z).toBeCloseTo(0.0053, 5)
 
     const thick = computeHeldSocketPosition(palmOffset, 1.0, 1.2)
-    expect(thick.x).toBeCloseTo(-0.0399 * 1.07, 5)
+    expect(thick.x).toBeCloseTo(-(0.016 * 1.07 + 0.0239), 5)
     expect(thick.y).toBeCloseTo(0.09 * 1.07, 5)
     expect(thick.z).toBeCloseTo(0.0053 * 1.07, 5)
+
+    const bigHand = computeHeldSocketPosition(palmOffset, 1.0, 1.0, new Vector3(), 1.3)
+    expect(bigHand.x).toBeCloseTo(-(0.016 * 1.3 + 0.0239), 5)
+    expect(bigHand.y).toBeCloseTo(0.09 * 1.3, 5)
+    expect(bigHand.z).toBeCloseTo(0.0053 * 1.3, 5)
   })
 })
 

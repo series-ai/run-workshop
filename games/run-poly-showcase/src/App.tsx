@@ -36,7 +36,7 @@ export function App() {
             <span className="hide-compact">Parametric </span>Avatar Lab
           </button>
           <button className={`tab-btn ${tab === 'stage' ? 'active' : ''}`} onClick={() => setTab('stage')}>
-            Context Stage<span className="hide-compact"> (Medieval · WW2 · Sim · Monsters)</span>
+            Context Stage<span className="hide-compact"> (Medieval · WW2 · Sim · Cyberpunk · Monsters)</span>
           </button>
           <button className={`tab-btn ${tab === 'perf' ? 'active' : ''}`} onClick={() => setTab('perf')}>
             <span className="hide-compact">S23 Ultra </span>Perf Bench

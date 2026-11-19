@@ -35,6 +35,7 @@ from build_packs import (  # noqa: E402
 PACK = 'monsters'
 SOURCE_RIG = pk.TOOL_ROOT / 'assets/source/ual1-base.glb'
 SKIN_PAULDRON_ORC_L = pk.rigid(clavicle_l=0.55, upperarm_l=0.45)
+SKIN_PAULDRON_TROLL_L = pk.rigid(clavicle_l=0.40, upperarm_l=0.60)
 QUADRUPED_CONTRACT = pk.load_json('quadruped-rig.json')
 ARACHNID_CONTRACT = pk.load_json('arachnid-rig.json')
 
@@ -253,14 +254,14 @@ def torso_orc_harness(part, body):
     part.covers = ['chest', 'legs_waist']
     torso_stack(part, b, [('hips', 0.012, {'y': 1.07}), ('belt', 0.015),
                           ('ribs', 0.016), ('chest', 0.018), ('shoulder', 0.016),
-                          ('neck_base', 0.014, {'skin': SKIN_NECK})], 'primary',
+                          ('neck_base', 0.010, {'skin': SKIN_NECK})], 'primary',
                 cap_end=True,
                 band_regions=['secondary', 'primary', 'primary', 'secondary', 'secondary'],
                 band_ao=[-0.06, -0.02, 0.02, -0.04, -0.06])
     belt(part, b, 1.135, 0.015, 0.066, 'secondary', bulge=0.006, flat=False)
-    torso_plate(part, b, 1.135, 2, 0.040, 0.076, 0.060, 0.016, 'metal', corner=0.014)
+    torso_plate(part, b, 1.135, 2, 0.040, 0.076, 0.060, 0.016, 'metal', shrink=0.78)
     # Forged chest plate with a spiked boss.
-    torso_plate(part, b, 1.425, 2, 0.040, 0.104, 0.100, 0.016, 'metal', shrink=0.74, corner=0.022, ao=0.04)
+    torso_plate(part, b, 1.425, 2, 0.040, 0.104, 0.100, 0.016, 'metal', shrink=0.74, ao=0.04)
     boss = pk.facet(pk.torso_ring(b, 1.425, 0.052), 2)[0]
     with part.skinned(pk.SKIN_TORSO), part.anchored(pk.facet(pk.torso_ring(b, 1.425), 2)[0]):
         spike(part, boss, boss + V(0, 0.006, 0.062), 0.026, 'metal', n=4, up=Y, ao=0.1)
@@ -299,7 +300,7 @@ def torso_troll_hide(part, body):
         (1.405, 0.038, -0.125, {'widen': -0.038, 'front': 0.012, 'back': 0.008}),
         (1.500, 0.044, -0.045, {'widen': -0.042, 'front': 0.012, 'back': 0.008}),
         (shoulder, 0.040, 0.0, {'widen': -0.036, 'front': 0.010, 'back': 0.008}),
-        (neck, 0.032, 0.0, {}),
+        (neck, 0.022, 0.0, {}),
     ]
     rings = [tilted_torso_ring(b, height, grow, tilt, **opts) for height, grow, tilt, opts in spec]
     refs = [tilted_torso_ring(b, height, 0.0, tilt) for height, _, tilt, _ in spec]
@@ -315,8 +316,8 @@ def torso_troll_hide(part, body):
                       flat=0.5, up=out, ao=-0.06)
 
     # 2. Fur pauldron on the left shoulder, with three tufts on its rim.
-    with part.skinned(SKIN_PAULDRON_L):
-        cap = [pk.arm_ring(b, 0.88, 0.034), pk.arm_ring(b, 1.38, 0.046), pk.arm_ring(b, 1.85, 0.032)]
+    with part.skinned(SKIN_PAULDRON_TROLL_L):
+        cap = [pk.arm_ring(b, 1.00, 0.036), pk.arm_ring(b, 1.48, 0.048), pk.arm_ring(b, 1.92, 0.034)]
         part.loft(cap, 'hair', band_ao=[0.06, -0.06], cap_start=True, cap_end=True)
         crown = pk.facet(cap[1], 1, axis=X)[0]
         for dx, dz in ((-0.030, 0.040), (0.040, -0.030)):
@@ -349,13 +350,13 @@ def torso_troll_hide(part, body):
                 spike(part, torso_at(b, height, fraction, grow), torso_at(b, height, fraction, grow + 0.022), 0.015,
                       'metal', n=4, up=Y, ao=0.1)
 
-    # 4. Belt with an iron buckle and a hide pouch on the right hip.
-    belt(part, b, 1.135, 0.026, 0.060, 'secondary', flat=False)
-    torso_plate(part, b, 1.135, 2, 0.038, 0.064, 0.056, 0.016, 'metal', corner=0.016)
-    centre, normal, _ = pk.facet(pk.torso_ring(b, 1.095, 0.038), 4)
-    with part.skinned(pk.SKIN_TORSO), part.anchored(pk.facet(pk.torso_ring(b, 1.125), 4)[0]):
-        part.box(centre + normal * 0.024, (0.080, 0.096, 0.050), 'primary', right=Y.cross(normal), taper=0.84, ao=-0.06)
-        part.plate(centre + normal * 0.050 + V(0, 0.026, 0), normal, Y, 0.086, 0.040, 0.008, 'secondary', shrink=0.86)
+    # 4. Belt with an iron buckle and a hide pouch on the right hip (sits cleanly above legs_troll_wraps apron and wraps).
+    belt(part, b, 1.148, 0.028, 0.050, 'secondary', flat=False)
+    torso_plate(part, b, 1.148, 2, 0.040, 0.064, 0.050, 0.016, 'metal', corner=0.016)
+    centre, normal, _ = pk.facet(pk.torso_ring(b, 1.118, 0.044), 4)
+    with part.skinned(pk.SKIN_TORSO), part.anchored(pk.facet(pk.torso_ring(b, 1.145), 4)[0]):
+        part.box(centre + normal * 0.030, (0.076, 0.072, 0.048), 'primary', right=Y.cross(normal), taper=0.84, ao=-0.06)
+        part.plate(centre + normal * 0.055 + V(0, 0.018, 0), normal, Y, 0.082, 0.034, 0.008, 'secondary', shrink=0.86)
 
     with part.mirrored():
         # Strapped bicep band with a bone stud, and a forearm wrap.
@@ -363,74 +364,89 @@ def torso_troll_hide(part, body):
         stud, normal, _ = pk.facet(pk.arm_ring(b, 2.34, 0.020), 1, axis=X)
         with part.skinned(pk.SKIN_ARM_L), part.anchored(pk.facet(pk.arm_ring(b, 2.34), 1, axis=X)[0]):
             spike(part, stud, stud + normal * 0.050, 0.018, 'accent', n=3, up=X, ao=0.1)
-        arm_stack(part, b, [(4.1, 0.014), (5.0, 0.022), (6.0, 0.016)], 'secondary', band_ao=[-0.02, -0.09])
+        arm_stack(part, b, [(4.1, 0.014), (5.0, 0.022), (5.45, 0.008)], 'secondary', band_ao=[-0.02, -0.09])
 
 
 def legs_orc_kilt(part, body):
     b = body
     part.covers = ['pelvis', 'thigh', 'shin', 'foot']
-    pelvis_shell(part, b, 'secondary', grow=0.012, ao=-0.06)
-    # Split left/right war-kilt tasset panels wrapping the thighs + compact upper front loin tab.
-    kilt_rings = [
-        pk.skirt_tail_ring(b, 1.135, torso_grow=0.024, torso_weight=1.0, back_x=0.012, front_x=0.016),
-        pk.skirt_tail_ring(b, 0.985, clearance=0.024, torso_grow=0.026, back_x=0.014, front_x=0.018, torso_weight=0.30),
-        pk.skirt_tail_ring(b, 0.815, clearance=0.025, torso_grow=0.028, back_x=0.016, front_x=0.020, torso_weight=0.0),
-    ]
-    kilt_skins = [pk.skirt_skin(1.0), pk.skirt_skin(0.30), pk.skirt_skin(0.0)]
+    pelvis_shell(part, b, 'secondary', grow=0.012, ao=-0.06, skip_seat_sides=True)
+    # Split left/right war-kilt tasset panels wrapping pelvis + thighs across strides.
+    kilt_rings = pk.skirt_tail_rings(b, [
+        {'y': 1.135, 'clearance': 0.008, 'back_x': 0.012, 'front_x': 0.014},
+        {'y': 1.060, 'clearance': 0.012, 'back_x': 0.013, 'front_x': 0.015, 'back_pad': 0.018},
+        {'y': 0.960, 'clearance': 0.012, 'back_x': 0.014, 'front_x': 0.017, 'back_pad': 0.016},
+        {'y': 0.815, 'clearance': 0.012, 'back_x': 0.016, 'front_x': 0.019},
+    ], two_sided_margin=0.0055, knee_plate=False, leg_pad_scale=0.0)
+    kilt_cells = pk.skirt_cell_skins([1.0, 0.70, 0.25, 0.0], [1.0, 0.95, 0.80, 0.35])
     with part.mirrored():
-        part.loft(kilt_rings, 'primary', ring_skins=kilt_skins, closed=False,
-                  band_ao=[0.0, -0.05], two_sided=True, thickness=0.005, inner_ao=-0.22)
-    tab_top = [V(0.044, 1.135, pk.torso_surface_z(b, 1.135, 0.044, 0.026)),
-               V(-0.044, 1.135, pk.torso_surface_z(b, 1.135, -0.044, 0.026))]
-    tab_bot = [V(0.048, 0.985, pk.torso_surface_z(b, 0.985, 0.048, 0.044) + 0.020),
-               V(-0.048, 0.985, pk.torso_surface_z(b, 0.985, -0.048, 0.044) + 0.020)]
+        part.loft(kilt_rings, 'primary', cell_skins=kilt_cells, closed=False,
+                  band_ao=[0.0, -0.02, -0.05], two_sided=True, thickness=0.005, inner_ao=-0.22)
+    z_tab_top = max(pk.torso_surface_z(b, 1.135, 0.044, 0.026), kilt_rings[0][4].z + 0.008)
+    z_tab_mid = kilt_rings[1][4].z + 0.009
+    z_tab_bot = max(pk.torso_surface_z(b, 0.985, 0.048, 0.044) + 0.020, kilt_rings[2][4].z + 0.010)
+    tab_top = [V(0.044, 1.135, z_tab_top), V(-0.044, 1.135, z_tab_top)]
+    tab_mid = [V(0.046, 1.060, z_tab_mid), V(-0.046, 1.060, z_tab_mid)]
+    tab_bot = [V(0.048, 0.985, z_tab_bot), V(-0.048, 0.985, z_tab_bot)]
     with part.skinned(pk.SKIN_TORSO):
-        part.loft([tab_top, tab_bot], 'secondary', closed=False, toward=Z,
-                  ring_skins=[pk.SKIN_TORSO, pk.Skin(allowed=('thigh_l', 'thigh_r'), blend={'pelvis': 0.25})],
+        part.loft([tab_top, tab_mid, tab_bot], 'secondary', closed=False, toward=Z,
+                  ring_skins=[pk.SKIN_TORSO, pk.Skin(allowed=('thigh_l', 'thigh_r'), blend={'pelvis': 0.35}),
+                              pk.Skin(allowed=('thigh_l', 'thigh_r'), blend={'pelvis': 0.20})],
                   two_sided=True, thickness=0.005, inner_ao=-0.22)
     with part.mirrored():
-        leg_stack(part, b, [(0, 0.014), (2.4, 0.014), (3.65, 0.024), (5, 0.020)],
-                  'skin', band_regions=['skin', 'secondary', 'metal'])
+        leg_stack(part, b, [(0, 0.014), (1, 0.014), (2.4, 0.014), (3.65, 0.024), (5, 0.018), (6, 0.015), (7, 0.008)],
+                  'skin', band_regions=['skin', 'skin', 'secondary', 'metal', 'metal', 'metal'],
+                  band_ao=[0, 0, 0, 0, 0, -0.08])
         pk.build_foot(part, b, 'secondary', grow=0.015, sole=0.016, sole_region='metal', ao=-0.06)
 
 
 def legs_troll_wraps(part, body):
     b = body
-    part.covers = ['pelvis', 'thigh']
-    pelvis_shell(part, b, 'primary', grow=0.012, ao=-0.06)
+    part.covers = ['pelvis', 'thigh', 'shin']
+    pelvis_shell(part, b, 'primary', grow=0.012, ao=-0.06, skip_seat_sides=True)
     # Layer 1: split left/right ragged hide tassets with a pointed fur V-hem on the outer thigh.
-    r0 = pk.skirt_tail_ring(b, 1.115, torso_grow=0.030, torso_weight=1.0, back_x=0.014, front_x=0.016)
-    r1 = pk.skirt_tail_ring(b, 0.985, clearance=0.040, torso_grow=0.044, back_x=0.016, front_x=0.018, torso_weight=0.15)
-    r2_base = pk.skirt_tail_ring(b, 0.800, clearance=0.042, torso_grow=0.052, back_x=0.018, front_x=0.020, torso_weight=0.0)
-    v_drops = (0.04, -0.02, -0.075, -0.03, 0.04)  # lower ragged point over outer-front thigh
-    r2 = [V(pt.x, pt.y + dy, pt.z) for pt, dy in zip(r2_base, v_drops)]
+    wraps_rings = pk.skirt_tail_rings(b, [
+        {'y': 1.115, 'clearance': 0.010, 'back_x': 0.014, 'front_x': 0.016},
+        {'y': 1.060, 'clearance': 0.022, 'back_x': 0.014, 'front_x': 0.016, 'back_pad': 0.020},
+        {'y': 0.960, 'clearance': 0.024, 'back_x': 0.016, 'front_x': 0.018, 'back_pad': 0.018},
+        {'y': 0.800, 'clearance': 0.026, 'back_x': 0.018, 'front_x': 0.020,
+         'v_drop': (0.04, -0.02, -0.075, -0.03, 0.04)},
+    ], two_sided_margin=0.0065)
+    wraps_cells = pk.skirt_cell_skins([1.0, 0.22, 0.04, 0.0], [1.0, 0.95, 0.80, 0.35])
     with part.mirrored():
-        part.loft([r0, r1, r2], 'primary',
-                  ring_skins=[pk.skirt_skin(1.0), pk.skirt_skin(0.15), pk.skirt_skin(0.0)],
-                  closed=False, band_regions=['primary', 'hair'], band_ao=[-0.04, 0.05],
+        part.loft(wraps_rings, 'primary', cell_skins=wraps_cells, closed=False,
+                  band_regions=['primary', 'primary', 'hair'], band_ao=[-0.04, -0.02, 0.05],
                   two_sided=True, thickness=0.005, inner_region='secondary', inner_ao=-0.20)
-    # Layer 2: compact high-cut front leather apron + stitched bone talismans (moves with thighs during crouch/sit).
-    apron_top = [torso_at(b, 1.125, fraction, 0.040) for fraction in (0.30, 0.0, -0.30)]
+    # Layer 2: compact high-cut front leather apron + stitched bone talismans (clears belt above and wraps/thighs below).
+    apron_top = [V(pt.x, 1.116, max(pt.z, wraps_rings[0][4].z + 0.008))
+                 for pt in (torso_at(b, 1.116, f, 0.040) for f in (0.30, 0.0, -0.30))]
+    apron_mid_z = wraps_rings[1][4].z + 0.010
+    apron_mid = [torso_at(b, 1.060, f, 0.050) for f in (0.32, 0.0, -0.32)]
+    apron_mid = [V(pt.x, 1.060, max(pt.z, apron_mid_z)) for pt in apron_mid]
     apron_bot = [
-        torso_at(b, 1.005, 0.34, 0.054) + V(0, 0, 0.022),
-        torso_at(b, 0.975, 0.0, 0.056) + V(0, 0, 0.024),
-        torso_at(b, 1.005, -0.34, 0.054) + V(0, 0, 0.022),
+        V(torso_at(b, 1.005, 0.34, 0.054).x, 0.990, max(torso_at(b, 1.005, 0.34, 0.054).z + 0.022, wraps_rings[2][4].z + 0.010)),
+        V(0.0, 0.975, max(torso_at(b, 0.975, 0.0, 0.056).z + 0.024, wraps_rings[2][4].z + 0.012)),
+        V(torso_at(b, 1.005, -0.34, 0.054).x, 0.990, max(torso_at(b, 1.005, -0.34, 0.054).z + 0.022, wraps_rings[2][4].z + 0.010)),
     ]
     with part.skinned(pk.SKIN_TORSO):
-        part.loft([apron_top, apron_bot], 'secondary', closed=False, toward=Z,
-                  ring_skins=[pk.SKIN_TORSO, pk.Skin(allowed=('thigh_l', 'thigh_r'), blend={'pelvis': 0.30})],
+        part.loft([apron_top, apron_mid, apron_bot], 'secondary', closed=False, toward=Z,
+                  ring_skins=[pk.SKIN_TORSO, pk.Skin(allowed=('thigh_l', 'thigh_r'), blend={'pelvis': 0.35}),
+                              pk.Skin(allowed=('thigh_l', 'thigh_r'), blend={'pelvis': 0.25})],
                   two_sided=True, thickness=0.005, inner_ao=-0.22)
         # Stitched bone talismans high on the apron so they never dip into sitting thighs.
+        talisman_z = max(torso_at(b, 1.065, 0.0, 0.064).z, wraps_rings[1][4].z + 0.020)
         for fraction in (-0.18, 0.18):
             with part.anchored(torso_at(b, 1.08, fraction)):
-                centre = torso_at(b, 1.065, fraction, 0.064)
+                base_pt = torso_at(b, 1.065, fraction, 0.064)
+                centre = V(base_pt.x, 1.065, max(base_pt.z, talisman_z))
                 part.loft([pk.ring(centre, X, Z, 0.013, 0.011, 4)], 'accent', tip_start=centre + V(0, 0.036, -0.004),
                           tip_end=centre - V(0, 0.040, -0.006), ao=0.08)
     with part.mirrored():
-        # Bare thighs, then layered shin wraps.
-        leg_stack(part, b, [(0, 0.010), (1, 0.012), (2.4, 0.010), (3.2, 0.022), (4.6, 0.022), (5.0, 0.012)],
-                  'skin', band_regions=['skin', 'skin', 'secondary', 'primary', 'secondary'],
-                  band_ao=[0, 0, -0.04, 0.02, -0.1])
+        # Bare thighs, then layered shin wraps with closed inward cuff returning to bare ankle skin.
+        leg_stack(part, b, [(0, 0.010), (1, 0.012), (2.4, 0.010), (3.45, 0.022), (5, 0.020), (6, 0.016),
+                            (6, 0.002, 0.154), (7, 0.001, 0.112)],
+                  'skin', band_regions=['skin', 'skin', 'secondary', 'primary', 'primary', 'secondary', 'skin'],
+                  band_ao=[0, 0, -0.04, 0.02, 0.02, -0.18, 0])
         # Three bone claws on each foot (raised cleanly above toe swing arc).
         with part.skinned(pk.SKIN_FOOT_L):
             for sx in (-0.028, 0.0, 0.028):
@@ -450,7 +466,7 @@ def headwear_orc_horned(part, shape=pk.HEAD_ENVELOPE):
     with part.mirrored():
         path = [V(side_x, rim + 0.045, pk.HEAD_Z), V(side_x + 0.092, rim + 0.075, pk.HEAD_Z + 0.025),
                 V(side_x + 0.127, rim + 0.165, pk.HEAD_Z + 0.065), V(side_x + 0.092, rim + 0.240, pk.HEAD_Z + 0.090)]
-        part.tube(path, [0.032, 0.026, 0.016, 0.004], 5, 'accent', up=Z, cap_start=True, cap_end=True, ao=0.1)
+        part.tube(path, [0.032, 0.026, 0.016, 0.004], 4, 'accent', up=Z, cap_start=True, cap_end=True, ao=0.1)
 
 
 def back_orc_trophy(part, body):
@@ -458,7 +474,7 @@ def back_orc_trophy(part, body):
     back_z = pk.torso_surface_z(b, 1.44, 0.0, 0.036, 'back')
     # The rack is narrow at bind time: a wide-shouldered orc scales the upper spine in X at run time.
     with part.skinned(SKIN_BACK), part.anchored(pk.torso_point(b, 1.44, 0.0, 0.0, 'back')):
-        part.box(V(0, 1.44, back_z - 0.026), (0.250, 0.050, 0.044), 'primary', bevel=0.008)
+        part.box(V(0, 1.44, back_z - 0.026), (0.250, 0.050, 0.044), 'primary')
         with part.mirrored():
             base, top = V(0.082, 1.250, back_z - 0.030), V(0.146, 1.800, back_z - 0.108)
             part.tube([base, top], [0.019, 0.015], 5, 'primary', up=Z, cap_start=True, cap_end=False)
@@ -467,15 +483,15 @@ def back_orc_trophy(part, body):
             part.box(cross, (0.052, 0.056, 0.050), 'secondary', ao=-0.06)
             # Trophy skull that looks back, with a dark eye band and an iron spike.
             skull = top + V(0, 0.030, 0)
-            part.box(skull, (0.084, 0.088, 0.088), 'accent', bevel=0.014, taper=0.86)
+            part.box(skull, (0.084, 0.088, 0.088), 'accent', taper=0.86)
             part.plate(skull + V(0, 0.006, -0.044), -Z, Y, 0.062, 0.022, 0.004, 'secondary', shrink=0.9, ao=-0.4)
             spike(part, skull + V(0, 0.036, 0), skull + V(0.012, 0.150, -0.022), 0.017, 'metal', n=4, up=Z, ao=0.08)
 
 
 def held_orc_cleaver(part):
     # Canonical grip frame: handle +Y, blade edge +Z.
-    part.tube([V(0, -0.10, 0), V(0, 0.11, 0)], [0.022, 0.020], 6, 'secondary', up=Z, cap_start=True, ao=-0.06)
-    part.lathe([(0.016, -0.14), (0.038, -0.11), (0.022, -0.09)], 6, 'accent', cap_start=True)
+    part.tube([V(0, -0.10, 0), V(0, 0.11, 0)], [0.022, 0.020], 5, 'secondary', up=Z, cap_start=True, ao=-0.06)
+    part.lathe([(0.016, -0.14), (0.038, -0.11), (0.022, -0.09)], 5, 'accent', cap_start=True)
     part.box(V(0, 0.13, 0.012), (0.046, 0.038, 0.150), 'metal', taper=(0.8, 0.86))
     # Forged blade: a thick spine that tapers to a bevel line, then a bright honed edge with two notches.
     #          y,     spine z, bevel z, edge z, half thickness
@@ -499,25 +515,26 @@ def held_orc_cleaver(part):
 
 def held_troll_club(part):
     # Canonical grip frame: handle along +Y. A heavy wooden club with rope lashing, two iron bands and iron spikes.
-    part.tube([V(0, -0.14, 0), V(0, 0.24, 0), V(0, 0.46, 0.004), V(0, 0.66, 0.006), V(0, 0.84, 0.0)],
-              [0.024, 0.030, 0.070, 0.100, 0.070], 6, 'primary', up=Z, cap_start=True, cap_end=True,
-              band_ao=[-0.08, -0.02, 0.0, -0.04])
-    # Pommel knob and leather grip wrap.
-    part.lathe([(0.020, -0.180), (0.040, -0.150), (0.026, -0.124)], 6, 'secondary', cap_start=True, ao=-0.06)
-    part.lathe([(0.028, -0.085), (0.035, -0.010), (0.030, 0.105)], 6, 'secondary', band_ao=[-0.04, -0.1])
-    # Rope lashing at the neck of the club.
-    part.lathe([(0.048, 0.300), (0.064, 0.350), (0.060, 0.400)], 6, 'accent', center=(0, 0, 0.003),
-               band_ao=[-0.12, -0.04])
-    # Two forged iron bands with a row of spikes on each.
-    for low, high, radius, turn in ((0.500, 0.566, 0.092, 0.0), (0.690, 0.756, 0.106, 45.0)):
-        part.lathe([(radius - 0.012, low), (radius + 0.002, (low + high) / 2), (radius - 0.010, high)], 6,
-                   'metal', center=(0, 0, 0.005), band_ao=[-0.04, 0.06])
-        for index in range(4):
-            angle = math.radians(turn + index * 90.0)
-            out = V(math.cos(angle), 0.0, math.sin(angle))
-            middle = V(0, (low + high) / 2, 0.005)
-            spike(part, middle + out * (radius - 0.018), middle + out * (radius + 0.090) + V(0, 0.012, 0), 0.026,
-                  'metal', n=3, up=Y, ao=0.08)
+    with part.placed(Matrix.Translation(V(0.004, 0.0, 0.004)) @ Matrix.Rotation(math.radians(-6), 4, 'Z') @ Matrix.Rotation(math.radians(-6), 4, 'X')):
+        part.tube([V(0, -0.14, 0), V(0, 0.24, 0), V(0, 0.46, 0.004), V(0, 0.66, 0.006), V(0, 0.84, 0.0)],
+                  [0.021, 0.027, 0.068, 0.098, 0.068], 6, 'primary', up=Z, cap_start=True, cap_end=True,
+                  band_ao=[-0.08, -0.02, 0.0, -0.04])
+        # Pommel knob and leather grip wrap.
+        part.lathe([(0.020, -0.180), (0.036, -0.150), (0.024, -0.124)], 6, 'secondary', cap_start=True, ao=-0.06)
+        part.lathe([(0.024, -0.085), (0.028, -0.010), (0.025, 0.105)], 6, 'secondary', band_ao=[-0.04, -0.1])
+        # Rope lashing at the neck of the club.
+        part.lathe([(0.046, 0.300), (0.062, 0.350), (0.058, 0.400)], 6, 'accent', center=(0, 0, 0.003),
+                   band_ao=[-0.12, -0.04])
+        # Two forged iron bands with a row of spikes on each.
+        for low, high, radius, turn in ((0.500, 0.566, 0.090, 0.0), (0.690, 0.756, 0.104, 45.0)):
+            part.lathe([(radius - 0.012, low), (radius + 0.002, (low + high) / 2), (radius - 0.010, high)], 6,
+                       'metal', center=(0, 0, 0.005), band_ao=[-0.04, 0.06])
+            for index in range(4):
+                angle = math.radians(turn + index * 90.0)
+                out = V(math.cos(angle), 0.0, math.sin(angle))
+                middle = V(0, (low + high) / 2, 0.005)
+                spike(part, middle + out * (radius - 0.018), middle + out * (radius + 0.080) + V(0, 0.012, 0), 0.026,
+                      'metal', n=3, up=Y, ao=0.08)
 
 
 def held_spiked_buckler(part):
@@ -526,9 +543,9 @@ def held_spiked_buckler(part):
     turn = Matrix(((0, 1, 0, offset), (0, 0, 1, 0), (1, 0, 0, centre), (0, 0, 0, 1)))
     with part.placed(turn):
         # Wooden disc, forged iron rim, iron boss with a long spike.
-        part.lathe([(0.136, 0.0), (0.128, 0.030)], 8, 'primary', cap_start=True, cap_end=True, ao=-0.04)
-        part.lathe([(0.132, -0.004), (0.152, 0.012), (0.128, 0.030)], 8, 'metal', band_ao=[-0.08, 0.06])
-        part.lathe([(0.064, 0.032), (0.052, 0.062)], 6, 'metal', tip_end=V(0, 0.145, 0), ao=0.06)
+        part.lathe([(0.136, 0.0), (0.128, 0.030)], 6, 'primary', cap_start=True, cap_end=True, ao=-0.04)
+        part.lathe([(0.132, -0.004), (0.152, 0.012), (0.128, 0.030)], 6, 'metal', band_ao=[-0.08, 0.06])
+        part.lathe([(0.064, 0.032), (0.052, 0.062)], 5, 'metal', tip_end=V(0, 0.145, 0), ao=0.06)
         # Four iron spikes on the wood.
         for index in range(4):
             angle = math.radians(45 + index * 90)

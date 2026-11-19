@@ -19,15 +19,22 @@ export interface MultiContextStageProps {
 
 const DIORAMA_SPACING = 4.9
 const PAD_RADIUS = 2.25
-/** Viewport aspect at which four dioramas fill the width of the stage camera. */
-const FULL_WIDTH_ASPECT = 2.4
+/** Viewport aspect at which four or five dioramas fill the width of the stage camera. */
+const FULL_WIDTH_ASPECT_4 = 2.4
+const FULL_WIDTH_ASPECT_5 = 3.05
 
 /** Character places on a pad: x, z and the turn about Y. The characters face the camera (+Z). */
-const AVATAR_SLOTS: readonly (readonly [number, number, number])[] = [
+const AVATAR_SLOTS_3: readonly (readonly [number, number, number])[] = [
   [-1.38, 0.45, 0.34],
   [0.0, -0.1, -0.05],
   [1.38, 0.45, -0.36],
-  [0.05, 1.42, 0.1],
+]
+
+const AVATAR_SLOTS_4: readonly (readonly [number, number, number])[] = [
+  [-1.42, 0.35, 0.36],
+  [-0.46, 0.08, 0.12],
+  [1.38, 0.42, -0.36],
+  [0.42, 1.12, -0.12],
 ]
 
 /** A wolf or a spider shows its side line in a 3/4 view. It gets this turn on top of the slot turn. */
@@ -62,9 +69,10 @@ function Diorama({
 }) {
   const context = catalog.pack as ContextPackKey
   const selections = useMemo(
-    () => catalog.presets.slice(0, AVATAR_SLOTS.length).map((preset: CharacterPreset) => selectionFromPreset(preset)),
+    () => catalog.presets.slice(0, AVATAR_SLOTS_4.length).map((preset: CharacterPreset) => selectionFromPreset(preset)),
     [catalog],
   )
+  const avatarSlots = selections.length > 3 ? AVATAR_SLOTS_4 : AVATAR_SLOTS_3
   const props = useMemo(() => [...catalog.props].sort((a, b) => reach(b) - reach(a)).slice(0, PROP_SLOTS.length), [catalog])
   // One material for all props of the context: one program, one palette.
   const propMaterial = useMemo(() => createPolyMaterial(PROP_PALETTES[context]), [context])
@@ -80,7 +88,7 @@ function Diorama({
         <meshStandardMaterial attach="material-2" color={ground.side} roughness={1} flatShading />
       </mesh>
       {selections.map((selection, i) => {
-        const [sx, sz, turn] = AVATAR_SLOTS[i]!
+        const [sx, sz, turn] = avatarSlots[i]!
         return (
           <PolyAvatar
             key={catalog.presets[i]!.id}
@@ -125,29 +133,37 @@ function Diorama({
   )
 }
 
-/** Medieval, WW2, Sim, and Monsters dioramas side by side (or 2x2 on portrait) using shared 7-region shader and mobile budget. */
+/** Medieval, WW2, Sim, Cyberpunk, and Monsters dioramas side by side (or 2-col grid on portrait) using shared 7-region shader and mobile budget. */
 export function MultiContextStage({ catalogs, index, activeContext, shadowMode }: MultiContextStageProps) {
   const shown = CONTEXT_PACK_KEYS.filter((key) => activeContext === 'all' || activeContext === key)
   const aspect = useThree((state) => state.viewport.aspect)
   const isPortraitGrid = aspect < 0.9 && shown.length > 1
-  // Desktop lays out 1x4 across width; portrait lays out 2x2 so all 4 contexts stay large and legible.
+  const fullWidthAspect = shown.length > 4 ? FULL_WIDTH_ASPECT_5 : FULL_WIDTH_ASPECT_4
+  const portraitRows = Math.ceil(shown.length / 2)
+  // Desktop lays out 1xN across width; portrait lays out 2 columns so all contexts stay legible.
   const fit =
     shown.length === 1
       ? Math.min(1.25, Math.max(0.75, aspect * 1.15))
       : isPortraitGrid
-        ? Math.max(0.38, Math.min(0.85, aspect / 1.12))
-        : Math.max(0.4, Math.min(1, aspect / FULL_WIDTH_ASPECT))
+        ? Math.max(0.34, Math.min(0.85, aspect / (portraitRows > 2 ? 1.32 : 1.12)))
+        : Math.max(0.4, Math.min(1, aspect / fullWidthAspect))
   return (
     <group scale={fit}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.15, 0]}>
-        <circleGeometry args={[24, 48]} />
+        <circleGeometry args={[28, 48]} />
         <meshStandardMaterial color="#14171d" roughness={1} />
       </mesh>
       {shown.map((key, i) => {
         const catalog = catalogs.find((item) => item.pack === key)
         if (!catalog) throw new Error(`The "${key}" pack catalog is missing.`)
-        const x = isPortraitGrid ? ((i % 2) - 0.5) * (DIORAMA_SPACING + 0.35) : (i - (shown.length - 1) / 2) * DIORAMA_SPACING
-        const z = isPortraitGrid ? (Math.floor(i / 2) - 0.5) * 6.8 : 0
+        const row = Math.floor(i / 2)
+        const isLastSingle = isPortraitGrid && shown.length % 2 === 1 && i === shown.length - 1
+        const x = isPortraitGrid
+          ? isLastSingle
+            ? 0
+            : ((i % 2) - 0.5) * (DIORAMA_SPACING + 0.35)
+          : (i - (shown.length - 1) / 2) * DIORAMA_SPACING
+        const z = isPortraitGrid ? (row - (portraitRows - 1) / 2) * 6.4 : 0
         return (
           <group key={key} position={[0, 0, z]}>
             <Diorama

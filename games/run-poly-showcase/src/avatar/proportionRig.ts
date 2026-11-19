@@ -226,6 +226,7 @@ export function computeHeldSocketPosition(
   armFactor: number,
   limbThickness: number,
   out: Vector3 = new Vector3(),
+  handScale = 1,
 ): Vector3 {
-  return heldSocketOffsetFor(palmOffset, armFactor, limbThickness, out)
+  return heldSocketOffsetFor(palmOffset, armFactor, limbThickness, out, handScale)
 }

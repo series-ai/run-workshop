@@ -27,25 +27,52 @@ RIG_FILE = 'core-rig.glb'
 
 def build_body(part, body):
     ref = pk.BODIES[pk.BASE_BODY]
-    rings = [pk.torso_ring(body, key) for key in pk.TORSO_KEYS]
-    t_refs = [pk.torso_ring(ref, key) for key in pk.TORSO_KEYS]
-    skins = [pk.SKIN_TORSO] * (len(rings) - 1) + [pk.SKIN_HEAD]
-    part.loft(rings, 'skin', refs=t_refs, cap_start=True, ring_skins=skins,
-              band_tags=['pelvis', 'pelvis', 'chest', 'chest', 'chest', 'chest', 'chest', 'neck'])
+    torso_keys = pk.TORSO_KEYS[:-1]
+    rings = [pk.torso_ring(body, key) for key in torso_keys]
+    t_refs = [pk.torso_ring(ref, key) for key in torso_keys]
+    part.loft(rings, 'skin', refs=t_refs, cap_start=True, cap_end=False,
+              ring_skins=[pk.SKIN_TORSO] * len(rings),
+              band_tags=['pelvis', 'pelvis', 'chest', 'chest', 'chest', 'chest', 'chest'])
+    nb_y = body.torso['neck_base'].y - 0.004
+    nb_ref_y = ref.torso['neck_base'].y - 0.004
+    with part.tagged('neck'):
+        part.loft(
+            [pk.neck_ring(body, 'neck_base', y=nb_y, inset=0.97), pk.neck_ring(body, 'neck_top')],
+            'skin',
+            refs=[pk.neck_ring(ref, 'neck_base', y=nb_ref_y, inset=0.97), pk.neck_ring(ref, 'neck_top')],
+            ring_skins=[pk.SKIN_TORSO, pk.SKIN_HEAD],
+        )
     with part.mirrored():
-        arm_skins = [pk.SKIN_SHOULDER_ROOT_L, pk.SKIN_SHOULDER_CAP_L] + [pk.SKIN_ARM_L] * (len(body.arm) - 3) + [pk.SKIN_WRIST_L]
+        arm_skins = [
+            pk.SKIN_SHOULDER_ROOT_L,
+            pk.SKIN_SHOULDER_CAP_L,
+            pk.SKIN_ARM_L,
+            pk.SKIN_ELBOW_HI_L,
+            pk.SKIN_ELBOW_LO_L,
+            pk.SKIN_ARM_L,
+            pk.SKIN_FOREARM_END_L,
+        ]
         with part.skinned(pk.SKIN_ARM_L):
             a_rings = [pk.arm_ring(body, index) for index in range(len(body.arm))]
             a_refs = [pk.arm_ring(ref, index) for index in range(len(body.arm))]
-            part.loft(a_rings, 'skin', refs=a_refs, cap_start=True, cap_end=True,
+            part.loft(a_rings, 'skin', refs=a_refs, cap_start=False, cap_end=True,
                       ring_skins=arm_skins, band_tags=['upperarm'] * 3 + ['forearm'] * 3)
         pk.build_hand(part, body)
         with part.skinned(pk.SKIN_LEG_L):
-            skins = [pk.SKIN_HIP_SOCKET_L] + [pk.SKIN_LEG_L] * (len(body.leg) - 1)
+            skins = [
+                pk.SKIN_HIP_SOCKET_L,
+                pk.SKIN_LEG_L,
+                pk.SKIN_LEG_L,
+                pk.SKIN_LEG_L,
+                pk.SKIN_LEG_L,
+                pk.SKIN_ANKLE_HI_L,
+                pk.SKIN_ANKLE_L,
+                pk.SKIN_ANKLE_IN_L,
+            ]
             l_rings = [pk.leg_ring(body, index) for index in range(len(body.leg))]
             l_refs = [pk.leg_ring(ref, index) for index in range(len(body.leg))]
-            part.loft(l_rings, 'skin', refs=l_refs, cap_start=True,
-                      ring_skins=skins, band_tags=['thigh', 'thigh', 'shin', 'shin', 'shin'])
+            part.loft(l_rings, 'skin', refs=l_refs, cap_start=False,
+                      ring_skins=skins, band_tags=['thigh', 'thigh', 'shin', 'shin', 'shin', 'shin', 'shin'])
         pk.build_foot(part, body)
 
 
@@ -216,19 +243,22 @@ def torso_core_tee(part, body):
     part.covers = ['chest', 'legs_waist']
     neck = body.torso['neck_base'].y
     torso_spec = [
-        ('hips', 0.011, {'y': 1.045}),
+        ('hips', 0.015, {'y': 1.074}),
         ('belt', 0.011),
         ('waist', 0.010),
         ('ribs', 0.011),
         ('chest', 0.012),
         ('shoulder', 0.011),
-        ('neck_base', 0.010),
-        ('neck_base', 0.012, {'y': neck + 0.018}),
+        ('neck_base', 0.006),
+        ('neck_base', 0.008, {'y': neck + 0.016}),
     ]
     t_rings, t_refs = [], []
     for key, grow, *rest in torso_spec:
         extra = dict(rest[0]) if rest else {}
-        t_rings.append(pk.torso_ring(body, key, grow, **extra))
+        if key == 'hips':
+            t_rings.append(pk.hip_hem_torso_ring(body, extra.get('y', body.torso['hips'].y), grow, clearance=0.005))
+        else:
+            t_rings.append(pk.torso_ring(body, key, grow, **extra))
         t_refs.append(pk.torso_ring(body, key, 0.0, y=extra.get('y')))
     with part.skinned(pk.SKIN_TORSO):
         part.loft(t_rings, 'primary', refs=t_refs,
@@ -260,11 +290,12 @@ def legs_core_shorts(part, body):
         extra = dict(rest[0]) if rest else {}
         p_rings.append(pk.torso_ring(body, key, grow, **extra))
         p_refs.append(pk.torso_ring(body, key, 0.0, y=extra.get('y')))
+    cell_tags, start_cap_tag = pk.pelvis_cell_tags()
     with part.skinned(pk.SKIN_TORSO):
         part.loft(p_rings, 'secondary', refs=p_refs, cap_start=True,
                   band_regions=['secondary', 'secondary', 'accent'],
                   band_ao=[-0.06, -0.02, 0.04],
-                  band_tags=['pelvis', 'pelvis', 'legs_waist'])
+                  cell_tags=cell_tags, start_cap_tag=start_cap_tag)
 
     shorts_spec = [(0, 0.003), (1, 0.004), (1.60, 0.005), (1.74, 0.005), (1.74, 0.001), (1.58, 0.001)]
     shorts_skins = [pk.SKIN_HIP_SOCKET_L] + [pk.SKIN_LEG_L] * (len(shorts_spec) - 1)
@@ -275,9 +306,11 @@ def legs_core_shorts(part, body):
             part.loft(l_rings, 'secondary', refs=l_refs, ring_skins=shorts_skins,
                       band_regions=['secondary', 'secondary', 'accent', 'secondary', 'secondary'],
                       band_ao=[0.0, 0.0, 0.04, -0.18, -0.18])
-            sock_rings = [pk.leg_ring(body, 4.72, 0.005), pk.leg_ring(body, 5.0, 0.007)]
-            sock_refs = [pk.leg_ring(body, 4.72, 0.0), pk.leg_ring(body, 5.0, 0.0)]
-            part.loft(sock_rings, 'metal', refs=sock_refs, ao=0.10)
+            sock_spec = [(5.15, 0.006), (6.0, 0.007), (7.0, 0.003)]
+            sock_rings = [pk.leg_ring(body, index, grow) for index, grow in sock_spec]
+            sock_refs = [pk.leg_ring(body, index, 0.0) for index, _ in sock_spec]
+            sock_skins = [pk.SKIN_ANKLE_HI_L, pk.SKIN_ANKLE_L, pk.SKIN_ANKLE_IN_L]
+            part.loft(sock_rings, 'metal', refs=sock_refs, ring_skins=sock_skins, ao=0.10)
         pk.build_foot(part, body, 'primary', grow=0.009, sole=0.016, sole_region='metal', ao=0.02)
 
 
@@ -388,10 +421,12 @@ def main():
     solver = pk.WeightSolver(rig)
 
     u1_state = retarget.Ual1SkeletonState(rig)
-    fixed_pistol = {clip['name']: clip for clip in retarget.fix_ual1_pistol_clips(u1_state, args.source)}
+    fixed_clips = {clip['name']: clip for clip in retarget.fix_ual1_pistol_clips(u1_state, args.source)}
+    sword_idle = retarget.fix_ual1_sword_idle_clip(u1_state, args.source)
+    fixed_clips[sword_idle['name']] = sword_idle
 
     builder = pk.GlbBuilder()
-    builder.add_rig(rig, with_clips=True, replace_clips=fixed_pistol)
+    builder.add_rig(rig, with_clips=True, replace_clips=fixed_clips)
 
     ual2_path = args.ual2 or (args.source.parent / 'ual2-standard.glb')
     kaykit_path = args.kaykit_ranged or (args.source.parent / 'kaykit-combat-ranged.glb')
@@ -447,9 +482,9 @@ def main():
 
     path = pk.leaf_dir(args.stage, PACK, 'characters') / RIG_FILE
     size = builder.write(path)
-    verify_core(path, rig, all_clip_names, modified_clips=fixed_pistol.keys())
+    verify_core(path, rig, all_clip_names, modified_clips=fixed_clips.keys())
 
-    default_props = {'height': 1.0, 'shoulderWidth': 1.0, 'torsoBulk': 1.0, 'waistScale': 1.0, 'headScale': 1.0, 'limbThickness': 1.0}
+    default_props = {'height': 1.0, 'legRatio': 0.94, 'armLength': 0.96, 'shoulderWidth': 1.04, 'torsoBulk': 1.0, 'waistScale': 1.0, 'headScale': 1.0, 'limbThickness': 1.02}
     core_presets = [
         {
             'id': 'core_athletic', 'pack': PACK, 'label': 'Core Athletic', 'rigId': 'ual1', 'clip': 'Idle_Loop',
@@ -463,14 +498,14 @@ def main():
             'body': 'body_heavy', 'head': 'head_stern', 'hair': 'hair_swept', 'torso': 'torso_core_tee', 'legs': 'legs_core_shorts',
             'headwear': None, 'back': None, 'heldRight': None, 'heldLeft': None,
             'palette': {'skin': '#bc8358', 'hair': '#25262b', 'primary': '#7c3f34', 'secondary': '#4a3d33', 'accent': '#d49d3b', 'metal': '#8a94a0', 'eye': '#63462c'},
-            'proportions': {**default_props, 'shoulderWidth': 1.08, 'torsoBulk': 1.1, 'limbThickness': 1.12},
+            'proportions': {**default_props, 'legRatio': 0.93, 'shoulderWidth': 1.08, 'torsoBulk': 1.1, 'limbThickness': 1.12},
         },
         {
             'id': 'core_slim', 'pack': PACK, 'label': 'Core Slim', 'rigId': 'ual1', 'clip': 'Jog_Fwd_Loop',
             'body': 'body_slim', 'head': 'head_cheerful', 'hair': 'hair_ponytail', 'torso': 'torso_core_tee', 'legs': 'legs_core_shorts',
             'headwear': None, 'back': None, 'heldRight': None, 'heldLeft': None,
             'palette': {'skin': '#ecc8aa', 'hair': '#a84f2b', 'primary': '#3f6b45', 'secondary': '#4f5565', 'accent': '#db6e48', 'metal': '#9ca3af', 'eye': '#346b4c'},
-            'proportions': {**default_props, 'height': 0.95, 'headScale': 1.04},
+            'proportions': {**default_props, 'height': 0.95, 'legRatio': 0.98, 'armLength': 0.97, 'shoulderWidth': 1.0, 'headScale': 1.04, 'limbThickness': 0.94},
         },
     ]
 

@@ -1,6 +1,7 @@
 import {
   AVATAR_SLOTS,
   PROPORTION_DEFAULTS,
+  UAL1_STANDARD_PROPORTIONS,
   type AvatarPartEntry,
   type AvatarProportions,
   type AvatarSlot,
@@ -8,7 +9,7 @@ import {
   type HeldItemEntry,
   type PackCatalog,
 } from '@poly/contracts/catalog'
-import type { PolyPackKey } from '@poly/contracts/packs'
+import type { ContextPackKey, PolyPackKey } from '@poly/contracts/packs'
 import { CONTEXT_DEFAULT_PALETTES, type PaletteColors } from '@poly/contracts/palette'
 import type { RigId } from '@poly/contracts/rig'
 import type { AssetRef } from '../assetSource'
@@ -138,7 +139,7 @@ export function assetRefFor(pack: PolyPackKey, leaf: 'characters' | 'world', rel
 
 export function createDefaultSelection(
   index: PolyPartIndex,
-  context: 'medieval' | 'ww2' | 'sim' | 'monsters' = 'medieval',
+  context: ContextPackKey = 'medieval',
 ): PolyAvatarSelection {
   const firstOf = (slot: AvatarSlot, prefix?: string, rigId: RigId = 'ual1') => {
     const list = (index.partsBySlot.get(slot) ?? []).filter((p) => p.rigId === rigId)
@@ -157,7 +158,7 @@ export function createDefaultSelection(
     heldRight: [...index.heldById.values()].find((h) => h.pack === context && h.hand === 'hand_r')?.id ?? null,
     heldLeft: [...index.heldById.values()].find((h) => h.pack === context && h.hand === 'hand_l')?.id ?? null,
     clip:
-      context === 'medieval'
+      context === 'medieval' || context === 'cyberpunk'
         ? 'Sword_Idle'
         : context === 'ww2'
           ? 'Pistol_Idle_Loop'
@@ -165,6 +166,6 @@ export function createDefaultSelection(
             ? 'Sword_Attack'
             : 'Walk_Loop',
     palette: { ...CONTEXT_DEFAULT_PALETTES[context] },
-    proportions: { ...PROPORTION_DEFAULTS },
+    proportions: context === 'monsters' ? { ...PROPORTION_DEFAULTS } : { ...UAL1_STANDARD_PROPORTIONS },
   }
 }

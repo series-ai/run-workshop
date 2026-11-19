@@ -137,6 +137,8 @@ async function main() {
       ['knight', 'Knight Captain'], ['squire', 'Torchbearer Squire'], ['guard', 'Town Guard'],
       ['rifleman', 'Rifleman'], ['officer', 'Field Officer'], ['sapper', 'Assault Sapper'],
       ['student', 'Coffee Run Student'], ['executive', 'Executive'], ['varsity', 'Varsity Dancer'],
+      ['cyber-edgerunner', 'Street Edgerunner'], ['cyber-netrunner', 'Ghost Netrunner'],
+      ['cyber-enforcer', 'Corp Enforcer'], ['cyber-ronin', 'Chrome Ronin'],
     ]
     const shots = [
       ['01-overview', async () => void (await tab('Architecture & Spec'))],
@@ -199,10 +201,10 @@ async function main() {
       }],
       ['09-stage-all-contexts', async () => {
         await tab(/Context Stage/)
-        await page.getByRole('button', { name: /^All \d+ Contexts$/ }).click()
+        await page.getByRole('button', { name: /^All \d+(?: Contexts)?$/ }).click()
         await page.waitForTimeout(900)
       }],
-      ...['MEDIEVAL', 'WW2', 'SIM', 'MONSTERS'].map((context, i) => [`09${'bcde'[i]}-stage-${context.toLowerCase()}`, async () => {
+      ...['MEDIEVAL', 'WW2', 'SIM', 'CYBERPUNK', 'MONSTERS'].map((context, i) => [`09${'bcdef'[i]}-stage-${context.toLowerCase()}`, async () => {
         await tab(/Context Stage/)
         await page.getByRole('button', { name: context, exact: true }).click()
         await page.waitForTimeout(700)
@@ -211,7 +213,7 @@ async function main() {
         await tab('S23 Ultra Perf Bench')
         await page.getByRole('button', { name: '64', exact: true }).click()
         await page.waitForTimeout(3200)
-        perfText = await page.locator('.hud-overlay').innerText()
+        perfText = await page.locator('.hud-overlay').first().innerText()
       }],
     ]
     for (const [name, run] of shots) {

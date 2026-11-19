@@ -32,6 +32,14 @@
       "hasWorldLeaf": true,
       "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
     },
+    "cyberpunk": {
+      "dir": "run-poly-cyberpunk",
+      "worldTheme": "cyberpunk",
+      "label": "Cyberpunk Neon",
+      "description": "High-collar cyber jackets, netrunner rigs, oni helms, AR visors, thermal katanas, smartguns, and neon street kiosks.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
     "monsters": {
       "dir": "run-poly-monsters",
       "worldTheme": "monsters",

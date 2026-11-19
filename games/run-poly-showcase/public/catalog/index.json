@@ -22,6 +22,11 @@
       "path": "sim/catalog.json"
     },
     {
+      "pack": "cyberpunk",
+      "label": "Cyberpunk Neon",
+      "path": "cyberpunk/catalog.json"
+    },
+    {
       "pack": "monsters",
       "label": "Monsters & Beasts",
       "path": "monsters/catalog.json"

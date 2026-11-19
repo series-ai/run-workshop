@@ -1,10 +1,10 @@
-"""Build the context packs (medieval, ww2, sim) on the exact UAL1 rig of run-poly-core.
+"""Build the context packs (medieval, ww2, sim, cyberpunk) on the exact UAL1 rig of run-poly-core.
 
 Each pack gets:
   3D/characters/<pack>-parts.glb   skinned outfit parts (torso, legs, headwear, back)
   3D/characters/held/<id>.glb      held items in the canonical grip frame (rule M3)
   3D/<theme>/props/<id>.glb        grounded world props (rule M4)
-The script also writes out/meta/manifest.json with all four pack catalogs.
+The script also writes out/meta/manifest.json with the core and context pack catalogs.
 
 Usage (see scripts/build.ts):
   blender --background --factory-startup --python build_packs.py -- --core <core-rig.glb> --stage <dir> --meta <dir>
@@ -32,10 +32,9 @@ SOURCE_RIG = pk.TOOL_ROOT / 'assets/source/ual1-base.glb'
 # Layer clearances over the base body (rule F4).
 CLOTH, JACKET, OVER = 0.008, 0.014, 0.022
 
-SKIN_SKIRT = pk.Skin(allowed=('pelvis', 'thigh_l', 'thigh_r'), blend={'pelvis': 0.5})
 SKIN_NECK = pk.Skin(allowed=('spine_03', 'neck_01'))
 SKIN_BACK = pk.Skin(allowed=('spine_02', 'spine_03'))
-SKIN_PAULDRON_L = pk.rigid(upperarm_l=0.6, clavicle_l=0.4)
+SKIN_PAULDRON_L = pk.rigid(upperarm_l=0.92, clavicle_l=0.08)
 ENVELOPE = pk.HEAD_ENVELOPE
 BROW = pk.HEAD_Y['brow']
 
@@ -45,15 +44,40 @@ BROW = pk.HEAD_Y['brow']
 # --------------------------------------------------------------------------
 
 def torso_stack(part, body, spec, region, **options):
-    """Loft torso rings. spec rows: (station or height, grow[, {'y', 'widen', 'front', 'back', 'skin'}])."""
+    """Loft torso rings. spec rows: (station or height, grow[, {'y', 'widen', 'front', 'back', 'skin', 'hem'}])."""
     rings, refs, skins = [], [], []
     for key, grow, *rest in spec:
         extra = dict(rest[0]) if rest else {}
         skins.append(extra.pop('skin', None))
-        rings.append(pk.torso_ring(body, key, grow, **extra))
-        refs.append(pk.torso_ring(body, key, 0.0, y=extra.get('y')))
+        hem_clearance = extra.pop('hem', None)
+        height_y = extra.get('y')
+        if hem_clearance is not None:
+            y_val = height_y if height_y is not None else (body.torso[key].y if isinstance(key, str) else key)
+            rings.append(pk.hip_hem_torso_ring(
+                body, y_val, grow, clearance=hem_clearance,
+                extra_widen=extra.get('widen', 0.0),
+                extra_front=extra.get('front', 0.0),
+                extra_back=extra.get('back', 0.0),
+            ))
+        else:
+            rings.append(pk.torso_ring(body, key, grow, **extra))
+        refs.append(pk.torso_ring(body, key, 0.0, y=height_y))
     with part.skinned(pk.SKIN_TORSO):
         return part.loft(rings, region, refs=refs, ring_skins=skins, **options)
+
+
+def _default_arm_skin(index):
+    if index <= 0.05:
+        return pk.SKIN_SHOULDER_ROOT_L
+    if index <= 1.05:
+        return pk.SKIN_SHOULDER_CAP_L
+    if 2.85 <= index <= 3.15:
+        return pk.SKIN_ELBOW_HI_L
+    if 3.85 <= index <= 4.15:
+        return pk.SKIN_ELBOW_LO_L
+    if index >= 5.45:
+        return pk.SKIN_FOREARM_END_L
+    return pk.SKIN_ARM_L
 
 
 def arm_stack(part, body, spec, region, **options):
@@ -61,13 +85,21 @@ def arm_stack(part, body, spec, region, **options):
     rings = [pk.arm_ring(body, index, grow, x=rest[0] if rest else None) for index, grow, *rest in spec]
     refs = [pk.arm_ring(body, index, 0.0, x=rest[0] if rest else None) for index, grow, *rest in spec]
     if 'ring_skins' not in options:
-        options['ring_skins'] = [
-            pk.SKIN_SHOULDER_ROOT_L if index <= 0.05
-            else (pk.SKIN_SHOULDER_CAP_L if index <= 1.05 else (pk.SKIN_WRIST_L if index >= 5.95 else pk.SKIN_ARM_L))
-            for index, *_ in spec
-        ]
+        options['ring_skins'] = [_default_arm_skin(index) for index, *_ in spec]
     with part.skinned(pk.SKIN_ARM_L):
         return part.loft(rings, region, refs=refs, **options)
+
+
+def _default_leg_skin(index):
+    if index <= 0.01:
+        return pk.SKIN_HIP_SOCKET_L
+    if 4.8 <= index < 5.5:
+        return pk.SKIN_ANKLE_HI_L
+    if 5.5 <= index < 6.5:
+        return pk.SKIN_ANKLE_L
+    if index >= 6.5:
+        return pk.SKIN_ANKLE_IN_L
+    return pk.SKIN_LEG_L
 
 
 def leg_stack(part, body, spec, region, **options):
@@ -75,7 +107,7 @@ def leg_stack(part, body, spec, region, **options):
     rings = [pk.leg_ring(body, index, grow, y=rest[0] if rest else None) for index, grow, *rest in spec]
     refs = [pk.leg_ring(body, index, 0.0, y=rest[0] if rest else None) for index, grow, *rest in spec]
     if 'ring_skins' not in options:
-        options['ring_skins'] = [pk.SKIN_HIP_SOCKET_L if index <= 0.01 else pk.SKIN_LEG_L for index, *_ in spec]
+        options['ring_skins'] = [_default_leg_skin(index) for index, *_ in spec]
     with part.skinned(pk.SKIN_LEG_L):
         return part.loft(rings, region, refs=refs, **options)
 
@@ -91,10 +123,25 @@ def belt(part, body, height, grow, width, region, *, bulge=0.010, flat=True, ao=
     return torso_stack(part, body, rows, region, ao=ao)
 
 
-def pelvis_shell(part, body, region, *, grow=CLOTH, top=1.168, ao=0.0):
-    """Trouser seat from the crotch to the waistband. The upper waistband rim is tagged 'legs_waist'."""
-    return torso_stack(part, body, [('crotch', grow), ('hips', grow + 0.002), ('belt', grow), ('belt', grow, {'y': top})],
-                       region, cap_start=True, ao=ao, band_tags=['pelvis', 'pelvis', 'legs_waist'])
+def pelvis_shell(part, body, region, *, grow=CLOTH, hips_grow=None, top=1.168, ao=0.0, skip_seat_sides=False):
+    """Trouser seat from the crotch to the waistband with granular cell tags for skirt/kilt culling."""
+    hg = grow + 0.002 if hips_grow is None else hips_grow
+    if skip_seat_sides:
+        torso_stack(part, body, [('belt', grow), ('belt', grow, {'y': top})], region, ao=ao, band_tags=['legs_waist'])
+        with part.skinned(pk.SKIN_TORSO):
+            c_pts, c_ref = pk.torso_ring(body, 'crotch', grow), pk.torso_ring(body, 'crotch', 0.0)
+            h_pts, h_ref = pk.torso_ring(body, 'hips', hg), pk.torso_ring(body, 'hips', 0.0)
+            b_pts, b_ref = pk.torso_ring(body, 'belt', grow), pk.torso_ring(body, 'belt', 0.0)
+            part.loft([[c_pts[2], c_pts[3]], [h_pts[2], h_pts[3]], [b_pts[2], b_pts[3]]],
+                      region, refs=[[c_ref[2], c_ref[3]], [h_ref[2], h_ref[3]], [b_ref[2], b_ref[3]]],
+                      closed=False, toward=Z, ao=ao, band_tags=['legs_seat_front', 'legs_seat_front'])
+            part.loft([[c_pts[2], c_pts[3]], [c_pts[7], c_pts[8]]], region,
+                      refs=[[c_ref[2], c_ref[3]], [c_ref[7], c_ref[8]]],
+                      closed=False, toward=-Y, ao=ao, band_tags=['legs_seat_crotch'])
+        return None
+    cell_tags, start_cap_tag = pk.pelvis_cell_tags()
+    return torso_stack(part, body, [('crotch', grow), ('hips', hg), ('belt', grow), ('belt', grow, {'y': top})],
+                       region, cap_start=True, ao=ao, cell_tags=cell_tags, start_cap_tag=start_cap_tag)
 
 
 def front_strip(part, body, rows, region, **options):
@@ -140,17 +187,23 @@ def torso_plate(part, body, height, index, grow, width, tall, depth, region, **o
         return part.plate(center, normal, Y, width, tall, depth, region, **options)
 
 
-def shoulder_strap(part, body, region, *, x=0.056, half=0.014, grow=0.025, low_front=1.30, low_back=1.38):
+def shoulder_strap(part, body, region, *, x=0.062, half=0.014, grow=0.025, low_front=1.30, low_back=1.38):
     """Left pack strap over the shoulder. Use inside `part.mirrored()`."""
-    top = body.torso['shoulder'].y + grow
-    rows = [('back', low_back), ('back', 1.52), ('top', top), ('front', 1.54), ('front', 1.465), ('front', 1.38),
+    sh, nb = body.torso['shoulder'], body.torso['neck_base']
+
+    def _top_y(px):
+        t = max(0.0, min(1.0, (px - nb.w) / max(1e-4, sh.w - nb.w)))
+        return nb.y + t * (sh.y - nb.y) + grow
+
+    rows = [('back', low_back), ('back', 1.52), ('top', 0.0), ('front', 1.54), ('front', 1.465), ('front', 1.38),
             ('front', low_front)]
     rings, refs = [], []
     for side, height in rows:
         if side == 'top':
-            center = body.torso['shoulder'].zc
-            rings.append([V(x - half, height, center), V(x + half, height, center)])
-            refs.append([V(x - half, height - grow, center), V(x + half, height - grow, center)])
+            center = sh.zc
+            y_in, y_out = _top_y(x - half), _top_y(x + half)
+            rings.append([V(x - half, y_in, center), V(x + half, y_out, center)])
+            refs.append([V(x - half, y_in - grow, center), V(x + half, y_out - grow, center)])
         else:
             limit = pk.station_at(body, height).w * 0.96
             x_in = min(x - half, limit - half)
@@ -183,68 +236,75 @@ def head_facet(height, index, grow, shape=ENVELOPE):
 def torso_medieval_knight(part, body):
     part.covers = ['chest', 'upperarm', 'forearm', 'hand', 'legs_waist']
     neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('hips', 0.015, {'y': 1.065}), ('belt', 0.015), ('waist', 0.016), ('ribs', 0.018),
-                             ('chest', 0.024), ('shoulder', 0.018), ('neck_base', 0.024),
-                             ('neck_base', 0.034, {'y': neck + 0.048, 'skin': SKIN_NECK})], 'metal',
-                band_ao=[-0.06, 0, 0, 0.03, 0.03, 0, 0.05])
+    torso_stack(part, body, [('hips', 0.015, {'y': 1.072, 'hem': 0.010}), ('waist', 0.016), ('ribs', 0.018),
+                             ('chest', 0.024), ('shoulder', 0.016), ('neck_base', 0.012),
+                             ('neck_base', 0.016, {'y': neck + 0.040, 'skin': SKIN_NECK})], 'metal',
+                band_ao=[-0.06, 0, 0.03, 0.03, 0, 0.05])
     # Tabard strip and brass emblem on the breastplate.
     front_strip(part, body, [(1.10, 0.052, 0.022), (1.235, 0.046, 0.024), (1.355, 0.052, 0.028), (1.465, 0.058, 0.034)],
                 'primary')
-    torso_plate(part, body, 1.405, 2, 0.040, 0.058, 0.070, 0.010, 'accent', corner=0.016)
+    torso_plate(part, body, 1.405, 2, 0.040, 0.058, 0.070, 0.010, 'accent', shrink=0.7)
     belt(part, body, 1.135, 0.015, 0.050, 'secondary', bulge=0.006, flat=False)
     torso_plate(part, body, 1.135, 2, 0.028, 0.050, 0.046, 0.012, 'accent')
     with part.mirrored():
-        arm_stack(part, body, [(0, 0.012), (2, 0.012), (3, 0.008), (4, 0.010), (5.5, 0.010), (6, 0.011)],
-                  'metal', band_regions=['metal', 'secondary', 'secondary', 'metal', 'metal'])
+        arm_stack(part, body, [(0, 0.003), (2, 0.009), (3, 0.008), (4, 0.010), (5.45, 0.011), (6, 0.011)],
+                  'metal', cap_end=True, band_regions=['metal', 'secondary', 'secondary', 'metal', 'metal'])
         with part.skinned(SKIN_PAULDRON_L):
-            part.loft([pk.arm_ring(body, 0.90, 0.022), pk.arm_ring(body, 1.32, 0.028), pk.arm_ring(body, 1.92, 0.022)],
-                      'metal', cap_start=True, band_regions=['metal', 'accent'], ao=0.04)
-        pk.build_hand(part, body, 'metal', grow=0.002, cap_start=False)
+            part.loft([pk.arm_ring(body, 0.85, 0.025), pk.arm_ring(body, 1.15, 0.026), pk.arm_ring(body, 1.45, 0.018)],
+                      'metal', cap_start=False, band_regions=['metal', 'accent'], ao=0.04)
+        pk.build_hand(part, body, 'metal', grow=0.002)
 
 
 def torso_medieval_tunic(part, body):
-    part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
-    neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('belt', 0.014, {'y': 1.125}), ('waist', 0.014),
-                             ('ribs', 0.014), ('chest', 0.016), ('shoulder', 0.014), ('neck_base', 0.012)], 'primary')
-    # Split left/right tunic tasset panels with front & back riding slits so strides never clip thighs.
-    skirt_rings = [
-        pk.skirt_tail_ring(body, 1.125, torso_grow=0.014, torso_weight=1.0, back_x=0.008, front_x=0.008),
-        pk.skirt_tail_ring(body, 1.005, clearance=0.012, torso_grow=0.016, back_x=0.010, front_x=0.010, torso_weight=0.35),
-        pk.skirt_tail_ring(body, 0.875, clearance=0.012, torso_grow=0.020, back_x=0.012, front_x=0.012, torso_weight=0.0),
+    part.covers = [
+        'chest', 'upperarm', 'forearm', 'legs_waist', 'legs_seat_sides', 'legs_seat_back', 'legs_seat_front',
+        'legs_seat_crotch',
     ]
-    skirt_skins = [pk.skirt_skin(1.0), pk.skirt_skin(0.35), pk.skirt_skin(0.0)]
+    neck = body.torso['neck_base'].y
+    torso_stack(part, body, [('belt', 0.014, {'y': 1.158}), ('waist', 0.014),
+                             ('ribs', 0.014), ('chest', 0.016), ('shoulder', 0.014), ('neck_base', 0.008)], 'primary')
+    # Split left/right tunic tasset panels enclosing pelvis + dressed thighs across strides and sitting/jogging.
+    skirt_rings = pk.skirt_tail_rings(body, [
+        {'y': 1.158, 'clearance': 0.001, 'back_x': 0.004, 'front_x': 0.004},
+        {'y': 1.060, 'clearance': 0.008, 'back_x': 0.004, 'front_x': 0.004,
+         'front_pad': 0.014, 'back_pad': 0.024},
+        {'y': 0.985, 'clearance': 0.006, 'back_x': 0.006, 'front_x': 0.006, 'front_pad': 0.003, 'back_pad': 0.032},
+        {'y': 0.875, 'clearance': 0.005, 'back_x': 0.008, 'front_x': 0.010, 'back_pad': 0.022},
+    ], two_sided_margin=0.0045)
+    skirt_cells = pk.skirt_cell_skins([1.0, 0.22, 0.04, 0.0], [1.0, 0.92, 0.95, 0.0], [1.0, 0.18, 0.04, 0.0])
     with part.mirrored():
-        part.loft(skirt_rings, 'primary', ring_skins=skirt_skins, closed=False,
-                  band_regions=['primary', 'accent'], band_ao=[0.0, -0.04],
+        part.loft(skirt_rings, 'primary', cell_skins=skirt_cells, closed=False,
+                  band_regions=['primary', 'primary', 'accent'], band_ao=[0.0, 0.0, -0.04],
                   two_sided=True, thickness=0.004, inner_ao=-0.20)
-    # Hooded mantle over the shoulders (tucked laterally inside sleeve tops).
-    torso_stack(part, body, [('shoulder', 0.022, {'y': 1.515, 'widen': -0.012, 'front': 0.014, 'back': 0.018}),
-                             ('shoulder', 0.022, {'widen': -0.008, 'front': 0.010, 'back': 0.014}),
-                             ('neck_base', 0.028),
-                             ('neck_base', 0.022, {'y': neck + 0.05, 'skin': SKIN_NECK})], 'secondary', ao=0.02)
-    belt(part, body, 1.125, 0.015, 0.052, 'secondary', bulge=0.006)
-    torso_plate(part, body, 1.125, 2, 0.027, 0.048, 0.050, 0.012, 'metal')
-    center, normal, _ = pk.facet(pk.torso_ring(body, 1.095, 0.016), 3)
-    with part.skinned(pk.SKIN_TORSO), part.anchored(pk.facet(pk.torso_ring(body, 1.125), 3)[0]):
-        part.box(center + normal * 0.016, (0.054, 0.068, 0.032), 'secondary', right=Y.cross(normal), taper=0.86,
-                 bevel=0.006, ao=-0.08)
+    # Hooded mantle over the shoulders (tucked laterally inside sleeve tops, tapering smoothly onto chest).
+    torso_stack(part, body, [(1.515, 0.018, {'front': 0.006, 'back': 0.008}),
+                             ('shoulder', 0.018, {'widen': -0.002, 'front': 0.006, 'back': 0.010}),
+                             ('neck_base', 0.014),
+                             ('neck_base', 0.016, {'y': neck + 0.032, 'back': 0.012, 'skin': SKIN_NECK})], 'secondary', ao=0.02)
+    belt(part, body, 1.160, 0.015, 0.042, 'secondary', bulge=0.006, flat=False)
+    torso_plate(part, body, 1.160, 2, 0.027, 0.046, 0.042, 0.012, 'metal')
+    center, normal, _ = pk.facet(pk.torso_ring(body, 1.160, 0.026), 3)
+    with part.skinned(pk.SKIN_TORSO), part.anchored(pk.facet(pk.torso_ring(body, 1.160), 3)[0]):
+        part.box(center + normal * 0.026, (0.048, 0.036, 0.026), 'secondary', right=Y.cross(normal), taper=0.86,
+                 ao=-0.08)
     with part.mirrored():
         arm_stack(part, body, [(0, 0.011), (1, 0.012), (2, 0.012), (2.9, 0.016), (3.0, 0.008), (4, 0.008), (5, 0.008),
-                               (6, 0.010)], 'primary',
-                  band_regions=['primary'] * 3 + ['primary', 'secondary', 'secondary', 'secondary'],
-                  band_ao=[0, 0, 0, -0.2, -0.04, -0.04, -0.04])
+                               (6, 0.010), (6.0, 0.000, 0.654)], 'primary',
+                  band_regions=['primary'] * 3 + ['primary', 'secondary', 'secondary', 'secondary', 'secondary'],
+                  band_ao=[0, 0, 0, -0.2, -0.04, -0.04, -0.04, -0.22])
 
 
 def legs_medieval_greaves(part, body):
     part.covers = ['pelvis', 'thigh', 'shin', 'foot']
     pelvis_shell(part, body, 'secondary', ao=-0.06)
     with part.mirrored():
-        leg_stack(part, body, [(0, 0.009), (1, 0.011), (2, 0.010), (3, 0.012), (4, 0.017), (5, 0.016)], 'metal',
-                  band_regions=['secondary', 'metal', 'secondary', 'metal', 'metal'], band_ao=[-0.06, 0, -0.1, 0, 0])
+        leg_stack(part, body, [(0, 0.009), (1, 0.011), (2, 0.010), (3, 0.012), (4, 0.016), (5, 0.017), (6, 0.016),
+                               (7, 0.011)], 'metal',
+                  band_regions=['secondary', 'metal', 'secondary', 'metal', 'metal', 'metal', 'metal'],
+                  band_ao=[-0.06, 0, -0.1, 0, 0, 0, -0.08])
         center, normal, _ = pk.facet(pk.leg_ring(body, 2.5, 0.014), 1)
         with part.skinned(pk.SKIN_LEG_L), part.anchored(pk.facet(pk.leg_ring(body, 2.5), 1)[0]):
-            part.plate(center, normal, Y, 0.094, 0.120, 0.032, 'metal', shrink=0.5, corner=0.022, ao=0.05)
+            part.plate(center, normal, Y, 0.094, 0.120, 0.032, 'metal', shrink=0.55, ao=0.05)
         pk.build_foot(part, body, 'metal', grow=0.012)
 
 
@@ -252,8 +312,9 @@ def legs_medieval_breeches(part, body):
     part.covers = ['pelvis', 'thigh', 'shin', 'foot']
     pelvis_shell(part, body, 'secondary')
     with part.mirrored():
-        leg_stack(part, body, [(0, CLOTH), (1, 0.010), (2, 0.009), (3.15, 0.011), (3.15, 0.028), (3.75, 0.021),
-                               (5, 0.017)], 'secondary', band_ao=[0, 0, 0, -0.16, -0.04, -0.1])
+        leg_stack(part, body, [(0, CLOTH), (1, 0.010), (2, 0.010), (3.45, 0.012), (3.45, 0.024),
+                               (5, 0.017), (6, 0.015), (7, 0.011)], 'secondary',
+                  band_ao=[0, 0, 0, -0.16, -0.08, -0.1, -0.1])
         pk.build_foot(part, body, 'secondary', grow=0.013, sole=0.014, ao=-0.08)
 
 
@@ -266,8 +327,8 @@ def headwear_great_helm(part, shape=ENVELOPE):
         return [V(point.x * scale, height, pk.HEAD_Z + (point.z - pk.HEAD_Z) * scale) for point in wide]
 
     part.loft([pk.head_ring(shape, 1.698, grow + 0.008), pk.head_ring(shape, 1.716, grow + 0.006),
-               pk.head_ring(shape, 1.80, grow), wide, lifted(1.992, 0.98), lifted(2.012, 0.86)], 'metal',
-              cap_end=True, band_regions=['accent', 'metal', 'metal', 'metal', 'metal'])
+               wide, lifted(1.992, 0.98), lifted(2.012, 0.86)], 'metal',
+              cap_end=True, band_regions=['accent', 'metal', 'metal', 'metal'])
     eye = pk.HEAD_Y['cheek'] + 0.026
     for index, width in ((1, 0.100), (0, 0.060), (2, 0.060)):
         center, normal, _ = head_facet(eye, index, grow, shape)
@@ -293,13 +354,12 @@ def back_medieval_cloak(part, body):
     neck = body.torso['neck_base'].y
     skin_cape = pk.Skin(allowed=('pelvis', 'spine_01', 'spine_02', 'spine_03'))
     # Mantle ring clears breastplate collar while staying tucked inside the pauldron line.
-    torso_stack(part, body, [('shoulder', 0.036, {'y': 1.548, 'widen': -0.006, 'front': 0.010, 'back': 0.012, 'skin': SKIN_BACK}),
-                             ('shoulder', 0.038, {'widen': -0.005, 'front': 0.010, 'back': 0.010, 'skin': SKIN_BACK}),
-                             ('neck_base', 0.036, {'y': neck + 0.032, 'skin': SKIN_NECK})], 'primary', ao=0.03)
+    torso_stack(part, body, [('shoulder', 0.036, {'y': 1.548, 'widen': -0.010, 'front': 0.010, 'back': 0.012, 'skin': SKIN_BACK}),
+                             ('shoulder', 0.036, {'widen': -0.010, 'front': 0.010, 'back': 0.010, 'skin': SKIN_BACK}),
+                             ('neck_base', 0.022, {'y': neck + 0.026, 'skin': SKIN_NECK})], 'primary', ao=0.03)
     with part.skinned(SKIN_BACK), part.anchored(pk.torso_point(body, 1.548, 0.0)):
         part.plate(pk.torso_point(body, 1.552, 0.0, 0.046), Z, Y, 0.054, 0.044, 0.012, 'accent')
     rows = [('shoulder', 0.046, 1.548, -0.010, 0.008, 0.0), ('chest', 0.052, 1.440, -0.014, 0.018, 0.006),
-            ('ribs', 0.052, 1.355, -0.016, 0.022, 0.008), ('waist', 0.054, 1.235, -0.020, 0.024, 0.009),
             ('belt', 0.056, 1.135, -0.022, 0.028, 0.010), ('hips', 0.062, 0.880, -0.024, 0.036, 0.014),
             ('hips', 0.070, 0.560, -0.026, 0.044, 0.018)]
     rings, refs = [], []
@@ -318,14 +378,14 @@ def back_medieval_cloak(part, body):
         refs.append([base[column] for column in columns])
     with part.skinned(skin_cape):
         part.loft(rings, 'primary', refs=refs, closed=False, toward=-Z,
-                  band_regions=['primary'] * 5 + ['accent'], two_sided=True, thickness=0.005,
+                  band_regions=['primary'] * 3 + ['accent'], two_sided=True, thickness=0.005,
                   inner_region='secondary', inner_ao=-0.20)
 
 
 def held_broadsword(part):
     part.tube([V(0, -0.078, 0), V(0, 0.078, 0)], [0.018, 0.016], 6, 'secondary', up=Z)
-    part.lathe([(0.012, -0.130), (0.033, -0.104), (0.019, -0.078)], 6, 'accent', cap_start=True)
-    part.box(V(0, 0.094, 0), (0.038, 0.030, 0.280), 'metal', bevel=0.008)
+    part.lathe([(0.012, -0.130), (0.033, -0.104), (0.019, -0.078)], 5, 'accent', cap_start=True)
+    part.box(V(0, 0.094, 0), (0.038, 0.030, 0.280), 'metal')
     for side in (1, -1):
         part.plate(V(side * 0.019, 0.094, 0), X * side, Y, 0.034, 0.024, 0.007, 'accent')
     part.loft([pk.ring(V(0, 0.108, 0), Z, X, 0.050, 0.012, 4), pk.ring(V(0, 0.800, 0), Z, X, 0.038, 0.009, 4)], 'metal',
@@ -429,71 +489,92 @@ def prop_war_banner(part):
 
 def epaulette(part, body, region, grow=0.018):
     """Left shoulder strap plate. Use inside `part.mirrored()`."""
-    top = body.torso['shoulder'].y + grow + 0.004
-    center = V(0.086, top + 0.004, body.torso['shoulder'].zc)
-    with part.skinned(pk.SKIN_TORSO), part.anchored(V(0.082, body.torso['shoulder'].y, body.torso['shoulder'].zc)):
-        part.plate(center, V(0.22, 1, 0), Z, 0.056, 0.110, 0.012, region, shrink=0.8)
+    sh = body.torso['shoulder']
+    nb = body.torso['neck_base']
+    p_sh = V(sh.w + grow * 0.85, sh.y, sh.zc)
+    p_nb = V(nb.w + grow * 0.65, nb.y, nb.zc)
+    slope = p_sh - p_nb
+    slope.z = 0.0
+    length = slope.length
+    tangent = slope / max(length, 1e-4)
+    normal = V(-tangent.y, tangent.x, 0.0)
+    anchor = p_nb.lerp(p_sh, 0.54)
+    center = anchor + normal * 0.004
+    strap_len = min(0.058, length * 0.72)
+    with part.skinned(pk.SKIN_TORSO), part.anchored(anchor):
+        part.plate(center, normal, Z, strap_len, 0.038, 0.008, region, shrink=0.8)
 
 
 def torso_ww2_field_jacket(part, body):
     part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
     neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('hips', 0.013, {'y': 1.02}), ('belt', 0.015), ('waist', 0.015), ('ribs', 0.015),
-                             ('chest', 0.017), ('shoulder', 0.015), ('neck_base', 0.014)], 'primary')
-    torso_stack(part, body, [('neck_base', 0.016, {'y': neck - 0.004}), ('neck_base', 0.044, {'y': neck + 0.022}),
-                             ('neck_base', 0.018, {'y': neck + 0.058, 'skin': SKIN_NECK})], 'primary', band_ao=[-0.1, 0.06])
-    belt(part, body, 1.130, 0.015, 0.056, 'secondary', bulge=0.006)
-    torso_plate(part, body, 1.130, 2, 0.027, 0.056, 0.044, 0.010, 'metal')
+    torso_stack(part, body, [('hips', 0.017, {'y': 1.068, 'hem': 0.012}), ('belt', 0.018), ('waist', 0.016), ('ribs', 0.015),
+                             ('chest', 0.017), ('shoulder', 0.015), ('neck_base', 0.009)], 'primary')
+    torso_stack(part, body, [('neck_base', 0.010, {'y': neck - 0.004}), ('neck_base', 0.020, {'y': neck + 0.018}),
+                             ('neck_base', 0.012, {'y': neck + 0.044, 'skin': SKIN_NECK})], 'primary', band_ao=[-0.1, 0.06])
+    belt(part, body, 1.130, 0.018, 0.056, 'secondary', bulge=0.006, flat=False)
+    torso_plate(part, body, 1.130, 2, 0.030, 0.056, 0.044, 0.010, 'metal')
     with part.mirrored():
-        arm_stack(part, body, [(0, 0.010), (1, 0.011), (2, 0.011), (3, 0.008), (4, 0.009), (5.55, 0.008), (5.55, 0.012),
-                               (6.05, 0.010)], 'primary', band_ao=[0, 0, 0, 0, 0, -0.2, -0.08])
+        arm_stack(part, body, [(0, 0.010), (1, 0.011), (2, 0.011), (3, 0.008), (4, 0.009), (5.55, 0.012),
+                               (6.0, 0.010), (6.0, 0.000, 0.654)], 'primary',
+                  band_ao=[0, 0, 0, 0, 0, -0.08, -0.22])
         torso_plate(part, body, 1.425, 1, 0.034, 0.068, 0.086, 0.012, 'primary', shrink=0.84, ao=0.05)
         torso_plate(part, body, 1.474, 1, 0.035, 0.072, 0.030, 0.018, 'primary', shrink=0.86, ao=-0.07)
-        torso_plate(part, body, 1.118, 1, 0.022, 0.068, 0.078, 0.012, 'secondary', shrink=0.84, ao=-0.02)
+        torso_plate(part, body, 1.118, 1, 0.025, 0.068, 0.078, 0.012, 'secondary', shrink=0.84, ao=-0.02)
         epaulette(part, body, 'primary')
 
 
 def torso_ww2_trenchcoat(part, body):
-    part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
+    part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist', 'legs_seat_sides', 'legs_seat_back']
     neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('belt', 0.015), ('waist', 0.016), ('ribs', 0.016), ('chest', 0.018), ('shoulder', 0.016),
-                             ('neck_base', 0.014)], 'primary')
-    # Split left/right coat tails with a center-back vent and open front so legs move freely through full strides.
-    skirt_rings = [
-        pk.skirt_tail_ring(body, 1.135, torso_grow=0.015, torso_weight=1.0, back_x=0.006, front_x=0.048),
-        pk.skirt_tail_ring(body, 1.015, clearance=0.009, torso_grow=0.016, back_x=0.008, front_x=0.052, torso_weight=0.40, side_flare=-0.004),
-        pk.skirt_tail_ring(body, 0.885, clearance=0.009, torso_grow=0.018, back_x=0.010, front_x=0.056, torso_weight=0.05, side_flare=-0.004),
-        pk.skirt_tail_ring(body, 0.600, clearance=0.008, torso_grow=0.020, back_x=0.012, front_x=0.064, torso_weight=0.0, side_flare=-0.004),
-    ]
-    skirt_skins = [pk.skirt_skin(1.0), pk.skirt_skin(0.40), pk.skirt_skin(0.05), pk.skirt_skin(0.0)]
+    torso_stack(part, body, [('belt', 0.015, {'y': 1.158}), ('waist', 0.016), ('ribs', 0.016), ('chest', 0.018),
+                             ('shoulder', 0.016), ('neck_base', 0.010)], 'primary')
+    # Split left/right coat tails with a center-back vent and open front so trousers/front-flap stay visible and thighs move freely.
+    skirt_rings = pk.skirt_tail_rings(body, [
+        {'y': 1.158, 'clearance': 0.001, 'back_x': 0.012, 'front_x': 0.048},
+        {'y': 1.060, 'clearance': 0.008, 'back_x': 0.014, 'front_x': 0.064,
+         'front_pad': 0.026, 'back_pad': 0.024},
+        {'y': 0.985, 'clearance': 0.007, 'back_x': 0.016, 'front_x': 0.066, 'front_pad': 0.026, 'back_pad': 0.032},
+        {'y': 0.900, 'clearance': 0.006, 'back_x': 0.018, 'front_x': 0.068, 'front_pad': 0.018, 'back_pad': 0.028},
+        {'y': 0.680, 'clearance': 0.005, 'back_x': 0.020, 'front_x': 0.070, 'front_pad': 0.008, 'back_pad': 0.010},
+    ], diag_deg=41.0, two_sided_margin=0.0045)
+    skirt_cells = pk.skirt_cell_skins(
+        [1.0, 0.35, 0.06, 0.0, 0.0],
+        [1.0, 0.95, 0.92, 0.45, 0.0],
+        [1.0, 0.32, 0.06, 0.0, 0.0],
+        [1.0, 0.35, 0.06, 0.0, 0.0],
+    )
     with part.mirrored():
-        part.loft(skirt_rings, 'primary', ring_skins=skirt_skins, closed=False,
-                  band_ao=[0.0, -0.02, -0.05], two_sided=True, thickness=0.004, inner_ao=-0.22)
-    torso_stack(part, body, [('neck_base', 0.020, {'y': neck - 0.004}), ('neck_base', 0.040, {'y': neck + 0.070, 'skin': SKIN_NECK})],
+        part.loft(skirt_rings, 'primary', cell_skins=skirt_cells, closed=False,
+                  band_ao=[0.0, 0.0, 0.0, -0.04], two_sided=True, thickness=0.004, inner_ao=-0.22)
+    torso_stack(part, body, [('neck_base', 0.012, {'y': neck - 0.004}), ('neck_base', 0.018, {'y': neck + 0.038, 'skin': SKIN_NECK})],
                 'primary', ao=0.05)
-    belt(part, body, 1.140, 0.015, 0.058, 'secondary', bulge=0.006, flat=False)
-    torso_plate(part, body, 1.140, 2, 0.028, 0.060, 0.050, 0.010, 'metal')
+    torso_stack(part, body, [('belt', 0.019, {'y': 1.140}), ('belt', 0.019, {'y': 1.180})], 'secondary', ao=-0.05)
+    torso_plate(part, body, 1.160, 2, 0.028, 0.060, 0.042, 0.010, 'metal')
     # Multi-station bevelled lapels following ribs/chest/shoulder so the convex chest never pokes through.
     w_ribs = pk.station_at(body, 1.355).w
     w_chest = body.torso['chest'].w
     w_sh = body.torso['shoulder'].w
-    w_top = pk.station_at(body, 1.592).w
+    w_top = pk.station_at(body, neck - 0.008).w
+    sh_y = body.torso['shoulder'].y
     lapel_rows = [
-        (1.355, min(0.064, w_ribs * 0.41), 0.008, 0.019, 0.029),
+        (1.355, min(0.064, w_ribs * 0.44), 0.008, 0.019, 0.029),
         (1.465, min(0.084, w_chest * 0.48), 0.018, 0.021, 0.031),
-        (1.562, min(0.084, w_sh * 0.51), 0.030, 0.019, 0.029),
-        (1.592, min(0.052, w_top * 0.48), 0.032, 0.017, 0.026),
+        (sh_y, min(0.088, w_sh * 0.52), 0.028, 0.019, 0.029),
+        (neck - 0.008, min(0.046, w_top * 0.72), 0.022, 0.014, 0.023),
     ]
     with part.mirrored():
         front_bevel_panel(part, body, lapel_rows, 'primary', inset=0.004, ao=0.07,
-                          tip_start=pk.torso_point(body, 1.295, 0.010, 0.023), cap_end=True)
+                          tip_start=pk.torso_point(body, 1.295, 0.010, 0.023))
         with part.skinned(pk.SKIN_TORSO):
-            for height, bgrow in ((1.24, 0.025), (1.38, 0.029)):
-                with part.anchored(pk.torso_point(body, height, 0.045)):
-                    part.plate(pk.torso_point(body, height, 0.045, bgrow), Z, Y, 0.024, 0.024, 0.008, 'metal')
+            base_pt = pk.torso_point(body, 1.30, 0.045, 0.023)
+            with part.anchored(pk.torso_point(body, 1.30, 0.045)):
+                part.loft([pk.rect_ring(base_pt, X, Y, 0.012, 0.012)], 'metal',
+                          tip_end=base_pt + Z * 0.009, toward=Z, ao=0.06)
     with part.mirrored():
-        arm_stack(part, body, [(0, 0.010), (1, 0.012), (2, 0.011), (3, 0.009), (4, 0.010), (5.5, 0.011), (6.05, 0.011)],
-                  'primary')
+        arm_stack(part, body, [(0, 0.010), (1, 0.012), (2, 0.011), (3, 0.009), (4, 0.010),
+                               (5.5, 0.011), (6.0, 0.011), (6.0, 0.000, 0.654)],
+                  'primary', band_ao=[0, 0, 0, 0, 0, 0, -0.22])
         epaulette(part, body, 'primary', grow=0.018)
 
 
@@ -501,9 +582,10 @@ def legs_ww2_field_trousers(part, body):
     part.covers = ['pelvis', 'thigh', 'shin', 'foot']
     pelvis_shell(part, body, 'primary', ao=-0.05)
     with part.mirrored():
-        leg_stack(part, body, [(0, 0.009), (1, 0.011), (2, 0.010), (3.3, 0.012), (3.3, 0.021), (4, 0.019), (5, 0.017)],
-                  'primary', band_regions=['primary', 'primary', 'primary', 'secondary', 'secondary', 'secondary'],
-                  band_ao=[-0.05, -0.05, -0.05, -0.2, 0, 0])
+        leg_stack(part, body, [(0, 0.009), (1, 0.011), (2, 0.010), (3.45, 0.012), (3.45, 0.021),
+                               (5, 0.017), (6, 0.015), (7, 0.011)],
+                  'primary', band_regions=['primary', 'primary', 'primary', 'secondary', 'secondary', 'secondary', 'secondary'],
+                  band_ao=[-0.05, -0.05, -0.05, -0.2, 0, 0, -0.08])
         pk.build_foot(part, body, 'secondary', grow=0.012, sole=0.014, sole_region='metal', ao=-0.1)
 
 
@@ -511,9 +593,10 @@ def legs_ww2_officer_breeches(part, body):
     part.covers = ['pelvis', 'thigh', 'shin', 'foot']
     pelvis_shell(part, body, 'primary', ao=-0.05)
     with part.mirrored():
-        leg_stack(part, body, [(0, 0.009), (1, 0.012), (1.7, 0.011), (2.35, 0.010), (2.35, 0.020), (4, 0.016), (5, 0.015)],
-                  'primary', band_regions=['primary', 'primary', 'primary', 'secondary', 'secondary', 'secondary'],
-                  band_ao=[-0.05, -0.03, -0.05, -0.16, -0.06, -0.12])
+        leg_stack(part, body, [(0, 0.009), (1, 0.011), (2.35, 0.010), (2.35, 0.020), (4.0, 0.017),
+                               (5, 0.015), (6, 0.014), (7, 0.010)],
+                  'primary', band_regions=['primary', 'primary', 'secondary', 'secondary', 'secondary', 'secondary', 'secondary'],
+                  band_ao=[-0.05, -0.03, -0.16, -0.06, -0.06, -0.12, -0.12])
         pk.build_foot(part, body, 'secondary', grow=0.012, sole=0.014, sole_region='metal', ao=-0.1)
 
 
@@ -550,13 +633,13 @@ def headwear_officer_cap(part, shape=ENVELOPE):
 def back_ww2_field_pack(part, body):
     back = pk.torso_surface_z(body, 1.40, 0.0, 0.018, 'back')
     with part.skinned(SKIN_BACK), part.anchored(pk.torso_point(body, 1.40, 0.0, 0.0, 'back')):
-        part.box(V(0, 1.365, back - 0.076), (0.300, 0.360, 0.152), 'secondary', bevel=0.020, corner=0.026)
+        part.box(V(0, 1.365, back - 0.076), (0.300, 0.360, 0.152), 'secondary', bevel=0.020)
         part.plate(V(0, 1.440, back - 0.152), -Z, Y, 0.262, 0.170, 0.016, 'secondary', shrink=0.9, ao=0.06)
         for side in (1, -1):
             part.plate(V(side * 0.072, 1.340, back - 0.166), -Z, Y, 0.030, 0.050, 0.008, 'metal')
-        part.tube([V(-0.176, 1.590, back - 0.072), V(0.176, 1.590, back - 0.072)], [0.052, 0.052], 6, 'primary', up=Y,
+        part.tube([V(-0.176, 1.590, back - 0.072), V(0.176, 1.590, back - 0.072)], [0.052, 0.052], 5, 'primary', up=Y,
                   cap_start=True, cap_end=True, ao=-0.04)
-        part.lathe([(0.046, 1.205), (0.056, 1.245), (0.056, 1.315), (0.030, 1.345)], 6, 'metal',
+        part.lathe([(0.046, 1.205), (0.056, 1.245), (0.056, 1.315), (0.030, 1.345)], 5, 'metal',
                    center=(-0.196, 0, back - 0.080), cap_start=True, cap_end=True)
     with part.mirrored():
         shoulder_strap(part, body, 'secondary')
@@ -567,7 +650,7 @@ def held_rifle(part):
     def section(z, y, half_w, half_h):
         return pk.ring(V(0, y, z), X, Y, half_w, half_h, 6, squareness=0.8, phase=math.pi / 6)
 
-    xform = Matrix.Translation(V(-0.009, 0.018, 0.022)) @ Matrix.Rotation(math.radians(-13), 4, 'Y')
+    xform = Matrix.Translation(V(-0.017, 0.018, 0.022)) @ Matrix.Rotation(math.radians(-13), 4, 'Y')
     with part.placed(xform):
         grip = Matrix.Rotation(math.radians(-14), 4, 'X')
         with part.placed(Matrix.Translation(V(0, -0.016, -0.004)) @ grip):
@@ -588,7 +671,7 @@ def held_rifle(part):
 
 def held_smg(part):
     # Retracted-stock SMG: angled outward (-13 deg Y) & shifted outward (-X) within palm-back bounds (minX >= -0.032).
-    xform = Matrix.Translation(V(-0.009, 0.016, 0.022)) @ Matrix.Rotation(math.radians(-13), 4, 'Y')
+    xform = Matrix.Translation(V(-0.017, 0.016, 0.022)) @ Matrix.Rotation(math.radians(-13), 4, 'Y')
     with part.placed(xform):
         grip = Matrix.Rotation(math.radians(-14), 4, 'X')
         with part.placed(Matrix.Translation(V(0, -0.016, 0.0)) @ grip):
@@ -608,7 +691,7 @@ def held_smg(part):
 def held_pistol(part):
     # Weapons are 1.15 times life size so that they read at a distance (rule F2).
     # Angle outward (-14 deg Y) and shift (-X, +Y, +Z) so slide & barrel clear palm and thigh_r/trenchcoat.
-    xform = Matrix.Translation(V(-0.010, 0.022, 0.028)) @ Matrix.Rotation(math.radians(-14), 4, 'Y') @ Matrix.Scale(1.15, 4)
+    xform = Matrix.Translation(V(-0.018, 0.022, 0.028)) @ Matrix.Rotation(math.radians(-14), 4, 'Y') @ Matrix.Scale(1.15, 4)
     with part.placed(xform):
         grip = Matrix.Rotation(math.radians(-12), 4, 'X')
         with part.placed(Matrix.Translation(V(0, -0.014, -0.006)) @ grip):
@@ -699,13 +782,13 @@ def sneaker(part, body):
 def torso_sim_hoodie(part, body):
     part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
     neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('hips', 0.012, {'y': 1.025}), ('hips', 0.026, {'y': 1.065}), ('belt', 0.021), ('waist', 0.018),
-                             ('ribs', 0.018), ('chest', 0.020), ('shoulder', 0.018), ('neck_base', 0.016)], 'primary',
+    torso_stack(part, body, [('hips', 0.017, {'y': 1.072, 'hem': 0.011}), ('hips', 0.022, {'y': 1.100}), ('belt', 0.021), ('waist', 0.018),
+                             ('ribs', 0.018), ('chest', 0.020), ('shoulder', 0.018), ('neck_base', 0.010)], 'primary',
                 band_ao=[-0.12, 0, 0, 0, 0, 0, 0])
     # Hood that lies on the upper back.
-    torso_stack(part, body, [('neck_base', 0.018, {'y': neck - 0.006}),
-                             ('neck_base', 0.040, {'y': neck + 0.026, 'back': 0.054}),
-                             ('neck_base', 0.024, {'y': neck + 0.072, 'back': 0.044, 'skin': SKIN_NECK})], 'primary',
+    torso_stack(part, body, [('neck_base', 0.011, {'y': neck - 0.006}),
+                             ('neck_base', 0.022, {'y': neck + 0.024, 'back': 0.042}),
+                             ('neck_base', 0.014, {'y': neck + 0.058, 'back': 0.036, 'skin': SKIN_NECK})], 'primary',
                 band_ao=[-0.08, 0.05])
     # Kangaroo pocket conforms across belt (1.135) so outer corners never tuck into body_heavy/orc.
     w_hip = pk.station_at(body, 1.085).w
@@ -725,18 +808,20 @@ def torso_sim_hoodie(part, body):
                 part.plate(pk.torso_point(body, 1.490, side * 0.030, 0.030), Z, Y, 0.014, 0.104, 0.009, 'accent')
     with part.mirrored():
         arm_stack(part, body, [(0, 0.011), (1, 0.012), (2, 0.012), (3, 0.012), (4, 0.014), (5.5, 0.015), (5.6, 0.011),
-                               (6.05, 0.012)], 'primary', band_ao=[0, 0, 0, 0, 0, -0.16, -0.1])
+                               (6.0, 0.012), (6.0, 0.000, 0.654)], 'primary',
+                  band_ao=[0, 0, 0, 0, 0, -0.16, -0.1, -0.22])
 
 
 def torso_sim_blazer(part, body):
     part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
     neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('hips', 0.022, {'y': 1.035}), ('belt', 0.017), ('waist', 0.016), ('ribs', 0.016),
-                             ('chest', 0.018), ('shoulder', 0.017), ('neck_base', 0.014)], 'primary')
-    torso_stack(part, body, [('neck_base', 0.018, {'y': neck - 0.004}), ('neck_base', 0.028, {'y': neck + 0.042, 'skin': SKIN_NECK})],
+    torso_stack(part, body, [('hips', 0.018, {'y': 1.066, 'hem': 0.012}), ('belt', 0.018), ('waist', 0.016), ('ribs', 0.016),
+                             ('chest', 0.018), ('shoulder', 0.017), ('neck_base', 0.009)], 'primary')
+    torso_stack(part, body, [('neck_base', 0.010, {'y': neck - 0.004}), ('neck_base', 0.009, {'y': neck + 0.026, 'skin': SKIN_NECK})],
                 'metal', ao=0.12)
     # Curved V-front shirt panel conforming across ribs/chest/shoulder proud of the blazer shell.
-    shirt_spec = [(1.355, 0.024, 0.022), (1.465, 0.042, 0.025), (1.562, 0.052, 0.024), (neck - 0.004, 0.040, 0.021)]
+    sh_y = body.torso['shoulder'].y
+    shirt_spec = [(1.355, 0.024, 0.022), (1.465, 0.042, 0.025), (sh_y, 0.048, 0.024), (neck - 0.004, 0.030, 0.018)]
     shirt_rings = [
         [pk.torso_point(body, y, hw, grow), pk.torso_point(body, y, 0.0, grow), pk.torso_point(body, y, -hw, grow)]
         for y, hw, grow in shirt_spec
@@ -752,9 +837,9 @@ def torso_sim_blazer(part, body):
     front_bevel_panel(part, body, [
         (1.365, 0.016, -0.016, 0.028, 0.037),
         (1.465, 0.015, -0.015, 0.032, 0.041),
-        (1.562, 0.012, -0.012, 0.030, 0.039),
-        (1.590, 0.016, -0.016, 0.028, 0.038),
-        (neck - 0.004, 0.012, -0.012, 0.026, 0.034),
+        (sh_y, 0.012, -0.012, 0.030, 0.039),
+        (1.592, 0.015, -0.015, 0.026, 0.035),
+        (neck - 0.004, 0.011, -0.011, 0.022, 0.030),
     ], 'accent', inset=0.003, tip_start=pk.torso_point(body, 1.315, 0.0, 0.032), cap_end=True)
     # Mirrored multi-station blazer lapels framing the V-opening outside the tie up to the collar.
     w_ribs = pk.station_at(body, 1.355).w
@@ -762,10 +847,10 @@ def torso_sim_blazer(part, body):
     w_sh = body.torso['shoulder'].w
     w_top = pk.station_at(body, neck - 0.006).w
     lapel_rows = [
-        (1.355, min(0.060, w_ribs * 0.38), 0.020, 0.022, 0.030),
+        (1.355, min(0.060, w_ribs * 0.40), 0.020, 0.022, 0.030),
         (1.465, min(0.078, w_chest * 0.44), 0.032, 0.024, 0.033),
-        (1.562, min(0.082, w_sh * 0.50), 0.040, 0.023, 0.032),
-        (neck - 0.006, min(0.052, w_top * 0.52), 0.034, 0.020, 0.028),
+        (sh_y, min(0.082, w_sh * 0.50), 0.036, 0.025, 0.033),
+        (neck - 0.006, min(0.046, w_top * 0.72), 0.024, 0.019, 0.026),
     ]
     with part.mirrored():
         front_bevel_panel(part, body, lapel_rows, 'primary', inset=0.003, ao=0.08,
@@ -776,35 +861,37 @@ def torso_sim_blazer(part, body):
     torso_plate(part, body, 1.448, 1, 0.024, 0.050, 0.020, 0.008, 'accent', shrink=0.9)
     with part.mirrored():
         arm_stack(part, body, [(0, 0.011), (1, 0.012), (2, 0.012), (3, 0.011), (4, 0.013), (5.6, 0.014), (5.6, 0.008),
-                               (6.1, 0.009)], 'primary', band_regions=['primary'] * 5 + ['metal', 'metal'],
-                  band_ao=[0, 0, 0, 0, 0, -0.1, 0.12])
+                               (6.0, 0.009), (6.0, 0.000, 0.654)], 'primary',
+                  band_regions=['primary'] * 5 + ['metal', 'metal', 'metal'],
+                  band_ao=[0, 0, 0, 0, 0, -0.1, 0.12, -0.22])
 
 
 def torso_sim_varsity(part, body):
     part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
     neck = body.torso['neck_base'].y
-    torso_stack(part, body, [('hips', 0.013, {'y': 1.040}), ('hips', 0.015, {'y': 1.078}), ('belt', 0.013), ('waist', 0.012),
-                             ('ribs', 0.012), ('chest', 0.013), ('shoulder', 0.012), ('neck_base', 0.012),
-                             ('neck_base', 0.022, {'y': neck + 0.044, 'skin': SKIN_NECK})], 'primary',
+    torso_stack(part, body, [('hips', 0.017, {'y': 1.072, 'hem': 0.011}), ('hips', 0.019, {'y': 1.098}), ('belt', 0.015), ('waist', 0.013),
+                             ('ribs', 0.012), ('chest', 0.013), ('shoulder', 0.012), ('neck_base', 0.008),
+                             ('neck_base', 0.010, {'y': neck + 0.028, 'skin': SKIN_NECK})], 'primary',
                 band_regions=['accent'] + ['primary'] * 6 + ['accent'])
-    front_strip(part, body, [(1.085, 0.014, 0.021), (1.135, 0.014, 0.019), (1.235, 0.014, 0.017),
-                             (1.355, 0.014, 0.018), (1.465, 0.014, 0.019), (1.562, 0.014, 0.018),
-                             (1.592, 0.014, 0.018)], 'metal', ao=0.08)
+    front_strip(part, body, [(1.085, 0.014, 0.023), (1.135, 0.014, 0.019), (1.235, 0.014, 0.017),
+                             (1.355, 0.014, 0.018), (1.465, 0.014, 0.019), (body.torso['shoulder'].y, 0.014, 0.018),
+                             (1.596, 0.014, 0.016)], 'metal', ao=0.08)
     torso_plate(part, body, 1.440, 1, 0.022, 0.064, 0.078, 0.009, 'accent', shrink=0.8, corner=0.014)
     with part.mirrored():
         arm_stack(part, body, [(0, 0.010), (1, 0.011), (2, 0.011), (3, 0.009), (4, 0.010), (5.5, 0.010), (5.6, 0.008),
-                               (6.05, 0.009)], 'metal', band_regions=['metal'] * 5 + ['accent', 'accent'],
-                  band_ao=[0.06, 0.06, 0.06, 0.06, 0.06, -0.16, 0])
+                               (6.0, 0.009), (6.0, 0.000, 0.654)], 'metal',
+                  band_regions=['metal'] * 5 + ['accent', 'accent', 'accent'],
+                  band_ao=[0.06, 0.06, 0.06, 0.06, 0.06, -0.16, 0, -0.22])
 
 
 def legs_sim_jeans(part, body):
     part.covers = ['pelvis', 'thigh', 'shin', 'foot']
     pelvis_shell(part, body, 'secondary')
-    with part.tagged('legs_waist'):
-        torso_plate(part, body, 1.150, 2, CLOTH + 0.002, 0.040, 0.032, 0.008, 'metal')
     with part.mirrored():
-        leg_stack(part, body, [(0, CLOTH), (1, 0.009), (2, 0.009), (3, 0.011), (4, 0.011), (4.78, 0.013), (5.0, 0.021)],
-                  'secondary', band_ao=[0, 0, 0, 0, 0, 0.1])
+        leg_stack(part, body, [(0, CLOTH), (1, 0.009), (2, 0.009), (3, 0.0115), (4, 0.011), (5, 0.012), (6, 0.016),
+                               (6, 0.004, 0.155), (7, 0.003, 0.125)],
+                  'secondary', band_regions=['secondary'] * 7 + ['metal'],
+                  band_ao=[0, 0, 0, 0, 0, 0.08, -0.20, -0.06])
         sneaker(part, body)
 
 
@@ -812,9 +899,9 @@ def legs_sim_shorts(part, body):
     part.covers = ['pelvis', 'thigh', 'foot']
     pelvis_shell(part, body, 'secondary')
     with part.mirrored():
-        leg_stack(part, body, [(0, 0.010), (1, 0.021), (1.82, 0.030), (1.92, 0.031)], 'secondary',
+        leg_stack(part, body, [(0, 0.010), (1, 0.017), (1.82, 0.022), (1.92, 0.023)], 'secondary',
                   band_regions=['secondary', 'secondary', 'accent'])
-        leg_stack(part, body, [(4.5, 0.009), (5.05, 0.011)], 'metal', ao=0.08)
+        leg_stack(part, body, [(5.15, 0.008), (6.0, 0.009), (7.0, 0.005)], 'metal', ao=0.08)
         sneaker(part, body)
 
 
@@ -837,21 +924,21 @@ def headwear_sim_beanie(part, shape=ENVELOPE):
     low = BROW - 0.030
     pk.head_shell(part, 'primary', 0.020, front=low + 0.02, temple=low + 0.01, side=low, back=low - 0.014, top_lift=0.030,
                   shape=shape)
-    part.loft([pk.head_ring(shape, low - 0.016, 0.022), pk.head_ring(shape, low - 0.010, 0.034),
-               pk.head_ring(shape, low + 0.034, 0.036), pk.head_ring(shape, low + 0.040, 0.024)], 'primary', ao=0.09)
+    part.loft([pk.head_ring(shape, low - 0.016, 0.022), pk.head_ring(shape, low + 0.012, 0.036),
+               pk.head_ring(shape, low + 0.040, 0.024)], 'primary', ao=0.09)
     top = pk.HEAD_Y['crown'] + 0.036
-    part.lathe([(0.016, top), (0.044, top + 0.030), (0.034, top + 0.064)], 6, 'accent', center=(0, 0, pk.HEAD_Z),
-               tip_end=V(0, top + 0.084, pk.HEAD_Z))
+    part.lathe([(0.016, top), (0.042, top + 0.032)], 5, 'accent', center=(0, 0, pk.HEAD_Z),
+               tip_end=V(0, top + 0.080, pk.HEAD_Z))
     hat_hair(part, shape, temple=-0.016, side=-0.024, back=-0.130)
 
 
 def back_sim_daypack(part, body):
     back = pk.torso_surface_z(body, 1.40, 0.0, 0.015, 'back')
     with part.skinned(SKIN_BACK), part.anchored(pk.torso_point(body, 1.40, 0.0, 0.0, 'back')):
-        part.box(V(0, 1.370, back - 0.074), (0.290, 0.410, 0.148), 'primary', taper=(0.82, 0.96), bevel=0.024, corner=0.032)
-        part.plate(V(0, 1.290, back - 0.148), -Z, Y, 0.200, 0.170, 0.034, 'secondary', shrink=0.84, corner=0.024)
+        part.box(V(0, 1.370, back - 0.074), (0.290, 0.410, 0.148), 'primary', taper=(0.82, 0.96), bevel=0.024)
+        part.plate(V(0, 1.290, back - 0.148), -Z, Y, 0.200, 0.170, 0.034, 'secondary', shrink=0.84)
         part.plate(V(0, 1.470, back - 0.142), -Z, Y, 0.190, 0.022, 0.008, 'accent', shrink=0.94)
-        part.box(V(0, 1.592, back - 0.060), (0.090, 0.030, 0.024), 'secondary', bevel=0.008)
+        part.box(V(0, 1.592, back - 0.060), (0.090, 0.030, 0.024), 'secondary')
         part.lathe([(0.034, 1.200), (0.038, 1.330), (0.022, 1.350), (0.022, 1.376)], 5, 'metal',
                    center=(0.176, 0, back - 0.070), cap_start=True, cap_end=True, band_regions=['metal', 'metal', 'accent'])
     with part.mirrored():
@@ -934,12 +1021,251 @@ def prop_planter(part):
 
 
 # --------------------------------------------------------------------------
+# Cyberpunk
+# --------------------------------------------------------------------------
+
+def torso_cyber_edgerunner(part, body):
+    part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
+    neck = body.torso['neck_base'].y
+    torso_stack(part, body, [('hips', 0.017, {'y': 1.072, 'hem': 0.012}), ('hips', 0.019, {'y': 1.098}), ('belt', 0.015),
+                             ('waist', 0.014), ('ribs', 0.015), ('chest', 0.017), ('shoulder', 0.016), ('neck_base', 0.010)],
+                'primary', band_ao=[-0.08, 0, 0, 0, 0.02, 0.02, 0])
+    # High flared tech-collar with glowing neon inner rim.
+    torso_stack(part, body, [('neck_base', 0.011, {'y': neck - 0.004}),
+                             ('neck_base', 0.022, {'y': neck + 0.032, 'widen': 0.010, 'back': 0.020, 'front': 0.008}),
+                             ('neck_base', 0.024, {'y': neck + 0.062, 'widen': 0.014, 'back': 0.026, 'front': 0.006, 'skin': SKIN_NECK})],
+                'primary', band_regions=['primary', 'accent'], band_ao=[-0.06, 0.14])
+    belt(part, body, 1.132, 0.016, 0.044, 'secondary', bulge=0.007, flat=False)
+    torso_plate(part, body, 1.132, 2, 0.026, 0.048, 0.036, 0.010, 'metal')
+    # Central neon data strip and asymmetric tech-plate on left chest.
+    front_strip(part, body, [(1.170, 0.011, 0.019), (1.235, 0.011, 0.018), (1.355, 0.012, 0.020),
+                             (1.465, 0.012, 0.022), (body.torso['shoulder'].y, 0.012, 0.021), (neck - 0.004, 0.011, 0.017)],
+                'accent', ao=0.14)
+    torso_plate(part, body, 1.445, 1, 0.026, 0.058, 0.066, 0.010, 'secondary', shrink=0.84, ao=0.02)
+    torso_plate(part, body, 1.445, 1, 0.034, 0.042, 0.020, 0.008, 'metal', shrink=0.88)
+    with part.mirrored():
+        arm_stack(part, body, [(0, 0.011), (1, 0.013), (2, 0.012), (2.9, 0.013), (3.1, 0.009), (4, 0.010),
+                               (5.45, 0.011), (5.65, 0.013), (6.0, 0.010), (6.0, 0.000, 0.654)],
+                  'primary',
+                  band_regions=['primary', 'primary', 'primary', 'secondary', 'metal', 'metal', 'accent', 'metal', 'metal'],
+                  band_ao=[0, 0.02, 0, -0.14, 0.04, 0.04, 0.16, 0.0, -0.22])
+
+
+def torso_cyber_netrunner(part, body):
+    part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
+    neck = body.torso['neck_base'].y
+    torso_stack(part, body, [('hips', 0.016, {'y': 1.074, 'hem': 0.011}), ('belt', 0.013), ('waist', 0.011),
+                             ('ribs', 0.012), ('chest', 0.014), ('shoulder', 0.012), ('neck_base', 0.009),
+                             ('neck_base', 0.012, {'y': neck + 0.036, 'skin': SKIN_NECK})],
+                'secondary',
+                band_regions=['secondary', 'secondary', 'secondary', 'primary', 'primary', 'secondary', 'accent'],
+                band_ao=[-0.06, 0, 0, 0.04, 0.04, -0.04, 0.14])
+    front_strip(part, body, [(1.140, 0.012, 0.017), (1.235, 0.014, 0.016), (1.355, 0.016, 0.017),
+                             (1.465, 0.018, 0.019), (body.torso['shoulder'].y, 0.014, 0.017), (neck - 0.004, 0.010, 0.014)],
+                'accent', ao=0.16)
+    torso_plate(part, body, 1.455, 2, 0.021, 0.056, 0.046, 0.010, 'metal', shrink=0.86, ao=0.08)
+    with part.mirrored():
+        arm_stack(part, body, [(0, 0.010), (1, 0.011), (2, 0.010), (3, 0.008), (4, 0.010),
+                               (5.45, 0.011), (5.65, 0.012), (6.0, 0.010), (6.0, 0.000, 0.654)],
+                  'secondary',
+                  band_regions=['primary', 'secondary', 'secondary', 'primary', 'primary', 'accent', 'metal', 'metal'],
+                  band_ao=[0.04, 0, -0.04, 0.04, 0.04, 0.16, 0.02, -0.22])
+
+
+def torso_cyber_enforcer(part, body):
+    part.covers = ['chest', 'upperarm', 'forearm', 'legs_waist']
+    neck = body.torso['neck_base'].y
+    sh_y = body.torso['shoulder'].y
+    torso_stack(part, body, [('hips', 0.017, {'y': 1.072, 'hem': 0.012}), ('belt', 0.015), ('waist', 0.014),
+                             ('ribs', 0.018), ('chest', 0.022), ('shoulder', 0.018), ('neck_base', 0.011),
+                             ('neck_base', 0.015, {'y': neck + 0.040, 'skin': SKIN_NECK})],
+                'secondary',
+                band_regions=['secondary', 'secondary', 'primary', 'primary', 'primary', 'metal', 'accent'],
+                band_ao=[-0.08, -0.04, 0.04, 0.06, 0.04, 0.02, 0.12])
+    front_bevel_panel(part, body, [
+        (1.320, 0.048, -0.048, 0.022, 0.032),
+        (1.465, 0.058, -0.058, 0.026, 0.036),
+        (sh_y, 0.044, -0.044, 0.022, 0.031),
+    ], 'metal', inset=0.006, ao=0.06, cap_start=True, cap_end=True)
+    front_strip(part, body, [(1.355, 0.013, 0.034), (1.465, 0.013, 0.038), (sh_y, 0.012, 0.033)], 'accent', ao=0.18)
+    belt(part, body, 1.132, 0.016, 0.050, 'secondary', bulge=0.007, flat=False)
+    torso_plate(part, body, 1.132, 2, 0.028, 0.052, 0.042, 0.011, 'metal')
+    with part.mirrored():
+        arm_stack(part, body, [(0, 0.011), (1, 0.012), (2, 0.011), (3, 0.008), (4, 0.011),
+                               (5.5, 0.011), (5.65, 0.009), (6.0, 0.010), (6.0, 0.000, 0.654)],
+                  'secondary',
+                  band_regions=['secondary', 'secondary', 'secondary', 'metal', 'metal', 'accent', 'metal', 'metal'],
+                  band_ao=[0, 0, -0.04, 0.04, 0.04, 0.15, 0, -0.22])
+        with part.skinned(SKIN_PAULDRON_L):
+            part.loft([pk.arm_ring(body, 0.85, 0.023), pk.arm_ring(body, 1.15, 0.025), pk.arm_ring(body, 1.45, 0.017)],
+                      'primary', cap_start=False, cap_end=True, band_regions=['primary', 'metal'], ao=0.05)
+
+
+def legs_cyber_cargo(part, body):
+    part.covers = ['pelvis', 'thigh', 'shin', 'foot']
+    pelvis_shell(part, body, 'secondary', ao=-0.04)
+    with part.mirrored():
+        leg_stack(part, body, [(0, CLOTH), (1, 0.011), (2, 0.011), (3, 0.013), (4, 0.014),
+                               (5, 0.016), (6, 0.015), (7, 0.010)],
+                  'secondary',
+                  band_regions=['secondary', 'secondary', 'accent', 'secondary', 'primary', 'primary', 'metal'],
+                  band_ao=[0, 0, 0.14, 0, 0.02, -0.06, -0.08])
+        center, normal, _ = pk.facet(pk.leg_ring(body, 2.5, 0.014), 1)
+        with part.skinned(pk.SKIN_LEG_L), part.anchored(pk.facet(pk.leg_ring(body, 2.5), 1)[0]):
+            part.plate(center, normal, Y, 0.078, 0.098, 0.022, 'metal', shrink=0.7, ao=0.06)
+        pk.build_foot(part, body, 'primary', grow=0.012, sole=0.020, sole_region='metal')
+
+
+def legs_cyber_cyberlegs(part, body):
+    part.covers = ['pelvis', 'thigh', 'shin', 'foot']
+    pelvis_shell(part, body, 'secondary', ao=-0.04)
+    with part.mirrored():
+        leg_stack(part, body, [(0, CLOTH), (1, 0.010), (1.9, 0.011), (3, 0.010), (4, 0.010),
+                               (5, 0.011), (6, 0.011), (7, 0.009)],
+                  'metal',
+                  band_regions=['secondary', 'accent', 'metal', 'metal', 'accent', 'metal', 'metal'],
+                  band_ao=[0, 0.16, 0.04, 0.02, 0.16, 0, -0.08])
+        pk.build_foot(part, body, 'metal', grow=0.010, sole=0.018, sole_region='secondary')
+
+
+def headwear_cyber_helm(part, shape=ENVELOPE):
+    part.skin = pk.SKIN_HEAD
+    grow = 0.024
+    wide = pk.head_ring(shape, BROW, grow)
+
+    def lifted(height, scale):
+        return [V(point.x * scale, height, pk.HEAD_Z + (point.z - pk.HEAD_Z) * scale) for point in wide]
+
+    part.loft([pk.head_ring(shape, 1.704, grow + 0.008), pk.head_ring(shape, 1.772, grow + 0.005),
+               wide, lifted(1.984, 0.96), lifted(2.010, 0.80)],
+              'primary', cap_end=True, band_regions=['secondary', 'primary', 'primary', 'primary'])
+    eye = pk.HEAD_Y['cheek'] + 0.022
+    for index, width in ((1, 0.098), (0, 0.056), (2, 0.056)):
+        center, normal, _ = head_facet(eye, index, grow, shape)
+        part.plate(center, normal, Y, width, 0.024, 0.008, 'accent', shrink=0.88, ao=0.22)
+    # Angular respirator chin plate and twin cybernetic ear comms fins.
+    center, normal, _ = head_facet(1.772, 1, grow + 0.004, shape)
+    part.plate(center, normal, Y, 0.076, 0.068, 0.012, 'secondary', shrink=0.8, ao=-0.06)
+    for index in (0, 3):
+        center, normal, _ = head_facet(1.880, index, grow, shape)
+        part.plate(center, normal, Y, 0.026, 0.105, 0.016, 'metal', shrink=0.7, ao=0.06)
+
+
+def headwear_cyber_visor(part, shape=ENVELOPE):
+    # Open-hair AR wraparound cyber visor (<= 32 tris so worst open-hat + hair stays <= 159).
+    part.skin = pk.SKIN_HEAD
+    stations = (
+        (0, 1.866, 1.886, 0.008, 0.016),
+        (1, 1.844, 1.894, 0.016, 0.028),
+        (2, 1.844, 1.894, 0.016, 0.028),
+        (3, 1.866, 1.886, 0.008, 0.016),
+    )
+    rings = []
+    for col, y_lo, y_hi, g_in, g_out in stations:
+        p_in_lo = pk.head_ring(shape, y_lo, g_in)[col]
+        p_out_lo = pk.head_ring(shape, y_lo, g_out)[col]
+        p_out_hi = pk.head_ring(shape, y_hi, g_out)[col]
+        p_in_hi = pk.head_ring(shape, y_hi, g_in)[col]
+        rings.append([p_in_lo, p_out_lo, p_out_hi, p_in_hi])
+    part.loft(rings, 'accent', band_regions=['secondary', 'accent', 'secondary'],
+              cap_start=True, cap_end=True, ao=0.18)
+
+
+def back_cyber_deck(part, body):
+    back = pk.torso_surface_z(body, 1.40, 0.0, 0.015, 'back')
+    with part.skinned(SKIN_BACK), part.anchored(pk.torso_point(body, 1.40, 0.0, 0.0, 'back')):
+        part.box(V(0, 1.385, back - 0.062), (0.250, 0.340, 0.116), 'secondary', taper=(0.84, 0.94), bevel=0.018)
+        part.plate(V(0, 1.395, back - 0.120), -Z, Y, 0.168, 0.240, 0.016, 'primary', shrink=0.88)
+        part.plate(V(0, 1.405, back - 0.134), -Z, Y, 0.030, 0.180, 0.010, 'accent', shrink=0.92, ao=0.2)
+        for side in (1, -1):
+            part.tube([V(side * 0.088, 1.545, back - 0.056), V(side * 0.096, 1.720, back - 0.072)],
+                      [0.009, 0.005], 4, 'metal', up=Z, cap_end=True)
+    with part.mirrored():
+        shoulder_strap(part, body, 'secondary', low_front=1.28)
+
+
+def held_cyber_katana(part):
+    part.tube([V(0, -0.078, 0), V(0, 0.078, 0)], [0.017, 0.015], 6, 'secondary', up=Z)
+    part.lathe([(0.010, -0.118), (0.024, -0.096), (0.016, -0.078)], 6, 'accent', cap_start=True, ao=0.15)
+    part.box(V(0, 0.092, 0), (0.036, 0.020, 0.130), 'metal', bevel=0.004)
+    part.plate(V(0, 0.110, 0.014), Z, Y, 0.024, 0.022, 0.010, 'accent', ao=0.18)
+    # Single-edged blade with metallic spine and glowing thermal cutting edge along +Z.
+    part.loft([
+        [V(-0.006, 0.104, -0.018), V(0.006, 0.104, -0.018), V(0.0, 0.104, 0.026)],
+        [V(-0.005, 0.780, -0.014), V(0.005, 0.780, -0.014), V(0.0, 0.780, 0.026)],
+    ], 'metal', tip_end=V(0.0, 1.010, 0.036))
+    part.loft([
+        [V(-0.003, 0.106, 0.022), V(0.003, 0.106, 0.022), V(0.0, 0.106, 0.034)],
+        [V(-0.0025, 0.780, 0.022), V(0.0025, 0.780, 0.022), V(0.0, 0.780, 0.033)],
+    ], 'accent', tip_end=V(0.0, 1.010, 0.042), ao=0.22)
+
+
+def held_smart_smg(part):
+    xform = Matrix.Translation(V(-0.017, 0.016, 0.022)) @ Matrix.Rotation(math.radians(-13), 4, 'Y')
+    with part.placed(xform):
+        grip = Matrix.Rotation(math.radians(-14), 4, 'X')
+        with part.placed(Matrix.Translation(V(0, -0.016, 0.0)) @ grip):
+            part.box(V(0, 0, 0), (0.024, 0.094, 0.044), 'secondary', taper=0.9)
+        part.box(V(0, 0.058, 0.130), (0.034, 0.068, 0.340), 'primary', bevel=0.009)
+        part.box(V(0, 0.062, 0.350), (0.028, 0.050, 0.130), 'metal', bevel=0.007)
+        part.plate(V(-0.017, 0.064, 0.145), -X, Y, 0.180, 0.014, 0.005, 'accent', ao=0.2)
+        part.plate(V(0, 0.095, 0.130), Y, Z, 0.018, 0.210, 0.014, 'metal', shrink=0.8)
+        part.box(V(0, -0.028, 0.210), (0.024, 0.118, 0.042), 'metal', ao=-0.1)
+
+
+def held_holo_deck(part):
+    # Left hand: compact cyberdeck chassis + glowing projected holographic screen wing.
+    part.box(V(0.021, 0.036, 0.0), (0.088, 0.136, 0.013), 'secondary', right=Z, up=Y, bevel=0.003, corner=0.008, ao=-0.16)
+    part.plate(V(0.0145, 0.036, 0.0), -X, Y, 0.072, 0.116, 0.002, 'metal', shrink=0.95)
+    part.plate(V(0.015, 0.134, 0.016), -X, Y, 0.092, 0.072, 0.003, 'accent', shrink=0.96, ao=0.24)
+    part.tube([V(0.024, 0.104, -0.036), V(0.024, 0.172, -0.036)], [0.005, 0.003], 4, 'metal', up=Z, cap_end=True)
+
+
+def prop_holo_kiosk(part):
+    part.box(V(0, 0.440, 0), (0.860, 0.880, 0.540), 'secondary', bevel=0.024, ao=-0.1)
+    part.box(V(0, 1.380, -0.040), (0.760, 1.040, 0.340), 'primary', bevel=0.020)
+    part.plate(V(0, 1.420, 0.130), Z, Y, 0.620, 0.840, 0.018, 'hair', shrink=0.94, ao=0.22)
+    for side in (-1, 1):
+        part.box(V(side * 0.395, 1.360, 0.050), (0.040, 1.020, 0.140), 'accent', bevel=0.006, ao=0.18)
+    part.box(V(0, 1.980, 0.080), (0.940, 0.140, 0.560), 'secondary', bevel=0.016, taper=0.9)
+    part.tube([V(-0.280, 2.050, -0.080), V(-0.280, 2.480, -0.080)], [0.018, 0.008], 5, 'metal', up=Z, cap_end=True)
+
+
+def prop_server_terminal(part):
+    part.box(V(0, 0.820, 0), (0.620, 1.640, 0.480), 'primary', bevel=0.022, taper=0.94)
+    part.box(V(0, 0.040, 0), (0.700, 0.080, 0.560), 'secondary', bevel=0.010)
+    for height in (0.480, 0.860, 1.240):
+        part.plate(V(0, height, 0.236), Z, Y, 0.460, 0.240, 0.016, 'secondary', shrink=0.94, ao=-0.16)
+    part.plate(V(0, 1.420, 0.244), Z, Y, 0.420, 0.048, 0.010, 'hair', ao=0.22)
+    part.plate(V(0.304, 0.900, 0.0), X, Y, 0.056, 1.220, 0.012, 'accent', ao=0.18)
+    part.tube([V(0.180, 1.640, -0.120), V(0.180, 1.960, -0.120)], [0.014, 0.006], 4, 'metal', up=Z, cap_end=True)
+
+
+def prop_cyber_crate(part):
+    part.box(V(0, 0.240, 0), (0.780, 0.480, 0.520), 'primary', bevel=0.028, corner=0.034)
+    part.plate(V(0, 0.480, 0), Y, Z, 0.680, 0.420, 0.024, 'secondary', shrink=0.92, ao=0.05)
+    for x in (-0.280, 0.280):
+        part.box(V(x, 0.250, 0), (0.060, 0.500, 0.548), 'secondary', bevel=0.008)
+    part.plate(V(0, 0.280, 0.260), Z, Y, 0.360, 0.044, 0.010, 'accent', ao=0.2)
+    for x in (-0.180, 0.180):
+        part.plate(V(x, 0.390, 0.260), Z, Y, 0.050, 0.065, 0.012, 'metal')
+
+
+def prop_neon_bollard(part):
+    part.box(V(0, 0.050, 0), (0.280, 0.100, 0.280), 'metal', bevel=0.012)
+    part.box(V(0, 0.490, 0), (0.160, 0.800, 0.160), 'secondary', bevel=0.016, taper=0.86)
+    for side, axis in ((1, Z), (-1, Z), (1, X), (-1, X)):
+        part.plate(V(0, 0.560, 0) + axis * (side * 0.078), axis * side, Y, 0.036, 0.520, 0.008, 'accent', ao=0.22)
+    part.box(V(0, 0.910, 0), (0.145, 0.050, 0.145), 'metal', bevel=0.008)
+
+
+# --------------------------------------------------------------------------
 # Pack tables
 # --------------------------------------------------------------------------
 
 def proportions(**changes):
-    values = {'height': 1.0, 'shoulderWidth': 1.0, 'torsoBulk': 1.0, 'waistScale': 1.0, 'headScale': 1.0,
-              'limbThickness': 1.0}
+    values = {'height': 1.0, 'legRatio': 0.94, 'armLength': 0.96, 'shoulderWidth': 1.04, 'torsoBulk': 1.0,
+              'waistScale': 1.0, 'headScale': 1.0, 'limbThickness': 1.02}
     values.update(changes)
     return values
 
@@ -978,13 +1304,15 @@ PACK_TABLE = {
                    {'skin': '#ecc8aa', 'hair': '#a84f2b', 'primary': '#3f6b45', 'secondary': '#5c3c24', 'accent': '#d9a441',
                     'metal': '#8c96a3', 'eye': '#346b4c'},
                    body='body_slim', head='head_cheerful', hair='hair_swept', torso='torso_medieval_tunic',
-                   legs='legs_medieval_breeches', left='held_torch', height=0.96),
+                   legs='legs_medieval_breeches', left='held_torch', height=0.96, legRatio=0.95, armLength=0.96,
+                   shoulderWidth=1.06, limbThickness=1.0),
             preset('medieval', 'medieval_guard', 'Town Guard', 'Sword_Idle',
                    {'skin': '#bc8358', 'hair': '#25262b', 'primary': '#2f4f8a', 'secondary': '#5c3c24', 'accent': '#d9a441',
                     'metal': '#8c96a3', 'eye': '#1f2634'},
                    body='body_heavy', head='head_stern', hair='hair_short_part', torso='torso_medieval_tunic',
                    legs='legs_medieval_greaves', headwear='headwear_kettle_helm', right='held_broadsword',
-                   left='held_heater_shield', shoulderWidth=1.08, torsoBulk=1.1),
+                   left='held_heater_shield', legRatio=0.94, armLength=0.98, shoulderWidth=1.08, torsoBulk=1.06,
+                   limbThickness=1.0),
         ],
     },
     'ww2': {
@@ -1011,14 +1339,15 @@ PACK_TABLE = {
             preset('ww2', 'ww2_officer', 'Field Officer', 'Pistol_Idle_Loop',
                    {'skin': '#ecc8aa', 'hair': '#cfa563', 'primary': '#5c635f', 'secondary': '#4a4238', 'accent': '#b84a39',
                     'metal': '#3a4046', 'eye': '#2e5d8c'},
-                   body='body_slim', head='head_stern', hair='hair_short_part', torso='torso_ww2_trenchcoat',
-                   legs='legs_ww2_officer_breeches', headwear='headwear_officer_cap', right='held_pistol', height=1.04),
+                   body='body_athletic', head='head_stern', hair='hair_short_part', torso='torso_ww2_trenchcoat',
+                   legs='legs_ww2_officer_breeches', headwear='headwear_officer_cap', right='held_pistol',
+                   height=1.02, shoulderWidth=1.06),
             preset('ww2', 'ww2_sapper', 'Assault Sapper', 'Walk_Loop',
                    {'skin': '#945d3b', 'hair': '#25262b', 'primary': '#545e43', 'secondary': '#8c7d5b', 'accent': '#d4a24c',
                     'metal': '#3a4046', 'eye': '#3c2a21'},
                    body='body_heavy', head='head_cheerful', hair='hair_short_part', torso='torso_ww2_field_jacket',
                    legs='legs_ww2_field_trousers', headwear='headwear_m1_helmet', right='held_smg', left='held_ammo_can',
-                   torsoBulk=1.08, limbThickness=1.08),
+                   legRatio=0.95, armLength=0.97, torsoBulk=1.06, limbThickness=1.06),
         ],
     },
     'sim': {
@@ -1041,7 +1370,8 @@ PACK_TABLE = {
                    {'skin': '#bc8358', 'hair': '#25262b', 'primary': '#35668c', 'secondary': '#9c8b70', 'accent': '#db6e48',
                     'metal': '#a2aab4', 'eye': '#2b2420'},
                    body='body_slim', head='head_cheerful', hair='hair_bob', torso='torso_sim_hoodie', legs='legs_sim_jeans',
-                   back='back_sim_daypack', right='held_coffee_cup', left='held_phone', height=0.96, headScale=1.06),
+                   back='back_sim_daypack', right='held_coffee_cup', left='held_phone',
+                   height=0.96, legRatio=0.95, armLength=0.96, headScale=1.06, limbThickness=1.0),
             preset('sim', 'sim_executive', 'Executive', 'Walk_Formal_Loop',
                    {'skin': '#d8a67e', 'hair': '#4a2e1f', 'primary': '#34425c', 'secondary': '#56606e', 'accent': '#b5483a',
                     'metal': '#c9cfd6', 'eye': '#2e5d8c'},
@@ -1051,7 +1381,49 @@ PACK_TABLE = {
                    {'skin': '#945d3b', 'hair': '#384b7a', 'primary': '#6f8f6b', 'secondary': '#4b5563', 'accent': '#d9a441',
                     'metal': '#d3cfc2', 'eye': '#3c2a21'},
                    body='body_heavy', head='head_hero', hair='hair_ponytail', torso='torso_sim_varsity',
-                   legs='legs_sim_shorts', headwear='headwear_sim_beanie', torsoBulk=1.06),
+                   legs='legs_sim_shorts', headwear='headwear_sim_beanie', legRatio=0.93, torsoBulk=1.06, limbThickness=1.04),
+        ],
+    },
+    'cyberpunk': {
+        'parts': [
+            ('torso', torso_cyber_edgerunner, 'Edgerunner High-Collar Jacket', {}),
+            ('torso', torso_cyber_netrunner, 'Netrunner Plugsuit', {}),
+            ('torso', torso_cyber_enforcer, 'Corp Enforcer Armor', {}),
+            ('legs', legs_cyber_cargo, 'Tech Cargo & Mag-Boots', {}),
+            ('legs', legs_cyber_cyberlegs, 'Chrome Cyber-Legs', {}),
+            ('headwear', headwear_cyber_helm, 'Oni Cyber Helm', {'hides_hair': True}),
+            ('headwear', headwear_cyber_visor, 'Neon AR Visor', {'hides_hair': False}),
+            ('back', back_cyber_deck, 'Neural Relay Pack', {}),
+        ],
+        'held': [(held_cyber_katana, 'Thermal Katana', 'hand_r'), (held_smart_smg, 'Smart Pulse SMG', 'hand_r'),
+                 (held_holo_deck, 'Holo Cyberdeck', 'hand_l')],
+        'props': [(prop_holo_kiosk, 'Holo Kiosk'), (prop_server_terminal, 'Server Terminal'),
+                  (prop_cyber_crate, 'Cyber Crate'), (prop_neon_bollard, 'Neon Bollard')],
+        'presets': [
+            preset('cyberpunk', 'cyber_edgerunner', 'Street Edgerunner', 'Sword_Idle',
+                   {'skin': '#d8a67e', 'hair': '#d93878', 'primary': '#1e293b', 'secondary': '#141824',
+                    'accent': '#00e5ff', 'metal': '#8d99ae', 'eye': '#00e5ff'},
+                   body='body_athletic', head='head_hero', hair='hair_swept', torso='torso_cyber_edgerunner',
+                   legs='legs_cyber_cargo', headwear='headwear_cyber_visor', back='back_cyber_deck',
+                   right='held_cyber_katana', height=1.02, shoulderWidth=1.08, torsoBulk=1.04),
+            preset('cyberpunk', 'cyber_netrunner', 'Ghost Netrunner', 'Jog_Fwd_Loop',
+                   {'skin': '#ecc8aa', 'hair': '#b8bec7', 'primary': '#252042', 'secondary': '#12131c',
+                    'accent': '#22f3b8', 'metal': '#9aa4b2', 'eye': '#22f3b8'},
+                   body='body_slim', head='head_cheerful', hair='hair_bob', torso='torso_cyber_netrunner',
+                   legs='legs_cyber_cyberlegs', headwear='headwear_cyber_visor', back='back_cyber_deck',
+                   left='held_holo_deck', height=0.97, legRatio=0.96, armLength=0.96, headScale=1.04, limbThickness=0.96),
+            preset('cyberpunk', 'cyber_enforcer', 'Corp Enforcer', 'Pistol_Idle_Loop',
+                   {'skin': '#945d3b', 'hair': '#25262b', 'primary': '#cfd6e0', 'secondary': '#1a1f29',
+                    'accent': '#ff2e55', 'metal': '#475261', 'eye': '#ff2e55'},
+                   body='body_heavy', head='head_stern', hair='hair_short_part', torso='torso_cyber_enforcer',
+                   legs='legs_cyber_cargo', headwear='headwear_cyber_helm', right='held_smart_smg',
+                   height=1.04, legRatio=0.94, shoulderWidth=1.10, torsoBulk=1.08, limbThickness=1.06),
+            preset('cyberpunk', 'cyber_ronin', 'Chrome Ronin', 'Sword_Attack',
+                   {'skin': '#bc8358', 'hair': '#25262b', 'primary': '#8f2438', 'secondary': '#141720',
+                    'accent': '#f5b727', 'metal': '#a8b3c2', 'eye': '#f5b727'},
+                   body='body_athletic', head='head_stern', hair='hair_ponytail', torso='torso_cyber_edgerunner',
+                   legs='legs_cyber_cyberlegs', right='held_cyber_katana',
+                   height=1.01, shoulderWidth=1.06, limbThickness=1.02),
         ],
     },
 }

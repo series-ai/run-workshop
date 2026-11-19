@@ -347,7 +347,7 @@ function LoadedAvatar({
       const socket = UAL1_RIG.heldSockets[hand]
       const mesh = new Mesh(findStaticMesh(gltfFor(loaded, entry), entry.nodeName).geometry, material)
       mesh.name = entry.id
-      computeHeldSocketPosition(socket.palmOffset, armFactor, limbThickness, mesh.position)
+      computeHeldSocketPosition(socket.palmOffset, armFactor, limbThickness, mesh.position, handScale)
       mesh.rotation.set(socket.rotationEuler[0], socket.rotationEuler[1], socket.rotationEuler[2], 'XYZ')
       if (isArmShieldHeldItem(entry.id)) {
         mesh.translateX(Math.max(0, lowerMass - 1) * 0.085)
@@ -357,7 +357,7 @@ function LoadedAvatar({
       added.push(mesh)
     }
     return () => added.forEach((mesh) => mesh.removeFromParent())
-  }, [rig, material, castShadow, plan.heldKey, selection.body, buildQuant, limbThickness]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rig, material, castShadow, plan.heldKey, selection.body, buildQuant, limbThickness, handScale]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Animation: shared clips, one mixer for each avatar.
   const mixer = useMemo(() => new AnimationMixer(rig.root), [rig])

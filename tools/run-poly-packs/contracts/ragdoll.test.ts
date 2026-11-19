@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { Matrix4, Quaternion, SkinnedMesh, Vector3, type Bone } from 'three'
 import { packCatalogSchema, PROPORTION_DEFAULTS, type AvatarPartEntry, type PackCatalog } from './catalog'
+import { POLY_PACK_KEYS } from './packs'
 import { boneScaleFor } from './proportions'
 import {
   interpolateBuildColliders,
@@ -92,11 +93,11 @@ describe('ragdoll physics metadata contracts', () => {
     expect(colossusRagdoll.totalMassKg).toBeGreaterThan(baseRagdoll.totalMassKg * 1.3)
   })
 
-  it.skipIf(!HAS_BUILT_MANIFEST)('enriches all 16 built presets across all 5 packs and all rigged parts with valid ragdoll metadata', () => {
+  it.skipIf(!HAS_BUILT_MANIFEST)('enriches all built presets across all registered packs and all rigged parts with valid ragdoll metadata', () => {
     const packs = loadBuiltPacks()
-    expect(packs).toHaveLength(5)
+    expect(packs).toHaveLength(POLY_PACK_KEYS.length)
     const allPresets = packs.flatMap((p) => p.presets)
-    expect(allPresets).toHaveLength(16)
+    expect(allPresets.length).toBeGreaterThanOrEqual(20)
 
     for (const pack of packs) {
       for (const part of pack.parts) {

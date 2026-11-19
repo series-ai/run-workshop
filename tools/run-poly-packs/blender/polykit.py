@@ -448,10 +448,17 @@ SKIN_HEAD = Skin(rigid={'Head': 1.0})
 SKIN_TORSO = Skin(allowed=SPINE + ('clavicle_l', 'clavicle_r'))
 SKIN_ARM_L = Skin(allowed=('clavicle_l', 'upperarm_l', 'lowerarm_l', 'hand_l'))
 SKIN_SHOULDER_ROOT_L = Skin(rigid={'clavicle_l': 0.96, 'spine_03': 0.04})
-SKIN_SHOULDER_CAP_L = Skin(rigid={'clavicle_l': 0.35, 'upperarm_l': 0.65})
+SKIN_SHOULDER_CAP_L = Skin(rigid={'clavicle_l': 0.42, 'upperarm_l': 0.58})
+SKIN_ELBOW_HI_L = Skin(rigid={'upperarm_l': 0.90, 'lowerarm_l': 0.10})
+SKIN_ELBOW_LO_L = Skin(rigid={'lowerarm_l': 0.90, 'upperarm_l': 0.10})
 SKIN_WRIST_L = Skin(rigid={'lowerarm_l': 0.65, 'hand_l': 0.35})
+SKIN_FOREARM_END_L = Skin(rigid={'lowerarm_l': 1.0})
+SKIN_HAND_ROOT_L = Skin(rigid={'hand_l': 1.0})
 SKIN_LEG_L = Skin(allowed=('thigh_l', 'calf_l', 'foot_l', 'ball_l'))
 SKIN_HIP_SOCKET_L = Skin(rigid={'thigh_l': 0.78, 'pelvis': 0.22})
+SKIN_ANKLE_HI_L = Skin(rigid={'calf_l': 0.85, 'foot_l': 0.15})
+SKIN_ANKLE_L = Skin(rigid={'calf_l': 0.50, 'foot_l': 0.50})
+SKIN_ANKLE_IN_L = Skin(rigid={'foot_l': 1.0})
 _FINGERS = [f'{finger}_0{segment}_l' for finger in ('index', 'ring', 'pinky') for segment in (1, 2, 3)]
 SKIN_MITTEN_L = Skin(allowed=('hand_l', 'middle_01_l', 'middle_02_l', 'middle_03_l'),
                      alias={name: 'middle_' + name.split('_', 1)[1] for name in _FINGERS})
@@ -724,20 +731,34 @@ class Part:
 
     def loft(self, rings, region, *, refs=None, closed=True, cap_start=False, cap_end=False,
              tip_start=None, tip_end=None, ao=0.0, band_regions=None, band_ao=None, band_tags=None, toward=None,
-             ring_skins=None, two_sided=False, thickness=0.005, inner_ao=-0.18, inner_region=None):
+             ring_skins=None, cell_skins=None, cell_tags=None, start_cap_tag=None, end_cap_tag=None,
+             two_sided=False, thickness=0.005, inner_ao=-0.18, inner_region=None):
         """Join a list of rings with quads. Optional flat caps or pointed tips close the ends.
 
-        `refs` gives a weight sample point for each ring point. `ring_skins` gives one Skin for each ring.
+        `refs` gives a weight sample point for each ring point. `ring_skins` gives one Skin for each ring;
+        `cell_skins` gives a 2D [row][column] Skin override matrix (mirrored consistently on inner linings).
+        `cell_tags` gives a 2D [row][column] region tag override matrix for quad bands.
         `two_sided=True` adds a solid inner lining offset opposite the front normal so FrontSide renders cleanly.
         """
         count = len(rings[0])
         if any(len(points) != count for points in rings):
             raise ValueError('All rings of a loft need the same point count.')
         group = self.group()
+
+        def vertex_skin(row, col):
+            if cell_skins and row < len(cell_skins) and cell_skins[row] is not None and cell_skins[row][col] is not None:
+                return cell_skins[row][col]
+            if ring_skins and ring_skins[row] is not None:
+                return ring_skins[row]
+            return self.skin
+
         ids = []
         for row, points in enumerate(rings):
-            with self.skinned(ring_skins[row] if ring_skins and ring_skins[row] is not None else self.skin):
-                ids.append([self.vert(point, refs[row][column] if refs else None) for column, point in enumerate(points)])
+            row_ids = []
+            for column, point in enumerate(points):
+                with self.skinned(vertex_skin(row, column)):
+                    row_ids.append(self.vert(point, refs[row][column] if refs else None))
+            ids.append(row_ids)
         # Use the stored vertices: inside `placed()` they differ from the ring points, and the
         # outward test of `face()` works in the space of the stored vertices.
         centers = [centroid([self.pos[index] for index in row]) for row in ids]
@@ -759,7 +780,9 @@ class Part:
         for row, column, middle, quad in bands:
             band_region = band_regions[row] if band_regions else region
             band_shade = band_ao[row] if band_ao else ao
-            tag = band_tags[row] if band_tags else None
+            tag = (cell_tags[row][column]
+                   if cell_tags and row < len(cell_tags) and cell_tags[row] is not None and cell_tags[row][column] is not None
+                   else (band_tags[row] if band_tags else None))
             before = len(self.faces)
             if toward is not None:
                 self.face(quad, band_region, ao=band_shade, group=group, toward=toward, tag=tag)
@@ -777,21 +800,20 @@ class Part:
                         vn[row + dr][(column + dc) % count] += n
             b_ids = []
             for row, points in enumerate(rings):
-                skin_row = ring_skins[row] if ring_skins and ring_skins[row] is not None else self.skin
-                with self.skinned(skin_row):
-                    b_row = []
-                    for col, point in enumerate(points):
-                        n = vn[row][col]
-                        offset = n.normalized() * thickness if n.length > 1e-9 else Vector((0.0, 0.0, 0.0))
-                        ref_pt = refs[row][col] if refs else None
+                b_row = []
+                for col, point in enumerate(points):
+                    n = vn[row][col]
+                    offset = n.normalized() * thickness if n.length > 1e-9 else Vector((0.0, 0.0, 0.0))
+                    ref_pt = refs[row][col] if refs else None
+                    with self.skinned(vertex_skin(row, col)):
                         b_row.append(self.vert(point - offset, ref_pt))
-                    b_ids.append(b_row)
+                b_ids.append(b_row)
             back_group = self.group()
             for row in range(len(rings) - 1):
                 band_region = inner_region or (band_regions[row] if band_regions else region)
-                tag = band_tags[row] if band_tags else None
                 for column in range(sides):
                     following = (column + 1) % count
+                    tag = front_faces[row * sides + column][3]
                     f_ordered = front_faces[row * sides + column][4]
                     f_norm = polygon_normal([self.pos[idx] for idx in f_ordered])
                     b_quad = (b_ids[row][column], b_ids[row + 1][column], b_ids[row + 1][following], b_ids[row][following])
@@ -806,9 +828,11 @@ class Part:
         other_end = next((point for point in reversed(centers[:-1]) if (point - centers[-1]).length > 1e-6),
                          centers[-1] - Y)
         if cap_start:
-            self.face(ids[0], first_region, ao=ao, group=group, toward=centers[0] - other_start, tag=first_tag)
+            self.face(ids[0], first_region, ao=ao, group=group, toward=centers[0] - other_start,
+                      tag=start_cap_tag if start_cap_tag is not None else first_tag)
         if cap_end:
-            self.face(ids[-1], last_region, ao=ao, group=group, toward=centers[-1] - other_end, tag=last_tag)
+            self.face(ids[-1], last_region, ao=ao, group=group, toward=centers[-1] - other_end,
+                      tag=end_cap_tag if end_cap_tag is not None else last_tag)
         for tip, row, region_name, tag in ((tip_start, 0, first_region, first_tag), (tip_end, -1, last_region, last_tag)):
             if tip is None:
                 continue
@@ -1191,45 +1215,48 @@ class BodySpec:
 
 
 def make_body(body_id, label, *, chest=1.0, waist=1.0, belly=1.0, hips=1.0, depth=1.0, arm=1.0, leg=1.0, neck=1.0,
-              shoulder=1.0):
+              shoulder=1.0, top_neck_cap=1.0):
     """Heroic base body. The factors bend the athletic baseline into other archetypes."""
     base_neck = 0.4 + 0.6 * neck
-    top_neck = min(neck, 1.0)
+    top_neck = min(neck, top_neck_cap)
+    sh_width = 0.4 * chest + 0.6 * shoulder
     torso = {
         'crotch': Station(0.990, 0.050 * hips, 0.054 * depth, 0.056 * depth, -0.012),
-        'hips': Station(1.045, 0.114 * hips, 0.088 * depth * belly, 0.080 * depth, -0.010),
+        'hips': Station(1.045, 0.126 * hips, 0.090 * depth * belly, 0.084 * depth, -0.010),
         'belt': Station(1.135, 0.103 * waist, 0.080 * depth * belly, 0.074 * depth, 0.000),
-        'waist': Station(1.235, 0.092 * waist, 0.075 * depth * belly, 0.051 * depth, 0.016),
-        'ribs': Station(1.355, 0.077 * chest, 0.067 * depth, 0.040 * depth, 0.028),
-        'chest': Station(1.465, 0.091 * chest, 0.078 * depth, 0.048 * depth, 0.026),
-        'shoulder': Station(1.562, 0.090 * chest, 0.062 * depth, 0.049 * depth, 0.026),
-        'neck_base': Station(1.616, 0.065 * base_neck, 0.056 * base_neck, 0.054 * base_neck, 0.024),
-        'neck_top': Station(1.708, 0.052 * top_neck, 0.050 * top_neck, 0.050 * top_neck, HEAD_Z),
+        'waist': Station(1.235, 0.088 * waist, 0.074 * depth * belly, 0.051 * depth, 0.016),
+        'ribs': Station(1.355, 0.077 * chest, 0.066 * depth, 0.035 * depth, 0.028),
+        'chest': Station(1.465, 0.091 * chest, 0.0715 * depth, 0.042 * depth, 0.032),
+        'shoulder': Station(1.556, 0.096 * sh_width, 0.060 * depth, 0.042 * depth, 0.035),
+        'neck_base': Station(1.615, 0.052 * base_neck, 0.048 * base_neck, 0.046 * base_neck, 0.026),
+        'neck_top': Station(1.712, 0.044 * top_neck, 0.042 * top_neck, 0.040 * top_neck, HEAD_Z),
     }
     arms = (
-        (0.072, 0.036 * arm, 0.037 * arm, 0.004),
-        (0.136, 0.038 * arm * shoulder, 0.040 * max(arm * shoulder, depth), 0.006),
-        (0.255, 0.0275 * arm, 0.0285 * arm, 0.017),
-        (0.385, 0.029 * arm, 0.030 * arm, 0.002),
-        (0.455, 0.033 * arm, 0.034 * arm, 0.002),
-        (0.565, 0.029 * arm, 0.031 * arm, 0.001),
-        (0.672, 0.027 * arm, 0.030 * arm, 0.002),
+        (0.082, 0.030 * arm, 0.027 * arm, 0.003),
+        (0.130, 0.0335 * arm * shoulder, 0.033 * max(arm * shoulder, depth), 0.005),
+        (0.255, 0.028 * arm, 0.0295 * arm, 0.0165),
+        (0.392, 0.030 * arm, 0.031 * arm, 0.002),
+        (0.448, 0.034 * arm, 0.035 * arm, 0.001),
+        (0.565, 0.030 * arm, 0.032 * arm, 0.000),
+        (0.672, 0.028 * arm, 0.031 * arm, 0.000),
     )
     legs = (
-        (1.060, 0.047 * leg, 0.054 * leg, 0.086, -0.016),
-        (0.920, 0.047 * leg, 0.055 * leg, 0.088, -0.014),
-        (0.685, 0.041 * leg, 0.049 * leg, 0.088, -0.018),
-        (0.585, 0.046 * leg, 0.052 * leg, 0.088, -0.026),
-        (0.430, 0.051 * leg, 0.059 * leg, 0.090, -0.040),
-        (0.108, 0.039 * leg, 0.045 * leg, 0.092, -0.058),
+        (1.060, 0.044 * leg, 0.049 * leg, 0.076, -0.018),
+        (0.920, 0.046 * leg, 0.052 * leg, 0.084, -0.016),
+        (0.685, 0.042 * leg, 0.047 * leg, 0.088, -0.018),
+        (0.585, 0.041 * leg, 0.046 * leg, 0.089, -0.026),
+        (0.430, 0.043 * leg, 0.049 * leg, 0.091, -0.038),
+        (0.215, 0.033 * leg, 0.038 * leg, ANKLE.x, -0.054),
+        (0.160, 0.029 * leg, 0.034 * leg, ANKLE.x, ANKLE.z),
+        (0.112, 0.021 * leg, 0.022 * leg, ANKLE.x, -0.046),
     )
     return BodySpec(body_id, label, torso, arms, legs, hand=0.5 + 0.5 * arm, foot=0.5 + 0.5 * leg)
 
 
 BODIES = {
     'body_athletic': make_body('body_athletic', 'Athletic'),
-    'body_heavy': make_body('body_heavy', 'Heavy', chest=1.01, waist=1.12, belly=1.22, hips=1.03, depth=1.14, arm=1.02,
-                            leg=1.02, neck=1.12, shoulder=1.03),
+    'body_heavy': make_body('body_heavy', 'Heavy', chest=1.04, waist=1.12, belly=1.22, hips=1.03, depth=1.14, arm=1.02,
+                            leg=1.02, neck=1.12, shoulder=1.07),
     'body_slim': make_body('body_slim', 'Slim', chest=0.90, waist=0.86, belly=0.90, hips=0.92, depth=0.84, arm=0.86,
                            leg=0.88, neck=0.90, shoulder=0.94),
 }
@@ -1237,7 +1264,7 @@ BODIES = {
 
 def make_monster_body(body_id, label, *, chest, waist, belly, hips, depth, arm, leg, neck, shoulder, slouch=0.0):
     base = make_body(body_id, label, chest=chest, waist=waist, belly=belly, hips=hips,
-                     depth=depth, arm=arm, leg=leg, neck=neck, shoulder=shoulder)
+                     depth=depth, arm=arm, leg=leg, neck=neck, shoulder=shoulder, top_neck_cap=1.06)
     shifts = {'ribs': slouch * 0.45, 'chest': slouch * 0.85, 'shoulder': slouch * 0.90,
               'neck_base': slouch * 0.45}
     for key, dz in shifts.items():
@@ -1248,13 +1275,13 @@ def make_monster_body(body_id, label, *, chest, waist, belly, hips, depth, arm, 
 
 ORC_BODY = make_monster_body(
     'body_orc', 'Orc Muscular',
-    chest=1.04, waist=1.06, belly=1.08, hips=1.02, depth=1.10,
-    arm=1.06, leg=1.02, neck=1.22, shoulder=1.08, slouch=0.028,
+    chest=1.05, waist=1.06, belly=1.08, hips=1.03, depth=1.10,
+    arm=1.08, leg=1.05, neck=1.22, shoulder=1.10, slouch=0.028,
 )
 TROLL_BODY = make_monster_body(
     'body_troll', 'Troll Hulking',
-    chest=1.05, waist=1.03, belly=1.08, hips=1.01, depth=1.12,
-    arm=1.04, leg=1.01, neck=1.16, shoulder=1.08, slouch=0.052,
+    chest=1.04, waist=0.98, belly=1.05, hips=1.00, depth=1.12,
+    arm=0.98, leg=0.96, neck=1.14, shoulder=1.07, slouch=0.056,
 )
 MONSTER_BODIES = {
     'body_orc': ORC_BODY,
@@ -1297,10 +1324,20 @@ def torso_ring(body, key, grow=0.0, *, y=None, widen=0.0, front=0.0, back=0.0, s
                 rv_neg=station.zb + grow + back, squareness=squareness)
 
 
+def neck_ring(body, key, grow=0.0, *, y=None, inset=1.0):
+    """8-sided neck section matching HEAD_SIDES / phase / squareness so neck and head facets align."""
+    station = body.torso[key] if isinstance(key, str) else station_at(body, key)
+    center = Vector((0.0, station.y if y is None else y, station.zc))
+    return ring(center, X, Z, station.w * inset + grow, station.zf * inset + grow, HEAD_SIDES,
+                rv_neg=station.zb * inset + grow, squareness=HEAD_SQUARENESS, phase=math.pi / HEAD_SIDES)
+
+
 def arm_ring(body, index, grow=0.0, *, x=None, scale=1.0):
     """Left arm section in the T pose at a station index (fractions interpolate). Facet 1 is the flat top."""
     along, ry, rz, lift = _lerp_rows(body.arm, index)
-    center = Vector((along if x is None else x, SHOULDER.y + lift, SHOULDER.z - 0.008))
+    t = max(0.0, min(1.0, (along - 0.45) / 0.11))
+    cz = (SHOULDER.z - 0.006) * (1.0 - t) + WRIST.z * t
+    center = Vector((along if x is None else x, SHOULDER.y + lift, cz))
     return ring(center, Z, Y, rz * scale + grow, ry * scale + grow, ARM_SIDES)
 
 
@@ -1314,7 +1351,7 @@ def leg_ring(body, index, grow=0.0, *, y=None, scale=1.0, squareness=0.9):
 
 def leg_section_at_y(body, height):
     """Interpolate (height, rx, rz, cx, cz) of the left leg at world `height`."""
-    rows = body.leg  # ordered top (y=1.065) to bottom (y=0.175)
+    rows = body.leg  # ordered top (y=1.060) to bottom (y=0.112)
     if height >= rows[0][0]:
         return (height, *rows[0][1:])
     for high, low in zip(rows, rows[1:]):
@@ -1325,9 +1362,16 @@ def leg_section_at_y(body, height):
     return (height, *rows[-1][1:])
 
 
-# Worst-case trouser/breeches/greaves radial thickness envelope along the thigh so split skirts
-# clear every compatible leg outfit across every body archetype.
-_LEG_OUTFIT_PAD = ((1.065, 0.010), (0.930, 0.015), (0.720, 0.014), (0.600, 0.012))
+# Worst-case pelvis_shell and trouser/breeches/greaves radial thickness envelopes so skirts and
+# hip hems clear every compatible leg outfit across all 5 UAL1 body archetypes.
+PELVIS_OUTFIT_MAX_GROW = 0.0105
+_LEG_OUTFIT_PAD = (
+    (1.065, 0.010),
+    (0.920, 0.016),
+    (0.725, 0.022),
+    (0.650, 0.020),
+    (0.585, 0.020),
+)
 
 
 def leg_outfit_pad(height):
@@ -1340,61 +1384,302 @@ def leg_outfit_pad(height):
     return _LEG_OUTFIT_PAD[-1][1]
 
 
-def skirt_skin(pelvis_share):
-    """Graduated pelvis -> left-thigh skinning for a split coat/tunic/kilt tail.
+def leg_outfit_front_pad(height):
+    """Extra front clearance below y=0.695 for knee plates on legs_medieval_greaves."""
+    base = leg_outfit_pad(height)
+    if 0.565 <= height <= 0.695:
+        fade = min((height - 0.565) / 0.015, (0.695 - height) / 0.025, 1.0)
+        return max(base, base + (0.046 - base) * fade)
+    return base
 
-    Use inside `part.mirrored()` so the right tail automatically switches to `thigh_r`.
+
+def pelvis_cell_tags():
+    """Return (cell_tags, start_cap_tag) for a standard 3-band TORSO_SIDES=10 pelvis_shell.
+
+    Quads: col 2 is flat front center ('legs_seat_front'), col 7 is flat back center ('legs_seat_back'),
+    cols 0,1,3,4,5,6,8,9 are sides/flanks ('legs_seat_sides'), band 2 is 'legs_waist', start cap is 'legs_seat_crotch'.
+    """
+    seat_row = [
+        'legs_seat_front' if col == 2 else ('legs_seat_back' if col == 7 else 'legs_seat_sides')
+        for col in range(TORSO_SIDES)
+    ]
+    waist_row = ['legs_waist'] * TORSO_SIDES
+    return [list(seat_row), list(seat_row), waist_row], 'legs_seat_crotch'
+
+
+def skirt_skin(pelvis_share):
+    """Deterministic pelvis -> left-thigh skinning for a split coat/tunic/kilt tail.
+
+    Use inside `part.mirrored()` so the right tail automatically switches to `thigh_l`.
     """
     if pelvis_share >= 0.99:
         return SKIN_TORSO
     if pelvis_share <= 0.01:
-        return Skin(allowed=('thigh_l',))
-    return Skin(allowed=('thigh_l',), blend={'pelvis': float(pelvis_share)})
+        return Skin(rigid={'thigh_l': 1.0})
+    return Skin(rigid={'thigh_l': float(1.0 - pelvis_share), 'pelvis': float(pelvis_share)})
 
 
-def skirt_tail_ring(body, height, *, clearance=0.022, torso_grow=0.024, back_x=0.008, front_x=0.010,
-                    torso_weight=0.0, front_flare=0.0, back_flare=0.0, side_flare=0.0):
-    """5-point left half-skirt ring ordered Back-Inner -> Back-Outer -> Left-Outer -> Front-Outer -> Front-Inner.
+def skirt_cell_skins(pelvis_shares, back_inner_shares=None, back_outer_shares=None, front_inner_shares=None):
+    """Build a 2D [row][col] Skin matrix for a 5-column skirt_tail_rings loft.
 
-    Combines the dressed-thigh envelope (body leg + trouser pad + clearance) with the torso envelope at `height`
-    so neither high-belly archetypes (`body_heavy`) nor thick trousers (`officer_breeches`) clip the flat facets.
+    Columns 0..1 (back-inner and back-outer behind the buttocks) keep extra `pelvis` weight so
+    backward-facing skirt panels never swing forward through the crotch/pelvis during knee lifts while
+    outer/front columns 2..4 track the thigh (with optional `front_inner_shares` on column 4 for open coats).
     """
-    t_ring = torso_ring(body, height, torso_grow)
-    t_back_mid = t_ring[7] + (t_ring[8] - t_ring[7]) * max(0.0, min(1.0, (back_x - t_ring[7].x) / max(t_ring[8].x - t_ring[7].x, 1e-6)))
-    t_front_mid = t_ring[3] + (t_ring[2] - t_ring[3]) * max(0.0, min(1.0, (front_x - t_ring[3].x) / max(t_ring[2].x - t_ring[3].x, 1e-6)))
-    t_half = [
-        V(back_x, height, t_back_mid.z),
-        t_ring[9],
-        t_ring[0],
-        t_ring[1],
-        V(front_x, height, t_front_mid.z),
-    ]
-    if torso_weight >= 0.999:
-        return t_half
+    bi = back_inner_shares if back_inner_shares is not None else pelvis_shares
+    bo = back_outer_shares if back_outer_shares is not None else pelvis_shares
+    fi = front_inner_shares if front_inner_shares is not None else pelvis_shares
+    rows = []
+    for p_share, bi_share, bo_share, fi_share in zip(pelvis_shares, bi, bo, fi):
+        outer = skirt_skin(p_share)
+        inner_back = skirt_skin(bi_share)
+        outer_back = skirt_skin(bo_share)
+        inner_front = skirt_skin(fi_share)
+        rows.append([inner_back, outer_back, outer, outer, inner_front])
+    return rows
 
-    _, rx, rz, cx, cz = leg_section_at_y(body, height)
-    pad = leg_outfit_pad(height)
-    rad_x = (rx + pad + clearance) * 1.02 + side_flare
-    rad_z_front = (rz + pad + clearance) * 1.02 + front_flare
-    rad_z_back = (rz + pad + clearance) * 1.02 + back_flare
-    l_half = [
-        V(back_x, height, cz - rad_z_back * 0.96),
-        V(cx + rad_x * 0.62, height, cz - rad_z_back * 0.84),
-        V(cx + rad_x * 1.00, height, cz),
-        V(cx + rad_x * 0.62, height, cz + rad_z_front * 0.84),
-        V(front_x, height, cz + rad_z_front * 0.96),
-    ]
-    if torso_weight > 0.0:
-        l_half = [l_pt.lerp(t_pt, torso_weight) for l_pt, t_pt in zip(l_half, t_half)]
 
-    # Clamp each column radially outward to at least the torso surface envelope (prevents belly/hip pokethrough).
-    zc = station_at(body, height).zc
-    out = []
-    for l_pt, t_pt in zip(l_half, t_half):
-        x = max(l_pt.x, t_pt.x) if t_pt.x > 0.06 else l_pt.x
-        z = max(l_pt.z, t_pt.z) if t_pt.z >= zc else min(l_pt.z, t_pt.z)
-        out.append(V(x, height, z))
-    return out
+def _lower_body_hull_points(body, height, *, pelvis_grow=PELVIS_OUTFIT_MAX_GROW, include_pelvis=True,
+                            include_legs=True, knee_plate=True, leg_pad_scale=1.0):
+    """Left-half (x >= 0) XZ envelope points of dressed pelvis and dressed thigh at `height`."""
+    pts = []
+    if include_pelvis and height >= 0.985:
+        t_pts = torso_ring(body, height, pelvis_grow)
+        for p in t_pts:
+            if p.x >= -1e-5:
+                pts.append((max(0.0, p.x), p.z))
+        # Centerline midpoints of front (2->3) and back (7->8) flat facets.
+        pts.append((0.0, 0.5 * (t_pts[2].z + t_pts[3].z)))
+        pts.append((0.0, 0.5 * (t_pts[7].z + t_pts[8].z)))
+    if include_legs and height <= 1.062:
+        _, rx, rz, cx, cz = leg_section_at_y(body, height)
+        pad = leg_outfit_pad(height) * leg_pad_scale
+        f_pad = (leg_outfit_front_pad(height) * leg_pad_scale) if knee_plate else pad
+        l_pts = ring(Vector((cx, height, cz)), X, Z, rx + pad, rz + pad, LEG_SIDES,
+                     squareness=0.9, phase=math.pi / LEG_SIDES)
+        for p in l_pts:
+            if p.x >= 0.0:
+                pts.append((p.x, p.z))
+        if knee_plate and 0.565 <= height <= 0.695:
+            front_z = cz + rz * math.cos(math.pi / LEG_SIDES)
+            z_plate = front_z + f_pad
+            z_base = front_z + 0.015 * leg_pad_scale
+            pts.append((max(0.0, cx - 0.024), z_plate))
+            pts.append((cx + 0.024, z_plate))
+            pts.append((cx + 0.045, z_base))
+    if not pts:
+        t_pts = torso_ring(body, height, pelvis_grow)
+        pts = [(max(0.0, p.x), p.z) for p in t_pts if p.x >= -1e-5]
+    return pts
+
+
+def skirt_tail_rings(body, specs, *, pelvis_grow=PELVIS_OUTFIT_MAX_GROW, diag_deg=36.0,
+                     two_sided_margin=0.0055, include_pelvis=True, include_legs=True,
+                     knee_plate=True, leg_pad_scale=1.0, min_edge=0.005):
+    """Build 5-point left half-skirt rings (Back-Inner -> Back-Outer -> Left-Outer -> Front-Outer -> Front-Inner)
+    bounded strictly inside the direct lateral leg envelope `d_s` while keeping Front-Outer (`x3`) chamfered
+    cleanly away from hanging hands and held items, sweeping every 5 mm vertical interval.
+
+    Each entry in `specs` (ordered top to bottom) is a dict:
+      y, clearance, back_x, front_x, plus optional front_pad, back_pad, side_pad, v_drop (list of 5 dy).
+    """
+    ca = math.cos(math.radians(diag_deg))
+    sa = math.sin(math.radians(diag_deg))
+
+    def support_req(y, cl, f_pad, b_pad, s_pad):
+        pts = _lower_body_hull_points(body, y, pelvis_grow=pelvis_grow, include_pelvis=include_pelvis,
+                                      include_legs=include_legs, knee_plate=knee_plate, leg_pad_scale=leg_pad_scale)
+        m_b = cl + b_pad + two_sided_margin
+        m_bl = cl + ca * s_pad + sa * b_pad + two_sided_margin
+        m_s = cl + s_pad + two_sided_margin
+        m_fl = cl + ca * s_pad + sa * f_pad + two_sided_margin
+        m_f = cl + f_pad + two_sided_margin
+        d_b = max(-pz for _, pz in pts) + m_b
+        d_bl = max(ca * px - sa * pz for px, pz in pts) + m_bl
+        d_s = max(px for px, _ in pts) + m_s
+        d_fl = max(ca * px + sa * pz for px, pz in pts) + m_fl
+        d_f = max(pz for _, pz in pts) + m_f
+        return [d_b, d_bl, d_s, d_fl, d_f], pts, m_bl, m_fl
+
+    dists = []
+    row_data = []
+    for sp in specs:
+        req, pts, m_bl, m_fl = support_req(sp['y'], sp['clearance'], sp.get('front_pad', 0.0),
+                                           sp.get('back_pad', 0.0), sp.get('side_pad', 0.0))
+        dists.append(req)
+        row_data.append((pts, m_bl, m_fl))
+
+    # Verify linear chords between consecutive rings at 5 mm vertical steps and lift as needed.
+    for i in range(len(specs) - 1):
+        s0, s1 = specs[i], specs[i + 1]
+        y0, y1 = s0['y'], s1['y']
+        span = y0 - y1
+        if span <= 1e-6:
+            continue
+        steps = max(2, int(math.ceil(span / 0.005)))
+        for k in range(1, steps):
+            t = k / steps
+            y = y0 - span * t
+            cl = s0['clearance'] * (1.0 - t) + s1['clearance'] * t
+            fp = s0.get('front_pad', 0.0) * (1.0 - t) + s1.get('front_pad', 0.0) * t
+            bp = s0.get('back_pad', 0.0) * (1.0 - t) + s1.get('back_pad', 0.0) * t
+            sp_ = s0.get('side_pad', 0.0) * (1.0 - t) + s1.get('side_pad', 0.0) * t
+            req, _, _, _ = support_req(y, cl, fp, bp, sp_)
+            for e in range(5):
+                cur = dists[i][e] * (1.0 - t) + dists[i + 1][e] * t
+                gap = req[e] - cur
+                if gap > 0.0:
+                    # Keep row 0 (belt/waist join) compact by shifting chord lift onto row 1 for band 0.
+                    if i == 0:
+                        dists[i + 1][e] += gap / max(t, 0.25)
+                    else:
+                        denom = (1.0 - t) ** 2 + t ** 2
+                        dists[i][e] += gap * (1.0 - t) / denom
+                        dists[i + 1][e] += gap * t / denom
+
+    def solve_ring_chords(d_b, x2, z2, d_f, x1_base, x3_base, pts, m_bl, m_fl):
+        x1, x3 = min(x2, x1_base), min(x2, x3_base)
+        for _ in range(4):
+            dz_b = max(z2 + d_b, 1e-4)
+            dx_b = max(0.0, x2 - x1)
+            Lb = math.hypot(dx_b, dz_b)
+            for px, pz in pts:
+                if pz < z2:
+                    need = (x2 - px) * dz_b - m_bl * Lb
+                    max_dx = max(0.0, need / max(z2 - pz, 1e-4))
+                    x1 = max(x1, min(x2, x2 - max_dx))
+            dz_f = max(d_f - z2, 1e-4)
+            dx_f = max(0.0, x2 - x3)
+            Lf = math.hypot(dx_f, dz_f)
+            for px, pz in pts:
+                if pz > z2:
+                    need = (x2 - px) * dz_f - m_fl * Lf
+                    max_dx = max(0.0, need / max(pz - z2, 1e-4))
+                    x3 = max(x3, min(x2, x2 - max_dx))
+        return x1, x3
+
+    def ring_coords(d_vec, sp, pts, m_bl, m_fl):
+        d_b, d_bl, d_s, d_fl, d_f = d_vec
+        bx, fx = sp['back_x'], sp['front_x']
+        d_bl = max(d_bl, ca * (bx + min_edge) + sa * d_b)
+        d_fl = max(d_fl, ca * (fx + min_edge) + sa * d_f)
+        x1_u = max(bx + min_edge, min(d_s, (d_bl - sa * d_b) / ca))
+        x2_u = (d_bl + d_fl) / (2.0 * ca)
+        z2_u = max(-d_b * 0.65, min(d_f * 0.65, (d_fl - d_bl) / (2.0 * sa)))
+        x3_u = max(fx + min_edge, min(d_s, (d_fl - sa * d_f) / ca))
+        x2 = min(x2_u, d_s)
+        z2 = z2_u
+        x1, x3 = x1_u, x3_u
+        if x2_u > d_s:
+            # Place outer horn vertex z2 so the front chamfer x3 pulls cleanly inside hanging arms/items while
+            # both chords P1->P2 and P2->P3 maintain full clearance outside `pts`.
+            z_lo = max(-d_b * 0.45, z2_u)
+            z_hi = min(d_f * 0.65, d_f - 0.012)
+            best = None
+            steps_z = 12 if z_hi > z_lo + 1e-4 else 0
+            for idx_z in range(steps_z + 1):
+                zt = z_lo + (z_hi - z_lo) * (idx_z / max(steps_z, 1)) if steps_z else z2_u
+                cand_x1, cand_x3 = solve_ring_chords(d_b, x2, zt, d_f, x1_u, x3_u, pts, m_bl, m_fl)
+                score = cand_x3 * 1.0 + cand_x1 * 0.15 + 0.02 * abs(zt)
+                if best is None or score < best[0]:
+                    best = (score, zt, cand_x1, cand_x3)
+            _, z2, x1, x3 = best
+        return [d_b, x1, x2, z2, x3]
+
+    row_params = [ring_coords(dists[i], specs[i], *row_data[i]) for i in range(len(specs))]
+
+    # Final 5 mm chord pass on clamped (x1, x2, z2, x3) across bands 1+ so clamping x2 never pinches an edge.
+    for i in range(1, len(specs) - 1):
+        s0, s1 = specs[i], specs[i + 1]
+        y0, y1 = s0['y'], s1['y']
+        span = y0 - y1
+        if span <= 1e-6:
+            continue
+        p0, p1 = row_params[i], row_params[i + 1]
+        steps = max(2, int(math.ceil(span / 0.005)))
+        for k in range(1, steps):
+            t = k / steps
+            y = y0 - span * t
+            cl = s0['clearance'] * (1.0 - t) + s1['clearance'] * t
+            fp = s0.get('front_pad', 0.0) * (1.0 - t) + s1.get('front_pad', 0.0) * t
+            bp = s0.get('back_pad', 0.0) * (1.0 - t) + s1.get('back_pad', 0.0) * t
+            sp_ = s0.get('side_pad', 0.0) * (1.0 - t) + s1.get('side_pad', 0.0) * t
+            pts = _lower_body_hull_points(body, y, pelvis_grow=pelvis_grow, include_pelvis=include_pelvis,
+                                          include_legs=include_legs, knee_plate=knee_plate, leg_pad_scale=leg_pad_scale)
+            m_bl = cl + ca * sp_ + sa * bp + two_sided_margin
+            m_fl = cl + ca * sp_ + sa * fp + two_sided_margin
+            db = p0[0] * (1.0 - t) + p1[0] * t
+            x1 = p0[1] * (1.0 - t) + p1[1] * t
+            x2 = p0[2] * (1.0 - t) + p1[2] * t
+            z2 = p0[3] * (1.0 - t) + p1[3] * t
+            x3 = p0[4] * (1.0 - t) + p1[4] * t
+            df = dists[i][4] * (1.0 - t) + dists[i + 1][4] * t
+            req_x1, req_x3 = solve_ring_chords(db, x2, z2, df, x1, x3, pts, m_bl, m_fl)
+            if req_x1 > x1:
+                g = req_x1 - x1
+                denom = (1.0 - t) ** 2 + t ** 2
+                p0[1] = min(p0[2], p0[1] + g * (1.0 - t) / denom)
+                p1[1] = min(p1[2], p1[1] + g * t / denom)
+            if req_x3 > x3:
+                g = req_x3 - x3
+                denom = (1.0 - t) ** 2 + t ** 2
+                p0[4] = min(p0[2], p0[4] + g * (1.0 - t) / denom)
+                p1[4] = min(p1[2], p1[4] + g * t / denom)
+
+    rings = []
+    for i, sp in enumerate(specs):
+        y = sp['y']
+        d_b, x1, x2, z2, x3 = row_params[i]
+        d_f = dists[i][4]
+        bx, fx = sp['back_x'], sp['front_x']
+        v_drop = sp.get('v_drop') or (0.0, 0.0, 0.0, 0.0, 0.0)
+        rings.append([
+            V(bx, y + v_drop[0], -d_b),
+            V(x1, y + v_drop[1], -d_b),
+            V(x2, y + v_drop[2], z2),
+            V(x3, y + v_drop[3], d_f),
+            V(fx, y + v_drop[4], d_f),
+        ])
+    return rings
+
+
+def hip_hem_torso_ring(body, height, base_grow, *, clearance=0.012, extra_widen=0.0, extra_front=0.0,
+                       extra_back=0.0):
+    """Build a closed TORSO_SIDES=10 torso ring at `height` guaranteed to enclose dressed pelvis + thigh without
+    flaring laterally into hanging forearms."""
+    # Above leg_stack(0) (y=1.060), only pelvis_shell (grow <= 0.010, monster front tab <= 0.014) is present.
+    if height > 1.062:
+        ring_grow = max(base_grow, 0.010 + min(clearance, 0.006))
+        return torso_ring(body, height, ring_grow, widen=extra_widen,
+                          front=max(extra_front, 0.003), back=extra_back)
+    half_pts = _lower_body_hull_points(body, height, include_pelvis=True, include_legs=True, knee_plate=False)
+    all_pts = half_pts + [(-px, pz) for px, pz in half_pts if px > 1e-6]
+    widen, front, back = extra_widen, extra_front, extra_back
+    for _ in range(24):
+        ring_pts = torso_ring(body, height, base_grow, widen=widen, front=front, back=back)
+        ok = True
+        for idx in range(TORSO_SIDES):
+            a, b = ring_pts[idx], ring_pts[(idx + 1) % TORSO_SIDES]
+            nx, nz = b.z - a.z, -(b.x - a.x)
+            ln = math.hypot(nx, nz)
+            if ln < 1e-9:
+                continue
+            nx /= ln
+            nz /= ln
+            limit = nx * a.x + nz * a.z - clearance
+            worst = max(nx * px + nz * pz - limit for px, pz in all_pts)
+            if worst > 1e-4:
+                ok = False
+                if abs(nx) > 0.35:
+                    widen += worst * abs(nx) + 0.001
+                if nz > 0.35:
+                    front += worst * nz + 0.001
+                if nz < -0.35:
+                    back += worst * (-nz) + 0.001
+        if ok:
+            return ring_pts
+    return torso_ring(body, height, base_grow, widen=widen, front=front, back=back)
+
 
 
 
@@ -1423,30 +1708,33 @@ def facet(points, index, axis=Y):
 
 
 def build_hand(part, body, region='skin', grow=0.0, *, cap_start=True):
-    """Left hand in the T pose: palm, mitten fingers and thumb. Use inside `part.mirrored()` for both hands."""
+    """Left hand in the T pose: tucked root, palm, mitten fingers and thumb aligned to UAL1 finger bones."""
     ref_body = BODIES[BASE_BODY]
-    palm_y = WRIST.y + 0.004
-    palm_z = WRIST.z - 0.002
 
     def section(target, x, half_y, half_z, lift=0.0, g=0.0):
-        return ring(Vector((x, palm_y + lift, palm_z)), Z, Y, half_z + g, half_y * target.hand + g, ARM_SIDES)
+        return ring(Vector((x, WRIST.y + lift, WRIST.z)), Z, Y,
+                    half_z * target.hand + g, half_y * target.hand + g, ARM_SIDES)
 
     specs = (
-        (0.668, 0.020, 0.028, 0.0),
-        (0.775, 0.017, 0.032, 0.0),
-        (0.828, 0.015, 0.030, -0.002),
-        (0.875, 0.010, 0.024, -0.004),
+        (0.660, 0.016, 0.021, 0.000),
+        (0.688, 0.020, 0.029, 0.002),
+        (0.785, 0.021, 0.042, 0.004),
+        (0.840, 0.016, 0.038, 0.004),
+        (0.890, 0.011, 0.029, 0.002),
     )
     with part.tagged('hand'):
         rings = [section(body, x, hy, hz, lift, grow) for x, hy, hz, lift in specs]
         refs = [section(ref_body, x, hy, hz, lift, 0.0) for x, hy, hz, lift in specs]
         part.loft(rings, region, refs=refs, cap_start=cap_start, cap_end=True,
-                  ring_skins=[SKIN_WRIST_L, SKIN_PALM_L, SKIN_MITTEN_L, SKIN_MITTEN_L])
+                  ring_skins=[SKIN_HAND_ROOT_L, SKIN_HAND_ROOT_L, SKIN_PALM_L, SKIN_MITTEN_L, SKIN_MITTEN_L])
         with part.skinned(SKIN_THUMB_L):
-            path = [Vector((0.715, palm_y - 0.004, palm_z + 0.026)), Vector((0.750, palm_y - 0.018, palm_z + 0.046)),
-                    Vector((0.780, palm_y - 0.030, palm_z + 0.056))]
-            part.tube(path, [0.014 + grow, 0.012 + grow, 0.008 + grow], 4, region, up=Y, cap_end=True,
-                      phase=math.pi / 4)
+            path = [
+                Vector((0.706, WRIST.y + 0.002, WRIST.z + 0.034)),
+                Vector((0.752, 1.505, 0.124)),
+                Vector((0.808, 1.474, 0.154)),
+            ]
+            part.tube(path, [0.015 + grow, 0.012 + grow, 0.008 + grow], 4, region, up=Y,
+                      cap_end=True, phase=math.pi / 4)
 
 
 SKIN_FOOT_L = Skin(allowed=('foot_l', 'ball_l', 'calf_l'))
@@ -1456,7 +1744,7 @@ def build_foot(part, body, region='skin', grow=0.0, *, sole=0.0, toe=0.0, sole_r
     """Left foot or shoe as a tapered wedge. `sole` adds a sole slab, `toe` adds toe length, `top` scales the height."""
     width = 0.046 * body.foot + grow
     cx = ANKLE.x
-    base_low = max(sole - 0.005, 0.0)
+    base_low = max(sole - 0.007, 0.0)
 
     # The shoe body starts inside the sole slab, so no two faces share a plane (rule F4).
     def section(z, half_w, height, low=base_low):
@@ -1464,14 +1752,13 @@ def build_foot(part, body, region='skin', grow=0.0, *, sole=0.0, toe=0.0, sole_r
                 Vector((cx + half_w * 0.84, low + height, z)), Vector((cx - half_w * 0.84, low + height, z))]
 
     stations = (
-        (-0.096 - grow * 0.6, 0.64, 0.072 * top + grow, 0.004),
-        (-0.046, 0.76, 0.122 * top + grow, 0.0),
-        (0.025, 0.88, 0.090 * top + grow, 0.0),
-        (0.096, 0.92, 0.058 * top + grow, 0.0),
-        (0.156 + grow + toe, 0.68, 0.036 * top + grow * 0.4, 0.004),
+        (-0.096 - grow * 0.6, 0.64, 0.072 * top + grow, 0.005),
+        (-0.046, 0.76, 0.122 * top + grow, 0.006),
+        (0.096, 0.92, 0.058 * top + grow, 0.002),
+        (0.156 + grow + toe, 0.68, 0.036 * top + grow * 0.4, 0.013),
     )
     # A value step from heel to toe keeps the planes of a dark boot apart: the toe cap is the brightest band.
-    bands = [ao - 0.05, ao, ao + 0.04, ao + 0.09]
+    bands = [ao - 0.05, ao + 0.02, ao + 0.09]
     with part.tagged('foot'), part.skinned(SKIN_FOOT_L):
         part.loft([section(z, width * scale, height, base_low + lift) for z, scale, height, lift in stations],
                   region, cap_start=True, cap_end=True, ao=ao, band_ao=bands)
@@ -1479,7 +1766,7 @@ def build_foot(part, body, region='skin', grow=0.0, *, sole=0.0, toe=0.0, sole_r
             rim = 0.004
             slab = [[Vector((cx - width * scale - rim, lift, z)), Vector((cx + width * scale + rim, lift, z)),
                      Vector((cx + width * scale + rim, sole + lift, z)), Vector((cx - width * scale - rim, sole + lift, z))]
-                    for z, scale, lift in ((stations[0][0] - rim, 0.64, 0.004), (stations[3][0], 0.92, 0.0), (stations[4][0] + rim, 0.68, 0.004))]
+                    for z, scale, lift in ((stations[0][0] - rim, 0.64, 0.005), (stations[2][0], 0.92, 0.002), (stations[3][0] + rim, 0.68, 0.013))]
             # A sole in the boot region needs its own value step.
             part.loft(slab, sole_region or region, cap_start=True, cap_end=True, ao=-0.1 if sole_region else ao - 0.16)
 
@@ -1489,7 +1776,7 @@ def build_foot(part, body, region='skin', grow=0.0, *, sole=0.0, toe=0.0, sole_r
 HEAD_SIDES = 8
 HEAD_SQUARENESS = 0.88
 HEAD_STATION_KEYS = ('plug', 'chin', 'jaw', 'cheek', 'brow', 'upper', 'crown')
-HEAD_Y = {'plug': 1.688, 'chin': 1.716, 'jaw': 1.772, 'cheek': 1.842, 'brow': 1.906, 'upper': 1.956, 'crown': 1.984}
+HEAD_Y = {'plug': 1.698, 'chin': 1.716, 'jaw': 1.772, 'cheek': 1.842, 'brow': 1.906, 'upper': 1.956, 'crown': 1.984}
 # Fraction of the half width / depth where the flat side and front planes sit.
 HEAD_PLANE = math.cos(math.pi / HEAD_SIDES) ** HEAD_SQUARENESS
 
@@ -1507,7 +1794,7 @@ class HeadSpec:
 
 
 def _head_shape(**changes):
-    shape = {'plug': (0.056, 0.054, 0.052), 'chin': (0.056, 0.084, 0.048), 'jaw': (0.088, 0.098, 0.086),
+    shape = {'plug': (0.053, 0.053, 0.053), 'chin': (0.058, 0.084, 0.054), 'jaw': (0.088, 0.098, 0.086),
              'cheek': (0.098, 0.104, 0.098), 'brow': (0.100, 0.108, 0.102), 'upper': (0.086, 0.088, 0.092),
              'crown': (0.050, 0.048, 0.054)}
     shape.update(changes)
@@ -1518,12 +1805,12 @@ HEADS = {
     'head_hero': HeadSpec('head_hero', 'Hero', _head_shape(), nose=(0.032, 0.015, 0.068), eye=(0.028, 0.018, 0.036, 1.864),
                           brow=(0.038, 0.012, 0.010, 0.10), mouth=(0.044, 0.010, 0.002)),
     'head_stern': HeadSpec('head_stern', 'Stern',
-                           _head_shape(chin=(0.052, 0.084, 0.046), jaw=(0.084, 0.096, 0.084), cheek=(0.094, 0.102, 0.096),
+                           _head_shape(chin=(0.056, 0.084, 0.054), jaw=(0.084, 0.096, 0.084), cheek=(0.094, 0.102, 0.096),
                                        brow=(0.099, 0.112, 0.102)),
                            nose=(0.038, 0.015, 0.076), eye=(0.026, 0.013, 0.034, 1.862), brow=(0.040, 0.015, 0.014, -0.22),
                            mouth=(0.036, 0.009, 0.0), beard=True),
     'head_cheerful': HeadSpec('head_cheerful', 'Cheerful',
-                              _head_shape(chin=(0.062, 0.080, 0.050), jaw=(0.093, 0.098, 0.088), cheek=(0.103, 0.106, 0.099),
+                              _head_shape(chin=(0.062, 0.080, 0.054), jaw=(0.093, 0.098, 0.088), cheek=(0.103, 0.106, 0.099),
                                           brow=(0.101, 0.105, 0.102)),
                               nose=(0.026, 0.015, 0.052), eye=(0.031, 0.023, 0.038, 1.864), brow=(0.035, 0.010, 0.009, 0.28),
                               mouth=(0.054, 0.012, 0.010)),
@@ -1532,8 +1819,8 @@ HEAD_ENVELOPE = {key: tuple(max(spec.shape[key][axis] for spec in HEADS.values()
                  for key in HEAD_STATION_KEYS}
 
 ORC_HEAD_SHAPE = {
-    'plug': (0.064, 0.058, 0.064),
-    'chin': (0.092, 0.128, 0.054),
+    'plug': (0.060, 0.058, 0.058),
+    'chin': (0.092, 0.128, 0.058),
     'jaw': (0.122, 0.132, 0.098),
     'cheek': (0.126, 0.122, 0.114),
     'brow': (0.126, 0.132, 0.118),
@@ -1541,8 +1828,8 @@ ORC_HEAD_SHAPE = {
     'crown': (0.062, 0.056, 0.060),
 }
 TROLL_HEAD_SHAPE = {
-    'plug': (0.058, 0.054, 0.060),
-    'chin': (0.090, 0.150, 0.050),
+    'plug': (0.058, 0.056, 0.056),
+    'chin': (0.090, 0.150, 0.054),
     'jaw': (0.114, 0.144, 0.094),
     'cheek': (0.106, 0.118, 0.108),
     'brow': (0.114, 0.134, 0.112),

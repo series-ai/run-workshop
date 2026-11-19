@@ -3,6 +3,7 @@ import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { BUDGETS } from '@poly/contracts/budgets'
 import {
   PROPORTION_DEFAULTS,
+  UAL1_STANDARD_PROPORTIONS,
   type AvatarProportions,
   type AvatarSlot,
   type CharacterPreset,
@@ -122,10 +123,10 @@ const EXPRESSION_PRESETS: readonly BodyPresetSpec[] = [
 
 const BODY_PRESETS_BY_RIG: Readonly<Record<RigId, BodyPresetSpec[]>> = {
   ual1: [
-    { id: 'heroic', label: 'Heroic', patch: { ...PROPORTION_DEFAULTS, shoulderWidth: 1.12, torsoBulk: 1.08, waistScale: 0.96 } },
+    { id: 'heroic', label: 'Heroic', patch: { ...UAL1_STANDARD_PROPORTIONS, shoulderWidth: 1.12, torsoBulk: 1.08, waistScale: 0.96 } },
     { id: 'slender', label: 'Slender', patch: { ...PROPORTION_DEFAULTS, height: 1.04, build: -0.85, legRatio: 1.06, shoulderWidth: 0.92, torsoBulk: 0.88, waistScale: 0.88, limbThickness: 0.88 } },
-    { id: 'stocky', label: 'Stocky', patch: { ...PROPORTION_DEFAULTS, height: 0.86, build: 0.7, legRatio: 0.84, shoulderWidth: 1.24, torsoBulk: 1.22, waistScale: 1.18, limbThickness: 1.24 } },
-    { id: 'colossus', label: 'Colossus', patch: { ...PROPORTION_DEFAULTS, height: 1.28, build: 0.9, legRatio: 0.96, shoulderWidth: 1.32, torsoBulk: 1.26, waistScale: 1.12, limbThickness: 1.3, armLength: 1.06 } },
+    { id: 'stocky', label: 'Stocky', patch: { ...UAL1_STANDARD_PROPORTIONS, height: 0.86, build: 0.7, legRatio: 0.84, shoulderWidth: 1.24, torsoBulk: 1.22, waistScale: 1.18, limbThickness: 1.24 } },
+    { id: 'colossus', label: 'Colossus', patch: { ...UAL1_STANDARD_PROPORTIONS, height: 1.28, build: 0.9, legRatio: 0.92, shoulderWidth: 1.32, torsoBulk: 1.26, waistScale: 1.12, limbThickness: 1.3, armLength: 1.02 } },
     { id: 'lanky', label: 'Lanky', patch: { ...PROPORTION_DEFAULTS, height: 1.18, build: -0.65, legRatio: 1.14, shoulderWidth: 0.96, torsoBulk: 0.9, waistScale: 0.88, limbThickness: 0.86, armLength: 1.08 } },
   ],
   quadruped: [
@@ -446,7 +447,12 @@ export function AvatarLabTab({ catalogs, index }: { catalogs: PackCatalog[]; ind
               <h3 className="section-title">Parametric Proportions</h3>
               <button
                 className="pill-btn"
-                onClick={() => setSelection((s) => ({ ...s, proportions: { ...PROPORTION_DEFAULTS } }))}
+                onClick={() =>
+                  setSelection((s) => ({
+                    ...s,
+                    proportions: s.rigId === 'ual1' ? { ...UAL1_STANDARD_PROPORTIONS } : { ...PROPORTION_DEFAULTS },
+                  }))
+                }
               >
                 Reset
               </button>

@@ -24,8 +24,8 @@ export function OverviewTab({
           <strong>{UAL1_CLIPS.length} animation clips</strong> plus procedural{' '}
           <strong>23-joint Quadruped</strong> and <strong>28-joint Arachnid</strong> rigs driving faceted characters,
           non-uniform monsters, parametric outfits, held weapons/tools, and world props across{' '}
-          <strong>Medieval</strong>, <strong>WW2</strong>, <strong>Sim</strong>, and <strong>Monsters</strong>{' '}
-          contexts — engineered for <strong>120 Hz on Samsung Galaxy S23 Ultra</strong> and staged for{' '}
+          <strong>Medieval</strong>, <strong>WW2</strong>, <strong>Sim</strong>, <strong>Cyberpunk</strong>, and{' '}
+          <strong>Monsters</strong> contexts — engineered for <strong>120 Hz on Samsung Galaxy S23 Ultra</strong> and staged for{' '}
           <code>jam-ready-assets</code> + <code>@series-inc/rundot-game-sdk</code>.
         </p>
         <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
@@ -33,7 +33,7 @@ export function OverviewTab({
             Open Parametric Avatar Lab
           </button>
           <button className="btn-secondary" onClick={() => onNavigate('stage')}>
-            View 4-Context Stage
+            View 5-Context Stage
           </button>
           <button className="btn-secondary" onClick={() => onNavigate('perf')}>
             Run S23 Ultra Perf Bench

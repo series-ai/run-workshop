@@ -453,6 +453,31 @@ def _quat_from_axes(col_x: Vector, col_y: Vector, col_z: Vector) -> Quaternion:
     return m.to_quaternion().normalized()
 
 
+def _split_forearm_twist(
+    q_ll: Quaternion,
+    q_hl: Quaternion,
+    rest_q_ll: Quaternion,
+    rest_q_hl: Quaternion,
+    rest_forearm_dir: Vector,
+    share: float = 0.45,
+) -> Quaternion:
+    """Return updated lowerarm world quaternion carrying `share` of wrist axial twist without moving the wrist."""
+    forearm_axis = ((q_ll @ rest_q_ll.inverted()) @ rest_forearm_dir).normalized()
+    q_hl_zero = (q_ll @ rest_q_ll.inverted() @ rest_q_hl).normalized()
+    q_wrist_world = (q_hl @ q_hl_zero.inverted()).normalized()
+    if q_wrist_world.w < 0.0:
+        q_wrist_world = -q_wrist_world
+    proj = forearm_axis * Vector((q_wrist_world.x, q_wrist_world.y, q_wrist_world.z)).dot(forearm_axis)
+    q_twist = Quaternion((q_wrist_world.w, proj.x, proj.y, proj.z))
+    if q_twist.magnitude < 1e-6:
+        return q_ll
+    q_twist.normalize()
+    if q_twist.w < 0.0:
+        q_twist = -q_twist
+    q_share = Quaternion((1.0, 0.0, 0.0, 0.0)).slerp(q_twist, share)
+    return (q_share @ q_ll).normalized()
+
+
 def _sample_pistol_finger_curls(u1: Ual1SkeletonState) -> dict[int, Quaternion]:
     """Read finger joint local rotations from UAL1's Pistol_Idle_Loop frame 0 for natural weapon grip."""
     anim = next((a for a in u1.rig.doc['animations'] if a['name'] == 'Pistol_Idle_Loop'), None)
@@ -820,6 +845,14 @@ def retarget_kaykit_ranged_clips(u1: Ual1SkeletonState, kaykit_path: Path) -> li
             hand_l_fingers = (forearm_dir_l + Vector((-0.35, 0.35, 0.25))).normalized()
             hand_l_back = Vector((-0.35, -0.88, -0.20)).normalized()
             q_hl = (_quat_from_axes(hand_l_fingers, hand_l_back, hand_l_fingers.cross(hand_l_back)) @ u1_hand_l_rest_q).normalized()
+            q_ll_ik = _split_forearm_twist(
+                q_ll_ik,
+                q_hl,
+                u1.rest_q[u1.index['lowerarm_l']],
+                u1_hand_l_rest_q,
+                rest_l_dir_l,
+                share=0.45,
+            )
 
             for jname, q_w in (('upperarm_l', q_ul_ik), ('lowerarm_l', q_ll_ik), ('hand_l', q_hl)):
                 j = u1.index[jname]
@@ -948,7 +981,7 @@ def fix_ual1_pistol_clips(u1: Ual1SkeletonState, rig_path: Path) -> list[dict]:
             q_hl_aim = (_quat_from_axes(f_dir_aim, b_dir_aim, f_dir_aim.cross(b_dir_aim)) @ u1_hand_l_rest_q).normalized()
 
             if clip_name == 'Pistol_Reload' and duration > 1e-6:
-                pouch_target = shoulder_l + Vector((0.125, -0.385, -0.005))
+                pouch_target = shoulder_l + Vector((0.160, -0.360, 0.020))
                 mag_target = palm_r_world + (q_sock_r_world @ Vector((0.055, -0.125, -0.068)))
                 seat_target = palm_r_world + (q_sock_r_world @ Vector((0.062, -0.088, -0.068)))
                 pole_l_pouch = shoulder_l + Vector((0.36, -0.18, -0.26))
@@ -998,6 +1031,15 @@ def fix_ual1_pistol_clips(u1: Ual1SkeletonState, rig_path: Path) -> list[dict]:
                 u1.rest_q[ll_idx],
             )
 
+            q_ll = _split_forearm_twist(
+                q_ll,
+                q_hl,
+                u1.rest_q[ll_idx],
+                u1_hand_l_rest_q,
+                rest_l_dir_l,
+                share=0.45,
+            )
+
             clav_q = src_q[clav_l_si]
             local_rot[ul_idx] = (clav_q.inverted() @ q_ul).normalized()
             local_rot[ll_idx] = (q_ul.inverted() @ q_ll).normalized()
@@ -1009,4 +1051,40 @@ def fix_ual1_pistol_clips(u1: Ual1SkeletonState, rig_path: Path) -> list[dict]:
         out_clips.append(_pack_clip_tracks(u1, clip_name, times, frame_rots, frame_pelvis))
 
     return out_clips
+
+
+def fix_ual1_sword_idle_clip(u1: Ual1SkeletonState, rig_path: Path) -> dict:
+    """Lift UAL1 `Sword_Idle` pelvis by +12mm in world Y so heels/soles stay grounded without dipping below y=0."""
+    src = SourceRig(rig_path)
+    src_pelvis_idx = src.by_name['pelvis']
+    q_root_inv = u1.rest_q[u1.index['root']].inverted()
+    pelvis_lift = q_root_inv @ Vector((0.0, 0.012, 0.0))
+
+    _, by_node = src.clip_samplers('Sword_Idle')
+    times = None
+    for tracks in by_node.values():
+        for ts, _ in tracks.values():
+            if times is None or len(ts) > len(times):
+                times = ts
+    if times is None or len(times) == 0:
+        raise ValueError(f'{rig_path}: Sword_Idle has no animation samples')
+
+    frame_rots: list[dict[int, Quaternion]] = []
+    frame_pelvis: list[Vector] = []
+    for t_raw in times:
+        t = float(t_raw)
+        src_pos, src_q = src.sample_world_at(by_node, t)
+        local_rot: dict[int, Quaternion] = {}
+        for j, jname in enumerate(u1.names):
+            pj = u1.parent[j]
+            if pj is None:
+                local_rot[j] = u1.rest_local[j][1]
+            else:
+                p_si = src.by_name[u1.names[pj]]
+                c_si = src.by_name[jname]
+                local_rot[j] = (src_q[p_si].inverted() @ src_q[c_si]).normalized()
+        frame_rots.append(local_rot)
+        frame_pelvis.append((q_root_inv @ src_pos[src_pelvis_idx]) + pelvis_lift)
+
+    return _pack_clip_tracks(u1, 'Sword_Idle', times, frame_rots, frame_pelvis)
 

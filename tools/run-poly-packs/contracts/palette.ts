@@ -85,6 +85,15 @@ export const CONTEXT_DEFAULT_PALETTES = {
     metal: '#a2aab4',
     eye: '#3c2a21',
   },
+  cyberpunk: {
+    skin: '#d8a67e',
+    hair: '#25262b',
+    primary: '#1e293b',
+    secondary: '#141824',
+    accent: '#00e5ff',
+    metal: '#8d99ae',
+    eye: '#00e5ff',
+  },
   monsters: {
     skin: '#4f6b3a',
     hair: '#232022',
@@ -94,4 +103,4 @@ export const CONTEXT_DEFAULT_PALETTES = {
     metal: '#646d75',
     eye: '#8a5628',
   },
-} as const satisfies Record<'medieval' | 'ww2' | 'sim' | 'monsters', PaletteColors>
+} as const satisfies Record<'medieval' | 'ww2' | 'sim' | 'cyberpunk' | 'monsters', PaletteColors>

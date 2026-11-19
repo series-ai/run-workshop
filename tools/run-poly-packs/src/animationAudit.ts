@@ -1266,9 +1266,11 @@ export async function loadPresetForAudit(
   ].filter((x): x is string => Boolean(x))
 
   const partMeshes: SkinnedMesh[] = []
+  let hidesLegsUpper = false
   for (const id of partIds) {
     const part = partsById.get(id)
     if (!part) throw new Error(`Preset "${preset.id}" references missing part "${id}".`)
+    if (part.rules.hidesLegsUpper) hidesLegsUpper = true
     const leafDir = join(stageDir, leavesFor(part.pack).find((l) => l.kind === part.leaf)!.id)
     const gltf = await loadPath(join(leafDir, part.relativePath))
     const found = gltf.scene.getObjectByName(part.nodeName) as SkinnedMesh | undefined
@@ -1283,6 +1285,7 @@ export async function loadPresetForAudit(
   })
 
   const covered = new Set(partMeshes.flatMap((m) => stringList(m.userData.polyCovers)))
+  if (hidesLegsUpper) covered.add('legs_waist')
   const bakedParts = partMeshes.map((mesh) => {
     const geo = buildCulledMorphedGeometry([mesh], preset.body, preset.proportions.build ?? 0, preset.head ?? null, [
       ...covered,

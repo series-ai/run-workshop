@@ -31,6 +31,14 @@ export const PROPORTION_DEFAULTS = {
   faceBlink: 0.0,
 } as const
 
+export const UAL1_STANDARD_PROPORTIONS = {
+  ...PROPORTION_DEFAULTS,
+  legRatio: 0.94,
+  armLength: 0.96,
+  shoulderWidth: 1.04,
+  limbThickness: 1.02,
+} as const
+
 export const proportionSchema = z.object({
   height: z.number().min(0.65).max(1.55),
   legRatio: z.number().min(0.7).max(1.4).optional(),

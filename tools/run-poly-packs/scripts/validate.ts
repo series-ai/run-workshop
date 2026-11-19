@@ -604,6 +604,569 @@ function assertShoulderSocketUniformity(glb: ParsedGlb, part: AvatarPartEntry): 
   }
 }
 
+interface UniqueVert {
+  pos: Vec3Tuple
+  weights: Map<string, number>
+}
+
+function collectUniquePartVerts(glb: ParsedGlb, nodeName: string): UniqueVert[] {
+  const node = glb.doc.nodes?.find((n) => n.name === nodeName)
+  if (!node || node.mesh === undefined || node.skin === undefined) return []
+  const skin = glb.doc.skins?.[node.skin]
+  if (!skin) return []
+  const jointNames = skin.joints.map((idx) => glb.doc.nodes?.[idx]?.name ?? '')
+  const prim = glb.doc.meshes![node.mesh]!.primitives[0]!
+  const positions = readAccessor(glb, prim.attributes.POSITION!)
+  const joints = readAccessor(glb, prim.attributes.JOINTS_0!)
+  const weights = readAccessor(glb, prim.attributes.WEIGHTS_0!)
+  const seen = new Set<string>()
+  const out: UniqueVert[] = []
+  for (let i = 0; i < positions.length; i++) {
+    const p = positions[i]!
+    const key = `${Math.round(p[0]! * 1e4)},${Math.round(p[1]! * 1e4)},${Math.round(p[2]! * 1e4)}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    const wMap = new Map<string, number>()
+    for (let s = 0; s < 4; s++) {
+      const w = weights[i]![s]!
+      if (w < 1e-4) continue
+      const jn = jointNames[joints[i]![s]!] ?? ''
+      if (jn) wMap.set(jn, (wMap.get(jn) ?? 0) + w)
+    }
+    out.push({ pos: [p[0]!, p[1]!, p[2]!], weights: wMap })
+  }
+  return out
+}
+
+function assertHingeJointRingProximity(glb: ParsedGlb, part: AvatarPartEntry, fail: (msg: string) => void): void {
+  if ((part.rigId ?? 'ual1') !== 'ual1') return
+  const node = glb.doc.nodes?.find((n) => n.name === part.nodeName)
+  if (!node || node.mesh === undefined) return
+  const extras = partExtrasSchema.parse(node.extras ?? {})
+  const covers = extras.polyCovers ?? []
+  const verts = collectUniquePartVerts(glb, part.nodeName)
+  if (verts.length === 0) return
+
+  // 1. Ankle rings & leg cuffs on bodies and shin-covering legs
+  if (part.slot === 'body' || (part.slot === 'legs' && covers.includes('shin'))) {
+    const leftLegVerts = verts.filter((v) => v.pos[0] > 0.025 && !(v.pos[2] > 0.015 && v.pos[1] < 0.148))
+    const ankleHi = leftLegVerts.filter((v) => v.pos[1] >= 0.180 && v.pos[1] <= 0.245)
+    const ankle = leftLegVerts.filter((v) => v.pos[1] >= 0.140 && v.pos[1] < 0.180)
+    const ankleIn = leftLegVerts.filter((v) => v.pos[1] >= 0.106 && v.pos[1] < 0.140)
+    if (ankleHi.length < 6) {
+      fail(`Part "${part.id}" missing upper ankle ring in y=[0.180..0.245] (found ${ankleHi.length} verts)`)
+    } else {
+      const meanCalf = ankleHi.reduce((acc, v) => acc + (v.weights.get('calf_l') ?? 0), 0) / ankleHi.length
+      if (meanCalf < 0.68) {
+        fail(`Part "${part.id}" upper ankle ring mean calf_l weight ${meanCalf.toFixed(2)} < 0.68`)
+      }
+    }
+    if (ankle.length < 6) {
+      fail(`Part "${part.id}" missing ankle hinge ring in y=[0.140..0.180] (found ${ankle.length} verts)`)
+    }
+    if (ankleIn.length < 6) {
+      fail(`Part "${part.id}" missing tucked lower ankle ring in y=[0.106..0.140] (found ${ankleIn.length} verts)`)
+    } else {
+      const minZ = Math.min(...ankleIn.map((v) => v.pos[2]))
+      if (minZ < -0.092) {
+        fail(`Part "${part.id}" lower ankle ring protrudes behind heel (minZ=${minZ.toFixed(4)} < -0.092)`)
+      }
+    }
+    if (part.slot === 'legs' && (!covers.includes('foot') || part.id === 'legs_sim_jeans')) {
+      const hemBand = leftLegVerts.filter((v) => v.pos[1] >= 0.115 && v.pos[1] <= 0.165)
+      if (hemBand.length >= 8) {
+        const cx = 0.09428
+        const cz = -0.06148
+        const radii = hemBand.map((v) => Math.hypot(v.pos[0] - cx, v.pos[2] - cz))
+        const diff = Math.max(...radii) - Math.min(...radii)
+        if (diff < 0.005) {
+          fail(`Part "${part.id}" shin cuff has no closed inward return ring (maxR-minR=${(diff * 1000).toFixed(1)}mm < 5mm)`)
+        }
+      }
+    }
+  }
+
+  // 2. Wrist centering, closed forearm cuffs, elbow rings, and pelvis-thigh containment
+  if (part.slot === 'body' || (part.slot === 'torso' && covers.includes('forearm'))) {
+    const leftArm = verts.filter((v) => v.pos[0] > 0.05 && v.pos[1] >= 1.38 && v.pos[1] <= 1.64)
+    const wristArmVerts = leftArm.filter(
+      (v) => v.pos[0] >= 0.630 && v.pos[0] <= 0.680 && (v.weights.get('lowerarm_l') ?? 0) >= 0.45,
+    )
+    if (wristArmVerts.length === 0) {
+      fail(`Part "${part.id}" missing forearm wrist ring in x=[0.630..0.680]`)
+    } else {
+      const meanZ = wristArmVerts.reduce((acc, v) => acc + v.pos[2], 0) / wristArmVerts.length
+      if (Math.abs(meanZ - 0.04765) > 0.003) {
+        fail(`Part "${part.id}" wrist centerline Z=${meanZ.toFixed(4)} off WRIST.z=0.04765 by ${((meanZ - 0.04765) * 1000).toFixed(1)}mm`)
+      }
+    }
+
+    if (part.slot === 'torso' && covers.includes('forearm') && !covers.includes('hand')) {
+      const distalCuff = leftArm.filter((v) => v.pos[0] >= 0.635)
+      if (distalCuff.length < 6) {
+        fail(`Part "${part.id}" distal sleeve cuff too short/missing (verts x>=0.635: ${distalCuff.length})`)
+      } else {
+        const minLowerW = Math.min(...distalCuff.map((v) => v.weights.get('lowerarm_l') ?? 0))
+        if (minLowerW < 0.98) {
+          fail(`Part "${part.id}" distal sleeve cuff blends with hand_l (min lowerarm_l=${minLowerW.toFixed(2)} < 0.98)`)
+        }
+        const maxX = Math.max(...distalCuff.map((v) => v.pos[0]))
+        const endVerts = distalCuff.filter((v) => v.pos[0] >= maxX - 0.025)
+        const radii = endVerts.map((v) => Math.hypot(v.pos[1] - 1.52357, v.pos[2] - 0.04765))
+        const diff = radii.length > 0 ? Math.max(...radii) - Math.min(...radii) : 0
+        if (diff < 0.005) {
+          fail(`Part "${part.id}" sleeve cuff is an open hollow tube (maxR-minR=${(diff * 1000).toFixed(1)}mm < 5mm)`)
+        }
+      }
+    }
+
+    if (part.slot === 'body' || (part.slot === 'torso' && covers.includes('upperarm') && covers.includes('forearm'))) {
+      const aboveElbow = leftArm.filter((v) => v.pos[0] >= 0.365 && v.pos[0] <= 0.412)
+      const belowElbow = leftArm.filter((v) => v.pos[0] >= 0.426 && v.pos[0] <= 0.468)
+      if (aboveElbow.length < 6) {
+        fail(`Part "${part.id}" missing above-elbow ring in x=[0.365..0.412] (${aboveElbow.length} verts)`)
+      } else {
+        const meanU = aboveElbow.reduce((acc, v) => acc + (v.weights.get('upperarm_l') ?? 0), 0) / aboveElbow.length
+        if (meanU < 0.70) fail(`Part "${part.id}" above-elbow ring mean upperarm_l=${meanU.toFixed(2)} < 0.70`)
+      }
+      if (belowElbow.length < 6) {
+        fail(`Part "${part.id}" missing below-elbow ring in x=[0.426..0.468] (${belowElbow.length} verts)`)
+      } else {
+        const meanL = belowElbow.reduce((acc, v) => acc + (v.weights.get('lowerarm_l') ?? 0), 0) / belowElbow.length
+        if (meanL < 0.70) fail(`Part "${part.id}" below-elbow ring mean lowerarm_l=${meanL.toFixed(2)} < 0.70`)
+      }
+    }
+  }
+
+  if (part.slot === 'body') {
+    const handRoot = verts.filter((v) => v.pos[0] > 0.60 && (v.weights.get('hand_l') ?? 0) >= 0.90)
+    const forearmEnd = verts.filter(
+      (v) => v.pos[0] >= 0.660 && v.pos[0] <= 0.685 && (v.weights.get('lowerarm_l') ?? 0) >= 0.90,
+    )
+    if (handRoot.length === 0) {
+      fail(`Body "${part.id}" missing 100% hand_l hand root`)
+    } else {
+      const handMinX = Math.min(...handRoot.map((v) => v.pos[0]))
+      if (handMinX > 0.662) {
+        fail(`Body "${part.id}" hand root not tucked inside forearm (minX=${handMinX.toFixed(4)} > 0.662)`)
+      }
+      if (forearmEnd.length >= 6) {
+        const handRootVerts = handRoot.filter((v) => v.pos[0] <= handMinX + 0.010)
+        const handMaxR = Math.max(...handRootVerts.map((v) => Math.hypot(v.pos[1] - 1.52357, v.pos[2] - 0.04765)))
+        const armMinR = Math.min(...forearmEnd.map((v) => Math.hypot(v.pos[1] - 1.52357, v.pos[2] - 0.04765)))
+        if (armMinR < handMaxR - 0.001) {
+          fail(`Body "${part.id}" forearm end (${(armMinR * 1000).toFixed(1)}mm) narrower than hand root (${(handMaxR * 1000).toFixed(1)}mm)`)
+        }
+      }
+    }
+
+    const hipsVerts = verts.filter((v) => v.pos[1] >= 1.035 && v.pos[1] <= 1.055 && Math.abs(v.pos[0]) > 0.04 && (v.weights.get('pelvis') ?? 0) >= 0.5)
+    const thighTop = verts.filter((v) => v.pos[1] >= 1.050 && v.pos[1] <= 1.070 && v.pos[0] > 0.03 && (v.weights.get('thigh_l') ?? 0) >= 0.5)
+    if (hipsVerts.length >= 6 && thighTop.length >= 6) {
+      const hipsMaxX = Math.max(...hipsVerts.map((v) => v.pos[0]))
+      const hipsMinZ = Math.min(...hipsVerts.map((v) => v.pos[2]))
+      const thighMaxX = Math.max(...thighTop.map((v) => v.pos[0]))
+      const thighMinZ = Math.min(...thighTop.map((v) => v.pos[2]))
+      if (thighMaxX > hipsMaxX + 0.002) {
+        fail(`Body "${part.id}" thigh top X=${thighMaxX.toFixed(4)} protrudes outside pelvis hips X=${hipsMaxX.toFixed(4)}`)
+      }
+      if (thighMinZ < hipsMinZ - 0.002) {
+        fail(`Body "${part.id}" thigh top Z=${thighMinZ.toFixed(4)} protrudes behind pelvis hips Z=${hipsMinZ.toFixed(4)}`)
+      }
+    }
+  }
+}
+
+function minorAxisRmsRadius(points: Vec3Tuple[]): number {
+  const n = points.length
+  if (n < 4) return 0
+  let cx = 0
+  let cy = 0
+  let cz = 0
+  for (const p of points) {
+    cx += p[0]
+    cy += p[1]
+    cz += p[2]
+  }
+  cx /= n
+  cy /= n
+  cz /= n
+  const a = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ]
+  for (const p of points) {
+    const dx = p[0] - cx
+    const dy = p[1] - cy
+    const dz = p[2] - cz
+    a[0]![0]! += dx * dx
+    a[0]![1]! += dx * dy
+    a[0]![2]! += dx * dz
+    a[1]![1]! += dy * dy
+    a[1]![2]! += dy * dz
+    a[2]![2]! += dz * dz
+  }
+  a[1]![0] = a[0]![1]!
+  a[2]![0] = a[0]![2]!
+  a[2]![1] = a[1]![2]!
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) a[i]![j]! /= n
+
+  // 3x3 Jacobi eigenvalue iteration
+  for (let iter = 0; iter < 24; iter++) {
+    let p = 0
+    let q = 1
+    let maxOff = Math.abs(a[0]![1]!)
+    if (Math.abs(a[0]![2]!) > maxOff) {
+      maxOff = Math.abs(a[0]![2]!)
+      p = 0
+      q = 2
+    }
+    if (Math.abs(a[1]![2]!) > maxOff) {
+      maxOff = Math.abs(a[1]![2]!)
+      p = 1
+      q = 2
+    }
+    if (maxOff < 1e-14) break
+    const app = a[p]![p]!
+    const aqq = a[q]![q]!
+    const apq = a[p]![q]!
+    const tau = (aqq - app) / (2 * apq)
+    const t = tau >= 0 ? 1 / (tau + Math.sqrt(1 + tau * tau)) : -1 / (-tau + Math.sqrt(1 + tau * tau))
+    const c = 1 / Math.sqrt(1 + t * t)
+    const s = t * c
+    a[p]![p] = app - t * apq
+    a[q]![q] = aqq + t * apq
+    a[p]![q] = 0
+    a[q]![p] = 0
+    for (let r = 0; r < 3; r++) {
+      if (r === p || r === q) continue
+      const arp = a[r]![p]!
+      const arq = a[r]![q]!
+      a[r]![p] = c * arp - s * arq
+      a[p]![r] = a[r]![p]!
+      a[r]![q] = s * arp + c * arq
+      a[q]![r] = a[r]![q]!
+    }
+  }
+  const eigs = [a[0]![0]!, a[1]![1]!, a[2]![2]!].sort((x, y) => x - y)
+  return Math.sqrt(Math.max(0, eigs[1]!))
+}
+
+async function assertJointRingPreservation(
+  presets: CharacterPreset[],
+  packs: PackCatalog[],
+  auditCache: Map<string, Awaited<ReturnType<typeof loadGlbHeadless>>>,
+  fail: (msg: string) => void,
+): Promise<void> {
+  const targetPresetIds = ['core_athletic', 'medieval_knight', 'ww2_rifleman', 'ww2_officer', 'sim_executive', 'monster_orc_warlord', 'monster_troll_brute']
+  const checkClips = ['Sword_Attack', 'Ranged_2H_Aiming', 'Ranged_2H_Shoot', 'Pistol_Idle_Loop', 'Melee_Hook', 'Jog_Fwd_Loop', 'Sitting_Idle_Loop', 'Shield_Dash']
+
+  for (const presetId of targetPresetIds) {
+    const preset = presets.find((p) => p.id === presetId)
+    if (!preset) continue
+    const loaded = await loadPresetForAudit(preset, packs, STAGE_DIR, auditCache)
+    const propCtrl = createAuditProportionController(loaded.root, loaded.meshes, 'ual1', preset.proportions)
+
+    interface MonitoredRing {
+      mesh: SkinnedMesh
+      label: string
+      indices: number[]
+      restMinor: number
+    }
+    const monitored: MonitoredRing[] = []
+
+    const addRings = (mesh: SkinnedMesh | undefined, kind: 'body' | 'torso' | 'legs') => {
+      if (!mesh) return
+      const pos = mesh.geometry.getAttribute('position')
+      const ji = mesh.geometry.getAttribute('skinIndex')
+      const wi = mesh.geometry.getAttribute('skinWeight')
+      const bones = mesh.skeleton.bones
+      const uniqueByPos = new Map<string, number>()
+      for (let i = 0; i < pos.count; i++) {
+        const key = `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`
+        if (!uniqueByPos.has(key)) uniqueByPos.set(key, i)
+      }
+      const weightOf = (vi: number, prefix: string) => {
+        let w = 0
+        for (let s = 0; s < 4; s++) {
+          if (bones[ji.getComponent(vi, s)]?.name.startsWith(prefix)) w += wi.getComponent(vi, s)
+        }
+        return w
+      }
+      const makeRing = (label: string, pred: (vi: number, x: number, y: number, z: number) => boolean) => {
+        const idxs: number[] = []
+        for (const vi of uniqueByPos.values()) {
+          if (pred(vi, pos.getX(vi), pos.getY(vi), pos.getZ(vi))) idxs.push(vi)
+        }
+        if (idxs.length < 5) return
+        // Group tightly along primary axis if multiple rings landed in band: take slice closest to median
+        const pts: Vec3Tuple[] = idxs.map((vi) => [pos.getX(vi), pos.getY(vi), pos.getZ(vi)])
+        const minor = minorAxisRmsRadius(pts)
+        if (minor > 0.008) monitored.push({ mesh, label: `${mesh.name}:${label}`, indices: idxs, restMinor: minor })
+      }
+      if (kind === 'body' || kind === 'torso') {
+        for (const [side, sgn] of [['L', 1], ['R', -1]] as const) {
+          makeRing(`wrist_${side}`, (vi, x, y) => x * sgn >= 0.658 && x * sgn <= 0.680 && y >= 1.45 && y <= 1.60 && weightOf(vi, 'lowerarm_') >= 0.45)
+          makeRing(`elbow_hi_${side}`, (vi, x, y) => x * sgn >= 0.370 && x * sgn <= 0.405 && y >= 1.45 && y <= 1.60 && weightOf(vi, 'upperarm_') >= 0.5)
+          makeRing(`elbow_lo_${side}`, (vi, x, y) => x * sgn >= 0.440 && x * sgn <= 0.470 && y >= 1.45 && y <= 1.60 && weightOf(vi, 'lowerarm_') >= 0.5)
+        }
+      }
+      if (kind === 'body' || kind === 'legs') {
+        for (const [side, sgn] of [['L', 1], ['R', -1]] as const) {
+          makeRing(`ankle_${side}`, (vi, x, y, z) => x * sgn >= 0.025 && y >= 0.145 && y <= 0.178 && z <= 0.015 && weightOf(vi, 'calf_') >= 0.40)
+          makeRing(`knee_hi_${side}`, (_vi, x, y) => x * sgn >= 0.025 && y >= 0.670 && y <= 0.700)
+          makeRing(`knee_lo_${side}`, (_vi, x, y) => x * sgn >= 0.025 && y >= 0.570 && y <= 0.600)
+        }
+      }
+    }
+
+    addRings(loaded.meshes.find((m) => m.name.startsWith('body_')), 'body')
+    addRings(loaded.meshes.find((m) => m.name.startsWith('torso_')), 'torso')
+    addRings(loaded.meshes.find((m) => m.name.startsWith('legs_')), 'legs')
+    if (monitored.length === 0) continue
+
+    // Recompute restMinor in scaled/morphed bind pose so proportions don't skew rest radius
+    propCtrl.restoreRest()
+    propCtrl.scalePelvis()
+    loaded.root.updateMatrixWorld(true)
+    const restSkinned = new Map<SkinnedMesh, Vec3Tuple[]>()
+    for (const m of new Set(monitored.map((r) => r.mesh))) restSkinned.set(m, skinMeshPositions(m))
+    for (const r of monitored) {
+      const sk = restSkinned.get(r.mesh)!
+      r.restMinor = minorAxisRmsRadius(r.indices.map((vi) => sk[vi]!))
+    }
+
+    const restBones = new Map<string, Object3D>()
+    loaded.root.traverse((obj) => {
+      if (obj.name && obj.type === 'Bone') restBones.set(obj.name, obj)
+    })
+    const mixer = new AnimationMixer(loaded.root)
+    try {
+      for (const clipName of checkClips) {
+        const rawClip = loaded.clips.find((c) => c.name === clipName)
+        if (!rawClip) continue
+        const clip = optimizeClipForAudit(rawClip, restBones)
+        for (let step = 0; step < 8; step++) {
+          propCtrl.unscalePelvis()
+          mixer.stopAllAction()
+          mixer.clipAction(clip).reset().play()
+          const t = (clip.duration * step) / 8
+          mixer.setTime(t)
+          propCtrl.scalePelvis()
+          loaded.root.updateMatrixWorld(true)
+          const animCache = new Map<SkinnedMesh, Vec3Tuple[]>()
+          for (const r of monitored) {
+            let sk = animCache.get(r.mesh)
+            if (!sk) {
+              sk = skinMeshPositions(r.mesh)
+              animCache.set(r.mesh, sk)
+            }
+            const animMinor = minorAxisRmsRadius(r.indices.map((vi) => sk[vi]!))
+            const ratio = animMinor / Math.max(r.restMinor, 1e-6)
+            if (ratio < 0.75) {
+              fail(
+                `Preset "${presetId}" [${clipName}@${t.toFixed(2)}s] ${r.label} collapses/pinches (minorRatio=${ratio.toFixed(2)} < 0.75)`,
+              )
+              break
+            }
+          }
+        }
+      }
+    } finally {
+      mixer.stopAllAction()
+    }
+  }
+}
+
+async function assertConnectionSeamContainment(
+  presets: CharacterPreset[],
+  packs: PackCatalog[],
+  auditCache: Map<string, Awaited<ReturnType<typeof loadGlbHeadless>>>,
+  fail: (msg: string) => void,
+): Promise<void> {
+  const heldById = new Map<string, HeldItemEntry>()
+  for (const pack of packs) {
+    for (const h of pack.heldItems) heldById.set(h.id, h)
+  }
+  const loadHeldPositions = (entry: HeldItemEntry): Vec3Tuple[] => {
+    const leafDir = join(STAGE_DIR, leavesFor(entry.pack).find((l) => l.kind === entry.leaf)!.id)
+    const glb = parseGlb(join(leafDir, entry.relativePath))
+    const node = glb.doc.nodes!.find((n) => n.name === entry.nodeName)!
+    return readAccessor(glb, glb.doc.meshes![node.mesh!]!.primitives[0]!.attributes.POSITION!) as Vec3Tuple[]
+  }
+
+  const ual1Presets = presets.filter((p) => (p.rigId ?? 'ual1') === 'ual1')
+  for (const preset of ual1Presets) {
+    const loaded = await loadPresetForAudit(preset, packs, STAGE_DIR, auditCache)
+    const bodyMesh = loaded.meshes.find((m) => m.name.startsWith('body_'))
+    const torsoMesh = loaded.meshes.find((m) => m.name.startsWith('torso_'))
+    const legsMesh = loaded.meshes.find((m) => m.name.startsWith('legs_'))
+    if (!bodyMesh) continue
+
+    // 1. Sleeve cuff vs hand root overlap & radial containment
+    if (torsoMesh) {
+      const tPos = torsoMesh.geometry.getAttribute('position')
+      const bPos = bodyMesh.geometry.getAttribute('position')
+      const bJi = bodyMesh.geometry.getAttribute('skinIndex')
+      const bWi = bodyMesh.geometry.getAttribute('skinWeight')
+      const bBones = bodyMesh.skeleton.bones
+      let sleeveMaxX = -Infinity
+      const sleeveCuffRadii: number[] = []
+      for (let i = 0; i < tPos.count; i++) {
+        const x = tPos.getX(i)
+        if (x > 0.635 && x < 0.72) {
+          sleeveMaxX = Math.max(sleeveMaxX, x)
+          if (x >= 0.655) sleeveCuffRadii.push(Math.hypot(tPos.getY(i) - 1.52357, tPos.getZ(i) - 0.04765))
+        }
+      }
+      let handMinX = Infinity
+      const handRootRadii: number[] = []
+      for (let i = 0; i < bPos.count; i++) {
+        const x = bPos.getX(i)
+        if (x < 0.60) continue
+        let hw = 0
+        for (let s = 0; s < 4; s++) {
+          if (bBones[bJi.getComponent(i, s)]?.name === 'hand_l') hw += bWi.getComponent(i, s)
+        }
+        if (hw >= 0.90) {
+          handMinX = Math.min(handMinX, x)
+          if (x <= 0.665) handRootRadii.push(Math.hypot(bPos.getY(i) - 1.52357, bPos.getZ(i) - 0.04765))
+        }
+      }
+      if (sleeveMaxX > -Infinity && handMinX < Infinity && sleeveCuffRadii.length >= 4 && handRootRadii.length >= 4) {
+        if (sleeveMaxX < handMinX + 0.004) {
+          fail(`Preset "${preset.id}" sleeve cuff (maxX=${sleeveMaxX.toFixed(4)}) does not overlap hand root (minX=${handMinX.toFixed(4)}) by >= 4mm`)
+        }
+        const outerSleeveR = Math.max(...sleeveCuffRadii)
+        const maxHandR = Math.max(...handRootRadii)
+        if (outerSleeveR < maxHandR) {
+          fail(`Preset "${preset.id}" sleeve cuff radius (${(outerSleeveR * 1000).toFixed(1)}mm) < hand root (${(maxHandR * 1000).toFixed(1)}mm)`)
+        }
+      }
+    }
+
+    // 2. Ankle/leg vs foot heel containment
+    if (legsMesh) {
+      const legsCovers = (legsMesh.userData?.polyCovers as string[] | undefined) ?? []
+      const footSourceMesh = legsCovers.includes('foot') ? legsMesh : bodyMesh
+      const lPos = legsMesh.geometry.getAttribute('position')
+      const fPos = footSourceMesh.geometry.getAttribute('position')
+      let minLegZ = Infinity
+      let minFootZ = Infinity
+      for (let i = 0; i < lPos.count; i++) {
+        if (lPos.getX(i) < 0.025) continue
+        const y = lPos.getY(i)
+        const z = lPos.getZ(i)
+        if (y >= 0.100 && y <= 0.145 && z <= 0.015) minLegZ = Math.min(minLegZ, z)
+      }
+      for (let i = 0; i < fPos.count; i++) {
+        if (fPos.getX(i) < 0.025) continue
+        if (fPos.getY(i) < 0.095) minFootZ = Math.min(minFootZ, fPos.getZ(i))
+      }
+      if (minLegZ < Infinity && minFootZ < Infinity && minLegZ < minFootZ + 0.002) {
+        fail(`Preset "${preset.id}" shin/ankle (minZ=${minLegZ.toFixed(4)}) sticks behind boot/foot heel (minZ=${minFootZ.toFixed(4)})`)
+      }
+    }
+
+    // 3. Held-item grip contact & back-of-hand protrusion across base + handScale extremes
+    for (const [hand, heldId] of [['hand_r', preset.heldRight], ['hand_l', preset.heldLeft]] as const) {
+      if (!heldId || isArmShieldHeldItem(heldId)) continue
+      const entry = heldById.get(heldId)
+      if (!entry) continue
+      const heldVerts = loadHeldPositions(entry)
+      const gripVerts = heldVerts.filter((v) => Math.abs(v[1]) <= 0.045 && Math.abs(v[2]) <= 0.035)
+      if (gripVerts.length === 0) continue
+
+      const sock = UAL1_RIG.heldSockets[hand]
+      const sockQuat = new Quaternion().setFromEuler(new Euler(sock.rotationEuler[0], sock.rotationEuler[1], sock.rotationEuler[2], 'XYZ'))
+      const handSideSign = hand === 'hand_r' ? -1 : 1
+      const baseHandScale = preset.proportions.handScale ?? 1
+
+      for (const hScale of [baseHandScale, 0.8, 1.3]) {
+        const testProps: AvatarProportions = { ...preset.proportions, handScale: hScale }
+        const loadedTest =
+          hScale === baseHandScale ? loaded : await loadPresetForAudit(preset, packs, STAGE_DIR, auditCache)
+        const testBodyMesh = loadedTest.meshes.find((m) => m.name.startsWith('body_'))!
+        const testTorsoMesh = loadedTest.meshes.find((m) => m.name.startsWith('torso_'))
+        const testHandMesh: SkinnedMesh =
+          hand === 'hand_r' || !testTorsoMesh
+            ? testBodyMesh
+            : testTorsoMesh
+        const propCtrl = createAuditProportionController(loadedTest.root, loadedTest.meshes, 'ual1', testProps)
+        propCtrl.restoreRest()
+        propCtrl.scalePelvis()
+        loadedTest.root.updateMatrixWorld(true)
+
+        const handBone = loadedTest.root.getObjectByName(hand)!
+        const armFactor = armThicknessFactorFor(preset.body, testProps.build ?? 0)
+        const offset = heldSocketOffsetFor(sock.palmOffset, armFactor, testProps.limbThickness, new Vector3(), hScale)
+        const localMat = new Matrix4().compose(offset, sockQuat, new Vector3(1, 1, 1))
+        const gripWorldMat = new Matrix4().multiplyMatrices(handBone.matrixWorld, localMat)
+        const gripInvMat = gripWorldMat.clone().invert()
+
+        const checkPalmMesh = (mesh: SkinnedMesh) => {
+          const pos = skinMeshPositions(mesh)
+          const ji = mesh.geometry.getAttribute('skinIndex')
+          const wi = mesh.geometry.getAttribute('skinWeight')
+          const bones = mesh.skeleton.bones
+          const palmPts: Vec3Tuple[] = []
+          const v = new Vector3()
+          for (let i = 0; i < pos.length; i++) {
+            let hw = 0
+            for (let s = 0; s < 4; s++) {
+              const bn = bones[ji.getComponent(i, s)]?.name ?? ''
+              if (bn === hand || bn.endsWith(`_${hand === 'hand_r' ? 'r' : 'l'}`)) {
+                if (/^(hand|thumb|index|middle|ring|pinky)/.test(bn)) hw += wi.getComponent(i, s)
+              }
+            }
+            if (hw < 0.5) continue
+            v.set(pos[i]![0], pos[i]![1], pos[i]![2]).applyMatrix4(gripInvMat)
+            if (Math.abs(v.y) <= 0.045 && Math.abs(v.z) <= 0.040 && v.x * handSideSign > -0.05) {
+              palmPts.push([v.x, v.y, v.z])
+            }
+          }
+          return palmPts
+        }
+
+        const palmPts = checkPalmMesh(testBodyMesh)
+        if (palmPts.length < 4 && testHandMesh !== testBodyMesh) palmPts.push(...checkPalmMesh(testHandMesh))
+        if (palmPts.length < 4) continue
+
+        // In grip space: for hand_r, palm is on -X side of handle (handle center x=0), back of hand is further -X.
+        // Wait: in hand_r grip space, +X is toward body (thumb/index? Wait: check signed X of palm vs handle).
+        const gripMinX = Math.min(...gripVerts.map((p) => p[0]))
+        const gripMaxX = Math.max(...gripVerts.map((p) => p[0]))
+        const palmXs = palmPts.map((p) => p[0])
+        const palmMinX = Math.min(...palmXs)
+        const palmMaxX = Math.max(...palmXs)
+        // Compute air gap or back-of-hand protrusion depending on side
+        if (hand === 'hand_r') {
+          // On hand_r: palm surface facing handle is palmMaxX (closer to 0 from -X), dorsal back is palmMinX
+          const gap = gripMinX - palmMaxX
+          const backProtrusion = palmMinX - gripMinX
+          if (gap > 0.008) {
+            fail(`Preset "${preset.id}" (handScale=${hScale}) ${heldId} handle floats ${(gap * 1000).toFixed(1)}mm off right palm`)
+          }
+          if (backProtrusion > 0.003) {
+            fail(`Preset "${preset.id}" (handScale=${hScale}) ${heldId} protrudes ${(backProtrusion * 1000).toFixed(1)}mm through back of right hand`)
+          }
+        } else {
+          // On hand_l: handle is on -X side or +X side? Let's measure distance between intervals
+          const gap = palmMinX - gripMaxX
+          const backProtrusion = gripMaxX - palmMaxX
+          if (gap > 0.008) {
+            fail(`Preset "${preset.id}" (handScale=${hScale}) ${heldId} handle floats ${(gap * 1000).toFixed(1)}mm off left palm`)
+          }
+          if (backProtrusion > 0.003) {
+            fail(`Preset "${preset.id}" (handScale=${hScale}) ${heldId} protrudes ${(backProtrusion * 1000).toFixed(1)}mm through back of left hand`)
+          }
+        }
+      }
+    }
+  }
+}
+
 function maxArmRayX(tris: [Vec3Tuple, Vec3Tuple, Vec3Tuple][], sideSign: number, y: number, z: number): number | null {
   let best = -Infinity
   for (const [p0, p1, p2] of tris) {
@@ -655,15 +1218,33 @@ function skinMeshPositions(mesh: SkinnedMesh): Vec3Tuple[] {
   const pos = mesh.geometry.getAttribute('position')
   const ji = mesh.geometry.getAttribute('skinIndex')
   const wi = mesh.geometry.getAttribute('skinWeight')
+  const morphPos = mesh.geometry.morphAttributes.position
+  const infl = mesh.morphTargetInfluences
+  const activeMorphs: { attr: NonNullable<typeof morphPos>[number]; weight: number }[] = []
+  if (morphPos && infl) {
+    for (let m = 0; m < morphPos.length; m++) {
+      const weight = infl[m] ?? 0
+      if (Math.abs(weight) > 1e-6) activeMorphs.push({ attr: morphPos[m]!, weight })
+    }
+  }
   const boneMats = mesh.skeleton.boneMatrices
   const out: Vec3Tuple[] = []
   const mat = new Matrix4()
   const v = new Vector3()
   const acc = new Vector3()
   for (let i = 0; i < pos.count; i++) {
-    const bx = pos.getX(i)
-    const by = pos.getY(i)
-    const bz = pos.getZ(i)
+    let bx = pos.getX(i)
+    let by = pos.getY(i)
+    let bz = pos.getZ(i)
+    for (const { attr, weight } of activeMorphs) {
+      bx += attr.getX(i) * weight
+      by += attr.getY(i) * weight
+      bz += attr.getZ(i) * weight
+    }
+    v.set(bx, by, bz).applyMatrix4(mesh.bindMatrix)
+    bx = v.x
+    by = v.y
+    bz = v.z
     acc.set(0, 0, 0)
     for (let s = 0; s < 4; s++) {
       const w = wi.getComponent(i, s)
@@ -672,7 +1253,6 @@ function skinMeshPositions(mesh: SkinnedMesh): Vec3Tuple[] {
       v.set(bx, by, bz).applyMatrix4(mat).multiplyScalar(w)
       acc.add(v)
     }
-    acc.applyMatrix4(mesh.matrixWorld)
     out.push([acc.x, acc.y, acc.z])
   }
   return out
@@ -961,7 +1541,7 @@ async function assertHeldBodyCollisionFree(
 
     const clipsForHeld = (heldId: string): Set<string> => {
       const set = new Set<string>([preset.clip])
-      if (isArmShieldHeldItem(heldId) || /sword|cleaver|club/.test(heldId)) {
+      if (isArmShieldHeldItem(heldId) || /sword|katana|cleaver|club/.test(heldId)) {
         set.add('Sword_Idle')
         set.add('Sword_Attack')
       } else if (heldId === 'held_torch') {
@@ -975,7 +1555,7 @@ async function assertHeldBodyCollisionFree(
         set.add('Ranged_2H_Reload')
         set.add('Pistol_Idle_Loop')
         set.add('Pistol_Shoot')
-      } else if (heldId === 'held_smg' || heldId === 'held_pistol') {
+      } else if (heldId === 'held_smg' || heldId === 'held_smart_smg' || heldId === 'held_pistol') {
         set.add('Idle_Loop')
         set.add('Walk_Loop')
         set.add('Pistol_Idle_Loop')
@@ -1000,7 +1580,7 @@ async function assertHeldBodyCollisionFree(
 
     const buildHeldMat = (hand: 'hand_r' | 'hand_l', heldId: string): Matrix4 => {
       const sock = UAL1_RIG.heldSockets[hand]
-      const offset = heldSocketOffsetFor(sock.palmOffset, armFactor, limbThickness, new Vector3())
+      const offset = heldSocketOffsetFor(sock.palmOffset, armFactor, limbThickness, new Vector3(), preset.proportions.handScale ?? 1)
       const quat = new Quaternion().setFromEuler(new Euler(sock.rotationEuler[0], sock.rotationEuler[1], sock.rotationEuler[2], 'XYZ'))
       const localMat = new Matrix4().compose(offset, quat, new Vector3(1, 1, 1))
       if (isArmShieldHeldItem(heldId)) {
@@ -1086,11 +1666,15 @@ async function assertHeldBodyCollisionFree(
                 const b0 = sk[i0]!
                 const b1 = sk[i1]!
                 const b2 = sk[i2]!
-                // Ignore wrist seam within 6.5cm of palm bone
+                // Ignore wrist seam within 6.5cm centroid or any vertex within 5.5cm of palm bone
                 const cx = (b0[0] + b1[0] + b2[0]) / 3 - handWorldPos.x
                 const cy = (b0[1] + b1[1] + b2[1]) / 3 - handWorldPos.y
                 const cz = (b0[2] + b1[2] + b2[2]) / 3 - handWorldPos.z
                 if (cx * cx + cy * cy + cz * cz <= 0.065 * 0.065) continue
+                const d0Sq = (b0[0] - handWorldPos.x) ** 2 + (b0[1] - handWorldPos.y) ** 2 + (b0[2] - handWorldPos.z) ** 2
+                const d1Sq = (b1[0] - handWorldPos.x) ** 2 + (b1[1] - handWorldPos.y) ** 2 + (b1[2] - handWorldPos.z) ** 2
+                const d2Sq = (b2[0] - handWorldPos.x) ** 2 + (b2[1] - handWorldPos.y) ** 2 + (b2[2] - handWorldPos.z) ** 2
+                if (Math.min(d0Sq, d1Sq, d2Sq) <= 0.055 * 0.055) continue
                 if (
                   hxMax < Math.min(b0[0], b1[0], b2[0]) ||
                   hxMin > Math.max(b0[0], b1[0], b2[0]) ||
@@ -1142,6 +1726,384 @@ async function assertHeldBodyCollisionFree(
               }
               throw new Error(msg)
             }
+          }
+        }
+      }
+    } finally {
+      mixer.stopAllAction()
+    }
+  }
+}
+
+function collectRestYBandTriangles(mesh: SkinnedMesh, restYMin: number, restYMax: number): [number, number, number][] {
+  const pos = mesh.geometry.getAttribute('position')
+  const idx = mesh.geometry.getIndex()
+  const triCount = idx ? idx.count / 3 : pos.count / 3
+  const tris: [number, number, number][] = []
+  for (let t = 0; t < triCount; t++) {
+    const a = idx ? idx.getX(t * 3) : t * 3
+    const b = idx ? idx.getX(t * 3 + 1) : t * 3 + 1
+    const c = idx ? idx.getX(t * 3 + 2) : t * 3 + 2
+    const minY = Math.min(pos.getY(a), pos.getY(b), pos.getY(c))
+    const maxY = Math.max(pos.getY(a), pos.getY(b), pos.getY(c))
+    if (minY >= restYMin && maxY <= restYMax) tris.push([a, b, c])
+  }
+  return tris
+}
+
+function countTriangleIntersections(
+  posA: Vec3Tuple[],
+  trisA: [number, number, number][],
+  posB: Vec3Tuple[],
+  trisB: [number, number, number][],
+): number {
+  let hits = 0
+  for (const [a0, a1, a2] of trisA) {
+    const p0 = posA[a0]!
+    const p1 = posA[a1]!
+    const p2 = posA[a2]!
+    const axMin = Math.min(p0[0], p1[0], p2[0])
+    const axMax = Math.max(p0[0], p1[0], p2[0])
+    const ayMin = Math.min(p0[1], p1[1], p2[1])
+    const ayMax = Math.max(p0[1], p1[1], p2[1])
+    const azMin = Math.min(p0[2], p1[2], p2[2])
+    const azMax = Math.max(p0[2], p1[2], p2[2])
+    for (const [b0, b1, b2] of trisB) {
+      const q0 = posB[b0]!
+      const q1 = posB[b1]!
+      const q2 = posB[b2]!
+      if (
+        axMax < Math.min(q0[0], q1[0], q2[0]) ||
+        axMin > Math.max(q0[0], q1[0], q2[0]) ||
+        ayMax < Math.min(q0[1], q1[1], q2[1]) ||
+        ayMin > Math.max(q0[1], q1[1], q2[1]) ||
+        azMax < Math.min(q0[2], q1[2], q2[2]) ||
+        azMin > Math.max(q0[2], q1[2], q2[2])
+      ) {
+        continue
+      }
+      if (triTriIntersect(p0, p1, p2, q0, q1, q2)) {
+        hits++
+        break
+      }
+    }
+  }
+  return hits
+}
+
+async function assertGarmentLegClearance(
+  presets: CharacterPreset[],
+  packs: PackCatalog[],
+  auditCache: Map<string, Awaited<ReturnType<typeof loadGlbHeadless>>>,
+): Promise<void> {
+  const ual1Presets = presets.filter((p) => (p.rigId ?? 'ual1') === 'ual1')
+  const presetClips = [
+    'Idle_Loop',
+    'Walk_Loop',
+    'Jog_Fwd_Loop',
+    'Sitting_Idle_Loop',
+    'Sword_Idle',
+    'Sword_Attack',
+    'Pistol_Idle_Loop',
+    'Ranged_2H_Aiming',
+    'Dance_Loop',
+  ]
+  const failOrLog = (msg: string) => {
+    if (process.env.VALIDATE_ALL === '1') console.error('GARMENT CLIP:', msg)
+    else throw new Error(msg)
+  }
+
+  for (const preset of ual1Presets) {
+    const loaded = await loadPresetForAudit(preset, packs, STAGE_DIR, auditCache)
+    const propCtrl = createAuditProportionController(loaded.root, loaded.meshes, loaded.rigId, preset.proportions)
+    const torso = loaded.meshes.find((m) => m.name.startsWith('torso_'))
+    const legs = loaded.meshes.find((m) => m.name.startsWith('legs_'))
+    const body = loaded.meshes.find((m) => m.name.startsWith('body_'))
+    if (!torso || !legs || !body) continue
+
+    const tp = torso.geometry.getAttribute('position')
+    let minY = Infinity
+    for (let i = 0; i < tp.count; i++) minY = Math.min(minY, tp.getY(i))
+    const tTris = collectRestYBandTriangles(torso, minY - 0.01, 1.16)
+    const lTris = collectRestYBandTriangles(legs, Math.max(0.60, minY + 0.012), 1.135)
+    const bTris = collectRestYBandTriangles(body, Math.max(0.60, minY + 0.012), 1.135)
+
+    propCtrl.restoreRest()
+    propCtrl.scalePelvis()
+    loaded.root.updateMatrixWorld(true)
+    const bindTorso = skinMeshPositions(torso)
+    const bindLegs = skinMeshPositions(legs)
+    const bindBody = skinMeshPositions(body)
+    const bindLegHits = countTriangleIntersections(bindLegs, lTris, bindTorso, tTris)
+    const bindBodyHits = countTriangleIntersections(bindBody, bTris, bindTorso, tTris)
+    if (bindLegHits > 0 || bindBodyHits > 0) {
+      failOrLog(`Preset "${preset.id}" [bind] torso clips lower body (legs=${bindLegHits}, body=${bindBodyHits})`)
+    }
+
+    const checkMonsterKilt = preset.id === 'monster_orc_warlord' || preset.id === 'monster_troll_brute'
+    const kiltBodyTris = checkMonsterKilt ? collectRestYBandTriangles(body, 0.0, 1.14) : []
+    const kiltLegTris = checkMonsterKilt ? collectRestYBandTriangles(legs, 0.55, 1.14) : []
+    if (checkMonsterKilt) {
+      const bindKiltHits = countTriangleIntersections(bindBody, kiltBodyTris, bindLegs, kiltLegTris)
+      if (bindKiltHits > 0) {
+        failOrLog(`Preset "${preset.id}" [bind] kilt/wraps clips body (${bindKiltHits} tris)`)
+      }
+    }
+
+    const restBones = new Map<string, Object3D>()
+    loaded.root.traverse((obj) => {
+      if (obj.name && obj.type === 'Bone') restBones.set(obj.name, obj)
+    })
+    const mixer = new AnimationMixer(loaded.root)
+    try {
+      for (const clipName of presetClips) {
+        const rawClip = loaded.clips.find((c) => c.name === clipName)
+        if (!rawClip) continue
+        const clip = optimizeClipForAudit(rawClip, restBones)
+        for (let step = 0; step < 8; step++) {
+          propCtrl.unscalePelvis()
+          mixer.stopAllAction()
+          mixer.clipAction(clip).reset().play()
+          const t = (clip.duration * step) / 8
+          mixer.setTime(t)
+          propCtrl.scalePelvis()
+          loaded.root.updateMatrixWorld(true)
+          const pLegs = skinMeshPositions(legs)
+          const pTorso = skinMeshPositions(torso)
+          const hits = countTriangleIntersections(pLegs, lTris, pTorso, tTris)
+          if (hits > 0) {
+            failOrLog(`Preset "${preset.id}" [${clipName}@${t.toFixed(2)}s] torso clips legs (${hits} tris)`)
+            break
+          }
+          if (checkMonsterKilt) {
+            const pBody = skinMeshPositions(body)
+            const kh = countTriangleIntersections(pBody, kiltBodyTris, pLegs, kiltLegTris)
+            if (kh > 0) {
+              failOrLog(`Preset "${preset.id}" [${clipName}@${t.toFixed(2)}s] kilt/wraps clips body (${kh} tris)`)
+              break
+            }
+          }
+        }
+      }
+    } finally {
+      mixer.stopAllAction()
+    }
+  }
+
+  // Cross-pack garment compatibility matrix (bind + animated poses across bodies, legs, and build slider).
+  const template = ual1Presets[0]!
+  const baseProp: AvatarProportions = {
+    height: 1,
+    legRatio: 1,
+    build: 0,
+    shoulderWidth: 1,
+    torsoBulk: 1,
+    waistScale: 1,
+    headScale: 1,
+    limbThickness: 1,
+    armLength: 1,
+    bodyLength: 1,
+  }
+  const matrixTorsos = ['torso_medieval_tunic', 'torso_ww2_trenchcoat', 'torso_medieval_knight']
+  const matrixBodies = ['body_athletic', 'body_heavy', 'body_slim', 'body_orc', 'body_troll']
+  const matrixLegs = [
+    'legs_core_shorts',
+    'legs_medieval_greaves',
+    'legs_medieval_breeches',
+    'legs_ww2_field_trousers',
+    'legs_sim_jeans',
+    'legs_sim_shorts',
+  ]
+  const animLegsSet = new Set(['legs_medieval_greaves', 'legs_ww2_field_trousers'])
+  const animClips = ['Idle_Loop', 'Walk_Loop', 'Jog_Fwd_Loop', 'Sitting_Idle_Loop', 'Sword_Idle']
+
+  for (const torsoId of matrixTorsos) {
+    for (const bodyId of matrixBodies) {
+      for (const legsId of matrixLegs) {
+        const builds = bodyId === 'body_orc' || bodyId === 'body_troll' ? [0] : [0, -1, 1]
+        for (const build of builds) {
+          const custom: CharacterPreset = {
+            ...template,
+            id: `${torsoId}+${bodyId}+${legsId}+b${build}`,
+            rigId: 'ual1',
+            body: bodyId,
+            head: 'head_hero',
+            hair: 'hair_short_part',
+            torso: torsoId,
+            legs: legsId,
+            heldRight: null,
+            heldLeft: null,
+            proportions: { ...baseProp, build },
+          }
+          const loaded = await loadPresetForAudit(custom, packs, STAGE_DIR, auditCache)
+          const propCtrl = createAuditProportionController(loaded.root, loaded.meshes, 'ual1', custom.proportions)
+          const torso = loaded.meshes.find((m) => m.name.startsWith('torso_'))!
+          const legs = loaded.meshes.find((m) => m.name.startsWith('legs_'))!
+          const body = loaded.meshes.find((m) => m.name.startsWith('body_'))!
+          const tp = torso.geometry.getAttribute('position')
+          let minY = Infinity
+          for (let i = 0; i < tp.count; i++) minY = Math.min(minY, tp.getY(i))
+          const tTris = collectRestYBandTriangles(torso, minY - 0.01, 1.16)
+          const lTris = collectRestYBandTriangles(legs, Math.max(0.60, minY + 0.012), 1.135)
+          const bTris = collectRestYBandTriangles(body, Math.max(0.60, minY + 0.012), 1.135)
+
+          propCtrl.restoreRest()
+          propCtrl.scalePelvis()
+          loaded.root.updateMatrixWorld(true)
+          const pTorso = skinMeshPositions(torso)
+          const bl = countTriangleIntersections(skinMeshPositions(legs), lTris, pTorso, tTris)
+          const bb = countTriangleIntersections(skinMeshPositions(body), bTris, pTorso, tTris)
+          if (bl > 0 || bb > 0) {
+            failOrLog(`Cross-pack [bind] ${custom.id}: torso clips lower body (legs=${bl}, body=${bb})`)
+          }
+
+          if (build === 0 && animLegsSet.has(legsId) && bodyId !== 'body_slim') {
+            const restBones = new Map<string, Object3D>()
+            loaded.root.traverse((obj) => {
+              if (obj.name && obj.type === 'Bone') restBones.set(obj.name, obj)
+            })
+            const mixer = new AnimationMixer(loaded.root)
+            try {
+              for (const clipName of animClips) {
+                const rawClip = loaded.clips.find((c) => c.name === clipName)
+                if (!rawClip) continue
+                const clip = optimizeClipForAudit(rawClip, restBones)
+                for (let step = 0; step < 8; step++) {
+                  propCtrl.unscalePelvis()
+                  mixer.stopAllAction()
+                  mixer.clipAction(clip).reset().play()
+                  const t = (clip.duration * step) / 8
+                  mixer.setTime(t)
+                  propCtrl.scalePelvis()
+                  loaded.root.updateMatrixWorld(true)
+                  const hits = countTriangleIntersections(skinMeshPositions(legs), lTris, skinMeshPositions(torso), tTris)
+                  if (hits > 0) {
+                    failOrLog(`Cross-pack [${clipName}@${t.toFixed(2)}s] ${custom.id}: torso clips legs (${hits} tris)`)
+                    break
+                  }
+                }
+              }
+            } finally {
+              mixer.stopAllAction()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+async function assertNeckHeadAlignment(
+  presets: CharacterPreset[],
+  packs: PackCatalog[],
+  auditCache: Map<string, Awaited<ReturnType<typeof loadGlbHeadless>>>,
+): Promise<void> {
+  const ual1Presets = presets.filter((p) => (p.rigId ?? 'ual1') === 'ual1')
+  const template = ual1Presets[0]
+  if (!template) return
+  const baseProp: AvatarProportions = {
+    height: 1,
+    legRatio: 1,
+    build: 0,
+    shoulderWidth: 1,
+    torsoBulk: 1,
+    waistScale: 1,
+    headScale: 1,
+    limbThickness: 1,
+    armLength: 1,
+    bodyLength: 1,
+  }
+  const bodies = ['body_athletic', 'body_heavy', 'body_slim', 'body_orc', 'body_troll']
+  const heads = ['head_hero', 'head_stern', 'head_cheerful', 'head_orc', 'head_troll']
+
+  const outerHeadBaseTris = (headMesh: SkinnedMesh) => {
+    const pos = headMesh.geometry.getAttribute('position')
+    return collectRestYBandTriangles(headMesh, 1.690, 1.780).filter(([a, b, c]) => {
+      const y0 = pos.getY(a)
+      const y1 = pos.getY(b)
+      const y2 = pos.getY(c)
+      const minY = Math.min(y0, y1, y2)
+      const maxY = Math.max(y0, y1, y2)
+      return maxY >= 1.705 || maxY - minY > 0.003
+    })
+  }
+
+  for (const bodyId of bodies) {
+    for (const headId of heads) {
+      const builds = bodyId === 'body_orc' || bodyId === 'body_troll' ? [0] : [0, -1, 1]
+      for (const build of builds) {
+        const custom: CharacterPreset = {
+          ...template,
+          id: `${bodyId}+${headId}+b${build}`,
+          rigId: 'ual1',
+          body: bodyId,
+          head: headId,
+          hair: null,
+          headwear: null,
+          torso: null,
+          legs: null,
+          back: null,
+          heldRight: null,
+          heldLeft: null,
+          proportions: { ...baseProp, build },
+        }
+        const loaded = await loadPresetForAudit(custom, packs, STAGE_DIR, auditCache)
+        const propCtrl = createAuditProportionController(loaded.root, loaded.meshes, 'ual1', custom.proportions)
+        const bodyMesh = loaded.meshes.find((m) => m.name === bodyId)
+        const headMesh = loaded.meshes.find((m) => m.name === headId)
+        if (!bodyMesh || !headMesh) throw new Error(`Missing ${bodyId} or ${headId} in neck-head alignment audit`)
+
+        const neckTris = collectRestYBandTriangles(bodyMesh, 1.608, 1.716)
+        const headTris = outerHeadBaseTris(headMesh)
+        const jawIdx = headMesh.morphTargetDictionary?.['jaw']
+
+        for (const jaw of jawIdx !== undefined ? [0, -1] : [0]) {
+          if (jawIdx !== undefined && headMesh.morphTargetInfluences) {
+            headMesh.morphTargetInfluences[jawIdx] = jaw
+          }
+          propCtrl.restoreRest()
+          propCtrl.scalePelvis()
+          loaded.root.updateMatrixWorld(true)
+          const hits = countTriangleIntersections(skinMeshPositions(bodyMesh), neckTris, skinMeshPositions(headMesh), headTris)
+          if (hits > 0) {
+            throw new Error(`Neck/head polygon mismatch on ${custom.id} (jaw=${jaw}): ${hits} intersecting tris`)
+          }
+        }
+      }
+    }
+  }
+
+  const headMotionClips = ['Idle_Loop', 'Walk_Loop', 'Sword_Attack', 'Dance_Loop']
+  for (const preset of ual1Presets) {
+    const loaded = await loadPresetForAudit(preset, packs, STAGE_DIR, auditCache)
+    const propCtrl = createAuditProportionController(loaded.root, loaded.meshes, 'ual1', preset.proportions)
+    const bodyMesh = loaded.meshes.find((m) => m.name.startsWith('body_'))
+    const headMesh = loaded.meshes.find((m) => m.name.startsWith('head_'))
+    if (!bodyMesh || !headMesh) continue
+
+    const neckTris = collectRestYBandTriangles(bodyMesh, 1.608, 1.716)
+    const headTris = outerHeadBaseTris(headMesh)
+    const restBones = new Map<string, Object3D>()
+    loaded.root.traverse((obj) => {
+      if (obj.name && obj.type === 'Bone') restBones.set(obj.name, obj)
+    })
+    const mixer = new AnimationMixer(loaded.root)
+    try {
+      for (const clipName of headMotionClips) {
+        const rawClip = loaded.clips.find((c) => c.name === clipName)
+        if (!rawClip) continue
+        const clip = optimizeClipForAudit(rawClip, restBones)
+        for (let step = 0; step < 4; step++) {
+          propCtrl.unscalePelvis()
+          mixer.stopAllAction()
+          mixer.clipAction(clip).reset().play()
+          const t = (clip.duration * step) / 4
+          mixer.setTime(t)
+          propCtrl.scalePelvis()
+          loaded.root.updateMatrixWorld(true)
+          const hits = countTriangleIntersections(skinMeshPositions(bodyMesh), neckTris, skinMeshPositions(headMesh), headTris)
+          if (hits > 0) {
+            throw new Error(`Preset "${preset.id}" [${clipName}@${t.toFixed(2)}s] neck intersects outer head shell (${hits} tris)`)
           }
         }
       }
@@ -1242,6 +2204,11 @@ async function main(): Promise<void> {
       assertMorphAndLayerContracts(glb, part)
       assertCreatureLegSides(glb, part.nodeName, rigId)
       assertShoulderSocketUniformity(glb, part)
+      const failPart = (msg: string) => {
+        if (process.env.VALIDATE_ALL === '1') console.error('PART STRUCT:', msg)
+        else throw new Error(msg)
+      }
+      assertHingeJointRingProximity(glb, part, failPart)
       if (!part.ragdollColliders || Object.keys(part.ragdollColliders).length === 0) {
         throw new Error(`Part "${part.id}" is missing mesh-measured ragdollColliders`)
       }
@@ -1349,6 +2316,14 @@ async function main(): Promise<void> {
   await assertHeldPresetClips(allPresets, auditCache)
   await assertHeldBodyCollisionFree(allPresets, manifest.packs, auditCache)
   await assertAnimatedShoulderSleeveIntegrity(allPresets, manifest.packs, auditCache)
+  await assertGarmentLegClearance(allPresets, manifest.packs, auditCache)
+  await assertNeckHeadAlignment(allPresets, manifest.packs, auditCache)
+  const failAudit = (tag: string) => (msg: string) => {
+    if (process.env.VALIDATE_ALL === '1') console.error(`${tag}:`, msg)
+    else throw new Error(msg)
+  }
+  await assertJointRingPreservation(allPresets, manifest.packs, auditCache, failAudit('RING PRESERVE'))
+  await assertConnectionSeamContainment(allPresets, manifest.packs, auditCache, failAudit('SEAM CONTAIN'))
 
   const GROUNDED_EVERY_FRAME_CLIPS = new Set([
     'Idle',
@@ -1404,8 +2379,10 @@ async function main(): Promise<void> {
       ],
     },
     { presetId: 'medieval_knight', clips: ['A_TPose', 'Sword_Idle', 'Sword_Attack', 'Sword_Regular_A_Rec', 'Idle_Shield_Loop', 'Idle_Loop', 'Walk_Loop'] },
+    { presetId: 'medieval_squire', clips: ['A_TPose', 'Sword_Idle', 'Sword_Attack', 'Jog_Fwd_Loop', 'Idle_Loop', 'Walk_Loop'] },
     { presetId: 'medieval_guard', clips: ['A_TPose', 'Sword_Idle', 'Idle_Shield_Loop', 'Idle_Loop', 'Walk_Loop'] },
     { presetId: 'ww2_rifleman', clips: ['A_TPose', 'Ranged_2H_Aiming', 'Ranged_2H_Shoot', 'Ranged_2H_Shooting', 'Ranged_2H_Reload', 'Pistol_Idle_Loop', 'Walk_Loop'] },
+    { presetId: 'ww2_sapper', clips: ['A_TPose', 'Ranged_2H_Aiming', 'Idle_Loop', 'Walk_Loop', 'Jog_Fwd_Loop'] },
     {
       presetId: 'ww2_officer',
       clips: [
@@ -1423,9 +2400,25 @@ async function main(): Promise<void> {
     { presetId: 'sim_executive', clips: ['A_TPose', 'Walk_Formal_Loop', 'Idle_TalkingPhone_Loop', 'Idle_Loop'] },
     { presetId: 'sim_varsity', clips: ['A_TPose', 'Dance_Loop', 'Walk_Loop', 'Idle_Loop'] },
     { presetId: 'sim_student', clips: ['A_TPose', 'Jog_Fwd_Loop', 'Idle_TalkingPhone_Loop', 'Idle_Loop'] },
+    { presetId: 'cyber_edgerunner', clips: ['A_TPose', 'Sword_Idle', 'Sword_Attack', 'Idle_Loop', 'Walk_Loop'] },
+    { presetId: 'cyber_netrunner', clips: ['A_TPose', 'Idle_TalkingPhone_Loop', 'Jog_Fwd_Loop', 'Idle_Loop', 'Walk_Loop'] },
+    { presetId: 'cyber_enforcer', clips: ['A_TPose', 'Pistol_Idle_Loop', 'Pistol_Shoot', 'Idle_Loop', 'Walk_Loop'] },
+    { presetId: 'cyber_ronin', clips: ['A_TPose', 'Sword_Attack', 'Sword_Idle', 'Jog_Fwd_Loop', 'Idle_Loop'] },
     { presetId: 'monster_orc_warlord', clips: ['A_TPose', 'Sword_Attack', 'Idle_Shield_Loop', 'Idle_Loop', 'Walk_Loop'] },
     { presetId: 'monster_troll_brute', clips: ['A_TPose', 'Sword_Idle', 'Sword_Attack', 'Idle_Loop', 'Walk_Loop'] },
   ]
+  const STATIONARY_GROUNDED_CLIPS = new Set([
+    'A_TPose',
+    'Idle_Loop',
+    'Sword_Idle',
+    'Pistol_Idle_Loop',
+    'Crouch_Idle_Loop',
+    'Ranged_2H_Aiming',
+    'Idle_Shield_Loop',
+    'Idle_TalkingPhone_Loop',
+    'Idle_FoldArms_Loop',
+    'Zombie_Idle_Loop',
+  ])
   for (const check of cleanClipChecks) {
     const preset = allPresets.find((p) => p.id === check.presetId)
     if (!preset) throw new Error(`Missing audit preset "${check.presetId}"`)
@@ -1443,7 +2436,8 @@ async function main(): Promise<void> {
         if (process.env.VALIDATE_ALL === '1') console.error('CLIP ERROR:', msg)
         else throw new Error(msg)
       }
-      if (report.minVertexY < -0.025) {
+      const floorLimit = STATIONARY_GROUNDED_CLIPS.has(report.clip) ? -0.008 : -0.025
+      if (report.minVertexY < floorLimit) {
         const msg = `Animation floor penetration on ${preset.id} ${serializeReportSummary(report)}`
         if (process.env.VALIDATE_ALL === '1') console.error('FLOOR PEN:', msg)
         else throw new Error(msg)

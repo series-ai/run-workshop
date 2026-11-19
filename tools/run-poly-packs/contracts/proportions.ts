@@ -72,27 +72,32 @@ export function isArmShieldHeldItem(id?: string | null): boolean {
 
 /** Arm thickness morph factor matching the body archetype builders in polykit.py. */
 export function armThicknessFactorFor(bodyId: string, build = 0): number {
-  if (bodyId === 'body_orc') return 1.06
-  if (bodyId === 'body_troll') return 1.04
+  if (bodyId === 'body_orc') return 1.08
+  if (bodyId === 'body_troll') return 0.98
   const baseCoord = bodyId === 'body_slim' ? -1 : bodyId === 'body_heavy' ? 1 : 0
   const targetCoord = clamp(baseCoord + build, -1, 1)
   return targetCoord < 0 ? 1 + (0.86 - 1) * -targetCoord : 1 + (1.02 - 1) * targetCoord
 }
 
-/** Nominal palm half-thickness (metres) in UAL1 `build_hand` before `body.hand` scaling. */
+/** Nominal palm half-thickness and palm surface offset (metres) in UAL1 `build_hand`. */
 const PALM_HALF_THICKNESS = 0.025
+const PALM_SURFACE_OFFSET = 0.016
 
-/** Compute held-item socket offset in hand-bone local space accounting for body hand thickness and skeletal limbThickness. */
+/** Compute held-item socket offset in hand-bone local space accounting for body hand thickness, skeletal limbThickness, and handScale. */
 export function heldSocketOffsetFor<T extends Vec3Out>(
   palmOffset: readonly [number, number, number],
   armFactor: number,
   limbThickness: number,
   out: T,
+  handScaleOverride = 1,
 ): T {
-  const skelHandScale = 1 + 0.35 * (limbThickness - 1)
+  const skelHandScale = (1 + 0.35 * (limbThickness - 1)) * handScaleOverride
   const bodyHand = 0.5 + 0.5 * armFactor
   const palmThicknessDelta = (bodyHand - 1) * PALM_HALF_THICKNESS
-  out.x = (palmOffset[0] + Math.sign(palmOffset[0]) * palmThicknessDelta) * skelHandScale
+  const baseOffset = Math.abs(palmOffset[0]) + palmThicknessDelta
+  const handleRadiusGap = Math.max(0, Math.abs(palmOffset[0]) - PALM_SURFACE_OFFSET)
+  const palmThickness = Math.max(0, baseOffset - handleRadiusGap)
+  out.x = Math.sign(palmOffset[0]) * (palmThickness * skelHandScale + handleRadiusGap)
   out.y = palmOffset[1] * skelHandScale
   out.z = palmOffset[2] * skelHandScale
   return out

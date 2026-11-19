@@ -1,10 +1,10 @@
 import { z } from 'zod'
 import packsJson from './data/packs.json'
 
-export const POLY_PACK_KEYS = ['core', 'medieval', 'ww2', 'sim', 'monsters'] as const
+export const POLY_PACK_KEYS = ['core', 'medieval', 'ww2', 'sim', 'cyberpunk', 'monsters'] as const
 export type PolyPackKey = (typeof POLY_PACK_KEYS)[number]
 
-export const CONTEXT_PACK_KEYS = ['medieval', 'ww2', 'sim', 'monsters'] as const
+export const CONTEXT_PACK_KEYS = ['medieval', 'ww2', 'sim', 'cyberpunk', 'monsters'] as const
 export type ContextPackKey = (typeof CONTEXT_PACK_KEYS)[number]
 
 export const LICENSES = ['CC0-1.0', 'LicenseRef-RUN-Repository-Supplemental-1.0'] as const
@@ -26,6 +26,7 @@ const packsFileSchema = z.object({
     medieval: packDefSchema,
     ww2: packDefSchema,
     sim: packDefSchema,
+    cyberpunk: packDefSchema,
     monsters: packDefSchema,
   }),
 })
