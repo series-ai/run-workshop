@@ -1,0 +1,41 @@
+{
+  "name": "run-chisel-showcase",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "RUN Chisel Packs Showcase: stylized faceted parametric low-poly avatar lab, multi-context dioramas (Medieval, WW2, Sim, Monsters) on one shared Quaternius UAL1 rig, and S23 Ultra 120Hz performance bench.",
+  "keywords": [
+    "RUN.game"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build:local": "tsc -p tsconfig.json --noEmit && vite build --mode local-preview",
+    "preview": "vite preview --mode local-preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "thumbnails": "../../tools/run-chisel-packs/node_modules/.bin/tsx scripts/render-thumbnails.ts",
+    "deploy": "npm run build && rundot deploy"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
+    "@series-inc/rundot-game-sdk": "^5.39.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "~0.170.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/three": "~0.170.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^25.0.1",
+    "typescript": "~5.7.0",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.7"
+  }
+}
