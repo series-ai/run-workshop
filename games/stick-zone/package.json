@@ -1,0 +1,41 @@
+{
+  "name": "stick-zone",
+  "version": "1.0.0",
+  "description": "High-Action 3D Stickman Extraction Shooter in Sector 7 Depot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 58392",
+    "build": "node scripts/stage-inkline-assets.mjs && tsc && vite build",
+    "preview": "vite preview --port 48392",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "record:proofs": "node scripts/record-gameplay.mjs",
+    "start": "vite preview --port 48392",
+    "predev": "node scripts/stage-inkline-assets.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^9.121.4",
+    "@react-three/fiber": "^8.17.10",
+    "@series-inc/rundot-game-sdk": "^5.38.0",
+    "@series-inc/rundot-syncplay": "^6.0.0-rc.80",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.469.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "three": "~0.170.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "~0.170.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "esbuild": "^0.24.0",
+    "playwright": "^1.63.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^2.1.8"
+  }
+}

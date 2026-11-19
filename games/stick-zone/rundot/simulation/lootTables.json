@@ -1,0 +1,47 @@
+{
+  "lootTables": {
+    "military_depot_crate": {
+      "entries": [
+        {
+          "entityId": "circuit_board",
+          "weight": 40,
+          "amount": 1
+        },
+        {
+          "entityId": "military_battery",
+          "weight": 25,
+          "amount": 1
+        },
+        {
+          "entityId": "weapon_parts",
+          "weight": 20,
+          "amount": 2
+        },
+        {
+          "entityId": "encrypted_drive",
+          "weight": 10,
+          "amount": 1
+        },
+        {
+          "entityId": "depot_keycard",
+          "weight": 5,
+          "amount": 1
+        }
+      ]
+    },
+    "medical_cache": {
+      "entries": [
+        {
+          "entityId": "tactical_bandage",
+          "weight": 60,
+          "amount": 2
+        },
+        {
+          "entityId": "med_stim",
+          "weight": 40,
+          "amount": 1
+        }
+      ]
+    }
+  }
+}
