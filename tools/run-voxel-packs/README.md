@@ -4,6 +4,10 @@ Authoring pipeline for the four RUN voxel asset packs (fantasy, space,
 monster, post-apocalypse) that interchange with the Pirate Nation (PN) pack in
 `jam-ready-assets`.
 
+For new assets and repairs, use [the authoring workflow](docs/authoring-workflow.md)
+and the [RUN voxel skill](SKILL.md). The workflow includes the visual gate that
+the numeric validator cannot perform.
+
 ## Commands
 
 ```bash
@@ -20,6 +24,8 @@ node --import tsx scripts/check-expansion.ts  # exact counts, clips, bindings an
 npm run catalog            # games/run-voxel-showcase/public/catalog/{index.json,<pack>/catalog.json}
 npm run snapshot -- --out sheet.png [--clip open@0.5] [--clip-from other.glb] a.glb …   # dev contact sheet
 npm run lineup -- --out lineup.png <rvx id | pn:<file stem> | a.glb> …   # native-scale lineup next to a person gauge
+npm run review -- --pack monster --only bone-hound --motion attack   # full clip sample sheet
+npm run review:check -- --record <review.json> [--min-reviewers 2]   # final GLB hash and blocker gate
 # previews and icons come from the showcase: (cd ../../games/run-voxel-showcase && npm run thumbnails -- --pack fantasy [--icons])
 npm test                   # unit tests;  npm run test:integration  needs a built fantasy pack
 ```

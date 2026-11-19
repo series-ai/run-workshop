@@ -1,16 +1,19 @@
 /**
- * Review sheet per asset: four rest views, optional clip frames, and a
+ * Review sheet per asset: four rest views, a 128 px view, optional clip frames, and a
  * native-scale lineup with Pirate Nation references of the same class and
- * the person gauge. Look at every sheet before an asset counts as done.
+ * the person gauge. --motion samples a named clip from start to end.
+ * Look at every sheet before an asset counts as done.
  *
  * Usage:
- *   npm run review -- --pack monster --only haunted-manor [--ref pn:<stem>|<rvx id>] [--clips] [--out-dir /tmp/rvx-review]
+ *   npm run review -- --pack monster --only haunted-manor [--ref pn:<stem>|<rvx id>] [--clips] [--motion attack] [--out-dir /tmp/rvx-review]
  * `--only` matches asset ids by substring (several assets → several sheets).
  * `--clips` adds a frame from the middle of every clip in the file.
+ * `--motion` adds five frames of a one-shot or seven frames of a loop.
  */
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { ONE_SHOT_CLIPS } from '../contracts/clips'
 import { RVX_PACK_KEYS, RVX_PACKS, type RvxPackKey } from '../contracts/packs'
 import { BLENDER_BIN, pirateModelsDir, STAGE_DIR, TOOL_ROOT } from '../src/paths'
 import { inspectGlb } from '../src/validate/inspect'
@@ -90,17 +93,29 @@ async function main(): Promise<void> {
     const summary = await inspectGlb(new Uint8Array(readFileSync(glb)))
     const refs = args('ref').length > 0 ? args('ref') : (PN_REFS[summary.scaleClass ?? ''] ?? []).map((s) => `pn:${s}`)
     const refPaths = refs.map((r) => (r.startsWith('pn:') ? findGlb(pirateModelsDir(), r.slice(3)) : findGlb(STAGE_DIR, r)))
-    const clips = process.argv.includes('--clips') ? summary.animations.map((a) => `${a.name}@${(a.duration / 2).toFixed(2)}`) : []
+    const clips = process.argv.includes('--clips') ? summary.animations.map((a) => `${a.name}@${(a.duration / 2).toFixed(3)}`) : []
+    const motionNames = args('motion')
+    for (const name of motionNames) {
+      const animation = summary.animations.find((a) => a.name === name)
+      if (!animation) throw new Error(`${glb} has no clip "${name}"`)
+      if (animation.duration <= 0) throw new Error(`${glb} clip "${name}" has no duration`)
+      const fractions = ONE_SHOT_CLIPS.includes(name) ? [0, 0.25, 0.5, 0.75, 1] : [0, 0.05, 0.25, 0.5, 0.75, 0.95, 1]
+      clips.push(...fractions.map((f) => `${name}@${(f * animation.duration).toFixed(3)}`))
+    }
     const id = glb.split('/').pop()!.replace('.glb', '')
-    const out = join(outDir, `${id}.png`)
-    const cli = ['-b', '--factory-startup', '--python', join(TOOL_ROOT, 'blender/review.py'), '--', '--out', out, '--asset', glb, ...refPaths.flatMap((r) => ['--ref', r]), ...clips.flatMap((c) => ['--clip', c])]
+    const suffix = motionNames.length ? `--motion-${motionNames.join('-').replace(/[^A-Za-z0-9_-]/g, '')}` : ''
+    const out = join(outDir, `${id}${suffix}.png`)
+    const thumb = join(outDir, `${id}-128.png`)
+    const cli = ['-b', '--factory-startup', '--python', join(TOOL_ROOT, 'blender/review.py'), '--', '--out', out, '--thumb-out', thumb, '--asset', glb, ...refPaths.flatMap((r) => ['--ref', r]), ...clips.flatMap((c) => ['--clip', c])]
     const result = spawnSync(BLENDER_BIN, cli, { encoding: 'utf8' })
     const log = `${result.stdout}\n${result.stderr}`
     if (result.status !== 0 || !log.includes('REVIEW')) {
-      console.error(log.split('\n').filter((l) => /Error|Traceback|File "/.test(l)).join('\n'))
-      process.exit(1)
+      throw new Error(`Blender review failed for ${id}: ${result.error?.message ?? `exit ${result.status}`}\n${log.split('\n').slice(-40).join('\n')}`)
     }
-    console.log(`${id} [${summary.scaleClass}] → ${out}  (views: front, back, side, top${clips.length ? `, clips: ${clips.join(' ')}` : ''}; last tile: native scale with ${refs.join(', ') || 'no refs'} and the red person gauge)`)
+    const legend = ['front', 'back', 'side', 'top', ...clips, `native scale: ${refs.join(', ') || 'no refs'}; red person gauge`]
+    const legendPath = join(outDir, `${id}${suffix}.txt`)
+    writeFileSync(legendPath, `${legend.map((label, i) => `${Math.floor(i / 4) + 1}:${(i % 4) + 1} ${label}`).join('\n')}\n`)
+    console.log(`${id} [${summary.scaleClass}] → ${out}  (128 px: ${thumb}; tile labels: ${legendPath})`)
   }
 }
 
