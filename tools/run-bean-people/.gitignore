@@ -1,0 +1,19 @@
+.env
+.asset-bot/
+CLAUDE.md
+__pycache__/
+
+# Concept art, reference images and early exploration builds stay local
+concepts/
+references/
+kit/out*/
+kit/viewer/
+kit/boxy-viewer/
+kit/boxy-kit/
+
+# npm (scripts/compress.mjs, scripts/pack.mjs)
+kit/node_modules/
+
+# Test leaf for the asset library (node scripts/pack.mjs pack-out), used by pack/cover.html
+kit/pack-out/
+.claude/
