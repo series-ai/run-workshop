@@ -54,7 +54,7 @@ const PROP_SLOTS: readonly (readonly [number, number, number])[] = [
   [1.56, 1.26, -0.52],
 ]
 
-const AMBIENT_CLIP_ORDER = ['Idle', 'Hover', 'Spin', 'Sweep', 'Loop', 'Pulse', 'Active', 'Opening', 'Raise', 'SlideOpen']
+const AMBIENT_CLIP_ORDER = ['Idle', 'Hover', 'Spin', 'Sweep', 'Swing', 'Loop', 'Pulse', 'Active', 'Open', 'Closed', 'Down', 'Armed']
 const FLOOR_TILE_RE = /(?:floor_tile|sidewalk_tile|road_crosswalk|grate_tile|duckboard)/
 
 /** The largest extent of a prop in metres (width, height or depth). */
