@@ -1,0 +1,200 @@
+{
+  "version": 1,
+  "rigId": "chisel-kaiju-22",
+  "source": "RUN Chisel Kaiju Rig (LicenseRef-RUN-Repository-Supplemental-1.0 / CC0 Mesh2Motion clips)",
+  "jointCount": 22,
+  "joints": [
+    "root",
+    "pelvis",
+    "spine_01",
+    "chest",
+    "neck",
+    "head",
+    "jaw",
+    "tail_01",
+    "tail_02",
+    "tail_03",
+    "arm_upper_l",
+    "arm_lower_l",
+    "hand_l",
+    "arm_upper_r",
+    "arm_lower_r",
+    "hand_r",
+    "leg_upper_l",
+    "leg_lower_l",
+    "foot_l",
+    "leg_upper_r",
+    "leg_lower_r",
+    "foot_r"
+  ],
+  "parents": {
+    "root": null,
+    "pelvis": "root",
+    "spine_01": "pelvis",
+    "chest": "spine_01",
+    "neck": "chest",
+    "head": "neck",
+    "jaw": "head",
+    "tail_01": "pelvis",
+    "tail_02": "tail_01",
+    "tail_03": "tail_02",
+    "arm_upper_l": "chest",
+    "arm_lower_l": "arm_upper_l",
+    "hand_l": "arm_lower_l",
+    "arm_upper_r": "chest",
+    "arm_lower_r": "arm_upper_r",
+    "hand_r": "arm_lower_r",
+    "leg_upper_l": "pelvis",
+    "leg_lower_l": "leg_upper_l",
+    "foot_l": "leg_lower_l",
+    "leg_upper_r": "pelvis",
+    "leg_lower_r": "leg_upper_r",
+    "foot_r": "leg_lower_r"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pelvis": [
+      0.0,
+      0.68,
+      -0.2
+    ],
+    "spine_01": [
+      0.0,
+      0.86,
+      0.02
+    ],
+    "chest": [
+      0.0,
+      1.12,
+      0.22
+    ],
+    "neck": [
+      0.0,
+      1.38,
+      0.32
+    ],
+    "head": [
+      0.0,
+      1.56,
+      0.38
+    ],
+    "jaw": [
+      0.0,
+      1.46,
+      0.48
+    ],
+    "tail_01": [
+      0.0,
+      0.6,
+      -0.44
+    ],
+    "tail_02": [
+      0.0,
+      0.5,
+      -0.84
+    ],
+    "tail_03": [
+      0.0,
+      0.4,
+      -1.28
+    ],
+    "arm_upper_l": [
+      0.18,
+      1.1,
+      0.24
+    ],
+    "arm_lower_l": [
+      0.38,
+      1.1,
+      0.28
+    ],
+    "hand_l": [
+      0.54,
+      1.1,
+      0.32
+    ],
+    "arm_upper_r": [
+      -0.18,
+      1.1,
+      0.24
+    ],
+    "arm_lower_r": [
+      -0.38,
+      1.1,
+      0.28
+    ],
+    "hand_r": [
+      -0.54,
+      1.1,
+      0.32
+    ],
+    "leg_upper_l": [
+      0.2,
+      0.72,
+      -0.18
+    ],
+    "leg_lower_l": [
+      0.24,
+      0.4,
+      -0.1
+    ],
+    "foot_l": [
+      0.26,
+      0.07,
+      -0.16
+    ],
+    "leg_upper_r": [
+      -0.2,
+      0.72,
+      -0.18
+    ],
+    "leg_lower_r": [
+      -0.24,
+      0.4,
+      -0.1
+    ],
+    "foot_r": [
+      -0.26,
+      0.07,
+      -0.16
+    ]
+  },
+  "clips": [
+    {
+      "name": "Idle",
+      "duration": 2.3667
+    },
+    {
+      "name": "Walk",
+      "duration": 3.1
+    },
+    {
+      "name": "Attack",
+      "duration": 1.0333
+    },
+    {
+      "name": "Tail_Attack",
+      "duration": 2.7333
+    },
+    {
+      "name": "Roar",
+      "duration": 6.0
+    },
+    {
+      "name": "Hit",
+      "duration": 0.9667
+    },
+    {
+      "name": "Swim",
+      "duration": 2.8
+    },
+    {
+      "name": "Death",
+      "duration": 4.5333
+    }
+  ]
+}

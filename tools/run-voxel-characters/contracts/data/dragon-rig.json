@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "rigId": "chisel-dragon-28",
+  "source": "RUN Chisel Dragon Rig (LicenseRef-RUN-Repository-Supplemental-1.0 / CC0 Mesh2Motion clips)",
+  "jointCount": 28,
+  "joints": [
+    "root",
+    "pelvis",
+    "spine_01",
+    "chest",
+    "neck",
+    "head",
+    "jaw",
+    "tail_01",
+    "tail_02",
+    "tail_03",
+    "wing_upper_l",
+    "wing_mid_l",
+    "wing_tip_l",
+    "wing_upper_r",
+    "wing_mid_r",
+    "wing_tip_r",
+    "foreleg_upper_l",
+    "foreleg_lower_l",
+    "foreleg_foot_l",
+    "foreleg_upper_r",
+    "foreleg_lower_r",
+    "foreleg_foot_r",
+    "hindleg_upper_l",
+    "hindleg_lower_l",
+    "hindleg_foot_l",
+    "hindleg_upper_r",
+    "hindleg_lower_r",
+    "hindleg_foot_r"
+  ],
+  "parents": {
+    "root": null,
+    "pelvis": "root",
+    "spine_01": "pelvis",
+    "chest": "spine_01",
+    "neck": "chest",
+    "head": "neck",
+    "jaw": "head",
+    "tail_01": "pelvis",
+    "tail_02": "tail_01",
+    "tail_03": "tail_02",
+    "wing_upper_l": "chest",
+    "wing_mid_l": "wing_upper_l",
+    "wing_tip_l": "wing_mid_l",
+    "wing_upper_r": "chest",
+    "wing_mid_r": "wing_upper_r",
+    "wing_tip_r": "wing_mid_r",
+    "foreleg_upper_l": "chest",
+    "foreleg_lower_l": "foreleg_upper_l",
+    "foreleg_foot_l": "foreleg_lower_l",
+    "foreleg_upper_r": "chest",
+    "foreleg_lower_r": "foreleg_upper_r",
+    "foreleg_foot_r": "foreleg_lower_r",
+    "hindleg_upper_l": "pelvis",
+    "hindleg_lower_l": "hindleg_upper_l",
+    "hindleg_foot_l": "hindleg_lower_l",
+    "hindleg_upper_r": "pelvis",
+    "hindleg_lower_r": "hindleg_upper_r",
+    "hindleg_foot_r": "hindleg_lower_r"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pelvis": [
+      0.0,
+      0.66,
+      -0.28
+    ],
+    "spine_01": [
+      0.0,
+      0.64,
+      0.04
+    ],
+    "chest": [
+      0.0,
+      0.68,
+      0.38
+    ],
+    "neck": [
+      0.0,
+      0.78,
+      0.68
+    ],
+    "head": [
+      0.0,
+      0.88,
+      0.96
+    ],
+    "jaw": [
+      0.0,
+      0.78,
+      1.06
+    ],
+    "tail_01": [
+      0.0,
+      0.65,
+      -0.56
+    ],
+    "tail_02": [
+      0.0,
+      0.62,
+      -0.96
+    ],
+    "tail_03": [
+      0.0,
+      0.6,
+      -1.4
+    ],
+    "wing_upper_l": [
+      0.22,
+      0.76,
+      0.42
+    ],
+    "wing_mid_l": [
+      0.72,
+      0.86,
+      0.56
+    ],
+    "wing_tip_l": [
+      1.56,
+      0.68,
+      0.48
+    ],
+    "wing_upper_r": [
+      -0.22,
+      0.76,
+      0.42
+    ],
+    "wing_mid_r": [
+      -0.72,
+      0.86,
+      0.56
+    ],
+    "wing_tip_r": [
+      -1.56,
+      0.68,
+      0.48
+    ],
+    "foreleg_upper_l": [
+      0.18,
+      0.56,
+      0.34
+    ],
+    "foreleg_lower_l": [
+      0.18,
+      0.3,
+      0.22
+    ],
+    "foreleg_foot_l": [
+      0.18,
+      0.06,
+      0.32
+    ],
+    "foreleg_upper_r": [
+      -0.18,
+      0.56,
+      0.34
+    ],
+    "foreleg_lower_r": [
+      -0.18,
+      0.3,
+      0.22
+    ],
+    "foreleg_foot_r": [
+      -0.18,
+      0.06,
+      0.32
+    ],
+    "hindleg_upper_l": [
+      0.18,
+      0.58,
+      -0.26
+    ],
+    "hindleg_lower_l": [
+      0.18,
+      0.32,
+      -0.36
+    ],
+    "hindleg_foot_l": [
+      0.18,
+      0.06,
+      -0.26
+    ],
+    "hindleg_upper_r": [
+      -0.18,
+      0.58,
+      -0.26
+    ],
+    "hindleg_lower_r": [
+      -0.18,
+      0.32,
+      -0.36
+    ],
+    "hindleg_foot_r": [
+      -0.18,
+      0.06,
+      -0.26
+    ]
+  },
+  "clips": [
+    {
+      "name": "Idle",
+      "duration": 1.9583
+    },
+    {
+      "name": "Walk",
+      "duration": 1.3333
+    },
+    {
+      "name": "Attack",
+      "duration": 1.625
+    },
+    {
+      "name": "Fire_Breath",
+      "duration": 3.125
+    },
+    {
+      "name": "Roar",
+      "duration": 4.4583
+    },
+    {
+      "name": "Take_Off",
+      "duration": 3.3333
+    },
+    {
+      "name": "Fly_Flap",
+      "duration": 1.3333
+    },
+    {
+      "name": "Fly_Glide",
+      "duration": 1.9583
+    },
+    {
+      "name": "Land",
+      "duration": 3.75
+    },
+    {
+      "name": "Hurt",
+      "duration": 1.2083
+    },
+    {
+      "name": "Death",
+      "duration": 4.1667
+    }
+  ]
+}
