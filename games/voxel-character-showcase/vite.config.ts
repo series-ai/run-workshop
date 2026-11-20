@@ -1,7 +1,7 @@
 import { createReadStream, existsSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { homedir } from 'node:os'
-import { extname, join, normalize, resolve, sep } from 'node:path'
+import { join, posix, resolve, sep } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { rundotGameLibrariesPlugin } from '@series-inc/rundot-game-sdk/vite'
@@ -20,8 +20,9 @@ function localJamAssets(): Plugin {
     const url = decodeURIComponent((req.url ?? '').split('?')[0] ?? '')
     const match = /^\/jam\/(.+)$/.exec(url)
     if (!match?.[1]) return next()
-    const rel = normalize(match[1])
-    if (rel.startsWith('..') || !/^run-cubix-[a-z0-9-]+\//.test(rel) || !MIME[extname(rel)] || rel.split(sep).some((s) => s.startsWith('.'))) {
+    const rel = posix.normalize(match[1])
+    const contentType = MIME[posix.extname(rel)]
+    if (!/^run-cubix-[a-z0-9-]+\//.test(rel) || !contentType || rel.includes('\\') || rel.split('/').some((s) => s.startsWith('.'))) {
       res.statusCode = 404
       return res.end('not a run-cubix asset path')
     }
@@ -31,7 +32,7 @@ function localJamAssets(): Plugin {
       const real = realpathSync(file)
       if (!real.startsWith(realpathSync(root) + sep)) continue
       if (statSync(real).isFile()) {
-        res.setHeader('Content-Type', MIME[extname(file)] ?? 'application/octet-stream')
+        res.setHeader('Content-Type', contentType)
         createReadStream(real).pipe(res)
         return
       }
