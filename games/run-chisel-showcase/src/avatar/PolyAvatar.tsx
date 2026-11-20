@@ -15,6 +15,7 @@ import {
   type MeshStandardMaterial,
 } from 'three'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { AvatarPartEntry, HeldItemEntry, WorldPropEntry } from '@chisel/contracts/catalog'
 import type { PaletteColors } from '@chisel/contracts/palette'
 import { armThicknessFactorFor, isArmShieldHeldItem } from '@chisel/contracts/proportions'
@@ -466,9 +467,15 @@ export type PolyPropProps = Placement &
     item: WorldPropEntry | HeldItemEntry
     blobShadow?: boolean
     castShadow?: boolean
+    /** Optional animation clip name for animated props. */
+    clip?: string
+    /** Start time in the clip, in seconds. */
+    timeOffset?: number
+    /** Hold the clip at this part of its duration (0 to 1). `null` or no value plays the clip. */
+    holdPhase?: number | null
   }
 
-/** A static pack model (world prop or held item) with the palette shader. */
+/** A pack model (world prop, static or animated, or held item) with the palette shader. */
 export function PolyProp(props: PolyPropProps) {
   const ref = useMemo(
     () => [assetRefFor(props.item.pack, props.item.leaf, props.item.relativePath)],
@@ -479,8 +486,25 @@ export function PolyProp(props: PolyPropProps) {
   return <LoadedProp {...props} url={urls[0]} />
 }
 
-function LoadedProp({ item, url, palette, material: sharedMaterial, blobShadow = false, castShadow = false, position, rotation, scale }: PolyPropProps & { url: string }) {
-  const gltf = readGltf(url)
+function LoadedProp(props: PolyPropProps & { url: string }) {
+  const gltf = readGltf(props.url)
+  if (gltf.animations.length > 0) {
+    return <LoadedAnimatedProp {...props} gltf={gltf} />
+  }
+  return <LoadedStaticProp {...props} gltf={gltf} />
+}
+
+function LoadedStaticProp({
+  item,
+  gltf,
+  palette,
+  material: sharedMaterial,
+  blobShadow = false,
+  castShadow = false,
+  position,
+  rotation,
+  scale,
+}: PolyPropProps & { gltf: GLTF }) {
   const geometry = findStaticMesh(gltf, item.nodeName).geometry
   const ownMaterial = useMemo(() => (sharedMaterial ? null : createPolyMaterial(palette)), [sharedMaterial]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -495,6 +519,119 @@ function LoadedProp({ item, url, palette, material: sharedMaterial, blobShadow =
   return (
     <group position={position} rotation={rotation} scale={scale}>
       <mesh geometry={geometry} material={sharedMaterial ?? ownMaterial!} castShadow={castShadow} />
+      {blob && (
+        <mesh
+          geometry={blob.geometry}
+          material={blob.material}
+          userData={{ isBlobShadow: true }}
+          position={[0, BLOB_Y, 0]}
+          scale={footprint}
+        />
+      )}
+    </group>
+  )
+}
+
+function LoadedAnimatedProp({
+  item,
+  gltf,
+  palette,
+  material: sharedMaterial,
+  blobShadow = false,
+  castShadow = false,
+  clip: clipName,
+  timeOffset = 0,
+  holdPhase = null,
+  position,
+  rotation,
+  scale,
+}: PolyPropProps & { gltf: GLTF }) {
+  const ownMaterial = useMemo(() => (sharedMaterial ? null : createPolyMaterial(palette)), [sharedMaterial]) // eslint-disable-line react-hooks/exhaustive-deps
+  const material = sharedMaterial ?? ownMaterial!
+  const { skin, hair, primary, secondary, accent, metal, eye } = palette ?? {
+    skin: '#ffffff',
+    hair: '#ffffff',
+    primary: '#ffffff',
+    secondary: '#ffffff',
+    accent: '#ffffff',
+    metal: '#ffffff',
+    eye: '#ffffff',
+  }
+  useEffect(() => {
+    if (ownMaterial && palette) updatePolyMaterialPalette(ownMaterial, { skin, hair, primary, secondary, accent, metal, eye })
+  }, [ownMaterial, palette, skin, hair, primary, secondary, accent, metal, eye])
+  useEffect(() => () => ownMaterial?.dispose(), [ownMaterial])
+
+  const root = useMemo(() => cloneSkeleton(gltf.scene), [gltf])
+  useLayoutEffect(() => {
+    root.traverse((obj) => {
+      if ((obj as Mesh).isMesh) {
+        const m = obj as Mesh
+        m.material = material
+        m.castShadow = castShadow
+        if ((obj as SkinnedMesh).isSkinnedMesh) {
+          m.frustumCulled = false
+        }
+      }
+    })
+  }, [root, material, castShadow])
+
+  const footprint = useMemo(() => {
+    if ('bounds' in item) {
+      return [item.bounds.size[0] * 1.5 + 0.2, 1, item.bounds.size[2] * 1.5 + 0.2] as const
+    }
+    return [1.0, 1, 1.0] as const
+  }, [item])
+
+  const mixer = useMemo(() => new AnimationMixer(root), [root])
+  const actionRef = useRef<AnimationAction | null>(null)
+  useLayoutEffect(() => {
+    const selected = (clipName ? gltf.animations.find((c) => c.name === clipName) : undefined) ?? gltf.animations[0]
+    if (!selected) return
+    const next = mixer.clipAction(selected)
+    const previous = actionRef.current
+    if (previous !== next) {
+      next.reset()
+      next.setLoop(LoopRepeat, Infinity)
+      next.clampWhenFinished = false
+      if (selected.duration > 0) {
+        next.time = holdPhase !== null && holdPhase !== undefined ? holdPhase * selected.duration : timeOffset % selected.duration
+      }
+      next.play()
+      if (previous) previous.stop()
+      actionRef.current = next
+    } else if (holdPhase !== null && holdPhase !== undefined && selected.duration > 0) {
+      next.time = holdPhase * selected.duration
+    }
+    mixer.update(0)
+  }, [mixer, gltf, clipName, timeOffset, holdPhase])
+
+  useEffect(
+    () => () => {
+      mixer.stopAllAction()
+      mixer.uncacheRoot(root)
+      actionRef.current = null
+    },
+    [mixer, root],
+  )
+
+  useFrame((_, delta) => {
+    const current = actionRef.current
+    if (!current) return
+    if (holdPhase !== null && holdPhase !== undefined) {
+      current.paused = true
+      current.time = holdPhase * current.getClip().duration
+      mixer.update(0)
+      return
+    }
+    if (current.paused) current.paused = false
+    mixer.update(delta)
+  })
+
+  const blob = blobShadow ? getSharedBlobShadowResources() : null
+  return (
+    <group position={position} rotation={rotation} scale={scale}>
+      <primitive object={root} />
       {blob && (
         <mesh
           geometry={blob.geometry}

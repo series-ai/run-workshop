@@ -807,6 +807,366 @@
           0.47833
         ]
       }
+    },
+    {
+      "id": "prop_stone_floor_tile",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_stone_floor_tile.glb",
+      "nodeName": "prop_stone_floor_tile",
+      "label": "Stone Floor Tile",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.135,
+          1
+        ],
+        "size": [
+          2,
+          0.135,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_wall",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_wall.glb",
+      "nodeName": "prop_dungeon_wall",
+      "label": "Dungeon Stone Wall",
+      "triangles": 260,
+      "bounds": {
+        "min": [
+          -1.01,
+          0,
+          -0.22
+        ],
+        "max": [
+          1.01,
+          2.21,
+          0.22
+        ],
+        "size": [
+          2.02,
+          2.21,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_pillar",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_pillar.glb",
+      "nodeName": "prop_dungeon_pillar",
+      "label": "Dungeon Stone Pillar",
+      "triangles": 224,
+      "bounds": {
+        "min": [
+          -0.33,
+          0,
+          -0.3325
+        ],
+        "max": [
+          0.33,
+          2.28,
+          0.3325
+        ],
+        "size": [
+          0.66,
+          2.28,
+          0.665
+        ]
+      }
+    },
+    {
+      "id": "prop_wooden_bridge",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_wooden_bridge.glb",
+      "nodeName": "prop_wooden_bridge",
+      "label": "Wooden Plank Bridge",
+      "triangles": 516,
+      "bounds": {
+        "min": [
+          -1.17628,
+          0,
+          -0.635
+        ],
+        "max": [
+          1.17628,
+          1.045,
+          0.635
+        ],
+        "size": [
+          2.35257,
+          1.045,
+          1.27
+        ]
+      }
+    },
+    {
+      "id": "prop_anvil_forge",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_anvil_forge.glb",
+      "nodeName": "prop_anvil_forge",
+      "label": "Blacksmith Anvil & Forge",
+      "triangles": 178,
+      "bounds": {
+        "min": [
+          -0.56125,
+          0,
+          -0.30625
+        ],
+        "max": [
+          0.56125,
+          1.04,
+          0.30625
+        ],
+        "size": [
+          1.12249,
+          1.04,
+          0.61249
+        ]
+      }
+    },
+    {
+      "id": "prop_tavern_table",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_tavern_table.glb",
+      "nodeName": "prop_tavern_table",
+      "label": "Tavern Banquet Table",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -0.76,
+          0,
+          -0.41
+        ],
+        "max": [
+          0.76,
+          0.89,
+          0.41
+        ],
+        "size": [
+          1.52,
+          0.89,
+          0.82
+        ]
+      }
+    },
+    {
+      "id": "prop_tree_oak",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_tree_oak.glb",
+      "nodeName": "prop_tree_oak",
+      "label": "Faceted Oak Tree",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -0.93722,
+          0,
+          -0.74095
+        ],
+        "max": [
+          0.93722,
+          2.84,
+          0.74095
+        ],
+        "size": [
+          1.87445,
+          2.84,
+          1.48189
+        ]
+      }
+    },
+    {
+      "id": "prop_boulder_cluster",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_boulder_cluster.glb",
+      "nodeName": "prop_boulder_cluster",
+      "label": "Mossy Boulder Cluster",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -0.73334,
+          0,
+          -0.55835
+        ],
+        "max": [
+          0.73334,
+          0.72,
+          0.55835
+        ],
+        "size": [
+          1.46667,
+          0.72,
+          1.1167
+        ]
+      }
+    },
+    {
+      "id": "prop_treasure_chest",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_treasure_chest.glb",
+      "nodeName": "prop_treasure_chest",
+      "label": "Treasure Chest",
+      "triangles": 209,
+      "bounds": {
+        "min": [
+          -0.39,
+          0,
+          -0.241
+        ],
+        "max": [
+          0.39,
+          0.572,
+          0.241
+        ],
+        "size": [
+          0.78,
+          0.572,
+          0.482
+        ]
+      },
+      "clips": [
+        "Closed",
+        "Opening",
+        "Open"
+      ]
+    },
+    {
+      "id": "prop_portcullis_gate",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_portcullis_gate.glb",
+      "nodeName": "prop_portcullis_gate",
+      "label": "Portcullis Gate",
+      "triangles": 388,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.1,
+          2.7,
+          0.25
+        ],
+        "size": [
+          2.2,
+          2.7,
+          0.5
+        ]
+      },
+      "clips": [
+        "Closed",
+        "Raise",
+        "Open"
+      ]
+    },
+    {
+      "id": "prop_brazier_fire",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_brazier_fire.glb",
+      "nodeName": "prop_brazier_fire",
+      "label": "Blazing Iron Brazier",
+      "triangles": 166,
+      "bounds": {
+        "min": [
+          -0.3326,
+          0,
+          -0.3326
+        ],
+        "max": [
+          0.3326,
+          1.44299,
+          0.3326
+        ],
+        "size": [
+          0.66519,
+          1.44299,
+          0.66519
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_floor_spike_trap",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_floor_spike_trap.glb",
+      "nodeName": "prop_floor_spike_trap",
+      "label": "Floor Spike Trap",
+      "triangles": 238,
+      "bounds": {
+        "min": [
+          -0.62,
+          0,
+          -0.62
+        ],
+        "max": [
+          0.62,
+          0.48,
+          0.62
+        ],
+        "size": [
+          1.24,
+          0.48,
+          1.24
+        ]
+      },
+      "clips": [
+        "Armed",
+        "Snap",
+        "Reset"
+      ]
+    },
+    {
+      "id": "prop_target_dummy",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_target_dummy.glb",
+      "nodeName": "prop_target_dummy",
+      "label": "Training Target Dummy",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -0.46,
+          0,
+          -0.32
+        ],
+        "max": [
+          0.46,
+          1.79,
+          0.32
+        ],
+        "size": [
+          0.92,
+          1.79,
+          0.64
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Hit"
+      ]
     }
   ],
   "presets": [

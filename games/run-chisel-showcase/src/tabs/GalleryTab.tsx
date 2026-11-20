@@ -84,7 +84,7 @@ function buildRows(catalogs: PackCatalog[], index: PolyPartIndex): CatalogRow[] 
         id: prop.id,
         label: prop.label,
         pack: prop.pack,
-        kindLabel: 'prop',
+        kindLabel: prop.clips?.length ? `prop (${prop.clips.length} clips)` : 'prop',
         filterKind: 'prop',
         item: { kind: 'prop', entry: prop },
         previewSource: prop,
@@ -158,13 +158,18 @@ function itemDetails(
   if (row.item.kind === 'prop') {
     const e: WorldPropEntry = row.item.entry
     const size = e.bounds.size.map((n) => `${n.toFixed(2)}m`).join(' × ')
+    const clips = e.clips ?? []
     return {
       leaf: leafFor(e.pack, e.leaf).id,
       triangles: e.triangles,
       license,
-      metaLines: [`Size: ${size}`, `Node: ${e.nodeName}`],
-      clips: [],
-      defaultClip: null,
+      metaLines: [
+        `Size: ${size}`,
+        `Node: ${e.nodeName}`,
+        `Animation: ${clips.length > 0 ? `Animated (${clips.length} clips)` : 'Static'}`,
+      ],
+      clips,
+      defaultClip: clips[0] ?? null,
     }
   }
   const p: CharacterPreset = row.item.entry

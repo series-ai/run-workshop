@@ -789,6 +789,287 @@
           0.24
         ]
       }
+    },
+    {
+      "id": "prop_czech_hedgehog",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_czech_hedgehog.glb",
+      "nodeName": "prop_czech_hedgehog",
+      "label": "Czech Hedgehog Obstacle",
+      "triangles": 94,
+      "bounds": {
+        "min": [
+          -0.62707,
+          0,
+          -0.62968
+        ],
+        "max": [
+          0.62707,
+          1.18337,
+          0.62968
+        ],
+        "size": [
+          1.25414,
+          1.18337,
+          1.25936
+        ]
+      }
+    },
+    {
+      "id": "prop_bunker_wall",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_bunker_wall.glb",
+      "nodeName": "prop_bunker_wall",
+      "label": "Concrete Bunker Wall",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -1.04,
+          0,
+          -0.3366
+        ],
+        "max": [
+          1.04,
+          1.73,
+          0.3366
+        ],
+        "size": [
+          2.08,
+          1.73,
+          0.6732
+        ]
+      }
+    },
+    {
+      "id": "prop_barbed_wire_fence",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_barbed_wire_fence.glb",
+      "nodeName": "prop_barbed_wire_fence",
+      "label": "Barbed Wire Entanglement",
+      "triangles": 312,
+      "bounds": {
+        "min": [
+          -0.98,
+          0,
+          -0.3714
+        ],
+        "max": [
+          0.98,
+          0.9839,
+          0.3714
+        ],
+        "size": [
+          1.96,
+          0.9839,
+          0.7428
+        ]
+      }
+    },
+    {
+      "id": "prop_watchtower",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_watchtower.glb",
+      "nodeName": "prop_watchtower",
+      "label": "Timber Guard Watchtower",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -0.74483,
+          0,
+          -0.79631
+        ],
+        "max": [
+          0.74483,
+          3.04463,
+          0.79631
+        ],
+        "size": [
+          1.48967,
+          3.04463,
+          1.59262
+        ]
+      }
+    },
+    {
+      "id": "prop_trench_duckboard",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_trench_duckboard.glb",
+      "nodeName": "prop_trench_duckboard",
+      "label": "Trench Duckboard",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.56
+        ],
+        "max": [
+          1,
+          0.123,
+          0.56
+        ],
+        "size": [
+          2,
+          0.123,
+          1.12
+        ]
+      }
+    },
+    {
+      "id": "prop_radar_dish",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_radar_dish.glb",
+      "nodeName": "prop_radar_dish",
+      "label": "Rotating Radar Dish",
+      "triangles": 222,
+      "bounds": {
+        "min": [
+          -0.46002,
+          0,
+          -0.41273
+        ],
+        "max": [
+          0.46002,
+          1.76673,
+          0.41273
+        ],
+        "size": [
+          0.92004,
+          1.76673,
+          0.82546
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_parachute_crate",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_parachute_crate.glb",
+      "nodeName": "prop_parachute_crate",
+      "label": "Airborne Supply Crate",
+      "triangles": 210,
+      "bounds": {
+        "min": [
+          -0.60976,
+          0,
+          -0.60976
+        ],
+        "max": [
+          0.60976,
+          1.74,
+          0.60976
+        ],
+        "size": [
+          1.21952,
+          1.74,
+          1.21952
+        ]
+      },
+      "clips": [
+        "Drop",
+        "Land",
+        "Open"
+      ]
+    },
+    {
+      "id": "prop_landmine",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_landmine.glb",
+      "nodeName": "prop_landmine",
+      "label": "Bouncing Betty Landmine",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -0.23097,
+          0,
+          -0.23097
+        ],
+        "max": [
+          0.23097,
+          0.215,
+          0.23097
+        ],
+        "size": [
+          0.46194,
+          0.215,
+          0.46194
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Pop"
+      ]
+    },
+    {
+      "id": "prop_mg_turret",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_mg_turret.glb",
+      "nodeName": "prop_mg_turret",
+      "label": "Sandbagged MG Turret",
+      "triangles": 254,
+      "bounds": {
+        "min": [
+          -0.55623,
+          0,
+          -0.55311
+        ],
+        "max": [
+          0.55623,
+          0.96998,
+          0.55311
+        ],
+        "size": [
+          1.11247,
+          0.96998,
+          1.10622
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Fire",
+        "Sweep"
+      ]
+    },
+    {
+      "id": "prop_barrier_arm",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_barrier_arm.glb",
+      "nodeName": "prop_barrier_arm",
+      "label": "Checkpoint Barrier Gate",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -0.955,
+          0,
+          -0.22
+        ],
+        "max": [
+          0.955,
+          0.95,
+          0.22
+        ],
+        "size": [
+          1.91,
+          0.95,
+          0.44
+        ]
+      },
+      "clips": [
+        "Down",
+        "Raise"
+      ]
     }
   ],
   "presets": [

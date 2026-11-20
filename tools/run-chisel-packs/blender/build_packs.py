@@ -1477,6 +1477,8 @@ def build_pack(pack, table, core, solver, stage):
         mesh.positions -= np.array([(low[0] + high[0]) / 2, low[1], (low[2] + high[2]) / 2])
         path = f'props/{mesh.name}.glb'
         props.append(pk.prop_entry(mesh, pack, label, path, pk.write_static_glb(world / path, mesh)))
+    from build_props import build_extra_props_for_pack
+    props.extend(build_extra_props_for_pack(pack, world))
     return pk.pack_catalog(pack, parts=parts, held=held, props=props, presets=table['presets'])
 
 

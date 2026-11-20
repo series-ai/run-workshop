@@ -3842,6 +3842,313 @@
           0.82166
         ]
       }
+    },
+    {
+      "id": "prop_obsidian_pillar",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_obsidian_pillar.glb",
+      "nodeName": "prop_obsidian_pillar",
+      "label": "Obsidian Rune Pillar",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -0.38105,
+          0,
+          -0.44
+        ],
+        "max": [
+          0.38105,
+          2.52,
+          0.44
+        ],
+        "size": [
+          0.7621,
+          2.52,
+          0.88
+        ]
+      }
+    },
+    {
+      "id": "prop_broken_arch",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_broken_arch.glb",
+      "nodeName": "prop_broken_arch",
+      "label": "Ruined Monster Arch",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -1.06485,
+          0,
+          -0.2298
+        ],
+        "max": [
+          1.06485,
+          2.29,
+          0.2298
+        ],
+        "size": [
+          2.12969,
+          2.29,
+          0.4596
+        ]
+      }
+    },
+    {
+      "id": "prop_crag_boulder",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_crag_boulder.glb",
+      "nodeName": "prop_crag_boulder",
+      "label": "Basalt Crag Formation",
+      "triangles": 82,
+      "bounds": {
+        "min": [
+          -0.66191,
+          0,
+          -0.47689
+        ],
+        "max": [
+          0.66191,
+          1.31446,
+          0.47689
+        ],
+        "size": [
+          1.32382,
+          1.31446,
+          0.95378
+        ]
+      }
+    },
+    {
+      "id": "prop_dead_tree",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_dead_tree.glb",
+      "nodeName": "prop_dead_tree",
+      "label": "Twisted Dead Tree",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -0.71267,
+          0,
+          -0.28
+        ],
+        "max": [
+          0.71267,
+          2.48,
+          0.28
+        ],
+        "size": [
+          1.42534,
+          2.48,
+          0.56
+        ]
+      }
+    },
+    {
+      "id": "prop_cage_cart",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_cage_cart.glb",
+      "nodeName": "prop_cage_cart",
+      "label": "Iron Prisoner Cage",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -0.53,
+          0,
+          -0.70173
+        ],
+        "max": [
+          0.53,
+          1.31173,
+          0.70173
+        ],
+        "size": [
+          1.06,
+          1.31173,
+          1.40346
+        ]
+      }
+    },
+    {
+      "id": "prop_skull_brazier",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_skull_brazier.glb",
+      "nodeName": "prop_skull_brazier",
+      "label": "Horned Skull Brazier",
+      "triangles": 111,
+      "bounds": {
+        "min": [
+          -0.36,
+          0,
+          -0.34
+        ],
+        "max": [
+          0.36,
+          1.38,
+          0.34
+        ],
+        "size": [
+          0.72,
+          1.38,
+          0.68
+        ]
+      }
+    },
+    {
+      "id": "prop_egg_hatch",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_egg_hatch.glb",
+      "nodeName": "prop_egg_hatch",
+      "label": "Hatching Monster Egg",
+      "triangles": 146,
+      "bounds": {
+        "min": [
+          -0.40651,
+          0,
+          -0.40651
+        ],
+        "max": [
+          0.40651,
+          0.84,
+          0.40651
+        ],
+        "size": [
+          0.81301,
+          0.84,
+          0.81301
+        ]
+      },
+      "clips": [
+        "Pulse",
+        "Hatch",
+        "Broken"
+      ]
+    },
+    {
+      "id": "prop_ritual_portal",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_ritual_portal.glb",
+      "nodeName": "prop_ritual_portal",
+      "label": "Shaman Ritual Portal",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -1.07,
+          0,
+          -0.33
+        ],
+        "max": [
+          1.07,
+          2.63,
+          0.33
+        ],
+        "size": [
+          2.14,
+          2.63,
+          0.66
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Activate"
+      ]
+    },
+    {
+      "id": "prop_lava_vent",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_lava_vent.glb",
+      "nodeName": "prop_lava_vent",
+      "label": "Volcanic Lava Vent",
+      "triangles": 98,
+      "bounds": {
+        "min": [
+          -0.59128,
+          0,
+          -0.59128
+        ],
+        "max": [
+          0.59128,
+          1.18,
+          0.59128
+        ],
+        "size": [
+          1.18257,
+          1.18,
+          1.18257
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Erupt"
+      ]
+    },
+    {
+      "id": "prop_bear_trap",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_bear_trap.glb",
+      "nodeName": "prop_bear_trap",
+      "label": "Giant Iron Bear Trap",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.41
+        ],
+        "max": [
+          0.45,
+          0.22,
+          0.41
+        ],
+        "size": [
+          0.9,
+          0.22,
+          0.82
+        ]
+      },
+      "clips": [
+        "Armed",
+        "Snap"
+      ]
+    },
+    {
+      "id": "prop_boss_altar",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_boss_altar.glb",
+      "nodeName": "prop_boss_altar",
+      "label": "Boss Crystal Altar",
+      "triangles": 134,
+      "bounds": {
+        "min": [
+          -0.77606,
+          0,
+          -0.77606
+        ],
+        "max": [
+          0.77606,
+          1.68,
+          0.77606
+        ],
+        "size": [
+          1.55212,
+          1.68,
+          1.55212
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Shatter"
+      ]
     }
   ],
   "presets": [

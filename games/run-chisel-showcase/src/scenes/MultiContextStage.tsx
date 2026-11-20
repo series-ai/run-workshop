@@ -41,19 +41,41 @@ const AVATAR_SLOTS_4: readonly (readonly [number, number, number])[] = [
 const CREATURE_TURN = 0.8
 
 /**
- * Prop places on a pad, from the largest prop to the smallest prop. The two largest props go to the back,
- * so a tall banner or a wide wall does not hide a character. The two smallest props go to the front corners.
+ * Prop places on a pad, from the largest prop to the smallest prop. The largest props go to the back,
+ * so a tall banner or landmark does not hide a character. Smaller props go to the sides and front corners.
  */
 const PROP_SLOTS: readonly (readonly [number, number, number])[] = [
-  [1.0, -1.38, -0.12],
-  [-1.0, -1.42, 0.3],
-  [-1.5, 1.28, 0.6],
-  [1.52, 1.28, -0.5],
+  [1.12, -1.44, -0.22],
+  [0.0, -1.72, 0.0],
+  [-1.12, -1.44, 0.28],
+  [-1.80, -0.52, 0.62],
+  [1.80, -0.52, -0.62],
+  [-1.56, 1.26, 0.56],
+  [1.56, 1.26, -0.52],
 ]
+
+const AMBIENT_CLIP_ORDER = ['Idle', 'Hover', 'Spin', 'Sweep', 'Loop', 'Pulse', 'Active', 'Opening', 'Raise', 'SlideOpen']
+const FLOOR_TILE_RE = /(?:floor_tile|sidewalk_tile|road_crosswalk|grate_tile|duckboard)/
 
 /** The largest extent of a prop in metres (width, height or depth). */
 function reach(prop: WorldPropEntry): number {
   return Math.max(...prop.bounds.size)
+}
+
+function pickAmbientClip(prop: WorldPropEntry): string | undefined {
+  const clips = prop.clips
+  if (!clips || clips.length === 0) return undefined
+  for (const candidate of AMBIENT_CLIP_ORDER) {
+    if (clips.includes(candidate)) return candidate
+  }
+  return clips[0]
+}
+
+function pickStageProps(allProps: readonly WorldPropEntry[]): WorldPropEntry[] {
+  const animated = allProps.filter((p) => p.clips && p.clips.length > 0)
+  const nonFloorStatic = allProps.filter((p) => !p.clips?.length && !FLOOR_TILE_RE.test(p.id))
+  const chosen = [...animated, ...nonFloorStatic].slice(0, PROP_SLOTS.length)
+  return chosen.sort((a, b) => reach(b) - reach(a))
 }
 
 function Diorama({
@@ -73,7 +95,7 @@ function Diorama({
     [catalog],
   )
   const avatarSlots = selections.length > 3 ? AVATAR_SLOTS_4 : AVATAR_SLOTS_3
-  const props = useMemo(() => [...catalog.props].sort((a, b) => reach(b) - reach(a)).slice(0, PROP_SLOTS.length), [catalog])
+  const props = useMemo(() => pickStageProps(catalog.props), [catalog.props])
   // One material for all props of the context: one program, one palette.
   const propMaterial = useMemo(() => createPolyMaterial(PROP_PALETTES[context]), [context])
   useEffect(() => () => propMaterial.dispose(), [propMaterial])
@@ -111,6 +133,8 @@ function Diorama({
             blobShadow={blobShadow}
             position={[px, 0, pz]}
             rotation={[0, turn, 0]}
+            clip={pickAmbientClip(prop)}
+            timeOffset={i * 0.65}
           />
         )
       })}
