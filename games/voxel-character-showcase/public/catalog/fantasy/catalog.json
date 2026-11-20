@@ -445,7 +445,7 @@
       "nodeName": "headwear_knight_greathelm",
       "slot": "headwear",
       "label": "Great Helm",
-      "triangles": 170,
+      "triangles": 182,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -535,7 +535,7 @@
       "nodeName": "body_orc_raider",
       "slot": "body",
       "label": "Orc Raider",
-      "triangles": 992,
+      "triangles": 1012,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -776,7 +776,7 @@
       "nodeName": "body_orc_warboss",
       "slot": "body",
       "label": "Orc Warboss",
-      "triangles": 1088,
+      "triangles": 1100,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -1017,7 +1017,7 @@
       "nodeName": "body_troll_moss",
       "slot": "body",
       "label": "Moss Troll",
-      "triangles": 960,
+      "triangles": 976,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -1258,7 +1258,7 @@
       "nodeName": "body_troll_cave",
       "slot": "body",
       "label": "Cave Troll",
-      "triangles": 962,
+      "triangles": 970,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -2189,7 +2189,7 @@
       "nodeName": "headwear_furnace_helm",
       "slot": "headwear",
       "label": "Furnace Helm",
-      "triangles": 136,
+      "triangles": 140,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -2200,15 +2200,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.03686,
-            0.0364
+            0.03457,
+            0.03647
           ],
           "b": [
             0,
-            0.14768,
-            0.03279
+            0.14997,
+            0.03272
           ],
-          "radius": 0.14149
+          "radius": 0.13753
         }
       }
     },
@@ -2220,7 +2220,7 @@
       "nodeName": "headwear_rime_crown",
       "slot": "headwear",
       "label": "Rime Crown",
-      "triangles": 246,
+      "triangles": 232,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -2251,7 +2251,7 @@
       "nodeName": "headwear_eclipse_mask",
       "slot": "headwear",
       "label": "Eclipse Mask",
-      "triangles": 218,
+      "triangles": 216,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -2543,7 +2543,7 @@
       "nodeName": "headwear_mage_hat",
       "slot": "headwear",
       "label": "Pointed Wizard Hat",
-      "triangles": 286,
+      "triangles": 278,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -2554,15 +2554,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.22758,
-            0.01768
+            0.22158,
+            0.00537
           ],
           "b": [
             0,
-            0.30596,
-            0.01513
+            0.31114,
+            0.00246
           ],
-          "radius": 0.16946
+          "radius": 0.15982
         }
       }
     },
@@ -2605,7 +2605,7 @@
       "nodeName": "body_goblin_scavenger",
       "slot": "body",
       "label": "Goblin Scavenger",
-      "triangles": 918,
+      "triangles": 934,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -2658,15 +2658,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.0102,
-            0.0998
+            0.00812,
+            0.09986
           ],
           "b": [
             0,
-            0.10344,
-            0.09676
+            0.10552,
+            0.09669
           ],
-          "radius": 0.1782
+          "radius": 0.17462
         },
         "upperarm_l": {
           "type": "capsule",
@@ -2846,7 +2846,7 @@
       "nodeName": "body_goblin_shaman",
       "slot": "body",
       "label": "Goblin Shaman",
-      "triangles": 930,
+      "triangles": 934,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -3242,7 +3242,7 @@
       "nodeName": "headwear_necro_cowl",
       "slot": "headwear",
       "label": "Necromancer Skull Cowl",
-      "triangles": 208,
+      "triangles": 204,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -3253,15 +3253,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.0567,
-            0.02324
+            0.05409,
+            0.01082
           ],
           "b": [
             0,
-            0.20198,
-            0.01852
+            0.20378,
+            0.00595
           ],
-          "radius": 0.15047
+          "radius": 0.14723
         }
       }
     },
@@ -3273,7 +3273,7 @@
       "nodeName": "headwear_shaman_antlers",
       "slot": "headwear",
       "label": "Shaman Antler Headdress",
-      "triangles": 304,
+      "triangles": 286,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -3284,15 +3284,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.12163,
-            0.00862
+            0.12394,
+            -0.00396
           ],
           "b": [
             0,
-            0.2112,
-            0.00571
+            0.20808,
+            -0.00669
           ],
-          "radius": 0.15982
+          "radius": 0.1645
         }
       }
     },
@@ -3304,7 +3304,7 @@
       "nodeName": "headwear_witch_hat",
       "slot": "headwear",
       "label": "Crooked Witch Hat",
-      "triangles": 356,
+      "triangles": 346,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -3315,15 +3315,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.24571,
-            0.01709
+            0.24351,
+            0.00466
           ],
           "b": [
             0,
-            0.28782,
-            0.01572
+            0.28921,
+            0.00317
           ],
-          "radius": 0.15764
+          "radius": 0.15455
         }
       }
     },
@@ -10081,10 +10081,10 @@
               ],
               "b": [
                 0,
-                0.306,
-                0.0151
+                0.3115,
+                0.015
               ],
-              "radius": 0.1695
+              "radius": 0.1598
             },
             "joint": {
               "type": "cone_twist",
@@ -10939,10 +10939,10 @@
               ],
               "b": [
                 0,
-                0.1473,
-                0.0203
+                0.1496,
+                0.0202
               ],
-              "radius": 0.1415
+              "radius": 0.1375
             },
             "joint": {
               "type": "cone_twist",
@@ -13508,15 +13508,15 @@
               "type": "capsule",
               "a": [
                 0,
-                0.0126,
+                0.0101,
                 0.1238
               ],
               "b": [
                 0,
-                0.1283,
-                0.12
+                0.1308,
+                0.1199
               ],
-              "radius": 0.221
+              "radius": 0.2165
             },
             "joint": {
               "type": "cone_twist",
@@ -15229,10 +15229,10 @@
               ],
               "b": [
                 0,
-                0.202,
+                0.2042,
                 0.0185
               ],
-              "radius": 0.1505
+              "radius": 0.1472
             },
             "joint": {
               "type": "cone_twist",
@@ -16087,10 +16087,10 @@
               ],
               "b": [
                 0,
-                0.2116,
-                0.0182
+                0.2089,
+                0.0183
               ],
-              "radius": 0.1598
+              "radius": 0.1645
             },
             "joint": {
               "type": "cone_twist",
@@ -16945,10 +16945,10 @@
               ],
               "b": [
                 0,
-                0.2878,
+                0.2896,
                 0.0157
               ],
-              "radius": 0.1576
+              "radius": 0.1546
             },
             "joint": {
               "type": "cone_twist",

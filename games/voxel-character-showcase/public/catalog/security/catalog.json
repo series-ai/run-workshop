@@ -215,7 +215,7 @@
       "nodeName": "headwear_sec_peaked_cap",
       "slot": "headwear",
       "label": "Peaked Guard Cap",
-      "triangles": 118,
+      "triangles": 116,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -226,15 +226,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.16763,
-            0.04465
+            0.16723,
+            0.03215
           ],
           "b": [
             0,
-            0.16763,
-            0.04465
+            0.16723,
+            0.03215
           ],
-          "radius": 0.14294
+          "radius": 0.13753
         }
       }
     },
@@ -361,7 +361,7 @@
       "nodeName": "headwear_riot_helmet",
       "slot": "headwear",
       "label": "Riot Helmet",
-      "triangles": 288,
+      "triangles": 284,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -372,15 +372,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.01561,
-            0.02458
+            0.01584,
+            0.02457
           ],
           "b": [
             0,
-            0.16812,
-            0.01962
+            0.16788,
+            0.01963
           ],
-          "radius": 0.14863
+          "radius": 0.14903
         }
       }
     },
@@ -696,7 +696,7 @@
                 0.1668,
                 0.0197
               ],
-              "radius": 0.1429
+              "radius": 0.1375
             },
             "joint": {
               "type": "cone_twist",
@@ -2411,10 +2411,10 @@
               ],
               "b": [
                 0,
-                0.1681,
+                0.1679,
                 0.0196
               ],
-              "radius": 0.1486
+              "radius": 0.149
             },
             "joint": {
               "type": "cone_twist",

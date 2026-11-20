@@ -265,9 +265,9 @@ def headwear_knit_beanie() -> vk.VoxelPart:
     grid.fill(-3, core.HAT_BROW_Y, -3, 2, core.HAT_BROW_Y + 1, -3, knit_shadow)
     core.hat_fill_sym(grid, -4, -4, core.HAT_BROW_Y, core.HAT_BROW_Y + 1, -3, 2, knit_shadow)
     # 5 cm folded cuff (y = 72..73), alternating rib shades around perimeter.
-    grid.fill(-4, cuff_y, -3, 3, cuff_y + 1, 6, knit_cuff)
+    grid.fill(-4, cuff_y, -3, 3, cuff_y + 1, 5, knit_cuff)
     for x in (-4, -2, 1, 3):
-        grid.fill(x, cuff_y, 6, x, cuff_y + 1, 6, knit_shadow)
+        grid.fill(x, cuff_y, 5, x, cuff_y + 1, 5, knit_shadow)
         grid.fill(x, cuff_y, -3, x, cuff_y + 1, -3, knit_shadow)
     for z in (-2, 1, 4):
         core.hat_fill_sym(grid, -4, -4, cuff_y, cuff_y + 1, z, z, knit_shadow)
@@ -294,12 +294,12 @@ def headwear_welding_cap() -> vk.VoxelPart:
     grid.fill(-4, band, -3, 3, band + 1, 5, cloth)
     grid.fill(-4, band + 2, -3, 3, band + 2, 5, cloth)
     grid.fill(-3, band + 3, -2, 2, band + 3, 4, cloth)
-    grid.fill(-3, band + 1, 6, 2, band + 2, 6, cloth_dark)                         # Short upturned bill
+    grid.fill(-2, band + 1, 6, 1, band + 2, 6, cloth_dark)                         # Short upturned bill
     # Goggle strap wrapping sides and back on band row.
     core.hat_fill_sym(grid, -4, -4, band, band + 1, -3, 5, strap)
     grid.fill(-4, band, -3, 3, band + 1, -3, strap)
     # Dual-lens welding goggles perched snugly on the brow band (clearing y = 68..69 eyes).
-    grid.fill(-4, band, 6, 3, band + 1, 6, frame)
+    grid.fill(-3, band, 6, 2, band + 1, 6, frame)
     grid.fill(-1, band + 1, core.HAT_VISOR_Z, 0, band + 1, core.HAT_VISOR_Z, frame)   # Nose bridge
     core.hat_fill_sym(grid, -3, -2, band, band + 1, core.HAT_VISOR_Z, core.HAT_VISOR_Z, lens)
     return part
@@ -371,7 +371,6 @@ def headwear_hard_hat() -> vk.VoxelPart:
         for cz in (-3, 6):
             grid.clear(cx, rim_y, cz, cx, rim_y, cz)
     grid.fill(-4, rim_y, 7, 3, rim_y, 7, IND_HAT_RIM)                               # Front brim lip (clears z=6..7 brows)
-    grid.fill(-3, rim_y, 8, 2, rim_y, 8, IND_HAT_RIM)                               # Front safety peak
     # Tapered helmet shell + stiffening ridge.
     grid.fill(-4, rim_y + 1, -3, 3, rim_y + 2, 5, IND_HAT)
     grid.fill(-3, rim_y + 3, -2, 2, rim_y + 3, 4, IND_HAT)
@@ -602,8 +601,8 @@ def headwear_sec_peaked_cap() -> vk.VoxelPart:
     core.hat_fill_sym(grid, -4, -4, core.HAT_BROW_Y, core.HAT_BROW_Y, -3, 2, hair)
     # Cap band + dark visor peak above lower brow (y = 71).
     grid.fill(-4, band_y, -3, 3, band_y, 5, SEC_SHIRT_DARK)
-    grid.fill(-4, band_y, 6, 3, band_y, 7, SEC_SHIRT_DARK)
-    grid.fill(-3, band_y, 8, 2, band_y, 8, SEC_SHIRT_DARK)                          # Sleek tapered peak tip
+    grid.fill(-4, band_y, 6, 3, band_y, 6, SEC_SHIRT_DARK)
+    grid.fill(-3, band_y, 7, 2, band_y, 7, SEC_SHIRT_DARK)                          # Sleek tapered peak tip
     # Flared patrol crown (y = 72..74).
     grid.fill(-4, band_y + 1, -3, 3, band_y + 1, 5, SEC_SHIRT)
     grid.fill(-4, band_y + 2, -3, 3, band_y + 2, 6, SEC_SHIRT)
@@ -671,7 +670,7 @@ def headwear_riot_helmet() -> vk.VoxelPart:
     grid.fill(-3, core.HAT_JAW_Y + 1, -4, 2, core.HAT_MOUTH_Y, -4, SEC_STEEL_DARK)
     # Side ear/temple armor (x = -5 & +4 clears ears and head_cyber_visor temple pod cleanly).
     core.hat_fill_sym(grid, -5, -5, core.HAT_NOSE_Y - 1, core.HAT_BROW_Y + 1, -3, 3, shell)
-    core.hat_fill_sym(grid, -4, -4, core.HAT_JAW_Y + 1, core.HAT_MOUTH_Y + 1, 4, 5, shell)   # Cheek guards
+    core.hat_fill_sym(grid, -4, -4, core.HAT_JAW_Y + 1, core.HAT_MOUTH_Y + 1, 4, 4, shell)   # Cheek guards
     # Upper helmet dome & brow mount rim (y = 71..75).
     grid.fill(-4, core.HAT_BROW_Y + 1, -3, 3, core.HAT_CROWN_Y + 2, 6, shell)
     grid.fill(-4, core.HAT_BROW_Y + 1, core.HAT_VISOR_Z, 3, core.HAT_BROW_Y + 1, core.HAT_VISOR_Z, SEC_STEEL_DARK)   # Visor brow mount

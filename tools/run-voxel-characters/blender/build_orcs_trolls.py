@@ -92,6 +92,7 @@ def monster(body_id, *, troll=False, boss=False, cave=False):
     head.box(0, 32, 4, BROW)                                           # Snout bridge between eyes
     # Massive overhanging brow ridge across z = 4..5.
     head.box((-2, 2), 33, (3, 5), ROCK_DARK if cave else BROW)
+    head.both(1, 33, 5, 0)
     # Tall crisp ivory tusks rising out of the underbite jaw corners at z = 5.
     head.both(2, (30, 32), 5, IVORY)
     if boss or cave:

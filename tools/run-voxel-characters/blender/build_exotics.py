@@ -150,7 +150,7 @@ def _build_aquatic():
         .both(1, 15, 20, teeth)
         .box(0, 15, 21, teeth)
         .eyes(2, 17, 16, pupil, facing='side')
-        .both(2, 17, 15, iris)
+        .paint_both(2, 18, 16, iris)
     )
     s.seg('head', skull, pad=2, bake_ao=False)
 
@@ -495,7 +495,7 @@ def _build_dragon():
         .both(3, 24, (14, 16), horn)
         .both(2, 17, (22, 25), teeth)
         .eyes(3, 20, 20, pupil, facing='side')
-        .both(3, 20, 21, ember)
+        .paint_both(3, 21, 20, ember)
     )
     s.seg('head', skull, pad=2, bake_ao=False)
     s.seg(

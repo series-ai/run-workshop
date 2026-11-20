@@ -380,15 +380,17 @@ def headwear_red_bob_hat():
     core.hat_fill_sym(grid, -4, -4, core.HAT_BROW_Y, core.HAT_CROWN_Y - 1, -3, 2, hair)
     # Crisp 2.5 cm thin brim on y = 72, beveled at the outer corners to avoid a mushroom slab.
     y_brim = core.HAT_CROWN_Y
-    grid.fill(-5, y_brim, -4, 4, y_brim, core.HAT_VISOR_Z, brim_col)
+    brim_front = core.HAT_VISOR_Z - 1
+    crown_front = brim_front - 1
+    grid.fill(-5, y_brim, -4, 4, y_brim, brim_front, brim_col)
     for cx in (-5, 4):
-        for cz in (-4, core.HAT_VISOR_Z):
+        for cz in (-4, brim_front):
             grid.clear(cx, y_brim, cz, cx, y_brim, cz)
     # Snug crown (20 cm wide) hugging the skull silhouette.
-    grid.fill(-4, y_brim + 1, -3, 3, y_brim + 1, 6, band_col)                     # Leather hatband
-    grid.set(1, y_brim + 1, 6, vox('accent', 0.25, mottle=False))                 # Brass band clasp
-    grid.fill(-4, y_brim + 2, -3, 3, y_brim + 2, 6, crown_col)                    # Lower crown
-    grid.fill(-3, y_brim + 3, -2, 2, y_brim + 3, 5, crown_col)                    # Tapered top crown
+    grid.fill(-4, y_brim + 1, -3, 3, y_brim + 1, crown_front, band_col)
+    grid.set(1, y_brim + 1, crown_front, vox('accent', 0.25, mottle=False))
+    grid.fill(-4, y_brim + 2, -3, 3, y_brim + 2, crown_front, crown_col)
+    grid.fill(-3, y_brim + 3, -2, 2, y_brim + 3, crown_front - 1, crown_col)
     return part
 
 

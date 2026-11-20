@@ -366,6 +366,16 @@ Keep the outside edge clear of the hand during the arm swing.
 | Swamp Witch | Moss, plum, and worn copper. Fitted vest and one-sided shawl with fungi. | Defined cheekbones, crooked hat, knotwood staff, and lantern flask. |
 | Sorceress | Wine, indigo, and antique gold. V-neck gown, long gloves, and upward ivory wings. | Tapered chin, pale blonde hair, low diadem, gold scepter, and orb. |
 
+Keep the face clear below the Archmage's front brim and the Necromancer's
+cowl. Trim the front edge in 2.5 cm steps. Check the eyes in the front and
+three-quarter views at thumbnail size.
+
+Use the same check for workwear, helmets, and creature faces. Shorten a
+projecting edge by one cell where it hides the eye line. Keep the brim in
+front of the crown. Keep the visor or eye slit on closed helmets. On
+creatures, use a lighter cell next to the pupil when the eye blends into
+the fur or scales.
+
 Keep the forehead and cheek width on the 5 cm face grid. Step the chin corners
 back toward the neck to shape the jaw. Give each face its own nose depth and
 cheek shading. For fitted garments, narrow the waist rows and keep the upper

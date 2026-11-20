@@ -243,7 +243,7 @@
       "nodeName": "headwear_knit_beanie",
       "slot": "headwear",
       "label": "Knit Beanie",
-      "triangles": 214,
+      "triangles": 184,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -254,15 +254,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.18142,
-            0.01919
+            0.17635,
+            0.00684
           ],
           "b": [
             0,
-            0.2022,
-            0.01851
+            0.20645,
+            0.00586
           ],
-          "radius": 0.13294
+          "radius": 0.1249
         }
       }
     },
@@ -504,7 +504,7 @@
       "nodeName": "headwear_hard_hat",
       "slot": "headwear",
       "label": "Hard Hat",
-      "triangles": 150,
+      "triangles": 138,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -515,15 +515,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.19262,
-            0.04383
+            0.19222,
+            0.03134
           ],
           "b": [
             0,
-            0.19262,
-            0.04383
+            0.19222,
+            0.03134
           ],
-          "radius": 0.14294
+          "radius": 0.13753
         }
       }
     },
@@ -535,7 +535,7 @@
       "nodeName": "headwear_welding_cap",
       "slot": "headwear",
       "label": "Welding Cap & Goggles",
-      "triangles": 120,
+      "triangles": 128,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -893,8 +893,8 @@
               ],
               "b": [
                 0,
-                0.2022,
-                0.0185
+                0.2069,
+                0.0184
               ],
               "radius": 0.137
             },
@@ -2614,7 +2614,7 @@
                 0.1918,
                 0.0189
               ],
-              "radius": 0.1429
+              "radius": 0.1375
             },
             "joint": {
               "type": "cone_twist",

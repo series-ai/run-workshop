@@ -871,7 +871,7 @@ def hair_bob_cut():
         grid.fill(side, HEAD_MOUTH_Y, NAPE, side, TOP, FRONT, h0)
     grid.clear(SIDE, HEAD_MOUTH_Y, FRONT - 1, SIDE, HEAD_NOSE_Y, FRONT)
     grid.set(-SIDE, HEAD_JAW_Y, HEAD_EAR_Z, h_lo)
-    grid.fill(-SIDE, CROWN, FRINGE, 0, CROWN, FRINGE, h_hi)        # Parted side of the fringe
+    grid.fill(-HALF, CROWN, FRINGE, 0, CROWN, FRINGE, h_hi)        # Parted side of the fringe
     return part
 
 
@@ -1172,7 +1172,7 @@ PRESETS = (
         'core_veteran', PACK, 'Core Veteran', 'Walk_Formal_Loop',
         {'skin': '#ab6a43', 'hair': '#9aa0a8', 'primary': '#5d6b3a', 'secondary': '#524432',
          'accent': '#cfa63c', 'metal': '#c2c7cf', 'trim': '#dad2c2', 'leather': '#432d20',
-         'visor': '#4a9dbd', 'detail': '#9e3e2d'},
+         'visor': '#334955', 'detail': '#9e3e2d'},
         body='body_heavy', head='head_scarred_veteran', hair='hair_buzz_crew',
         torso='torso_core_tee', legs='legs_core_shorts',
     ),

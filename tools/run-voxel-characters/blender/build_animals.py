@@ -378,6 +378,7 @@ def _build_horse():
         skull.paint(0, top, depth, white)
     skull.box(0, 48, (24, 26), mane)
     skull.eyes(3, 45, 28, eye, facing='side').both(1, 40, 37, eye)
+    skull.paint_both(3, 44, 28, vox('primary', 0.25))
     s.seg('head', skull, pad=2, role='head', bake_ao=False)
 
     ear = Sculpt().box((1, 2), (46, 50), (27, 29), coat).box(2, (51, 52), 28, bay)
@@ -805,7 +806,7 @@ def _build_gsd():
     skull.paint((-2, 2), (21, 23), (10, 12), black)
     skull.box((-1, 1), (22, 23), (13, 15), black).box((-1, 1), 23, 16, nose)
     skull.both(2, 22, (10, 12), brow)
-    skull.eyes(2, 24, 12, vox('visor', mottle=False)).both(2, 25, 12, brow)
+    skull.eyes(2, 24, 12, vox('visor', mottle=False)).both(2, 25, 12, tan)
     skull.both((1, 3), (26, 27), (8, 9), tan).both((2, 3), (28, 29), 8, brow).both(2, 28, 8, black).both(
         3, 30, (7, 8), brow
     ).both(3, 31, 7, brow)

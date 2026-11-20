@@ -1895,7 +1895,7 @@
       "nodeName": "body_chestnut_horse",
       "slot": "body",
       "label": "Chestnut Horse",
-      "triangles": 1074,
+      "triangles": 1078,
       "rigId": "horse",
       "rules": {
         "hidesHair": false,
@@ -3363,7 +3363,7 @@
       "nodeName": "body_k9_gsd",
       "slot": "body",
       "label": "K9 Shepherd",
-      "triangles": 990,
+      "triangles": 986,
       "rigId": "gsd",
       "rules": {
         "hidesHair": false,
@@ -4750,7 +4750,7 @@
       "nodeName": "body_ember_dragon",
       "slot": "body",
       "label": "Ember Dragon",
-      "triangles": 906,
+      "triangles": 910,
       "rigId": "dragon",
       "rules": {
         "hidesHair": false,

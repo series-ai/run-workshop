@@ -229,6 +229,8 @@ def headwear_knight_greathelm():
     grid.fill(-4, core.HAT_JAW_Y, -3, 3, top_y, core.HAT_VISOR_Z, STEEL)           # Main barrel enclosing skull & brows
     core.hat_fill_sym(grid, -5, -5, core.HAT_NOSE_Y - 1, core.HAT_CROWN_Y, -3, 3, STEEL)   # Ear & temple armor
     grid.fill(-4, top_y, -3, 3, top_y, core.HAT_VISOR_Z, STEEL_LIGHT)              # Crown plate
+    for x in (-4, 3):
+        grid.clear(x, top_y, core.HAT_VISOR_Z, x, top_y, core.HAT_VISOR_Z)
     grid.fill(-4, core.HAT_JAW_Y, -3, 3, core.HAT_JAW_Y, core.HAT_VISOR_Z, STEEL_DARK)   # Lower rim
     # Recessed eye slits (depth 6 SLIT behind front plate 7 so face never z-fights).
     for x0, x1 in ((-3, -2), (1, 2)):
@@ -266,7 +268,7 @@ def headwear_knight_sallet():
     grid.fill(-3, core.HAT_EYE_Y, 6, 2, core.HAT_EYE_Y + 1, 6, SLIT)               # Recessed eye slit
     grid.fill(-4, core.HAT_EYE_Y, core.HAT_VISOR_Z, -4, core.HAT_EYE_Y + 1, core.HAT_VISOR_Z, STEEL)
     grid.fill(3, core.HAT_EYE_Y, core.HAT_VISOR_Z, 3, core.HAT_EYE_Y + 1, core.HAT_VISOR_Z, STEEL)
-    grid.fill(-4, core.HAT_BROW_Y, core.HAT_VISOR_Z, 3, core.HAT_BROW_Y + 1, core.HAT_VISOR_Z, GOLD)
+    grid.fill(-4, core.HAT_BROW_Y, core.HAT_VISOR_Z, 3, core.HAT_BROW_Y + 1, core.HAT_VISOR_Z, GOLD_DARK)
     # Plume crest (y = 74..75, total height 62..75 = 0.358 m <= 0.36 m).
     grid.fill(-1, dome_y + 1, -4, 0, dome_y + 1, 3, CLOTH)
     grid.fill(-1, dome_y + 2, -4, 0, dome_y + 2, 1, CLOTH)

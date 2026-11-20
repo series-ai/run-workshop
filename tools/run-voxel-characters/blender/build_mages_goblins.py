@@ -169,8 +169,8 @@ def headwear_mage_hood():
 
 
 def headwear_mage_hat():
-    felt = Sculpt().box((-5, 4), 71, (-5, 7), ROBE_DARK)
-    felt.box((-6, 5), 71, (-3, 5), ROBE_DARK).box((-4, 3), 71, (6, 8), ROBE)
+    felt = Sculpt().box((-5, 4), 71, (-5, 6), ROBE_DARK)
+    felt.box((-6, 5), 71, (-3, 5), ROBE_DARK).box((-4, 3), 71, (6, 7), ROBE)
     felt.box((-4, 3), (72, 74), (-3, 5), ROBE).box((-4, 3), 73, (-3, 5), LEATHER)
     felt.box((-3, 2), (75, 76), (-3, 4), ROBE).box((-2, 2), (77, 78), (-3, 2), ROBE)
     felt.box((-1, 2), (79, 80), (-4, 0), ROBE_LIGHT).box((1, 2), 81, (-5, -2), ROBE)
@@ -226,7 +226,7 @@ def headwear_furnace_helm():
     helm.box((-3, 2), 73, (-3, 5), STEEL).box((-2, 1), 74, (-2, 3), IRON)
     helm.box((-4, 3), (65, 68), (-3, 2), IRON)
     helm.box((-3, 2), (65, 69), (4, 7), IRON).box((-2, 1), 68, 7, GLOW)
-    helm.box((-4, 3), 69, (5, 7), STEEL).box((-1, 0), (64, 67), 7, STEEL)
+    helm.box((-3, 2), 69, (5, 7), STEEL).box((-1, 0), (64, 67), 7, STEEL)
     return mage_headwear('headwear_furnace_helm', helm)
 
 
@@ -286,7 +286,7 @@ def held_brazier():
 
 def headwear_rime_crown():
     felt = hood().box((-4, 3), 70, (-3, 6), IRON)
-    felt.box((-3, 2), 71, (5, 7), STEEL).box((-1, 0), (70, 72), 7, STOLE)
+    felt.box((-3, 2), 71, (5, 7), STEEL).box((-1, 0), (71, 72), 7, STOLE)
     for x in (-4, 3):
         felt.box(x, (71, 73), (0, 4), STEEL).box(x, 74, (-2, 1), STEEL)
     return mage_headwear('headwear_rime_crown', felt)
@@ -331,7 +331,8 @@ def held_rime_aegis():
 
 
 def headwear_eclipse_mask():
-    cowl = hood().box((-3, 2), (66, 67), (5, 7), IRON)
+    cowl = hood().box((-3, 2), (66, 67), 6, IRON)
+    cowl.box((-2, 1), (66, 67), (5, 7), IRON)
     cowl.box((-2, 1), (64, 65), (5, 7), IRON).box((-1, 0), 68, 7, STEEL)
     cowl.box((-2, 1), 70, 7, ROBE_DARK)
     return mage_headwear('headwear_eclipse_mask', cowl)
@@ -434,6 +435,7 @@ def goblin_body(body_id, *, shaman=False):
     head.box(0, 32, 5, GOB_SKIN_LIGHT)                                   # Nose tip
     head.both(1, 33, 3, GOB_EYE)                                         # Bright mischievous goblin eyes
     head.box((-2, 2), 34, (1, 4), GOB_SKIN_DARK)                         # Heavy furrowed brow
+    head.both(1, 34, 4, 0)                                               # Open the brow above the eyes
     # Long swept-out pointed goblin ears (|x| = 3..5) — unmistakable goblin silhouette!
     head.both(3, (32, 33), (1, 2), GOB_SKIN)
     head.both(4, (33, 34), 1, GOB_SKIN_LIGHT)

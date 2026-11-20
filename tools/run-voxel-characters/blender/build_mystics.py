@@ -132,8 +132,9 @@ def hair_sorceress_mane():
 # --------------------------------------------------------------------------
 
 def headwear_necro_cowl():
-    cowl = hood().box((-3, 2), (71, 73), (5, 7), ROBE_DARK)
-    cowl.box((-1, 0), 70, (6, 8), ROBE_DARK)
+    cowl = hood().box((-3, 2), (71, 73), (5, 6), ROBE_DARK)
+    cowl.box((-3, 2), 71, 7, ROBE_DARK)
+    cowl.box((-1, 0), 70, (6, 7), ROBE_DARK)
     cowl.box((-2, 1), 76, (-4, 2), ROBE).box((-1, 0), 77, (-5, -2), ROBE)
     return mage_headwear('headwear_necro_cowl', cowl)
 
@@ -191,7 +192,7 @@ def held_phylactery_skull():
 def headwear_shaman_antlers():
     mask = Sculpt().box((-4, 3), (70, 72), (-3, 4), LEATHER_DARK)
     mask.box((-3, 2), (70, 72), (4, 7), BONE_DARK)
-    mask.box((-1, 0), (67, 71), (6, 8), BONE)
+    mask.box((-1, 0), (67, 71), (6, 7), BONE)
     for root, outer in [(-4, -5), (3, 4)]:
         mask.box(root, (68, 71), (3, 6), BONE)
         mask.box(root, (72, 74), (-1, 3), BONE_DARK)
@@ -248,8 +249,8 @@ def held_shaman_drum():
 
 
 def headwear_witch_hat():
-    felt = Sculpt().box((-4, 3), 73, (-5, 7), ROBE_DARK)
-    felt.box((-6, -4), 72, (-3, 6), ROBE).box((-5, -2), 72, (5, 8), ROBE)
+    felt = Sculpt().box((-4, 3), 73, (-5, 6), ROBE_DARK)
+    felt.box((-6, -4), 72, (-3, 6), ROBE).box((-5, -2), 72, (5, 7), ROBE)
     felt.box((3, 5), 74, (-4, 4), ROBE).box((4, 5), 75, (-4, -2), ROBE)
     felt.box((-3, 2), (74, 75), (-3, 5), LEATHER_DARK)
     felt.box((-3, 2), (76, 77), (-2, 4), ROBE)
