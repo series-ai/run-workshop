@@ -112,8 +112,13 @@ npm run dev
 ## Where to go next
 
 - **Build a game** — start from a starter under `games/` and read its `README.md`.
-- **Author content** — sub-projects document their own pipelines (for example,
-  BeatBoard's [pack-authoring guide](games/beat-board/docs/authoring-packs.md)).
+- **Author & expand packs** — sub-projects document their own pipelines (for example,
+  BeatBoard's [pack-authoring guide](games/beat-board/docs/authoring-packs.md),
+  [RUN Chisel Packs](tools/run-chisel-packs/README.md), and
+  [RUN Voxel Packs](tools/run-voxel-packs/README.md)). When adding new assets or
+  expanding 3D packs, we recommend staging and publishing the updated leaves,
+  previews, and license metadata to `jam-ready-assets` (and syncing pins back into
+  the showcase) so all RUN games can consume them.
 - **Contribute** — read [CONTRIBUTING.md](CONTRIBUTING.md) for account
   eligibility, the DCO, and CI guardrails.
 - **Report a vulnerability** — see [SECURITY.md](SECURITY.md).

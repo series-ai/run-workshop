@@ -105,6 +105,10 @@ fail to upload LFS objects.
 When adding a new binary type, add its glob to `.gitattributes` so it is tracked
 by LFS rather than committed directly into Git history.
 
+## Expanding asset packs (`jam-ready-assets`)
+
+When adding new assets or expanding existing packs (such as `tools/run-chisel-packs/` or `tools/run-voxel-packs/`), we recommend also adding the newly built assets, rendered thumbnails/previews, `.preview-sources`, `preview.webp`, and `License.txt` files to the `jam-ready-assets` repository (`npm run stage -- --target <jam-ready-assets>`), rebuilding its v2 manifest, and syncing the published leaf pins back into the corresponding showcase app (`src/pins.ts`) so pinned production builds stay in sync.
+
 ## Pull requests
 
 Use the pull request template and confirm all required certification checkboxes before requesting review.

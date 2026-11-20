@@ -447,4 +447,3 @@ describe('scaleAnimatedPelvis', () => {
     expect(thick.z).toBeCloseTo(0.0053 * 1.07, 5)
   })
 })
-

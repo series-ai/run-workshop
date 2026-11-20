@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "run-chisel-showcase",
+    "name": "RUN Chisel Showcase",
+    "description": "Stylized faceted low-poly configurable avatars, cross-context outfits, creatures & props (Medieval, WW2, Sim, Cyberpunk, Monsters) on the Quaternius UAL1 53-joint rig and 7 CC0 creature rigs, tuned for S23 Ultra 120Hz.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "packs": {
+    "core": {
+      "dir": "run-chisel-core",
+      "label": "Core Rig & Bodies",
+      "description": "Canonical 53-joint Quaternius UAL1 rig, 89 CC0 clips (UAL1 + UAL2 + KayKit 2H Rifle), and stylized faceted parametric base bodies, heads, and hair.",
+      "hasWorldLeaf": false,
+      "license": "CC0-1.0"
+    },
+    "medieval": {
+      "dir": "run-chisel-medieval",
+      "worldTheme": "medieval",
+      "label": "Medieval Kingdom",
+      "description": "Plate armor, tunics, great & kettle helms, cloaks, broadswords, shields, and tavern/camp props.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "ww2": {
+      "dir": "run-chisel-ww2",
+      "worldTheme": "ww2",
+      "label": "WW2 Frontline",
+      "description": "M41 field jackets, officer trenchcoats, M1 steel helmets, field packs, rifles, SMGs, sandbags, and jerrycans.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "sim": {
+      "dir": "run-chisel-sim",
+      "worldTheme": "sim",
+      "label": "Sim City Life",
+      "description": "Modern hoodies, tailored blazers, varsity jackets, caps, daypacks, coffee/phones, cafe tables, and benches.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "cyberpunk": {
+      "dir": "run-chisel-cyberpunk",
+      "worldTheme": "cyberpunk",
+      "label": "Cyberpunk Neon",
+      "description": "High-collar cyber jackets, netrunner rigs, oni helms, AR visors, thermal katanas, smartguns, and neon street kiosks.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "monsters": {
+      "dir": "run-chisel-monsters",
+      "worldTheme": "monsters",
+      "label": "Monsters & Beasts",
+      "description": "Orc warlords, trolls, quadrupeds, arachnids, avians, dragons, kaiju, serpents, and aquatic creatures with CC0 Mesh2Motion animations.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    }
+  }
+}
