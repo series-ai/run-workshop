@@ -14,26 +14,8 @@
 
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { dirname, resolve } from 'node:path'
-
-const require = createRequire(import.meta.url)
-
-function findPlaywright() {
-  for (const candidate of [
-    process.env.PLAYWRIGHT_PATH,
-    'playwright',
-    'playwright-core',
-    resolve(dirname(process.execPath), '../lib/node_modules/@playwright/cli/node_modules/playwright'),
-  ].filter(Boolean)) {
-    try {
-      return require(candidate)
-    } catch {
-      // try next
-    }
-  }
-  throw new Error('Playwright not found. Install playwright or set PLAYWRIGHT_PATH.')
-}
+import { chromium } from 'playwright'
 
 function parseArgs(argv) {
   const outIdx = argv.indexOf('--out')
@@ -81,7 +63,6 @@ async function main() {
 
   try {
     await waitForServer(url)
-    const { chromium } = findPlaywright()
     browser = await chromium.launch({
       headless: true,
       executablePath: existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')
