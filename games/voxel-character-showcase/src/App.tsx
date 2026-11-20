@@ -38,8 +38,8 @@ export function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-badge">RUN Voxel Characters</span>
-          <h1>Teardown-Style Voxel Character &amp; Context Workshop</h1>
+          <span className="brand-badge">RUN Cubix</span>
+          <h1>Orthogonal Voxel Character &amp; Context Workshop</h1>
         </div>
         <nav className="tabs">
           <button className={`tab-btn ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
@@ -52,7 +52,7 @@ export function App() {
             Animation Reviewer
           </button>
           <button className={`tab-btn ${tab === 'stage' ? 'active' : ''}`} onClick={() => setTab('stage')}>
-            Context Stage (Heist · Industrial · Security · Creatures)
+            Context Stage (Heist · Industrial · Security · Creatures · Fantasy)
           </button>
           <button className={`tab-btn ${tab === 'perf' ? 'active' : ''}`} onClick={() => setTab('perf')}>
             S23 Ultra Perf Bench
@@ -68,7 +68,7 @@ export function App() {
           </div>
         )}
         {!error && (!bundle || !index) && (
-          <div style={{ padding: 24, color: 'var(--muted)' }}>Loading RUN Voxel Character catalogs…</div>
+          <div style={{ padding: 24, color: 'var(--muted)' }}>Loading RUN Cubix catalogs…</div>
         )}
         {bundle && index && (
           <>

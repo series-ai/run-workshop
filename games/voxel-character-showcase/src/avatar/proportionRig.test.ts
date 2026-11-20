@@ -10,8 +10,8 @@ import { applyProportionsToSkeleton, computeHeldSocketPosition, scaleAnimatedPel
  * These tests use the real UAL1 bind rig (plus built creature rigs when present) and real three.js skinning math.
  */
 const SOURCE_RIG = resolve(import.meta.dirname, '../../../../tools/run-voxel-characters/assets/source/ual1-base.glb')
-const QUADRUPED_RIG = resolve(import.meta.dirname, '../../../../tools/run-voxel-characters/out/jam-stage/run-voxchar-creatures/3D/characters/quadruped-rig.glb')
-const ARACHNID_RIG = resolve(import.meta.dirname, '../../../../tools/run-voxel-characters/out/jam-stage/run-voxchar-creatures/3D/characters/arachnid-rig.glb')
+const QUADRUPED_RIG = resolve(import.meta.dirname, '../../../../tools/run-voxel-characters/out/jam-stage/run-cubix-creatures/3D/characters/quadruped-rig.glb')
+const ARACHNID_RIG = resolve(import.meta.dirname, '../../../../tools/run-voxel-characters/out/jam-stage/run-cubix-creatures/3D/characters/arachnid-rig.glb')
 
 /** Remove materials and images. Node has no image decoder, and the tests do not use them. */
 function withoutTextures(file: Buffer): ArrayBuffer {

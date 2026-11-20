@@ -580,7 +580,7 @@ class CreatureSculptor:
     `export_glb` does not copy the scale channels of the clips. A scaled bone makes voxels that are not cubes.
     """
 
-    def __init__(self, rig_path, name, voxel, palette, *, forward='+Z', rig_scale=1.0, quadruped=True):
+    def __init__(self, rig_path, name, voxel, palette, *, forward='+Z', rig_scale=1.0, quadruped=True, floating=False):
         if forward not in FORWARD_AXES:
             raise ValueError(f'Forward axis "{forward}" is not one of {sorted(FORWARD_AXES)}.')
         self.rig_scale = float(rig_scale)
@@ -592,6 +592,7 @@ class CreatureSculptor:
         self.forward = forward
         self.palette = palette
         self.quadruped = quadruped
+        self.floating = bool(floating)
         self.to_creature = FORWARD_AXES[forward]
         self.rest = rest_world_matrices(self.rig, rig_scale=self.rig_scale)
         self.rig_world = self.rig.world.copy()
@@ -604,6 +605,24 @@ class CreatureSculptor:
         self.audit = QuadrupedAudit(name, self.voxel, parents,
                                     animated=animated_joints(self.rig, self.voxel, rig_scale=self.rig_scale))
         self.max_pad = 0
+        self._ibm_dirty = False
+
+    def retarget_rest_rotation(self, bone, rotation_xyzw):
+        """Set a leaf bone's rest rotation and sync its inverse bind matrix so closed-pose sculpts stay axis-aligned."""
+        if bone not in self.rig.index:
+            raise ValueError(f'{self.part.name}: the rig has no joint "{bone}".')
+        idx = self.rig.index[bone]
+        if self.rig.children[idx]:
+            raise ValueError(f'{self.part.name}: retarget_rest_rotation only supports leaf bones (not "{bone}").')
+        q = np.array(rotation_xyzw, dtype=np.float64)
+        q = q / np.linalg.norm(q)
+        node = self.rig.doc['nodes'][self.rig.joint_nodes[idx]]
+        node.pop('matrix', None)
+        node['rotation'] = [float(v) for v in q]
+        self.rest = rest_world_matrices(self.rig, rig_scale=self.rig_scale)
+        self.rig_world[idx] = self.rest[idx].copy()
+        self.position[bone] = self.to_creature @ self.rest[idx][:3, 3]
+        self._ibm_dirty = True
 
     def _centred(self, position):
         """Joint position with a joint near x = 0 moved onto x = 0."""
@@ -680,6 +699,8 @@ class CreatureSculptor:
         for node in source['nodes']:
             copied_node = {key: copy.deepcopy(value) for key, value in node.items()
                            if key not in ('mesh', 'skin', 'weights')}
+            if 'mesh' in node and copied_node.get('name') == self.part.name:
+                copied_node['name'] = f"{self.part.name}_source"
             if self.rig_scale != 1.0:
                 if 'translation' in copied_node:
                     copied_node['translation'] = [float(v) * self.rig_scale for v in copied_node['translation']]
@@ -694,8 +715,11 @@ class CreatureSculptor:
         scene = source.get('scene', 0)
         builder.doc['scene'] = scene
         builder.doc['scenes'] = copy.deepcopy(source['scenes'])
-        if self.rig_scale == 1.0:
+        if self.rig_scale == 1.0 and not self._ibm_dirty:
             ibm_accessor = builder._copy_accessor(self.rig, self.rig.skin['inverseBindMatrices'])
+        elif self._ibm_dirty:
+            raw_ibm = np.linalg.inv(self.rig_world).transpose(0, 2, 1).reshape(-1, 16).astype(np.float32)
+            ibm_accessor = builder._accessor(raw_ibm, 'MAT4')
         else:
             raw_ibm = vk.accessor_array(self.rig.doc, self.rig.bin, self.rig.skin['inverseBindMatrices']).astype(np.float32).copy()
             raw_ibm[:, 12:15] *= self.rig_scale
@@ -762,6 +786,8 @@ class CreatureSculptor:
         poly_creature = {'forward': self.forward, 'quadruped': self.quadruped, 'palette': dict(self.palette)}
         if self.rig_scale != 1.0:
             poly_creature['rigScale'] = self.rig_scale
+        if self.floating:
+            poly_creature['floating'] = True
         extras = {'polyLattice': {'voxelSize': self.voxel, 'maxPad': round(self.max_pad * PAD_LEVEL * self.voxel, 9)},
                   'polyCreature': poly_creature}
         builder.doc['nodes'].append({'name': self.part.name, 'mesh': 0, 'skin': 0, 'extras': extras})

@@ -13,7 +13,7 @@
       "nodeName": "torso_sec_guard_shirt",
       "slot": "torso",
       "label": "Guard Shirt & Utility Belt",
-      "triangles": 338,
+      "triangles": 326,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -37,30 +37,30 @@
         "spine_01": {
           "type": "capsule",
           "a": [
-            -0.10193,
-            0.06153,
-            0.0245
+            -0.11744,
+            0.05846,
+            -0.00031
           ],
           "b": [
-            0.10193,
-            0.06153,
-            0.0245
+            0.11744,
+            0.05846,
+            -0.00031
           ],
-          "radius": 0.09614
+          "radius": 0.07333
         },
         "spine_03": {
           "type": "capsule",
           "a": [
-            -0.07787,
-            0.04048,
-            0.00151
+            -0.08554,
+            0.04129,
+            -0.02348
           ],
           "b": [
-            0.07787,
-            0.04048,
-            0.00151
+            0.08554,
+            0.04129,
+            -0.02348
           ],
-          "radius": 0.12314
+          "radius": 0.11186
         },
         "upperarm_l": {
           "type": "capsule",
@@ -215,7 +215,7 @@
       "nodeName": "headwear_sec_peaked_cap",
       "slot": "headwear",
       "label": "Peaked Guard Cap",
-      "triangles": 104,
+      "triangles": 118,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -226,15 +226,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.14577,
-            0.02035
+            0.16763,
+            0.04465
           ],
           "b": [
             0,
-            0.21286,
-            0.01816
+            0.16763,
+            0.04465
           ],
-          "radius": 0.15764
+          "radius": 0.14294
         }
       }
     },
@@ -246,7 +246,7 @@
       "nodeName": "torso_sec_cyber_vest",
       "slot": "torso",
       "label": "Cyber-Tech Vest & Armored Arm",
-      "triangles": 370,
+      "triangles": 420,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -312,16 +312,16 @@
         "lowerarm_l": {
           "type": "capsule",
           "a": [
-            -0.00514,
-            0.02776,
-            0.00639
+            -0.00515,
+            0.00517,
+            0.00678
           ],
           "b": [
             -0.00508,
-            0.21704,
-            0.00313
+            0.23963,
+            0.00274
           ],
-          "radius": 0.0997
+          "radius": 0.06647
         },
         "upperarm_r": {
           "type": "capsule",
@@ -336,6 +336,20 @@
             0.00618
           ],
           "radius": 0.06647
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.00512,
+            0.11345,
+            0.00492
+          ],
+          "b": [
+            0.00508,
+            0.23963,
+            0.00274
+          ],
+          "radius": 0.06647
         }
       }
     },
@@ -347,7 +361,7 @@
       "nodeName": "headwear_riot_helmet",
       "slot": "headwear",
       "label": "Riot Helmet",
-      "triangles": 170,
+      "triangles": 288,
       "rigId": "ual1",
       "rules": {
         "hidesHair": true,
@@ -358,15 +372,15 @@
           "type": "capsule",
           "a": [
             0,
-            0.0116,
-            0.02471
+            0.01561,
+            0.02458
           ],
           "b": [
             0,
-            0.14714,
-            0.0203
+            0.16812,
+            0.01962
           ],
-          "radius": 0.15764
+          "radius": 0.14863
         }
       }
     },
@@ -378,7 +392,7 @@
       "nodeName": "back_radio_pack",
       "slot": "back",
       "label": "Radio Pack",
-      "triangles": 100,
+      "triangles": 124,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -398,6 +412,20 @@
             -0.04356
           ],
           "radius": 0.14667
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.08361,
+            0.05873,
+            0.10215
+          ],
+          "b": [
+            0.08361,
+            0.05873,
+            0.10215
+          ],
+          "radius": 0.04675
         }
       }
     }
@@ -411,6 +439,7 @@
       "nodeName": "held_voxel_pistol",
       "label": "Voxel Pistol",
       "hand": "hand_r",
+      "gripStyle": "handle",
       "triangles": 98
     },
     {
@@ -421,6 +450,7 @@
       "nodeName": "held_walkie_talkie",
       "label": "Walkie-Talkie",
       "hand": "hand_l",
+      "gripStyle": "handle",
       "triangles": 74
     }
   ],
@@ -497,14 +527,14 @@
       "palette": {
         "skin": "#eeb38e",
         "hair": "#2b1d15",
-        "primary": "#2d728a",
-        "secondary": "#5c4730",
-        "accent": "#e6b53a",
+        "primary": "#948464",
+        "secondary": "#383e46",
+        "accent": "#d4ab48",
         "metal": "#86909a",
-        "trim": "#e0e6ec",
-        "leather": "#584a3f",
-        "visor": "#3ec2ec",
-        "detail": "#c6362c"
+        "trim": "#e4e9ee",
+        "leather": "#4b3f36",
+        "visor": "#34444e",
+        "detail": "#b83c32"
       },
       "proportions": {
         "height": 0.97,
@@ -561,12 +591,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1019,
+                -0.1174,
                 0.043,
                 0.0016
               ],
               "b": [
-                0.1019,
+                0.1174,
                 0.043,
                 0.0016
               ],
@@ -609,12 +639,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0844,
+                -0.0926,
                 0.0776,
                 0.0028
               ],
               "b": [
-                0.0844,
+                0.0926,
                 0.0776,
                 0.0028
               ],
@@ -663,10 +693,10 @@
               ],
               "b": [
                 0,
-                0.2129,
-                0.0182
+                0.1668,
+                0.0197
               ],
-              "radius": 0.1576
+              "radius": 0.1429
             },
             "joint": {
               "type": "cone_twist",
@@ -1468,12 +1498,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0787,
+                -0.0905,
                 0.0776,
                 0.0028
               ],
               "b": [
-                0.0787,
+                0.0905,
                 0.0776,
                 0.0028
               ],
@@ -1621,7 +1651,7 @@
                 0.2212,
                 0.003
               ],
-              "radius": 0.0997
+              "radius": 0.0665
             },
             "joint": {
               "type": "hinge",
@@ -1763,7 +1793,7 @@
               "b": [
                 0.0051,
                 0.2212,
-                0.0031
+                0.003
               ],
               "radius": 0.0665
             },
@@ -2279,12 +2309,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1019,
+                -0.1174,
                 0.043,
                 0.0016
               ],
               "b": [
-                0.1019,
+                0.1174,
                 0.043,
                 0.0016
               ],
@@ -2327,12 +2357,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0844,
+                -0.0926,
                 0.0776,
                 0.0028
               ],
               "b": [
-                0.0844,
+                0.0926,
                 0.0776,
                 0.0028
               ],
@@ -2381,10 +2411,10 @@
               ],
               "b": [
                 0,
-                0.1471,
-                0.0203
+                0.1681,
+                0.0196
               ],
-              "radius": 0.1576
+              "radius": 0.1486
             },
             "joint": {
               "type": "cone_twist",

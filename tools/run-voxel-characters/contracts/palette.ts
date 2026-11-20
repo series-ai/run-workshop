@@ -154,4 +154,16 @@ export const CONTEXT_DEFAULT_PALETTES = {
     visor: '#ff5238',
     detail: '#6b3e2e',
   },
-} as const satisfies Record<'heist' | 'industrial' | 'security' | 'creatures', Required<PaletteColors>>
+  fantasy: {
+    skin: '#e8aa7e',
+    hair: '#3a271d',
+    primary: '#2f4e82',
+    secondary: '#434b57',
+    accent: '#d9a434',
+    metal: '#aeb6c0',
+    trim: '#e4ddd0',
+    leather: '#5c3c27',
+    visor: '#2b333d',
+    detail: '#9c362c',
+  },
+} as const satisfies Record<'heist' | 'industrial' | 'security' | 'creatures' | 'fantasy', Required<PaletteColors>>

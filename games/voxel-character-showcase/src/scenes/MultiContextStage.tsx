@@ -18,10 +18,11 @@ export interface MultiContextStageProps {
 }
 
 const PAD_RADIUS = 2.25
-const CREATURES_PAD_RADIUS = 3.85
+const FANTASY_PAD_RADIUS = 7.1
+const CREATURES_PAD_RADIUS = 5.25
 const PAD_GAP = 0.45
-/** Viewport aspect at which all four dioramas (including the wide 10-creature pad) fill the stage camera width. */
-const FULL_WIDTH_ASPECT = 2.75
+/** Viewport aspect at which all five dioramas fill the stage camera width. */
+const FULL_WIDTH_ASPECT = 4.65
 
 /** Character places on a standard humanoid pad: x, z and the turn about Y. The characters face the camera (+Z). */
 const AVATAR_SLOTS: readonly (readonly [number, number, number])[] = [
@@ -29,6 +30,26 @@ const AVATAR_SLOTS: readonly (readonly [number, number, number])[] = [
   [0.0, -0.1, -0.05],
   [1.38, 0.45, -0.36],
   [0.05, 1.42, 0.1],
+]
+
+/** Knights and goblins stand in front. The four battle mages and four mystics flank the orcs and trolls. */
+const FANTASY_AVATAR_SLOTS: readonly (readonly [number, number, number])[] = [
+  [-2.1, 1.55, 0.18],
+  [2.1, 1.55, -0.18],
+  [-1.85, -1.35, 0.12],
+  [1.85, -1.35, -0.12],
+  [-1.2, -4.65, 0.12],
+  [1.2, -4.65, -0.12],
+  [-3.80, -4.35, 0.26],
+  [4.1, -4.35, -0.26],
+  [-4.65, -1.28, 0.28],
+  [4.65, -1.5, -0.28],
+  [-1.05, 4.75, 0.12],
+  [1.05, 4.75, -0.12],
+  [-4.4, 1.55, 0.20],
+  [4.4, 1.55, -0.20],
+  [-3.3, 4.5, 0.22],
+  [3.3, 4.5, -0.22],
 ]
 
 /**
@@ -42,23 +63,34 @@ const PROP_SLOTS: readonly (readonly [number, number, number])[] = [
   [1.52, 1.28, -0.5],
 ]
 
-/** Explicit 3-tier non-overlapping placement for all 10 creature presets (tall back -> mid -> low front). */
+const FANTASY_PROP_SLOTS: readonly (readonly [number, number, number])[] = [
+  [0.0, -1.9, 0.0],
+  [0.0, 2.25, 0.0],
+  [0.0, -0.15, 0.15],
+]
+
+/** Explicit 4-tier non-overlapping placement for all 15 creature presets (winged/giant back -> mid -> low front). */
 const CREATURE_AVATAR_SLOT_BY_ID: Readonly<Record<string, readonly [number, number, number]>> = {
-  creature_chestnut_horse: [-0.55, -1.55, 1.05],
-  creature_demolition_bot: [1.85, -1.45, -0.22],
-  creature_timber_wolf: [-2.35, 0.45, 0.85],
-  creature_guard_hound: [0.05, 0.35, 0.78],
-  creature_k9_gsd: [2.15, 0.35, -0.8],
-  creature_red_fox: [-2.05, 2.05, 0.9],
-  creature_pembroke_corgi: [-0.55, 2.35, 0.55],
-  creature_chonky_pug: [0.45, 2.4, -0.35],
-  creature_ginger_cat: [1.35, 2.35, -0.6],
-  creature_scrap_spider: [2.65, 1.85, -0.55],
+  creature_ember_dragon: [-2.35, -2.55, 0.55],
+  creature_apex_rex: [0.15, -2.85, 0.25],
+  creature_chestnut_horse: [2.55, -2.25, -0.75],
+  creature_frost_eagle: [-3.15, -0.45, 0.65],
+  creature_reef_shark: [-0.35, -0.85, 0.85],
+  creature_demolition_bot: [2.15, -0.45, -0.25],
+  creature_timber_wolf: [-2.65, 1.25, 0.85],
+  creature_guard_hound: [-0.45, 0.95, 0.78],
+  creature_k9_gsd: [1.55, 1.05, -0.75],
+  creature_scrap_spider: [3.35, 1.25, -0.55],
+  creature_red_fox: [-2.25, 2.75, 0.85],
+  creature_pembroke_corgi: [-0.85, 3.25, 0.55],
+  creature_chonky_pug: [0.35, 3.35, -0.35],
+  creature_ginger_cat: [1.45, 3.15, -0.55],
+  creature_cobra_serpent: [2.55, 2.55, -0.85],
 }
 
 const CREATURE_PROP_SLOT_BY_ID: Readonly<Record<string, readonly [number, number, number]>> = {
-  prop_dog_kennel: [-2.95, -1.25, 0.4],
-  prop_scrap_beacon: [3.05, -0.95, -0.35],
+  prop_dog_kennel: [-4.15, -1.65, 0.45],
+  prop_scrap_beacon: [4.05, -1.35, -0.35],
 }
 
 /** A wolf or a spider shows its side line in a 3/4 view. It gets this turn on top of the slot turn on fallback slots. */
@@ -70,7 +102,9 @@ function reach(prop: WorldPropEntry): number {
 }
 
 function padRadiusFor(context: ContextPackKey): number {
-  return context === 'creatures' ? CREATURES_PAD_RADIUS : PAD_RADIUS
+  if (context === 'creatures') return CREATURES_PAD_RADIUS
+  if (context === 'fantasy') return FANTASY_PAD_RADIUS
+  return PAD_RADIUS
 }
 
 function Diorama({
@@ -86,14 +120,16 @@ function Diorama({
 }) {
   const context = catalog.pack as ContextPackKey
   const isCreatures = context === 'creatures'
+  const isFantasy = context === 'fantasy'
   const padRadius = padRadiusFor(context)
 
   const avatarPlacements = useMemo(() => {
-    const list = isCreatures ? catalog.presets : catalog.presets.slice(0, AVATAR_SLOTS.length)
+    const slots = isFantasy ? FANTASY_AVATAR_SLOTS : AVATAR_SLOTS
+    const list = isCreatures ? catalog.presets : catalog.presets.slice(0, slots.length)
     return list.map((preset: CharacterPreset, i: number) => {
       const selection = selectionFromPreset(preset)
       const explicit = isCreatures ? CREATURE_AVATAR_SLOT_BY_ID[preset.id] : undefined
-      const fallback = AVATAR_SLOTS[i % AVATAR_SLOTS.length]!
+      const fallback = slots[i % slots.length]!
       const [sx, sz, turn] = explicit ?? [
         fallback[0],
         fallback[1],
@@ -101,16 +137,17 @@ function Diorama({
       ]
       return { preset, selection, sx, sz, turn }
     })
-  }, [catalog, isCreatures])
+  }, [catalog, isCreatures, isFantasy])
 
   const propPlacements = useMemo(() => {
     const sorted = [...catalog.props].sort((a, b) => reach(b) - reach(a))
-    const list = isCreatures ? sorted : sorted.slice(0, PROP_SLOTS.length)
+    const slots = isFantasy ? FANTASY_PROP_SLOTS : PROP_SLOTS
+    const list = isCreatures ? sorted : sorted.slice(0, slots.length)
     return list.map((prop, i) => {
-      const [px, pz, turn] = (isCreatures ? CREATURE_PROP_SLOT_BY_ID[prop.id] : undefined) ?? PROP_SLOTS[i % PROP_SLOTS.length]!
+      const [px, pz, turn] = (isCreatures ? CREATURE_PROP_SLOT_BY_ID[prop.id] : undefined) ?? slots[i % slots.length]!
       return { prop, px, pz, turn }
     })
-  }, [catalog, isCreatures])
+  }, [catalog, isCreatures, isFantasy])
 
   // One material for all props of the context: one program, one palette.
   const propMaterial = useMemo(() => createPolyMaterial(PROP_PALETTES[context]), [context])
@@ -174,8 +211,10 @@ export function MultiContextStage({ catalogs, index, activeContext, shadowMode }
     shown.length === 1
       ? shown[0] === 'creatures'
         ? Math.min(1.05, Math.max(0.55, aspect / 1.5))
-        : 1.25
-      : Math.max(0.38, Math.min(1, aspect / FULL_WIDTH_ASPECT))
+        : shown[0] === 'fantasy'
+          ? Math.min(0.70, aspect * 0.60)
+          : 1.25
+      : Math.min(1, aspect / FULL_WIDTH_ASPECT)
 
   const placements = useMemo(() => {
     const radii = shown.map((key) => padRadiusFor(key))

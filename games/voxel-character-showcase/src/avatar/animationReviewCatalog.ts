@@ -51,14 +51,47 @@ const ONE_SHOT_CLIPS = new Set<string>([
   'dead',
   'Hit_Chest',
   'Hit_Head',
+  'Hit_Knockback',
   'Interact',
   'Jump_Land',
   'Jump_Start',
+  'NinjaJump_Land',
+  'NinjaJump_Start',
+  'ClimbUp_1m',
+  'Slide_Start',
+  'Slide_Exit',
+  'LayToIdle',
+  'Chest_Open',
+  'Consume',
+  'Idle_Rail_Call',
+  'Idle_Shield_Break',
+  'Yes',
   'PickUp_Table',
   'Pistol_Reload',
   'Pistol_Shoot',
   'Punch_Cross',
   'Punch_Jab',
+  'Melee_Hook',
+  'Melee_Hook_Rec',
+  'OverhandThrow',
+  'Shield_Dash',
+  'Shield_OneShot',
+  'Sword_Dash',
+  'Sword_Heavy_Combo',
+  'Sword_Regular_A',
+  'Sword_Regular_A_Rec',
+  'Sword_Regular_B',
+  'Sword_Regular_B_Rec',
+  'Sword_Regular_C',
+  'Sword_Regular_Combo',
+  'Zombie_Scratch',
+  'Melee_2H_Attack_Chop',
+  'Melee_2H_Attack_Slice',
+  'Melee_2H_Attack_Spin',
+  'Melee_2H_Attack_Stab',
+  'Ranged_2H_Aiming',
+  'Ranged_2H_Reload',
+  'Ranged_2H_Shoot',
   'Roll',
   'Sitting_Enter',
   'Sitting_Exit',
@@ -88,11 +121,24 @@ const ONE_SHOT_CLIPS = new Set<string>([
   'land',
   'pounce',
   'paw_swipe',
+  'Bite',
+  'Hit',
+  'Dead_Floating',
+  'Hop',
+  'Take_Off',
+  'Land',
+  'Fire_Breath',
+  'Roar',
+  'Hurt',
+  'Tail_Attack',
 ])
 
 function categorizeUal1Clip(name: string): AnimationCategory {
   if (
     name === 'A_TPose' ||
+    name === 'Yes' ||
+    name === 'LayToIdle' ||
+    name === 'Zombie_Idle_Loop' ||
     name.startsWith('Idle_') ||
     name.startsWith('Sitting_')
   ) {
@@ -104,7 +150,11 @@ function categorizeUal1Clip(name: string): AnimationCategory {
     name.startsWith('Sprint_') ||
     name.startsWith('Crouch_') ||
     name.startsWith('Jump_') ||
+    name.startsWith('NinjaJump_') ||
+    name.startsWith('Slide_') ||
     name.startsWith('Swim_') ||
+    name === 'ClimbUp_1m' ||
+    name === 'Zombie_Walk_Fwd_Loop' ||
     name === 'Roll'
   ) {
     return 'Locomotion'
@@ -114,14 +164,23 @@ function categorizeUal1Clip(name: string): AnimationCategory {
     name === 'PickUp_Table' ||
     name === 'Push_Loop' ||
     name === 'Fixing_Kneeling' ||
-    name === 'Driving_Loop'
+    name === 'Driving_Loop' ||
+    name === 'Chest_Open' ||
+    name === 'Consume' ||
+    name === 'TreeChopping_Loop' ||
+    name.startsWith('Farm_')
   ) {
     return 'Work & Interact'
   }
   if (
     name.startsWith('Pistol_') ||
     name.startsWith('Sword_') ||
-    name.startsWith('Punch_')
+    name.startsWith('Punch_') ||
+    name.startsWith('Shield_') ||
+    name.startsWith('Melee_') ||
+    name.startsWith('Ranged_2H_') ||
+    name === 'OverhandThrow' ||
+    name === 'Zombie_Scratch'
   ) {
     return 'Combat & Weapons'
   }
@@ -132,12 +191,38 @@ function suggestedPropsForUal1(name: string): {
   suggestedHeldRight?: string | null
   suggestedHeldLeft?: string | null
 } {
-  if (name.startsWith('Pistol_')) return { suggestedHeldRight: 'held_voxel_pistol', suggestedHeldLeft: null }
-  if (name.startsWith('Sword_')) return { suggestedHeldRight: 'held_crowbar', suggestedHeldLeft: null }
+  if (name.startsWith('Pistol_') || name.startsWith('Ranged_2H_')) {
+    return { suggestedHeldRight: 'held_voxel_pistol', suggestedHeldLeft: null }
+  }
+  if (name === 'Melee_2H_Attack_Chop') {
+    return { suggestedHeldRight: 'held_warhammer', suggestedHeldLeft: null }
+  }
+  if (name.startsWith('Melee_2H_')) {
+    return { suggestedHeldRight: 'held_broadsword', suggestedHeldLeft: null }
+  }
+  if (name.startsWith('Idle_Shield_') || name.startsWith('Shield_')) {
+    return { suggestedHeldRight: 'held_broadsword', suggestedHeldLeft: 'held_heater_shield' }
+  }
+  if (name.startsWith('Sword_')) {
+    return { suggestedHeldRight: 'held_broadsword', suggestedHeldLeft: null }
+  }
+  if (name === 'TreeChopping_Loop') return { suggestedHeldRight: 'held_warhammer', suggestedHeldLeft: null }
   if (name === 'Fixing_Kneeling') return { suggestedHeldRight: 'held_pipe_wrench', suggestedHeldLeft: null }
-  if (name === 'Idle_Torch_Loop') return { suggestedHeldRight: 'held_blowtorch', suggestedHeldLeft: null }
+  if (name === 'Idle_Torch_Loop' || name === 'Idle_Lantern_Loop') {
+    return { suggestedHeldRight: 'held_blowtorch', suggestedHeldLeft: null }
+  }
+  if (name === 'Idle_TalkingPhone_Loop') return { suggestedHeldRight: 'held_walkie_talkie', suggestedHeldLeft: null }
   if (name === 'Idle_Talking_Loop') return { suggestedHeldRight: null, suggestedHeldLeft: 'held_walkie_talkie' }
-  if (name === 'Push_Loop' || name.startsWith('Punch_') || name.startsWith('Swim_') || name.startsWith('Spell_')) {
+  if (
+    name === 'Push_Loop' ||
+    name === 'Walk_Carry_Loop' ||
+    name === 'Idle_FoldArms_Loop' ||
+    name === 'OverhandThrow' ||
+    name.startsWith('Melee_Hook') ||
+    name.startsWith('Punch_') ||
+    name.startsWith('Swim_') ||
+    name.startsWith('Spell_')
+  ) {
     return { suggestedHeldRight: null, suggestedHeldLeft: null }
   }
   return {}

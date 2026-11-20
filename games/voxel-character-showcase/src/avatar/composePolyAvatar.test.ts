@@ -10,8 +10,8 @@ import { PolyPartIndex, resolveVisibleParts, type PolyAvatarSelection } from './
 import { findSkinnedPart, mergeParts } from './polyRig'
 
 const STAGE_ROOT = resolve(import.meta.dirname, '../../../../tools/run-voxel-characters/out/jam-stage')
-const CORE_RIG_PATH = resolve(STAGE_ROOT, 'run-voxchar-core/3D/characters/core-rig.glb')
-const HEIST_PACK_PATH = resolve(STAGE_ROOT, 'run-voxchar-heist/3D/characters/heist-pack.glb')
+const CORE_RIG_PATH = resolve(STAGE_ROOT, 'run-cubix-core/3D/characters/core-rig.glb')
+const HEIST_PACK_PATH = resolve(STAGE_ROOT, 'run-cubix-heist/3D/characters/heist-pack.glb')
 
 async function loadGlb(path: string) {
   const raw = readFileSync(path)

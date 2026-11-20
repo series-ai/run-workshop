@@ -2,7 +2,7 @@ import { CanvasTexture, Color, FrontSide, MeshBasicMaterial, MeshStandardMateria
 import { PALETTE_REGIONS, resolvePaletteColors, type PaletteColors } from '@voxchar/contracts/palette'
 
 /**
- * 10-region UV palette + Teardown voxel micro-mottle shader:
+ * 10-region UV palette + orthogonal voxel micro-mottle shader:
  *   TEXCOORD_0 (uv):
  *     u selects one of ten palette colors (skin, hair, primary, secondary, accent, metal, trim, leather, visor, detail).
  *     v in [0.15, 0.85] supplies baked crevice + directional overhang AO; v >= 0.92 marks emissive accent voxels.
@@ -14,8 +14,8 @@ import { PALETTE_REGIONS, resolvePaletteColors, type PaletteColors } from '@voxc
 const PROGRAM_KEY = 'run-voxchar-atlas-v4'
 
 /**
- * Look constants. `docs/art-direction.md` section 4 gives the reason for each group.
- *  - Tone ramp: `rampDark` (0.44) and `toneFloor` (0.38) give Teardown-style downward/overhang facet contrast.
+ * Look constants. `docs/art-direction.md` section 7 gives the reason for each group.
+ *  - Tone ramp: `rampDark` (0.44) and `toneFloor` (0.38) give crisp downward/overhang facet contrast.
  *  - Dark floor: a palette color below `darkFloorLuma` gets `darkFloor` added and `darkMottleGain` on its
  *    mottle, thus a charcoal tee keeps visible 1x1 voxel facets.
  *  - Skin: `skinMottle` scales the tone mottle of skin and `skinHueJitter` gives each skin voxel a small

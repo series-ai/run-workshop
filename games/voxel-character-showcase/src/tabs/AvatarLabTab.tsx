@@ -87,6 +87,11 @@ const SLIDERS_BY_RIG: Readonly<Record<RigId, ProportionSliderSpec[]>> = {
   pug: ANIMAL_SLIDERS,
   gsd: ANIMAL_SLIDERS,
   cat: ANIMAL_SLIDERS,
+  aquatic: ANIMAL_SLIDERS,
+  avian: ANIMAL_SLIDERS,
+  serpent: ANIMAL_SLIDERS,
+  dragon: ANIMAL_SLIDERS,
+  kaiju: ANIMAL_SLIDERS,
 }
 
 interface BodyPresetSpec {

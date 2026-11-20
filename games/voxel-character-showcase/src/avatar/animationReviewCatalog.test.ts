@@ -10,8 +10,9 @@ import {
 } from './animationReviewCatalog'
 
 describe('animationReviewCatalog', () => {
-  it('covers 100% of UAL1 (43), Quadruped (6), Arachnid (5), and all 7 animal rigs without duplicates', () => {
-    expect(CLIP_REVIEW_CATALOG.ual1).toHaveLength(43)
+  it('covers the full clip list of each rig without duplicates', () => {
+    expect(CLIP_REVIEW_CATALOG.ual1).toHaveLength(96)
+    expect(RIG_SPECS.ual1.clips.filter((name) => name === 'Staff_Idle_Loop')).toHaveLength(1)
     expect(CLIP_REVIEW_CATALOG.quadruped).toHaveLength(6)
     expect(CLIP_REVIEW_CATALOG.arachnid).toHaveLength(5)
 
@@ -28,7 +29,12 @@ describe('animationReviewCatalog', () => {
 
   it('flags known one-shot clips vs looping clips properly', () => {
     expect(isLoopingByDefault('ual1', 'Idle_Loop')).toBe(true)
+    expect(isLoopingByDefault('ual1', 'Staff_Idle_Loop')).toBe(true)
     expect(isLoopingByDefault('ual1', 'Walk_Loop')).toBe(true)
+    expect(isLoopingByDefault('ual1', 'Melee_2H_Idle')).toBe(true)
+    expect(isLoopingByDefault('ual1', 'Melee_2H_Attack_Spinning')).toBe(true)
+    expect(isLoopingByDefault('ual1', 'Melee_2H_Attack_Chop')).toBe(false)
+    expect(isLoopingByDefault('ual1', 'Sword_Heavy_Combo')).toBe(false)
     expect(isLoopingByDefault('ual1', 'Death01')).toBe(false)
     expect(isLoopingByDefault('ual1', 'Roll')).toBe(false)
     expect(isLoopingByDefault('ual1', 'Pistol_Shoot')).toBe(false)
@@ -39,6 +45,11 @@ describe('animationReviewCatalog', () => {
   it('assigns context-appropriate held props for UAL1 weapon/tool clips', () => {
     const byName = new Map(CLIP_REVIEW_CATALOG.ual1.map((c) => [c.name, c]))
     expect(byName.get('Pistol_Shoot')?.suggestedHeldRight).toBe('held_voxel_pistol')
+    expect(byName.get('Melee_2H_Attack_Chop')?.suggestedHeldRight).toBe('held_warhammer')
+    expect(byName.get('Melee_2H_Idle')?.suggestedHeldRight).toBe('held_broadsword')
+    expect(byName.get('Staff_Idle_Loop')?.suggestedHeldRight).toBeUndefined()
+    expect(byName.get('Sword_Heavy_Combo')?.suggestedHeldRight).toBe('held_broadsword')
+    expect(byName.get('Idle_Shield_Loop')?.suggestedHeldLeft).toBe('held_heater_shield')
     expect(byName.get('Fixing_Kneeling')?.suggestedHeldRight).toBe('held_pipe_wrench')
     expect(byName.get('Idle_Torch_Loop')?.suggestedHeldRight).toBe('held_blowtorch')
     expect(byName.get('Idle_Talking_Loop')?.suggestedHeldLeft).toBe('held_walkie_talkie')

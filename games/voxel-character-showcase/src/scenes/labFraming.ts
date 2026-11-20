@@ -35,6 +35,11 @@ const RIG_STAGE: Readonly<Record<RigId, RigStageSpec>> = {
   pug: { height: 0.68, yawDeg: 38, pitchDeg: 10, plinthRadius: 0.55, headTargetY: 0.38, headDistance: 1.1, feetTargetY: 0.16, feetDistance: 1.2 },
   gsd: { height: 1.45, yawDeg: 40, pitchDeg: 8, plinthRadius: 1.0, headTargetY: 1.0, headDistance: 1.45, feetTargetY: 0.32, feetDistance: 1.8 },
   cat: { height: 0.72, yawDeg: 38, pitchDeg: 10, plinthRadius: 0.55, headTargetY: 0.42, headDistance: 1.05, feetTargetY: 0.16, feetDistance: 1.2 },
+  aquatic: { height: 1.4, yawDeg: 48, pitchDeg: 8, plinthRadius: 1.45, headTargetY: 0.72, headDistance: 1.35, feetTargetY: 0.45, feetDistance: 1.65 },
+  avian: { height: 1.6, yawDeg: 38, pitchDeg: 14, plinthRadius: 1.75, headTargetY: 0.72, headDistance: 1.25, feetTargetY: 0.16, feetDistance: 1.45 },
+  serpent: { height: 1.25, yawDeg: 52, pitchDeg: 12, plinthRadius: 1.45, headTargetY: 0.52, headDistance: 1.15, feetTargetY: 0.12, feetDistance: 1.65 },
+  dragon: { height: 2.15, yawDeg: 40, pitchDeg: 12, plinthRadius: 2.25, headTargetY: 1.0, headDistance: 1.65, feetTargetY: 0.25, feetDistance: 2.1 },
+  kaiju: { height: 2.05, yawDeg: 42, pitchDeg: 8, plinthRadius: 1.55, headTargetY: 1.62, headDistance: 1.6, feetTargetY: 0.28, feetDistance: 1.95 },
 }
 
 /** Part of the viewport height that the HUD bar covers, plus headroom below it. */

@@ -1,13 +1,13 @@
-"""Build run-voxchar-creatures: guard hound (23-joint quadruped), scrap spider (28-joint arachnid), demolition bot (UAL1).
+"""Build run-cubix-creatures: guard hound (23-joint quadruped), scrap spider (28-joint arachnid), demolition bot (UAL1).
 
 Usage (see scripts/build.ts):
   blender --background --factory-startup --python build_creatures.py -- --core <core-rig.glb> --stage <dir> --meta <dir>
 
 Outputs:
-  <stage>/run-voxchar-creatures/3D/characters/quadruped-rig.glb   rig + 6 clips + body_dire_wolf
-  <stage>/run-voxchar-creatures/3D/characters/arachnid-rig.glb    rig + 5 clips + body_giant_spider
-  <stage>/run-voxchar-creatures/3D/characters/scrap-bot.glb       UAL1 rig (no clips) + body_scrap_bot
-  <stage>/run-voxchar-creatures/3D/creatures/props/*.glb          world props
+  <stage>/run-cubix-creatures/3D/characters/quadruped-rig.glb   rig + 6 clips + body_dire_wolf
+  <stage>/run-cubix-creatures/3D/characters/arachnid-rig.glb    rig + 5 clips + body_giant_spider
+  <stage>/run-cubix-creatures/3D/characters/scrap-bot.glb       UAL1 rig (no clips) + body_scrap_bot
+  <stage>/run-cubix-creatures/3D/creatures/props/*.glb          world props
   <meta>/creatures.json                                           pack catalog
 """
 
@@ -23,6 +23,7 @@ from mathutils import Euler  # noqa: E402
 
 import voxchar as vk  # noqa: E402
 from build_animals import build_all_animals  # noqa: E402
+from build_exotics import build_all_exotics  # noqa: E402
 from creature_kit import QuadrupedAudit, Sculpt, lattice_anchor  # noqa: E402
 from voxchar import vox  # noqa: E402
 
@@ -238,7 +239,7 @@ def build_guard_hound(rig):
     seg('tail_03', Sculpt().box(0, (12, 13), (-22, -19), coat).box(0, (11, 12), (-24, -21), tan))
 
     # ---- legs: armoured shoulder and haunch, tan lower leg, paw with a toe box on a black pad --------------------
-    seg('leg_fl_upper', Sculpt().box((3, 4), (7, 13), (6, 8), coat).box(5, (12, 16), (5, 9), plate),
+    seg('leg_fl_upper', Sculpt().box((3, 4), (7, 13), (6, 8), coat).box(4, (13, 16), (6, 8), coat).box(5, (12, 16), (5, 9), plate),
         mirror=True, pad=JOINT_PAD, role='front_upper')
     seg('leg_fl_lower', Sculpt().box((3, 4), (1, 8), (7, 8), tan), mirror=True, role='front_lower')
     seg('leg_fl_paw', Sculpt().box((3, 4), 0, (7, 10), black).box((3, 4), 1, (9, 10), tan), mirror=True,
@@ -414,16 +415,45 @@ def hound_clips():
         return legs(pose, front, front, hind, hind)
 
     def howl_fn(u, _t):
-        # The rear stays on the floor while the chest and the muzzle lift into a howl.
+        # Plant all four paws on the floor with a braced squat while the chest and muzzle lift into a howl.
+        wp = QUADRUPED_CONTRACT['worldPositions']
+
+        def rot_yz(v, rx):
+            c, s = math.cos(rx), math.sin(rx)
+            return (v[0] * c - v[1] * s, v[0] * s + v[1] * c)
+
+        def offset_yz(a, b):
+            return (wp[b][1] - wp[a][1], wp[b][2] - wp[a][2])
+
+        def wrap_pi(x):
+            return (x + math.pi) % tau - math.pi
+
+        def solve_leg_ik(hip_yz, u_name, l_name, p_name, parent_rx):
+            ru, rl, rp = wp[u_name], wp[l_name], wp[p_name]
+            ay, az = rl[1] - ru[1], rl[2] - ru[2]
+            by, bz = rp[1] - rl[1], rp[2] - rl[2]
+            l1, l2 = math.hypot(ay, az), math.hypot(by, bz)
+            ang_a0, ang_b0 = math.atan2(az, ay), math.atan2(bz, by)
+            dy, dz = rp[1] - hip_yz[0], rp[2] - hip_yz[1]
+            dist = min(math.hypot(dy, dz), (l1 + l2) * 0.999)
+            cos_a = max(-1.0, min(1.0, (l1 * l1 + dist * dist - l2 * l2) / (2.0 * l1 * dist)))
+            world_ang_a = math.atan2(dz, dy) + math.acos(cos_a)
+            ey, ez = l1 * math.cos(world_ang_a), l1 * math.sin(world_ang_a)
+            world_ang_b = math.atan2(dz - ez, dy - ey)
+            up_rx = wrap_pi(world_ang_a - ang_a0 - parent_rx)
+            lo_rx = wrap_pi(world_ang_b - ang_b0 - parent_rx - up_rx)
+            pw_rx = wrap_pi(-(parent_rx + up_rx + lo_rx))
+            return (up_rx, lo_rx, pw_rx)
+
         rise = ease(u / 0.24) if u < 0.24 else (1.0 if u < 0.76 else 1.0 - ease((u - 0.76) / 0.24))
         sway = math.sin(u * tau * 2.0) * rise
         tremble = math.sin(u * tau * 9.0) * rise
-        sink, lean = 0.012 * rise, -0.12 * rise
-        arch = -0.09 * rise
+        lean, arch, chest_rx = -0.06 * rise, -0.08 * rise, -0.16 * rise
+        py, pz = -0.060 * rise, -0.020 * rise
         pose = {
-            'pelvis': pelvis(lean, y=0.042 * rise - sink, z=-0.02 * rise),
+            'pelvis': pelvis(lean, y=py, z=pz),
             'spine_02': rot(arch),
-            'chest': rot(-0.14 * rise),
+            'chest': rot(chest_rx),
             'neck': rot((-0.46 - 0.03 * sway) * rise, 0.04 * sway),
             'head': rot((-0.42 - 0.03 * sway) * rise, 0.03 * sway),
             'jaw': rot(0.10 + (0.42 + 0.05 * tremble) * rise),
@@ -431,8 +461,15 @@ def hound_clips():
             'tail_02': rot(0.12 * rise, 0.10 * sway),
             'tail_03': rot(0.10 * rise),
         }
-        front = (-(lean + arch - 0.14 * rise), 0.0, 0.0)
-        hind = (-lean - 0.22 * rise, 0.34 * rise, -0.12 * rise)
+        p_pel = (wp['pelvis'][1] + py, wp['pelvis'][2] + pz)
+        p_s1 = tuple(a + b for a, b in zip(p_pel, rot_yz(offset_yz('pelvis', 'spine_01'), lean)))
+        p_s2 = tuple(a + b for a, b in zip(p_s1, rot_yz(offset_yz('spine_01', 'spine_02'), lean)))
+        p_ch = tuple(a + b for a, b in zip(p_s2, rot_yz(offset_yz('spine_02', 'chest'), lean + arch)))
+        rx_ch = lean + arch + chest_rx
+        p_flu = tuple(a + b for a, b in zip(p_ch, rot_yz(offset_yz('chest', 'leg_fl_upper'), rx_ch)))
+        p_blu = tuple(a + b for a, b in zip(p_pel, rot_yz(offset_yz('pelvis', 'leg_bl_upper'), lean)))
+        front = solve_leg_ik(p_flu, 'leg_fl_upper', 'leg_fl_lower', 'leg_fl_paw', rx_ch)
+        hind = solve_leg_ik(p_blu, 'leg_bl_upper', 'leg_bl_lower', 'leg_bl_paw', lean)
         return legs(pose, front, front, hind, hind)
 
     def death_fn(u, _t):
@@ -550,17 +587,19 @@ def build_scrap_spider(rig):
         .box((-2, 2), 10, (6, 9), hull)
         .both((1, 2), 9, 8, optic)
         .both(3, 8, (6, 7), optic)
-        .both((1, 2), (5, 7), 9, steel))
+        .both((1, 2), (5, 7), 9, steel), bake_ao=False)
 
     # ---- abdomen: yellow tank with black hazard bands and a rear warning light ----------------------------------
     tank = (Sculpt()
             .box((-2, 2), (8, 11), (-5, -3), chassis)
-            .box((-5, 5), (8, 14), (-18, -6), hull)
-            .box((-1, 1), (10, 12), -19, chassis)
-            .box(0, 11, -19, optic))
-    for z in (-16, -12, -8):
-        tank.paint((-5, 5), (9, 14), (z, z + 1), black)
-    seg('abdomen', tank)
+            .box((-4, 4), (8, 13), (-18, -6), hull)
+            .box((-5, 5), (9, 12), (-17, -7), hull)
+            .box((-3, 3), 14, (-17, -7), hull)
+            .box((-1, 1), (10, 12), -18, chassis)
+            .box(0, 11, -18, optic))
+    for z in (-15, -10):
+        tank.paint((-5, 5), (9, 14), z, black)
+    seg('abdomen', tank, bake_ao=False)
 
     # ---- eight legs: coxa stub, stepped femur, stepped tibia with a black foot column on y = 0 -------------------
     # Only the femur has a pad. It overlaps the coxa and the tibia, and the tibia must stop exactly on y = 0.
@@ -769,7 +808,8 @@ def build_scrap_bot(rig):
     seg('lowerarm_l', Sculpt()
         .box((-1, 1), (-1, 1), (-1, 1), steel)
         .paint(1, (-1, 1), (-1, 1), armour)
-        .box((2, 6), 0, 0, chrome), mirror=True)
+        .box((2, 4), (0, 1), (-1, 0), dark)
+        .box((5, 6), 0, 0, chrome), mirror=True)
     seg('hand_l', Sculpt()
         .box((0, 1), (0, 1), (-1, 1), dark)
         .box((2, 3), (0, 1), 1, chrome)
@@ -926,6 +966,9 @@ def main():
     animal_parts, animal_presets, animal_rigs = build_all_animals(characters)
     parts.extend(animal_parts)
 
+    exotic_parts, exotic_presets, exotic_rigs = build_all_exotics(characters)
+    parts.extend(exotic_parts)
+
     # 4. World props
     props = []
     for build, label in ((prop_dog_kennel, 'Dog Kennel'), (prop_scrap_beacon, 'Scrap Beacon')):
@@ -944,6 +987,7 @@ def main():
                         {'skin': '#88929b', 'hair': '#26272b', 'primary': '#bf8a44', 'secondary': '#4f5660',
                          'accent': '#ff2a1f', 'metal': '#b9c0c8'}),
         *animal_presets,
+        *exotic_presets,
     ]
 
     catalog = vk.pack_catalog(
@@ -959,6 +1003,7 @@ def main():
             {'rigId': 'arachnid', 'rigModelPath': arachnid_file,
              'clips': [c['name'] for c in ARACHNID_CONTRACT['clips']]},
             *animal_rigs,
+            *exotic_rigs,
         ],
     )
     args.meta.mkdir(parents=True, exist_ok=True)

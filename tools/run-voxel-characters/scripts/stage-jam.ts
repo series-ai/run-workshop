@@ -1,5 +1,5 @@
 /**
- * Stages built run-voxchar-* packs into a jam-ready-assets checkout, writing
+ * Stages built run-cubix-* packs into a jam-ready-assets checkout, writing
  * verified License.txt files per leaf.
  *
  * Usage: npm run stage -- --target ~/dev/jam-ready-assets [--packs core,heist,industrial,security,creatures]

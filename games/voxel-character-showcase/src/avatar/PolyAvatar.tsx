@@ -325,7 +325,7 @@ function LoadedAvatar({
       mesh.name = entry.id
       computeHeldSocketPosition(socket.palmOffset, armFactor, limbThickness, mesh.position)
       mesh.rotation.set(socket.rotationEuler[0], socket.rotationEuler[1], socket.rotationEuler[2], 'XYZ')
-      if (entry.id === 'held_heater_shield' || entry.id === 'held_spiked_buckler') {
+      if (entry.gripStyle === 'forearm_shield') {
         mesh.translateX(Math.max(0, lowerMass - 1) * 0.085)
       }
       mesh.castShadow = castShadow
@@ -496,6 +496,11 @@ function LoadedAvatar({
     pug: 0.75,
     corgi: 0.75,
     cat: 0.65,
+    aquatic: 1.8,
+    avian: 2.2,
+    serpent: 1.65,
+    dragon: 2.8,
+    kaiju: 1.9,
   }
   const footprint =
     plan.rigId === 'arachnid'

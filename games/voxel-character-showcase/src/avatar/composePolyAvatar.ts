@@ -9,7 +9,7 @@ import {
   type HeldItemEntry,
   type PackCatalog,
 } from '@voxchar/contracts/catalog'
-import type { VoxCharPackKey } from '@voxchar/contracts/packs'
+import { leafFor, type VoxCharPackKey } from '@voxchar/contracts/packs'
 import { CONTEXT_DEFAULT_PALETTES, type PaletteColors } from '@voxchar/contracts/palette'
 import type { RigId } from '@voxchar/contracts/rig'
 import type { AssetRef } from '../assetSource'
@@ -61,7 +61,7 @@ export class PolyPartIndex {
     if (!core || !core.rigModelPath) {
       throw new Error('Core pack catalog is missing or lacks rigModelPath')
     }
-    this.coreRigRef = { leafId: 'run-voxchar-core/3D/characters', path: core.rigModelPath }
+    this.coreRigRef = assetRefFor('core', 'characters', core.rigModelPath)
     this.rigRefs.set('ual1', this.coreRigRef)
     for (const cat of catalogs) {
       for (const cr of cat.creatureRigs ?? []) {
@@ -132,14 +132,12 @@ export function resolveVisibleParts(
 }
 
 export function assetRefFor(pack: VoxCharPackKey, leaf: 'characters' | 'world', relativePath: string): AssetRef {
-  const dir = pack === 'core' ? 'run-voxchar-core' : `run-voxchar-${pack}`
-  const leafPath = leaf === 'characters' ? '3D/characters' : `3D/${pack}`
-  return { leafId: `${dir}/${leafPath}`, path: relativePath }
+  return { leafId: leafFor(pack, leaf).id, path: relativePath }
 }
 
 export function createDefaultSelection(
   index: PolyPartIndex,
-  context: 'heist' | 'industrial' | 'security' | 'creatures' = 'heist',
+  context: 'heist' | 'industrial' | 'security' | 'creatures' | 'fantasy' = 'heist',
 ): PolyAvatarSelection {
   const firstOf = (slot: AvatarSlot, prefix?: string, rigId: RigId = 'ual1') => {
     const list = (index.partsBySlot.get(slot) ?? []).filter((p) => p.rigId === rigId)
@@ -164,7 +162,9 @@ export function createDefaultSelection(
           ? 'Pistol_Idle_Loop'
           : context === 'industrial'
             ? 'Idle_Torch_Loop'
-            : 'Walk_Loop',
+            : context === 'fantasy'
+              ? 'Sword_Idle'
+              : 'Walk_Loop',
     palette: { ...CONTEXT_DEFAULT_PALETTES[context] },
     // The creatures context starts on the sculpted Scrap Bot. The other contexts start on a voxel human.
     proportions: { ...(context === 'creatures' ? PROPORTION_DEFAULTS : HUMANOID_PROPORTION_DEFAULTS) },

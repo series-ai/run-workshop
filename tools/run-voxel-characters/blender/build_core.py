@@ -1,4 +1,4 @@
-"""Build the core pack: the UAL1 rig, Teardown-scale voxel bodies, sculpted heads, hair, and starter outfit.
+"""Build the core pack: the UAL1 rig, 5 cm canonical voxel bodies, sculpted heads, hair, and starter outfit.
 
 Usage (Blender 5.1, headless):
   blender --background --factory-startup --python build_core.py -- \
@@ -7,7 +7,7 @@ Usage (Blender 5.1, headless):
 `npm run build` writes `<meta>/humanoid-pose.json` first. This script reads it.
 
 Output:
-  <stage>/run-voxchar-core/3D/characters/core-rig.glb  (rig, 43 clips, all core parts)
+  <stage>/run-cubix-core/3D/characters/core-rig.glb  (rig, shared clips, all core parts)
   <meta>/core.json                                     (pack catalog)
 
 `build_heist.py` and `build_industrial_security.py` share the lattice, the anatomy
@@ -33,10 +33,11 @@ PACK = 'core'
 RIG_FILE = 'core-rig.glb'
 
 # --------------------------------------------------------------------------
-# One Teardown voxel size (metres)
+# Canonical voxel sizes (metres)
 # --------------------------------------------------------------------------
 
-CHAR_VOX = float(vk.PROPORTION_CONTRACT['humanoid']['voxelSize'])   # 5.0 cm: body, outfit, head, hair, headwear
+CHAR_VOX = float(vk.PROPORTION_CONTRACT['humanoid']['voxelSize'])   # 5.0 cm: body, outfit, head, hair
+HAT_VOX = float(vk.PROPORTION_CONTRACT['humanoid']['headwearVoxelSize'])   # 2.5 cm: snug humanoid headwear
 HELD_VOX = 0.028     # 2.8 cm held tools & weapons
 PROP_VOX = 0.05      # 5.0 cm world props
 
@@ -73,7 +74,7 @@ TORSO_COVERS = (TAG_CHEST,)
 SLEEVED_TORSO_COVERS = (TAG_CHEST, TAG_ARMS_UPPER, TAG_ARMS_LOWER)
 LEGS_COVERS = (TAG_HIPS, TAG_LEGS_UPPER, TAG_LEGS_LOWER, TAG_FEET)
 
-# Rows (inclusive) from the floor. Measured on the Teardown hero: 2 shoe rows, 17 leg rows, 1 belt row,
+# Rows (inclusive) from the floor. Canonical human proportions: 2 shoe rows, 17 leg rows, 1 belt row,
 # 10 shirt rows, 1 exposed neck row (plus 2 rows inside the torso/neckline), 5 face rows and 2 hair rows.
 SHOE_Y = (0, 1)         # 0.00 m .. 0.10 m
 CALF_Y = (2, 11)        # 0.10 m .. 0.60 m: from the top of the shoe to one row above the knee joint (0.56 m)
@@ -92,7 +93,7 @@ NECK_Y = (28, 32)       # 1.40 m .. 1.65 m: anchored 2 blocks deep inside chest/
 ARM_Y = (28, 29)        # 1.40 m .. 1.50 m: the T-pose arm is level with the top of the shoulders
 
 # Columns and depth cells.
-CHEST_HALF_X = 3        # 7 wide (35 cm boxy Teardown torso)
+CHEST_HALF_X = 3        # 7 wide (35 cm boxy torso)
 HIPS_HALF_X = 3
 TORSO_Z = (-1, 1)       # 3 deep (15 cm): -0.05 m .. +0.10 m
 TORSO_BACK, TORSO_FRONT = TORSO_Z
@@ -112,6 +113,7 @@ FOOT_Z = (-1, 1)        # flush at the back with the calf, 1 voxel in front of t
 TOE_Z = (2, 2)          # toe tip on the sole row: +0.10 m .. +0.15 m (in front of the ball joint at +0.093 m)
 
 ARM_UPPER_X = (4, 10)   # 0.175 m .. 0.525 m. Cell 4 is the shoulder cap between the chest side and the joint.
+SHOULDER_CAP_X = ARM_UPPER_X[0]   # the cap has the lower arm row only (see `round_shoulder_cap`)
 SLEEVE_SHORT_X = (4, 6) # short sleeve: shoulder cap and two voxels of the upper arm
 ARM_LOWER_X = (10, 15)  # 0.475 m .. 0.775 m: one voxel into the upper arm (the elbow joint is at 0.512 m)
 HAND_X = (16, 18)       # 0.775 m .. 0.925 m: heel, grip channel, fingers (the wrist joint is at 0.759 m)
@@ -139,6 +141,22 @@ HEAD_BROW_Y = 35        # 1.75 m .. 1.80 m: forehead. Sideburns, heavy brows and
 HEAD_BAND_Y = HEAD_BROW_Y
 HEAD_TOP_Y = HEAD_BROW_Y   # top row of the skull
 CROWN_Y = HEAD_TOP_Y + 1   # 1.80 m: first row above the skull (hair cap, hat band)
+
+# Half-voxel headwear lattice (`HAT_VOX = 0.025 m`, `center_x=center_y=center_z=False`):
+# Cell c spans [c * HAT_VOX, (c + 1) * HAT_VOX] in model/sculpt space; Z=0 is z=0.0 m (spine center is at +0.025 m).
+HAT_ORIGIN = (0.0, 0.0, 0.0)
+HAT_SKULL_X = (-3, 2)      # -0.075..+0.075 m (15 cm skin skull)
+HAT_SHELL_X = (-4, 3)      # -0.100..+0.100 m (20 cm snug headwear wall — 2.5 cm thin shell!)
+HAT_BRIM_X = (-5, 4)       # -0.125..+0.125 m (25 cm wide brim / ear clearance)
+HAT_SKULL_Z = (-2, 5)      # -0.050..+0.150 m (20 cm skull depth; face plane at z = +0.150 m)
+HAT_SHELL_Z = (-3, 6)      # -0.075..+0.175 m (25 cm snug shell; clears nose/visor at z = 6)
+HAT_VISOR_Z = 7            # +0.175..+0.200 m (outer face +0.204 m with PAD_HEADWEAR, clears proud nose/brows)
+HAT_JAW_Y = 62             # 1.550 m
+HAT_MOUTH_Y = 64           # 1.600 m
+HAT_NOSE_Y = 66            # 1.650 m
+HAT_EYE_Y = 68             # 1.700 m
+HAT_BROW_Y = 70            # 1.750..1.800 m (forehead rows 70..71)
+HAT_CROWN_Y = 72           # 1.800 m (first row above the skull)
 
 LEG_BONES = ('thigh_l', 'calf_l', 'foot_l', 'ball_l')
 FOOT_BONES = ('foot_l', 'ball_l')
@@ -225,6 +243,16 @@ def _morph_anchor(bone):
     return LATTICE_ORIGIN, scale
 
 
+def round_shoulder_cap(grid, *, columns=1):
+    """Remove the top row of the shoulder cap of an upper arm or a sleeve.
+
+    The cap column is on the body side of the shoulder joint. When the arm hangs, its top row turns up and
+    out and makes a square shoulder pad above the collarbone. Without that row the shoulder steps down
+    one voxel from the yoke to the arm. Call it on the body arm and on each sleeve, thus no skin shows.
+    """
+    grid.clear(SHOULDER_CAP_X, ARM_Y[1], ARM_Z[0], SHOULDER_CAP_X + columns - 1, ARM_Y[1], ARM_Z[1])
+
+
 def seg(part, bone, x, y, z, *, tag=None, pad=0.0, half_x=False, half_z=False, center_y=False):
     """Add one rigid segment on the sculpt lattice. `x`, `y` and `z` are inclusive cell ranges.
 
@@ -238,6 +266,23 @@ def seg(part, bone, x, y, z, *, tag=None, pad=0.0, half_x=False, half_z=False, c
     )
     grid.morph_center, grid.morph_scale = _morph_anchor(bone)
     return grid
+
+
+def hat_seg(part, x, y, z, *, pad=PAD_HEADWEAR, bone='Head', tag=None):
+    """Add one half-voxel (`HAT_VOX = 0.025 m`) headwear segment on the sculpt lattice."""
+    grid = part.custom_segment(
+        bone, HAT_ORIGIN, x[0], x[1], y[0], y[1], z[0], z[1],
+        voxel_size=HAT_VOX, tag=tag, layer_pad=pad,
+        center_x=False, center_y=False, center_z=False,
+    )
+    grid.morph_center, grid.morph_scale = _morph_anchor(bone)
+    return grid
+
+
+def hat_fill_sym(grid, x0, x1, y0, y1, z0, z1, code):
+    """Fill inclusive half-voxel box `[x0..x1]` and its X-mirror `[-x1-1..-x0-1]`."""
+    grid.fill(x0, y0, z0, x1, y1, z1, code)
+    grid.fill(-x1 - 1, y0, z0, -x0 - 1, y1, z1, code)
 
 
 def add_twin(part, grid):
@@ -352,7 +397,7 @@ def skinned_mesh(part, rig):
     extras['polyRagdollColliders'] = measure_colliders(part, rig)
     # `scripts/validate.ts` skins the mesh in the sculpt pose and checks that each vertex is on this lattice.
     extras['polyLattice'] = {
-        'voxelSize': CHAR_VOX,
+        'voxelSize': min(segment.voxel_size for segment in part.segments),
         'maxPad': round(max(segment.layer_pad for segment in part.segments), 6),
     }
     mesh.extras = extras
@@ -360,11 +405,11 @@ def skinned_mesh(part, rig):
 
 
 # --------------------------------------------------------------------------
-# Shared limbs: Teardown C-claw hands and 2-wide shoes
+# Shared limbs: C-claw hands and 2-wide shoes
 # --------------------------------------------------------------------------
 
 def claw_hands(part, *, palm=SKIN, fingers=None, cuff=None, tag=None, pad=PAD_GARMENT):
-    """Chunky Teardown C-claw hand: 3 long, 3 tall, 2 deep, and a thumb.
+    """Chunky C-claw hand: 3 long, 3 tall, 2 deep, and a thumb.
 
     Side view in the T-pose (x along the arm, y up):   row 29  P P P   back of the hand
                                                        row 28  H . F   heel, grip channel, curled fingers
@@ -389,7 +434,7 @@ def claw_hands(part, *, palm=SKIN, fingers=None, cuff=None, tag=None, pad=PAD_GA
 
 @dataclass(frozen=True)
 class Shoe:
-    """Colors of a 2-row Teardown shoe: 3 long on both rows (flush at heel, +1 in front of shin) + 1 sole toe tip."""
+    """Colors of a 2-row shoe: 3 long on both rows (flush at heel, +1 in front of shin) + 1 sole toe tip."""
     upper: int
     sole: int
     toe: int
@@ -410,7 +455,7 @@ SNEAKER = Shoe(
 
 
 def shoes(part, shoe, *, tag=None, pad=PAD_SHOE, wide=False):
-    """Add chunky Teardown shoes: 2 rows, 3 long flush at the calf back (+1 in front), and a sole toe tip."""
+    """Add chunky shoes: 2 rows, 3 long flush at the calf back (+1 in front), and a sole toe tip."""
     x_range = TROUSER_CALF_X if wide else FOOT_X
     half_x = not wide
     x0, x1 = x_range
@@ -491,6 +536,7 @@ def build_body(name, build):
 
     upper = seg(part, 'upperarm_l', ARM_UPPER_X, ARM_Y, ARM_Z, tag=TAG_ARMS_UPPER)
     upper.fill(ARM_UPPER_X[0], ARM_Y[0], ARM_Z[0], ARM_UPPER_X[1], ARM_Y[1], ARM_Z[1], SKIN)
+    round_shoulder_cap(upper)
     add_twin(part, upper)
 
     lower = seg(part, 'lowerarm_l', ARM_LOWER_X, ARM_Y, ARM_Z, tag=TAG_ARMS_LOWER, pad=PAD_JOINT)
@@ -527,9 +573,8 @@ def build_body(name, build):
 #   row 32  mouth
 #   row 31  chin (lit face front overhanging the neck by 2 voxels / 10 cm)
 #
-# Measured on the Teardown hero, blonde, red hat, bandana, guard and Chris: the skin face is 3 voxels wide
-# and 5 rows tall (H/W = 1.67), and the skull is 4 voxels deep front-to-back (-1..2). Hair or a hat adds
-# one voxel on each side and two rows on top.
+# The skin face is 3 voxels wide and 5 rows tall (H/W = 1.67), and the skull is 4 voxels deep
+# front-to-back (-1..2). Hair or a hat adds one voxel on each side and two rows on top.
 # --------------------------------------------------------------------------
 
 FACE_ROWS = HEAD_TOP_Y - HEAD_JAW_Y + 1
@@ -607,21 +652,23 @@ def head_base(part, *, ears=True):
 
 
 def head_rugged_hero():
-    """Teardown box-art hero: one-voxel blue-teal eyes, proud nose, cheek blush, 2-wide smirk, lit chin."""
+    """Open, friendly face: lit brow, one-voxel eyes, proud nose, freckled cheeks, level mouth, soft stubble jaw."""
     part = vk.VoxelPart('head_rugged_hero', covers=(TAG_HEAD,))
     grid = head_base(part)
     paint_face(grid, (
-        'wLs',
-        'EwE',
-        'cnc',
-        '.mm',
         'sLs',
+        'EsE',
+        'wnc',
+        'smw',
+        'wLw',
     ), NOSE_RELIEF, {**FACE_TONES, 'E': vox('visor', 0.0, mottle=False)})
+    for side in (-HEAD_SHELL + 1, HEAD_SHELL - 1):
+        grid.paint_if_filled(side, HEAD_JAW_Y, HEAD_EAR_Z + 1, side, HEAD_JAW_Y, HEAD_EAR_Z + 1, SKIN_BLUSH)   # Stubble shade on the jaw sides
     return part
 
 
 def head_bearded_craftsman():
-    """Teardown Chris Seabranch: heavy proud brows, flush teal eyes below brows, proud nose, 5-wide beard."""
+    """Bearded craftsman: heavy proud brows, flush eyes below the brows, proud nose, 5-wide beard."""
     part = vk.VoxelPart('head_bearded_craftsman', covers=(TAG_HEAD,))
     grid = head_base(part)
     beard = vox('hair', 0.0)
@@ -651,17 +698,21 @@ def head_bearded_craftsman():
 
 
 def head_cyber_visor():
-    """Asymmetric steel face plate with a glowing optic. The left side of the face stays human."""
+    """Steel plate on the right third of the face, a dark visor bar across the eye row, one glowing optic.
+
+    The plate is one full column and the visor bar is one full row, thus the two edges are straight.
+    The left side of the face stays human.
+    """
     part = vk.VoxelPart('head_cyber_visor', covers=(TAG_HEAD,))
     grid = head_base(part)
     plate = vox('metal', -0.125)
     dark_plate = vox('metal', -0.5)
     paint_face(grid, (
-        'DPs',
-        'GsT',
-        'Pnc',
-        'Dmw',
         'Pss',
+        'GDT',
+        'Pnc',
+        'Pmw',
+        'Dss',
     ), (
         '+..',
         '...',
@@ -678,7 +729,7 @@ def head_cyber_visor():
 
 
 def head_cool_shades():
-    """Teardown Red-Hat lookout: flush blue sunglasses, proud nose, warm cheeks, flush mouth, lit chin."""
+    """Give the Lookout dark sunglasses and a tapered chin."""
     part = vk.VoxelPart('head_cool_shades', covers=(TAG_HEAD,))
     grid = head_base(part)
     paint_face(grid, (
@@ -688,11 +739,13 @@ def head_cool_shades():
         'wmw',
         'wsw',
     ), NOSE_RELIEF, {**FACE_TONES, 'V': vox('visor', 0.0, mottle=False)})
+    for side in (-1, 1):
+        grid.clear(side, HEAD_JAW_Y, HEAD_FACE_Z, side, HEAD_JAW_Y, HEAD_FACE_Z)
     return part
 
 
 def head_scarred_veteran():
-    """Teardown blonde fixer: flush slate-teal eyes, pale scar through left column, proud nose, lit chin."""
+    """Veteran: flush slate eyes, a pale scar through the left column, proud nose, lit chin."""
     part = vk.VoxelPart('head_scarred_veteran', covers=(TAG_HEAD,))
     grid = head_base(part)
     paint_face(grid, (
@@ -709,7 +762,7 @@ def head_scarred_veteran():
 
 
 def head_keen_scout():
-    """Teardown bandana scout and security guard: flush warm-brown eyes, rosy cheeks, proud nose, warm mouth, lit chin."""
+    """Scout: flush warm-brown eyes, rosy cheeks, proud nose, warm mouth, lit chin."""
     part = vk.VoxelPart('head_keen_scout', covers=(TAG_HEAD,))
     grid = head_base(part)
     paint_face(grid, (
@@ -722,6 +775,18 @@ def head_keen_scout():
     return part
 
 
+def head_core_runner():
+    """Give the Runner a tapered chin and a shallow nose."""
+    part = vk.VoxelPart('head_core_runner', covers=(TAG_HEAD,))
+    grid = head_base(part)
+    paint_face(grid, ('wLw', 'EwE', 'CnC', 'wmw', 'sLs'), ('...',) * FACE_ROWS, {
+        **FACE_TONES, 'E': vox('leather', -0.35, mottle=False),
+    })
+    for side in (-1, 1):
+        grid.clear(side, HEAD_JAW_Y, HEAD_FACE_Z, side, HEAD_JAW_Y, HEAD_FACE_Z)
+    return part
+
+
 HEADS = (
     ('Rugged Hero Head', head_rugged_hero),
     ('Bearded Craftsman Head', head_bearded_craftsman),
@@ -729,6 +794,7 @@ HEADS = (
     ('Cool Shades Head', head_cool_shades),
     ('Scarred Veteran Head', head_scarred_veteran),
     ('Keen Scout Head', head_keen_scout),
+    ('Runner Head', head_core_runner),
 )
 
 
@@ -753,22 +819,21 @@ def hair_part(name, *, back=NAPE):
 
 
 def hair_short_quiff():
-    """Teardown box-art hero hair: a 5-wide cap flush with the face, a narrower top row off center, sideburns."""
+    """Short crop with a raised front quiff: a 5-wide cap, a centered 3-wide top row, a 2-row lift at the hairline."""
     part, grid = hair_part('hair_short_quiff')
     h0, h_hi, h_lo = vox('hair', 0.0), vox('hair', 0.25), vox('hair', -0.25)
     grid.fill(-SIDE, CROWN, NAPE, SIDE, CROWN, FRONT, h0)          # 5-wide cap, flush with the face plane
-    grid.fill(-HALF, CROWN + 1, BACK, SIDE, CROWN + 1, FRONT, h_hi)   # Top row, off center to his left
-    grid.fill(-SIDE, TOP, FRONT, -HALF, TOP, FRONT, h0)
-    grid.set(-HALF, TOP, FRINGE, h0)       # Swept forelock
-    grid.clear(SIDE, CROWN + 1, FRONT, SIDE, CROWN + 1, FRONT)     # Stepped front corner
-    grid.fill(-HALF, HEAD_NOSE_Y, NAPE, HALF, TOP, NAPE, h_lo)     # Back nape
+    grid.fill(-HALF, CROWN + 1, BACK, HALF, CROWN + 1, FRONT, h_hi)   # Centered top row
+    grid.fill(-HALF, CROWN + 1, FRINGE, HALF, CROWN + 1, FRINGE, h_hi)   # Quiff: one voxel in front of the hairline
+    grid.fill(-HALF, CROWN + 2, FRONT, HALF, CROWN + 2, FRINGE, h0)   # Quiff lift
+    grid.fill(-HALF, HEAD_EYE_Y, NAPE, HALF, TOP, NAPE, h_lo)      # Short back
     for side in (-SIDE, SIDE):
-        grid.fill(side, TOP, NAPE, side, TOP, HEAD_EAR_Z + 1, h_lo)   # Sideburns above and behind the cheeks
+        grid.fill(side, TOP, NAPE, side, TOP, HEAD_EAR_Z, h_lo)    # Short temples above the ears
     return part
 
 
 def hair_wavy_blonde():
-    """Teardown blonde tousled waves: lumpy 3-row crown, a fringe that overhangs one brow, ear-length sides."""
+    """Tousled waves: lumpy 3-row crown, a fringe that overhangs one brow, ear-length sides."""
     part, grid = hair_part('hair_wavy_blonde')
     h0, h_hi, h_lo = vox('hair', 0.0), vox('hair', 0.25), vox('hair', -0.25)
     grid.fill(-SIDE, CROWN, NAPE, SIDE, CROWN, FRONT, h0)
@@ -824,7 +889,7 @@ def hair_buzz_crew():
 
 
 def hair_slick_back():
-    """Swept-back Teardown hair: a flat cap that goes back over the nape, dark temples above the ears."""
+    """Swept-back hair: a flat cap that goes back over the nape, dark temples above the ears."""
     part, grid = hair_part('hair_slick_back', back=NAPE - 1)
     h0, h_hi, h_lo = vox('hair', 0.0), vox('hair', 0.25), vox('hair', -0.25)
     grid.fill(-SIDE, CROWN, NAPE, SIDE, CROWN, FRONT, h0)          # Cap, from the hairline to the nape
@@ -883,7 +948,7 @@ class TorsoBox:
 def shirt_torso(part, shirt, *, hem=None, y=TORSO_Y, grid_y=None, z=TORSO_OUTER_Z, open_neck=True):
     """The torso of a garment: a 7-wide, 3-deep box from the belt row up to the shoulders, in two rigid pieces.
 
-    The Teardown torso is one flat box. The UAL1 spine turns at the waist and at the chest, thus:
+    The canonical voxel torso is one flat box. The UAL1 spine turns at the waist and at the chest, thus:
       - the trunk (rows 20..27) is on spine_02. It is one box with no seam on the shirt front. It hangs
         over the trouser hips and turns on them at the belt.
       - the yoke (rows 28..29) is on spine_03 with the arms, the neck and the collar. Its seam is 2 cm
@@ -925,11 +990,27 @@ def low_collar(part, code, *, turtleneck=False, back=True):
     return ring
 
 
-def paint_short_sleeve(grid, shirt, cuff):
+def paint_short_sleeve(grid, shirt, cuff, *, cap_columns=1):
     """Paint one short sleeve flush on the 2 x 2 upper arm with a cuff on the last voxel column."""
     x0, x1 = SLEEVE_SHORT_X
     grid.fill(x0, ARM_Y[0], ARM_Z[0], x1, ARM_Y[1], ARM_Z[1], shirt)
     grid.fill(x1, ARM_Y[0], ARM_Z[0], x1, ARM_Y[1], ARM_Z[1], cuff)
+    round_shoulder_cap(grid, columns=cap_columns)
+
+
+def harness_straps(part, code, columns, y0, *, z=TORSO_FRONT + 1, pad=PAD_BACK):
+    """Front straps of a back pack from row `y0` up to the shoulders, one voxel in front of the torso.
+
+    The rows of the trunk are on spine_02 and the rows of the yoke are on spine_03, the same split as
+    `shirt_torso`. Thus a strap stays on the garment when the chest turns.
+    """
+    x0, x1 = min(columns), max(columns)
+    for bone, rows in (('spine_02', (y0, TRUNK_Y[1])), ('spine_03', YOKE_Y)):
+        if rows[0] > rows[1]:
+            continue
+        grid = seg(part, bone, (x0, x1), rows, (z, z), pad=pad)
+        for x in columns:
+            grid.fill(x, rows[0], z, x, rows[1], z, code)
 
 
 def short_sleeves(part, shirt, cuff):
@@ -940,15 +1021,57 @@ def short_sleeves(part, shirt, cuff):
     return sleeve
 
 
-def torso_core_tee():
-    part = vk.VoxelPart('torso_core_tee', covers=TORSO_COVERS)
+def shape_chest_front(torso, cloth, seam):
+    """Step the fabric forward above the fitted waist."""
+    front = TORSO_FRONT + 1
+    torso.fill(-2, 26, front, 2, 26, front, cloth)
+    torso.fill(-1, 25, front, 1, 25, front, seam)
+    for side in (-1, 1):
+        x0, x1 = sorted((side, 2 * side))
+        torso.fill(x0, 27, front, x1, 27, front, cloth)
+
+
+def lower_shoulder_line(torso, *, from_column=CHEST_HALF_X):
+    """Lower the outer yoke by one row and keep the collar at its original height."""
+    z0, z1 = TORSO_OUTER_Z
+    torso.clear(-CHEST_HALF_X, SHOULDER_Y, z0, -from_column, SHOULDER_Y, z1)
+    torso.clear(from_column, SHOULDER_Y, z0, CHEST_HALF_X, SHOULDER_Y, z1)
+
+
+def runner_sleeves(part, shirt, cuff):
+    sleeve = seg(part, 'upperarm_l', SLEEVE_SHORT_X, ARM_Y, ARM_Z, pad=PAD_GARMENT)
+    paint_short_sleeve(sleeve, shirt, cuff, cap_columns=2)
+    add_twin(part, sleeve)
+    x0, x1 = SLEEVE_SHORT_X[1] + 1, ARM_UPPER_X[1]
+    upper = seg(part, 'upperarm_l', (x0, x1), ARM_Y, ARM_Z)
+    upper.fill(x0, ARM_Y[0], ARM_Z[0], x1, ARM_Y[1], ARM_Z[1], SKIN)
+    add_twin(part, upper)
+
+
+def torso_core_tee(*, fitted=False):
+    """Ringer athletic tee: contrast neck band and sleeve cuffs, darker side panels, a flush two-voxel chest mark."""
+    covers = (TAG_CHEST, TAG_ARMS_UPPER) if fitted else TORSO_COVERS
+    part = vk.VoxelPart('torso_runner_tee' if fitted else 'torso_core_tee', covers=covers)
     shirt = vox('primary', 0.0)
-    torso = shirt_torso(part, shirt, hem=vox('primary', -0.25))
-    torso.fill(-1, SHOULDER_Y - 1, TORSO_FRONT, 1, SHOULDER_Y - 1, TORSO_FRONT, vox('primary', -0.25))
-    # A stitched patch pocket stands clear of the chest.
-    torso.fill(1, SHOULDER_Y - 4, TORSO_FRONT + 1, 2, SHOULDER_Y - 2, TORSO_FRONT + 1, shirt)
-    torso.fill(1, SHOULDER_Y - 2, TORSO_FRONT + 1, 2, SHOULDER_Y - 2, TORSO_FRONT + 1, vox('primary', 0.25))
-    short_sleeves(part, shirt, vox('primary', -0.25))
+    shade = vox('primary', -0.25)
+    ringer = vox('trim', 0.25)
+    hem_y = TAIL_Y[1] if fitted else TORSO_Y[0]
+    torso = shirt_torso(part, shirt, hem=shade, y=(hem_y, SHOULDER_Y))
+    torso.fill(-1, SHOULDER_Y - 1, TORSO_FRONT, 1, SHOULDER_Y - 1, TORSO_FRONT, ringer)   # Neck band below the neckline
+    for side in (-CHEST_HALF_X, CHEST_HALF_X):
+        torso.fill(side, hem_y + 1, TORSO_BACK + 1, side, TRUNK_Y[1], TORSO_FRONT - 1, shade)   # Side panel
+    if fitted:
+        for side in (-CHEST_HALF_X, CHEST_HALF_X):
+            torso.clear(side, 22, TORSO_BACK, side, 24, TORSO_FRONT)
+        shape_chest_front(torso, shirt, shade)
+        band = seg(part, 'pelvis', (-2, 2), (TORSO_Y[0], hem_y - 1), TORSO_Z, pad=PAD_GARMENT_OUTER)
+        band.fill(-2, TORSO_Y[0], TORSO_BACK, 2, hem_y - 1, TORSO_FRONT, shade)
+        lower_shoulder_line(torso, from_column=2)
+        runner_sleeves(part, shirt, ringer)
+    else:
+        short_sleeves(part, shirt, ringer)
+    mark_z = TORSO_FRONT + 1 if fitted else TORSO_FRONT
+    torso.fill(1, SHOULDER_Y - 3, mark_z, 2, SHOULDER_Y - 3, mark_z, vox('accent', 0.125, mottle=False))
     return part
 
 
@@ -976,6 +1099,7 @@ def bare_knees(part, hem):
 
 
 def legs_core_shorts():
+    """Athletic shorts above the knee: belt, side stripe, hem band, striped crew socks, sneakers."""
     part = vk.VoxelPart('legs_core_shorts', covers=LEGS_COVERS)
     cloth = vox('secondary', 0.0)
     trouser_hips(part, cloth, belt=vox('leather', -0.25), buckle=vox('metal', 0.45, mottle=False))
@@ -984,14 +1108,17 @@ def legs_core_shorts():
     hem = THIGH_Y[1] - 4                                           # The shorts end above the knee
     thigh = seg(part, 'thigh_l', THIGH_X, THIGH_Y, THIGH_Z, pad=PAD_JOINT)
     thigh.fill(tx0, hem, THIGH_BACK, tx1, THIGH_Y[1], THIGH_FRONT, cloth)
-    thigh.fill(tx0, hem, THIGH_BACK, tx1, hem, THIGH_FRONT, vox('secondary', -0.25))
+    thigh.fill(tx1, hem + 1, THIGH_BACK + 1, tx1, THIGH_Y[1], THIGH_FRONT - 1, vox('trim', 0.25))   # Side stripe
+    thigh.fill(tx0, hem, THIGH_BACK, tx1, hem, THIGH_FRONT, vox('secondary', -0.25))                # Hem band
     add_twin(part, thigh)
     bare_knees(part, hem)
 
     cx0, cx1 = CALF_X
+    sock_y = CALF_Y[0] + 2
     calf = seg(part, 'calf_l', CALF_X, CALF_Y, CALF_Z, half_x=True)
     calf.fill(cx0, CALF_Y[0], CALF_BACK, cx1, CALF_Y[1], CALF_FRONT, vox('skin', -0.04))
-    calf.fill(cx0, CALF_Y[0], CALF_BACK, cx1, CALF_Y[0] + 2, CALF_FRONT, vox('trim', 0.45))
+    calf.fill(cx0, CALF_Y[0], CALF_BACK, cx1, sock_y, CALF_FRONT, vox('trim', 0.45))
+    calf.fill(cx0, sock_y, CALF_BACK, cx1, sock_y, CALF_FRONT, vox('detail', 0.0))                  # Sock stripe
     add_twin(part, calf)
     shoes(part, SNEAKER)
     return part
@@ -1026,9 +1153,9 @@ def preset(preset_id, pack, label, clip, palette, *, body, head, hair, torso, le
 PRESETS = (
     preset(
         'core_rookie', PACK, 'Core Rookie', 'Idle_Loop',
-        {'skin': '#f2b792', 'hair': '#4a2f20', 'primary': '#b8433a', 'secondary': '#355f8f',
-         'accent': '#e5b342', 'metal': '#c9ced6', 'trim': '#e6dfd4', 'leather': '#593b28',
-         'visor': '#3a93bd', 'detail': '#cf3e32'},
+        {'skin': '#e9ad85', 'hair': '#b98a4a', 'primary': '#cf9130', 'secondary': '#34505c',
+         'accent': '#f2ead8', 'metal': '#c9ced6', 'trim': '#efe7d6', 'leather': '#5a3f2c',
+         'visor': '#55793f', 'detail': '#2f7f8c'},
         body='body_athletic', head='head_rugged_hero', hair='hair_short_quiff',
         torso='torso_core_tee', legs='legs_core_shorts',
     ),
@@ -1037,8 +1164,9 @@ PRESETS = (
         {'skin': '#d8986b', 'hair': '#382a26', 'primary': '#2d9286', 'secondary': '#3a3f4b',
          'accent': '#ec6a3c', 'metal': '#d8dce2', 'trim': '#e8ecee', 'leather': '#4b3324',
          'visor': '#40c2ea', 'detail': '#e04f36'},
-        body='body_slim', head='head_keen_scout', hair='hair_bob_cut',
-        torso='torso_core_tee', legs='legs_core_shorts',
+        body='body_slim', head='head_core_runner', hair='hair_bob_cut',
+        torso='torso_runner_tee', legs='legs_core_shorts',
+        proportions={'shoulderWidth': 1.39, 'waistScale': 0.87, 'limbThickness': 0.95},
     ),
     preset(
         'core_veteran', PACK, 'Core Veteran', 'Walk_Formal_Loop',
@@ -1081,17 +1209,52 @@ def core_parts():
     for label, make in HAIR:
         yield 'hair', label, make()
     yield 'torso', 'Core Tee', torso_core_tee()
+    yield 'torso', 'Fitted Runner Tee', torso_core_tee(fitted=True)
     yield 'legs', 'Core Shorts', legs_core_shorts()
+
+
+def add_staff_idle(builder):
+    """Keep the idle motion and hold the right grip upright in front of the hip."""
+    clips = builder.doc['animations']
+    idle = next(clip for clip in clips if clip['name'] == 'Idle_Loop')
+    rotations = {
+        'upperarm_r': (-0.084682, -0.639249, 0.509146, 0.570053),
+        'lowerarm_r': (0.723696, 0.000977, -0.138419, 0.676094),
+        'hand_r': (0.030235, 0.469977, 0.142292, 0.870609),
+    }
+    samplers = []
+    channels = []
+    time = builder._accessor(np.array([0], dtype=np.float32), 'SCALAR', bounds=True)
+    for channel in idle['channels']:
+        target = channel['target']
+        sampler = idle['samplers'][channel['sampler']]
+        rotation = rotations.get(builder.doc['nodes'][target['node']]['name'])
+        if target['path'] == 'rotation' and rotation is not None:
+            quat = np.array([rotation], dtype=np.float32)
+            quat /= np.linalg.norm(quat)
+            output = builder._accessor(quat, 'VEC4')
+            sampler = {'input': time, 'output': output, 'interpolation': 'LINEAR'}
+        channels.append({'sampler': len(samplers), 'target': target})
+        samplers.append(sampler)
+    clips.append({'name': 'Staff_Idle_Loop', 'samplers': samplers, 'channels': channels})
 
 
 def main():
     args = vk.script_args('Build the core voxel character pack.', 'source', 'stage', 'meta')
     rig = vk.RigData(args.source, vk.RIG_CONTRACT['joints'])
-    rig.check_contract()
+    rig.check_contract(check_clips=False)
     load_pose(rig, args.meta)
 
     builder = vk.GlbBuilder()
     builder.add_rig(rig, with_clips=True)
+    for extra in ('ual2-clips.glb', 'kaykit-2h-clips.glb'):
+        extra_path = args.source.parent / extra
+        if not extra_path.exists():
+            raise FileNotFoundError(f'Missing source clips GLB: {extra_path}')
+        builder.add_extra_clips(extra_path)
+    add_staff_idle(builder)
+    builder.check_clips(vk.RIG_CONTRACT)
+
     entries = []
     for slot, label, part in core_parts():
         mesh = skinned_mesh(part, rig)
@@ -1109,7 +1272,7 @@ def main():
         rig_model_path=RIG_FILE,
     )
     path = write_catalog(args.meta, catalog)
-    print(f'Wrote {RIG_FILE} ({size} bytes, {len(entries)} parts) and {path}.')
+    print(f'Wrote {RIG_FILE} ({size} bytes, {len(entries)} parts, {len(builder.doc["animations"])} clips) and {path}.')
 
 
 if __name__ == '__main__':

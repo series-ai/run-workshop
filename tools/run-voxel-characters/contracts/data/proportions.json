@@ -2,6 +2,7 @@
   "version": 2,
   "humanoid": {
     "voxelSize": 0.05,
+    "headwearVoxelSize": 0.025,
     "defaults": {
       "height": 0.97,
       "legRatio": 0.9,
@@ -23,6 +24,11 @@
         0.65,
         0.9
       ],
+      "headwearToChestWidth": [
+        0.55,
+        0.92
+      ],
+      "maxHeadwearHeight": 0.36,
       "minNeckToFaceWidth": 0.6,
       "minArmToChestWidth": 0.27,
       "minCalfToThighWidth": 0.65,
@@ -30,6 +36,19 @@
       "maxHeelBackOffset": 0.01,
       "minToeStep": 0.04
     }
+  },
+  "bipedalMonster": {
+    "silhouette": {
+      "maxWaistToChestWidth": 0.82,
+      "minHeadDepthMeters": 0.24,
+      "minHeadForwardOffset": 0.025,
+      "minFootLengthMeters": 0.22
+    },
+    "requireBakedAo": true
+  },
+  "prop": {
+    "minHeightMeters": 0.2,
+    "minUniqueShades": 3
   },
   "quadruped": {
     "silhouette": {

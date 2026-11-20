@@ -103,7 +103,7 @@ describe('quadruped silhouette contract', () => {
   })
 })
 
-const HOUND_GLB = join(STAGE_DIR, 'run-voxchar-creatures/3D/characters/quadruped-rig.glb')
+const HOUND_GLB = join(STAGE_DIR, 'run-cubix-creatures/3D/characters/quadruped-rig.glb')
 
 describe.skipIf(!existsSync(HOUND_GLB))('creature audit of the built Guard Hound', () => {
   it('passes each check and no clip opens a gap', async () => {

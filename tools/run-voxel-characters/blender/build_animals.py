@@ -1,4 +1,4 @@
-"""Build the seven Astra-redesigned voxel quadrupeds for run-voxchar-creatures.
+"""Build the seven Astra-redesigned voxel quadrupeds for run-cubix-creatures.
 
 Each animal is sculpted with `CreatureSculptor` (`blender/creature_kit.py`) onto its CC0 / RUN source rig,
 checked by `QuadrupedAudit`, and exported as a single skinned GLB (`<rig_id>-rig.glb`) with world-metre
@@ -208,7 +208,7 @@ def _build_fox():
     )
     skull = barrel([((15, 18), 20, 25, 3), ((19, 20), 20, 24, 2)], coat)
     skull.both(3, (20, 21), (16, 18), cream).both(2, 21, (19, 20), cream)
-    skull.box((-1, 1), (21, 22), (20, 22), coat).box(0, 21, (23, 24), nose)
+    skull.box((-1, 1), (21, 22), (20, 22), coat).box(0, 21, 23, nose)
     skull.both(2, 22, 20, brow).both(2, 24, 20, vox('detail'))
     skull.eyes(2, 23, 20, vox('visor', mottle=False))
     skull.box(0, 22, 23, coat).box(0, 20, 23, cream)
@@ -328,7 +328,7 @@ def _build_horse():
         role='trunk',
         bake_ao=False,
     )
-    s.seg('spine_1', barrel([((-8, 1), 24, 36, 4)], coat), pad=1, role='trunk', bake_ao=False)
+    s.seg('spine_1', Sculpt().box((-4, 4), (24, 36), (-8, 1), coat), pad=1, role='trunk', bake_ao=False)
     s.seg('spine_2', barrel([((0, 7), 21, 37, 6)], coat), role='trunk', bake_ao=False)
     s.seg(
         'spine_3',
@@ -341,13 +341,13 @@ def _build_horse():
     # ---- Arched muscular neck with continuous dorsal mane ----
     s.seg(
         'spine_4',
-        barrel([((11, 17), 29, 40, 3)], coat).box(0, (41, 42), (12, 19), mane),
+        Sculpt().box((-3, 3), (29, 40), (11, 17), coat).box(0, (41, 42), (12, 19), mane),
         pad=2,
         bake_ao=False,
     )
     s.seg(
         'spine_5',
-        barrel([((16, 21), 33, 43, 3)], coat).box(0, (44, 45), (17, 23), mane),
+        Sculpt().box((-2, 2), (33, 43), (16, 21), coat).box(0, (44, 45), (17, 23), mane),
         pad=3,
         bake_ao=False,
     )
@@ -359,30 +359,32 @@ def _build_horse():
     )
 
     # ---- Head: defined cheeks, smooth tapered nasal bridge, continuous blaze, compact jaw & tall ears ----
-    skull = barrel(
-        [
-            ((24, 28), 41, 47, 3),
-            ((29, 31), 39, 45, 2),
-            ((32, 33), 38, 43, 1),
-            ((34, 35), 37, 41, 1),
-            ((36, 37), 37, 40, 1),
-        ],
-        coat,
-    )
-    skull.paint((-1, 1), (37, 40), (36, 37), bay)
-    skull.paint(0, 47, (27, 28), white).paint(0, 46, 28, white)
-    skull.paint(0, 45, (29, 31), white).paint(0, 44, 31, white)
-    skull.paint(0, 43, (32, 33), white).paint(0, 42, 33, white)
-    skull.paint(0, 41, (34, 35), white)
-    skull.box(0, 48, (25, 28), mane)
-    skull.eyes(3, 45, 28, eye, facing='side').both(1, 39, 37, eye)
+    profile = [
+        ((24, 27), 41, 47, 3),
+        ((28, 29), 40, 46, 3),
+        ((30, 31), 40, 45, 2),
+        ((32, 32), 39, 44, 2),
+        ((33, 33), 38, 43, 2),
+        ((34, 35), 37, 42, 2),
+        ((36, 37), 37, 41, 2),
+    ]
+    skull = barrel(profile[:2], coat)
+    for depth, base, top, width in profile[2:]:
+        skull.box((-width, width), (39, min(43, top - 1)), depth, coat)
+        skull.box((1 - width, width - 1), (base, top), depth, coat)
+    velvet = vox('leather', 0.25, mottle=False)
+    skull.paint((-2, 2), (37, 41), (36, 37), velvet)
+    for depth, _, top, _ in profile[1:-1]:
+        skull.paint(0, top, depth, white)
+    skull.box(0, 48, (24, 26), mane)
+    skull.eyes(3, 45, 28, eye, facing='side').both(1, 40, 37, eye)
     s.seg('head', skull, pad=2, role='head', bake_ao=False)
 
-    ear = Sculpt().box((1, 2), (47, 50), (29, 30), coat).box(2, (51, 52), 30, bay)
+    ear = Sculpt().box((1, 2), (46, 50), (27, 29), coat).box(2, (51, 52), 28, bay)
     s.seg('ear_1_l', ear, mirror_bone='ear_1_r', pad=3, bake_ao=False)
     s.seg(
         'mouth',
-        Sculpt().box((-1, 1), 36, (34, 35), bay),
+        Sculpt().box((-1, 1), (38, 39), (30, 33), bay).box((-1, 1), 37, (33, 35), velvet),
         pad=1,
         bake_ao=False,
     )
@@ -520,7 +522,7 @@ def _build_wolf():
     skull = barrel([((18, 21), 20, 26, 3), ((22, 23), 21, 25, 2)], coat)
     skull.both(3, (20, 22), (18, 21), cheek).box((-1, 1), (21, 23), (24, 26), pale)
     skull.box((-1, 1), 23, (26, 27), nose).eyes(2, 24, 23, nose)
-    skull.both(1, 24, 23, vox('accent', mottle=False)).box(0, 23, 28, nose)
+    skull.both(1, 24, 23, vox('accent', mottle=False))
     skull.box((-1, 1), 21, (24, 25), dark)
     s.seg('Head', ears(skull, 2, 26, 19, ruff, cheek, dark), pad=1, role='head', bake_ao=True)
     s.seg(
@@ -617,7 +619,8 @@ def _build_corgi():
             ((-12, -11), 7, 12, 3),
             ((-10, -5), 5, 14, 5),
             ((-4, 0), 6, 13, 4),
-            ((1, 5), 5, 14, 7),
+            ((1, 2), 5, 14, 6),
+            ((3, 5), 5, 14, 7),
             ((6, 8), 6, 14, 5),
             (9, 8, 14, 3),
         ],
@@ -695,7 +698,7 @@ def _build_pug():
         bake_ao=False,
     )
     s.seg('neck', barrel([((4, 9), 14, 20, 4)], pale).paint((-4, 4), 16, (4, 9), collar), pad=3, bake_ao=False)
-    skull = barrel([((5, 7), 18, 24, 4), ((8, 11), 16, 25, 5), ((12, 13), 17, 24, 5)], fawn)
+    skull = barrel([((5, 7), 17, 24, 4), ((8, 11), 16, 25, 5), ((12, 13), 17, 24, 5)], fawn)
     skull.paint((-5, 5), (17, 22), (12, 13), wrinkle)
     skull.both((2, 4), (20, 22), 13, mask)
     skull.box((-2, 2), (17, 19), 14, mask).both((1, 2), 18, 15, mask)
@@ -746,7 +749,7 @@ def _build_pug():
     )
     s.seg('tail.1', Sculpt().box((-1, 1), (16, 19), (-14, -12), shade), pad=1, bake_ao=False)
     s.seg('tail.2', Sculpt().box((-1, 1), (18, 20), (-16, -13), fawn), bake_ao=False)
-    curl = Sculpt().box((-1, 1), (19, 22), (-17, -16), fawn)
+    curl = Sculpt().box((-1, 1), (19, 22), (-17, -15), fawn)
     curl.box((-1, 1), (22, 23), (-16, -12), pale).box((-1, 1), (20, 22), (-12, -11), pale)
     s.seg('tail.3', curl, pad=1, bake_ao=False)
     return s
@@ -800,7 +803,7 @@ def _build_gsd():
     )
     skull = barrel([((7, 10), 21, 26, 3), ((11, 12), 21, 25, 2)], tan)
     skull.paint((-2, 2), (21, 23), (10, 12), black)
-    skull.box((-1, 1), (22, 23), (13, 15), black).box(0, 23, (16, 17), nose)
+    skull.box((-1, 1), (22, 23), (13, 15), black).box((-1, 1), 23, 16, nose)
     skull.both(2, 22, (10, 12), brow)
     skull.eyes(2, 24, 12, vox('visor', mottle=False)).both(2, 25, 12, brow)
     skull.both((1, 3), (26, 27), (8, 9), tan).both((2, 3), (28, 29), 8, brow).both(2, 28, 8, black).both(
@@ -870,15 +873,12 @@ def _build_gsd():
     )
     s.seg(
         'tail',
-        barrel(
-            [
-                ((-13, -10), 14, 17, 1),
-                ((-16, -13), 12, 16, 2),
-                ((-19, -17), 10, 14, 2),
-                ((-22, -20), 8, 12, 1),
-            ],
-            black,
-        ).box(0, (8, 10), -23, brow),
+        Sculpt()
+        .box(0, (15, 17), (-13, -10), black)
+        .box(0, (13, 15), (-16, -13), black)
+        .box(0, (11, 13), (-19, -16), black)
+        .box(0, (9, 11), (-21, -19), brow)
+        .box(0, (8, 9), (-23, -21), brow),
         pad=1,
         bake_ao=False,
     )
@@ -992,16 +992,15 @@ def _build_cat():
     tail = (
         ('tail.0', (13, 15), (-13, -10), ginger),
         ('tail.1', (14, 16), (-15, -12), stripe),
-        ('tail.2', (16, 18), (-16, -13), ginger),
-        ('tail.3', (18, 20), (-16, -14), stripe),
-        ('tail.4', (20, 22), (-16, -14), ginger),
-        ('tail.5', (22, 24), (-16, -14), stripe),
+        ('tail.2', (16, 18), (-15, -14), ginger),
+        ('tail.3', (18, 20), (-15, -14), stripe),
+        ('tail.4', (20, 22), (-15, -14), ginger),
+        ('tail.5', (22, 24), (-15, -14), stripe),
         ('tail.6', (24, 26), (-15, -13), ginger),
         ('tail.7', (26, 27), (-14, -12), white),
     )
     for index, (bone, rows, depth, code) in enumerate(tail):
-        width = 0 if index >= 6 else 1
-        s.seg(bone, Sculpt().box((-width, width), rows, depth, code), pad=1 - index % 2, bake_ao=False)
+        s.seg(bone, Sculpt().box(0, rows, depth, code), pad=1 - index % 2, bake_ao=False)
     return s
 
 

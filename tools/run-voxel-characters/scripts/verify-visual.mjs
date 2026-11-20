@@ -111,8 +111,8 @@ async function main() {
     const presetButtons = page.locator('.section-card:has-text("Context Presets") .preset-pills button')
     const presetCount = await presetButtons.count()
     console.log(`Found ${presetCount} presets in Avatar Lab`)
-    if (presetCount < 23) {
-      throw new Error(`Expected at least 23 presets (including 7 rebuilt animals), found ${presetCount}`)
+    if (presetCount < 29) {
+      throw new Error(`Expected at least 29 presets (including Knights, Orcs, and Trolls), found ${presetCount}`)
     }
     for (let i = 0; i < presetCount; i++) {
       const btn = presetButtons.nth(i)
@@ -141,7 +141,7 @@ async function main() {
     await page.waitForTimeout(1800)
     await page.screenshot({ path: join(OUT_DIR, 'stage-all.png') })
 
-    for (const ctxLabel of ['HEIST', 'INDUSTRIAL', 'SECURITY', 'CREATURES']) {
+    for (const ctxLabel of ['HEIST', 'INDUSTRIAL', 'SECURITY', 'CREATURES', 'FANTASY']) {
       await page.locator('.hud-card button', { hasText: new RegExp(`^${ctxLabel}$`, 'i') }).click()
       await page.waitForTimeout(900)
       await page.screenshot({ path: join(OUT_DIR, `stage-${ctxLabel.toLowerCase()}.png`) })

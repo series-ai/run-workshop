@@ -272,6 +272,107 @@ const ANIMAL_VOXEL_BONES: Readonly<Record<AnimalRigId, ReadonlySet<string>>> = {
     'forearm.R',
     'wrist.R',
   ]),
+  aquatic: new Set([
+    'pelvis',
+    'neck',
+    'head',
+    'jaw',
+    'spine_01',
+    'tail_01',
+    'tail_02',
+    'tail_fin',
+    'fin_l',
+    'fin_r',
+    'pelvic_fin_l',
+    'pelvic_fin_r',
+  ]),
+  avian: new Set([
+    'pelvis',
+    'spine_01',
+    'chest',
+    'neck',
+    'head',
+    'jaw',
+    'tail_01',
+    'tail_02',
+    'wing_upper_l',
+    'wing_mid_l',
+    'wing_tip_l',
+    'wing_upper_r',
+    'wing_mid_r',
+    'wing_tip_r',
+    'leg_upper_l',
+    'leg_lower_l',
+    'foot_l',
+    'leg_upper_r',
+    'leg_lower_r',
+    'foot_r',
+  ]),
+  serpent: new Set([
+    'pelvis',
+    'neck',
+    'head',
+    'jaw',
+    'spine_01',
+    'spine_02',
+    'tail_01',
+    'tail_02',
+    'tail_03',
+    'tail_04',
+    'tail_tip',
+  ]),
+  dragon: new Set([
+    'pelvis',
+    'spine_01',
+    'chest',
+    'neck',
+    'head',
+    'jaw',
+    'tail_01',
+    'tail_02',
+    'tail_03',
+    'wing_upper_l',
+    'wing_mid_l',
+    'wing_tip_l',
+    'wing_upper_r',
+    'wing_mid_r',
+    'wing_tip_r',
+    'foreleg_upper_l',
+    'foreleg_lower_l',
+    'foreleg_foot_l',
+    'foreleg_upper_r',
+    'foreleg_lower_r',
+    'foreleg_foot_r',
+    'hindleg_upper_l',
+    'hindleg_lower_l',
+    'hindleg_foot_l',
+    'hindleg_upper_r',
+    'hindleg_lower_r',
+    'hindleg_foot_r',
+  ]),
+  kaiju: new Set([
+    'pelvis',
+    'spine_01',
+    'chest',
+    'neck',
+    'head',
+    'jaw',
+    'tail_01',
+    'tail_02',
+    'tail_03',
+    'arm_upper_l',
+    'arm_lower_l',
+    'hand_l',
+    'arm_upper_r',
+    'arm_lower_r',
+    'hand_r',
+    'leg_upper_l',
+    'leg_lower_l',
+    'foot_l',
+    'leg_upper_r',
+    'leg_lower_r',
+    'foot_r',
+  ]),
 }
 
 const ANIMAL_BONE_LOOKUP: Readonly<Record<AnimalRigId, ReadonlyMap<string, string>>> = Object.fromEntries(
@@ -973,6 +1074,11 @@ const ANIMAL_DEFAULT_MASS_KG: Readonly<Record<AnimalRigId, number>> = {
   pug: 9,
   gsd: 35,
   cat: 4.5,
+  aquatic: 180,
+  avian: 18,
+  serpent: 14,
+  dragon: 380,
+  kaiju: 520,
 }
 
 const ANIMAL_EXTRA_IGNORE: Readonly<Record<AnimalRigId, readonly [string, string][]>> = {
@@ -1032,6 +1138,39 @@ const ANIMAL_EXTRA_IGNORE: Readonly<Record<AnimalRigId, readonly [string, string
     ['pelvis', 'thigh.R'],
     ['pelvis', 'tail.0'],
   ],
+  aquatic: [
+    ['pelvis', 'fin_l'],
+    ['pelvis', 'fin_r'],
+    ['tail_01', 'pelvic_fin_l'],
+    ['tail_01', 'pelvic_fin_r'],
+  ],
+  avian: [
+    ['chest', 'wing_upper_l'],
+    ['chest', 'wing_upper_r'],
+    ['pelvis', 'leg_upper_l'],
+    ['pelvis', 'leg_upper_r'],
+    ['pelvis', 'tail_01'],
+  ],
+  serpent: [
+    ['pelvis', 'spine_01'],
+    ['pelvis', 'neck'],
+  ],
+  dragon: [
+    ['chest', 'wing_upper_l'],
+    ['chest', 'wing_upper_r'],
+    ['chest', 'foreleg_upper_l'],
+    ['chest', 'foreleg_upper_r'],
+    ['pelvis', 'hindleg_upper_l'],
+    ['pelvis', 'hindleg_upper_r'],
+    ['pelvis', 'tail_01'],
+  ],
+  kaiju: [
+    ['chest', 'arm_upper_l'],
+    ['chest', 'arm_upper_r'],
+    ['pelvis', 'leg_upper_l'],
+    ['pelvis', 'leg_upper_r'],
+    ['pelvis', 'tail_01'],
+  ],
 }
 
 function animalBodySpec(
@@ -1078,6 +1217,18 @@ function animalBodySpec(
     halfLen = 0.03 * s
     joint = hasParent ? cone(25, 25, 15, 8, 1.5) : null
     group = 4
+  } else if (/wing/.test(lower)) {
+    massFraction = 0.025
+    radius = Math.max(0.02, 0.05 * s)
+    halfLen = 0.14 * s
+    joint = hasParent ? cone(45, 35, 20, 14, 2.5) : null
+    group = 4
+  } else if (/fin/.test(lower)) {
+    massFraction = 0.02
+    radius = Math.max(0.02, 0.045 * s)
+    halfLen = 0.09 * s
+    joint = hasParent ? cone(35, 30, 20, 12, 2.0) : null
+    group = 4
   } else if (/tail/.test(lower)) {
     massFraction = 0.012
     radius = Math.max(0.016, 0.032 * s)
@@ -1090,7 +1241,7 @@ function animalBodySpec(
     halfLen = 0.03 * s
     joint = hasParent ? cone(40, 25, 15, 10, 2) : null
     group = 2
-  } else if (/lower|forearm|shin|ankle|wrist|hock|foot|leg/.test(lower)) {
+  } else if (/lower|forearm|shin|ankle|wrist|hock|foot|leg|arm|hand/.test(lower)) {
     massFraction = 0.025
     radius = Math.max(0.018, 0.042 * s)
     halfLen = 0.06 * s
@@ -1171,6 +1322,11 @@ export const RAGDOLL_RIG_TEMPLATES: Readonly<Record<RigId, RigPhysicsTemplate>> 
   pug: buildAnimalTemplate('pug'),
   gsd: buildAnimalTemplate('gsd'),
   cat: buildAnimalTemplate('cat'),
+  aquatic: buildAnimalTemplate('aquatic'),
+  avian: buildAnimalTemplate('avian'),
+  serpent: buildAnimalTemplate('serpent'),
+  dragon: buildAnimalTemplate('dragon'),
+  kaiju: buildAnimalTemplate('kaiju'),
 }
 
 // ---- Runtime blending, outfit merging & proportional collider resolution ----

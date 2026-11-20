@@ -1,4 +1,4 @@
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Suspense, useState } from 'react'
 import { BUDGETS } from '@voxchar/contracts/budgets'
@@ -13,8 +13,12 @@ export function ContextStageTab({ catalogs, index }: { catalogs: PackCatalog[]; 
   const [shadowMode, setShadowMode] = useState<'blob' | 'none'>('blob')
 
   return (
-    <div className="viewport-wrap" style={{ height: 'calc(100vh - 58px)' }}>
+    <div
+      className="viewport-wrap"
+      style={{ height: activeContext === 'fantasy' || activeContext === 'all' ? '100%' : 'calc(100vh - 58px)' }}
+    >
       <Canvas dpr={[1, BUDGETS.mobilePolicy.maxDpr]} gl={STUDIO_GL} camera={{ position: [0, 4.0, 12.6], fov: 40 }}>
+        {activeContext === 'fantasy' && <PerspectiveCamera makeDefault position={[0, 11.2, 9.2]} fov={40} />}
         <StudioLights reach={2} />
         <Suspense fallback={null}>
           <MultiContextStage
@@ -24,7 +28,7 @@ export function ContextStageTab({ catalogs, index }: { catalogs: PackCatalog[]; 
             shadowMode={shadowMode}
           />
         </Suspense>
-        <OrbitControls target={[0, 0.35, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={3} maxDistance={24} />
+        <OrbitControls target={activeContext === 'fantasy' ? [0, 0.25, 0.65] : [0, 0.35, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={3} maxDistance={24} />
       </Canvas>
 
       <div className="hud-overlay">

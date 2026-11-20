@@ -43,11 +43,14 @@ const proportionContract = z
     version: z.literal(2),
     humanoid: z.object({
       voxelSize: z.number().positive(),
+      headwearVoxelSize: z.number().positive(),
       defaults: humanoidDefaultsSchema,
       silhouette: z.object({
         faceToChestWidth: ratioRange,
         minFacePortraitRatio: z.number().positive(),
         headEnvelopeToChestWidth: ratioRange,
+        headwearToChestWidth: ratioRange,
+        maxHeadwearHeight: z.number().positive(),
         minNeckToFaceWidth: z.number().positive(),
         minArmToChestWidth: z.number().positive(),
         minCalfToThighWidth: z.number().positive(),
@@ -55,6 +58,19 @@ const proportionContract = z
         maxHeelBackOffset: z.number().nonnegative(),
         minToeStep: z.number().positive(),
       }),
+    }),
+    bipedalMonster: z.object({
+      silhouette: z.object({
+        maxWaistToChestWidth: z.number().positive(),
+        minHeadDepthMeters: z.number().positive(),
+        minHeadForwardOffset: z.number().positive(),
+        minFootLengthMeters: z.number().positive(),
+      }),
+      requireBakedAo: z.boolean(),
+    }),
+    prop: z.object({
+      minHeightMeters: z.number().positive(),
+      minUniqueShades: z.number().int().positive(),
     }),
     quadruped: z.object({
       silhouette: z.object({
@@ -79,8 +95,11 @@ const proportionContract = z
   })
   .parse(proportionsJson)
 
-/** Edge length (metres) of one voxel of a voxel human: body, outfit, head, hair and headwear. */
+/** Edge length (metres) of one voxel of a voxel human: body, outfit, head and hair. */
 export const HUMANOID_VOXEL_SIZE = proportionContract.humanoid.voxelSize
+
+/** Edge length (metres) of one voxel of snug humanoid headwear (`HUMANOID_VOXEL_SIZE / 2`). */
+export const HUMANOID_HEADWEAR_VOXEL_SIZE = proportionContract.humanoid.headwearVoxelSize
 
 /**
  * Default proportions of the voxel humans (core, heist, industrial and security packs).
@@ -91,11 +110,12 @@ export const HUMANOID_VOXEL_SIZE = proportionContract.humanoid.voxelSize
 export const HUMANOID_PROPORTION_DEFAULTS = { ...PROPORTION_DEFAULTS, ...proportionContract.humanoid.defaults } as const
 
 /**
- * Teardown silhouette ratios of the voxel humans. `scripts/validate.ts` measures them on the built meshes.
+ * Canonical silhouette ratios of the voxel humans. `scripts/validate.ts` measures them on the built meshes.
  *  - `faceToChestWidth`: skin skull width / garment chest width. Above the range the face reads wide and square.
  *  - `minFacePortraitRatio`: skin skull height / skin skull width. Below it the face reads squat.
- *  - `headEnvelopeToChestWidth`: width of the hair or the headwear / garment chest width. Below the range the
- *    head reads as a pinhead.
+ *  - `headEnvelopeToChestWidth`: width of the hair / garment chest width. Below the range the head reads as a pinhead.
+ *  - `headwearToChestWidth`: width of headwear at `HUMANOID_HEADWEAR_VOXEL_SIZE` / garment chest width. Prevents mushroom lids and pinhead caps.
+ *  - `maxHeadwearHeight`: max vertical span (metres) of headwear so helmets and brims never become towering blocks.
  *  - `minNeckToFaceWidth`: neck width / skin skull width. Below it the neck reads as a pencil.
  *  - `minArmToChestWidth`: bare arm thickness / garment chest width. Below it the arms read as matchsticks.
  *  - `minCalfToThighWidth`: calf width / thigh width. Below it the lower leg reads spindly (`2/3` bare, `1.0` trousers).
@@ -106,7 +126,17 @@ export const HUMANOID_PROPORTION_DEFAULTS = { ...PROPORTION_DEFAULTS, ...proport
 export const HUMANOID_SILHOUETTE = proportionContract.humanoid.silhouette
 
 /**
- * Teardown silhouette rules of a voxel quadruped. The Guard Hound is the reference (`docs/art-direction.md`
+ * Canonical silhouette and shading rules of UAL1 bipedal monsters (orcs, trolls, ogres).
+ */
+export const BIPEDAL_MONSTER_CONTRACT = proportionContract.bipedalMonster
+
+/**
+ * Craft rules for static world props (`minHeightMeters`, `minUniqueShades`).
+ */
+export const PROP_CRAFT = proportionContract.prop
+
+/**
+ * Canonical silhouette rules of a voxel quadruped. The Guard Hound is the reference (`docs/art-direction.md`
  * section 10). `blender/creature_kit.py` checks them on the voxel cells of a sculpt and `src/creatureAudit.ts`
  * measures them on the built mesh. Widths are in voxels of the creature.
  *  - `faceToChestWidth`: head width on the eye row / chest width (`5 / 9`). Above the range the head reads as a bobblehead.
@@ -175,6 +205,7 @@ export const heldItemEntrySchema = z.object({
   nodeName: z.string().min(1),
   label: z.string().min(1),
   hand: z.enum(['hand_r', 'hand_l']),
+  gripStyle: z.enum(['handle', 'forearm_shield']).default('handle'),
   triangles: z.number().int().positive(),
 })
 export type HeldItemEntry = z.infer<typeof heldItemEntrySchema>

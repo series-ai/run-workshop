@@ -5,9 +5,9 @@ Usage (Blender 5.1, headless):
       --core <core-rig.glb> --stage <stage_dir> --meta <meta_dir>
 
 Output:
-  <stage>/run-voxchar-heist/3D/characters/heist-pack.glb   (rig without clips, outfit parts)
-  <stage>/run-voxchar-heist/3D/characters/held_*.glb       (static held items)
-  <stage>/run-voxchar-heist/3D/heist/prop_*.glb            (static world props)
+  <stage>/run-cubix-heist/3D/characters/heist-pack.glb   (rig without clips, outfit parts)
+  <stage>/run-cubix-heist/3D/characters/held_*.glb       (static held items)
+  <stage>/run-cubix-heist/3D/heist/prop_*.glb            (static world props)
   <meta>/heist.json                                        (pack catalog)
 
 Run `build_core.py` first. This script reads the core rig and `<meta>/core.json`.
@@ -27,9 +27,9 @@ import build_core as core  # noqa: E402
 import voxchar as vk  # noqa: E402
 from build_core import (  # noqa: E402
     ARM_LOWER_X, ARM_UPPER_X, ARM_Y, ARM_Z, BELT_Y, CALF_BACK, CALF_FRONT, CALF_OUTER_Z, CALF_X, CALF_Y, CALF_Z,
-    CHEST_HALF_X, CROWN_Y, HEAD_BAND_Y, HEAD_FRONT_SHELL, HEAD_HALF_X, HEAD_MOUTH_Y, HEAD_NOSE_Y, HEAD_SHELL,
-    HEAD_TOP_Y, HEAD_Z, PAD_BACK, PAD_GARMENT, PAD_GARMENT_OUTER, PAD_HEADWEAR, PAD_JOINT, SHOULDER_Y,
-    SLEEVE_LATTICE, SLEEVE_Y, SLEEVE_Z, TAIL_Y, THIGH_BACK, THIGH_FRONT, THIGH_X,
+    CHEST_HALF_X, CROWN_Y, HEAD_BAND_Y, HEAD_EAR_Z, HEAD_EYE_Y, HEAD_FRONT_SHELL, HEAD_HALF_X, HEAD_MOUTH_Y,
+    HEAD_NOSE_Y, HEAD_SHELL, HEAD_TOP_Y, HEAD_Z, PAD_BACK, PAD_GARMENT, PAD_GARMENT_OUTER, PAD_HEADWEAR, PAD_JOINT,
+    SHOULDER_Y, TAIL_Y, THIGH_BACK, THIGH_FRONT, THIGH_X,
     THIGH_Y, THIGH_Z, TORSO_BACK, TORSO_FRONT, TORSO_OUTER_Z, TORSO_Y, TROUSER_CALF_X, paired, seg,
 )
 from voxchar import vox  # noqa: E402
@@ -61,19 +61,22 @@ def arm_band(part, bone, x, code, *, right=False, detail=None):
 
 
 def torso_heist_tee():
-    """Teardown hero charcoal tee with 2x2 gold chest badge, sleeve tattoo, and wrist watch."""
+    """Heavyweight crew-neck work tee: a chest stripe around the trunk, a flap pocket below it, a watch."""
     part = vk.VoxelPart('torso_heist_tee', covers=core.TORSO_COVERS)
     shirt = vox('primary', 0.0)
-    torso = core.shirt_torso(part, shirt, hem=vox('primary', -0.25))               # Untucked hem above the belt
-    badge_y = SHOULDER_Y - 3                                                       # Top two rows of the trunk
-    torso.fill(1, badge_y, TORSO_FRONT, 2, badge_y + 1, TORSO_FRONT, vox('accent', 0.0, mottle=False))   # 2x2 Teardown chest badge
-    torso.set(1, badge_y, TORSO_FRONT, vox('accent', 0.25, mottle=False))
-    torso.set(2, badge_y + 1, TORSO_FRONT, vox('accent', 0.25, mottle=False))
+    shade = vox('primary', -0.25)
+    trim = vox('trim', 0.125)
+    torso = core.shirt_torso(part, shirt, hem=shade)                               # Untucked hem above the belt
+    stripe_y = SHOULDER_Y - 3                                                      # Top row of the trunk box
+    # The stripe is one full ring: front, back and both sides.
+    torso.fill(-CHEST_HALF_X, stripe_y, TORSO_BACK, CHEST_HALF_X, stripe_y, TORSO_FRONT, trim)
+    torso.fill(1, stripe_y - 3, TORSO_FRONT, 2, stripe_y - 2, TORSO_FRONT, shade)  # Left chest pocket, flush
+    torso.fill(1, stripe_y - 2, TORSO_FRONT, 2, stripe_y - 2, TORSO_FRONT, vox('primary', -0.5))   # Pocket flap
     # Tuck the side seams above the belt. Leave a short tail across the front.
     for side in (-CHEST_HALF_X, CHEST_HALF_X):
         torso.clear(side, TORSO_Y[0], TORSO_BACK, side, TORSO_Y[0] + 1, TORSO_BACK)
     torso.fill(-2, TORSO_Y[0], OUTER_FRONT, 2, TORSO_Y[0], OUTER_FRONT, shirt)
-    core.short_sleeves(part, shirt, vox('primary', -0.25))
+    core.short_sleeves(part, shirt, trim)                                          # Cuffs match the chest stripe
     arm_band(
         part, 'upperarm_l', (7, 8), vox('hair', -0.25),
         detail=lambda band: band.fill(7, ARM_Y[0], ARM_Z[0], 7, ARM_Y[1], ARM_Z[1], vox('detail', 0.0)),   # Ink stripe
@@ -92,34 +95,34 @@ def open_front(grid, y0, y1, lining, *, half=1):
 
 
 def torso_heist_open_jacket():
-    """Royal purple open jacket, crimson scarf, and crisp cream undershirt."""
+    """Tailored open jacket over a buttoned waistcoat/tie front and crisp collared shirt."""
     part = vk.VoxelPart('torso_heist_open_jacket', covers=core.SLEEVED_TORSO_COVERS)
     jacket = vox('primary', 0.0)
     trim = vox('primary', -0.25)
     lapel = vox('primary', 0.25)
     shirt = vox('trim', 0.25)
-    scarf = vox('detail', 0.0)
+    vest = vox('detail', 0.0)
     y0, y1 = TORSO_Y
 
     torso = core.shirt_torso(part, jacket, z=(TORSO_BACK, OUTER_FRONT))
-    torso.fill(-CHEST_HALF_X, y0, OUTER_FRONT, CHEST_HALF_X, y1, OUTER_FRONT, jacket)   # Front panels, one voxel out
+    # Front panels, one voxel out. They end one row below the shoulders, thus the shoulder line is flat.
+    torso.fill(-CHEST_HALF_X, y0, OUTER_FRONT, CHEST_HALF_X, y1 - 1, OUTER_FRONT, jacket)
     torso.fill(-CHEST_HALF_X, y0, TORSO_BACK, CHEST_HALF_X, y0, OUTER_FRONT, trim)      # Hem band
     open_front(torso, y0, y1, shirt)
     torso.clear(-1, SHOULDER_Y, TORSO_FRONT, 1, SHOULDER_Y, TORSO_FRONT)
     for side in (-3, 3):
-        torso.clear(side, y0 + 4, OUTER_FRONT, side, y1 - 2, OUTER_FRONT)
-        torso.set(side, y0 + 3, OUTER_FRONT, trim)                                 # Pocket flaps
+        torso.fill(side - (1 if side > 0 else -1), y0 + 3, OUTER_FRONT, side, y0 + 3, OUTER_FRONT, trim)   # Pocket flaps: 2 wide
     for side in (-2, 2):
-        torso.fill(side, y1 - 3, OUTER_FRONT, side, y1, OUTER_FRONT, lapel)        # Turned lapels
-    for side in (-1, 1):
-        torso.fill(side, y1 - 1, OUTER_FRONT, side, y1, OUTER_FRONT, scarf)        # Scarf V sides leaving undershirt open
-    torso.set(0, y1 - 2, OUTER_FRONT, scarf)
-    torso.fill(-1, y1 - 4, OUTER_FRONT, -1, y1 - 2, OUTER_FRONT, vox('detail', -0.25))   # Scarf drape
-    core.low_collar(part, scarf)
+        torso.fill(side, y1 - 4, OUTER_FRONT, side, y1 - 1, OUTER_FRONT, lapel)    # Lapels: one straight edge on each side
+        torso.set(side, y1 - 2, OUTER_FRONT, trim)                                 # Lapel notch
+    # Waistcoat, shirt collar and tie in the opening
+    torso.fill(-1, y0 + 1, TORSO_FRONT, 1, y1 - 3, TORSO_FRONT, vest)
+    torso.fill(0, y1 - 2, TORSO_FRONT, 0, y1 - 1, TORSO_FRONT, vox('detail', -0.25))   # Tie
+    core.low_collar(part, trim, back=True)
 
     def upper_sleeve(grid):
         grid.fill(ARM_UPPER_X[0], ARM_Y[0], ARM_Z[0], ARM_UPPER_X[1], ARM_Y[1], ARM_Z[1], jacket)
-        grid.fill(5, ARM_Y[0], ARM_Z[0], 5, ARM_Y[1], ARM_Z[1], trim)   # Shoulder seam
+        core.round_shoulder_cap(grid)
 
     def lower_sleeve(grid):
         grid.fill(ARM_LOWER_X[0], ARM_Y[0], ARM_Z[0], ARM_LOWER_X[1], ARM_Y[1], ARM_Z[1], jacket)
@@ -146,16 +149,19 @@ def torso_heist_belted_tunic():
     torso.fill(-CHEST_HALF_X, y0, OUTER_BACK, CHEST_HALF_X, belt_y - 1, OUTER_FRONT, cloth)   # Flared tunic skirt
     torso.fill(-CHEST_HALF_X, y0, OUTER_BACK, CHEST_HALF_X, y0, OUTER_FRONT, shade)
     torso.fill(-CHEST_HALF_X, belt_y, OUTER_BACK, CHEST_HALF_X, belt_y, OUTER_FRONT, belt)    # Proud leather belt
+    for side in (-CHEST_HALF_X, CHEST_HALF_X):
+        torso.clear(side, belt_y, OUTER_BACK, side, belt_y + 1, OUTER_FRONT)
+    core.shape_chest_front(torso, cloth, shade)
     for side in (-1, 1):
         torso.set(side, belt_y, OUTER_FRONT, buckle)                               # Twin buckles
-    for side in (-3, 3):
-        torso.fill(side, SHOULDER_Y, TORSO_BACK, side, SHOULDER_Y, TORSO_FRONT, shade)   # Shoulder caps
-    torso.set(2, SHOULDER_Y - 2, TORSO_FRONT, vox('trim', 0.375, mottle=False))    # Chest patch
+    torso.set(2, SHOULDER_Y - 2, OUTER_FRONT, vox('primary', -0.5))                 # Pocket flap
+    core.lower_shoulder_line(torso)
     core.low_collar(part, shade, turtleneck=True)
 
     def upper_sleeve(grid):
         grid.fill(ARM_UPPER_X[0], ARM_Y[0], ARM_Z[0], 7, ARM_Y[1], ARM_Z[1], cloth)
         grid.fill(7, ARM_Y[0], ARM_Z[0], 7, ARM_Y[1], ARM_Z[1], shade)   # Sleeve band
+        core.round_shoulder_cap(grid, columns=2)
 
     def upper_wrap(grid):
         grid.fill(8, ARM_Y[0], ARM_Z[0], ARM_UPPER_X[1], ARM_Y[1], ARM_Z[1], wrap)
@@ -189,7 +195,8 @@ def torso_heist_tattoo_vest():
     torso.fill(-CHEST_HALF_X, vest_y, TORSO_BACK, CHEST_HALF_X, vest_y, TORSO_BACK, vest_dark)   # Rear hem
     for side in (-3, 3):
         torso.set(side, vest_y + 1, OUTER_FRONT, vest_dark)                        # Utility pockets
-        torso.fill(side, SHOULDER_Y, TORSO_BACK, side, SHOULDER_Y, OUTER_FRONT, vest_dark)   # Shoulder tabs
+    # The vest panels end one row below the shoulders. The pack straps lie on their inner columns.
+    torso.clear(-CHEST_HALF_X, SHOULDER_Y, OUTER_FRONT, CHEST_HALF_X, SHOULDER_Y, OUTER_FRONT)
     torso.set(3, SHOULDER_Y - 2, OUTER_FRONT, vest_dark)                           # Chest pocket
     core.low_collar(part, vest_dark)
 
@@ -243,7 +250,7 @@ CUFF_Y = CALF_Y[0]              # lowest calf row, above the shoe: rolled cuffs
 
 
 def legs_heist_holster_jeans():
-    """Blue denim jeans with leather thigh holster and tri-color Teardown sneakers."""
+    """Work denim jeans with leather thigh holster and rugged trail sneakers."""
     part = vk.VoxelPart('legs_heist_holster_jeans', covers=core.LEGS_COVERS)
     denim = vox('secondary', 0.0)
     faded = vox('secondary', 0.25)
@@ -267,8 +274,8 @@ def legs_heist_holster_jeans():
 
     trouser_legs(part, denim, thigh_detail=holster, thigh_detail_right=knee, calf_detail=cuff, thigh_z=THIGH_OUTER_Z, calf_z=CALF_OUTER_Z)
     core.shoes(part, core.Shoe(
-        upper=vox('trim', 0.625), sole=vox('trim', 0.625), toe=vox('trim', 0.75),
-        heel=vox('trim', 0.25), saddle=vox('detail', 0.0),
+        upper=vox('metal', -0.35), sole=vox('leather', -0.5), toe=vox('metal', -0.15),
+        heel=vox('leather', -0.25), stripe=vox('accent', 0.0),
     ), wide=True)
     return part
 
@@ -361,61 +368,65 @@ def legs_heist_cargo_shorts():
 # --------------------------------------------------------------------------
 
 def headwear_red_bob_hat():
-    """Chunky Teardown red bucket hat: 7-wide brim above the forehead, 2-row crown, dark bob that frames the face.
-
-    The brim goes one voxel in front of the face plane. A deeper brim hides the lenses from the game camera.
-    """
+    """Snug brimmed scout hat at 0.025 m resolution with beveled brim, leather band, and cropped nape hair."""
     part = vk.VoxelPart('headwear_red_bob_hat')
-    shell = HEAD_SHELL
-    brim = shell + 1
-    front_shell = HEAD_FRONT_SHELL
-    grid = seg(part, 'Head', (-brim, brim), (HEAD_MOUTH_Y, CROWN_Y + 2), (-brim, front_shell), pad=PAD_HEADWEAR)
     hair = vox('hair', -0.125)
-    lock = vox('hair', 0.125)
-    back, front = HEAD_Z
-    grid.fill(-HEAD_HALF_X, HEAD_MOUTH_Y, -shell, HEAD_HALF_X, HEAD_TOP_Y, -shell, hair)   # Back bob curtain
-    for side in (-shell, shell):
-        grid.fill(side, HEAD_MOUTH_Y, -shell, side, HEAD_TOP_Y, front, hair)       # Side curtains over the ears
-        grid.set(side, HEAD_MOUTH_Y, front, lock)                                  # Curled tips at the jaw
-    core.hat_slab(grid, CROWN_Y, vox('detail', -0.25), reach=brim, z_front=front_shell)   # 7-wide brim (+1 front)
-    grid.fill(-shell, CROWN_Y + 1, -shell, shell, CROWN_Y + 2, front, vox('detail', 0.125))   # Crown
-    grid.fill(-shell, CROWN_Y + 1, -shell, shell, CROWN_Y + 1, front, vox('detail', -0.125))  # Crown band
+    brim_col = vox('detail', -0.25)
+    crown_col = vox('detail', 0.125)
+    band_col = vox('leather', -0.2)
+    grid = core.hat_seg(part, core.HAT_BRIM_X, (core.HAT_NOSE_Y + 1, core.HAT_CROWN_Y + 3), (-4, core.HAT_VISOR_Z))
+    # Nape and temple sideburns strictly above the ears & cyber temple pod (y = 66..69).
+    grid.fill(-3, core.HAT_NOSE_Y + 1, -3, 2, core.HAT_CROWN_Y - 1, -3, hair)
+    core.hat_fill_sym(grid, -4, -4, core.HAT_BROW_Y, core.HAT_CROWN_Y - 1, -3, 2, hair)
+    # Crisp 2.5 cm thin brim on y = 72, beveled at the outer corners to avoid a mushroom slab.
+    y_brim = core.HAT_CROWN_Y
+    grid.fill(-5, y_brim, -4, 4, y_brim, core.HAT_VISOR_Z, brim_col)
+    for cx in (-5, 4):
+        for cz in (-4, core.HAT_VISOR_Z):
+            grid.clear(cx, y_brim, cz, cx, y_brim, cz)
+    # Snug crown (20 cm wide) hugging the skull silhouette.
+    grid.fill(-4, y_brim + 1, -3, 3, y_brim + 1, 6, band_col)                     # Leather hatband
+    grid.set(1, y_brim + 1, 6, vox('accent', 0.25, mottle=False))                 # Brass band clasp
+    grid.fill(-4, y_brim + 2, -3, 3, y_brim + 2, 6, crown_col)                    # Lower crown
+    grid.fill(-3, y_brim + 3, -2, 2, y_brim + 3, 5, crown_col)                    # Tapered top crown
     return part
 
 
 def headwear_bandana():
-    """Tied bandana: a one-row band around the forehead, a knot and two tails at the back."""
+    """Snug 2.5 cm tied bandana around the forehead with rear knot and twin hanging tails."""
     part = vk.VoxelPart('headwear_bandana')
-    shell = HEAD_SHELL
-    front_shell = HEAD_FRONT_SHELL
-    tail = -shell - 1
-    grid = seg(part, 'Head', (-shell, shell), (HEAD_MOUTH_Y, HEAD_BAND_Y), (tail, front_shell), pad=PAD_HEADWEAR)
     cloth = vox('detail', 0.0)
-    grid.fill(-shell, HEAD_BAND_Y, -shell, shell, HEAD_BAND_Y, front_shell, cloth)   # Headband wrap around forehead
-    grid.clear(-HEAD_HALF_X, HEAD_BAND_Y, HEAD_Z[0], HEAD_HALF_X, HEAD_BAND_Y, HEAD_Z[1])   # The skull is inside it
-    grid.fill(-HEAD_HALF_X, HEAD_BAND_Y, front_shell, 0, HEAD_BAND_Y, front_shell, vox('detail', 0.25))   # Fold highlight
-    grid.fill(0, HEAD_BAND_Y, tail, 0, HEAD_BAND_Y, tail, vox('detail', -0.25))    # Knot
-    grid.fill(-1, HEAD_NOSE_Y, tail, -1, HEAD_BAND_Y, tail, cloth)                 # Hanging tails
-    grid.fill(1, HEAD_MOUTH_Y, tail, 1, HEAD_BAND_Y, tail, vox('detail', -0.125))
+    cloth_hi = vox('detail', 0.25)
+    cloth_shade = vox('detail', -0.25)
+    y0, y1 = core.HAT_BROW_Y, core.HAT_BROW_Y + 1                                  # 1.750..1.800 m: full forehead wrap above eyes
+    grid = core.hat_seg(part, core.HAT_BRIM_X, (core.HAT_NOSE_Y - 1, y1), (-5, core.HAT_SHELL_Z[1]))
+    # Wrap forehead cleanly at z = 6 (1 half-voxel proud of skull; no cap bill) and over temple/nape hair.
+    grid.fill(-4, y0, 4, 3, y1, core.HAT_SHELL_Z[1], cloth)
+    grid.clear(-3, y0, 4, 2, y1, 5)                                                # Hollow inside for skull front
+    grid.fill(-5, y0, -4, 4, y1, 3, cloth)                                         # Wrap sides & nape flush over temple hair
+    grid.clear(-4, y0, -3, 3, y1, 3)                                               # Hollow inside for hair/skull sides
+    grid.fill(-3, y1, core.HAT_SHELL_Z[1], 0, y1, core.HAT_SHELL_Z[1], cloth_hi)   # Fold highlight across brow
+    grid.fill(-1, y0, -5, 0, y1, -5, cloth_shade)                                  # Rear knot
+    grid.fill(-2, core.HAT_NOSE_Y + 1, -5, -2, y0 - 1, -5, cloth)                  # Left tail
+    grid.fill(1, core.HAT_NOSE_Y - 1, -5, 1, y0 - 1, -5, vox('detail', -0.125))    # Longer right tail
     return part
 
 
 def back_demolition_pack():
-    """Canvas demolition backpack with shoulder straps and three crimson charges."""
+    """Canvas demolition backpack with shoulder straps and three charges. Its top is level with the shoulders."""
     part = vk.VoxelPart('back_demolition_pack')
     near, far = OUTER_BACK, OUTER_BACK - 1                                         # Pack body: 2 voxels behind the shirt
-    y0, y1 = SHOULDER_Y - 4, SHOULDER_Y - 1
-    grid = seg(part, 'spine_02', (-3, 3), (y0, SHOULDER_Y + 1), (far, OUTER_FRONT), pad=PAD_BACK)
+    y0, y1 = SHOULDER_Y - 5, SHOULDER_Y - 2                                        # The body is on the trunk rows only
+    charge_y = y1 + 1
+    grid = seg(part, 'spine_02', (-2, 2), (y0, charge_y + 1), (far, near), pad=PAD_BACK)
     canvas = vox('leather', -0.25)
-    strap = vox('leather', -0.5)
     grid.fill(-2, y0, far, 2, y1, near, canvas)                                    # Pack body
     grid.fill(-2, y1, far, 2, y1, far, vox('leather', 0.0))                        # Top flap
     grid.set(0, y0 + 1, far, vox('metal', 0.5, mottle=False))                      # Buckle
     for x in (-2, 0, 2):
-        grid.fill(x, SHOULDER_Y, far, x, SHOULDER_Y, near, vox('detail', 0.0))     # Red explosive charges
-        grid.set(x, SHOULDER_Y + 1, far, vox('trim', 0.5))                         # Fuse caps, behind the head
-    for side in (-2, 2):
-        grid.fill(side, y0 + 1, OUTER_FRONT, side, SHOULDER_Y, OUTER_FRONT, strap)   # Front harness straps
+        grid.fill(x, charge_y, far, x, charge_y, near, vox('detail', 0.0))         # Explosive charges
+        grid.set(x, charge_y + 1, far, vox('trim', 0.5))                           # Fuse caps, below the head
+    core.harness_straps(part, vox('leather', -0.5), (-2, 2), y0 + 1)               # Front harness straps
     return part
 
 
@@ -430,7 +441,7 @@ def static_grid(part, x, y, z, voxel):
 
 
 def held_sledgehammer():
-    """Teardown sledgehammer at the voxel size of the body: the shaft is one voxel and fills the grip channel."""
+    """Chunky sledgehammer at the voxel size of the body: the shaft is one voxel and fills the grip channel."""
     part = vk.VoxelPart('held_sledgehammer')
     grid = static_grid(part, (0, 1), (-3, 14), (-2, 2), core.CHAR_VOX)
     grid.fill(0, -3, 0, 0, 11, 0, vox('leather', 0.125))                           # Hardwood shaft
@@ -456,10 +467,11 @@ def held_detonator():
 
 def held_crowbar():
     part = vk.VoxelPart('held_crowbar')
-    grid = static_grid(part, (0, 0), (-6, 18), (-1, 2), HELD_VOX)
+    # The tail below the grip is 3 voxels: a longer tail goes into the forearm and the thigh in Sword_Idle.
+    grid = static_grid(part, (0, 0), (-4, 18), (-1, 2), HELD_VOX)
     steel = vox('metal', 0.3)
-    grid.fill(0, -5, 0, 0, 16, 0, vox('detail', 0.0))                              # Painted shaft
-    grid.fill(0, -6, 0, 0, -6, 1, steel)                                           # Chisel end
+    grid.fill(0, -3, 0, 0, 16, 0, vox('detail', 0.0))                              # Painted shaft
+    grid.fill(0, -4, 0, 0, -4, 1, steel)                                           # Chisel end
     grid.fill(0, 17, 0, 0, 18, 1, steel)                                           # Gooseneck bend
     grid.fill(0, 18, 2, 0, 18, 2, steel)
     grid.fill(0, 16, 2, 0, 17, 2, steel)                                           # Forged claw tip
@@ -582,7 +594,7 @@ PARTS = (
     ('legs', 'Tactical Strap Trousers', legs_heist_tactical_strap, {'hides_legs_upper': True}),
     ('torso', 'Tattoo Vest', torso_heist_tattoo_vest, {}),
     ('legs', 'Cargo Shorts', legs_heist_cargo_shorts, {'hides_legs_upper': True}),
-    ('headwear', 'Red Bob Hat', headwear_red_bob_hat, {'hides_hair': True}),
+    ('headwear', 'Brimmed Scout Hat', headwear_red_bob_hat, {'hides_hair': True}),
     ('headwear', 'Bandana', headwear_bandana, {'hides_hair': False}),
     ('back', 'Demolition Pack', back_demolition_pack, {}),
 )
@@ -590,37 +602,38 @@ PARTS = (
 PRESETS = (
     core.preset(
         'heist_wrecker', PACK, 'Heist Wrecker', 'Idle_Loop',
-        {'skin': '#f2b792', 'hair': '#4a2f20', 'primary': '#595055', 'secondary': '#2f6da8',
-         'accent': '#e09d38', 'metal': '#8d96a0', 'trim': '#e8e2d7', 'leather': '#70472b',
-         'visor': '#3a93bd', 'detail': '#cf3e32'},
-        body='body_athletic', head='head_rugged_hero', hair='hair_short_quiff',
+        {'skin': '#f2b792', 'hair': '#6e3824', 'primary': '#8f4236', 'secondary': '#3d4552',
+         'accent': '#e09d38', 'metal': '#8d96a0', 'trim': '#e8e2d7', 'leather': '#6b442b',
+         'visor': '#3a5a68', 'detail': '#c85a32'},
+        body='body_athletic', head='head_rugged_hero', hair='hair_cropped_fade',
         torso='torso_heist_tee', legs='legs_heist_holster_jeans',
         held_right='held_sledgehammer',
     ),
     core.preset(
         'heist_fixer', PACK, 'Heist Fixer', 'Walk_Formal_Loop',
-        {'skin': '#ecb08c', 'hair': '#cfa042', 'primary': '#5c3f9c', 'secondary': '#6fa3a8',
+        {'skin': '#ecb08c', 'hair': '#3a271d', 'primary': '#31495c', 'secondary': '#3d424b',
          'accent': '#d99c38', 'metal': '#b8c0c8', 'trim': '#ebe3cf', 'leather': '#5b3b28',
-         'visor': '#3f8f9c', 'detail': '#b02c44'},
-        body='body_athletic', head='head_scarred_veteran', hair='hair_wavy_blonde',
+         'visor': '#476873', 'detail': '#c27d36'},
+        body='body_athletic', head='head_scarred_veteran', hair='hair_slick_back',
         torso='torso_heist_open_jacket', legs='legs_heist_denim_sneakers',
         held_left='held_duffel_bag',
     ),
     core.preset(
         'heist_lookout', PACK, 'Heist Lookout', 'Idle_Loop',
-        {'skin': '#eeb38e', 'hair': '#33282b', 'primary': '#cf9d46', 'secondary': '#3b4868',
-         'accent': '#eb9b38', 'metal': '#9ca5af', 'trim': '#e6dfd2', 'leather': '#43372f',
-         'visor': '#3fa9cf', 'detail': '#c93a42'},
+        {'skin': '#eeb38e', 'hair': '#3a2824', 'primary': '#586949', 'secondary': '#524b40',
+         'accent': '#d49a42', 'metal': '#9ca5af', 'trim': '#e6dfd2', 'leather': '#4b382c',
+         'visor': '#34444e', 'detail': '#4d5d6e'},
         body='body_athletic', head='head_cool_shades', hair='hair_bob_cut',
         torso='torso_heist_belted_tunic', legs='legs_heist_tactical_strap',
         headwear='headwear_red_bob_hat', held_right='held_detonator',
+        proportions={'shoulderWidth': 1.42, 'waistScale': 0.96},
     ),
     core.preset(
         'heist_scout', PACK, 'Heist Scout', 'Sword_Idle',
-        {'skin': '#f2b792', 'hair': '#4a2f20', 'primary': '#627442', 'secondary': '#b28f58',
-         'accent': '#2e9386', 'metal': '#a4adb7', 'trim': '#ebe7df', 'leather': '#5a3d2a',
-         'visor': '#3ebae6', 'detail': '#cf3e32'},
-        body='body_athletic', head='head_keen_scout', hair='hair_slick_back',
+        {'skin': '#f2b792', 'hair': '#783e26', 'primary': '#484f59', 'secondary': '#4d5744',
+         'accent': '#9c5438', 'metal': '#a4adb7', 'trim': '#ebe7df', 'leather': '#5a3d2a',
+         'visor': '#4a6470', 'detail': '#385d7d'},
+        body='body_athletic', head='head_keen_scout', hair='hair_cropped_fade',
         torso='torso_heist_tattoo_vest', legs='legs_heist_cargo_shorts',
         headwear='headwear_bandana', back='back_demolition_pack',
         held_right='held_crowbar',

@@ -23,6 +23,11 @@ const BASE_MASS_BY_BODY: Readonly<Record<string, number>> = {
   body_chonky_pug: 9,
   body_k9_gsd: 35,
   body_ginger_cat: 4.5,
+  body_reef_shark: 180,
+  body_frost_eagle: 18,
+  body_cobra_serpent: 14,
+  body_ember_dragon: 380,
+  body_apex_rex: 520,
 }
 
 export function resolvePresetRagdoll(

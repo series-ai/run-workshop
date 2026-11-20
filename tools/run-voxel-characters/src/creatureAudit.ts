@@ -28,6 +28,7 @@ export const creatureExtrasSchema = z.object({
       quadruped: z.boolean(),
       palette: paletteColorsSchema,
       rigScale: z.number().positive().optional(),
+      floating: z.boolean().optional(),
     })
     .optional(),
 })
@@ -107,7 +108,7 @@ export function stretchOf(matrix: Matrix4): number {
 const width = (extent: Extent, axis: 0 | 1 | 2, voxel: number): number => Math.round((extent.max[axis] - extent.min[axis]) / voxel)
 
 /**
- * Teardown silhouette of a quadruped on the 23-joint contract rig, measured on the bounds of the vertices of
+ * Canonical silhouette of a quadruped on the 23-joint contract rig, measured on the bounds of the vertices of
  * each joint (rest pose, +Z forward). The rules are `QUADRUPED_SILHOUETTE`.
  */
 export function quadrupedSilhouetteProblems(extents: ReadonlyMap<string, Extent>, voxel: number): string[] {
@@ -365,6 +366,8 @@ export interface CreatureAuditOptions {
   palette?: PaletteColors
   /** True for a quadruped on the 23-joint contract rig: the joint names give the silhouette checks. */
   contractQuadruped?: boolean
+  /** True for swimming/floating creatures (e.g. aquatic) that hover above y = 0 in rest pose. */
+  allowFloating?: boolean
 }
 
 /** All artifact checks of one voxel creature GLB. The report lists each problem: it does not stop on the first. */
@@ -420,7 +423,12 @@ export async function auditCreatureGlb(path: string, options: CreatureAuditOptio
   if (normalError > 0.02) problems.push(`A rest-pose normal is ${normalError.toFixed(3)} off a lattice axis. Voxel faces are axis-aligned.`)
   let minY = Infinity
   for (let i = 1; i < rest.positions.length; i += 3) minY = Math.min(minY, rest.positions[i]!)
-  if (Math.abs(minY) > tolerance) problems.push(`The lowest vertex is on y = ${(minY / voxelSize).toFixed(2)} voxels. The paws stand on y = 0.`)
+  const floating = options.allowFloating ?? extras.data.polyCreature?.floating ?? false
+  if (floating) {
+    if (minY < -tolerance) problems.push(`The lowest vertex is below y = 0 (${(minY / voxelSize).toFixed(2)} voxels).`)
+  } else if (Math.abs(minY) > tolerance) {
+    problems.push(`The lowest vertex is on y = ${(minY / voxelSize).toFixed(2)} voxels. The paws stand on y = 0.`)
+  }
   if (options.contractQuadruped) problems.push(...quadrupedSilhouetteProblems(rest.extents, voxelSize))
 
   const { clips, restGaps } = auditClipMotion(gltf.scene, mesh, gltf.animations, voxelSize)

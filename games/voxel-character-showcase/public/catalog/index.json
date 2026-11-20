@@ -25,6 +25,11 @@
       "pack": "creatures",
       "label": "Voxel Beasts & Bots",
       "path": "creatures/catalog.json"
+    },
+    {
+      "pack": "fantasy",
+      "label": "Fantasy & Medieval",
+      "path": "fantasy/catalog.json"
     }
   ]
 }

@@ -55,6 +55,11 @@ const ANIMAL_FOOTPRINTS: Partial<Record<RigId, number>> = {
   pug: 0.75,
   corgi: 0.75,
   cat: 0.65,
+  aquatic: 1.8,
+  avian: 2.2,
+  serpent: 1.65,
+  dragon: 2.8,
+  kaiju: 1.9,
 }
 
 /** 1 to 64 animated avatars with live frame-time, mixer, draw-call and triangle telemetry. */

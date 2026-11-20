@@ -1,4 +1,4 @@
-"""Teardown-style voxel character & pack geometry kit for Blender 5.1 Python.
+"""Chunky orthogonal voxel character & pack geometry kit for Blender 5.1 Python.
 
 Coordinate space: glTF. +Y is up, +Z is forward, +X is the left side of the
 character. Unit = metre. `VOX` (0.04 m) is the voxel size of the sculpted creatures.
@@ -19,7 +19,7 @@ Key design guarantees:
          (-999, -999) when mottle=False (eyes, badges, glowing LEDs).
   5. Rigid per-bone segment skinning (weight = 1.0 per segment) with clean
      joint overlap so voxels never shear or stretch during UAL1 animation.
-  6. Byte-exact UAL1 rig copy (joints, inverseBindMatrices, 43 clips) +
+  6. Byte-exact UAL1 rig copy (joints, inverseBindMatrices, 95 clips) +
      automatic body_slim / body_heavy orthogonal morph targets + ragdoll fit.
   7. Sculpt pose (`SculptPose`): the voxel humans are sculpted in the pose of the
      default humanoid proportions. The mesh stores the inverse of the runtime bone
@@ -172,7 +172,7 @@ class RigData:
     def joint(self, name):
         return self.position[name].copy()
 
-    def check_contract(self, tolerance=2e-4, contract=None):
+    def check_contract(self, tolerance=2e-4, contract=None, check_clips=True):
         c = contract or RIG_CONTRACT
         if self.names != c['joints']:
             raise ValueError('Joint names differ from contract.')
@@ -180,10 +180,11 @@ class RigData:
             delta = (self.position[name] - Vector(target)).length
             if delta > tolerance:
                 raise ValueError(f'{name}: joint moved by {delta:.5f} m.')
-        clips = {clip['name'] for clip in self.doc.get('animations', ())}
-        missing = [entry['name'] for entry in c['clips'] if entry['name'] not in clips]
-        if missing:
-            raise ValueError(f'Missing clips: {missing}')
+        if check_clips:
+            clips = {clip['name'] for clip in self.doc.get('animations', ())}
+            missing = [entry['name'] for entry in c['clips'] if entry['name'] not in clips]
+            if missing:
+                raise ValueError(f'Missing clips: {missing}')
 
 
 class SculptPose:
@@ -313,17 +314,29 @@ class GlbBuilder:
             'type': kind,
         }
         if bounds and len(array):
-            accessor['min'] = array.min(axis=0).astype(float).tolist()
-            accessor['max'] = array.max(axis=0).astype(float).tolist()
+            if array.ndim == 1:
+                accessor['min'] = [float(array.min())]
+                accessor['max'] = [float(array.max())]
+            else:
+                accessor['min'] = array.min(axis=0).astype(float).tolist()
+                accessor['max'] = array.max(axis=0).astype(float).tolist()
         self.doc['accessors'].append(accessor)
         return len(self.doc['accessors']) - 1
 
-    def _copy_accessor(self, rig, index):
-        item, data = accessor_bytes(rig.doc, rig.bin, index)
+    def _copy_accessor_raw(self, doc, binary, index, cache=None):
+        if cache is not None and index in cache:
+            return cache[index]
+        item, data = accessor_bytes(doc, binary, index)
         copy = {k: v for k, v in item.items() if k in ('componentType', 'count', 'type', 'min', 'max', 'normalized')}
         copy['bufferView'] = self._view(data)
         self.doc['accessors'].append(copy)
-        return len(self.doc['accessors']) - 1
+        out = len(self.doc['accessors']) - 1
+        if cache is not None:
+            cache[index] = out
+        return out
+
+    def _copy_accessor(self, rig, index, cache=None):
+        return self._copy_accessor_raw(rig.doc, rig.bin, index, cache)
 
     def add_rig(self, rig, with_clips):
         if self.doc['nodes']:
@@ -343,17 +356,18 @@ class GlbBuilder:
         self.rig_root = len(self.doc['nodes'])
         self.doc['nodes'].append({'name': 'UAL1_Rig', 'children': roots})
         self.doc['scenes'][0]['nodes'].append(self.rig_root)
+        acc_cache = {}
         self.doc['skins'] = [{
             'name': 'UAL1_Rig',
             'joints': list(range(len(rig.joint_nodes))),
-            'inverseBindMatrices': self._copy_accessor(rig, rig.skin['inverseBindMatrices']),
+            'inverseBindMatrices': self._copy_accessor(rig, rig.skin['inverseBindMatrices'], acc_cache),
         }]
         if with_clips:
             clips = []
             for clip in rig.doc['animations']:
                 samplers = [{
-                    'input': self._copy_accessor(rig, s['input']),
-                    'output': self._copy_accessor(rig, s['output']),
+                    'input': self._copy_accessor(rig, s['input'], acc_cache),
+                    'output': self._copy_accessor(rig, s['output'], acc_cache),
                     'interpolation': s.get('interpolation', 'LINEAR'),
                 } for s in clip['samplers']]
                 channels = [{
@@ -362,6 +376,43 @@ class GlbBuilder:
                 } for ch in clip['channels']]
                 clips.append({'name': clip['name'], 'samplers': samplers, 'channels': channels})
             self.doc['animations'] = clips
+
+    def add_extra_clips(self, clip_path):
+        """Append animation clips from an animation-only GLB matched by joint node name."""
+        if not self.doc.get('skins'):
+            raise ValueError('Add the rig before extra clips.')
+        joint_by_name = {self.doc['nodes'][i]['name']: i for i in self.doc['skins'][0]['joints']}
+        existing = {a['name'] for a in self.doc.get('animations', ())}
+        src_doc, src_bin = read_glb(clip_path)
+        acc_cache = {}
+        clips = self.doc.setdefault('animations', [])
+        for clip in src_doc.get('animations', ()):
+            name = clip['name']
+            if name in existing:
+                raise ValueError(f'{clip_path}: duplicate clip name "{name}"')
+            existing.add(name)
+            samplers = [{
+                'input': self._copy_accessor_raw(src_doc, src_bin, s['input'], acc_cache),
+                'output': self._copy_accessor_raw(src_doc, src_bin, s['output'], acc_cache),
+                'interpolation': s.get('interpolation', 'LINEAR'),
+            } for s in clip['samplers']]
+            channels = []
+            for ch in clip['channels']:
+                src_node_name = src_doc['nodes'][ch['target']['node']]['name']
+                if src_node_name not in joint_by_name:
+                    raise ValueError(f'{clip_path}: clip "{name}" targets unknown joint "{src_node_name}"')
+                channels.append({
+                    'sampler': ch['sampler'],
+                    'target': {'node': joint_by_name[src_node_name], 'path': ch['target']['path']},
+                })
+            clips.append({'name': name, 'samplers': samplers, 'channels': channels})
+
+    def check_clips(self, contract=None):
+        c = contract or RIG_CONTRACT
+        clips = {clip['name'] for clip in self.doc.get('animations', ())}
+        missing = [entry['name'] for entry in c['clips'] if entry['name'] not in clips]
+        if missing:
+            raise ValueError(f'Missing clips: {missing}')
 
     def add_custom_rig(self, contract, animations=None, rig_name='Creature_Rig'):
         if self.doc['nodes']:
@@ -1062,7 +1113,9 @@ class VoxelPart:
         uv1s = np.concatenate(all_uv1, axis=0)
         indices = np.concatenate(all_idx, axis=0)
 
-        extras = {}
+        extras = {
+            'polyBakeAo': all(seg.bake_ao for seg in self.segments if np.any(seg.data)),
+        }
         own_tags = set(regions)
         covers = [c for c in self.covers if c not in own_tags]
         if regions:
@@ -1301,7 +1354,7 @@ def part_entry(mesh: MeshData, pack: str, slot: str, label: str, path: str, *, h
     return entry
 
 
-def held_entry(mesh: MeshData, pack: str, label: str, hand: str, path: str, size: int):
+def held_entry(mesh: MeshData, pack: str, label: str, hand: str, path: str, size: int, *, grip_style: str = 'handle'):
     finish_budget('held', mesh)
     limit = BUDGETS['classes']['held']['maxBytes']
     if size > limit:
@@ -1314,6 +1367,7 @@ def held_entry(mesh: MeshData, pack: str, label: str, hand: str, path: str, size
         'nodeName': mesh.name,
         'label': label,
         'hand': hand,
+        'gripStyle': grip_style,
         'triangles': mesh.triangles,
     }
 

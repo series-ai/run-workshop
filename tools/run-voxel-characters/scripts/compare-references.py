@@ -1,4 +1,4 @@
-"""Build the side-by-side comparison sheets against the Teardown reference stills.
+"""Build side-by-side comparison sheets against external voxel character reference stills.
 
 Usage:
   VERIFY_OUT=<shots> VERIFY_DPR=2 VERIFY_CLIP=Idle_Loop node scripts/verify-visual.mjs
@@ -141,17 +141,17 @@ def head_before(im):
 
 # Output name, lab screenshot, our label, reference label, reference crop.
 FACES = [
-    ('cmp_1_hero', '04-heist-wrecker', 'Heist Wrecker', 'Teardown Hero', ref('ref_body_hero.png', (150, 95, 400, 345))),
-    ('cmp_2_blonde', '05-heist-fixer', 'Heist Fixer', 'Teardown Blonde', ref('ref_blonde.png')),
-    ('cmp_3_lookout', '06-heist-lookout', 'Heist Lookout', 'Teardown Red Hat', ref('ref_redhat.png')),
-    ('cmp_4_scout', '07-heist-scout', 'Heist Scout', 'Teardown Bandana', ref('ref_scout2.png')),
-    ('cmp_5_chris', '08-workshop-craftsman', 'Workshop Craftsman', 'Teardown Chris', ref('ref_chris.png', (60, 40, 330, 310))),
-    ('cmp_6_guard', '11-night-guard', 'Night Guard', 'Teardown Guard', ref('ref_body_guard.png', (165, 60, 425, 320))),
+    ('cmp_1_hero', '04-heist-wrecker', 'Heist Wrecker', 'Reference Hero', ref('ref_body_hero.png', (150, 95, 400, 345))),
+    ('cmp_2_blonde', '05-heist-fixer', 'Heist Fixer', 'Reference Blonde', ref('ref_blonde.png')),
+    ('cmp_3_lookout', '06-heist-lookout', 'Heist Lookout', 'Reference Red Hat', ref('ref_redhat.png')),
+    ('cmp_4_scout', '07-heist-scout', 'Heist Scout', 'Reference Bandana', ref('ref_scout2.png')),
+    ('cmp_5_chris', '08-workshop-craftsman', 'Workshop Craftsman', 'Reference Chris', ref('ref_chris.png', (60, 40, 330, 310))),
+    ('cmp_6_guard', '11-night-guard', 'Night Guard', 'Reference Guard', ref('ref_body_guard.png', (165, 60, 425, 320))),
 ]
 BODIES = [
-    ('04-heist-wrecker', 'Heist Wrecker', 'Teardown Hero', ref('ref_body_hero.png')),
-    ('11-night-guard', 'Night Guard', 'Teardown Guard', ref('ref_body_guard.png')),
-    ('08-workshop-craftsman', 'Workshop Craftsman', 'Teardown Chris', ref('ref_body_chris.png')),
+    ('04-heist-wrecker', 'Heist Wrecker', 'Reference Hero', ref('ref_body_hero.png')),
+    ('11-night-guard', 'Night Guard', 'Reference Guard', ref('ref_body_guard.png')),
+    ('08-workshop-craftsman', 'Workshop Craftsman', 'Reference Chris', ref('ref_body_chris.png')),
 ]
 
 os.makedirs(args.out, exist_ok=True)

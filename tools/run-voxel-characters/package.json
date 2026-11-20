@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "license": "SEE LICENSE IN ../../LICENSE.md",
-  "description": "Teardown-style voxel character & pack authoring pipeline on the Quaternius UAL1 53-joint CC0 rig, targeting S23 Ultra 120Hz performance and jam-ready-assets staging.",
+  "description": "Chunky 5 cm voxel character & pack authoring pipeline on the Quaternius UAL1 53-joint CC0 rig, targeting S23 Ultra 120Hz performance and jam-ready-assets staging.",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

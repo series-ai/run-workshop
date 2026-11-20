@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import packsJson from './data/packs.json'
 
-export const VOXCHAR_PACK_KEYS = ['core', 'heist', 'industrial', 'security', 'creatures'] as const
+export const VOXCHAR_PACK_KEYS = ['core', 'heist', 'industrial', 'security', 'creatures', 'fantasy'] as const
 export type VoxCharPackKey = (typeof VOXCHAR_PACK_KEYS)[number]
-export const CONTEXT_PACK_KEYS = ['heist', 'industrial', 'security', 'creatures'] as const
+export const CONTEXT_PACK_KEYS = ['heist', 'industrial', 'security', 'creatures', 'fantasy'] as const
 export type ContextPackKey = (typeof CONTEXT_PACK_KEYS)[number]
 export type VoxCharLeafKind = 'characters' | 'world'
 
@@ -11,7 +11,7 @@ export const LICENSES = ['CC0-1.0', 'LicenseRef-RUN-Repository-Supplemental-1.0'
 export type PackLicense = (typeof LICENSES)[number]
 
 const packDefSchema = z.object({
-  dir: z.string().regex(/^run-voxchar-[a-z0-9-]+$/),
+  dir: z.string().regex(/^run-cubix-[a-z0-9-]+$/),
   worldTheme: z.string().regex(/^[a-z0-9-]+$/).optional(),
   label: z.string().min(1),
   description: z.string().min(1),
@@ -27,6 +27,7 @@ const packsFileSchema = z.object({
     industrial: packDefSchema,
     security: packDefSchema,
     creatures: packDefSchema,
+    fantasy: packDefSchema,
   }),
 })
 

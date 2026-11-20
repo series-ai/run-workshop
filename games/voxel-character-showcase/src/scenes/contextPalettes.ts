@@ -55,6 +55,18 @@ export const PROP_PALETTES: Readonly<Record<ContextPackKey, Required<PaletteColo
     visor: '#ff5238',
     detail: '#6d3e2c',
   },
+  fantasy: {
+    skin: '#948b7e',
+    hair: '#2d2825',
+    primary: '#355487',
+    secondary: '#4b5059',
+    accent: '#f08c2b',
+    metal: '#8c949e',
+    trim: '#d6c6a5',
+    leather: '#5c3c28',
+    visor: '#34414e',
+    detail: '#9c362c',
+  },
 }
 
 export const GROUND_COLORS: Readonly<Record<ContextPackKey, { top: string; side: string }>> = {
@@ -62,4 +74,5 @@ export const GROUND_COLORS: Readonly<Record<ContextPackKey, { top: string; side:
   industrial: { top: '#4f4a40', side: '#2e2b25' },
   security: { top: '#3c4552', side: '#232830' },
   creatures: { top: '#3b3634', side: '#221f1e' },
+  fantasy: { top: '#43484f', side: '#26292e' },
 }

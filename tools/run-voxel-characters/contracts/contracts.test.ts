@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { BUDGETS } from './budgets'
 import { leavesFor, VOXCHAR_PACK_KEYS } from './packs'
 import {
+  BIPEDAL_MONSTER_CONTRACT,
   CREATURE_MOTION,
+  HUMANOID_HEADWEAR_VOXEL_SIZE,
   HUMANOID_PROPORTION_DEFAULTS,
   HUMANOID_SILHOUETTE,
   HUMANOID_VOXEL_SIZE,
+  PROP_CRAFT,
   QUADRUPED_SILHOUETTE,
+  heldItemEntrySchema,
 } from './catalog'
 import { humanoidSculptPose } from './humanoidPose'
 import {
@@ -29,7 +33,7 @@ describe('run-voxel-characters contracts', () => {
 
   it('defines valid palettes and S23 Ultra budgets', () => {
     expect(PALETTE_REGIONS).toHaveLength(10)
-    expect(Object.keys(CONTEXT_DEFAULT_PALETTES)).toEqual(['heist', 'industrial', 'security', 'creatures'])
+    expect(Object.keys(CONTEXT_DEFAULT_PALETTES)).toEqual(['heist', 'industrial', 'security', 'creatures', 'fantasy'])
     expect(BUDGETS.mobilePolicy.maxTrianglesPerComposedAvatar).toBe(2200)
   })
 
@@ -44,14 +48,17 @@ describe('run-voxel-characters contracts', () => {
     }
   })
 
-  it('defines the Teardown voxel size and silhouette ratios of the voxel humans', () => {
-    // Measured on the Teardown hero: 38 voxels tall. The v5 voxel (0.036 m) made a character 56 voxels tall.
+  it('defines the canonical voxel size and silhouette ratios of the voxel humans', () => {
+    // Measured on the canonical 5 cm voxel hero: 38 voxels tall. The v5 voxel (0.036 m) made a character 56 voxels tall.
     expect(HUMANOID_VOXEL_SIZE).toBe(0.05)
+    expect(HUMANOID_HEADWEAR_VOXEL_SIZE).toBe(0.025)
     expect(1.9 / HUMANOID_VOXEL_SIZE).toBeCloseTo(38, 6)
 
     const {
       faceToChestWidth,
       headEnvelopeToChestWidth,
+      headwearToChestWidth,
+      maxHeadwearHeight,
       minFacePortraitRatio,
       minNeckToFaceWidth,
       minArmToChestWidth,
@@ -62,18 +69,26 @@ describe('run-voxel-characters contracts', () => {
     } = HUMANOID_SILHOUETTE
     const [minFace, maxFace] = faceToChestWidth
     const [minEnvelope, maxEnvelope] = headEnvelopeToChestWidth
+    const [minHat, maxHat] = headwearToChestWidth
     expect(minFace).toBeLessThan(maxFace)
     expect(minEnvelope).toBeLessThan(maxEnvelope)
+    expect(minHat).toBeLessThan(maxHat)
 
     // The v14 human: a 3 x 5 x 4 voxel skin face/skull (15 x 25 x 20 cm, 1 block forward on a flush-back 2 x 2 neck that drops 1 block into the shirt)
     // in a 5-wide hair envelope, a 7-wide chest, 2 x 2 arms, 3 x 3 thighs, 2 x 2 bare or 3 x 2 trouser calves,
     // and a flush-back 3 + 1 shoe (0.20 m long).
     const v = HUMANOID_VOXEL_SIZE
+    const chestW = 7 * v + 0.008
     expect((3 * v) / (7 * v)).toBeGreaterThan(minFace)
     expect((3 * v) / (7 * v)).toBeLessThan(maxFace)
     expect((5 * v) / (3 * v)).toBeGreaterThanOrEqual(minFacePortraitRatio)
     expect((5 * v) / (7 * v)).toBeGreaterThan(minEnvelope)
     expect((5 * v) / (7 * v)).toBeLessThan(maxEnvelope)
+    // Snug 0.025 m headwear: 20 cm shell (+ 8 mm pad) and 25 cm brim (+ 8 mm pad), never 35 cm mushroom lids.
+    expect((8 * HUMANOID_HEADWEAR_VOXEL_SIZE + 0.008) / chestW).toBeGreaterThanOrEqual(minHat)
+    expect((10 * HUMANOID_HEADWEAR_VOXEL_SIZE + 0.008) / chestW).toBeLessThanOrEqual(maxHat)
+    expect((7 * v + 0.008) / chestW).toBeGreaterThan(maxHat)
+    expect(maxHeadwearHeight).toBeLessThanOrEqual(0.36)
     expect((2 * v) / (3 * v)).toBeGreaterThanOrEqual(minNeckToFaceWidth)
     expect((2 * v) / (7 * v)).toBeGreaterThanOrEqual(minArmToChestWidth)
     expect((2 * v) / (3 * v)).toBeGreaterThanOrEqual(minCalfToThighWidth)
@@ -88,6 +103,42 @@ describe('run-voxel-characters contracts', () => {
     // The v4 pinhead: a 0.160 m head envelope on a 0.332 m chest, with 0.072 m arms.
     expect(0.16 / 0.332).toBeLessThan(minEnvelope)
     expect(0.072 / 0.332).toBeLessThan(minArmToChestWidth)
+  })
+
+  it('defines bipedal monster, prop craft, and forearm shield contracts', () => {
+    expect(BIPEDAL_MONSTER_CONTRACT.requireBakedAo).toBe(true)
+    expect(BIPEDAL_MONSTER_CONTRACT.silhouette.maxWaistToChestWidth).toBeLessThan(0.85)
+    expect(BIPEDAL_MONSTER_CONTRACT.silhouette.minHeadDepthMeters).toBeGreaterThanOrEqual(0.24)
+    expect(BIPEDAL_MONSTER_CONTRACT.silhouette.minHeadForwardOffset).toBeGreaterThan(0)
+    expect(BIPEDAL_MONSTER_CONTRACT.silhouette.minFootLengthMeters).toBeGreaterThanOrEqual(0.2)
+
+    expect(PROP_CRAFT.minHeightMeters).toBeGreaterThanOrEqual(0.2)
+    expect(PROP_CRAFT.minUniqueShades).toBeGreaterThanOrEqual(3)
+
+    const parsedDefault = heldItemEntrySchema.parse({
+      id: 'held_broadsword',
+      pack: 'fantasy',
+      leaf: 'characters',
+      relativePath: 'held_broadsword.glb',
+      nodeName: 'held_broadsword',
+      label: 'Broadsword',
+      hand: 'hand_r',
+      triangles: 120,
+    })
+    expect(parsedDefault.gripStyle).toBe('handle')
+
+    const parsedShield = heldItemEntrySchema.parse({
+      id: 'held_heater_shield',
+      pack: 'fantasy',
+      leaf: 'characters',
+      relativePath: 'held_heater_shield.glb',
+      nodeName: 'held_heater_shield',
+      label: 'Heater Shield',
+      hand: 'hand_l',
+      gripStyle: 'forearm_shield',
+      triangles: 200,
+    })
+    expect(parsedShield.gripStyle).toBe('forearm_shield')
   })
 
   it('defines the quadruped silhouette and the creature motion rules on the Guard Hound', () => {
@@ -148,11 +199,11 @@ describe('run-voxel-characters contracts', () => {
   })
 
   it('generates jam-ready-assets v2 leaves for all packs', () => {
-    expect(VOXCHAR_PACK_KEYS).toEqual(['core', 'heist', 'industrial', 'security', 'creatures'])
-    expect(leavesFor('core').map((l) => l.id)).toEqual(['run-voxchar-core/3D/characters'])
+    expect(VOXCHAR_PACK_KEYS).toEqual(['core', 'heist', 'industrial', 'security', 'creatures', 'fantasy'])
+    expect(leavesFor('core').map((l) => l.id)).toEqual(['run-cubix-core/3D/characters'])
     expect(leavesFor('heist').map((l) => l.id)).toEqual([
-      'run-voxchar-heist/3D/characters',
-      'run-voxchar-heist/3D/heist',
+      'run-cubix-heist/3D/characters',
+      'run-cubix-heist/3D/heist',
     ])
   })
 })

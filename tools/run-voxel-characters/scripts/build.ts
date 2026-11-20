@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { humanoidSculptPose } from '../contracts/humanoidPose'
-import { leavesFor, VOXCHAR_PACK_KEYS } from '../contracts/packs'
+import { leafFor, leavesFor, VOXCHAR_PACK_KEYS } from '../contracts/packs'
 import { licenseTextFor } from '../src/licenses'
 import { META_DIR, SOURCE_RIG_GLB, STAGE_DIR, TOOL_ROOT } from '../src/paths'
 import { populateManifestRagdoll } from '../src/resolveManifestRagdoll'
@@ -43,7 +43,7 @@ function main(): void {
   // The Blender builders sculpt the voxel humans in this pose (see contracts/humanoidPose.ts).
   writeFileSync(join(META_DIR, 'humanoid-pose.json'), JSON.stringify(humanoidSculptPose(), null, 2) + '\n')
 
-  const coreRigPath = join(STAGE_DIR, 'run-voxchar-core/3D/characters/core-rig.glb')
+  const coreRigPath = join(STAGE_DIR, leafFor('core', 'characters').id, 'core-rig.glb')
   runBlender(join(TOOL_ROOT, 'blender/build_core.py'), [
     '--source', SOURCE_RIG_GLB,
     '--stage', STAGE_DIR,
@@ -63,6 +63,12 @@ function main(): void {
   ])
 
   runBlender(join(TOOL_ROOT, 'blender/build_creatures.py'), [
+    '--core', coreRigPath,
+    '--stage', STAGE_DIR,
+    '--meta', META_DIR,
+  ])
+
+  runBlender(join(TOOL_ROOT, 'blender/build_fantasy.py'), [
     '--core', coreRigPath,
     '--stage', STAGE_DIR,
     '--meta', META_DIR,

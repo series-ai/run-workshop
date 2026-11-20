@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "license": "SEE LICENSE IN ../../LICENSE.md",
-  "description": "RUN Voxel Characters Showcase: Teardown-style parametric voxel avatar lab, multi-context dioramas (Heist, Industrial, Security, Creatures) on one shared Quaternius UAL1 rig, and S23 Ultra 120Hz performance bench.",
+  "description": "RUN Voxel Characters Showcase: Orthogonal parametric voxel avatar lab, multi-context dioramas (Heist, Industrial, Security, Creatures, Fantasy) on one shared Quaternius UAL1 rig, and S23 Ultra 120Hz performance bench.",
   "keywords": [
     "RUN.game"
   ],
@@ -20,7 +20,7 @@
   "dependencies": {
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
-    "@series-inc/rundot-game-sdk": "^5.28.0",
+    "@series-inc/rundot-game-sdk": "^5.38.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "~0.170.0",

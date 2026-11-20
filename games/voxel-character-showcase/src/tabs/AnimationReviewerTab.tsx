@@ -151,11 +151,13 @@ function WallGridStage({
   const controls = useRef<ElementRef<typeof OrbitControls>>(null)
 
   const isSmallAnimal = rigId === 'corgi' || rigId === 'pug' || rigId === 'cat'
-  const dx = rigId === 'ual1' ? 2.75 : rigId === 'horse' ? 4.2 : isSmallAnimal ? 2.2 : 3.1
-  const dy = rigId === 'ual1' ? 2.2 : rigId === 'horse' ? 2.5 : isSmallAnimal ? 1.45 : 1.75
-  const dz = rigId === 'ual1' ? 1.15 : rigId === 'horse' ? 1.65 : isSmallAnimal ? 0.95 : 1.35
-  const targetY = rigId === 'ual1' ? 3.05 : rigId === 'horse' ? 3.35 : isSmallAnimal ? 2.0 : 2.25
-  const baseDist = rigId === 'ual1' ? 12.6 : rigId === 'horse' ? 16.5 : isSmallAnimal ? 9.2 : 12.0
+  const isWideAnimal = rigId === 'dragon' || rigId === 'avian'
+  const isLargeAnimal = rigId === 'horse' || rigId === 'kaiju' || rigId === 'aquatic' || rigId === 'serpent'
+  const dx = rigId === 'ual1' ? 2.75 : isWideAnimal ? 4.8 : isLargeAnimal ? 4.2 : isSmallAnimal ? 2.2 : 3.1
+  const dy = rigId === 'ual1' ? 2.2 : isWideAnimal || isLargeAnimal ? 2.5 : isSmallAnimal ? 1.45 : 1.75
+  const dz = rigId === 'ual1' ? 1.15 : isWideAnimal || isLargeAnimal ? 1.65 : isSmallAnimal ? 0.95 : 1.35
+  const targetY = rigId === 'ual1' ? 3.05 : isWideAnimal || isLargeAnimal ? 3.35 : isSmallAnimal ? 2.0 : 2.25
+  const baseDist = rigId === 'ual1' ? 12.6 : isWideAnimal ? 18.8 : isLargeAnimal ? 16.5 : isSmallAnimal ? 9.2 : 12.0
   const distance = baseDist / Math.max(0.5, Math.min(1, aspect / 1.18))
 
   useLayoutEffect(() => {
@@ -168,7 +170,7 @@ function WallGridStage({
     }
   }, [camera, rigId, pageKey, targetY, distance])
 
-  const padRadius = rigId === 'ual1' ? 0.78 : rigId === 'horse' ? 1.65 : isSmallAnimal ? 0.58 : 0.98
+  const padRadius = rigId === 'ual1' ? 0.78 : isWideAnimal ? 1.95 : isLargeAnimal ? 1.65 : isSmallAnimal ? 0.58 : 0.98
 
   return (
     <>
@@ -294,6 +296,7 @@ export function AnimationReviewerTab({ catalogs, index }: { catalogs: PackCatalo
   const [loopAll, setLoopAll] = useState(false)
   const [replayKey, setReplayKey] = useState(0)
   const [seek, setSeek] = useState<{ seq: number; phase: number } | null>(null)
+  const seekSeqRef = useRef(0)
   const [progress, setProgress] = useState<{ time: number; duration: number; phase: number }>({
     time: 0,
     duration: 2.5,
@@ -465,7 +468,8 @@ export function AnimationReviewerTab({ catalogs, index }: { catalogs: PackCatalo
 
   const seekPhase = useCallback((nextPhase: number) => {
     const clamped = Math.max(0, Math.min(1, nextPhase))
-    setSeek((prev) => ({ seq: (prev?.seq ?? 0) + 1, phase: clamped }))
+    seekSeqRef.current += 1
+    setSeek({ seq: seekSeqRef.current, phase: clamped })
     setProgress((prev) => ({
       ...prev,
       phase: clamped,

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "rigId": "quaternius-ual1-53",
-  "source": "Quaternius Universal Animation Library Standard (CC0-1.0) + BodyMech Rig (CC0-1.0)",
+  "source": "Quaternius UAL1 & UAL2 (CC0-1.0) + KayKit 2H Combat (CC0-1.0) + BodyMech Rig (CC0-1.0)",
   "jointCount": 53,
   "joints": [
     "root",
@@ -395,6 +395,10 @@
       "duration": 2.5
     },
     {
+      "name": "Staff_Idle_Loop",
+      "duration": 2.5
+    },
+    {
       "name": "Idle_Talking_Loop",
       "duration": 2.9333
     },
@@ -525,6 +529,214 @@
     {
       "name": "Walk_Loop",
       "duration": 1.3333
+    },
+    {
+      "name": "Chest_Open",
+      "duration": 1.3667
+    },
+    {
+      "name": "ClimbUp_1m",
+      "duration": 0.6667
+    },
+    {
+      "name": "Consume",
+      "duration": 1.3333
+    },
+    {
+      "name": "Farm_Harvest",
+      "duration": 2.5
+    },
+    {
+      "name": "Farm_PlantSeed",
+      "duration": 2.7667
+    },
+    {
+      "name": "Farm_Watering",
+      "duration": 3.8
+    },
+    {
+      "name": "Hit_Knockback",
+      "duration": 0.8333
+    },
+    {
+      "name": "Idle_FoldArms_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Lantern_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_No_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Rail_Call",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Rail_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Shield_Break",
+      "duration": 1.0667
+    },
+    {
+      "name": "Idle_Shield_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_TalkingPhone_Loop",
+      "duration": 2.9333
+    },
+    {
+      "name": "LayToIdle",
+      "duration": 1.5333
+    },
+    {
+      "name": "Melee_Hook",
+      "duration": 0.4667
+    },
+    {
+      "name": "Melee_Hook_Rec",
+      "duration": 0.6
+    },
+    {
+      "name": "NinjaJump_Idle_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "NinjaJump_Land",
+      "duration": 1.2667
+    },
+    {
+      "name": "NinjaJump_Start",
+      "duration": 0.9667
+    },
+    {
+      "name": "OverhandThrow",
+      "duration": 1.3333
+    },
+    {
+      "name": "Shield_Dash",
+      "duration": 1.1
+    },
+    {
+      "name": "Shield_OneShot",
+      "duration": 0.8333
+    },
+    {
+      "name": "Slide_Exit",
+      "duration": 0.5
+    },
+    {
+      "name": "Slide_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "Slide_Start",
+      "duration": 0.8333
+    },
+    {
+      "name": "Sword_Block",
+      "duration": 1.2333
+    },
+    {
+      "name": "Sword_Dash",
+      "duration": 1.5667
+    },
+    {
+      "name": "Sword_Heavy_Combo",
+      "duration": 4.3333
+    },
+    {
+      "name": "Sword_Regular_A",
+      "duration": 0.4333
+    },
+    {
+      "name": "Sword_Regular_A_Rec",
+      "duration": 0.9667
+    },
+    {
+      "name": "Sword_Regular_B",
+      "duration": 0.5333
+    },
+    {
+      "name": "Sword_Regular_B_Rec",
+      "duration": 1.0333
+    },
+    {
+      "name": "Sword_Regular_C",
+      "duration": 2.0
+    },
+    {
+      "name": "Sword_Regular_Combo",
+      "duration": 3.0
+    },
+    {
+      "name": "TreeChopping_Loop",
+      "duration": 0.9667
+    },
+    {
+      "name": "Walk_Carry_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "Yes",
+      "duration": 2.5
+    },
+    {
+      "name": "Zombie_Idle_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Zombie_Scratch",
+      "duration": 1.8
+    },
+    {
+      "name": "Zombie_Walk_Fwd_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Melee_2H_Attack_Chop",
+      "duration": 1.6333
+    },
+    {
+      "name": "Melee_2H_Attack_Slice",
+      "duration": 1.1
+    },
+    {
+      "name": "Melee_2H_Attack_Spin",
+      "duration": 2.4
+    },
+    {
+      "name": "Melee_2H_Attack_Spinning",
+      "duration": 0.6667
+    },
+    {
+      "name": "Melee_2H_Attack_Stab",
+      "duration": 1.6
+    },
+    {
+      "name": "Melee_2H_Idle",
+      "duration": 1.0667
+    },
+    {
+      "name": "Ranged_2H_Aiming",
+      "duration": 1.6
+    },
+    {
+      "name": "Ranged_2H_Reload",
+      "duration": 1.6
+    },
+    {
+      "name": "Ranged_2H_Shoot",
+      "duration": 1.0667
+    },
+    {
+      "name": "Ranged_2H_Shooting",
+      "duration": 1.0667
     }
   ]
 }

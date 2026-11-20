@@ -1,10 +1,11 @@
-import { createReadStream, existsSync, realpathSync, statSync } from 'node:fs'
+import { createReadStream, existsSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { homedir } from 'node:os'
 import { extname, join, normalize, resolve, sep } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { rundotGameLibrariesPlugin } from '@series-inc/rundot-game-sdk/vite'
+import { PINS } from './src/pins'
 
 const ROOT = import.meta.dirname
 const CONTRACTS = resolve(ROOT, '../../tools/run-voxel-characters/contracts')
@@ -20,9 +21,9 @@ function localJamAssets(): Plugin {
     const match = /^\/jam\/(.+)$/.exec(url)
     if (!match?.[1]) return next()
     const rel = normalize(match[1])
-    if (rel.startsWith('..') || !/^run-voxchar-[a-z0-9-]+\//.test(rel) || !MIME[extname(rel)] || rel.split(sep).some((s) => s.startsWith('.'))) {
+    if (rel.startsWith('..') || !/^run-cubix-[a-z0-9-]+\//.test(rel) || !MIME[extname(rel)] || rel.split(sep).some((s) => s.startsWith('.'))) {
       res.statusCode = 404
-      return res.end('not a run-voxchar asset path')
+      return res.end('not a run-cubix asset path')
     }
     for (const root of roots) {
       const file = join(root, rel)
@@ -39,14 +40,39 @@ function localJamAssets(): Plugin {
     res.end(`not found in local jam roots: ${rel}`)
   }
   return {
-    name: 'voxchar-local-jam-assets',
+    name: 'cubix-local-jam-assets',
     configureServer: (server) => void server.middlewares.use(serve),
     configurePreviewServer: (server) => void server.middlewares.use(serve),
   }
 }
 
+/** Production builds must resolve every pack leaf through a published pin in src/pins.ts. */
+function requirePins(): Plugin {
+  return {
+    name: 'cubix-require-pins',
+    buildStart() {
+      const packsJson = JSON.parse(readFileSync(join(CONTRACTS, 'data/packs.json'), 'utf8')) as {
+        packs: Record<string, { dir: string; worldTheme?: string; hasWorldLeaf: boolean }>
+      }
+      const leaves: string[] = []
+      for (const def of Object.values(packsJson.packs)) {
+        leaves.push(`${def.dir}/3D/characters`)
+        if (def.hasWorldLeaf && def.worldTheme) {
+          leaves.push(`${def.dir}/3D/${def.worldTheme}`)
+        }
+      }
+      const missing = leaves.filter((id) => !PINS[id])
+      if (missing.length > 0) {
+        throw new Error(
+          `production build needs published pins in src/pins.ts for: ${missing.join(', ')}. Use \`npm run build:local\` until they are published in jam-ready-assets.`,
+        )
+      }
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), rundotGameLibrariesPlugin(), ...(mode === 'production' ? [] : [localJamAssets()])],
+  plugins: [react(), rundotGameLibrariesPlugin(), ...(mode === 'production' ? [requirePins()] : [localJamAssets()])],
   base: './',
   define: { __POLY_ASSET_MODE__: JSON.stringify(mode === 'production' ? 'pinned' : 'local') },
   resolve: {

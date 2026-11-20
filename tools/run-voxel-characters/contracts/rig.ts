@@ -1,16 +1,34 @@
 import { z } from 'zod'
+import aquaticJson from './data/aquatic-rig.json'
 import arachnidJson from './data/arachnid-rig.json'
+import avianJson from './data/avian-rig.json'
 import catJson from './data/cat-rig.json'
 import corgiJson from './data/corgi-rig.json'
+import dragonJson from './data/dragon-rig.json'
 import foxJson from './data/fox-rig.json'
 import gsdJson from './data/gsd-rig.json'
 import horseJson from './data/horse-rig.json'
+import kaijuJson from './data/kaiju-rig.json'
 import pugJson from './data/pug-rig.json'
 import quadrupedJson from './data/quadruped-rig.json'
+import serpentJson from './data/serpent-rig.json'
 import rigJson from './data/ual1-rig.json'
 import wolfJson from './data/wolf-rig.json'
 
-export const ANIMAL_RIG_IDS = ['fox', 'horse', 'wolf', 'corgi', 'pug', 'gsd', 'cat'] as const
+export const ANIMAL_RIG_IDS = [
+  'fox',
+  'horse',
+  'wolf',
+  'corgi',
+  'pug',
+  'gsd',
+  'cat',
+  'aquatic',
+  'avian',
+  'serpent',
+  'dragon',
+  'kaiju',
+] as const
 export type AnimalRigId = (typeof ANIMAL_RIG_IDS)[number]
 
 export const RIG_IDS = ['ual1', 'quadruped', 'arachnid', ...ANIMAL_RIG_IDS] as const
@@ -62,6 +80,11 @@ export const CORGI_RIG = creatureRigSchema.parse(corgiJson)
 export const PUG_RIG = creatureRigSchema.parse(pugJson)
 export const GSD_RIG = creatureRigSchema.parse(gsdJson)
 export const CAT_RIG = creatureRigSchema.parse(catJson)
+export const AQUATIC_RIG = creatureRigSchema.parse(aquaticJson)
+export const AVIAN_RIG = creatureRigSchema.parse(avianJson)
+export const SERPENT_RIG = creatureRigSchema.parse(serpentJson)
+export const DRAGON_RIG = creatureRigSchema.parse(dragonJson)
+export const KAIJU_RIG = creatureRigSchema.parse(kaijuJson)
 
 export const ANIMAL_RIG_CONTRACTS: Readonly<Record<AnimalRigId, typeof QUADRUPED_RIG>> = {
   fox: FOX_RIG,
@@ -71,6 +94,11 @@ export const ANIMAL_RIG_CONTRACTS: Readonly<Record<AnimalRigId, typeof QUADRUPED
   pug: PUG_RIG,
   gsd: GSD_RIG,
   cat: CAT_RIG,
+  aquatic: AQUATIC_RIG,
+  avian: AVIAN_RIG,
+  serpent: SERPENT_RIG,
+  dragon: DRAGON_RIG,
+  kaiju: KAIJU_RIG,
 }
 
 export interface RigSpec {
@@ -177,6 +205,51 @@ export const RIG_SPECS: Readonly<Record<RigId, RigSpec>> = {
     rootBone: 'root',
     groundBones: ['wrist.L', 'wrist.R', 'hock.L', 'hock.R'],
     facingYaw: -Math.PI / 2,
+  },
+  aquatic: {
+    id: 'aquatic',
+    label: 'Aquatic (13j)',
+    contractId: AQUATIC_RIG.rigId,
+    joints: AQUATIC_RIG.joints,
+    clips: AQUATIC_RIG.clips.map((c) => c.name),
+    rootBone: 'root',
+    groundBones: [],
+  },
+  avian: {
+    id: 'avian',
+    label: 'Avian (21j)',
+    contractId: AVIAN_RIG.rigId,
+    joints: AVIAN_RIG.joints,
+    clips: AVIAN_RIG.clips.map((c) => c.name),
+    rootBone: 'root',
+    groundBones: ['foot_l', 'foot_r'],
+  },
+  serpent: {
+    id: 'serpent',
+    label: 'Serpent (12j)',
+    contractId: SERPENT_RIG.rigId,
+    joints: SERPENT_RIG.joints,
+    clips: SERPENT_RIG.clips.map((c) => c.name),
+    rootBone: 'root',
+    groundBones: ['pelvis', 'spine_01', 'spine_02', 'tail_01', 'tail_02', 'tail_03', 'tail_04', 'tail_tip'],
+  },
+  dragon: {
+    id: 'dragon',
+    label: 'Dragon (28j)',
+    contractId: DRAGON_RIG.rigId,
+    joints: DRAGON_RIG.joints,
+    clips: DRAGON_RIG.clips.map((c) => c.name),
+    rootBone: 'root',
+    groundBones: ['foreleg_foot_l', 'foreleg_foot_r', 'hindleg_foot_l', 'hindleg_foot_r'],
+  },
+  kaiju: {
+    id: 'kaiju',
+    label: 'Kaiju (22j)',
+    contractId: KAIJU_RIG.rigId,
+    joints: KAIJU_RIG.joints,
+    clips: KAIJU_RIG.clips.map((c) => c.name),
+    rootBone: 'root',
+    groundBones: ['foot_l', 'foot_r'],
   },
 }
 

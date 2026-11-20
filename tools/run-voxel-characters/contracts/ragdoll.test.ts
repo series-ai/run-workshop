@@ -25,7 +25,7 @@ function loadBuiltPacks(): PackCatalog[] {
 }
 
 describe('ragdoll physics metadata contracts', () => {
-  it('defines complete canonical templates for ual1 (16), quadruped (22), arachnid (27), and the 7 animal rigs', () => {
+  it('defines complete canonical templates for ual1 (16), quadruped (22), arachnid (27), and the 12 animal rigs', () => {
     expect(RAGDOLL_RIG_TEMPLATES.ual1.bodies).toHaveLength(16)
     expect(RAGDOLL_RIG_TEMPLATES.quadruped.bodies).toHaveLength(22)
     expect(RAGDOLL_RIG_TEMPLATES.arachnid.bodies).toHaveLength(27)
@@ -38,7 +38,7 @@ describe('ragdoll physics metadata contracts', () => {
       expect(resolved.rigId).toBe(rigId)
       expect(resolved.totalMassKg).toBeGreaterThan(isAnimalRig(rigId) ? 2 : 20)
       expect(resolved.ignoreCollisionPairs.length).toBeGreaterThanOrEqual(resolved.bodies.length - 1)
-      expect(resolved.groundContactBones.length).toBeGreaterThanOrEqual(2)
+      expect(resolved.groundContactBones.length).toBeGreaterThanOrEqual(rigId === 'aquatic' ? 0 : 2)
       for (const body of resolved.bodies) {
         expect(body.collider.radius).toBeGreaterThan(0.01)
         expect(body.massKg).toBeGreaterThan(0.04)
@@ -93,11 +93,11 @@ describe('ragdoll physics metadata contracts', () => {
     expect(colossusRagdoll.totalMassKg).toBeGreaterThan(baseRagdoll.totalMassKg * 1.3)
   })
 
-  it.skipIf(!HAS_BUILT_MANIFEST)('enriches all 23 built presets across all 5 packs and all rigged parts with valid ragdoll metadata', () => {
+  it.skipIf(!HAS_BUILT_MANIFEST)('enriches all 44 built presets across all 6 packs and all rigged parts with valid ragdoll metadata', () => {
     const packs = loadBuiltPacks()
-    expect(packs).toHaveLength(5)
+    expect(packs).toHaveLength(6)
     const allPresets = packs.flatMap((p) => p.presets)
-    expect(allPresets).toHaveLength(23)
+    expect(allPresets).toHaveLength(44)
 
     for (const pack of packs) {
       for (const part of pack.parts) {
@@ -135,7 +135,7 @@ describe('ragdoll physics metadata contracts', () => {
       const partsById = new Map<string, AvatarPartEntry>()
       for (const p of packs) for (const part of p.parts) partsById.set(part.id, part)
 
-      const coreGlb = await loadGlbHeadless(join(STAGE_DIR, 'run-voxchar-core/3D/characters/core-rig.glb'))
+      const coreGlb = await loadGlbHeadless(join(STAGE_DIR, 'run-cubix-core/3D/characters/core-rig.glb'))
       const bodyMesh = coreGlb.scene.getObjectByName('body_athletic') as SkinnedMesh
       expect(bodyMesh?.isSkinnedMesh).toBe(true)
 
@@ -200,7 +200,7 @@ describe('ragdoll physics metadata contracts', () => {
         proportions: { ...PROPORTION_DEFAULTS },
         bindColliders: partsById.get('body_athletic')!.ragdollColliders!,
       })
-      const unscaledGlb = await loadGlbHeadless(join(STAGE_DIR, 'run-voxchar-core/3D/characters/core-rig.glb'))
+      const unscaledGlb = await loadGlbHeadless(join(STAGE_DIR, 'run-cubix-core/3D/characters/core-rig.glb'))
       const unscaledMesh = unscaledGlb.scene.getObjectByName('body_athletic') as SkinnedMesh
       unscaledGlb.scene.updateMatrixWorld(true)
       const capByBone = new Map(defaultRagdoll.bodies.map((b) => [b.bone, b.collider]))

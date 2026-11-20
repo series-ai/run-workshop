@@ -5,9 +5,9 @@ Usage (see scripts/build.ts):
       --core <core-rig.glb> --stage <stage_dir> --meta <meta_dir>
 
 Output for each pack:
-  <stage>/run-voxchar-<pack>/3D/characters/<pack>-pack.glb   skinned parts on the UAL1 rig
-  <stage>/run-voxchar-<pack>/3D/characters/held_*.glb        static held items
-  <stage>/run-voxchar-<pack>/3D/<pack>/prop_*.glb            static world props
+  <stage>/run-cubix-<pack>/3D/characters/<pack>-pack.glb   skinned parts on the UAL1 rig
+  <stage>/run-cubix-<pack>/3D/characters/held_*.glb        static held items
+  <stage>/run-cubix-<pack>/3D/<pack>/prop_*.glb            static world props
   <meta>/<pack>.json                                         pack catalog
 """
 
@@ -16,11 +16,8 @@ from __future__ import annotations
 import json
 import sys
 from dataclasses import dataclass
-from itertools import product
 from pathlib import Path
 from typing import Callable
-
-import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -30,8 +27,8 @@ from build_core import (  # noqa: E402
     ARM_LOWER_X, ARM_UPPER_X, ARM_Y, ARM_Z, BELT_Y, CALF_BACK, CALF_FRONT, CALF_OUTER_Z, CALF_Y, CALF_Z,
     CHEST_HALF_X, CROWN_Y, HEAD_BROW_Y, HEAD_EAR_Z, HEAD_EYE_Y, HEAD_FRONT_SHELL, HEAD_HALF_X,
     HEAD_JAW_Y, HEAD_MOUTH_Y, HEAD_NOSE_Y, HEAD_SHELL, HEAD_TOP_Y, HEAD_Z, HIPS_HALF_X, PAD_BACK, PAD_BELT,
-    PAD_GARMENT, PAD_GARMENT_OUTER, PAD_HEADWEAR, PAD_JOINT, SHOULDER_Y, SLEEVE_LATTICE, SLEEVE_SHORT_X,
-    SLEEVE_Y, SLEEVE_Z, THIGH_BACK, THIGH_FRONT, THIGH_X, THIGH_Y, THIGH_Z, TORSO_BACK, TORSO_FRONT,
+    PAD_GARMENT, PAD_GARMENT_OUTER, PAD_HEADWEAR, PAD_JOINT, SHOULDER_Y, SLEEVE_SHORT_X,
+    THIGH_BACK, THIGH_FRONT, THIGH_X, THIGH_Y, THIGH_Z, TORSO_BACK, TORSO_FRONT,
     TORSO_OUTER_Z, TORSO_Y, TROUSER_CALF_X, seg,
 )
 
@@ -46,7 +43,7 @@ CLOSED_GRIP_CLIPS = {
     'hand_l': ('Idle_Torch_Loop', 'Idle_Loop'),
 }
 
-HELD_VOX = 0.026   # 2.6 cm chunky Teardown tools & pistol
+HELD_VOX = 0.026   # 2.6 cm chunky tools & pistol
 PROP_VOX = core.PROP_VOX
 PALM_CLEARANCE = 0.032
 
@@ -179,7 +176,7 @@ IND_BADGE = c('accent', 0.25, mottle=False)
 # --------------------------------------------------------------------------
 
 def torso_ind_work_apron() -> vk.VoxelPart:
-    """Olive work shirt, stained khaki-tan apron, waist pack with crimson pouch, cobalt rubber gloves."""
+    """Chambray/olive work shirt, oiled leather apron, waist pack, and heavy leather work gloves."""
     part = vk.VoxelPart('torso_ind_work_apron', covers=('chest', 'arms_upper', 'hands'))
     y0 = BELT_Y                                                         # The shirt hangs over the belt row
     bib_y = SHOULDER_Y - 2                                              # Top row of the apron bib
@@ -191,28 +188,34 @@ def torso_ind_work_apron() -> vk.VoxelPart:
     torso.set_sym(2, bib_y + 1, OUTER_FRONT, IND_APRON)                 # Neck straps
     for side in (-2, 2):
         torso.fill(side, SHOULDER_Y, TORSO_BACK, side, SHOULDER_Y, OUTER_FRONT, IND_APRON)
-    torso.fill(1, y0 + 4, OUTER_FRONT, 2, y0 + 5, OUTER_FRONT, IND_RED)    # Vivid red paint stain
-    torso.set(2, y0 + 4, OUTER_FRONT, IND_RED_DARK)
+    torso.fill(1, y0 + 4, OUTER_FRONT, 2, y0 + 4, OUTER_FRONT, IND_APRON_GRIME)   # Subtle workshop wear
+    torso.set(2, y0 + 5, OUTER_FRONT, IND_STEEL)                        # Chest pocket rule clip
     torso.fill(-2, y0 + 3, OUTER_FRONT, -1, y0 + 3, OUTER_FRONT, IND_APRON_GRIME)
     torso.set(-2, y0 + 4, OUTER_FRONT, IND_APRON_GRIME)
     torso.set(-1, bib_y - 1, OUTER_FRONT, IND_APRON_BLEACH)
     torso.set(1, bib_y, OUTER_FRONT, IND_APRON_GRIME)
     torso.fill(-2, y0, OUTER_FRONT + 1, 0, y0 + 2, OUTER_FRONT + 1, IND_PACK)   # Bulging waist pack
     torso.fill(-3, y0 + 2, OUTER_FRONT + 1, 0, y0 + 2, OUTER_FRONT + 1, IND_PACK_FLAP)
-    torso.fill(2, y0, OUTER_FRONT + 1, 2, y0 + 1, OUTER_FRONT + 1, IND_RED)     # Crimson side pouch
-    torso.set(2, y0 + 1, OUTER_FRONT + 1, IND_RED_DARK)
+    torso.fill(2, y0, OUTER_FRONT + 1, 2, y0 + 1, OUTER_FRONT + 1, IND_LEATHER)  # Leather tool holster
+    torso.set(2, y0 + 1, OUTER_FRONT + 1, IND_STEEL)
     torso.set(-1, y0 + 1, OUTER_FRONT + 1, IND_STEEL)
     core.low_collar(part, IND_SHIRT_DARK)
 
     add_short_sleeve_arm(part, IND_SHIRT, IND_SHIRT_DARK, IND_SKIN)
 
-    # Chunky cobalt rubber gloves with darker cuffed wrists
-    core.claw_hands(part, palm=IND_GLOVE, fingers=IND_GLOVE_DARK, cuff=IND_GLOVE_CUFF, pad=PAD_GARMENT_OUTER)
+    # Heavy dark-leather work gloves with reinforced cuffs
+    core.claw_hands(
+        part,
+        palm=c('leather', -0.25),
+        fingers=c('leather', -0.45),
+        cuff=c('leather', -0.58),
+        pad=PAD_GARMENT_OUTER,
+    )
     return part
 
 
 def legs_ind_weathered_cargo() -> vk.VoxelPart:
-    """Blue-grey cargo pants with dried mud, crimson smear, and dark charcoal work boots on grey soles."""
+    """Heavy canvas cargo pants with knee patches, dust cuffs, and charcoal work boots."""
     part = vk.VoxelPart('legs_ind_weathered_cargo', covers=('hips', 'legs_upper', 'legs_lower', 'feet'))
     pelvis = paint_trouser_pelvis(part, IND_PANTS, IND_PANTS_DARK)
     pelvis.set(3, BELT_Y - 1, TORSO_FRONT, IND_DUST)
@@ -222,8 +225,7 @@ def legs_ind_weathered_cargo() -> vk.VoxelPart:
     def thigh_left(grid: vk.VoxelGrid):
         grid.fill(tx0, THIGH_Y[0], THIGH_BACK, tx1, THIGH_Y[1], THIGH_FRONT, IND_PANTS)
         grid.fill(tx1 - 1, KNEE_Y + 1, THIGH_FRONT + 1, tx1, KNEE_Y + 2, THIGH_FRONT + 1, IND_PANTS_DARK)   # Cargo pocket
-        grid.fill(tx1 - 1, KNEE_Y + 4, THIGH_FRONT, tx1, KNEE_Y + 5, THIGH_FRONT, IND_RED_DARK)   # Red paint smear
-        grid.set(tx1, KNEE_Y + 6, THIGH_FRONT, IND_RED)
+        grid.fill(tx0, KNEE_Y, THIGH_FRONT, tx1 - 1, KNEE_Y + 1, THIGH_FRONT, IND_PANTS_DARK)   # Reinforced knee patch
 
     def thigh_right(grid: vk.VoxelGrid):
         grid.fill(tx0, THIGH_Y[0], THIGH_BACK, tx1, THIGH_Y[1], THIGH_FRONT, IND_PANTS)
@@ -252,25 +254,54 @@ def legs_ind_weathered_cargo() -> vk.VoxelPart:
 
 
 def headwear_knit_beanie() -> vk.VoxelPart:
-    """Chunky Teardown knit toque: folded cuff above the forehead, ribbed crown, lumpy slouched top."""
+    """Snug ribbed knit watch cap at 0.025 m resolution with folded cuff and tapered dome."""
     part = vk.VoxelPart('headwear_knit_beanie', covers=('hair',))
-    shell = HEAD_SHELL
-    front_shell = HEAD_FRONT_SHELL
-    back, front = HEAD_Z
-    cuff = CROWN_Y                                                     # The cuff leaves the forehead row in view
-    grid = seg(part, 'Head', (-shell, shell), (HEAD_BROW_Y, cuff + 2), (-shell, front_shell), pad=HEADWEAR_PAD)
-    grid.fill(-HEAD_HALF_X, HEAD_BROW_Y, -shell, HEAD_HALF_X, HEAD_BROW_Y, -shell, IND_KNIT_SHADOW)   # Nape drop
-    for side in (-shell, shell):
-        grid.fill(side, HEAD_BROW_Y, -shell, side, HEAD_BROW_Y, HEAD_EAR_Z, IND_KNIT_SHADOW)   # Cuff drop behind temples
-    core.hat_slab(grid, cuff, IND_KNIT_CUFF, z_front=front_shell)      # Folded cuff: 1 voxel proud of face
-    grid.fill(-shell, cuff + 1, -shell, shell, cuff + 1, front, IND_KNIT)   # Crown row
-    grid.fill(-shell, cuff + 2, -shell, 0, cuff + 2, 1, IND_KNIT)      # Lumpy slouched top toward the back right
-    grid.fill(1, cuff + 2, back, 1, cuff + 2, front - 1, IND_KNIT)
-    for x in (-shell, shell):                                       # Knit ribs on the cuff
-        grid.set(x, cuff, front_shell, IND_KNIT_SHADOW)
-    for z in (-shell, 0):
-        grid.set(-shell, cuff, z, IND_KNIT_SHADOW)
-        grid.set(shell, cuff, z, IND_KNIT_SHADOW)
+    knit = c('detail', 0.05)
+    knit_cuff = c('detail', -0.18)
+    knit_shadow = c('detail', -0.38)
+    cuff_y = core.HAT_CROWN_Y
+    grid = core.hat_seg(part, core.HAT_SHELL_X, (core.HAT_BROW_Y, cuff_y + 4), (-3, 6))
+    # Nape and temple drop strictly above ears & cyber temple pod (y = 66..69).
+    grid.fill(-3, core.HAT_BROW_Y, -3, 2, core.HAT_BROW_Y + 1, -3, knit_shadow)
+    core.hat_fill_sym(grid, -4, -4, core.HAT_BROW_Y, core.HAT_BROW_Y + 1, -3, 2, knit_shadow)
+    # 5 cm folded cuff (y = 72..73), alternating rib shades around perimeter.
+    grid.fill(-4, cuff_y, -3, 3, cuff_y + 1, 6, knit_cuff)
+    for x in (-4, -2, 1, 3):
+        grid.fill(x, cuff_y, 6, x, cuff_y + 1, 6, knit_shadow)
+        grid.fill(x, cuff_y, -3, x, cuff_y + 1, -3, knit_shadow)
+    for z in (-2, 1, 4):
+        core.hat_fill_sym(grid, -4, -4, cuff_y, cuff_y + 1, z, z, knit_shadow)
+    # Tapered knit dome above the cuff.
+    grid.fill(-4, cuff_y + 2, -3, 3, cuff_y + 2, 5, knit)
+    grid.fill(-3, cuff_y + 3, -2, 2, cuff_y + 3, 4, knit)
+    grid.fill(-2, cuff_y + 4, -1, 1, cuff_y + 4, 3, knit_cuff)
+    return part
+
+
+def headwear_welding_cap() -> vk.VoxelPart:
+    """Snug welder's skull cap at 0.025 m resolution with upturned bill and dual-lens brow goggles."""
+    part = vk.VoxelPart('headwear_welding_cap', covers=('hair',))
+    cloth = c('detail', 0.05)
+    cloth_dark = c('detail', -0.3)
+    strap = c('leather', -0.45)
+    frame = c('metal', -0.35, mottle=False)
+    lens = c('visor', 0.15, mottle=False)
+    band = core.HAT_CROWN_Y - 1                                                    # Seat band on upper forehead (y = 71)
+    grid = core.hat_seg(part, core.HAT_SHELL_X, (core.HAT_BROW_Y - 1, band + 3), (-3, core.HAT_VISOR_Z))
+    # Nape flap above neck/ears.
+    grid.fill(-3, core.HAT_BROW_Y - 1, -3, 2, core.HAT_BROW_Y, -3, cloth_dark)
+    # Cap band + low dome (y = 71..74).
+    grid.fill(-4, band, -3, 3, band + 1, 5, cloth)
+    grid.fill(-4, band + 2, -3, 3, band + 2, 5, cloth)
+    grid.fill(-3, band + 3, -2, 2, band + 3, 4, cloth)
+    grid.fill(-3, band + 1, 6, 2, band + 2, 6, cloth_dark)                         # Short upturned bill
+    # Goggle strap wrapping sides and back on band row.
+    core.hat_fill_sym(grid, -4, -4, band, band + 1, -3, 5, strap)
+    grid.fill(-4, band, -3, 3, band + 1, -3, strap)
+    # Dual-lens welding goggles perched snugly on the brow band (clearing y = 68..69 eyes).
+    grid.fill(-4, band, 6, 3, band + 1, 6, frame)
+    grid.fill(-1, band + 1, core.HAT_VISOR_Z, 0, band + 1, core.HAT_VISOR_Z, frame)   # Nose bridge
+    core.hat_fill_sym(grid, -3, -2, band, band + 1, core.HAT_VISOR_Z, core.HAT_VISOR_Z, lens)
     return part
 
 
@@ -291,6 +322,7 @@ def torso_ind_coveralls() -> vk.VoxelPart:
     def sleeve(arm: vk.VoxelGrid):
         arm.fill(ARM_UPPER_X[0], ARM_Y[0], ARM_Z[0], ARM_UPPER_X[1], ARM_Y[1], ARM_Z[1], IND_SHIRT)
         arm.fill(7, ARM_Y[0], ARM_Z[0], 7, ARM_Y[1], ARM_Z[1], IND_REFLECTIVE)   # Hi-vis sleeve band
+        core.round_shoulder_cap(arm)
 
     def forearm_sleeve(arm: vk.VoxelGrid):
         arm.fill(ARM_LOWER_X[0], ARM_Y[0], ARM_Z[0], ARM_LOWER_X[1], ARM_Y[1], ARM_Z[1], IND_SHIRT)
@@ -329,19 +361,22 @@ def legs_ind_heavy_boots() -> vk.VoxelPart:
 
 
 def headwear_hard_hat() -> vk.VoxelPart:
-    """Chunky Teardown hard hat: brim above the forehead, front peak, dome, top ridge."""
+    """Snug hard hat at 0.025 m resolution: thin beveled brim, dome, top crest ridge, front badge."""
     part = vk.VoxelPart('headwear_hard_hat', covers=('hair',))
-    shell = HEAD_SHELL
-    front_shell = HEAD_FRONT_SHELL
-    peak = front_shell + 1
-    back, front = HEAD_Z
-    grid = seg(part, 'Head', (-shell, shell), (CROWN_Y, CROWN_Y + 2), (-shell, peak), pad=HEADWEAR_PAD)
-    core.hat_slab(grid, CROWN_Y, IND_HAT_RIM, z_front=front_shell)      # Brim (+1 in front of face)
-    grid.fill(-HEAD_HALF_X, CROWN_Y, peak, HEAD_HALF_X, CROWN_Y, peak, IND_HAT_RIM)   # Front peak
-    grid.fill(-shell, CROWN_Y + 1, -shell, shell, CROWN_Y + 1, front, IND_HAT)           # Dome shell
-    grid.fill(-HEAD_HALF_X, CROWN_Y + 2, -shell, HEAD_HALF_X, CROWN_Y + 2, front, IND_HAT)
-    grid.fill(0, CROWN_Y + 2, -shell, 0, CROWN_Y + 2, front, IND_HAT_RIM)                # Top crest ridge
-    grid.set(0, CROWN_Y + 1, front, IND_BADGE)                         # Front badge
+    rim_y = core.HAT_CROWN_Y - 1                                                    # Seat brim at upper forehead (y = 71)
+    grid = core.hat_seg(part, core.HAT_BRIM_X, (rim_y, rim_y + 4), (-3, 8))
+    # Crisp 2.5 cm thin brim with beveled corners and forward peak above the forehead.
+    grid.fill(-5, rim_y, -3, 4, rim_y, 6, IND_HAT_RIM)
+    for cx in (-5, 4):
+        for cz in (-3, 6):
+            grid.clear(cx, rim_y, cz, cx, rim_y, cz)
+    grid.fill(-4, rim_y, 7, 3, rim_y, 7, IND_HAT_RIM)                               # Front brim lip (clears z=6..7 brows)
+    grid.fill(-3, rim_y, 8, 2, rim_y, 8, IND_HAT_RIM)                               # Front safety peak
+    # Tapered helmet shell + stiffening ridge.
+    grid.fill(-4, rim_y + 1, -3, 3, rim_y + 2, 5, IND_HAT)
+    grid.fill(-3, rim_y + 3, -2, 2, rim_y + 3, 4, IND_HAT)
+    grid.fill(-1, rim_y + 4, -3, 0, rim_y + 4, 5, IND_HAT_RIM)                      # Top crest ridge
+    grid.fill(-1, rim_y + 1, 5, 0, rim_y + 2, 5, IND_BADGE)                         # Front safety badge
     return part
 
 
@@ -350,7 +385,7 @@ def back_tool_roll() -> vk.VoxelPart:
     part = vk.VoxelPart('back_tool_roll')
     near, far = OUTER_BACK, OUTER_BACK - 1                             # Roll: 2 voxels behind the shirt
     y0 = SHOULDER_Y - 3
-    grid = seg(part, 'spine_02', (-3, 4), (y0, SHOULDER_Y), (far, OUTER_FRONT), pad=BACK_PAD)
+    grid = seg(part, 'spine_02', (-3, 4), (y0, SHOULDER_Y), (far, near), pad=BACK_PAD)
     canvas = c('trim', -0.25)
     grid.fill(-3, y0, far, 3, y0 + 1, near, canvas)                    # Canvas roll
     grid.fill(-2, y0, far, -2, y0 + 1, near, IND_LEATHER)              # Leather straps
@@ -359,7 +394,7 @@ def back_tool_roll() -> vk.VoxelPart:
     grid.set(4, y0 + 1, far, IND_STEEL)                                # Wrench jaw
     grid.set(4, y0, far, IND_RED)                                      # Red screwdriver handle
     grid.fill(2, y0 + 2, near, 2, SHOULDER_Y, near, IND_LEATHER)       # Shoulder sling
-    grid.fill(2, y0 + 1, OUTER_FRONT, 2, SHOULDER_Y, OUTER_FRONT, IND_LEATHER)
+    core.harness_straps(part, IND_LEATHER, (2,), y0 + 1, pad=BACK_PAD)
     return part
 
 
@@ -471,7 +506,7 @@ SEC_SHIRT = c('primary')
 SEC_SHIRT_DARK = c('primary', -0.32)
 SEC_SHIRT_LIGHT = c('primary', 0.42)
 SEC_SKIN = c('skin')
-SEC_UNDERSHIRT = c('accent', 0.18)
+SEC_UNDERSHIRT = c('trim', 0.45)
 SEC_BADGE = c('accent', 0.42, mottle=False)
 SEC_BADGE_DARK = c('accent', -0.15, mottle=False)
 SEC_BAND = c('trim', 0.45)
@@ -497,19 +532,19 @@ SEC_VISOR = c('visor', 0.1, mottle=False)
 # --------------------------------------------------------------------------
 
 def torso_sec_guard_shirt() -> vk.VoxelPart:
-    """Collared security shirt, yellow V-neck undershirt, epaulettes, belt & crimson pouch."""
+    """Collared security shirt, crisp V-neck undershirt, epaulettes, belt & crimson pouch."""
     part = vk.VoxelPart('torso_sec_guard_shirt', covers=('chest', 'arms_upper'))
     y0 = TORSO_Y[0] + 1                                                 # Tucked uniform: the shirt ends above the duty belt
 
     torso = core.shirt_torso(part, SEC_SHIRT, y=(y0, SHOULDER_Y), z=TORSO_OUTER_Z)
     torso.fill(0, y0, TORSO_FRONT, 0, SHOULDER_Y - 3, TORSO_FRONT, SEC_SHIRT_DARK)        # Button placket
-    torso.fill(-1, SHOULDER_Y - 1, TORSO_FRONT, 1, SHOULDER_Y - 1, TORSO_FRONT, SEC_UNDERSHIRT)   # Yellow V-neck
+    torso.fill(-1, SHOULDER_Y - 1, TORSO_FRONT, 1, SHOULDER_Y - 1, TORSO_FRONT, SEC_UNDERSHIRT)   # Crisp undershirt V-neck
     torso.set(0, SHOULDER_Y - 2, TORSO_FRONT, SEC_UNDERSHIRT)
-    torso.fill(1, SHOULDER_Y - 4, OUTER_FRONT, 2, SHOULDER_Y - 2, OUTER_FRONT, SEC_SHIRT)
-    torso.fill(1, SHOULDER_Y - 2, OUTER_FRONT, 2, SHOULDER_Y - 2, OUTER_FRONT, SEC_SHIRT_LIGHT)   # Left chest pocket flap
+    torso.fill(1, SHOULDER_Y - 4, TORSO_FRONT, 2, SHOULDER_Y - 3, TORSO_FRONT, SEC_SHIRT_DARK)    # Left chest pocket, flush
+    torso.fill(1, SHOULDER_Y - 3, TORSO_FRONT, 2, SHOULDER_Y - 3, TORSO_FRONT, SEC_SHIRT_LIGHT)   # Pocket flap
     torso.set(-2, SHOULDER_Y - 2, TORSO_FRONT, SEC_BADGE)              # Gold shield badge
     torso.set(-2, SHOULDER_Y - 3, TORSO_FRONT, SEC_BADGE_DARK)
-    for side in (-3, 3):                                               # Epaulettes flush on the shoulder top row
+    for side in (-3, 3):                                               # Epaulette: one dark strap with a gold pip
         torso.fill(side, SHOULDER_Y, TORSO_BACK, side, SHOULDER_Y, TORSO_FRONT, SEC_SHIRT_DARK)
         torso.set(side, SHOULDER_Y, 0, SEC_BADGE)
     core.low_collar(part, SEC_SHIRT_DARK)
@@ -557,29 +592,28 @@ def legs_sec_kneepad_cargo() -> vk.VoxelPart:
 
 
 def headwear_sec_peaked_cap() -> vk.VoxelPart:
-    """Teardown peaked patrol cap: band above the forehead, broad peak, 2-row crown with gold badge, tucked hair.
-
-    The band leaves the forehead row in view. The eyes stay clear below the peak.
-    """
+    """Snug peaked patrol cap at 0.025 m resolution: tucked hair, dark band, curved peak, gold badge."""
     part = vk.VoxelPart('headwear_sec_peaked_cap', covers=('hair',))
-    shell = HEAD_SHELL
-    front_shell = HEAD_FRONT_SHELL
-    back, front = HEAD_Z
-    grid = seg(part, 'Head', (-shell, shell), (HEAD_NOSE_Y, CROWN_Y + 2), (-shell, front_shell), pad=HEADWEAR_PAD)
     hair = c('hair', -0.125)
-    grid.fill(-HEAD_HALF_X, HEAD_EYE_Y, -shell, HEAD_HALF_X, HEAD_BROW_Y, -shell, hair)   # Back hair nape
-    for side in (-shell, shell):
-        grid.fill(side, HEAD_BROW_Y, -shell, side, HEAD_BROW_Y, HEAD_EAR_Z + 1, hair)   # Sideburns above ears/cheeks
-    core.hat_slab(grid, CROWN_Y, SEC_SHIRT_DARK)                       # Dark cap band above forehead, flush with face
-    grid.fill(-shell, CROWN_Y, front_shell, shell, CROWN_Y, front_shell, SEC_SHIRT_DARK)   # Broad peak
-    grid.fill(-shell, CROWN_Y + 1, -shell, shell, CROWN_Y + 1, front, SEC_SHIRT)       # Crown
-    grid.fill(-HEAD_HALF_X, CROWN_Y + 2, back, HEAD_HALF_X, CROWN_Y + 2, front, SEC_SHIRT_LIGHT)   # Raised crown front
-    grid.set(0, CROWN_Y + 1, front, SEC_BADGE)                         # Gold badge on the crown front
+    band_y = core.HAT_CROWN_Y - 1                                                   # Seat cap band on upper forehead (y = 71)
+    grid = core.hat_seg(part, core.HAT_SHELL_X, (core.HAT_BROW_Y, band_y + 3), (-3, 8))
+    # Nape and temple sideburns strictly above ears & cyber temple pod (y = 66..69).
+    grid.fill(-3, core.HAT_BROW_Y, -3, 2, core.HAT_BROW_Y, -3, hair)
+    core.hat_fill_sym(grid, -4, -4, core.HAT_BROW_Y, core.HAT_BROW_Y, -3, 2, hair)
+    # Cap band + dark visor peak above lower brow (y = 71).
+    grid.fill(-4, band_y, -3, 3, band_y, 5, SEC_SHIRT_DARK)
+    grid.fill(-4, band_y, 6, 3, band_y, 7, SEC_SHIRT_DARK)
+    grid.fill(-3, band_y, 8, 2, band_y, 8, SEC_SHIRT_DARK)                          # Sleek tapered peak tip
+    # Flared patrol crown (y = 72..74).
+    grid.fill(-4, band_y + 1, -3, 3, band_y + 1, 5, SEC_SHIRT)
+    grid.fill(-4, band_y + 2, -3, 3, band_y + 2, 6, SEC_SHIRT)
+    grid.fill(-3, band_y + 3, -2, 2, band_y + 3, 6, SEC_SHIRT_LIGHT)
+    grid.fill(-1, band_y + 2, 6, 0, band_y + 2, 6, SEC_BADGE)                       # Gold patrol badge
     return part
 
 
 def torso_sec_cyber_vest() -> vk.VoxelPart:
-    """Tactical plate carrier with emissive status pip, shoulder radio, and cybernetic left arm."""
+    """Tactical plate carrier with emissive status pip, shoulder radio, cybernetic left arm, and right bracer."""
     part = vk.VoxelPart('torso_sec_cyber_vest', covers=('chest', 'arms_upper'))
     y0 = TORSO_Y[0]
     plate_y = (y0 + 3, SHOULDER_Y - 1)                                  # Rows of the plate carrier
@@ -599,43 +633,53 @@ def torso_sec_cyber_vest() -> vk.VoxelPart:
     torso.fill(3, SHOULDER_Y, OUTER_FRONT + 1, 3, SHOULDER_Y + 2, OUTER_FRONT + 1, SEC_GUNMETAL)   # Antenna
     core.low_collar(part, SEC_RIG, back=False)
 
-    sy0, sy1 = SLEEVE_Y
-    sz0, sz1 = SLEEVE_Z
+    # Left arm: cybernetic. It has the section of the human arm (2 x 2), thus the two arms have the same mass.
     cuff_x = SLEEVE_SHORT_X[1]
+    lx0, lx1 = ARM_LOWER_X
     pauldron = seg(part, 'upperarm_l', SLEEVE_SHORT_X, ARM_Y, ARM_Z, pad=PAD_GARMENT_OUTER)
     pauldron.fill(SLEEVE_SHORT_X[0], ARM_Y[0], ARM_Z[0], cuff_x, ARM_Y[1], ARM_Z[1], SEC_STEEL)   # Left cyber shoulder plate
     pauldron.fill(cuff_x, ARM_Y[0], ARM_Z[0], cuff_x, ARM_Y[1], ARM_Z[1], SEC_STEEL_DARK)
+    core.round_shoulder_cap(pauldron)
     cyber_upper = seg(part, 'upperarm_l', BARE_UPPER_X, ARM_Y, ARM_Z)
     cyber_upper.fill(BARE_UPPER_X[0], ARM_Y[0], ARM_Z[0], BARE_UPPER_X[1], ARM_Y[1], ARM_Z[1], SEC_GUNMETAL)   # Cyber upperarm
 
-    forearm = seg(part, 'lowerarm_l', ARM_LOWER_X, SLEEVE_Y, SLEEVE_Z, pad=PAD_GARMENT_OUTER, **SLEEVE_LATTICE)
-    forearm.fill(ARM_LOWER_X[0], sy0, sz0, ARM_LOWER_X[1], sy1, sz1, SEC_STEEL)   # Armored 3x3 cyber forearm
-    forearm.fill(ARM_LOWER_X[0], sy0, sz0, ARM_LOWER_X[0], sy1, sz1, SEC_STEEL_DARK)   # Elbow ring
-    forearm.fill(ARM_LOWER_X[1], sy0, sz0, ARM_LOWER_X[1], sy1, sz1, SEC_STEEL_DARK)   # Wrist ring
-    forearm.fill(12, sy1, 0, 13, sy1, 0, GLOW)                         # Power strip
+    forearm = seg(part, 'lowerarm_l', ARM_LOWER_X, ARM_Y, ARM_Z, pad=PAD_GARMENT_OUTER)
+    forearm.fill(lx0, ARM_Y[0], ARM_Z[0], lx1, ARM_Y[1], ARM_Z[1], SEC_STEEL)            # Cyber forearm shell
+    for ring_x in (lx0, lx1):
+        forearm.fill(ring_x, ARM_Y[0], ARM_Z[0], ring_x, ARM_Y[1], ARM_Z[1], SEC_STEEL_DARK)   # Elbow and wrist rings
+    forearm.fill(lx0 + 2, ARM_Y[1], ARM_Z[1], lx1 - 2, ARM_Y[1], ARM_Z[1], GLOW)         # Power strip
 
+    # Right arm: tactical half-sleeve and an armored bracer with the same rings as the cyber forearm.
     add_short_sleeve_arm(part, SEC_SHIRT_DARK, SEC_RIG, SEC_SKIN, right_only_arm=True)
+
+    def bracer(grid: vk.VoxelGrid):
+        grid.fill(lx0 + 2, ARM_Y[0], ARM_Z[0], lx1, ARM_Y[1], ARM_Z[1], SEC_RIG)
+        grid.fill(lx0 + 3, ARM_Y[1], ARM_Z[0], lx1 - 1, ARM_Y[1], ARM_Z[1], SEC_STEEL)   # Bracer plate on the back of the arm
+        grid.fill(lx1, ARM_Y[0], ARM_Z[0], lx1, ARM_Y[1], ARM_Z[1], SEC_STEEL_DARK)      # Wrist ring
+
+    right_only(part, 'lowerarm_l', (lx0 + 2, lx1), ARM_Y, ARM_Z, bracer, pad=PAD_GARMENT_OUTER)
     return part
 
 
 def headwear_riot_helmet() -> vk.VoxelPart:
-    """Chunky riot helmet: shell over the skull, cheek guards, neck guard, raised tinted visor."""
+    """Snug tactical riot helmet at 0.025 m resolution: shell, ear armor, neck guard, eye-level tinted visor."""
     part = vk.VoxelPart('headwear_riot_helmet', covers=('hair',))
-    shell_x = HEAD_SHELL
-    front_shell = HEAD_FRONT_SHELL
-    back, front = HEAD_Z
-    grid = seg(part, 'Head', (-shell_x, shell_x), (HEAD_JAW_Y, CROWN_Y + 1), (-shell_x, front_shell), pad=HEADWEAR_PAD)
     shell = c('primary', -0.5)
-    grid.fill(-shell_x, CROWN_Y, -shell_x, shell_x, CROWN_Y, front, shell)                 # Top dome
-    grid.fill(-HEAD_HALF_X, HEAD_JAW_Y, -shell_x, HEAD_HALF_X, HEAD_TOP_Y, -shell_x, shell)   # Rear shell & neck guard
-    grid.fill(-HEAD_HALF_X, HEAD_JAW_Y, -shell_x, HEAD_HALF_X, HEAD_JAW_Y, -shell_x, SEC_STEEL_DARK)   # Steel rear rim
-    for side in (-shell_x, shell_x):
-        grid.fill(side, HEAD_BROW_Y, -shell_x, side, HEAD_TOP_Y, front, shell)             # Upper side walls
-        grid.fill(side, HEAD_JAW_Y, -shell_x, side, HEAD_EYE_Y, HEAD_EAR_Z, shell)         # Ear and rear jaw guard
-        grid.fill(side, HEAD_JAW_Y, front, side, HEAD_MOUTH_Y, front, shell)               # Cheek guards
-    grid.fill(-shell_x, CROWN_Y, front_shell, shell_x, CROWN_Y, front_shell, SEC_VISOR)    # Raised tinted visor
-    grid.fill(-HEAD_HALF_X, HEAD_BROW_Y, front_shell, HEAD_HALF_X, HEAD_BROW_Y, front_shell, SEC_VISOR)
-    grid.fill(0, CROWN_Y + 1, -shell_x, 0, CROWN_Y + 1, front, SEC_STEEL_DARK)             # Crest stripe
+    grid = core.hat_seg(part, core.HAT_BRIM_X, (core.HAT_JAW_Y + 1, core.HAT_CROWN_Y + 3), (-4, core.HAT_VISOR_Z))
+    # Rear neck guard & nape flare (y = 63..70, total height 0.333 m <= 0.36 m).
+    grid.fill(-4, core.HAT_JAW_Y + 1, -3, 3, core.HAT_CROWN_Y - 2, -3, shell)
+    grid.fill(-3, core.HAT_JAW_Y + 1, -4, 2, core.HAT_MOUTH_Y, -4, SEC_STEEL_DARK)
+    # Side ear/temple armor (x = -5 & +4 clears ears and head_cyber_visor temple pod cleanly).
+    core.hat_fill_sym(grid, -5, -5, core.HAT_NOSE_Y - 1, core.HAT_BROW_Y + 1, -3, 3, shell)
+    core.hat_fill_sym(grid, -4, -4, core.HAT_JAW_Y + 1, core.HAT_MOUTH_Y + 1, 4, 5, shell)   # Cheek guards
+    # Upper helmet dome & brow mount rim (y = 71..75).
+    grid.fill(-4, core.HAT_BROW_Y + 1, -3, 3, core.HAT_CROWN_Y + 2, 6, shell)
+    grid.fill(-4, core.HAT_BROW_Y + 1, core.HAT_VISOR_Z, 3, core.HAT_BROW_Y + 1, core.HAT_VISOR_Z, SEC_STEEL_DARK)   # Visor brow mount
+    grid.fill(-3, core.HAT_CROWN_Y + 3, -2, 2, core.HAT_CROWN_Y + 3, 5, shell)
+    grid.fill(-1, core.HAT_CROWN_Y + 3, -3, 0, core.HAT_CROWN_Y + 3, 5, SEC_STEEL_DARK)   # Crest ridge
+    # Tinted ballistic visor shielding the eyes (y = 68..70, z = 7 clears proud nose/brows) + hinge brackets.
+    grid.fill(-4, core.HAT_EYE_Y, core.HAT_VISOR_Z, 3, core.HAT_BROW_Y, core.HAT_VISOR_Z, SEC_VISOR)
+    core.hat_fill_sym(grid, -5, -5, core.HAT_EYE_Y + 1, core.HAT_BROW_Y + 1, 4, 6, SEC_STEEL_DARK)
     return part
 
 
@@ -644,7 +688,7 @@ def back_radio_pack() -> vk.VoxelPart:
     part = vk.VoxelPart('back_radio_pack')
     near, far = OUTER_BACK, OUTER_BACK - 1                             # Case: 2 voxels behind the shirt
     y0 = SHOULDER_Y - 3
-    grid = seg(part, 'spine_02', (-2, 2), (y0, SHOULDER_Y + 2), (far, OUTER_FRONT), pad=BACK_PAD)
+    grid = seg(part, 'spine_02', (-2, 2), (y0, SHOULDER_Y + 2), (far, near), pad=BACK_PAD)
     grid.fill(-2, y0, far, 2, SHOULDER_Y - 1, near, SEC_STEEL_DARK)    # Case
     grid.fill(-2, SHOULDER_Y - 1, far, 2, SHOULDER_Y - 1, near, SEC_GUNMETAL)   # Lid
     grid.fill(-1, y0, far, 0, y0 + 1, far, SEC_GUNMETAL)               # Speaker grille
@@ -652,8 +696,7 @@ def back_radio_pack() -> vk.VoxelPart:
     grid.set(-1, SHOULDER_Y, far, GLOW)                                # Beacon LED
     grid.fill(2, SHOULDER_Y, far, 2, SHOULDER_Y + 1, far, SEC_GUNMETAL)   # Stub antenna, below the helmet neck guard
     grid.set(2, SHOULDER_Y + 2, far, SEC_STEEL)
-    for side in (-2, 2):
-        grid.fill(side, y0 + 1, OUTER_FRONT, side, SHOULDER_Y, OUTER_FRONT, SEC_BELT)   # Front harness straps
+    core.harness_straps(part, SEC_BELT, (-2, 2), y0 + 1, pad=BACK_PAD)   # Front harness straps
     return part
 
 
@@ -798,6 +841,7 @@ INDUSTRIAL = PackSpec(
         PartSpec(torso_ind_coveralls, 'torso', 'Zip Coveralls'),
         PartSpec(legs_ind_heavy_boots, 'legs', 'Coverall Legs & Heavy Boots', hides_legs_upper=True),
         PartSpec(headwear_hard_hat, 'headwear', 'Hard Hat', hides_hair=True),
+        PartSpec(headwear_welding_cap, 'headwear', 'Welding Cap & Goggles', hides_hair=True),
         PartSpec(back_tool_roll, 'back', 'Tool Roll'),
     ),
     held=(
@@ -816,22 +860,21 @@ INDUSTRIAL = PackSpec(
             torso='torso_ind_work_apron', legs='legs_ind_weathered_cargo', headwear='headwear_knit_beanie',
             back=None, held_right='held_pipe_wrench', held_left=None,
             palette={
-                'skin': '#f4b998', 'hair': '#786350', 'primary': '#677844',
-                'secondary': '#6c8398', 'accent': '#3863b8', 'metal': '#8e98a3',
-                'trim': '#e6dac1', 'leather': '#bea17a', 'visor': '#40b8a8', 'detail': '#c83428',
+                'skin': '#f4b998', 'hair': '#3a2a20', 'primary': '#4b647a',
+                'secondary': '#595146', 'accent': '#b87e3e', 'metal': '#8e98a3',
+                'trim': '#dfd6c1', 'leather': '#9e7b56', 'visor': '#42606b', 'detail': '#4d5d6e',
             },
-            # Stocky Chris Seabranch build: shorter, deeper chest, heavier limbs, larger head.
-            proportions={'height': 0.92, 'torsoBulk': 1.1, 'waistScale': 1.04, 'limbThickness': 1.08, 'headScale': 1.04},
+            proportions={'height': 0.96, 'torsoBulk': 1.05, 'waistScale': 1.02, 'limbThickness': 1.04, 'headScale': 1.0},
         ),
         preset(
             'industrial', 'ind_welder', 'Pipe Welder',
             clip='Idle_Loop', body='body_athletic', head='head_scarred_veteran', hair='hair_buzz_crew',
-            torso='torso_ind_coveralls', legs='legs_ind_heavy_boots', headwear='headwear_knit_beanie',
+            torso='torso_ind_coveralls', legs='legs_ind_heavy_boots', headwear='headwear_welding_cap',
             back='back_tool_roll', held_right='held_blowtorch', held_left=None,
             palette={
                 'skin': '#d49062', 'hair': '#382419', 'primary': '#4b5f76',
                 'secondary': '#3b424c', 'accent': '#3996e8', 'metal': '#9ca5b0',
-                'trim': '#dfd6c1', 'leather': '#593b27', 'visor': '#46c6eb', 'detail': '#c43a2e',
+                'trim': '#dfd6c1', 'leather': '#593b27', 'visor': '#46c6eb', 'detail': '#8a462e',
             },
         ),
         preset(
@@ -873,9 +916,9 @@ SECURITY = PackSpec(
             torso='torso_sec_guard_shirt', legs='legs_sec_kneepad_cargo', headwear='headwear_sec_peaked_cap',
             back=None, held_right='held_voxel_pistol', held_left=None,
             palette={
-                'skin': '#eeb38e', 'hair': '#2b1d15', 'primary': '#2d728a',
-                'secondary': '#5c4730', 'accent': '#e6b53a', 'metal': '#86909a',
-                'trim': '#e0e6ec', 'leather': '#584a3f', 'visor': '#3ec2ec', 'detail': '#c6362c',
+                'skin': '#eeb38e', 'hair': '#2b1d15', 'primary': '#948464',
+                'secondary': '#383e46', 'accent': '#d4ab48', 'metal': '#86909a',
+                'trim': '#e4e9ee', 'leather': '#4b3f36', 'visor': '#34444e', 'detail': '#b83c32',
             },
         ),
         preset(

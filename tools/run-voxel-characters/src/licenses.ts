@@ -17,10 +17,12 @@ Creative Commons Zero v1.0 Universal (CC0 1.0 Public Domain Dedication)
 https://creativecommons.org/publicdomain/zero/1.0/
 
 Contains:
-- Canonical 53-joint Quaternius UAL1 armature & 43 CC0 motion clips
-  (Quaternius Universal Animation Library Standard, CC0-1.0)
-- Teardown-style procedural voxel base bodies, heads, and hair
-  authored for RUN Voxel Characters (dedicated to CC0-1.0).
+- Canonical 53-joint Quaternius UAL1 armature & 95 CC0 motion clips:
+  - 43 clips from Quaternius Universal Animation Library Standard (CC0-1.0)
+  - 42 clips from Quaternius Universal Animation Library 2 (CC0-1.0)
+  - 10 two-handed Melee_2H_* / Ranged_2H_* clips from KayKit Character Animations (CC0-1.0)
+- Procedural orthogonal voxel base bodies, heads, and hair
+  authored for RUN Cubix (dedicated to CC0-1.0).
 `
 
 const UAL_RIG_NOTICE = `Third-Party Materials: character skinning uses the Quaternius Universal
@@ -41,7 +43,7 @@ export function licenseTextFor(pack: VoxCharPackKey, kind: VoxCharLeafKind): str
 Source: ${SOURCE}
 Verified-by: ${VERIFIED_BY}, ${TODAY}
 
-RUN Voxel Characters — ${def.label} ${title}
+RUN Cubix — ${def.label} ${title}
 Copyright (c) 2026 Series Entertainment, Inc.
 Made for the RUN platform. Licensed under the RUN Repository Supplemental
 License v1.0 below: use it in RUN projects; it converts to MIT on January 1,

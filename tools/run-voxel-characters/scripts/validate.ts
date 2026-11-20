@@ -4,13 +4,17 @@ import { AnimationMixer, Mesh, Vector3, type SkinnedMesh } from 'three'
 import { z } from 'zod'
 import { BUDGETS } from '../contracts/budgets'
 import {
+  BIPEDAL_MONSTER_CONTRACT,
+  HUMANOID_HEADWEAR_VOXEL_SIZE,
   HUMANOID_PROPORTION_DEFAULTS,
   HUMANOID_SILHOUETTE,
   HUMANOID_VOXEL_SIZE,
+  PROP_CRAFT,
   packCatalogSchema,
   type AvatarPartEntry,
   type CharacterPreset,
   type HeldItemEntry,
+  type WorldPropEntry,
 } from '../contracts/catalog'
 import { leavesFor, PACK_DEFS, VOXCHAR_PACK_KEYS } from '../contracts/packs'
 import { garmentRegionsBelowDarkFloor, MIN_GARMENT_LUMINANCE } from '../contracts/palette'
@@ -46,7 +50,7 @@ function assertOrthogonalVoxelNormals(glb: ParsedGlb, nodeName: string): void {
     const maxAxis = Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz))
     if (Math.abs(maxAxis - 1) > 0.02 || Math.abs(absSum - 1) > 0.02) {
       throw new Error(
-        `Voxel mesh "${nodeName}" vertex ${i} has non-orthogonal normal (${nx.toFixed(3)}, ${ny.toFixed(3)}, ${nz.toFixed(3)}). Teardown voxel meshes must use axis-aligned normals.`,
+        `Voxel mesh "${nodeName}" vertex ${i} has non-orthogonal normal (${nx.toFixed(3)}, ${ny.toFixed(3)}, ${nz.toFixed(3)}). Voxel meshes must use axis-aligned normals.`,
       )
     }
   }
@@ -80,7 +84,7 @@ function assertFiniteWeightsAndPositions(glb: ParsedGlb, nodeName: string, isSki
     }
   }
   const uvIdx = prim.attributes.TEXCOORD_0
-  if (uvIdx === undefined) throw new Error(`Mesh "${nodeName}" missing TEXCOORD_0 for 6-region UV palette`)
+  if (uvIdx === undefined) throw new Error(`Mesh "${nodeName}" missing TEXCOORD_0 for 10-region UV palette`)
   const uvs = readAccessor(glb, uvIdx)
   for (const [u, v] of uvs) {
     if (!Number.isFinite(u) || !Number.isFinite(v) || u! < -0.01 || u! > 1.01 || v! < -0.01 || v! > 1.01) {
@@ -125,8 +129,20 @@ const partExtrasSchema = z
   .object({
     polyRegions: z.record(z.string(), z.tuple([z.number().int().nonnegative(), z.number().int().nonnegative()])).optional(),
     polyCovers: z.array(z.string().min(1)).optional(),
+    polyBakeAo: z.boolean().optional(),
   })
   .passthrough()
+
+function assertBakedAo(glb: ParsedGlb, nodeName: string): void {
+  const node = glb.doc.nodes?.find((n) => n.name === nodeName)
+  if (!node) throw new Error(`Missing mesh node "${nodeName}"`)
+  const extras = partExtrasSchema.parse(node.extras ?? {})
+  if (extras.polyBakeAo === false) {
+    throw new Error(
+      `Mesh "${nodeName}" was built with bake_ao=False. Baked AO is mandatory on all characters, monsters, held items, and props.`,
+    )
+  }
+}
 
 function assertNoSelfCover(glb: ParsedGlb, nodeName: string): void {
   const node = glb.doc.nodes?.find((n) => n.name === nodeName)
@@ -162,7 +178,7 @@ function assertMorphAndLayerContracts(glb: ParsedGlb, part: AvatarPartEntry): vo
   }
 }
 
-// ---- Sculpt lattice and Teardown silhouette contract (contracts/data/proportions.json) ----
+// ---- Sculpt lattice and canonical voxel silhouette contract (contracts/data/proportions.json) ----
 
 interface Extent {
   min: [number, number, number]
@@ -175,16 +191,19 @@ const latticeExtrasSchema = z.object({
   polyLattice: z.object({ voxelSize: z.number().positive(), maxPad: z.number().nonnegative() }),
 })
 
-/** One voxel-human part in the sculpt pose: the rest pose of the rig with the default humanoid proportions. */
+/** One voxel-human or bipedal-monster part in the sculpt pose: the rest pose of the rig with the default humanoid proportions. */
 interface SculptedPart {
   part: AvatarPartEntry
   positions: Float64Array
   /** UAL1 joint index of each vertex. Voxel segments are rigid: joint slot 0 has weight 1. */
   joints: ArrayLike<number>
+  voxelSize: number
   maxPad: number
 }
 
-const isVoxelHumanPart = (part: AvatarPartEntry): boolean => (part.rigId ?? 'ual1') === 'ual1' && part.pack !== 'creatures'
+const isSculptedMonsterBody = (part: AvatarPartEntry): boolean =>
+  part.pack === 'creatures' || (part.slot === 'body' && /^body_(orc|troll|ogre|goblin|golem|demon|giant)_/.test(part.id))
+const isVoxelHumanPart = (part: AvatarPartEntry): boolean => (part.rigId ?? 'ual1') === 'ual1' && !isSculptedMonsterBody(part)
 
 /** Skin one part through the runtime path (`restPoseVertices`) with `HUMANOID_PROPORTION_DEFAULTS`. */
 async function sculptPart(
@@ -201,23 +220,30 @@ async function sculptPart(
   if (!mesh?.isSkinnedMesh) throw new Error(`Part "${part.id}" node "${part.nodeName}" is not a SkinnedMesh.`)
   const extras = latticeExtrasSchema.safeParse(mesh.userData)
   if (!extras.success) throw new Error(`Part "${part.id}" has no polyLattice extras. Sculpt it with build_core.skinned_mesh.`)
-  if (Math.abs(extras.data.polyLattice.voxelSize - HUMANOID_VOXEL_SIZE) > 1e-9) {
-    throw new Error(`Part "${part.id}" has ${extras.data.polyLattice.voxelSize} m voxels. The contract is ${HUMANOID_VOXEL_SIZE} m.`)
+  const expectedVoxelSize = part.slot === 'headwear' ? HUMANOID_HEADWEAR_VOXEL_SIZE : HUMANOID_VOXEL_SIZE
+  if (Math.abs(extras.data.polyLattice.voxelSize - expectedVoxelSize) > 1e-9) {
+    throw new Error(`Part "${part.id}" has ${extras.data.polyLattice.voxelSize} m voxels. The contract is ${expectedVoxelSize} m.`)
   }
   const [posed] = restPoseVertices(gltf.scene, [mesh], HUMANOID_PROPORTION_DEFAULTS, 'ual1')
   const skinIndex = mesh.geometry.getAttribute('skinIndex')
   const joints = Array.from({ length: skinIndex.count }, (_, i) => skinIndex.getX(i))
-  return { part, positions: posed!.positions, joints, maxPad: extras.data.polyLattice.maxPad }
+  return {
+    part,
+    positions: posed!.positions,
+    joints,
+    voxelSize: extras.data.polyLattice.voxelSize,
+    maxPad: extras.data.polyLattice.maxPad,
+  }
 }
 
 /**
- * Each face of a voxel human is on the half lattice of `HUMANOID_VOXEL_SIZE` in the sculpt pose (an even
- * part is half a voxel inside an odd part). A layer pad moves a face off the lattice by `maxPad` at most.
+ * Each face of a voxel human is on the half lattice of `HUMANOID_VOXEL_SIZE` (or full `HAT_VOX` for
+ * `0.025 m` headwear) in the sculpt pose. A layer pad moves a face off the lattice by `maxPad` at most.
  * A vertex that is not on the lattice shows that the mesh was not sculpted for the default proportions:
  * the runtime then shows voxels that are not cubes.
  */
 function assertOnSculptLattice(sculpted: SculptedPart): void {
-  const step = HUMANOID_VOXEL_SIZE / 2
+  const step = Math.min(HUMANOID_VOXEL_SIZE / 2, sculpted.voxelSize)
   const tolerance = sculpted.maxPad + 5e-4
   for (let i = 0; i < sculpted.positions.length; i++) {
     const value = sculpted.positions[i]!
@@ -256,6 +282,7 @@ function jointExtent(sculpted: SculptedPart, jointName: string, minY = -Infinity
 interface SilhouetteSample {
   id: string
   value: number
+  height?: number
 }
 
 /** Measured widths of the human parts. The validator compares each head with each torso and each body. */
@@ -278,7 +305,7 @@ function measureHead(sculpted: SculptedPart, measures: SilhouetteMeasures): void
   const ratio = size(head, 1) / faceWidth
   if (ratio < HUMANOID_SILHOUETTE.minFacePortraitRatio) {
     throw new Error(
-      `Head "${sculpted.part.id}" has a ${faceWidth.toFixed(3)} m wide face and is ${size(head, 1).toFixed(3)} m tall (ratio ${ratio.toFixed(2)} < ${HUMANOID_SILHOUETTE.minFacePortraitRatio}). A Teardown face is long and thin.`,
+      `Head "${sculpted.part.id}" has a ${faceWidth.toFixed(3)} m wide face and is ${size(head, 1).toFixed(3)} m tall (ratio ${ratio.toFixed(2)} < ${HUMANOID_SILHOUETTE.minFacePortraitRatio}). Canonical voxel faces are long and thin.`,
     )
   }
   measures.faces.push({ id: sculpted.part.id, value: faceWidth })
@@ -298,7 +325,7 @@ function measureLowerLimb(sculpted: SculptedPart): void {
   const heelOffset = Math.abs(foot.min[2] - calf.min[2])
   if (heelOffset > HUMANOID_SILHOUETTE.maxHeelBackOffset) {
     throw new Error(
-      `Part "${sculpted.part.id}" shoe heel back (${foot.min[2].toFixed(3)} m) is ${(heelOffset * 1000).toFixed(1)} mm off calf back (${calf.min[2].toFixed(3)} m). Teardown shoes sit flush at the calf back.`,
+      `Part "${sculpted.part.id}" shoe heel back (${foot.min[2].toFixed(3)} m) is ${(heelOffset * 1000).toFixed(1)} mm off calf back (${calf.min[2].toFixed(3)} m). Canonical voxel shoes sit flush at the calf back.`,
     )
   }
   const shoeLength = Math.max(foot.max[2], ball.max[2]) - Math.min(foot.min[2], ball.min[2])
@@ -319,7 +346,10 @@ function measureSilhouettePart(sculpted: SculptedPart, measures: SilhouetteMeasu
   const { part } = sculpted
   if (part.slot === 'head') measureHead(sculpted, measures)
   if (part.slot === 'hair') measures.hair.push({ id: part.id, value: size(jointExtent(sculpted, 'Head'), 0) })
-  if (part.slot === 'headwear') measures.headwear.push({ id: part.id, value: size(jointExtent(sculpted, 'Head'), 0) })
+  if (part.slot === 'headwear') {
+    const ext = jointExtent(sculpted, 'Head')
+    measures.headwear.push({ id: part.id, value: size(ext, 0), height: size(ext, 1) })
+  }
   if (part.slot === 'torso') measures.chests.push({ id: part.id, value: size(jointExtent(sculpted, 'spine_03'), 0) })
   if (part.slot === 'body') {
     measures.necks.push({ id: part.id, value: size(jointExtent(sculpted, 'neck_01'), 0) })
@@ -335,6 +365,7 @@ function assertSilhouetteContract(measures: SilhouetteMeasures): void {
   const percent = (ratio: number): string => `${(ratio * 100).toFixed(0)}%`
   const [minFace, maxFace] = HUMANOID_SILHOUETTE.faceToChestWidth
   const [minEnvelope, maxEnvelope] = HUMANOID_SILHOUETTE.headEnvelopeToChestWidth
+  const [minHat, maxHat] = HUMANOID_SILHOUETTE.headwearToChestWidth
   for (const chest of measures.chests) {
     for (const face of measures.faces) {
       const ratio = face.value / chest.value
@@ -352,12 +383,16 @@ function assertSilhouetteContract(measures: SilhouetteMeasures): void {
         )
       }
     }
-    // A hat can have a brim wider than the chest. Only the pinhead limit applies to it.
     for (const hat of measures.headwear) {
       const ratio = hat.value / chest.value
-      if (ratio < minEnvelope) {
+      if (ratio < minHat || ratio > maxHat) {
         throw new Error(
-          `Headwear "${hat.id}" (${hat.value.toFixed(3)} m) is ${percent(ratio)} of the chest of "${chest.id}" (${chest.value.toFixed(3)} m). The minimum head envelope is ${percent(minEnvelope)}.`,
+          `Headwear "${hat.id}" (${hat.value.toFixed(3)} m) is ${percent(ratio)} of the chest of "${chest.id}" (${chest.value.toFixed(3)} m). The headwear range is ${percent(minHat)} to ${percent(maxHat)}.`,
+        )
+      }
+      if ((hat.height ?? 0) > HUMANOID_SILHOUETTE.maxHeadwearHeight) {
+        throw new Error(
+          `Headwear "${hat.id}" height (${hat.height!.toFixed(3)} m) exceeds maxHeadwearHeight (${HUMANOID_SILHOUETTE.maxHeadwearHeight} m).`,
         )
       }
     }
@@ -382,6 +417,45 @@ function assertSilhouetteContract(measures: SilhouetteMeasures): void {
   }
 }
 
+function assertBipedalMonsterContract(sculpted: SculptedPart): void {
+  const { silhouette } = BIPEDAL_MONSTER_CONTRACT
+  const chest = jointExtent(sculpted, 'spine_03')
+  const waist = jointExtent(sculpted, 'spine_02')
+  const pelvis = jointExtent(sculpted, 'pelvis')
+  const head = jointExtent(sculpted, 'Head')
+  const foot = jointExtent(sculpted, 'foot_l')
+  const ballIdx = RIG_SPECS.ual1.joints.indexOf('ball_l')
+  const hasBall = ballIdx >= 0 && Array.from(sculpted.joints).includes(ballIdx)
+  const ball = hasBall ? jointExtent(sculpted, 'ball_l') : foot
+
+  const waistRatio = size(waist, 0) / size(chest, 0)
+  if (waistRatio > silhouette.maxWaistToChestWidth) {
+    throw new Error(
+      `Monster "${sculpted.part.id}" waist/chest width ratio is ${waistRatio.toFixed(3)} > ${silhouette.maxWaistToChestWidth} (must V-taper, not read as a straight block)`,
+    )
+  }
+  const headDepth = size(head, 2)
+  if (headDepth < silhouette.minHeadDepthMeters) {
+    throw new Error(
+      `Monster "${sculpted.part.id}" head depth ${headDepth.toFixed(3)} m < minHeadDepthMeters (${silhouette.minHeadDepthMeters} m)`,
+    )
+  }
+  const headCenterZ = (head.min[2] + head.max[2]) / 2
+  const pelvisCenterZ = (pelvis.min[2] + pelvis.max[2]) / 2
+  const forwardOffset = headCenterZ - pelvisCenterZ
+  if (forwardOffset < silhouette.minHeadForwardOffset) {
+    throw new Error(
+      `Monster "${sculpted.part.id}" head forward offset ${forwardOffset.toFixed(3)} m < minHeadForwardOffset (${silhouette.minHeadForwardOffset} m)`,
+    )
+  }
+  const footLength = Math.max(foot.max[2], ball.max[2]) - Math.min(foot.min[2], ball.min[2])
+  if (footLength < silhouette.minFootLengthMeters) {
+    throw new Error(
+      `Monster "${sculpted.part.id}" foot length ${footLength.toFixed(3)} m < minFootLengthMeters (${silhouette.minFootLengthMeters} m)`,
+    )
+  }
+}
+
 function creatureSideSpec(rigId: RigId): { axis: 0 | 2; leftSign: 1 | -1; leftPattern: RegExp; rightPattern: RegExp } {
   if (rigId === 'quadruped') {
     return { axis: 0, leftSign: 1, leftPattern: /^leg_(fl|bl)_/, rightPattern: /^leg_(fr|br)_/ }
@@ -389,7 +463,15 @@ function creatureSideSpec(rigId: RigId): { axis: 0 | 2; leftSign: 1 | -1; leftPa
   if (rigId === 'arachnid') {
     return { axis: 0, leftSign: 1, leftPattern: /^leg_[1-4]_l_/, rightPattern: /^leg_[1-4]_r_/ }
   }
-  if (rigId === 'fox' || rigId === 'horse') {
+  if (
+    rigId === 'fox' ||
+    rigId === 'horse' ||
+    rigId === 'aquatic' ||
+    rigId === 'avian' ||
+    rigId === 'serpent' ||
+    rigId === 'dragon' ||
+    rigId === 'kaiju'
+  ) {
     return { axis: 0, leftSign: 1, leftPattern: /_l$/, rightPattern: /_r$/ }
   }
   if (rigId === 'corgi') {
@@ -466,6 +548,25 @@ function assertHeldPalmClearance(glb: ParsedGlb, held: HeldItemEntry): void {
     if (z < minZ) minZ = z
     if (z > maxZ) maxZ = z
   }
+  if (held.gripStyle === 'forearm_shield') {
+    if (held.hand !== 'hand_l') {
+      throw new Error(`Forearm shield "${held.id}" must use hand_l, got ${held.hand}`)
+    }
+    if (maxX < 0.115 || minX < -0.05) {
+      throw new Error(
+        `Forearm shield "${held.id}" must mount flat on the outer left forearm (+X >= 0.115 m, minX >= -0.05 m; got X=[${minX.toFixed(3)}, ${maxX.toFixed(3)}])`,
+      )
+    }
+    if (minZ > -0.14) {
+      throw new Error(
+        `Forearm shield "${held.id}" must extend up the forearm toward the elbow (-Z <= -0.14 m; got minZ=${minZ.toFixed(3)})`,
+      )
+    }
+    if (minY > 0.04 || maxY < -0.04 || maxZ < -0.06) {
+      throw new Error(`Forearm shield "${held.id}" grip origin (0,0,0) is far from geometry`)
+    }
+    return
+  }
   const palmClear = held.hand === 'hand_r' ? minX >= -0.032 : maxX <= 0.032
   if (!palmClear) {
     throw new Error(
@@ -474,6 +575,25 @@ function assertHeldPalmClearance(glb: ParsedGlb, held: HeldItemEntry): void {
   }
   if (minY > 0.04 || maxY < -0.04 || minZ > 0.06 || maxZ < -0.06) {
     throw new Error(`Held item "${held.id}" grip origin (0,0,0) is far from geometry`)
+  }
+}
+
+function assertPropCraft(glb: ParsedGlb, prop: WorldPropEntry): void {
+  const height = prop.bounds.max[1] - prop.bounds.min[1]
+  if (height < PROP_CRAFT.minHeightMeters) {
+    throw new Error(`Prop "${prop.id}" height ${height.toFixed(3)} m < minHeightMeters (${PROP_CRAFT.minHeightMeters} m)`)
+  }
+  const node = glb.doc.nodes?.find((n) => n.name === prop.nodeName)
+  if (!node || node.mesh === undefined) return
+  const prim = glb.doc.meshes?.[node.mesh]?.primitives[0]
+  if (!prim || prim.attributes.TEXCOORD_0 === undefined) return
+  const uvs = readAccessor(glb, prim.attributes.TEXCOORD_0)
+  const shades = new Set<string>()
+  for (const [u = 0, v = 0] of uvs) {
+    shades.add(`${Math.round(u * 256)}:${Math.round(v * 256)}`)
+  }
+  if (shades.size < PROP_CRAFT.minUniqueShades) {
+    throw new Error(`Prop "${prop.id}" has only ${shades.size} unique UV shade(s); minimum is ${PROP_CRAFT.minUniqueShades}`)
   }
 }
 
@@ -636,6 +756,9 @@ async function main(): Promise<void> {
       if (!isAnimalRig(rigId)) {
         assertOrthogonalVoxelNormals(glb, part.nodeName)
       }
+      if (part.pack !== 'creatures') {
+        assertBakedAo(glb, part.nodeName)
+      }
       assertNoSelfCover(glb, part.nodeName)
       assertMorphAndLayerContracts(glb, part)
       const partPath = join(STAGE_DIR, leavesFor(cat.pack).find((l) => l.kind === part.leaf)!.id, part.relativePath)
@@ -643,11 +766,22 @@ async function main(): Promise<void> {
         const sculpted = await sculptPart(part, partPath, sculptCache)
         assertOnSculptLattice(sculpted)
         measureSilhouettePart(sculpted, silhouette)
+      } else if (part.pack !== 'creatures' && isSculptedMonsterBody(part)) {
+        const sculpted = await sculptPart(part, partPath, sculptCache)
+        assertOnSculptLattice(sculpted)
+        if (BIPEDAL_MONSTER_CONTRACT.requireBakedAo) {
+          assertBakedAo(glb, part.nodeName)
+        }
+        assertBipedalMonsterContract(sculpted)
       }
       await assertCreatureLegSides(partPath, part.nodeName, rigId, sculptCache)
       if (rigId !== 'ual1') {
         // World lattice, rest-pose normals, grounded feet, the quadruped silhouette and the motion of each clip.
-        const audit = await auditCreatureGlb(partPath, { nodeName: part.nodeName, contractQuadruped: rigId === 'quadruped' })
+        const audit = await auditCreatureGlb(partPath, {
+          nodeName: part.nodeName,
+          contractQuadruped: rigId === 'quadruped',
+          allowFloating: rigId === 'aquatic',
+        })
         if (audit.problems.length > 0) {
           throw new Error(`Creature "${part.id}" (${rigId}) breaks ${audit.problems.length} rule(s):\n  - ${audit.problems.join('\n  - ')}`)
         }
@@ -679,6 +813,7 @@ async function main(): Promise<void> {
       const glb = loadCached(held.leaf, held.relativePath)
       assertFiniteWeightsAndPositions(glb, held.nodeName, false, 0)
       assertOrthogonalVoxelNormals(glb, held.nodeName)
+      assertBakedAo(glb, held.nodeName)
       assertHeldPalmClearance(glb, held)
       const node = glb.doc.nodes!.find((n) => n.name === held.nodeName)!
       const tris = nodeTriangleCount(glb, node)
@@ -696,6 +831,8 @@ async function main(): Promise<void> {
       const glb = loadCached(prop.leaf, prop.relativePath)
       assertFiniteWeightsAndPositions(glb, prop.nodeName, false, 0)
       assertOrthogonalVoxelNormals(glb, prop.nodeName)
+      assertBakedAo(glb, prop.nodeName)
+      assertPropCraft(glb, prop)
       const node = glb.doc.nodes!.find((n) => n.name === prop.nodeName)!
       const tris = nodeTriangleCount(glb, node)
       if (tris > BUDGETS.classes.prop.maxTriangles) {
