@@ -880,6 +880,388 @@
           0.57983
         ]
       }
+    },
+    {
+      "id": "prop_sidewalk_tile",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_sidewalk_tile.glb",
+      "nodeName": "prop_sidewalk_tile",
+      "label": "Sidewalk Curb Tile",
+      "triangles": 90,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.158,
+          1
+        ],
+        "size": [
+          2,
+          0.158,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_road_crosswalk",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_road_crosswalk.glb",
+      "nodeName": "prop_road_crosswalk",
+      "label": "Road Crosswalk Tile",
+      "triangles": 76,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.09,
+          1
+        ],
+        "size": [
+          2,
+          0.09,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_streetlamp",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_streetlamp.glb",
+      "nodeName": "prop_streetlamp",
+      "label": "Classic Streetlamp",
+      "triangles": 132,
+      "bounds": {
+        "min": [
+          -0.18478,
+          0,
+          -0.43239
+        ],
+        "max": [
+          0.18478,
+          2.94,
+          0.43239
+        ],
+        "size": [
+          0.36955,
+          2.94,
+          0.86478
+        ]
+      }
+    },
+    {
+      "id": "prop_bus_stop",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bus_stop.glb",
+      "nodeName": "prop_bus_stop",
+      "label": "City Bus Stop Shelter",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -1.07,
+          0,
+          -0.52
+        ],
+        "max": [
+          1.07,
+          2.27,
+          0.52
+        ],
+        "size": [
+          2.14,
+          2.27,
+          1.04
+        ]
+      }
+    },
+    {
+      "id": "prop_trash_bin",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_trash_bin.glb",
+      "nodeName": "prop_trash_bin",
+      "label": "City Litter Bin",
+      "triangles": 258,
+      "bounds": {
+        "min": [
+          -0.2475,
+          0,
+          -0.24934
+        ],
+        "max": [
+          0.2475,
+          0.98,
+          0.24934
+        ],
+        "size": [
+          0.495,
+          0.98,
+          0.49868
+        ]
+      }
+    },
+    {
+      "id": "prop_picket_fence",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_picket_fence.glb",
+      "nodeName": "prop_picket_fence",
+      "label": "Suburban Picket Fence",
+      "triangles": 216,
+      "bounds": {
+        "min": [
+          -1.005,
+          0,
+          -0.07
+        ],
+        "max": [
+          1.005,
+          1.04,
+          0.07
+        ],
+        "size": [
+          2.01,
+          1.04,
+          0.14
+        ]
+      }
+    },
+    {
+      "id": "prop_hedge_row",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_hedge_row.glb",
+      "nodeName": "prop_hedge_row",
+      "label": "Manicured Hedge Row",
+      "triangles": 140,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.32
+        ],
+        "max": [
+          1,
+          1.02,
+          0.32
+        ],
+        "size": [
+          2,
+          1.02,
+          0.64
+        ]
+      }
+    },
+    {
+      "id": "prop_park_tree",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_tree.glb",
+      "nodeName": "prop_park_tree",
+      "label": "Faceted Park Tree",
+      "triangles": 174,
+      "bounds": {
+        "min": [
+          -0.76019,
+          0,
+          -0.64345
+        ],
+        "max": [
+          0.76019,
+          2.668,
+          0.64345
+        ],
+        "size": [
+          1.52039,
+          2.668,
+          1.2869
+        ]
+      }
+    },
+    {
+      "id": "prop_fountain_basin",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_fountain_basin.glb",
+      "nodeName": "prop_fountain_basin",
+      "label": "Town Plaza Fountain",
+      "triangles": 142,
+      "bounds": {
+        "min": [
+          -0.7391,
+          0,
+          -0.7391
+        ],
+        "max": [
+          0.7391,
+          1.44,
+          0.7391
+        ],
+        "size": [
+          1.47821,
+          1.44,
+          1.47821
+        ]
+      }
+    },
+    {
+      "id": "prop_vending_machine",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_vending_machine.glb",
+      "nodeName": "prop_vending_machine",
+      "label": "Soda Vending Machine",
+      "triangles": 128,
+      "bounds": {
+        "min": [
+          -0.44,
+          0,
+          -0.3525
+        ],
+        "max": [
+          0.44,
+          1.82,
+          0.3525
+        ],
+        "size": [
+          0.88,
+          1.82,
+          0.705
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Dispense"
+      ]
+    },
+    {
+      "id": "prop_traffic_light",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_traffic_light.glb",
+      "nodeName": "prop_traffic_light",
+      "label": "Animated Traffic Light",
+      "triangles": 184,
+      "bounds": {
+        "min": [
+          -0.1663,
+          0,
+          -0.20815
+        ],
+        "max": [
+          0.1663,
+          2.55,
+          0.20815
+        ],
+        "size": [
+          0.3326,
+          2.55,
+          0.4163
+        ]
+      },
+      "clips": [
+        "Loop"
+      ]
+    },
+    {
+      "id": "prop_mailbox",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_mailbox.glb",
+      "nodeName": "prop_mailbox",
+      "label": "Suburban Mailbox",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.1475,
+          0,
+          -0.22
+        ],
+        "max": [
+          0.1475,
+          1.165,
+          0.22
+        ],
+        "size": [
+          0.295,
+          1.165,
+          0.44
+        ]
+      },
+      "clips": [
+        "Closed",
+        "Open"
+      ]
+    },
+    {
+      "id": "prop_shop_awning",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_awning.glb",
+      "nodeName": "prop_shop_awning",
+      "label": "Bistro Shop Awning",
+      "triangles": 262,
+      "bounds": {
+        "min": [
+          -0.92,
+          0,
+          -0.41
+        ],
+        "max": [
+          0.92,
+          2.10325,
+          0.41
+        ],
+        "size": [
+          1.84,
+          2.10325,
+          0.82
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_park_swing",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_swing.glb",
+      "nodeName": "prop_park_swing",
+      "label": "Playground Swing Set",
+      "triangles": 128,
+      "bounds": {
+        "min": [
+          -0.76196,
+          0,
+          -0.57509
+        ],
+        "max": [
+          0.76196,
+          2.01031,
+          0.57509
+        ],
+        "size": [
+          1.52392,
+          2.01031,
+          1.15019
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Swing"
+      ]
     }
   ],
   "presets": [

@@ -1622,6 +1622,8 @@ def main():
         mesh.positions -= np.array([(low[0] + high[0]) / 2, low[1], (low[2] + high[2]) / 2])
         rel = f'props/{mesh.name}.glb'
         props.append(pk.prop_entry(mesh, PACK, label, rel, pk.write_static_glb(world / rel, mesh)))
+    from build_props import build_extra_props_for_pack
+    props.extend(build_extra_props_for_pack(PACK, world))
 
     def creature_preset(preset_id, label, rig_id, clip, body_id, palette, proportions=None):
         return {

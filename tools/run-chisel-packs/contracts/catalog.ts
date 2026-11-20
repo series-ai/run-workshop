@@ -104,6 +104,7 @@ export const worldPropEntrySchema = z.object({
   label: z.string().min(1),
   triangles: z.number().int().positive(),
   bounds: z.object({ min: vec3, max: vec3, size: vec3 }),
+  clips: z.array(z.string().min(1)).optional(),
 })
 export type WorldPropEntry = z.infer<typeof worldPropEntrySchema>
 

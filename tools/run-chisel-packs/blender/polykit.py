@@ -399,6 +399,13 @@ def write_static_glb(path, mesh):
     return builder.write(path)
 
 
+def write_animated_prop_glb(path, mesh, contract, animations):
+    builder = GlbBuilder()
+    builder.add_custom_rig(contract, animations=animations, rig_name=f'{mesh.name}_Rig')
+    builder.add_mesh(mesh)
+    return builder.write(path)
+
+
 # --------------------------------------------------------------------------
 # Skin weights
 # --------------------------------------------------------------------------
@@ -567,6 +574,20 @@ class SegmentWeightSolver:
             pairs = sorted(scores.items(), key=lambda row: (-row[1], row[0]))[:4]
         total = sum(w for _, w in pairs)
         return [(self.rig.index[name], w / total) for name, w in pairs]
+
+
+class PropWeightSolver:
+    """Rigid single-bone weight solver for animated procedural props."""
+
+    def __init__(self, joints, default_bone='base'):
+        self.index = {name: i for i, name in enumerate(joints)}
+        self.default_bone = default_bone
+
+    def solve(self, point, skin):
+        if skin and skin.rigid:
+            pairs = sorted(skin.rigid.items(), key=lambda row: (-row[1], row[0]))[:4]
+            return [(self.index[name], float(weight)) for name, weight in pairs]
+        return [(self.index[self.default_bone], 1.0)]
 
 
 # --------------------------------------------------------------------------
@@ -956,7 +977,7 @@ class Part:
         normals = np.array([normal for _, normal, *_ in rows], dtype=np.float64)
         uvs = np.zeros((len(rows), 2), dtype=np.float64)
         for row, (index, normal, region, ao, group) in enumerate(rows):
-            if region == 'skin' and solver is not None:
+            if region == 'skin' and solver is not None and not isinstance(solver, PropWeightSolver):
                 gradient = (self.pos[index].y / skin_high) - 0.5
                 ny = max(normal.y, -0.30)
                 shade = 0.60 + 0.14 * ny + 0.10 * gradient + ao
@@ -2013,7 +2034,7 @@ def held_entry(mesh, pack, label, hand, path, size):
             'label': label, 'hand': hand, 'triangles': mesh.triangles}
 
 
-def prop_entry(mesh, pack, label, path, size):
+def prop_entry(mesh, pack, label, path, size, clips=None):
     finish_budget('prop', mesh)
     limit = BUDGETS['classes']['prop']['maxBytes']
     if size > limit:
@@ -2024,8 +2045,11 @@ def prop_entry(mesh, pack, label, path, size):
     for axis in (0, 2):
         if abs(bounds['min'][axis] + bounds['max'][axis]) / 2 > 0.02:
             raise ValueError(f'{mesh.name}: the prop is not centred on X/Z.')
-    return {'id': mesh.name, 'pack': pack, 'leaf': 'world', 'relativePath': path, 'nodeName': mesh.name,
-            'label': label, 'triangles': mesh.triangles, 'bounds': bounds}
+    entry = {'id': mesh.name, 'pack': pack, 'leaf': 'world', 'relativePath': path, 'nodeName': mesh.name,
+             'label': label, 'triangles': mesh.triangles, 'bounds': bounds}
+    if clips:
+        entry['clips'] = list(clips)
+    return entry
 
 
 def pack_catalog(pack, *, parts=(), held=(), props=(), presets=(), clips=(), rig_model_path=None, creature_rigs=None):

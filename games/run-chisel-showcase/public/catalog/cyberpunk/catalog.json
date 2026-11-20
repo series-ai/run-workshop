@@ -880,6 +880,314 @@
           0.28
         ]
       }
+    },
+    {
+      "id": "prop_metal_grate_tile",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_metal_grate_tile.glb",
+      "nodeName": "prop_metal_grate_tile",
+      "label": "Industrial Grate Floor Tile",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.113,
+          1
+        ],
+        "size": [
+          2,
+          0.113,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_concrete_barrier",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_concrete_barrier.glb",
+      "nodeName": "prop_concrete_barrier",
+      "label": "Cyber Jersey Barrier",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.32
+        ],
+        "max": [
+          1,
+          0.845,
+          0.32
+        ],
+        "size": [
+          2,
+          0.845,
+          0.64
+        ]
+      }
+    },
+    {
+      "id": "prop_vent_duct",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_vent_duct.glb",
+      "nodeName": "prop_vent_duct",
+      "label": "Rooftop AC Vent Unit",
+      "triangles": 130,
+      "bounds": {
+        "min": [
+          -0.62,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.62,
+          0.96,
+          0.45
+        ],
+        "size": [
+          1.24,
+          0.96,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_neon_archway",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_neon_archway.glb",
+      "nodeName": "prop_neon_archway",
+      "label": "Neon Street Archway",
+      "triangles": 198,
+      "bounds": {
+        "min": [
+          -1.24,
+          0,
+          -0.22
+        ],
+        "max": [
+          1.24,
+          2.97,
+          0.22
+        ],
+        "size": [
+          2.48,
+          2.97,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_ramen_stand",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_ramen_stand.glb",
+      "nodeName": "prop_ramen_stand",
+      "label": "Cyber Noodle Kiosk",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -0.88,
+          0,
+          -0.50574
+        ],
+        "max": [
+          0.88,
+          2.39,
+          0.50574
+        ],
+        "size": [
+          1.76,
+          2.39,
+          1.01147
+        ]
+      }
+    },
+    {
+      "id": "prop_alley_dumpster",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_alley_dumpster.glb",
+      "nodeName": "prop_alley_dumpster",
+      "label": "Cyber Alley Dumpster",
+      "triangles": 106,
+      "bounds": {
+        "min": [
+          -0.73307,
+          0,
+          -0.45278
+        ],
+        "max": [
+          0.73307,
+          0.98,
+          0.45278
+        ],
+        "size": [
+          1.46615,
+          0.98,
+          0.90556
+        ]
+      }
+    },
+    {
+      "id": "prop_blast_door",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_blast_door.glb",
+      "nodeName": "prop_blast_door",
+      "label": "Sliding Blast Door",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -1.16,
+          0,
+          -0.23
+        ],
+        "max": [
+          1.16,
+          2.5,
+          0.23
+        ],
+        "size": [
+          2.32,
+          2.5,
+          0.46
+        ]
+      },
+      "clips": [
+        "Closed",
+        "SlideOpen",
+        "Locked"
+      ]
+    },
+    {
+      "id": "prop_security_camera",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_security_camera.glb",
+      "nodeName": "prop_security_camera",
+      "label": "Tracking Security Camera",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.265
+        ],
+        "max": [
+          0.2,
+          2.12,
+          0.265
+        ],
+        "size": [
+          0.4,
+          2.12,
+          0.53
+        ]
+      },
+      "clips": [
+        "Sweep",
+        "Alert"
+      ]
+    },
+    {
+      "id": "prop_laser_gate",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_laser_gate.glb",
+      "nodeName": "prop_laser_gate",
+      "label": "Security Laser Barrier",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -0.97989,
+          0,
+          -0.13987
+        ],
+        "max": [
+          0.97989,
+          1.92,
+          0.13987
+        ],
+        "size": [
+          1.95977,
+          1.92,
+          0.27973
+        ]
+      },
+      "clips": [
+        "Active",
+        "Disable"
+      ]
+    },
+    {
+      "id": "prop_hover_drone",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_hover_drone.glb",
+      "nodeName": "prop_hover_drone",
+      "label": "Patrol Hover Drone",
+      "triangles": 214,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.40651
+        ],
+        "max": [
+          0.5,
+          1.299,
+          0.40651
+        ],
+        "size": [
+          1,
+          1.299,
+          0.81301
+        ]
+      },
+      "clips": [
+        "Hover",
+        "Alert",
+        "Stun"
+      ]
+    },
+    {
+      "id": "prop_data_core",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_data_core.glb",
+      "nodeName": "prop_data_core",
+      "label": "Holo Data Core",
+      "triangles": 246,
+      "bounds": {
+        "min": [
+          -0.495,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.495,
+          1.735,
+          0.38
+        ],
+        "size": [
+          0.99,
+          1.735,
+          0.76
+        ]
+      },
+      "clips": [
+        "Spin",
+        "Hack"
+      ]
     }
   ],
   "presets": [

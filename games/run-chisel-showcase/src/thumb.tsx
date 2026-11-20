@@ -51,6 +51,41 @@ function resolveAnyItem(bundle: PolyCatalogBundle, token: string): GalleryItem {
   throw new Error(`Unknown thumbnail/lineup target "${token}"`)
 }
 
+const PROP_THUMB_CLIP_ORDER = [
+  'Opening',
+  'Hatch',
+  'Raise',
+  'SlideOpen',
+  'Activate',
+  'Erupt',
+  'Snap',
+  'Dispense',
+  'Alert',
+  'Drop',
+  'Fire',
+  'Swing',
+  'Hit',
+  'Hack',
+  'Shatter',
+  'Pop',
+  'Open',
+  'Loop',
+  'Spin',
+  'Hover',
+  'Sweep',
+  'Pulse',
+  'Active',
+  'Idle',
+]
+
+function pickPreviewPropClip(clips?: readonly string[]): string | null {
+  if (!clips || clips.length === 0) return null
+  for (const name of PROP_THUMB_CLIP_ORDER) {
+    if (clips.includes(name)) return name
+  }
+  return clips[0] ?? null
+}
+
 function ThumbApp() {
   const [bundle, setBundle] = useState<PolyCatalogBundle | null>(null)
   const params = useMemo(() => new URLSearchParams(window.location.search), [])
@@ -59,7 +94,8 @@ function ThumbApp() {
   const lineupRaw = params.get('lineup')
   const clip = params.get('clip')
   const phaseRaw = params.get('phase')
-  const phase = phaseRaw !== null && Number.isFinite(Number(phaseRaw)) ? Number(phaseRaw) : 0.18
+  const hasExplicitPhase = phaseRaw !== null && Number.isFinite(Number(phaseRaw))
+  const explicitPhase = hasExplicitPhase ? Number(phaseRaw) : 0.18
   const yawRaw = params.get('yaw')
   const yawDeg = yawRaw !== null && Number.isFinite(Number(yawRaw)) ? Number(yawRaw) : 36
   const pitchRaw = params.get('pitch')
@@ -102,6 +138,14 @@ function ThumbApp() {
 
   if (!resolved) return null
 
+  const singlePropDefaultClip =
+    resolved.mode === 'single' && resolved.item.kind === 'prop' ? pickPreviewPropClip(resolved.item.entry.clips) : null
+  const effectiveClip = clip ?? singlePropDefaultClip
+  const effectivePhase =
+    !hasExplicitPhase && resolved.mode === 'single' && resolved.item.kind === 'prop' && resolved.item.entry.clips?.length
+      ? 0.55
+      : explicitPhase
+
   return (
     <ThumbErrorBoundary>
       <Canvas style={{ width: '100%', height: '100%' }} dpr={1} gl={STUDIO_GL} camera={{ fov: 38, near: 0.02, far: 100 }}>
@@ -113,7 +157,7 @@ function ThumbApp() {
               index={resolved.index}
               presets={resolved.presets}
               clipOverride={clip}
-              holdPhase={phase}
+              holdPhase={explicitPhase}
               onReady={markReady}
             />
           ) : (
@@ -121,8 +165,8 @@ function ThumbApp() {
               item={resolved.item}
               index={resolved.index}
               presets={resolved.presets}
-              clipOverride={clip}
-              holdPhase={phase}
+              clipOverride={effectiveClip}
+              holdPhase={effectivePhase}
               yawDeg={yawDeg}
               pitchDeg={pitchDeg}
               onReady={markReady}

@@ -2355,11 +2355,28 @@ async function main(): Promise<void> {
     for (const prop of cat.props) {
       totalModels++
       const glb = loadCached(prop.leaf, prop.relativePath)
-      assertFiniteWeightsAndPositions(glb, prop.nodeName, false, 0)
+      const isAnimated = Boolean(prop.clips && prop.clips.length > 0)
+      const jointCount = isAnimated ? (glb.doc.skins?.[0]?.joints.length ?? 0) : 0
+      if (isAnimated && jointCount === 0) {
+        throw new Error(`Animated prop "${prop.id}" has no glTF skin`)
+      }
+      assertFiniteWeightsAndPositions(glb, prop.nodeName, isAnimated, jointCount)
       const node = glb.doc.nodes!.find((n) => n.name === prop.nodeName)!
       const tris = nodeTriangleCount(glb, node)
       if (tris > BUDGETS.classes.prop.maxTriangles) {
         throw new Error(`Prop "${prop.id}" has ${tris} tris > budget ${BUDGETS.classes.prop.maxTriangles}`)
+      }
+      const bytes = statSync(join(STAGE_DIR, leavesFor(cat.pack).find((l) => l.kind === prop.leaf)!.id, prop.relativePath)).size
+      if (bytes > (BUDGETS.classes.prop.maxBytes ?? Infinity)) {
+        throw new Error(`Prop "${prop.id}" is ${bytes} bytes > budget ${BUDGETS.classes.prop.maxBytes}`)
+      }
+      if (isAnimated) {
+        const animNames = new Set((glb.doc.animations ?? []).map((a) => a.name).filter((n): n is string => Boolean(n)))
+        for (const clip of prop.clips!) {
+          if (!animNames.has(clip)) {
+            throw new Error(`Animated prop "${prop.id}" is missing clip "${clip}" in GLB`)
+          }
+        }
       }
       if (Math.abs(prop.bounds.min[1]) > 0.015) {
         throw new Error(`Prop "${prop.id}" not grounded on y=0 (min.y=${prop.bounds.min[1]})`)

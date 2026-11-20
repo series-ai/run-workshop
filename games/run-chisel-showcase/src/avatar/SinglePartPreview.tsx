@@ -5,6 +5,7 @@ import type { AvatarPartEntry, CharacterPreset, HeldItemEntry, WorldPropEntry } 
 import { CONTEXT_DEFAULT_PALETTES, type PaletteColors } from '@chisel/contracts/palette'
 import type { ContextPackKey, PolyPackKey } from '@chisel/contracts/packs'
 import { assetRefFor, type PolyPartIndex } from './composePolyAvatar'
+import { PROP_PALETTES } from '../scenes/contextPalettes'
 import { createPolyMaterial, getSharedBlobShadowResources, updatePolyMaterialPalette } from './polyMaterial'
 import { findSkinnedPart, readGltf } from './polyRig'
 import { PolyAvatar, PolyProp } from './PolyAvatar'
@@ -19,6 +20,11 @@ export type GalleryItem =
 export function paletteForPack(pack: PolyPackKey): PaletteColors {
   const key: ContextPackKey = pack === 'core' ? 'medieval' : pack
   return CONTEXT_DEFAULT_PALETTES[key]
+}
+
+export function paletteForProp(pack: PolyPackKey): PaletteColors {
+  const key: ContextPackKey = pack === 'core' ? 'medieval' : pack
+  return PROP_PALETTES[key]
 }
 
 const _tmpV = new Vector3()
@@ -301,6 +307,16 @@ export function GalleryStageContent({
     )
   } else if (item.kind === 'part') {
     content = <IsolatedSkinnedPart entry={item.entry} palette={paletteForPack(item.entry.pack)} />
+  } else if (item.kind === 'prop') {
+    content = (
+      <PolyProp
+        item={item.entry}
+        palette={paletteForProp(item.entry.pack)}
+        clip={clipOverride ?? undefined}
+        holdPhase={holdPhase}
+        blobShadow
+      />
+    )
   } else {
     content = <PolyProp item={item.entry} palette={paletteForPack(item.entry.pack)} blobShadow />
   }
@@ -450,6 +466,14 @@ export function LineupStageContent({
               })()
             ) : item.kind === 'part' ? (
               <IsolatedSkinnedPart entry={item.entry} palette={paletteForPack(item.entry.pack)} />
+            ) : item.kind === 'prop' ? (
+              <PolyProp
+                item={item.entry}
+                palette={paletteForProp(item.entry.pack)}
+                clip={clipOverride ?? undefined}
+                holdPhase={holdPhase}
+                blobShadow
+              />
             ) : (
               <PolyProp item={item.entry} palette={paletteForPack(item.entry.pack)} blobShadow />
             )}
