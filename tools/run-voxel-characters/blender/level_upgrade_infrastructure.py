@@ -74,11 +74,14 @@ def charge_bin(g):
     return shape
 
 
+RAIL_CENTERS = (-7, 6)
+
+
 def rails(g):
     track = box(17, 1, 40, g.GRIT)
     for z in (-16, -6, 4, 14):
         box(17, 1, 3, g.WOOD, y=1, z=z, sculpt=track)
-    for x in (-7, 6):
+    for x in RAIL_CENTERS:
         box(2, 2, 40, g.METAL, x=x, y=2, sculpt=track)
     return track
 
@@ -87,6 +90,9 @@ def rail_crossing(g):
     crossing = box(36, 1, 17, g.GRIT)
     for y, width in ((1, 30), (2, 24), (3, 18)):
         box(width, 1, 17, g.WOOD, y=y, sculpt=crossing)
+    # Leave half a cell beside each rail head.
+    for x in RAIL_CENTERS:
+        crossing.cut((x - 2, x), 3, (-8, 8))
     return crossing
 
 

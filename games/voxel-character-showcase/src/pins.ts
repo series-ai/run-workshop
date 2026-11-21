@@ -10,7 +10,7 @@ export const PINS: Readonly<Record<string, string>> = {
   'run-cubix-heist/3D/characters': 'a1b2c908ee92',
   'run-cubix-heist/3D/heist': '708ab97ad0f5',
   'run-cubix-industrial/3D/characters': '6a0473ad6f62',
-  'run-cubix-industrial/3D/industrial': '730e4448373c',
+  'run-cubix-industrial/3D/industrial': '8b39df4b033a',
   'run-cubix-security/3D/characters': '0a56cd055f71',
   'run-cubix-security/3D/security': 'c246f3e6d95d',
   'run-cubix-creatures/3D/characters': '388e883dd8b6',
