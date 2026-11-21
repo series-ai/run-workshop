@@ -1,5 +1,10 @@
-import { CanvasTexture, Color, FrontSide, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry } from 'three'
+import {
+  CanvasTexture, Color, DataTexture, DoubleSide, FrontSide, LinearMipmapLinearFilter, MeshBasicMaterial,
+  MeshStandardMaterial, NearestFilter, PlaneGeometry, RepeatWrapping, SRGBColorSpace, Vector2,
+} from 'three'
 import { PALETTE_REGIONS, resolvePaletteColors, type PaletteColors } from '@voxchar/contracts/palette'
+import { LEVEL_FINISHES } from '@voxchar/contracts/levelFinishes'
+import type { WaterReflection } from '../scenes/useLevelWater'
 
 /**
  * 10-region UV palette + orthogonal voxel micro-mottle shader:
@@ -41,8 +46,26 @@ const LOOK = {
   metalRoughness: 0.26,
   metalness: 0.48,
   metalSky: 0.52,
+  glossSky: 0.35,
+  woodRoughness: 0.46,
+  glassRoughness: 0.16,
+  shadowTint: 'vec3(0.88, 0.93, 1.05)',
   mottleAmplitude: 0.12,
   emissiveGain: 1.65,
+} as const
+
+const LEVEL_LOOK = {
+  ...LOOK,
+  rampDark: 0.49,
+  rampBright: 1.16,
+  darkFloor: 'vec3(0.017, 0.019, 0.022)',
+  darkMottleGain: 1.24,
+  rimStrength: 0.14,
+  metalBoost: 1.1,
+  metalSky: 0.24,
+  glossSky: 0.25,
+  shadowTint: 'vec3(0.96, 0.98, 1.03)',
+  emissiveGain: LEVEL_FINISHES.emissiveStrength,
 } as const
 
 const glsl = (value: number) => value.toFixed(3)
@@ -63,28 +86,93 @@ function inject(source: string, chunk: string, replacement: string): string {
   return source.replace(chunk, replacement)
 }
 
-export function createPolyMaterial(palette: PaletteColors): MeshStandardMaterial {
+type PolySurface = 'avatar' | 'level' | 'glass' | { water: { zenith: string; horizon: string; reflection?: WaterReflection } }
+
+function createGrainTexture() {
+  const pixels = Uint8Array.from(LEVEL_FINISHES.grain.flat().flatMap((tone) => [tone, tone, tone, 255]))
+  const size = LEVEL_FINISHES.grain.length
+  const texture = new DataTexture(pixels, size, size)
+  texture.colorSpace = SRGBColorSpace
+  texture.wrapS = texture.wrapT = RepeatWrapping
+  texture.magFilter = NearestFilter
+  texture.minFilter = LinearMipmapLinearFilter
+  texture.generateMipmaps = true
+  texture.needsUpdate = true
+  return texture
+}
+
+let levelGrain: DataTexture | undefined
+
+export function createPolyMaterial(palette: PaletteColors, surface: PolySurface = 'avatar'): MeshStandardMaterial {
+  const isLevel = surface !== 'avatar'
+  const glass = surface === 'glass'
+  const look = isLevel ? LEVEL_LOOK : LOOK
+  const grain = isLevel ? (levelGrain ??= createGrainTexture()) : undefined
+  const waterSky = typeof surface === 'object' ? {
+    zenith: { value: new Color(surface.water.zenith) },
+    horizon: { value: new Color(surface.water.horizon) },
+  } : undefined
+  const reflection = typeof surface === 'object' ? surface.water.reflection : undefined
+  const regionFinishes = isLevel ? {
+    value: PALETTE_REGIONS.map((region) => new Vector2(
+      ...(glass ? LEVEL_FINISHES.glass : waterSky ? LEVEL_FINISHES.water : LEVEL_FINISHES.regions[region]),
+    )),
+  } : undefined
   const resolved = resolvePaletteColors(palette)
   const uniforms: PolyUniforms = {
     uPolyPalette: { value: PALETTE_REGIONS.map((region) => new Color(resolved[region])) },
   }
-  const material = new MeshStandardMaterial({ color: 0xffffff, metalness: 0, roughness: 0.8, side: FrontSide })
+  const material = new MeshStandardMaterial({
+    color: 0xffffff, metalness: 0, roughness: 0.8, side: glass ? DoubleSide : FrontSide,
+    opacity: glass ? LEVEL_FINISHES.glassOpacity : 1,
+    transparent: glass,
+    depthWrite: !glass,
+  })
   material.name = 'VoxChar_Atlas_Mat'
   material.userData.polyUniforms = uniforms
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uPolyPalette = uniforms.uPolyPalette
+    if (grain) shader.uniforms.uLevelGrain = { value: grain }
+    if (regionFinishes) shader.uniforms.uLevelFinishes = regionFinishes
+    if (waterSky) {
+      shader.uniforms.uWaterZenith = waterSky.zenith
+      shader.uniforms.uWaterHorizon = waterSky.horizon
+    }
+    if (reflection) {
+      shader.uniforms.uWaterReflection = reflection.texture
+      shader.uniforms.uWaterProjection = reflection.projection
+      shader.uniforms.uWaterReflectEnabled = reflection.enabled
+    }
     let vertex = inject(
       shader.vertexShader,
       '#include <common>',
       '#include <common>\nattribute vec2 uv1;\nvarying vec2 vPolyUv;\nvarying vec2 vVoxelGrid;',
     )
     vertex = inject(vertex, '#include <begin_vertex>', '#include <begin_vertex>\nvPolyUv = uv;\nvVoxelGrid = uv1;')
+    if (reflection) {
+      vertex = inject(vertex, '#include <common>', `#include <common>
+        uniform mat4 uWaterProjection;
+        varying vec4 vWaterProjection;`)
+      vertex = inject(vertex, '#include <begin_vertex>', `#include <begin_vertex>
+        vec4 waterPosition = vec4(transformed, 1.0);
+        #ifdef USE_INSTANCING
+          waterPosition = instanceMatrix * waterPosition;
+        #endif
+        vWaterProjection = uWaterProjection * modelMatrix * waterPosition;`)
+    }
     shader.vertexShader = vertex
 
     let fragment = inject(
       shader.fragmentShader,
       '#include <common>',
-      '#include <common>\nuniform vec3 uPolyPalette[10];\nvarying vec2 vPolyUv;\nvarying vec2 vVoxelGrid;',
+      `#include <common>
+        uniform vec3 uPolyPalette[10];
+        varying vec2 vPolyUv;
+        varying vec2 vVoxelGrid;
+        ${grain ? 'uniform sampler2D uLevelGrain;' : ''}
+        ${regionFinishes ? 'uniform vec2 uLevelFinishes[10];' : ''}
+        ${reflection ? 'uniform sampler2D uWaterReflection;\nuniform float uWaterReflectEnabled;\nvarying vec4 vWaterProjection;' : ''}
+        ${waterSky ? 'uniform vec3 uWaterZenith;\nuniform vec3 uWaterHorizon;' : ''}`,
     )
     fragment = inject(
       fragment,
@@ -94,62 +182,77 @@ export function createPolyMaterial(palette: PaletteColors): MeshStandardMaterial
         float polyEmissive = step(0.92, vPolyUv.y);
         float polyRamp = clamp((vPolyUv.y - 0.15) / 0.7, 0.0, 1.0);
         float polyMetal = polyRegion == 5 ? 1.0 : 0.0;
-        float polySkin = polyRegion == 0 ? 1.0 : 0.0;
+        float polySkin = ${surface === 'avatar' ? '(polyRegion == 0 ? 1.0 : 0.0)' : '0.0'};
         float polyLeather = polyRegion == 7 ? 1.0 : 0.0;
-        float polyGloss = polyRegion == 8 ? 1.0 : 0.0;
+        float polyGloss = ${waterSky ? '0.0' : '(polyRegion == 8 ? 1.0 : 0.0)'};
         vec3 polyBase = uPolyPalette[polyRegion];
         float polyLuma = dot(polyBase, vec3(0.2126, 0.7152, 0.0722));
-        float polyDark = 1.0 - smoothstep(0.0, ${glsl(LOOK.darkFloorLuma)}, polyLuma);
-        polyBase += ${LOOK.darkFloor} * polyDark;
+        float polyDark = 1.0 - smoothstep(0.0, ${glsl(look.darkFloorLuma)}, polyLuma);
+        polyBase += ${look.darkFloor} * polyDark;
         float voxMottle = 0.0;
         vec3 voxHueShift = vec3(1.0);
         if (vVoxelGrid.x > -100.0 && polyEmissive < 0.5) {
+          ${grain ? `float voxelGrain = texture2D(uLevelGrain, vVoxelGrid / ${glsl(LEVEL_FINISHES.grain.length)}).r;
+          voxHueShift *= 1.07 * voxelGrain;` : `
           vec2 voxCell = floor(vVoxelGrid + 0.001);
           float voxHash = fract(sin(dot(voxCell, vec2(127.1, 311.7))) * 43758.5453123);
           float voxHash2 = fract(sin(dot(voxCell, vec2(269.5, 183.3))) * 19283.7131);
-          float voxGain = mix(1.0, ${glsl(LOOK.skinMottle)}, polySkin) * mix(1.0, ${glsl(LOOK.darkMottleGain)}, polyDark);
-          voxMottle = (voxHash - 0.5) * ${glsl(LOOK.mottleAmplitude)} * voxGain;
+          float voxGain = mix(1.0, ${glsl(look.skinMottle)}, polySkin) * mix(1.0, ${glsl(look.darkMottleGain)}, polyDark);
+          voxMottle = (voxHash - 0.5) * ${glsl(look.mottleAmplitude)} * voxGain;
           vec3 clothHue = 1.0 + vec3(voxHash2 - 0.5, 0.5 - voxHash, (voxHash - voxHash2) * 0.5) * 0.032;
-          vec3 skinHue = 1.0 + vec3(0.6, -0.5, -1.0) * (voxHash2 - 0.5) * ${glsl(LOOK.skinHueJitter)};
-          voxHueShift = mix(clothHue, skinHue, polySkin);
+          vec3 skinHue = 1.0 + vec3(0.6, -0.5, -1.0) * (voxHash2 - 0.5) * ${glsl(look.skinHueJitter)};
+          voxHueShift = mix(clothHue, skinHue, polySkin);`}
         }
         float voxCurve = pow(polyRamp, 0.85);
-        float voxTone = clamp(mix(${glsl(LOOK.rampDark)}, ${glsl(LOOK.rampBright)}, voxCurve) + voxMottle, ${glsl(LOOK.toneFloor)}, 1.36);
-        vec3 skinDeepTint = mix(${LOOK.skinShadowTint}, ${LOOK.skinBlushTint}, smoothstep(0.10, 0.30, polyRamp));
+        float voxTone = clamp(mix(${glsl(look.rampDark)}, ${glsl(look.rampBright)}, voxCurve) + voxMottle, ${glsl(look.toneFloor)}, 1.36);
+        vec3 skinDeepTint = mix(${look.skinShadowTint}, ${look.skinBlushTint}, smoothstep(0.10, 0.30, polyRamp));
         vec3 skinShadeTint = mix(skinDeepTint, vec3(1.0), smoothstep(0.30, 0.52, polyRamp));
-        vec3 coolShadowTint = mix(vec3(0.88, 0.93, 1.05), vec3(1.0), smoothstep(0.0, 0.60, polyRamp));
+        vec3 coolShadowTint = mix(${look.shadowTint}, vec3(1.0), smoothstep(0.0, 0.60, polyRamp));
         vec3 shadeTint = mix(coolShadowTint, skinShadeTint, polySkin);
-        diffuseColor.rgb = polyBase * voxHueShift * shadeTint * voxTone * mix(1.0, ${glsl(LOOK.metalBoost)}, polyMetal);`,
+        diffuseColor.rgb = polyBase * voxHueShift * shadeTint * voxTone * mix(1.0, ${glsl(look.metalBoost)}, polyMetal);`,
     )
     fragment = inject(
       fragment,
       '#include <metalnessmap_fragment>',
       `#include <metalnessmap_fragment>
-        float regionRough = mix(0.82, 0.86, polySkin);
+        ${regionFinishes ? `vec2 finish = uLevelFinishes[polyRegion];
+        roughnessFactor = finish.x;
+        metalnessFactor = finish.y;` : `float regionRough = mix(0.82, 0.86, polySkin);
         regionRough = mix(regionRough, 0.78, polyRegion == 1 ? 1.0 : 0.0);
-        regionRough = mix(regionRough, 0.46, polyLeather);
-        regionRough = mix(regionRough, ${glsl(LOOK.metalRoughness)}, polyMetal);
-        regionRough = mix(regionRough, 0.16, polyGloss);
+        regionRough = mix(regionRough, ${glsl(look.woodRoughness)}, polyLeather);
+        regionRough = mix(regionRough, ${glsl(look.metalRoughness)}, polyMetal);
+        regionRough = mix(regionRough, ${glsl(look.glassRoughness)}, polyGloss);
         roughnessFactor = regionRough;
         metalnessFactor = mix(0.0, 0.06, polyLeather);
         metalnessFactor = mix(metalnessFactor, 0.12, polyGloss);
-        metalnessFactor = mix(metalnessFactor, ${glsl(LOOK.metalness)}, polyMetal);`,
+        metalnessFactor = mix(metalnessFactor, ${glsl(look.metalness)}, polyMetal);`}`,
     )
     fragment = inject(
       fragment,
       '#include <opaque_fragment>',
       `vec3 polyView = normalize(vViewPosition);
         vec3 polyNormal = normalize(normal);
-        float polyRim = pow(1.0 - clamp(dot(polyNormal, polyView), 0.0, 1.0), ${glsl(LOOK.rimPower)});
-        outgoingLight += (diffuseColor.rgb * 0.65 + ${LOOK.rimTint}) * polyRim * ${glsl(LOOK.rimStrength)};
+        float polyRim = pow(1.0 - clamp(dot(polyNormal, polyView), 0.0, 1.0), ${glsl(look.rimPower)});
+        outgoingLight += (diffuseColor.rgb * 0.65 + ${look.rimTint}) * polyRim * ${glsl(look.rimStrength)};
         float polySky = smoothstep(-0.25, 0.9, reflect(-polyView, polyNormal).y);
-        outgoingLight += diffuseColor.rgb * (polyMetal * 0.52 + polyGloss * 0.35) * polySky;
-        outgoingLight += uPolyPalette[4] * polyEmissive * ${glsl(LOOK.emissiveGain)};
+        outgoingLight += diffuseColor.rgb * (polyMetal * ${glsl(look.metalSky)} + polyGloss * ${glsl(look.glossSky)}) * polySky;
+        outgoingLight += uPolyPalette[4] * polyEmissive * ${glsl(look.emissiveGain)};
+        ${waterSky ? `vec3 waterNormal = inverseTransformDirection(polyNormal, viewMatrix);
+        vec3 waterRay = inverseTransformDirection(reflect(-polyView, polyNormal), viewMatrix);
+        vec3 waterReflection = mix(uWaterHorizon, uWaterZenith, smoothstep(0.0, 0.8, waterRay.y));
+        ${reflection ? `vec2 reflectedUv = vWaterProjection.xy / max(vWaterProjection.w, 0.001);
+        vec2 ripple = vec2(sin(reflectedUv.y * 210.0), cos(reflectedUv.x * 127.0)) * 0.0025;
+        vec3 reflected = texture2D(uWaterReflection, reflectedUv + ripple).rgb;
+        waterReflection = mix(waterReflection, reflected, uWaterReflectEnabled * 0.9);` : ''}
+        float waterFresnel = pow(1.0 - clamp(dot(polyNormal, polyView), 0.0, 1.0), 3.4);
+        outgoingLight = mix(outgoingLight, waterReflection * (0.28 + 0.4 * polyRamp),
+          max(waterNormal.y, 0.0) * (0.07 + 0.44 * waterFresnel));` : ''}
         #include <opaque_fragment>`,
     )
     shader.fragmentShader = fragment
   }
-  material.customProgramCacheKey = () => PROGRAM_KEY
+  material.customProgramCacheKey = () => waterSky ? `${PROGRAM_KEY}-water${reflection ? '-reflect' : ''}`
+    : isLevel ? `${PROGRAM_KEY}-${surface}` : PROGRAM_KEY
   return material
 }
 

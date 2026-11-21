@@ -6,7 +6,7 @@
  */
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { leavesFor, PACK_DEFS, VOXCHAR_PACK_KEYS, type VoxCharPackKey } from '../contracts/packs'
+import { leavesFor, VOXCHAR_PACK_KEYS, type VoxCharPackKey } from '../contracts/packs'
 import { licenseTextFor } from '../src/licenses'
 import { STAGE_DIR } from '../src/paths'
 
@@ -21,24 +21,25 @@ function main(): void {
 
   for (const pack of packs) {
     if (!VOXCHAR_PACK_KEYS.includes(pack)) throw new Error(`Unknown pack "${pack}"`)
-    const srcDir = join(STAGE_DIR, PACK_DEFS[pack].dir)
-    if (!existsSync(srcDir)) throw new Error(`Pack "${pack}" not built at ${srcDir}; run npm run build first`)
+    for (const leaf of leavesFor(pack)) {
+      const srcDir = join(STAGE_DIR, leaf.id)
+      if (!existsSync(srcDir)) throw new Error(`Pack "${pack}" not built at ${srcDir}. Run npm run build first.`)
+    }
   }
 
   for (const pack of packs) {
-    const dir = PACK_DEFS[pack].dir
-    const from = join(STAGE_DIR, dir)
-    const dest = join(target, dir)
-    rmSync(dest, { recursive: true, force: true })
-    mkdirSync(dest, { recursive: true })
-    cpSync(from, dest, { recursive: true })
     for (const leaf of leavesFor(pack)) {
-      writeFileSync(join(target, leaf.id, 'License.txt'), licenseTextFor(pack, leaf.kind))
+      const from = join(STAGE_DIR, leaf.id)
+      const dest = join(target, leaf.id)
+      rmSync(dest, { recursive: true, force: true })
+      mkdirSync(dest, { recursive: true })
+      cpSync(from, dest, { recursive: true })
+      writeFileSync(join(dest, 'License.txt'), licenseTextFor(pack, leaf.kind))
+      console.log(`Staged ${leaf.id} -> ${dest}`)
     }
-    console.log(`Staged ${dir} -> ${dest}`)
   }
 
-  console.log('Done. In target checkout, run `npm run manifest:build` and `npm test` to register & verify packs.')
+  console.log('Done. In target checkout, run `node scripts/build-manifest.mjs` and `npm test` to register & verify packs.')
 }
 
 main()

@@ -26,12 +26,17 @@ def main():
                 for file in ('demo.glb', 'demo.voxels.json'):
                     archive.write(folder / 'level-kit' / file, f'{pack}/{file}')
                 archive.write(folder / 'License.txt', f'{pack}/License.txt')
+                catalog = []
                 for prop in props:
                     path = folder / prop['relativePath']
-                    archive.write(path, f'{pack}/props/{path.name}')
+                    relative = f'props/{path.name}'
+                    archive.write(path, f'{pack}/{relative}')
+                    catalog.append({**prop, 'relativePath': relative})
                     if 'motion' in prop:
                         motion = folder / prop['motion']['relativePath']
                         archive.write(motion, f'{pack}/vehicles/{motion.name}')
+                archive.writestr(f'{pack}/props.json', json.dumps(
+                    {'version': 1, 'pack': pack, 'props': catalog}, separators=(',', ':')))
             archive.write(args.meta / 'level-scenes.json', 'level-scenes.json')
             archive.write(Path(__file__).resolve().parents[1] / 'docs/level-voxel-format.md', 'README.md')
         verify_archive(pending)

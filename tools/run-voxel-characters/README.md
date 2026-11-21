@@ -97,13 +97,13 @@ Whenever you add new characters, outfits, gear, creatures, props, or packs—or 
 ## Level kits
 
 Run `npm run build` and `npm run catalog`. The **Level Kits** tab of the local
-showcase opens a demo for each pack. Use **Eye level** to check the route.
+showcase opens a demo for each pack. Use **Viewpoint** to check the route.
 Select a model to see it alone and check its dimensions. See the [level kit art guide](docs/art-direction.md#level-kits)
 for the grid, pivots, and scene layouts.
 
-Find the individual GLBs in each staged leaf's `level-kit/` folder. The Core
-models use the existing CC0 characters leaf. The other models use their
-pack's world leaf. Keep the leaf license with any copies. Find the complete
+Find the individual GLBs in each staged world leaf's `level-kit/` folder.
+The Core world leaf is `run-cubix-core/3D/prototype-blocks`. It uses
+the CC0 license. Keep the leaf license with any copies. Find the complete
 scenes in `out/level-demos/`. Each scene uses the same models and transforms
 as the showcase. The GLBs include vertex colors for use with a standard
 glTF material.

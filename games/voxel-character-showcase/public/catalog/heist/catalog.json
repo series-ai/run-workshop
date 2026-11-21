@@ -1170,6 +1170,10 @@
           0.2,
           4
         ]
+      },
+      "palette": {
+        "primary": "#666360",
+        "secondary": "#4f4d49"
       }
     },
     {
@@ -1196,6 +1200,10 @@
           2.5,
           0.5
         ]
+      },
+      "palette": {
+        "skin": "#9d8e78",
+        "primary": "#8c775f"
       }
     },
     {
@@ -1326,6 +1334,10 @@
           2.9,
           1
         ]
+      },
+      "palette": {
+        "skin": "#969a8c",
+        "metal": "#697e78"
       }
     },
     {
@@ -1352,6 +1364,10 @@
           2,
           0.8
         ]
+      },
+      "palette": {
+        "secondary": "#4a5a58",
+        "metal": "#8c9a91"
       }
     },
     {
@@ -1378,6 +1394,10 @@
           0.9,
           0.8
         ]
+      },
+      "palette": {
+        "skin": "#a49a83",
+        "accent": "#ba9e70"
       }
     },
     {
@@ -1508,6 +1528,9 @@
           0.8,
           1.6
         ]
+      },
+      "palette": {
+        "leather": "#8b795e"
       }
     },
     {
@@ -1534,6 +1557,10 @@
           0.2,
           1.5
         ]
+      },
+      "palette": {
+        "accent": "#a99870",
+        "metal": "#788584"
       }
     },
     {
@@ -1699,7 +1726,7 @@
       "relativePath": "level-kit/prop_heist_crated_salvage.glb",
       "nodeName": "prop_heist_crated_salvage",
       "label": "Crated salvage",
-      "triangles": 322,
+      "triangles": 432,
       "bounds": {
         "min": [
           -0.75,
@@ -1829,7 +1856,7 @@
       "relativePath": "level-kit/prop_heist_upper_brick_windows.glb",
       "nodeName": "prop_heist_upper_brick_windows",
       "label": "Upper brick windows",
-      "triangles": 596,
+      "triangles": 610,
       "bounds": {
         "min": [
           -2,
@@ -1846,6 +1873,12 @@
           2.9,
           0.8
         ]
+      },
+      "palette": {
+        "skin": "#b9a88c",
+        "primary": "#997659",
+        "secondary": "#5d695f",
+        "visor": "#8ca29a"
       }
     },
     {
@@ -1872,6 +1905,9 @@
           0.3,
           2.4
         ]
+      },
+      "palette": {
+        "secondary": "#576a68"
       }
     },
     {
@@ -1924,6 +1960,10 @@
           2.8,
           0.9
         ]
+      },
+      "palette": {
+        "skin": "#999683",
+        "primary": "#847d6b"
       }
     },
     {
@@ -2316,6 +2356,10 @@
           3.1,
           0.5
         ]
+      },
+      "palette": {
+        "skin": "#aaa18e",
+        "primary": "#857863"
       }
     },
     {
@@ -2342,6 +2386,10 @@
           3.1,
           0.6
         ]
+      },
+      "palette": {
+        "skin": "#aaa18e",
+        "primary": "#967963"
       }
     },
     {
@@ -2368,7 +2416,41 @@
           3.1,
           0.8
         ]
+      },
+      "palette": {
+        "skin": "#b5a997",
+        "primary": "#916e56"
       }
+    },
+    {
+      "id": "prop_heist_print_works_window_glass",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_print_works_window_glass.glb",
+      "nodeName": "prop_heist_print_works_window_glass",
+      "label": "Print works window glass",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1.35,
+          0,
+          -0.05
+        ],
+        "max": [
+          1.35,
+          1.2,
+          0.05
+        ],
+        "size": [
+          2.7,
+          1.2,
+          0.1
+        ]
+      },
+      "palette": {
+        "visor": "#94a3a0"
+      },
+      "surface": "glass"
     },
     {
       "id": "prop_heist_print_office_upper_sash",
@@ -2394,6 +2476,10 @@
           2.9,
           0.5
         ]
+      },
+      "palette": {
+        "skin": "#7f8977",
+        "primary": "#a69980"
       }
     },
     {
@@ -2455,7 +2541,7 @@
       "relativePath": "level-kit/prop_heist_rotary_offset_press.glb",
       "nodeName": "prop_heist_rotary_offset_press",
       "label": "Rotary offset press",
-      "triangles": 364,
+      "triangles": 642,
       "bounds": {
         "min": [
           -1.45,
@@ -2464,14 +2550,20 @@
         ],
         "max": [
           1.45,
-          1.9,
+          1.4,
           0.7
         ],
         "size": [
           2.9,
-          1.9,
+          1.4,
           1.4
         ]
+      },
+      "palette": {
+        "primary": "#476e68",
+        "secondary": "#45525a",
+        "metal": "#abb2aa",
+        "trim": "#d0c3a8"
       }
     },
     {
@@ -2576,6 +2668,12 @@
           0.2,
           4
         ]
+      },
+      "palette": {
+        "skin": "#aaa69a",
+        "primary": "#7f7569",
+        "secondary": "#6b655b",
+        "metal": "#969791"
       }
     },
     {
@@ -2663,23 +2761,28 @@
       "relativePath": "level-kit/prop_heist_yard_poplar.glb",
       "nodeName": "prop_heist_yard_poplar",
       "label": "Yard poplar",
-      "triangles": 500,
+      "triangles": 644,
       "bounds": {
         "min": [
           -1.4,
           0,
-          -1.15
+          -0.9
         ],
         "max": [
           1.4,
-          6.7,
-          1.15
+          6.3,
+          0.9
         ],
         "size": [
           2.8,
-          6.7,
-          2.3
+          6.3,
+          1.8
         ]
+      },
+      "palette": {
+        "primary": "#64734b",
+        "secondary": "#454f37",
+        "leather": "#665a49"
       }
     },
     {
@@ -2793,23 +2896,28 @@
       "relativePath": "level-kit/prop_heist_roadside_shade_tree.glb",
       "nodeName": "prop_heist_roadside_shade_tree",
       "label": "Roadside shade tree",
-      "triangles": 488,
+      "triangles": 650,
       "bounds": {
         "min": [
           -1.5,
           0,
-          -1.25
+          -0.9
         ],
         "max": [
           1.5,
-          5.3,
-          1.25
+          4.9,
+          0.9
         ],
         "size": [
           3,
-          5.3,
-          2.5
+          4.9,
+          1.8
         ]
+      },
+      "palette": {
+        "primary": "#748051",
+        "secondary": "#4c593c",
+        "leather": "#695846"
       }
     },
     {
@@ -2888,6 +2996,3039 @@
           0.2,
           1.9
         ]
+      }
+    },
+    {
+      "id": "prop_heist_alley_delivery_steps",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_alley_delivery_steps.glb",
+      "nodeName": "prop_heist_alley_delivery_steps",
+      "label": "Alley delivery steps",
+      "triangles": 202,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.05,
+          0.3,
+          0.9
+        ],
+        "size": [
+          2.1,
+          0.3,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_gallery",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_gallery.glb",
+      "nodeName": "prop_heist_dispatch_gallery",
+      "label": "Dispatch gallery",
+      "triangles": 552,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.8
+        ],
+        "max": [
+          2,
+          1.6,
+          0.8
+        ],
+        "size": [
+          4,
+          1.6,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_stair_gallery",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_stair_gallery.glb",
+      "nodeName": "prop_heist_dispatch_stair_gallery",
+      "label": "Dispatch stair gallery",
+      "triangles": 508,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.8
+        ],
+        "max": [
+          2,
+          1.6,
+          0.8
+        ],
+        "size": [
+          4,
+          1.6,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_stair_landing",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_stair_landing.glb",
+      "nodeName": "prop_heist_dispatch_stair_landing",
+      "label": "Dispatch stair landing",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.6,
+          1.4,
+          0.85
+        ],
+        "size": [
+          3.2,
+          1.4,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_stair_flight",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_stair_flight.glb",
+      "nodeName": "prop_heist_dispatch_stair_flight",
+      "label": "Dispatch stair flight",
+      "triangles": 616,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -1.25
+        ],
+        "max": [
+          0.7,
+          0.9,
+          1.25
+        ],
+        "size": [
+          1.4,
+          0.9,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_stair_trestle",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_stair_trestle.glb",
+      "nodeName": "prop_heist_dispatch_stair_trestle",
+      "label": "Dispatch stair trestle",
+      "triangles": 170,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.7,
+          0.8,
+          0.15
+        ],
+        "size": [
+          1.4,
+          0.8,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_stair_handrail",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_stair_handrail.glb",
+      "nodeName": "prop_heist_dispatch_stair_handrail",
+      "label": "Dispatch stair handrail",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -0.15,
+          0,
+          -1.25
+        ],
+        "max": [
+          0.15,
+          1.7,
+          1.25
+        ],
+        "size": [
+          0.3,
+          1.7,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_gallery_door_sill",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_gallery_door_sill.glb",
+      "nodeName": "prop_heist_gallery_door_sill",
+      "label": "Gallery door sill",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.9,
+          0.3,
+          0.6
+        ],
+        "size": [
+          1.8,
+          0.3,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_gallery_delivery_hoist",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_gallery_delivery_hoist.glb",
+      "nodeName": "prop_heist_gallery_delivery_hoist",
+      "label": "Gallery delivery hoist",
+      "triangles": 356,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -1.1
+        ],
+        "max": [
+          0.3,
+          3.4,
+          1.1
+        ],
+        "size": [
+          0.6,
+          3.4,
+          2.2
+        ]
+      },
+      "palette": {
+        "primary": "#58726e",
+        "secondary": "#3f4b50",
+        "trim": "#e7d9ad"
+      }
+    },
+    {
+      "id": "prop_heist_loading_platform_corbel",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_loading_platform_corbel.glb",
+      "nodeName": "prop_heist_loading_platform_corbel",
+      "label": "Loading platform corbel",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.75
+        ],
+        "max": [
+          0.2,
+          1.3,
+          0.75
+        ],
+        "size": [
+          0.4,
+          1.3,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_office_doorway",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_office_doorway.glb",
+      "nodeName": "prop_heist_dispatch_office_doorway",
+      "label": "Dispatch office doorway",
+      "triangles": 358,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.9,
+          0.25
+        ],
+        "size": [
+          4,
+          2.9,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#819182",
+        "primary": "#8d8c7b"
+      }
+    },
+    {
+      "id": "prop_heist_gallery_freight_door",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_gallery_freight_door.glb",
+      "nodeName": "prop_heist_gallery_freight_door",
+      "label": "Gallery freight door",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.2
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_sorting_desk",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_sorting_desk.glb",
+      "nodeName": "prop_heist_dispatch_sorting_desk",
+      "label": "Dispatch sorting desk",
+      "triangles": 374,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.05,
+          1.9,
+          0.5
+        ],
+        "size": [
+          2.1,
+          1.9,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_docket_pigeonholes",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_docket_pigeonholes.glb",
+      "nodeName": "prop_heist_dispatch_docket_pigeonholes",
+      "label": "Dispatch docket pigeonholes",
+      "triangles": 634,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.85,
+          1.6,
+          0.4
+        ],
+        "size": [
+          1.7,
+          1.6,
+          0.8
+        ]
+      },
+      "palette": {
+        "trim": "#e1d8bd",
+        "visor": "#d9d8ba"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_roof_lantern",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_roof_lantern.glb",
+      "nodeName": "prop_heist_dispatch_roof_lantern",
+      "label": "Dispatch roof lantern",
+      "triangles": 562,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.7,
+          1,
+          0.85
+        ],
+        "size": [
+          3.4,
+          1,
+          1.7
+        ]
+      },
+      "palette": {
+        "primary": "#75827b",
+        "visor": "#8faeac"
+      }
+    },
+    {
+      "id": "prop_heist_paper_roll_cradle",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_paper_roll_cradle.glb",
+      "nodeName": "prop_heist_paper_roll_cradle",
+      "label": "Paper roll cradle",
+      "triangles": 646,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.8,
+          1.4,
+          0.6
+        ],
+        "size": [
+          1.6,
+          1.4,
+          1.2
+        ]
+      },
+      "palette": {
+        "trim": "#e1d8bd",
+        "visor": "#d9d8ba"
+      }
+    },
+    {
+      "id": "prop_heist_bindery_paper_cutter",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_paper_cutter.glb",
+      "nodeName": "prop_heist_bindery_paper_cutter",
+      "label": "Bindery paper cutter",
+      "triangles": 524,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.25,
+          1.9,
+          0.75
+        ],
+        "size": [
+          2.5,
+          1.9,
+          1.5
+        ]
+      },
+      "palette": {
+        "primary": "#58726e",
+        "secondary": "#3f4b50",
+        "trim": "#e7d9ad"
+      }
+    },
+    {
+      "id": "prop_heist_composing_type_cabinet",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_composing_type_cabinet.glb",
+      "nodeName": "prop_heist_composing_type_cabinet",
+      "label": "Composing type cabinet",
+      "triangles": 370,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.05,
+          1.5,
+          0.5
+        ],
+        "size": [
+          2.1,
+          1.5,
+          1
+        ]
+      },
+      "palette": {
+        "trim": "#e1d8bd",
+        "visor": "#d9d8ba"
+      }
+    },
+    {
+      "id": "prop_heist_printed_sheet_drying_rack",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_printed_sheet_drying_rack.glb",
+      "nodeName": "prop_heist_printed_sheet_drying_rack",
+      "label": "Printed sheet drying rack",
+      "triangles": 592,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.8,
+          1.9,
+          0.5
+        ],
+        "size": [
+          1.6,
+          1.9,
+          1
+        ]
+      },
+      "palette": {
+        "trim": "#e1d8bd",
+        "visor": "#d9d8ba"
+      }
+    },
+    {
+      "id": "prop_heist_book_lift_tower",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_book_lift_tower.glb",
+      "nodeName": "prop_heist_book_lift_tower",
+      "label": "Book lift tower",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.3,
+          3,
+          1.25
+        ],
+        "size": [
+          2.6,
+          3,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_book_lift_hip_roof",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_book_lift_hip_roof.glb",
+      "nodeName": "prop_heist_book_lift_hip_roof",
+      "label": "Book lift hip roof",
+      "triangles": 360,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -1.45
+        ],
+        "max": [
+          1.55,
+          1.8,
+          1.45
+        ],
+        "size": [
+          3.1,
+          1.8,
+          2.9
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_book_lift_masonry_shaft",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_book_lift_masonry_shaft.glb",
+      "nodeName": "prop_heist_book_lift_masonry_shaft",
+      "label": "Book lift masonry shaft",
+      "triangles": 610,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -1.3
+        ],
+        "max": [
+          1.3,
+          5.5,
+          1.3
+        ],
+        "size": [
+          2.6,
+          5.5,
+          2.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_folded_proof_signature",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_folded_proof_signature.glb",
+      "nodeName": "prop_heist_folded_proof_signature",
+      "label": "Folded proof signature",
+      "triangles": 100,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.5,
+          0.2,
+          0.35
+        ],
+        "size": [
+          1,
+          0.2,
+          0.7
+        ]
+      },
+      "palette": {
+        "trim": "#e1d8bd",
+        "visor": "#d9d8ba"
+      }
+    },
+    {
+      "id": "prop_heist_ink_fountain_trolley",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ink_fountain_trolley.glb",
+      "nodeName": "prop_heist_ink_fountain_trolley",
+      "label": "Ink fountain trolley",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.65,
+          1.4,
+          0.4
+        ],
+        "size": [
+          1.3,
+          1.4,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_bindery_shop_window",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_shop_window.glb",
+      "nodeName": "prop_heist_bindery_shop_window",
+      "label": "Bindery shop window",
+      "triangles": 580,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.7,
+          2.8,
+          0.3
+        ],
+        "size": [
+          3.4,
+          2.8,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_bindery_striped_awning",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_striped_awning.glb",
+      "nodeName": "prop_heist_bindery_striped_awning",
+      "label": "Bindery striped awning",
+      "triangles": 300,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.6
+        ],
+        "max": [
+          1.8,
+          0.5,
+          0.6
+        ],
+        "size": [
+          3.6,
+          0.5,
+          1.2
+        ]
+      },
+      "palette": {
+        "primary": "#547269",
+        "trim": "#d4c7a2"
+      }
+    },
+    {
+      "id": "prop_heist_bindery_shop_roof",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_shop_roof.glb",
+      "nodeName": "prop_heist_bindery_shop_roof",
+      "label": "Bindery shop roof",
+      "triangles": 328,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -1.8
+        ],
+        "max": [
+          1.75,
+          0.3,
+          1.8
+        ],
+        "size": [
+          3.5,
+          0.3,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_bound_book_counter",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bound_book_counter.glb",
+      "nodeName": "prop_heist_bound_book_counter",
+      "label": "Bound book counter",
+      "triangles": 390,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.95,
+          1.6,
+          0.45
+        ],
+        "size": [
+          1.9,
+          1.6,
+          0.9
+        ]
+      },
+      "palette": {
+        "trim": "#e1d8bd",
+        "visor": "#d9d8ba"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_trolley_track",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_trolley_track.glb",
+      "nodeName": "prop_heist_dispatch_trolley_track",
+      "label": "Dispatch trolley track",
+      "triangles": 364,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.9,
+          0.2,
+          1.8
+        ],
+        "size": [
+          1.8,
+          0.2,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_hand_freight_trolley",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_hand_freight_trolley.glb",
+      "nodeName": "prop_heist_hand_freight_trolley",
+      "label": "Hand freight trolley",
+      "triangles": 606,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -1
+        ],
+        "max": [
+          0.9,
+          1.3,
+          1
+        ],
+        "size": [
+          1.8,
+          1.3,
+          2
+        ]
+      },
+      "palette": {
+        "primary": "#58726e",
+        "secondary": "#3f4b50",
+        "trim": "#e7d9ad"
+      }
+    },
+    {
+      "id": "prop_heist_plate_siding_buffer",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_plate_siding_buffer.glb",
+      "nodeName": "prop_heist_plate_siding_buffer",
+      "label": "Plate siding buffer",
+      "triangles": 426,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.05,
+          0.8,
+          0.45
+        ],
+        "size": [
+          2.1,
+          0.8,
+          0.9
+        ]
+      },
+      "palette": {
+        "metal": "#798883",
+        "leather": "#9a8065"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_office_floor",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_office_floor.glb",
+      "nodeName": "prop_heist_dispatch_office_floor",
+      "label": "Dispatch office floor",
+      "triangles": 338,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "trim": "#cbc1a9",
+        "leather": "#987e65"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_plaster_wall",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_plaster_wall.glb",
+      "nodeName": "prop_heist_dispatch_plaster_wall",
+      "label": "Dispatch plaster wall",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.9,
+          0.25
+        ],
+        "size": [
+          4,
+          2.9,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#b0a594",
+        "trim": "#c7b8a0"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_order_board",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_order_board.glb",
+      "nodeName": "prop_heist_dispatch_order_board",
+      "label": "Dispatch order board",
+      "triangles": 358,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.1,
+          1,
+          0.25
+        ],
+        "size": [
+          2.2,
+          1,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#6a7a73",
+        "trim": "#ceb892",
+        "visor": "#eee1b8"
+      }
+    },
+    {
+      "id": "prop_heist_shipping_balance",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_shipping_balance.glb",
+      "nodeName": "prop_heist_shipping_balance",
+      "label": "Shipping balance",
+      "triangles": 158,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.4,
+          0.6,
+          0.2
+        ],
+        "size": [
+          0.8,
+          0.6,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#5e736a",
+        "trim": "#e0d8bb"
+      }
+    },
+    {
+      "id": "prop_heist_sorting_stool",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_sorting_stool.glb",
+      "nodeName": "prop_heist_sorting_stool",
+      "label": "Sorting stool",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.35,
+          0.7,
+          0.35
+        ],
+        "size": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_ledger_cupboard",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ledger_cupboard.glb",
+      "nodeName": "prop_heist_ledger_cupboard",
+      "label": "Ledger cupboard",
+      "triangles": 426,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          2.1,
+          0.5
+        ],
+        "size": [
+          1.8,
+          2.1,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#6a7975",
+        "visor": "#ded1aa"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_wall_lamp",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_wall_lamp.glb",
+      "nodeName": "prop_heist_dispatch_wall_lamp",
+      "label": "Dispatch wall lamp",
+      "triangles": 198,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.45,
+          0.6,
+          0.5
+        ],
+        "size": [
+          0.9,
+          0.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_rag_store_loading_bay",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_rag_store_loading_bay.glb",
+      "nodeName": "prop_heist_rag_store_loading_bay",
+      "label": "Rag store loading bay",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.5,
+          0.25
+        ],
+        "size": [
+          4,
+          3.5,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#9c9180",
+        "primary": "#6b7068",
+        "leather": "#6b634f"
+      }
+    },
+    {
+      "id": "prop_heist_rag_store_masonry_return",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_rag_store_masonry_return.glb",
+      "nodeName": "prop_heist_rag_store_masonry_return",
+      "label": "Rag store masonry return",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.5,
+          0.25
+        ],
+        "size": [
+          4,
+          3.5,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#9c9180",
+        "primary": "#6b7068",
+        "leather": "#6b634f"
+      }
+    },
+    {
+      "id": "prop_heist_rag_store_high_sash",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_rag_store_high_sash.glb",
+      "nodeName": "prop_heist_rag_store_high_sash",
+      "label": "Rag store high sash",
+      "triangles": 438,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.2
+        ],
+        "max": [
+          2,
+          1.1,
+          0.2
+        ],
+        "size": [
+          4,
+          1.1,
+          0.4
+        ]
+      },
+      "palette": {
+        "visor": "#8ba49d"
+      }
+    },
+    {
+      "id": "prop_heist_rag_store_roof",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_rag_store_roof.glb",
+      "nodeName": "prop_heist_rag_store_roof",
+      "label": "Rag store roof",
+      "triangles": 380,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.85
+        ],
+        "max": [
+          2,
+          0.8,
+          1.85
+        ],
+        "size": [
+          4,
+          0.8,
+          3.7
+        ]
+      },
+      "palette": {
+        "primary": "#63756d"
+      }
+    },
+    {
+      "id": "prop_heist_offcut_bale",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_offcut_bale.glb",
+      "nodeName": "prop_heist_offcut_bale",
+      "label": "Offcut bale",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.7,
+          1.2,
+          0.55
+        ],
+        "size": [
+          1.4,
+          1.2,
+          1.1
+        ]
+      },
+      "palette": {
+        "trim": "#bcb19c",
+        "visor": "#d7cdb7"
+      }
+    },
+    {
+      "id": "prop_heist_reel_feed_stand",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_reel_feed_stand.glb",
+      "nodeName": "prop_heist_reel_feed_stand",
+      "label": "Reel feed stand",
+      "triangles": 490,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.75
+        ],
+        "max": [
+          0.95,
+          1.5,
+          0.75
+        ],
+        "size": [
+          1.9,
+          1.5,
+          1.5
+        ]
+      },
+      "palette": {
+        "primary": "#51766c",
+        "trim": "#dfd7c2",
+        "visor": "#ece5cf"
+      }
+    },
+    {
+      "id": "prop_heist_press_delivery_belt",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_delivery_belt.glb",
+      "nodeName": "prop_heist_press_delivery_belt",
+      "label": "Press delivery belt",
+      "triangles": 576,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.65
+        ],
+        "max": [
+          1.1,
+          1.2,
+          0.65
+        ],
+        "size": [
+          2.2,
+          1.2,
+          1.3
+        ]
+      },
+      "palette": {
+        "primary": "#54776d",
+        "visor": "#e4e0c7",
+        "detail": "#b0604b"
+      }
+    },
+    {
+      "id": "prop_heist_press_ink_fountain",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_ink_fountain.glb",
+      "nodeName": "prop_heist_press_ink_fountain",
+      "label": "Press ink fountain",
+      "triangles": 286,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.6,
+          0.9,
+          0.3
+        ],
+        "size": [
+          1.2,
+          0.9,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#53736d",
+        "detail": "#5a6e88"
+      }
+    },
+    {
+      "id": "prop_heist_press_side_guard",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_side_guard.glb",
+      "nodeName": "prop_heist_press_side_guard",
+      "label": "Press side guard",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.1
+        ],
+        "max": [
+          1,
+          0.9,
+          0.1
+        ],
+        "size": [
+          2,
+          0.9,
+          0.2
+        ]
+      },
+      "palette": {
+        "primary": "#67847b",
+        "accent": "#d7ac65"
+      }
+    },
+    {
+      "id": "prop_heist_press_cylinder_paper_web",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_cylinder_paper_web.glb",
+      "nodeName": "prop_heist_press_cylinder_paper_web",
+      "label": "Press cylinder paper web",
+      "triangles": 184,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.1,
+          0.4,
+          0.3
+        ],
+        "size": [
+          2.2,
+          0.4,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#4e626d",
+        "visor": "#e5dfc8"
+      }
+    },
+    {
+      "id": "prop_heist_press_drive_flywheel",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_drive_flywheel.glb",
+      "nodeName": "prop_heist_press_drive_flywheel",
+      "label": "Press drive flywheel",
+      "triangles": 300,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.5,
+          1,
+          0.2
+        ],
+        "size": [
+          1,
+          1,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#67908a",
+        "secondary": "#343c40"
+      }
+    },
+    {
+      "id": "prop_heist_press_gauge_panel",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_gauge_panel.glb",
+      "nodeName": "prop_heist_press_gauge_panel",
+      "label": "Press gauge panel",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.4,
+          1.6,
+          0.25
+        ],
+        "size": [
+          0.8,
+          1.6,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#5b726e",
+        "trim": "#d5cfb5"
+      }
+    },
+    {
+      "id": "prop_heist_bindery_delivery_bundles",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_delivery_bundles.glb",
+      "nodeName": "prop_heist_bindery_delivery_bundles",
+      "label": "Bindery delivery bundles",
+      "triangles": 342,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.85,
+          1.1,
+          0.6
+        ],
+        "size": [
+          1.7,
+          1.1,
+          1.2
+        ]
+      },
+      "palette": {
+        "trim": "#d2c6ae",
+        "visor": "#e3dfc6"
+      }
+    },
+    {
+      "id": "prop_heist_press_inspection_lamp",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_inspection_lamp.glb",
+      "nodeName": "prop_heist_press_inspection_lamp",
+      "label": "Press inspection lamp",
+      "triangles": 194,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.25
+        ],
+        "max": [
+          1,
+          0.8,
+          0.25
+        ],
+        "size": [
+          2,
+          0.8,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_secure_plate_rack",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_secure_plate_rack.glb",
+      "nodeName": "prop_heist_secure_plate_rack",
+      "label": "Secure plate rack",
+      "triangles": 630,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.9,
+          1.9,
+          0.45
+        ],
+        "size": [
+          1.8,
+          1.9,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#556c65",
+        "trim": "#b8b4a1"
+      }
+    },
+    {
+      "id": "prop_heist_plate_store_sign",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_plate_store_sign.glb",
+      "nodeName": "prop_heist_plate_store_sign",
+      "label": "Plate store sign",
+      "triangles": 384,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.3,
+          0.8,
+          0.15
+        ],
+        "size": [
+          2.6,
+          0.8,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#526665",
+        "trim": "#d7d1b6"
+      }
+    },
+    {
+      "id": "prop_heist_plate_store_bell",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_plate_store_bell.glb",
+      "nodeName": "prop_heist_plate_store_bell",
+      "label": "Plate store bell",
+      "triangles": 70,
+      "bounds": {
+        "min": [
+          -0.15,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.15,
+          0.5,
+          0.15
+        ],
+        "size": [
+          0.3,
+          0.5,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_parcel_office_hatch",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_parcel_office_hatch.glb",
+      "nodeName": "prop_heist_parcel_office_hatch",
+      "label": "Parcel office hatch",
+      "triangles": 414,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.15,
+          2.2,
+          0.35
+        ],
+        "size": [
+          2.3,
+          2.2,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#496d69",
+        "trim": "#bbac91"
+      }
+    },
+    {
+      "id": "prop_heist_parcel_shed_side",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_parcel_shed_side.glb",
+      "nodeName": "prop_heist_parcel_shed_side",
+      "label": "Parcel shed side",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.15,
+          2,
+          0.3
+        ],
+        "size": [
+          2.3,
+          2,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#769084",
+        "trim": "#d3c1a1"
+      }
+    },
+    {
+      "id": "prop_heist_parcel_shed_felt_roof",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_parcel_shed_felt_roof.glb",
+      "nodeName": "prop_heist_parcel_shed_felt_roof",
+      "label": "Parcel shed felt roof",
+      "triangles": 236,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -1.2
+        ],
+        "max": [
+          1.25,
+          0.4,
+          1.2
+        ],
+        "size": [
+          2.5,
+          0.4,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_street_sack_barrow",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_street_sack_barrow.glb",
+      "nodeName": "prop_heist_street_sack_barrow",
+      "label": "Street sack barrow",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.5,
+          1.3,
+          0.3
+        ],
+        "size": [
+          1,
+          1.3,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#657873",
+        "trim": "#cbbc94"
+      }
+    },
+    {
+      "id": "prop_heist_parcel_curbside_post",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_parcel_curbside_post.glb",
+      "nodeName": "prop_heist_parcel_curbside_post",
+      "label": "Parcel curbside post",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.4,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_parcel_counter_sign",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_parcel_counter_sign.glb",
+      "nodeName": "prop_heist_parcel_counter_sign",
+      "label": "Parcel counter sign",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.9,
+          0.8,
+          0.15
+        ],
+        "size": [
+          1.8,
+          0.8,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#8b5247",
+        "trim": "#e0c8a1"
+      }
+    },
+    {
+      "id": "prop_heist_bindery_street_sign",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_street_sign.glb",
+      "nodeName": "prop_heist_bindery_street_sign",
+      "label": "Bindery street sign",
+      "triangles": 340,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.95,
+          0.8,
+          0.15
+        ],
+        "size": [
+          1.9,
+          0.8,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#536c60",
+        "trim": "#e3cb95"
+      }
+    },
+    {
+      "id": "prop_heist_news_bundle_bin",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_news_bundle_bin.glb",
+      "nodeName": "prop_heist_news_bundle_bin",
+      "label": "News bundle bin",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.6,
+          1.4,
+          0.5
+        ],
+        "size": [
+          1.2,
+          1.4,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#7e8b76",
+        "trim": "#d9ccb3",
+        "visor": "#b29e77"
+      }
+    },
+    {
+      "id": "prop_heist_service_street_gutter",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_service_street_gutter.glb",
+      "nodeName": "prop_heist_service_street_gutter",
+      "label": "Service street gutter",
+      "triangles": 76,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.25,
+          0.2,
+          1.8
+        ],
+        "size": [
+          0.5,
+          0.2,
+          3.6
+        ]
+      },
+      "palette": {
+        "primary": "#7a7970",
+        "secondary": "#5c625d"
+      }
+    },
+    {
+      "id": "prop_heist_bindery_return_crates",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bindery_return_crates.glb",
+      "nodeName": "prop_heist_bindery_return_crates",
+      "label": "Bindery return crates",
+      "triangles": 268,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.8,
+          1.3,
+          0.35
+        ],
+        "size": [
+          1.6,
+          1.3,
+          0.7
+        ]
+      },
+      "palette": {
+        "trim": "#bba07a",
+        "leather": "#947a5a"
+      }
+    },
+    {
+      "id": "prop_heist_ink_store_glazed_partition",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ink_store_glazed_partition.glb",
+      "nodeName": "prop_heist_ink_store_glazed_partition",
+      "label": "Ink store glazed partition",
+      "triangles": 580,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.1,
+          0.25
+        ],
+        "size": [
+          4,
+          3.1,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#6e837b",
+        "metal": "#6c7771",
+        "leather": "#8c7966",
+        "visor": "#a8bcb0"
+      }
+    },
+    {
+      "id": "prop_heist_ink_mixing_bench",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ink_mixing_bench.glb",
+      "nodeName": "prop_heist_ink_mixing_bench",
+      "label": "Ink mixing bench",
+      "triangles": 476,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.2,
+          1.4,
+          0.5
+        ],
+        "size": [
+          2.4,
+          1.4,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#75837c",
+        "trim": "#b9996c",
+        "leather": "#8d7a63",
+        "detail": "#88574c"
+      }
+    },
+    {
+      "id": "prop_heist_bench_pigment_mixer",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_bench_pigment_mixer.glb",
+      "nodeName": "prop_heist_bench_pigment_mixer",
+      "label": "Bench pigment mixer",
+      "triangles": 300,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.45,
+          1.6,
+          0.35
+        ],
+        "size": [
+          0.9,
+          1.6,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#657e78",
+        "accent": "#baa168",
+        "detail": "#794d54"
+      }
+    },
+    {
+      "id": "prop_heist_pigment_drawer_shelf",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_pigment_drawer_shelf.glb",
+      "nodeName": "prop_heist_pigment_drawer_shelf",
+      "label": "Pigment drawer shelf",
+      "triangles": 414,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.05,
+          1,
+          0.3
+        ],
+        "size": [
+          2.1,
+          1,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#538082",
+        "secondary": "#475765",
+        "accent": "#bd9444",
+        "trim": "#dacaad",
+        "detail": "#944d51"
+      }
+    },
+    {
+      "id": "prop_heist_ink_wash_sink",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ink_wash_sink.glb",
+      "nodeName": "prop_heist_ink_wash_sink",
+      "label": "Ink wash sink",
+      "triangles": 280,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.75,
+          1.6,
+          0.5
+        ],
+        "size": [
+          1.5,
+          1.6,
+          1
+        ]
+      },
+      "palette": {
+        "secondary": "#687b72",
+        "trim": "#c9cbbd"
+      }
+    },
+    {
+      "id": "prop_heist_ink_store_specimen_strip",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ink_store_specimen_strip.glb",
+      "nodeName": "prop_heist_ink_store_specimen_strip",
+      "label": "Ink store specimen strip",
+      "triangles": 98,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.15
+        ],
+        "size": [
+          1.6,
+          0.6,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#578993",
+        "secondary": "#47494a",
+        "accent": "#caaa5c",
+        "trim": "#e0cfad",
+        "detail": "#ae5963"
+      }
+    },
+    {
+      "id": "prop_heist_ink_store_work_lamp",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_ink_store_work_lamp.glb",
+      "nodeName": "prop_heist_ink_store_work_lamp",
+      "label": "Ink store work lamp",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.75,
+          0.6,
+          0.3
+        ],
+        "size": [
+          1.5,
+          0.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_standing_paper_rolls",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_standing_paper_rolls.glb",
+      "nodeName": "prop_heist_standing_paper_rolls",
+      "label": "Standing paper rolls",
+      "triangles": 324,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.85,
+          1.6,
+          0.6
+        ],
+        "size": [
+          1.7,
+          1.6,
+          1.2
+        ]
+      },
+      "palette": {
+        "trim": "#d7cbb0",
+        "visor": "#e9e2ce"
+      }
+    },
+    {
+      "id": "prop_heist_cylinder_wash_tins",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_cylinder_wash_tins.glb",
+      "nodeName": "prop_heist_cylinder_wash_tins",
+      "label": "Cylinder wash tins",
+      "triangles": 162,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          0.7,
+          0.25
+        ],
+        "size": [
+          1,
+          0.7,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#648180",
+        "trim": "#dacea9",
+        "detail": "#9b5f4d"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_door_transom",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_door_transom.glb",
+      "nodeName": "prop_heist_dispatch_door_transom",
+      "label": "Dispatch door transom",
+      "triangles": 300,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.9,
+          0.5,
+          0.15
+        ],
+        "size": [
+          1.8,
+          0.5,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_radiator",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_radiator.glb",
+      "nodeName": "prop_heist_dispatch_radiator",
+      "label": "Dispatch radiator",
+      "triangles": 516,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.9,
+          1.1,
+          0.2
+        ],
+        "size": [
+          1.8,
+          1.1,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#9b9784",
+        "metal": "#9d9e8e"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_ledger_shelf",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_ledger_shelf.glb",
+      "nodeName": "prop_heist_dispatch_ledger_shelf",
+      "label": "Dispatch ledger shelf",
+      "triangles": 302,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.7,
+          0.8,
+          0.25
+        ],
+        "size": [
+          1.4,
+          0.8,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#768772",
+        "secondary": "#56666d",
+        "detail": "#925c4e"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_ticket_rack",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_ticket_rack.glb",
+      "nodeName": "prop_heist_dispatch_ticket_rack",
+      "label": "Dispatch ticket rack",
+      "triangles": 296,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.55,
+          1.2,
+          0.2
+        ],
+        "size": [
+          1.1,
+          1.2,
+          0.4
+        ]
+      },
+      "palette": {
+        "trim": "#d9c89f",
+        "visor": "#d7a370"
+      }
+    },
+    {
+      "id": "prop_heist_wicket_return_screen",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_wicket_return_screen.glb",
+      "nodeName": "prop_heist_wicket_return_screen",
+      "label": "Wicket return screen",
+      "triangles": 496,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.25
+        ],
+        "max": [
+          1,
+          2.2,
+          0.25
+        ],
+        "size": [
+          2,
+          2.2,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#65736b",
+        "leather": "#88745b",
+        "visor": "#a3aaa0"
+      }
+    },
+    {
+      "id": "prop_heist_press_downspout",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_downspout.glb",
+      "nodeName": "prop_heist_press_downspout",
+      "label": "Press downspout",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.2,
+          3,
+          0.3
+        ],
+        "size": [
+          0.4,
+          3,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_loft_hatch_frame",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_loft_hatch_frame.glb",
+      "nodeName": "prop_heist_loft_hatch_frame",
+      "label": "Loft hatch frame",
+      "triangles": 358,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.2,
+          2.1,
+          0.25
+        ],
+        "size": [
+          2.4,
+          2.1,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_loading_loft_shutter",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_loading_loft_shutter.glb",
+      "nodeName": "prop_heist_loading_loft_shutter",
+      "label": "Loading loft shutter",
+      "triangles": 274,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.5,
+          1.5,
+          0.15
+        ],
+        "size": [
+          1,
+          1.5,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#526860",
+        "leather": "#778171"
+      }
+    },
+    {
+      "id": "prop_heist_loft_sack_beam",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_loft_sack_beam.glb",
+      "nodeName": "prop_heist_loft_sack_beam",
+      "label": "Loft sack beam",
+      "triangles": 242,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.25,
+          1.1,
+          0.9
+        ],
+        "size": [
+          0.5,
+          1.1,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_letterpress_bill_frame",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_letterpress_bill_frame.glb",
+      "nodeName": "prop_heist_letterpress_bill_frame",
+      "label": "Letterpress bill frame",
+      "triangles": 282,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          1.6,
+          0.2
+        ],
+        "size": [
+          1.3,
+          1.6,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#59776e",
+        "trim": "#d8cba7",
+        "leather": "#655748",
+        "detail": "#a76a53"
+      }
+    },
+    {
+      "id": "prop_heist_loading_brick_corbel",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_loading_brick_corbel.glb",
+      "nodeName": "prop_heist_loading_brick_corbel",
+      "label": "Loading brick corbel",
+      "triangles": 182,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.35,
+          0.6,
+          0.4
+        ],
+        "size": [
+          0.7,
+          0.6,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#958372",
+        "trim": "#b19a7c"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_skylight_curb",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_skylight_curb.glb",
+      "nodeName": "prop_heist_dispatch_skylight_curb",
+      "label": "Dispatch skylight curb",
+      "triangles": 548,
+      "bounds": {
+        "min": [
+          -2.05,
+          0,
+          -2.05
+        ],
+        "max": [
+          2.05,
+          0.3,
+          2.05
+        ],
+        "size": [
+          4.1,
+          0.3,
+          4.1
+        ]
+      },
+      "palette": {
+        "primary": "#747b71"
+      }
+    },
+    {
+      "id": "prop_heist_lantern_ridge_and_rafters",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_lantern_ridge_and_rafters.glb",
+      "nodeName": "prop_heist_lantern_ridge_and_rafters",
+      "label": "Lantern ridge and rafters",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.7,
+          0.5,
+          0.7
+        ],
+        "size": [
+          3.4,
+          0.5,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_heist_press_sheet_line",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_sheet_line.glb",
+      "nodeName": "prop_heist_press_sheet_line",
+      "label": "Press sheet line",
+      "triangles": 262,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.4,
+          1.3,
+          0.15
+        ],
+        "size": [
+          2.8,
+          1.3,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#617d79",
+        "trim": "#d2c5a6",
+        "visor": "#e7dfc6",
+        "detail": "#a36b58"
+      }
+    },
+    {
+      "id": "prop_heist_press_sash_sill",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_sash_sill.glb",
+      "nodeName": "prop_heist_press_sash_sill",
+      "label": "Press sash sill",
+      "triangles": 552,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.5,
+          1.7,
+          0.3
+        ],
+        "size": [
+          3,
+          1.7,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#647a70",
+        "leather": "#907758",
+        "visor": "#9aaea3"
+      }
+    },
+    {
+      "id": "prop_heist_parcel_office_lower_panels",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_parcel_office_lower_panels.glb",
+      "nodeName": "prop_heist_parcel_office_lower_panels",
+      "label": "Parcel office lower panels",
+      "triangles": 314,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.1,
+          0.7,
+          0.2
+        ],
+        "size": [
+          2.2,
+          0.7,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#74867e",
+        "leather": "#667669"
+      }
+    },
+    {
+      "id": "prop_heist_dispatch_rain_leader",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_dispatch_rain_leader.glb",
+      "nodeName": "prop_heist_dispatch_rain_leader",
+      "label": "Dispatch rain leader",
+      "triangles": 258,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.2,
+          2.9,
+          0.35
+        ],
+        "size": [
+          0.4,
+          2.9,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#69786c",
+        "metal": "#818981"
+      }
+    },
+    {
+      "id": "prop_heist_plate_store_masonry_repair",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_plate_store_masonry_repair.glb",
+      "nodeName": "prop_heist_plate_store_masonry_repair",
+      "label": "Plate store masonry repair",
+      "triangles": 162,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.5,
+          0.9,
+          0.15
+        ],
+        "size": [
+          1,
+          0.9,
+          0.3
+        ]
+      },
+      "palette": {
+        "skin": "#9f9683",
+        "primary": "#9b7963"
+      }
+    },
+    {
+      "id": "prop_heist_gallery_roll_chock",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_gallery_roll_chock.glb",
+      "nodeName": "prop_heist_gallery_roll_chock",
+      "label": "Gallery roll chock",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.45,
+          0.5,
+          0.55
+        ],
+        "size": [
+          0.9,
+          0.5,
+          1.1
+        ]
+      },
+      "palette": {
+        "leather": "#8c785f"
+      }
+    },
+    {
+      "id": "prop_heist_gallery_cart_lane",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_gallery_cart_lane.glb",
+      "nodeName": "prop_heist_gallery_cart_lane",
+      "label": "Gallery cart lane",
+      "triangles": 266,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#9a9280",
+        "primary": "#797f66",
+        "leather": "#7f755b"
+      }
+    },
+    {
+      "id": "prop_heist_cart_lane_sett_crossing",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_cart_lane_sett_crossing.glb",
+      "nodeName": "prop_heist_cart_lane_sett_crossing",
+      "label": "Cart lane sett crossing",
+      "triangles": 158,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.5,
+          0.3,
+          0.55
+        ],
+        "size": [
+          3,
+          0.3,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a29883"
+      }
+    },
+    {
+      "id": "prop_heist_clay_yard_drain",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_clay_yard_drain.glb",
+      "nodeName": "prop_heist_clay_yard_drain",
+      "label": "Clay yard drain",
+      "triangles": 448,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.4,
+          0.3,
+          1.8
+        ],
+        "size": [
+          0.8,
+          0.3,
+          3.6
+        ]
+      },
+      "palette": {
+        "secondary": "#566256",
+        "metal": "#85887a",
+        "leather": "#957b65"
+      }
+    },
+    {
+      "id": "prop_heist_willow_planting_pocket",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_willow_planting_pocket.glb",
+      "nodeName": "prop_heist_willow_planting_pocket",
+      "label": "Willow planting pocket",
+      "triangles": 424,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -1
+        ],
+        "max": [
+          0.7,
+          0.6,
+          1
+        ],
+        "size": [
+          1.4,
+          0.6,
+          2
+        ]
+      },
+      "palette": {
+        "skin": "#a89c85",
+        "primary": "#718062",
+        "leather": "#89755d",
+        "detail": "#919470"
+      }
+    },
+    {
+      "id": "prop_heist_roll_yard_drain_crossing",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_roll_yard_drain_crossing.glb",
+      "nodeName": "prop_heist_roll_yard_drain_crossing",
+      "label": "Roll yard drain crossing",
+      "triangles": 220,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.1,
+          0.3,
+          0.5
+        ],
+        "size": [
+          2.2,
+          0.3,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#a59a85",
+        "metal": "#89908a"
+      }
+    },
+    {
+      "id": "prop_heist_cart_lane_gully_pot",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_cart_lane_gully_pot.glb",
+      "nodeName": "prop_heist_cart_lane_gully_pot",
+      "label": "Cart lane gully pot",
+      "triangles": 196,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.45,
+          0.3,
+          0.5
+        ],
+        "size": [
+          0.9,
+          0.3,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#9b927f",
+        "metal": "#81877b"
+      }
+    },
+    {
+      "id": "prop_heist_pollard_willow_stem",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_pollard_willow_stem.glb",
+      "nodeName": "prop_heist_pollard_willow_stem",
+      "label": "Pollard willow stem",
+      "triangles": 456,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.65,
+          3,
+          0.45
+        ],
+        "size": [
+          1.3,
+          3,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#747c5f",
+        "leather": "#786f5b"
+      }
+    },
+    {
+      "id": "prop_heist_willow_leaf_spray",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_willow_leaf_spray.glb",
+      "nodeName": "prop_heist_willow_leaf_spray",
+      "label": "Willow leaf spray",
+      "triangles": 606,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.95,
+          1.8,
+          0.55
+        ],
+        "size": [
+          1.9,
+          1.8,
+          1.1
+        ]
+      },
+      "palette": {
+        "primary": "#747f5c",
+        "leather": "#756d56",
+        "detail": "#87906a"
+      }
+    },
+    {
+      "id": "prop_heist_sealed_asphalt_patch",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_sealed_asphalt_patch.glb",
+      "nodeName": "prop_heist_sealed_asphalt_patch",
+      "label": "Sealed asphalt patch",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#78726a",
+        "hair": "#444645",
+        "primary": "#666360",
+        "secondary": "#4f4d49"
+      }
+    },
+    {
+      "id": "prop_heist_brick_loading_apron",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_brick_loading_apron.glb",
+      "nodeName": "prop_heist_brick_loading_apron",
+      "label": "Brick loading apron",
+      "triangles": 366,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#816955",
+        "primary": "#666360",
+        "secondary": "#4f4d49",
+        "trim": "#a18a72"
+      }
+    },
+    {
+      "id": "prop_heist_damp_print_works_wall",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_damp_print_works_wall.glb",
+      "nodeName": "prop_heist_damp_print_works_wall",
+      "label": "Damp print works wall",
+      "triangles": 622,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.1,
+          0.3
+        ],
+        "size": [
+          4,
+          3.1,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#aaa18e",
+        "primary": "#967963",
+        "detail": "#8e7563"
       }
     }
   ],

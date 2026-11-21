@@ -225,6 +225,8 @@ export type WorldPropEntry = z.infer<typeof worldPropEntrySchema>
 
 export const levelPropEntrySchema = worldPropEntrySchema.extend({
   relativePath: z.string().regex(/^level-kit\/[a-z0-9_]+\.glb$/),
+  palette: paletteColorsSchema.partial().strict().optional(),
+  surface: z.enum(['water', 'glass']).optional(),
   motion: z.object({
     relativePath: z.string().regex(/^vehicles\/[a-z0-9_]+\.glb$/),
     clips: z.array(z.string().min(1)).min(1).refine((clips) => new Set(clips).size === clips.length),

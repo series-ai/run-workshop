@@ -5737,7 +5737,11 @@
           0.2,
           1.8
         ]
-      }
+      },
+      "palette": {
+        "visor": "#637e73"
+      },
+      "surface": "water"
     },
     {
       "id": "prop_creatures_tall_pine",
@@ -6032,7 +6036,7 @@
       "relativePath": "level-kit/prop_creatures_feed_bucket.glb",
       "nodeName": "prop_creatures_feed_bucket",
       "label": "Feed bucket",
-      "triangles": 332,
+      "triangles": 416,
       "bounds": {
         "min": [
           -0.45,
@@ -6041,12 +6045,12 @@
         ],
         "max": [
           0.45,
-          0.7,
+          0.6,
           0.45
         ],
         "size": [
           0.9,
-          0.7,
+          0.6,
           0.9
         ]
       }
@@ -6870,6 +6874,11 @@
           0.7,
           4
         ]
+      },
+      "palette": {
+        "primary": "#637847",
+        "secondary": "#435d39",
+        "leather": "#7d664b"
       }
     },
     {
@@ -6896,6 +6905,11 @@
           8.7,
           3.3
         ]
+      },
+      "palette": {
+        "primary": "#597249",
+        "secondary": "#354f35",
+        "leather": "#61523b"
       }
     },
     {
@@ -6931,23 +6945,28 @@
       "relativePath": "level-kit/prop_creatures_ridge_broadleaf.glb",
       "nodeName": "prop_creatures_ridge_broadleaf",
       "label": "Ridge broadleaf",
-      "triangles": 526,
+      "triangles": 626,
       "bounds": {
         "min": [
           -1.7,
           0,
-          -1.45
+          -0.9
         ],
         "max": [
           1.7,
-          6,
-          1.45
+          5.6,
+          0.9
         ],
         "size": [
           3.4,
-          6,
-          2.9
+          5.6,
+          1.8
         ]
+      },
+      "palette": {
+        "primary": "#67814f",
+        "secondary": "#435c3a",
+        "leather": "#6f593f"
       }
     },
     {
@@ -7026,6 +7045,1477 @@
           0.2,
           1.9
         ]
+      }
+    },
+    {
+      "id": "prop_creatures_forked_river_alder",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_forked_river_alder.glb",
+      "nodeName": "prop_creatures_forked_river_alder",
+      "label": "Forked river alder",
+      "triangles": 458,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.05,
+          5,
+          0.7
+        ],
+        "size": [
+          2.1,
+          5,
+          1.4
+        ]
+      },
+      "palette": {
+        "leather": "#77634d"
+      }
+    },
+    {
+      "id": "prop_creatures_alder_leaf_crown",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_alder_leaf_crown.glb",
+      "nodeName": "prop_creatures_alder_leaf_crown",
+      "label": "Alder leaf crown",
+      "triangles": 566,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -1.3
+        ],
+        "max": [
+          1.25,
+          1.8,
+          1.3
+        ],
+        "size": [
+          2.5,
+          1.8,
+          2.6
+        ]
+      },
+      "palette": {
+        "primary": "#729144",
+        "secondary": "#455c35"
+      }
+    },
+    {
+      "id": "prop_creatures_western_hemlock",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_western_hemlock.glb",
+      "nodeName": "prop_creatures_western_hemlock",
+      "label": "Western hemlock",
+      "triangles": 604,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.3,
+          6.4,
+          0.95
+        ],
+        "size": [
+          2.6,
+          6.4,
+          1.9
+        ]
+      },
+      "palette": {
+        "primary": "#54744f",
+        "secondary": "#334e43"
+      }
+    },
+    {
+      "id": "prop_creatures_mossy_gravel_bar",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_mossy_gravel_bar.glb",
+      "nodeName": "prop_creatures_mossy_gravel_bar",
+      "label": "Mossy gravel bar",
+      "triangles": 482,
+      "bounds": {
+        "min": [
+          -1.95,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.95,
+          0.8,
+          0.75
+        ],
+        "size": [
+          3.9,
+          0.8,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_sedge_and_rushes",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_sedge_and_rushes.glb",
+      "nodeName": "prop_creatures_sedge_and_rushes",
+      "label": "Sedge and rushes",
+      "triangles": 510,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.95,
+          1.3,
+          0.45
+        ],
+        "size": [
+          1.9,
+          1.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_botanical_drying_press",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_botanical_drying_press.glb",
+      "nodeName": "prop_creatures_botanical_drying_press",
+      "label": "Botanical drying press",
+      "triangles": 552,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.05,
+          2.7,
+          0.5
+        ],
+        "size": [
+          2.1,
+          2.7,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_herbarium_drawers",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_herbarium_drawers.glb",
+      "nodeName": "prop_creatures_herbarium_drawers",
+      "label": "Herbarium drawers",
+      "triangles": 630,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.2,
+          1.9,
+          0.55
+        ],
+        "size": [
+          2.4,
+          1.9,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_pressed_fern_specimen",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_pressed_fern_specimen.glb",
+      "nodeName": "prop_creatures_pressed_fern_specimen",
+      "label": "Pressed fern specimen",
+      "triangles": 378,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.85,
+          1.8,
+          0.2
+        ],
+        "size": [
+          1.7,
+          1.8,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_broken_moss_and_grass_margin",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_broken_moss_and_grass_margin.glb",
+      "nodeName": "prop_creatures_broken_moss_and_grass_margin",
+      "label": "Broken moss and grass margin",
+      "triangles": 262,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.6,
+          0.2,
+          0.95
+        ],
+        "size": [
+          3.2,
+          0.2,
+          1.9
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_lodge_boat_porch",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_lodge_boat_porch.glb",
+      "nodeName": "prop_creatures_lodge_boat_porch",
+      "label": "Lodge boat porch",
+      "triangles": 544,
+      "bounds": {
+        "min": [
+          -2.4,
+          0,
+          -1.4
+        ],
+        "max": [
+          2.4,
+          3.4,
+          1.4
+        ],
+        "size": [
+          4.8,
+          3.4,
+          2.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_bark_canoe_and_trestles",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_bark_canoe_and_trestles.glb",
+      "nodeName": "prop_creatures_bark_canoe_and_trestles",
+      "label": "Bark canoe and trestles",
+      "triangles": 638,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          2.2,
+          1.4,
+          0.55
+        ],
+        "size": [
+          4.4,
+          1.4,
+          1.1
+        ]
+      },
+      "palette": {
+        "trim": "#dbc99a",
+        "leather": "#bd8556",
+        "detail": "#7f402e"
+      }
+    },
+    {
+      "id": "prop_creatures_canoe_bent_ash_ribs",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_canoe_bent_ash_ribs.glb",
+      "nodeName": "prop_creatures_canoe_bent_ash_ribs",
+      "label": "Canoe bent ash ribs",
+      "triangles": 202,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.75,
+          0.3,
+          0.35
+        ],
+        "size": [
+          1.5,
+          0.3,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_porch_lantern",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_porch_lantern.glb",
+      "nodeName": "prop_creatures_ranger_porch_lantern",
+      "label": "Ranger porch lantern",
+      "triangles": 126,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          0.8,
+          0.25
+        ],
+        "size": [
+          0.5,
+          0.8,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_creek_sluice_stones",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_creek_sluice_stones.glb",
+      "nodeName": "prop_creatures_creek_sluice_stones",
+      "label": "Creek sluice stones",
+      "triangles": 430,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -0.8
+        ],
+        "max": [
+          1.75,
+          1.1,
+          0.8
+        ],
+        "size": [
+          3.5,
+          1.1,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_sword_fern_bed",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_sword_fern_bed.glb",
+      "nodeName": "prop_creatures_sword_fern_bed",
+      "label": "Sword fern bed",
+      "triangles": 578,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.75
+        ],
+        "max": [
+          0.7,
+          0.7,
+          0.75
+        ],
+        "size": [
+          1.4,
+          0.7,
+          1.5
+        ]
+      },
+      "palette": {
+        "primary": "#779e46",
+        "secondary": "#41683c"
+      }
+    },
+    {
+      "id": "prop_creatures_scoured_creek_bank",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_scoured_creek_bank.glb",
+      "nodeName": "prop_creatures_scoured_creek_bank",
+      "label": "Scoured creek bank",
+      "triangles": 534,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.5,
+          2
+        ],
+        "size": [
+          4,
+          0.5,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#918671",
+        "primary": "#627c42",
+        "leather": "#86613f"
+      }
+    },
+    {
+      "id": "prop_creatures_creek_cove",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_creek_cove.glb",
+      "nodeName": "prop_creatures_creek_cove",
+      "label": "Creek cove",
+      "triangles": 58,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.6
+        ],
+        "max": [
+          2,
+          0.2,
+          0.6
+        ],
+        "size": [
+          4,
+          0.2,
+          1.2
+        ]
+      },
+      "palette": {
+        "visor": "#637e73"
+      },
+      "surface": "water"
+    },
+    {
+      "id": "prop_creatures_creek_bank_shallows",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_creek_bank_shallows.glb",
+      "nodeName": "prop_creatures_creek_bank_shallows",
+      "label": "Creek bank shallows",
+      "triangles": 56,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          0.2,
+          0.4
+        ],
+        "size": [
+          4,
+          0.2,
+          0.8
+        ]
+      },
+      "palette": {
+        "visor": "#637e73"
+      },
+      "surface": "water"
+    },
+    {
+      "id": "prop_creatures_creek_inlet_lip",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_creek_inlet_lip.glb",
+      "nodeName": "prop_creatures_creek_inlet_lip",
+      "label": "Creek inlet lip",
+      "triangles": 64,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.3
+        ],
+        "max": [
+          1,
+          0.2,
+          0.3
+        ],
+        "size": [
+          2,
+          0.2,
+          0.6
+        ]
+      },
+      "palette": {
+        "visor": "#637e73"
+      },
+      "surface": "water"
+    },
+    {
+      "id": "prop_creatures_stranded_alder_roots",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_stranded_alder_roots.glb",
+      "nodeName": "prop_creatures_stranded_alder_roots",
+      "label": "Stranded alder roots",
+      "triangles": 430,
+      "bounds": {
+        "min": [
+          -1.65,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.65,
+          1.1,
+          0.45
+        ],
+        "size": [
+          3.3,
+          1.1,
+          0.9
+        ]
+      },
+      "palette": {
+        "trim": "#bbad89",
+        "leather": "#85705c"
+      }
+    },
+    {
+      "id": "prop_creatures_stream_depth_gauge",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_stream_depth_gauge.glb",
+      "nodeName": "prop_creatures_stream_depth_gauge",
+      "label": "Stream depth gauge",
+      "triangles": 246,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.2,
+          1.9,
+          0.25
+        ],
+        "size": [
+          0.4,
+          1.9,
+          0.5
+        ]
+      },
+      "palette": {
+        "trim": "#e3ddbf",
+        "detail": "#a64e35"
+      }
+    },
+    {
+      "id": "prop_creatures_survey_line_reel",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_line_reel.glb",
+      "nodeName": "prop_creatures_survey_line_reel",
+      "label": "Survey line reel",
+      "triangles": 416,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.75,
+          1.2,
+          0.4
+        ],
+        "size": [
+          1.5,
+          1.2,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_split_bark_fir_stem",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_split_bark_fir_stem.glb",
+      "nodeName": "prop_creatures_split_bark_fir_stem",
+      "label": "Split bark fir stem",
+      "triangles": 360,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          6.6,
+          0.5
+        ],
+        "size": [
+          1,
+          6.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_fir_needle_spray",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fir_needle_spray.glb",
+      "nodeName": "prop_creatures_fir_needle_spray",
+      "label": "Fir needle spray",
+      "triangles": 412,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.25,
+          0.8,
+          0.55
+        ],
+        "size": [
+          2.5,
+          0.8,
+          1.1
+        ]
+      },
+      "palette": {
+        "primary": "#62816a",
+        "secondary": "#304f43",
+        "leather": "#735f4b"
+      }
+    },
+    {
+      "id": "prop_creatures_fir_crown_leader",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fir_crown_leader.glb",
+      "nodeName": "prop_creatures_fir_crown_leader",
+      "label": "Fir crown leader",
+      "triangles": 302,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.75,
+          1.7,
+          0.4
+        ],
+        "size": [
+          1.5,
+          1.7,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#779577",
+        "secondary": "#3a594d"
+      }
+    },
+    {
+      "id": "prop_creatures_alder_outer_sprigs",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_alder_outer_sprigs.glb",
+      "nodeName": "prop_creatures_alder_outer_sprigs",
+      "label": "Alder outer sprigs",
+      "triangles": 572,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.15,
+          0.8,
+          0.9
+        ],
+        "size": [
+          2.3,
+          0.8,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#81994f",
+        "secondary": "#49623e"
+      }
+    },
+    {
+      "id": "prop_creatures_woodland_ridge_footing",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_woodland_ridge_footing.glb",
+      "nodeName": "prop_creatures_woodland_ridge_footing",
+      "label": "Woodland ridge footing",
+      "triangles": 398,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.5
+        ],
+        "max": [
+          2,
+          0.8,
+          1.5
+        ],
+        "size": [
+          4,
+          0.8,
+          3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_white_aspen_stems",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_white_aspen_stems.glb",
+      "nodeName": "prop_creatures_white_aspen_stems",
+      "label": "White aspen stems",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.8,
+          4.8,
+          0.4
+        ],
+        "size": [
+          1.6,
+          4.8,
+          0.8
+        ]
+      },
+      "palette": {
+        "trim": "#c3c2ab",
+        "leather": "#82705d"
+      }
+    },
+    {
+      "id": "prop_creatures_open_aspen_leaf_crown",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_open_aspen_leaf_crown.glb",
+      "nodeName": "prop_creatures_open_aspen_leaf_crown",
+      "label": "Open aspen leaf crown",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.25,
+          2.3,
+          0.75
+        ],
+        "size": [
+          2.5,
+          2.3,
+          1.5
+        ]
+      },
+      "palette": {
+        "primary": "#94a15b",
+        "secondary": "#566d48"
+      }
+    },
+    {
+      "id": "prop_creatures_exposed_bank_roots",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_exposed_bank_roots.glb",
+      "nodeName": "prop_creatures_exposed_bank_roots",
+      "label": "Exposed bank roots",
+      "triangles": 580,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.55,
+          0.9,
+          0.7
+        ],
+        "size": [
+          3.1,
+          0.9,
+          1.4
+        ]
+      },
+      "palette": {
+        "skin": "#918776",
+        "primary": "#73834f",
+        "leather": "#8f6242"
+      }
+    },
+    {
+      "id": "prop_creatures_willow_edge_thicket",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_willow_edge_thicket.glb",
+      "nodeName": "prop_creatures_willow_edge_thicket",
+      "label": "Willow edge thicket",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.45,
+          2.7,
+          0.7
+        ],
+        "size": [
+          2.9,
+          2.7,
+          1.4
+        ]
+      },
+      "palette": {
+        "primary": "#83965e",
+        "secondary": "#4e674c"
+      }
+    },
+    {
+      "id": "prop_creatures_trail_bend_outcrop",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_trail_bend_outcrop.glb",
+      "nodeName": "prop_creatures_trail_bend_outcrop",
+      "label": "Trail bend outcrop",
+      "triangles": 618,
+      "bounds": {
+        "min": [
+          -2.35,
+          0,
+          -1.1
+        ],
+        "max": [
+          2.35,
+          2.4,
+          1.1
+        ],
+        "size": [
+          4.7,
+          2.4,
+          2.2
+        ]
+      },
+      "palette": {
+        "skin": "#8b887a",
+        "primary": "#698151",
+        "leather": "#766347"
+      }
+    },
+    {
+      "id": "prop_creatures_worn_forest_switchback",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_worn_forest_switchback.glb",
+      "nodeName": "prop_creatures_worn_forest_switchback",
+      "label": "Worn forest switchback",
+      "triangles": 444,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -2
+        ],
+        "max": [
+          1.5,
+          0.2,
+          2
+        ],
+        "size": [
+          3,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#9d9582",
+        "primary": "#708055",
+        "leather": "#8a735a"
+      }
+    },
+    {
+      "id": "prop_creatures_staggered_forest_scrub",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_staggered_forest_scrub.glb",
+      "nodeName": "prop_creatures_staggered_forest_scrub",
+      "label": "Staggered forest scrub",
+      "triangles": 566,
+      "bounds": {
+        "min": [
+          -1.35,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.35,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.7,
+          1.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "primary": "#829253",
+        "secondary": "#435b41"
+      }
+    },
+    {
+      "id": "prop_creatures_marsh_nest_box",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_marsh_nest_box.glb",
+      "nodeName": "prop_creatures_marsh_nest_box",
+      "label": "Marsh nest box",
+      "triangles": 306,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          2.5,
+          0.5
+        ],
+        "size": [
+          1,
+          2.5,
+          1
+        ]
+      },
+      "palette": {
+        "secondary": "#52604c",
+        "trim": "#a99775",
+        "leather": "#8a745e"
+      }
+    },
+    {
+      "id": "prop_creatures_ash_canoe_paddles",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ash_canoe_paddles.glb",
+      "nodeName": "prop_creatures_ash_canoe_paddles",
+      "label": "Ash canoe paddles",
+      "triangles": 218,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.45,
+          1.9,
+          0.25
+        ],
+        "size": [
+          0.9,
+          1.9,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_blind_field_journal",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_blind_field_journal.glb",
+      "nodeName": "prop_creatures_blind_field_journal",
+      "label": "Blind field journal",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.6,
+          1.2,
+          0.35
+        ],
+        "size": [
+          1.2,
+          1.2,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_creek_observation_blind",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_creek_observation_blind.glb",
+      "nodeName": "prop_creatures_creek_observation_blind",
+      "label": "Creek observation blind",
+      "triangles": 578,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.5,
+          2.6,
+          1.05
+        ],
+        "size": [
+          3,
+          2.6,
+          2.1
+        ]
+      },
+      "palette": {
+        "secondary": "#625d42",
+        "leather": "#94754d"
+      }
+    },
+    {
+      "id": "prop_creatures_marsh_spotting_scope",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_marsh_spotting_scope.glb",
+      "nodeName": "prop_creatures_marsh_spotting_scope",
+      "label": "Marsh spotting scope",
+      "triangles": 564,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.75
+        ],
+        "max": [
+          0.5,
+          1.8,
+          0.75
+        ],
+        "size": [
+          1,
+          1.8,
+          1.5
+        ]
+      },
+      "palette": {
+        "primary": "#546a56",
+        "visor": "#89b2ac"
+      }
+    },
+    {
+      "id": "prop_creatures_kingfisher_field_sign",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_kingfisher_field_sign.glb",
+      "nodeName": "prop_creatures_kingfisher_field_sign",
+      "label": "Kingfisher field sign",
+      "triangles": 214,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.6,
+          0.9,
+          0.15
+        ],
+        "size": [
+          1.2,
+          0.9,
+          0.3
+        ]
+      },
+      "palette": {
+        "secondary": "#496b67",
+        "accent": "#b67f48",
+        "trim": "#c1ad80"
+      }
+    },
+    {
+      "id": "prop_creatures_wetland_sample_bottles",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_wetland_sample_bottles.glb",
+      "nodeName": "prop_creatures_wetland_sample_bottles",
+      "label": "Wetland sample bottles",
+      "triangles": 440,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.75,
+          1.3,
+          0.35
+        ],
+        "size": [
+          1.5,
+          1.3,
+          0.7
+        ]
+      },
+      "palette": {
+        "metal": "#818e82",
+        "leather": "#947756",
+        "visor": "#8eaea1"
+      }
+    },
+    {
+      "id": "prop_creatures_deposited_silt_fan",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_deposited_silt_fan.glb",
+      "nodeName": "prop_creatures_deposited_silt_fan",
+      "label": "Deposited silt fan",
+      "triangles": 446,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.3,
+          0.6,
+          0.55
+        ],
+        "size": [
+          2.6,
+          0.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#999483",
+        "trim": "#b8b59a",
+        "leather": "#736047"
+      }
+    },
+    {
+      "id": "prop_creatures_glacial_trail_ridge",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_glacial_trail_ridge.glb",
+      "nodeName": "prop_creatures_glacial_trail_ridge",
+      "label": "Glacial trail ridge",
+      "triangles": 592,
+      "bounds": {
+        "min": [
+          -1.95,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.95,
+          1.4,
+          0.9
+        ],
+        "size": [
+          3.9,
+          1.4,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_trail_drainage_timber",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_trail_drainage_timber.glb",
+      "nodeName": "prop_creatures_trail_drainage_timber",
+      "label": "Trail drainage timber",
+      "triangles": 296,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.25,
+          0.3,
+          0.4
+        ],
+        "size": [
+          2.5,
+          0.3,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_watershed_relief_desk",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_watershed_relief_desk.glb",
+      "nodeName": "prop_creatures_watershed_relief_desk",
+      "label": "Watershed relief desk",
+      "triangles": 454,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.6
+        ],
+        "max": [
+          1,
+          1.3,
+          0.6
+        ],
+        "size": [
+          2,
+          1.3,
+          1.2
+        ]
+      },
+      "palette": {
+        "primary": "#82965f",
+        "trim": "#d6c89b",
+        "visor": "#658f96"
+      }
+    },
+    {
+      "id": "prop_creatures_survey_contour_chart",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_contour_chart.glb",
+      "nodeName": "prop_creatures_survey_contour_chart",
+      "label": "Survey contour chart",
+      "triangles": 326,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.95,
+          1.1,
+          0.1
+        ],
+        "size": [
+          1.9,
+          1.1,
+          0.2
+        ]
+      },
+      "palette": {
+        "primary": "#98a661",
+        "accent": "#a8462b",
+        "trim": "#d7cda9",
+        "visor": "#4e8185"
+      }
+    },
+    {
+      "id": "prop_creatures_open_geology_case",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_open_geology_case.glb",
+      "nodeName": "prop_creatures_open_geology_case",
+      "label": "Open geology case",
+      "triangles": 366,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.65,
+          0.9,
+          0.4
+        ],
+        "size": [
+          1.3,
+          0.9,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#80959a",
+        "trim": "#cfc8ad",
+        "leather": "#8a6748",
+        "detail": "#b77a4b"
+      }
+    },
+    {
+      "id": "prop_creatures_drying_herb_specimens",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_drying_herb_specimens.glb",
+      "nodeName": "prop_creatures_drying_herb_specimens",
+      "label": "Drying herb specimens",
+      "triangles": 598,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.15,
+          2,
+          0.35
+        ],
+        "size": [
+          2.3,
+          2,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_damp_woodland_trail",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_damp_woodland_trail.glb",
+      "nodeName": "prop_creatures_damp_woodland_trail",
+      "label": "Damp woodland trail",
+      "triangles": 406,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "leather": "#74654e",
+        "detail": "#888072"
+      }
+    },
+    {
+      "id": "prop_creatures_gravel_trail_edge",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_gravel_trail_edge.glb",
+      "nodeName": "prop_creatures_gravel_trail_edge",
+      "label": "Gravel trail edge",
+      "triangles": 400,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#a09880",
+        "detail": "#817e6b"
+      }
+    },
+    {
+      "id": "prop_creatures_weathered_ranger_lodge_wall",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_weathered_ranger_lodge_wall.glb",
+      "nodeName": "prop_creatures_weathered_ranger_lodge_wall",
+      "label": "Weathered ranger lodge wall",
+      "triangles": 634,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.9,
+          0.25
+        ],
+        "size": [
+          4,
+          2.9,
+          0.5
+        ]
+      },
+      "palette": {
+        "detail": "#7e7058"
       }
     }
   ],

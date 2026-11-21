@@ -5,6 +5,7 @@ import math
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from re import fullmatch
 from shutil import copyfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -12,7 +13,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import voxchar as vk
 from creature_kit import Sculpt
 
-from level_geometry import CELL, PALETTES, box, make_grid, mesh_from_grid, span, vertex_colors
+from level_geometry import (CELL, ENVIRONMENTS, PALETTES, WATER_LABELS, box, make_grid,
+                            mesh_from_grid, overview_bounds, span, vertex_colors)
+from level_finish_glb import FINISHES, add_level_mesh, lamp_color, level_builder
+from level_scene_glb import append_environment
 from level_voxels import encode_prefab, write_voxel_scene
 from prop_surfaces import apply_finish
 import level_vehicles as vehicles
@@ -123,6 +127,30 @@ def crate(width, height, depth, face, frame):
     return shape
 
 
+def latched_case(width, height, depth, face, frame, label):
+    shape = crate(width, height, depth, face, frame)
+    front = (depth - 1) // 2
+    grip = height - 4
+    shape.cut((-1, 1), (grip, grip + 1), front)
+    box(3, 2, 1, RUBBER, y=grip, z=front - 1, sculpt=shape)
+    for x in (-width // 4 - 1, width // 4 + 1):
+        box(2, 2, 1, METAL, x=x, y=grip + 1, z=front, sculpt=shape)
+        box(1, 1, 1, PATINA, x=x, y=grip + 1, z=front, sculpt=shape)
+    box(3, 2, 1, label, x=width // 4, y=grip, z=-depth // 2, sculpt=shape)
+    return shape
+
+
+def salvage_crate():
+    shape = crate(13, 11, 12, WOOD, METAL)
+    for y in (3, 6):
+        shape.cut((-4, 4), y, 5)
+        box(9, 1, 1, DARK, y=y, z=4, sculpt=shape)
+    box(1, 7, 1, PATINA, x=-2, y=2, z=5, sculpt=shape)
+    box(1, 7, 1, PATINA, x=3, y=2, z=5, sculpt=shape)
+    box(4, 2, 1, CAP, x=1, y=4, z=-6, sculpt=shape)
+    return shape
+
+
 def drum(width, height, face, rim):
     shape = box(width, height, width - 4, face)
     box(width - 4, height, width, face, sculpt=shape)
@@ -130,6 +158,27 @@ def drum(width, height, face, rim):
         box(width + 2, 1, width - 4, rim, y=y, sculpt=shape)
         box(width - 4, 1, width + 2, rim, y=y, sculpt=shape)
     box(2, 1, 2, rim, x=1, y=height, sculpt=shape)
+    return shape
+
+
+def feed_bucket():
+    shape = drum(7, 6, WOOD, METAL)
+    shape.cut(span(3), (3, 6), span(3))
+    box(3, 1, 3, SOIL, y=2, sculpt=shape)
+    box(1, 2, 5, PATINA, x=-2, y=4, sculpt=shape)
+    return shape
+
+
+def cooper_barrel():
+    shape = drum(10, 11, WOOD, METAL)
+    grain = vk.vox('leather', -0.55, mottle=False)
+    for x in (-2, 1):
+        shape.paint(x, (2, 8), 4, grain)
+        shape.paint(x, (2, 8), -5, grain)
+    for z in (-2, 1):
+        shape.paint(-5, (2, 8), z, grain)
+        shape.paint(4, (2, 8), z, grain)
+    box(2, 1, 1, CAP, x=1, y=5, z=4, sculpt=shape)
     return shape
 
 
@@ -651,10 +700,27 @@ class Kit:
     props: list = field(default_factory=list)
     placements: list = field(default_factory=list)
     vehicles: dict = field(default_factory=dict)
+    palettes: dict = field(default_factory=dict)
+    surfaces: dict = field(default_factory=dict)
 
-    def add(self, label, sculpt, x, z, turn=0, height=0, *, vehicle=None):
+    def prop_id(self, label):
         slug = label.lower().replace(' ', '_').replace('-', '_')
-        prop_id = f'prop_{self.key}_{slug}'
+        return f'prop_{self.key}_{slug}'
+
+    def set_palette(self, label, **colors):
+        prop_id = self.prop_id(label)
+        if not any(asset == prop_id for asset, _, _ in self.props):
+            raise ValueError(f'Unknown prop for palette: {label}.')
+        for region, color in colors.items():
+            if region not in vk.REGIONS or not fullmatch(r'#[0-9a-fA-F]{6}', color):
+                raise ValueError(f'{label}: invalid palette entry {region}={color}.')
+        self.palettes.setdefault(prop_id, {}).update(colors)
+
+    def add(self, label, sculpt, x, z, turn=0, height=0, *, vehicle=None, surface=None):
+        prop_id = self.prop_id(label)
+        finish = surface or ('water' if label in WATER_LABELS else None)
+        if finish:
+            self.surfaces[prop_id] = finish
         if vehicle is None:
             apply_finish(self.key, label, sculpt)
         else:
@@ -667,12 +733,30 @@ class Kit:
         self.add(label, vehicle.rest(), x, z, turn, vehicle=vehicle)
 
     def place(self, label, x, z, turn=0, height=0):
-        slug = label.lower().replace(' ', '_').replace('-', '_')
         self.placements.append({
-            'propId': f'prop_{self.key}_{slug}',
+            'propId': self.prop_id(label),
             'position': [x, height, z],
             'turn': turn,
         })
+
+    def placement_at(self, label, x, z, *, height=None):
+        def close(a, b):
+            return math.isclose(a, b, rel_tol=0, abs_tol=1e-6)
+
+        prop_id = self.prop_id(label)
+        matches = []
+        for placement in self.placements:
+            px, py, pz = placement['position']
+            if (placement['propId'] == prop_id and close(px, x) and close(pz, z)
+                    and (height is None or close(py, height))):
+                matches.append(placement)
+        if len(matches) != 1:
+            raise ValueError(f'{label} at X {x}, Z {z}, Y {height}: expected one placement, found {len(matches)}.')
+        return matches[0]
+
+    def remove_at(self, label, x, z, *, height=None):
+        placement = self.placement_at(label, x, z, height=height)
+        self.placements.remove(placement)
 
     def shell(self, floor_label, wall_label, entry_label, cover_label, stair_label, rail_label, *, masonry=False):
         material, trim = self.material, self.trim
@@ -739,7 +823,8 @@ def core_kit():
     a('Training bench', bench(17, CAP), 4.1, 3)
     a('Utility cabinet', case(9, 17, 7, DARK, BODY), 4.7, -4.7)
     a('Storage bin', crate(8, 6, 8, DARK, CAP), -4.75, 2.2)
-    a('Field case', crate(11, 6, 8, BODY, DARK), -3.9, -3.25)
+    a('Field case', latched_case(11, 6, 8, BODY, DARK, CAP), -3.9, -3.25)
+    kit.set_palette('Field case', primary='#657067', secondary='#3f4743', metal='#adb0a4')
     a('Barrel marker', drum(8, 10, BODY, CAP), 4.85, 1.45)
     a('Site light', street_lamp(), -5.45, 4.85, 1)
     a('Training board', case(15, 18, 4, MASONRY, DARK, screen=True), -2.25, -4.8)
@@ -799,7 +884,7 @@ def heist_kit():
     a('Roadside kiosk', case(13, 18, 10, DARK, DETAIL, screen=True), 4.53, 3.67, 3)
     a('Fuel drum', drum(9, 9, DETAIL, DARK), 2.9, -4.13)
     a('Cable reel', drum(11, 7, WOOD, DARK), -4.54, -3.55)
-    a('Crated salvage', crate(13, 11, 12, WOOD, METAL), -3.75, 4.38)
+    a('Crated salvage', salvage_crate(), -3.75, 4.38)
     a('Access ladder', fence(8, 23, METAL, mesh=True), -4.55, -5.05)
     a('Overhead sign', panel(28, 22, 2, DARK, MARK, opening=22), 0, 4.9)
     kit.move('Overhead sign', 6.05, 4.8, 1)
@@ -859,7 +944,8 @@ def industrial_kit():
     a('Floor grate', inlay(15, 14, METAL, JOINT), 0.2, 1.85, height=-0.1)
     a('Safety drum', drum(8, 10, DETAIL, METAL), 4.12, 2.21)
     a('Striped bollard', post(12, MARK, RUBBER), 2.11, 3.38)
-    a('Shipping case', crate(15, 12, 12, BODY, METAL), 4.38, 3.9)
+    a('Shipping case', latched_case(15, 12, 12, BODY, METAL, MARK), 4.38, 3.9)
+    kit.set_palette('Shipping case', primary='#687471', metal='#89938c')
     a('Hoist frame', panel(34, 31, 5, METAL, MARK, opening=26), 0.1, 4.76)
     a('Foundry press', machine_press(), 0.95, -3.44)
     a('Vent duct', crate(10, 18, 10, METAL, DARK), 5.27, -4.9)
@@ -928,7 +1014,8 @@ def security_kit():
     a('Gate post', post(17, METAL, DETAIL), 2.2, 4.88)
     a('Camera pod', post(24, DARK, LIGHT, arm=True), -2.31, -3.28)
     a('Server bank', case(12, 24, 10, DARK, BODY, screen=True), 4.94, -4.15)
-    a('Evidence case', crate(12, 7, 9, BODY, DARK), -4.78, -0.5)
+    a('Evidence case', latched_case(12, 7, 9, BODY, DARK, DETAIL), -4.78, -0.5)
+    kit.set_palette('Evidence case', primary='#526e73', secondary='#344a53', detail='#bea96b')
     a('Knee barrier', panel(19, 6, 6, METAL, DARK), 3.36, 1.77)
     a('Indicator plate', inlay(18, 3, LIGHT, MARK), 0, 0.3, height=-0.1)
     a('Rotor pod', turret(), 4.03, 3.77)
@@ -990,7 +1077,7 @@ def creatures_kit():
     a('Supply shelf', counter(18, 8, WOOD, CAP, shelf=True), -4.36, -0.45)
     a('Warmth lamp', post(17, WOOD, MARK), 1.35, -3.48)
     a('Trail marker', post(14, WOOD, CAP), 1.35, 4.55)
-    a('Feed bucket', drum(7, 6, WOOD, METAL), 4.73, 2.45)
+    a('Feed bucket', feed_bucket(), 4.73, 2.45)
     a('Field station', case(15, 18, 11, DARK, METAL, screen=True), -4.6, 2.05)
     a('Observation screen', fence(25, 18, WOOD, mesh=True), 4.89, -4.67, 1)
     a('Shelter canopy', awning(), -2.71, -3.63)
@@ -1068,7 +1155,7 @@ def fantasy_kit():
     a('Rune monument', case(11, 24, 9, MASONRY, BODY, screen=True), 3.9, -2.4, 0, 0.8)
     a('Courtyard well', well(), -3.55, -3.45)
     a('Wooden bridge', bridge(), 0, 3.05)
-    a('Barrel stand', drum(10, 11, WOOD, METAL), -4.55, 2.55)
+    a('Barrel stand', cooper_barrel(), -4.55, 2.55)
     a('Market crate', crate(10, 8, 10, WOOD, CAP), -3.22, 2.9)
     a('Guild sign', post(22, WOOD, DETAIL, arm=True), -5.15, 4.1)
     a('Courtyard brazier', post(13, METAL, MARK), 2.04, 4.53)
@@ -1128,16 +1215,16 @@ def fantasy_kit():
 LEVEL_FACTORIES = (core_kit, heist_kit, industrial_kit, security_kit, creatures_kit, fantasy_kit)
 
 
-def write_demo(path, kit, models):
-    builder = vk.GlbBuilder()
+def write_demo(path, kit, models, layout):
+    builder = level_builder()
     source_nodes = {}
     scene_nodes = builder.doc['scenes'][0]['nodes']
     nodes = builder.doc['nodes']
     for placement in kit.placements:
         prop_id = placement['propId']
         if prop_id not in source_nodes:
-            mesh, colors = models[prop_id]
-            node_index = builder.add_mesh(mesh, colors=colors)
+            mesh, colors, surface, lamp = models[prop_id]
+            node_index = add_level_mesh(builder, mesh, colors, surface, lamp)
             source_nodes[prop_id] = node_index
         else:
             node_index = len(nodes)
@@ -1150,6 +1237,7 @@ def write_demo(path, kit, models):
             'rotation': [0, math.sin(angle), 0, math.cos(angle)],
         })
     builder.doc['scenes'][0]['name'] = kit.title
+    append_environment(builder.doc, layout)
     builder.write(path)
 
 
@@ -1160,7 +1248,7 @@ def main():
     for factory in LEVEL_FACTORIES:
         kit = factory()
         tour, fixtures = build_district(kit, sys.modules[__name__])
-        leaf = 'characters' if kit.key == 'core' else 'world'
+        leaf = 'world'
         folder = vk.leaf_dir(args.stage, kit.key, leaf)
         (folder / 'level-kit').mkdir(parents=True, exist_ok=True)
         props = []
@@ -1173,31 +1261,48 @@ def main():
                 raise ValueError(f'Duplicate prop {prop_id}.')
             known.add(prop_id)
             grid = make_grid(sculpt)
-            prefabs[prop_id] = encode_prefab(grid)
+            prefab = encode_prefab(grid)
+            overrides = kit.palettes.get(prop_id)
+            surface = kit.surfaces.get(prop_id)
+            if overrides:
+                prefab['palette'] = overrides
+            if surface:
+                prefab['surface'] = surface
+            prefabs[prop_id] = prefab
             mesh = mesh_from_grid(prop_id, grid)
             relative = f'level-kit/{prop_id}.glb'
-            colors = vertex_colors(mesh, palette)
-            models[prop_id] = mesh, colors
-            size = vk.write_static_glb(folder / relative, mesh, colors=colors)
+            prop_palette = {**palette, **(overrides or {})}
+            colors = vertex_colors(mesh, prop_palette)
+            lamp = lamp_color(mesh, prop_palette)
+            models[prop_id] = mesh, colors, surface, lamp
+            builder = level_builder()
+            add_level_mesh(builder, mesh, colors, surface, lamp)
+            size = builder.write(folder / relative)
             entry = vk.prop_entry(mesh, kit.key, label, relative, size)
             entry['leaf'] = leaf
+            if overrides:
+                entry['palette'] = overrides
+            if surface:
+                entry['surface'] = surface
             if prop_id in kit.vehicles:
                 vehicle = kit.vehicles[prop_id]
                 motion_path = f'vehicles/{prop_id}.glb'
-                lights = write_vehicle(folder / motion_path, prop_id, vehicle, palette)
+                lights = write_vehicle(folder / motion_path, prop_id, vehicle, prop_palette)
                 entry['motion'] = {'relativePath': motion_path, 'clips': list(vehicle.clips), 'lights': lights}
             props.append(entry)
         entries[kit.key] = props
         scene = {
             'title': kit.title, 'route': kit.use, 'placements': kit.placements,
-            'view': {'center': [0, -5], 'size': [40, 42], 'eye': tour[0]['eye'],
+            'view': {**overview_bounds(kit.placements, prefabs), 'eye': tour[0]['eye'],
                      'target': tour[0]['target'], 'stops': tour[1:]},
             'fixtures': fixtures,
+            'environment': ENVIRONMENTS[kit.key],
         }
         scenes[kit.key] = scene
         demo_path = folder / 'level-kit/demo.glb'
-        write_demo(demo_path, kit, models)
-        write_voxel_scene(folder / 'level-kit/demo.voxels.json', kit.key, CELL, palette, prefabs, scene)
+        write_demo(demo_path, kit, models, scene)
+        write_voxel_scene(folder / 'level-kit/demo.voxels.json', kit.key, CELL, palette, prefabs, scene,
+                          finishes=FINISHES)
         demo_dir = args.meta.parent / 'level-demos'
         demo_dir.mkdir(parents=True, exist_ok=True)
         copyfile(demo_path, demo_dir / f'{kit.key}.glb')

@@ -88,11 +88,21 @@ def yard_station(g, key):
     for x in (-9, 0, 9):
         box(3, 1, 9, g.DARK, x=x, y=0, sculpt=shape)
     if key == 'core':
-        for x, height in ((-7, 9), (0, 6), (7, 12)):
-            box(7, height, 5, g.RUBBER, x=x, y=2, sculpt=shape)
-            for y in range(4, 2 + height, 3):
-                box(5, 1, 6, g.DARK, x=x, y=y, sculpt=shape)
-            box(3, 1, 2, g.METAL, x=x, y=2 + height, sculpt=shape)
+        sidewall = g.vk.vox('hair', .22, mottle=False)
+        for x, z in ((-6, 1), (2, -1)):
+            box(4, 9, 3, sidewall, x=x, y=2, z=z, sculpt=shape)
+            box(6, 7, 3, sidewall, x=x, y=3, z=z, sculpt=shape)
+            box(8, 5, 3, sidewall, x=x, y=4, z=z, sculpt=shape)
+            shape.cut((x-2, x+1), (5, 7), (z-1, z+1))
+            shape.cut((x-1, x), (4, 8), (z-1, z+1))
+        box(3, 8, 4, g.RUBBER, x=8, y=2, sculpt=shape)
+        box(3, 6, 6, g.RUBBER, x=8, y=3, sculpt=shape)
+        box(3, 4, 8, g.RUBBER, x=8, y=4, sculpt=shape)
+        shape.cut((7, 9), (5, 6), (-2, 1))
+        for x in (-10, 9):
+            box(2, 13, 2, g.GRIT, x=x, y=2, z=-3, sculpt=shape)
+        box(21, 2, 2, g.DARK, y=11, z=-3, sculpt=shape)
+        box(21, 1, 2, g.GRIT, y=3, z=3, sculpt=shape)
     elif key == 'industrial':
         for x, height in ((-6, 4), (5, 6)):
             for y in range(2, 2 + height, 2):

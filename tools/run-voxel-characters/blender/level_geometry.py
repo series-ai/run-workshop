@@ -1,5 +1,7 @@
 """Geometry shared by the Cubix level kits."""
 
+from itertools import product
+
 import numpy as np
 
 import voxchar as vk
@@ -7,6 +9,8 @@ from creature_kit import Sculpt
 
 CELL = 0.1
 PALETTES = vk.load_json('level-palettes.json')
+ENVIRONMENTS = vk.load_json('level-environments.json')
+WATER_LABELS = frozenset(('Shallow water', 'Creek cove', 'Creek bank shallows', 'Creek inlet lip'))
 
 
 def span(size, center=0):
@@ -37,6 +41,23 @@ def mesh_from_grid(name, grid):
     part = vk.VoxelPart(name)
     part.add_grid(grid)
     return part.to_mesh(static=True)
+
+
+def overview_bounds(placements, prefabs):
+    corners = []
+    for placement in placements:
+        prefab = prefabs[placement['propId']]
+        origin_x, _, origin_z = prefab['origin']
+        width, _, depth = prefab['size']
+        world_x, _, world_z = placement['position']
+        for x, z in product((origin_x, origin_x + width * CELL), (origin_z, origin_z + depth * CELL)):
+            right, forward = ((x, z), (z, -x), (-x, -z), (-z, x))[placement['turn']]
+            corners.append((world_x + right, world_z + forward))
+    axes = list(zip(*corners))
+    return {
+        'center': [round((min(axis) + max(axis)) / 2, 3) for axis in axes],
+        'size': [round(max(axis) - min(axis), 3) for axis in axes],
+    }
 
 
 def make_mesh(name, sculpt, pivot=None, *, cell=CELL):

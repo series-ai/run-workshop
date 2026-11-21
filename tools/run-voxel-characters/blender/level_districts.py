@@ -1,7 +1,57 @@
 """Build occupied rooms and their yards from four-metre structural bays."""
 
+from creature_kit import Sculpt
 from level_geometry import box
+from level_ground import dress_ground
+from level_wall_finishes import add_wall_finish
 from level_details import dress_activity
+from level_upgrade_infrastructure import upgrade as upgrade_infrastructure
+from level_upgrade_terrain import upgrade as upgrade_terrain
+from level_upgrade_urban import upgrade as upgrade_urban
+
+
+SITE_UPGRADES = {
+    'core': upgrade_urban,
+    'heist': upgrade_urban,
+    'industrial': upgrade_infrastructure,
+    'security': upgrade_infrastructure,
+    'creatures': upgrade_terrain,
+    'fantasy': upgrade_terrain,
+}
+
+SITE_SWATCHES = {
+    'core': {
+        'Concrete floor': dict(skin='#818181', trim='#c2b493'),
+        'Motor pool window': dict(skin='#9b9a8e', primary='#59666a'),
+        'Motor pool door': dict(skin='#9b9a8e', primary='#59666a'),
+    },
+    'heist': {
+        'Asphalt tile': dict(primary='#666360', secondary='#4f4d49'),
+        'Brick facade': dict(primary='#a06950', skin='#9c8574'),
+        'Rotary offset press': dict(primary='#4f6665', secondary='#353b39', trim='#d0c3a8'),
+    },
+    'industrial': {
+        'Workshop deck': dict(secondary='#4e5558', primary='#8f7452', trim='#b8a070'),
+        'Charge furnace': dict(skin='#a0967f', secondary='#3b4041', accent='#e3a34f'),
+        'Smelting works ceiling': dict(primary='#867862', secondary='#3e4546'),
+    },
+    'security': {
+        'Station tile': dict(primary='#6d7982', skin='#919a9e', trim='#b7c4c9'),
+        'Baggage hall floor': dict(skin='#969e9c', secondary='#525c63'),
+        'Parcel X ray tunnel': dict(primary='#737e80', secondary='#424a52', metal='#a7b4bb'),
+    },
+    'creatures': {
+        'Ridge fir': dict(primary='#597249', secondary='#354f35', leather='#61523b'),
+        'Ridge broadleaf': dict(primary='#67814f', secondary='#435c3a', leather='#6f593f'),
+        'Meadow grass': dict(primary='#637847', secondary='#435d39', leather='#7d664b'),
+    },
+    'fantasy': {
+        'Ridge fir': dict(primary='#63794b', secondary='#3c533b', leather='#665039'),
+        'Ridge broadleaf': dict(primary='#78824d', secondary='#53643b', leather='#72573c'),
+        'Guild bakehouse ceiling': dict(detail='#935b49', leather='#67513d'),
+        'Market stone lane': dict(skin='#8f8577', trim='#b7a790'),
+    },
+}
 
 
 # Grid coordinates increase east and south. Letters identify connected work areas.
@@ -82,6 +132,15 @@ SITES = {
 }
 
 VECTORS = {'N': (0, -1, 2), 'S': (0, 1, 0), 'W': (-1, 0, 3), 'E': (1, 0, 1)}
+GLASS_COLORS = {'core': '#79959c', 'heist': '#94a3a0', 'industrial': '#859c9b', 'security': '#8ca8b0'}
+
+
+def window_glass(g, height):
+    panes = Sculpt()
+    for x in ((-14, -2), (1, 12)):
+        panes.box(x, (11, height - 14), 0, g.LIGHT)
+        panes.box(x, (height - 12, height - 9), 0, g.LIGHT)
+    return panes
 
 
 def wall_module(g, height, face, frame, style, trade=None):
@@ -278,14 +337,15 @@ def build_district(kit, g):
     }
     added = set()
 
-    def piece(label, factory, x, z, turn=0, height=0):
+    def piece(label, factory, x, z, turn=0, height=0, *, surface=None):
         if label in added:
             kit.place(label, x, z, turn, height)
         else:
-            kit.add(label, factory(), x, z, turn, height)
+            kit.add(label, factory(), x, z, turn, height, surface=surface)
             added.add(label)
 
     h = site['height']
+    pane_label = name + ' window glass'
     face, frame, roof = (getattr(g, site[key]) for key in ('skin', 'frame', 'roof'))
     entry, _, _ = site['doors']
     ex, ez = -6 + entry[0] * 4, -20 + entry[1] * 4 + 2
@@ -349,6 +409,13 @@ def build_district(kit, g):
                 z + 2 * dz,
                 turn,
             )
+            if style == 'window' and kit.key in GLASS_COLORS:
+                # The divider is one cell off center. Move the pane pivot to match.
+                piece(pane_label, lambda: window_glass(g, h),
+                      x + 2 * dx - 0.05 * dz, z + 2 * dz + 0.05 * dx,
+                      turn, height=1.1, surface='glass')
+    if pane_label in added:
+        kit.set_palette(pane_label, visor=GLASS_COLORS[kit.key])
     # Place practical lamps just below the underside of the ceiling.
     fixtures = []
     for col, row in (entry[:2], next(iter(tiles)), list(tiles)[len(tiles) // 2]):
@@ -424,6 +491,11 @@ def build_district(kit, g):
         dict(label=MACHINES[kit.key], eye=interior_eye, target=interior_target),
         dict(label=yard_name, eye=side_eye, target=side_target),
     ]
+    for label, swatches in SITE_SWATCHES[kit.key].items():
+        kit.set_palette(label, **swatches)
+    SITE_UPGRADES[kit.key](kit, g, stops, fixtures)
+    dress_ground(kit, site['floor'])
+    add_wall_finish(kit, name + ' solid')
     return stops, fixtures
 
 
@@ -535,6 +607,19 @@ def street_detail(kit, g, site, piece):
         kit.place('Barrel stand', -5.3, -13.3)
 
 
+def shade_tree(g, height, width, trunk, foliage):
+    tree = box(4, height - 11, 3, trunk)
+    box(6, 3, 4, trunk, sculpt=tree)
+    for x, z, bottom in ((-width // 4, -3, height - 18), (width // 4, 3, height - 15)):
+        box(abs(x) + 3, 3, 4, trunk, x=x // 2, y=bottom - 5, z=z // 2, sculpt=tree)
+        box(3, 5, 3, trunk, x=x, y=bottom - 4, z=z, sculpt=tree)
+        box(width // 2, 5, 12, foliage, x=x, y=bottom, z=z, sculpt=tree)
+        box(width // 2 - 5, 3, 9, g.GRIT, x=x, y=bottom + 5, z=z, sculpt=tree)
+    box(width // 2, 6, 11, foliage, x=1, y=height - 12, sculpt=tree)
+    box(width // 2 - 4, 6, 8, g.GRIT, x=1, y=height - 6, z=-1, sculpt=tree)
+    return tree
+
+
 def horizon(kit, g, piece):
     # The shapes and spacing follow the land use behind each site.
     wooded = kit.key in ('creatures', 'fantasy')
@@ -563,7 +648,8 @@ def horizon(kit, g, piece):
             piece('Ridge fir', lambda: g.tree(86, 35, g.SOIL, g.DARK, conifer=True), x, z, i % 4)
             if i % 2 == 0:
                 piece('High wooded bank', lambda: g.shale_escarpment(g.BODY), x + 1, z - 1, i % 4)
-                piece('Ridge broadleaf', lambda: g.tree(56, 34, g.WOOD, g.BODY), x - 1.8, z + 1.4, i % 4)
+                piece('Ridge broadleaf', lambda: shade_tree(g, 56, 34, g.WOOD, g.BODY),
+                      x - 1.8, z + 1.4, i % 4)
         return
     for i, (x, z) in enumerate(
         ((-12, -21), (-12, -25), (-8, -25), (-4, -25), (8, -25), (12, -25), (12, -21))
@@ -576,7 +662,8 @@ def horizon(kit, g, piece):
             1 if i in (0, 6) else 0,
         )
     for x, z in ((-14, -25), (-11, -26), (3, -27), (6, -26), (14, -17), (15, 2), (-15, 8)):
-        piece('Yard poplar', lambda: g.tree(63, 28, g.WOOD, g.GRIT), x, z)
+        piece('Yard poplar', lambda: shade_tree(g, 63, 28, g.WOOD, g.BODY), x, z)
+    kit.set_palette('Yard poplar', primary='#64734b', secondary='#454f37', leather='#665a49')
     roadside_x = 16.4 if kit.key in ('industrial', 'security') else 11
     for x, z in ((-12, -23), (12, -23), (roadside_x, -7)):
         piece('Service line pole', lambda: power_pole(g), x, z)
@@ -804,7 +891,8 @@ def approach_landscape(kit, g, piece):
         )
     for x, z in ((-10.7, 11.8), (-7.9, 12.5), (8.3, 11.4), (10.8, -2.0), (-10.6, 0)):
         piece('Roadside earth bed', lambda: embankment(g, key), x, z, height=-0.1)
-        piece('Roadside shade tree', lambda: g.tree(49, 30, g.WOOD, g.DARK), x - 0.4, z + 0.5)
+        piece('Roadside shade tree', lambda: shade_tree(g, 49, 30, g.WOOD, g.BODY), x - 0.4, z + 0.5)
+    kit.set_palette('Roadside shade tree', primary='#748051', secondary='#4c593c', leather='#695846')
 
 
 LETTERS = {

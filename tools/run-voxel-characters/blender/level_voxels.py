@@ -23,7 +23,7 @@ def encode_prefab(grid):
     return {'origin': origin, 'size': size, 'runs': runs}
 
 
-def write_voxel_scene(path, pack, cell, palette, prefabs, scene):
+def write_voxel_scene(path, pack, cell, palette, prefabs, scene, *, finishes):
     document = {
         'format': 'cubix-level-voxels',
         'version': 1,
@@ -31,6 +31,7 @@ def write_voxel_scene(path, pack, cell, palette, prefabs, scene):
         'voxelSize': cell,
         'regions': vk.REGIONS,
         'palette': palette,
+        'finishes': finishes,
         'prefabs': prefabs,
         'scene': scene,
     }

@@ -200,7 +200,10 @@ describe('run-voxel-characters contracts', () => {
 
   it('generates jam-ready-assets v2 leaves for all packs', () => {
     expect(VOXCHAR_PACK_KEYS).toEqual(['core', 'heist', 'industrial', 'security', 'creatures', 'fantasy'])
-    expect(leavesFor('core').map((l) => l.id)).toEqual(['run-cubix-core/3D/characters'])
+    expect(leavesFor('core')).toEqual([
+      { kind: 'characters', path: '3D/characters', id: 'run-cubix-core/3D/characters', license: 'CC0-1.0' },
+      { kind: 'world', path: '3D/prototype-blocks', id: 'run-cubix-core/3D/prototype-blocks', license: 'CC0-1.0' },
+    ])
     expect(leavesFor('heist').map((l) => l.id)).toEqual([
       'run-cubix-heist/3D/characters',
       'run-cubix-heist/3D/heist',

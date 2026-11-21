@@ -663,11 +663,45 @@ a floor tile below the walking surface.
 Use the same palette for the scene and the separate models. Export vertex
 colors so the models show their colors in a viewer without the Cubix shader.
 
-| Pack | Demo | Pieces to reuse |
+Give the route three depth layers. Use a low object near the camera, a clear
+opening or work area in the middle, and a roof, tree, or building farther
+away. Keep the opening visible from the previous stop. Put the edges of the
+level behind terrain or part of the site.
+
+Show one complete job at each main work area. Put stock, tools, equipment,
+and finished work where they belong. Show a clear connection between them.
+Match the shapes and colors of the parts to that job. Put wear where a tire,
+hand, tool, or load would touch the surface. Give repeated floor sections
+some plain tiles and a few tiles with repair marks or traffic stains.
+Use staggered paving joints at some edges to show the size of each stone.
+Keep the marks on the 10 cm grid.
+
+Use thin sills, rails, and joints to show changes in material or elevation.
+Keep openings clear. Let light through the spaces between supports. Set a
+light at a fixture's position. Keep bright color on the light or on the
+surface that needs attention. Give nearby surfaces a lower intensity.
+Use a small glow on bright lights. Keep the fixture and work surface clear.
+
+Give important materials their own colors. Use a different color or
+roughness where a part changes from paint to steel, glass, timber, or
+stone. Use the 10 cm grid for grain, stains, and chipped corners. Keep
+labels and lenses sharp. See [Cubix level kit files](level-voxel-format.md).
+
+Check the same camera positions after each revision. Check the entrance from
+eye level, at least one working area, and the route back. Use the overview
+to check where large parts meet. Use the exported cells to check that stairs
+reach the decks and that mounted objects have support.
+
+Use `Kit.placement_at` or `Kit.remove_at` when a scene change refers to a
+specific placement. Include the height if two placements share the same
+position on the ground. The builder stops if the location has zero or more
+than one match.
+
+| Pack | Surfaces and color | Work areas and connecting pieces |
 | --- | --- | --- |
-| Core | Training yard | Concrete walls, doorway, cover, steps, ramp, landing, markers |
-| Heist | Demolition block | Brick walls, service opening, vault, loading dock, street furniture |
-| Industrial | Foundry yard | Ribbed panels, catwalk, press, conveyors, pipe racks, storage |
-| Security | Transit checkpoint | Secure dividers, scanner, rails, booth, control desk, equipment |
-| Creatures | Ranger outpost | Rock faces, pen gates, split rails, trees, bridge, field supplies |
-| Fantasy | Market keep | Stone walls, gatehouse, awning, stalls, well, shrine, wagon |
+| Core | Cool concrete, muted teal paint, and yellow traffic marks | Wheel shop, compressor bench, parts counter, and test lane |
+| Heist | Warm brick, darkened timber, and worn terra-cotta pavers | Press floor, ink room, dispatch gallery, and loading alley |
+| Industrial | Oxidized steel, stained concrete, and warm furnace light | Casting floor, pump aisle, crane runway, and rail yard |
+| Security | Pale terrazzo, dark asphalt, and blue-green signs | Screening desks, arrivals hall, passenger curb, and parking return |
+| Creatures | Damp stone, timber, muted green water, and layered foliage | Map table, bridge, watchtower, and wildlife blind |
+| Fantasy | Warm stone, dark timber, and small accents in cloth or copper | Bakehouse, market, pear garden, wool loft, and coppersmith court |

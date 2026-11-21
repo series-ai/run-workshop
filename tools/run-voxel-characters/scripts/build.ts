@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod'
 import { packCatalogSchema, levelPropEntrySchema } from '../contracts/catalog'
@@ -46,7 +46,8 @@ function main(): void {
   // The Blender builders sculpt the voxel humans in this pose (see contracts/humanoidPose.ts).
   writeFileSync(join(META_DIR, 'humanoid-pose.json'), JSON.stringify(humanoidSculptPose(), null, 2) + '\n')
 
-  const coreRigPath = join(STAGE_DIR, leafFor('core', 'characters').id, 'core-rig.glb')
+  const coreCharacters = join(STAGE_DIR, leafFor('core', 'characters').id)
+  const coreRigPath = join(coreCharacters, 'core-rig.glb')
   runBlender(join(TOOL_ROOT, 'blender/build_core.py'), [
     '--source', SOURCE_RIG_GLB,
     '--stage', STAGE_DIR,
@@ -97,6 +98,9 @@ function main(): void {
   const packs = populateManifestRagdoll(META_DIR)
   const presetCount = packs.reduce((s, p) => s + p.presets.length, 0)
   runBlender(join(TOOL_ROOT, 'blender/pack_level_kits.py'), ['--stage', STAGE_DIR, '--meta', META_DIR])
+  for (const oldFolder of ['level-kit', 'vehicles']) {
+    rmSync(join(coreCharacters, oldFolder), { recursive: true, force: true })
+  }
   console.log(`Build finished cleanly (${presetCount} presets with resolved ragdoll metadata).`)
 }
 

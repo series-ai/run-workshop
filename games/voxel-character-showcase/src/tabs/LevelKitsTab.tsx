@@ -1,7 +1,7 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei'
 import { Canvas, useThree } from '@react-three/fiber'
 import { Component, Suspense, useEffect, useMemo, useState, type ErrorInfo, type ReactNode } from 'react'
-import { CanvasTexture, SRGBColorSpace } from 'three'
+import type { MeshStandardMaterial } from 'three'
 import { ZodError } from 'zod'
 import type { LevelPropEntry } from '@voxchar/contracts/catalog'
 import { BUDGETS } from '@voxchar/contracts/budgets'
@@ -12,7 +12,11 @@ import { clearFailedGltfLoads } from '../avatar/polyRig'
 import { createPolyMaterial } from '../avatar/polyMaterial'
 import type { PolyCatalogBundle } from '../catalog'
 import PALETTES from '@voxchar/contracts/data/level-palettes.json'
+import { LevelLightingEffects } from '../scenes/LevelLightingEffects'
+import { LevelInstances, type LevelPlacement } from '../scenes/LevelInstances'
+import { createLevelSky } from '../scenes/levelSky'
 import { STUDIO_GL, StudioLights } from '../scenes/studio'
+import { useLevelWater } from '../scenes/useLevelWater'
 import { KitVehicle } from './KitVehicle'
 
 const PACK_LABELS = {
@@ -60,43 +64,42 @@ const LEVEL_LIGHTS: Record<VoxCharPackKey, LevelLight> = {
   },
 }
 
-function LevelEnvironment({ pack, reach, eyeLevel, fixtures }: {
+function LevelEnvironment({ pack, reach, eyeLevel, fixtures, environment }: {
   pack: VoxCharPackKey
   reach: number
   eyeLevel: boolean
   fixtures: ResolvedLevelKit['fixtures']
+  environment: ResolvedLevelKit['environment']
 }) {
-  const { zenith, horizon, sun, fixtures: defaultFixtures } = LEVEL_LIGHTS[pack]
+  const legacy = LEVEL_LIGHTS[pack]
+  const { zenith, horizon } = environment ?? legacy
+  const defaultFixtures = legacy.fixtures
   const lights = fixtures ?? defaultFixtures.map(([position, color]) => ({ position, color, intensity: 8, distance: 4.5 }))
   const shadowSize = useThree((state) => state.size.width < 640 ? 1024 : 2048)
-  const sky = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 2
-    canvas.height = 256
-    const context = canvas.getContext('2d')!
-    const gradient = context.createLinearGradient(0, 0, 0, canvas.height)
-    gradient.addColorStop(0, zenith)
-    gradient.addColorStop(0.62, horizon)
-    gradient.addColorStop(1, horizon)
-    context.fillStyle = gradient
-    context.fillRect(0, 0, canvas.width, canvas.height)
-    const texture = new CanvasTexture(canvas)
-    texture.colorSpace = SRGBColorSpace
-    return texture
-  }, [horizon, zenith])
-  useEffect(() => () => sky.dispose(), [sky])
+  const [x, y, z] = environment?.sunDirection ?? legacy.sun
+  const sky = useMemo(
+    () => eyeLevel ? createLevelSky(zenith, horizon, [x, y, z]) : undefined,
+    [eyeLevel, zenith, horizon, x, y, z],
+  )
+  useEffect(() => () => sky?.dispose(), [sky])
 
-  const [x, y, z, color] = sun
+  const color = environment?.sunColor ?? legacy.sun[3]
+  const sunIntensity = environment?.sunIntensity ?? (pack === 'security' ? 1.55 : 2.75)
+  const hemisphere: [string, string, number] = environment
+    ? [environment.skyFill, environment.groundFill, environment.fillIntensity]
+    : ['#b5cfed', '#746447', pack === 'security' ? 0.64 : 1.04]
   const shadowRadius = 1.12 * reach
   return (
     <>
-      {eyeLevel ? <primitive attach="background" object={sky} /> : <color attach="background" args={['#101925']} />}
-      {eyeLevel && <fog attach="fog" args={[horizon, 9, 31]} />}
-      <hemisphereLight args={['#b5cfed', '#746447', pack === 'security' ? 0.64 : 1.04]} />
+      {sky ? <primitive attach="background" object={sky} /> : <color attach="background" args={['#101925']} />}
+      {eyeLevel && (environment
+        ? <fogExp2 attach="fog" args={[horizon, environment.fogDensity]} />
+        : <fog attach="fog" args={[horizon, 9, 31]} />)}
+      <hemisphereLight args={hemisphere} />
       <directionalLight
         position={[x * reach, y * reach, z * reach]}
         color={color}
-        intensity={pack === 'security' ? 1.55 : 2.75}
+        intensity={sunIntensity}
         castShadow
         shadow-mapSize={[shadowSize, shadowSize]}
         shadow-camera-left={-shadowRadius}
@@ -185,15 +188,41 @@ function KitCamera({ subject, view, viewpoint }: {
   )
 }
 
-function KitModels({ pack, layout, subject, motion, lightsOn }: {
+function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel }: {
   pack: VoxCharPackKey
   layout?: ResolvedLevelKit
   subject?: LevelPropEntry
   motion: string
   lightsOn: boolean
+  eyeLevel: boolean
 }) {
-  const material = useMemo(() => createPolyMaterial(PALETTES[pack]), [pack])
-  useEffect(() => () => material.dispose(), [material])
+  const groups = useMemo(() => {
+    const byId = new Map<string, { item: LevelPropEntry; placements: LevelPlacement[] }>()
+    for (const placement of layout?.placements ?? []) {
+      const group = byId.get(placement.item.id)
+      if (group) group.placements.push(placement)
+      else byId.set(placement.item.id, { item: placement.item, placements: [placement] })
+    }
+    return [...byId.values()]
+  }, [layout])
+  const reflection = useLevelWater(layout, eyeLevel && !subject)
+  const materials = useMemo(() => {
+    const base = createPolyMaterial(PALETTES[pack], 'level')
+    const overrides = new Map<string, MeshStandardMaterial>()
+    const models = subject ? [subject] : groups.map(({ item }) => item)
+    const { zenith, horizon } = layout?.environment ?? LEVEL_LIGHTS[pack]
+    for (const item of models) {
+      if (item.palette || item.surface) {
+        const surface = item.surface === 'water' ? { water: { zenith, horizon, reflection } } : item.surface ?? 'level'
+        overrides.set(item.id, createPolyMaterial({ ...PALETTES[pack], ...item.palette }, surface))
+      }
+    }
+    return { base, overrides }
+  }, [groups, layout?.environment, pack, reflection, subject])
+  useEffect(() => () => {
+    materials.base.dispose()
+    for (const material of materials.overrides.values()) material.dispose()
+  }, [materials])
 
   if (subject?.motion) {
     return (
@@ -206,19 +235,16 @@ function KitModels({ pack, layout, subject, motion, lightsOn }: {
       </>
     )
   }
-  if (subject) return <PolyProp item={subject} material={material} blobShadow />
+  if (subject) return <PolyProp item={subject} material={materials.overrides.get(subject.id) ?? materials.base} blobShadow />
 
   return (
     <>
-      {layout?.placements.map(({ item, position, turn }, index) => (
-        <PolyProp
-          key={index}
+      {groups.map(({ item, placements }) => (
+        <LevelInstances
+          key={item.id}
           item={item}
-          position={position}
-          rotation={[0, turn * Math.PI / 2, 0]}
-          material={material}
-          castShadow
-          receiveShadow
+          placements={placements}
+          material={materials.overrides.get(item.id) ?? materials.base}
         />
       ))}
     </>
@@ -337,11 +363,14 @@ export function LevelKitsTab({ bundle }: { bundle: PolyCatalogBundle }) {
                   <StudioLights reach={lightReach} heroShadows />
                 </>
               ) : (
-                <LevelEnvironment pack={pack} reach={lightReach} eyeLevel={viewpoint !== undefined} fixtures={layout?.fixtures} />
+                <LevelEnvironment pack={pack} reach={lightReach} eyeLevel={viewpoint !== undefined}
+                  fixtures={layout?.fixtures} environment={layout?.environment} />
               )}
               <KitCamera key={`${sceneKey}:${viewIndex}`} subject={subject} view={view} viewpoint={viewpoint} />
+              {!subject && viewpoint && <LevelLightingEffects />}
               <Suspense fallback={<Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading models…</span></Html>}>
-                <KitModels key={sceneKey} pack={pack} layout={layout} subject={subject} motion={motion} lightsOn={lightsOn} />
+                <KitModels key={sceneKey} pack={pack} layout={layout} subject={subject} motion={motion}
+                  lightsOn={lightsOn} eyeLevel={viewpoint !== undefined} />
               </Suspense>
             </Canvas>
           </div>

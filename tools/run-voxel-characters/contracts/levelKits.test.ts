@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { PackCatalog, LevelPropEntry } from './catalog'
+import { levelPropEntrySchema, type PackCatalog, type LevelPropEntry } from './catalog'
 import { resolveLevelKits, levelKitsSchema, withLevelProps, type LevelKits } from './levelKits'
 import { VOXCHAR_PACK_KEYS } from './packs'
+import { levelFinishesSchema } from './levelFinishes'
+import finishes from './data/level-finishes.json'
 
 function fixture() {
   const catalogs: PackCatalog[] = VOXCHAR_PACK_KEYS.map((pack) => ({
@@ -38,6 +40,32 @@ function fixture() {
 }
 
 describe('Cubix level kit contracts', () => {
+  it('rejects a missing finish region, invalid finish values, and broken grain rows', () => {
+    expect(levelFinishesSchema.parse(finishes)).toEqual(finishes)
+    const { visor: _, ...missing } = finishes.regions
+    expect(levelFinishesSchema.safeParse({ ...finishes, regions: missing }).success).toBe(false)
+    expect(levelFinishesSchema.safeParse({ ...finishes, water: [2, 0] }).success).toBe(false)
+    expect(levelFinishesSchema.safeParse({ ...finishes, grain: finishes.grain.slice(1) }).success).toBe(false)
+    const darkFlatFace = finishes.grain.map((row, index) => index === 9
+      ? row.map((tone, column) => column === 9 ? 128 : tone)
+      : row)
+    expect(levelFinishesSchema.safeParse({ ...finishes, grain: darkFlatFace }).success).toBe(false)
+  })
+
+  it('keeps a prefab palette override and rejects unknown swatches', () => {
+    const { core } = fixture()
+    const entry = { ...core.levelKitProps[0], palette: { primary: '#507443', trim: '#ccb499' } }
+    expect(levelPropEntrySchema.parse(entry)).toEqual(entry)
+    expect(levelPropEntrySchema.safeParse({ ...entry, palette: { wood: '#507443' } }).success).toBe(false)
+  })
+
+  it.each(['water', 'glass'])('preserves the %s finish on a level prefab', (surface) => {
+    const { core } = fixture()
+    const entry = { ...core.levelKitProps[0], surface }
+    expect(levelPropEntrySchema.parse(entry)).toEqual(entry)
+    expect(levelPropEntrySchema.safeParse({ ...entry, surface: 'unknown' }).success).toBe(false)
+  })
+
   it('resolves each placement to its catalog model before rendering', () => {
     const { kits, catalogs, core } = fixture()
     const resolved = resolveLevelKits(kits, catalogs)
@@ -47,11 +75,16 @@ describe('Cubix level kit contracts', () => {
     })
   })
 
-  it('preserves tour stops and scene lights in the exported layout', () => {
+  it('preserves tour stops, scene lights, and atmosphere in the exported layout', () => {
     const { kits } = fixture()
     const stop = { label: 'Loading bay', eye: [2, 1.65, 4], target: [2, 1.65, 0] }
     const fixtureLight = { position: [2, 3.2, 0], color: '#ffcc88', intensity: 12, distance: 7 }
-    const core = { ...kits.core, view: { ...kits.core.view, stops: [stop] }, fixtures: [fixtureLight] }
+    const environment = {
+      zenith: '#6f89a2', horizon: '#d0c9b2', fogDensity: 0.032,
+      skyFill: '#c2cbdb', groundFill: '#91816c', fillIntensity: 1.1,
+      sunDirection: [-2.4, 1.8, 1.8], sunColor: '#fff0db', sunIntensity: 2.6,
+    }
+    const core = { ...kits.core, view: { ...kits.core.view, stops: [stop] }, fixtures: [fixtureLight], environment }
 
     const parsed = levelKitsSchema.parse({ ...kits, core })
 

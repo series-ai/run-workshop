@@ -3,12 +3,24 @@ import type { LevelPropEntry, PackCatalog } from './catalog'
 import { VOXCHAR_PACK_KEYS, type VoxCharPackKey } from './packs'
 
 const position = z.tuple([z.number(), z.number(), z.number()])
+const hexColor = z.string().regex(/^#[0-9a-f]{6}$/i)
 const viewpoint = z.object({ eye: position, target: position })
 const lightFixture = z.object({
   position,
-  color: z.string().regex(/^#[0-9a-f]{6}$/i),
+  color: hexColor,
   intensity: z.number().positive(),
   distance: z.number().positive(),
+})
+export const levelEnvironmentSchema = z.object({
+  zenith: hexColor,
+  horizon: hexColor,
+  fogDensity: z.number().nonnegative(),
+  skyFill: hexColor,
+  groundFill: hexColor,
+  fillIntensity: z.number().nonnegative(),
+  sunDirection: position.refine((direction) => direction.some((axis) => axis !== 0)),
+  sunColor: hexColor,
+  sunIntensity: z.number().nonnegative(),
 })
 
 const layout = z.object({
@@ -20,6 +32,7 @@ const layout = z.object({
     stops: z.array(viewpoint.extend({ label: z.string().min(1) })).optional(),
   }),
   fixtures: z.array(lightFixture).optional(),
+  environment: levelEnvironmentSchema.optional(),
   placements: z.array(z.object({
     propId: z.string().min(1),
     position,

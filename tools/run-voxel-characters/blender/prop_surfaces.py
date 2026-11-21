@@ -3,7 +3,7 @@
 from zlib import crc32
 
 import voxchar as vk
-from level_geometry import make_mesh
+from level_geometry import WATER_LABELS, make_mesh
 
 # Each row runs across a physical face. The first row starts at its lower edge.
 # Digits select two tones. Spaces keep the original finish.
@@ -26,7 +26,7 @@ def tone(region, shade):
 
 
 def finish(kit, label, region):
-    if label == 'Shallow water':
+    if label in WATER_LABELS:
         return 'water'
     if region in ('visor', 'accent'):
         return None

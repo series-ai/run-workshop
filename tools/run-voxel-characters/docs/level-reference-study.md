@@ -43,7 +43,8 @@ sills, seams, and trim where materials or parts meet.
 Use the same 10 cm grid for wear and large forms. Keep the silhouette clear
 when the camera moves back. The showcase uses a sky gradient, directional
 shadows, and local lights below roofs and at entrances. The GLBs contain the
-scene geometry and vertex colors. Supply lighting in the target engine.
+scene geometry and vertex colors. See [Cubix level kit files](level-voxel-format.md)
+for the camera and light data.
 
 ## Vehicle pass
 
@@ -140,3 +141,15 @@ Pair tools with parts at the motor pool, paper with ink at the press, and
 ore with tongs at the foundry. Put trays near the scanner, samples near the
 ranger map, and bread boards near the oven. Check that supplies sit on the
 work surface and that the entrance and the main machine stay visible.
+
+
+## Paving scale and sight lines
+
+Use staggered joints near the edge of a paved lane. Show a few complete
+stones before the joints meet the wide part of the road. Put fine chips
+near large repairs and stains. Keep plain areas between marks.
+
+Keep the entrance path clear of the nearest props. At the creek, show
+the bridge deck and water from the same stop. At the terminal, continue
+the road behind the canopy to the inspection yard. At the motor pool,
+show the compressor bench through the side loading door.

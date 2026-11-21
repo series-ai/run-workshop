@@ -2,6 +2,10 @@
 
 Each pack folder has a complete scene in `demo.glb`. It also has the occupied voxel cells and scene placements in `demo.voxels.json`. Both files use the same prefabs and transforms. The `props/` folder contains the separate prop meshes. The `vehicles/` folder contains the articulated GLB rigs. The voxel scene contains the parked shapes used in the demo. See `License.txt` in each pack folder.
 
+In the ZIP, read each pack's `props.json` to find the relative GLB paths,
+model names, local bounds, motion clips, and lamp names. Use a prop's `id`
+to find its cells in `demo.voxels.json`.
+
 ## Read a voxel scene
 
 Read UTF-8 JSON. Check that `format` is `cubix-level-voxels` and `version` is `1`.
@@ -18,8 +22,34 @@ Subtract `1` from each `code` to get `value`. Code `0` is reserved for air and n
 
 | Field | Read from `value` |
 | --- | --- |
-| Palette index | `value >> 8`. Use this index in `regions`, then use that region name in `palette` to get the base sRGB hex color. |
+| Palette index | `value >> 8`. Use this index in `regions`. Look for that region in the prefab's optional `palette` overrides first. Use the same region in the scene file's top-level `palette` when the prefab has no override. The color is in sRGB hex. |
 | Shade | `(value >> 1) & 127`. Steps `0` through `24` give a shade from `-1` to `1` using `step / 12 - 1`. Step `31` is emissive. |
 | Grain flag | `value & 1`. A value of `1` permits per-cell color variation. |
 
-The cell codes keep the authored colors. The GLBs also include baked surface shading. Voxel renderers can compute their own shading and occlusion. `scene.view` carries the overview frame, approach camera, and named camera stops. `scene.fixtures` carries the point-light positions, colors, intensity, and range. Camera and light data also appear in the top-level `level-scenes.json` in the ZIP.
+The cell codes keep the authored colors. The GLBs include baked surface
+shading, a small grain texture, and a glTF metallic-roughness texture.
+The voxel file includes the same finish data in `finishes`.
+Use the prefab's optional `surface` field to select the `water` or
+`glass` finish. Use the palette region's finish for other surfaces.
+Each finish gives `[roughness, metalness]` from 0 to 1.
+
+Use `finishes.glassOpacity` for transparent panes. Cells with emissive shade
+use the accent color and `finishes.emissiveStrength` for emission. Use
+`finishes.grain` as a repeating 16 by 16 table of sRGB gray values. Sample
+one texel per cell on faces with the grain flag. A voxel renderer can
+compute its own occlusion and reflections. Older voxel files can omit
+`finishes`.
+
+## Set scene lights and cameras
+
+`scene.view` gives the overview frame, approach camera, and named camera
+stops. `scene.fixtures` gives the point-light positions, colors, intensity,
+and range in meters. `scene.environment` gives the sky gradient, exponential
+fog density, sky and ground fill, and sun. The sun vector points from the
+scene toward the sun. It can have any nonzero length.
+
+The same scene data also appears in the top-level `level-scenes.json` in
+the ZIP. The demo GLB has the same cameras and sun and point lights.
+The GLB uses `KHR_lights_punctual` for the lights. Read
+`scenes[scene].extras.cubixEnvironment` to set the sky, fog, and fill in
+the receiving engine.
