@@ -5504,6 +5504,1531 @@
       }
     }
   ],
+  "levelKitProps": [
+    {
+      "id": "prop_creatures_packed_earth",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_packed_earth.glb",
+      "nodeName": "prop_creatures_packed_earth",
+      "label": "Packed earth",
+      "triangles": 342,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_rock_face",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_rock_face.glb",
+      "nodeName": "prop_creatures_rock_face",
+      "label": "Rock face",
+      "triangles": 502,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.5,
+          0.25
+        ],
+        "size": [
+          4,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_pen_gateway",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_pen_gateway.glb",
+      "nodeName": "prop_creatures_pen_gateway",
+      "label": "Pen gateway",
+      "triangles": 586,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          2.8,
+          0.3
+        ],
+        "size": [
+          4,
+          2.8,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_stone_cover",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_stone_cover.glb",
+      "nodeName": "prop_creatures_stone_cover",
+      "label": "Stone cover",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.35
+        ],
+        "size": [
+          2.4,
+          0.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_trail_steps",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_trail_steps.glb",
+      "nodeName": "prop_creatures_trail_steps",
+      "label": "Trail steps",
+      "triangles": 184,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.9
+        ],
+        "size": [
+          1.6,
+          0.6,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_split_rail",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_split_rail.glb",
+      "nodeName": "prop_creatures_split_rail",
+      "label": "Split rail",
+      "triangles": 312,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.5,
+          1.2,
+          0.15
+        ],
+        "size": [
+          3,
+          1.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_watch_platform",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_watch_platform.glb",
+      "nodeName": "prop_creatures_watch_platform",
+      "label": "Watch platform",
+      "triangles": 368,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.75
+        ],
+        "size": [
+          2.4,
+          0.8,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_trail_bridge",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_trail_bridge.glb",
+      "nodeName": "prop_creatures_trail_bridge",
+      "label": "Trail bridge",
+      "triangles": 564,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          1.5,
+          0.9
+        ],
+        "size": [
+          2.8,
+          1.5,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_shallow_water",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shallow_water.glb",
+      "nodeName": "prop_creatures_shallow_water",
+      "label": "Shallow water",
+      "triangles": 94,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.9
+        ],
+        "max": [
+          2,
+          0.2,
+          0.9
+        ],
+        "size": [
+          4,
+          0.2,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_tall_pine",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_tall_pine.glb",
+      "nodeName": "prop_creatures_tall_pine",
+      "label": "Tall pine",
+      "triangles": 528,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.15,
+          5.2,
+          1.05
+        ],
+        "size": [
+          2.3,
+          5.2,
+          2.1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_alder_tree",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_alder_tree.glb",
+      "nodeName": "prop_creatures_alder_tree",
+      "label": "Alder tree",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.95,
+          3.1,
+          0.7
+        ],
+        "size": [
+          1.9,
+          3.1,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_dead_snag",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_dead_snag.glb",
+      "nodeName": "prop_creatures_dead_snag",
+      "label": "Dead snag",
+      "triangles": 216,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.3,
+          0.25
+        ],
+        "size": [
+          1,
+          2.3,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_brush_clump",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_brush_clump.glb",
+      "nodeName": "prop_creatures_brush_clump",
+      "label": "Brush clump",
+      "triangles": 190,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.75,
+          0.8,
+          0.6
+        ],
+        "size": [
+          1.5,
+          0.8,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_stream_boulder",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_stream_boulder.glb",
+      "nodeName": "prop_creatures_stream_boulder",
+      "label": "Stream boulder",
+      "triangles": 194,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.85,
+          1,
+          0.7
+        ],
+        "size": [
+          1.7,
+          1,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_nest_mound",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_nest_mound.glb",
+      "nodeName": "prop_creatures_nest_mound",
+      "label": "Nest mound",
+      "triangles": 182,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.65,
+          0.5,
+          0.55
+        ],
+        "size": [
+          1.3,
+          0.5,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_forage_trough",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_forage_trough.glb",
+      "nodeName": "prop_creatures_forage_trough",
+      "label": "Forage trough",
+      "triangles": 296,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.95,
+          0.6,
+          0.55
+        ],
+        "size": [
+          1.9,
+          0.6,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_animal_transport",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_animal_transport.glb",
+      "nodeName": "prop_creatures_animal_transport",
+      "label": "Animal transport",
+      "triangles": 250,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.9,
+          1.3,
+          0.65
+        ],
+        "size": [
+          1.8,
+          1.3,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_supply_shelf",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_supply_shelf.glb",
+      "nodeName": "prop_creatures_supply_shelf",
+      "label": "Supply shelf",
+      "triangles": 530,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.9,
+          1.6,
+          0.4
+        ],
+        "size": [
+          1.8,
+          1.6,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_warmth_lamp",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_warmth_lamp.glb",
+      "nodeName": "prop_creatures_warmth_lamp",
+      "label": "Warmth lamp",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.8,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.8,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_trail_marker",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_trail_marker.glb",
+      "nodeName": "prop_creatures_trail_marker",
+      "label": "Trail marker",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.5,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_feed_bucket",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_feed_bucket.glb",
+      "nodeName": "prop_creatures_feed_bucket",
+      "label": "Feed bucket",
+      "triangles": 332,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.45,
+          0.7,
+          0.45
+        ],
+        "size": [
+          0.9,
+          0.7,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_field_station",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_field_station.glb",
+      "nodeName": "prop_creatures_field_station",
+      "label": "Field station",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.85,
+          1.8,
+          0.65
+        ],
+        "size": [
+          1.7,
+          1.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_observation_screen",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_observation_screen.glb",
+      "nodeName": "prop_creatures_observation_screen",
+      "label": "Observation screen",
+      "triangles": 606,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.3,
+          1.9,
+          0.15
+        ],
+        "size": [
+          2.6,
+          1.9,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_shelter_canopy",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shelter_canopy.glb",
+      "nodeName": "prop_creatures_shelter_canopy",
+      "label": "Shelter canopy",
+      "triangles": 636,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.4,
+          2.3,
+          0.85
+        ],
+        "size": [
+          2.8,
+          2.3,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_upper_creek_bank",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_upper_creek_bank.glb",
+      "nodeName": "prop_creatures_upper_creek_bank",
+      "label": "Upper creek bank",
+      "triangles": 264,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.4,
+          2
+        ],
+        "size": [
+          4,
+          0.4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_lower_creek_bank",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_lower_creek_bank.glb",
+      "nodeName": "prop_creatures_lower_creek_bank",
+      "label": "Lower creek bank",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_creek_approach_steps",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_creek_approach_steps.glb",
+      "nodeName": "prop_creatures_creek_approach_steps",
+      "label": "Creek approach steps",
+      "triangles": 146,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.85,
+          0.3,
+          0.6
+        ],
+        "size": [
+          1.7,
+          0.3,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_uneven_rock_shelf",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_uneven_rock_shelf.glb",
+      "nodeName": "prop_creatures_uneven_rock_shelf",
+      "label": "Uneven rock shelf",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          0.9,
+          0.9
+        ],
+        "size": [
+          2.8,
+          0.9,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_trail_terrace",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_trail_terrace.glb",
+      "nodeName": "prop_creatures_trail_terrace",
+      "label": "Trail terrace",
+      "triangles": 288,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -1.1
+        ],
+        "max": [
+          1.4,
+          0.2,
+          1.1
+        ],
+        "size": [
+          2.8,
+          0.2,
+          2.2
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_lookout_deck",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_lookout_deck.glb",
+      "nodeName": "prop_creatures_lookout_deck",
+      "label": "Lookout deck",
+      "triangles": 618,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -1.3
+        ],
+        "max": [
+          1.55,
+          4.1,
+          1.3
+        ],
+        "size": [
+          3.1,
+          4.1,
+          2.6
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_lookout_shake_roof",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_lookout_shake_roof.glb",
+      "nodeName": "prop_creatures_lookout_shake_roof",
+      "label": "Lookout shake roof",
+      "triangles": 590,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.3
+        ],
+        "max": [
+          1.7,
+          0.9,
+          1.3
+        ],
+        "size": [
+          3.4,
+          0.9,
+          2.6
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_lookout_timber_stairs",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_lookout_timber_stairs.glb",
+      "nodeName": "prop_creatures_lookout_timber_stairs",
+      "label": "Lookout timber stairs",
+      "triangles": 370,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -2
+        ],
+        "max": [
+          0.6,
+          2,
+          2
+        ],
+        "size": [
+          1.2,
+          2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_shale_escarpment",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shale_escarpment.glb",
+      "nodeName": "prop_creatures_shale_escarpment",
+      "label": "Shale escarpment",
+      "triangles": 528,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2,
+          4.1,
+          1.2
+        ],
+        "size": [
+          4,
+          4.1,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_shale_return",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shale_return.glb",
+      "nodeName": "prop_creatures_shale_return",
+      "label": "Shale return",
+      "triangles": 492,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2,
+          4.1,
+          1.2
+        ],
+        "size": [
+          4,
+          4.1,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_stream_reeds",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_stream_reeds.glb",
+      "nodeName": "prop_creatures_stream_reeds",
+      "label": "Stream reeds",
+      "triangles": 330,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.5,
+          0.9,
+          0.4
+        ],
+        "size": [
+          1,
+          0.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_low_willow",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_low_willow.glb",
+      "nodeName": "prop_creatures_low_willow",
+      "label": "Low willow",
+      "triangles": 566,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -1
+        ],
+        "max": [
+          1.25,
+          3.2,
+          1
+        ],
+        "size": [
+          2.5,
+          3.2,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_shore_alder",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shore_alder.glb",
+      "nodeName": "prop_creatures_shore_alder",
+      "label": "Shore alder",
+      "triangles": 508,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.2,
+          4.2,
+          0.95
+        ],
+        "size": [
+          2.4,
+          4.2,
+          1.9
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_bridge_timber_footing",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_bridge_timber_footing.glb",
+      "nodeName": "prop_creatures_bridge_timber_footing",
+      "label": "Bridge timber footing",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.35,
+          1,
+          0.4
+        ],
+        "size": [
+          0.7,
+          1,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_shallow_stepping_stones",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shallow_stepping_stones.glb",
+      "nodeName": "prop_creatures_shallow_stepping_stones",
+      "label": "Shallow stepping stones",
+      "triangles": 258,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          0.9,
+          0.9
+        ],
+        "size": [
+          2.8,
+          0.9,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_truck",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_truck.glb",
+      "nodeName": "prop_creatures_ranger_truck",
+      "label": "Ranger truck",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -1.85
+        ],
+        "max": [
+          1.05,
+          2,
+          1.85
+        ],
+        "size": [
+          2.1,
+          2,
+          3.7
+        ]
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_creatures_ranger_truck.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lower Tailgate"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_headlamp_03_light",
+          "vehicle_root_taillamp_04_light",
+          "vehicle_root_taillamp_05_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_yard_embankment",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_yard_embankment.glb",
+      "nodeName": "prop_creatures_yard_embankment",
+      "label": "Yard embankment",
+      "triangles": 454,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_ceiling",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_ceiling.glb",
+      "nodeName": "prop_creatures_ranger_lodge_ceiling",
+      "label": "Ranger lodge ceiling",
+      "triangles": 606,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -2.2
+        ],
+        "max": [
+          2.2,
+          1.8,
+          2.2
+        ],
+        "size": [
+          4.4,
+          1.8,
+          4.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_solid",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_solid.glb",
+      "nodeName": "prop_creatures_ranger_lodge_solid",
+      "label": "Ranger lodge solid",
+      "triangles": 614,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.9,
+          0.25
+        ],
+        "size": [
+          4,
+          2.9,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_window",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_window.glb",
+      "nodeName": "prop_creatures_ranger_lodge_window",
+      "label": "Ranger lodge window",
+      "triangles": 628,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.9,
+          0.25
+        ],
+        "size": [
+          4,
+          2.9,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_door",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_door.glb",
+      "nodeName": "prop_creatures_ranger_lodge_door",
+      "label": "Ranger lodge door",
+      "triangles": 442,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.9,
+          0.25
+        ],
+        "size": [
+          4,
+          2.9,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_pendant",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_pendant.glb",
+      "nodeName": "prop_creatures_ranger_lodge_pendant",
+      "label": "Ranger lodge pendant",
+      "triangles": 146,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.45,
+          0.9,
+          0.3
+        ],
+        "size": [
+          0.9,
+          0.9,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_survey_map_table",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_map_table.glb",
+      "nodeName": "prop_creatures_survey_map_table",
+      "label": "Survey map table",
+      "triangles": 494,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.25,
+          2.4,
+          0.5
+        ],
+        "size": [
+          2.5,
+          2.4,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_chimney",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_chimney.glb",
+      "nodeName": "prop_creatures_ranger_lodge_chimney",
+      "label": "Ranger lodge chimney",
+      "triangles": 396,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.55,
+          4.1,
+          0.55
+        ],
+        "size": [
+          1.1,
+          4.1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_trade_sign",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_trade_sign.glb",
+      "nodeName": "prop_creatures_ranger_lodge_trade_sign",
+      "label": "Ranger lodge trade sign",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.25
+        ],
+        "size": [
+          2.4,
+          1.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_letter_board",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_letter_board.glb",
+      "nodeName": "prop_creatures_ranger_lodge_letter_board",
+      "label": "Ranger lodge letter board",
+      "triangles": 564,
+      "bounds": {
+        "min": [
+          -2.1,
+          0,
+          -0.15
+        ],
+        "max": [
+          2.1,
+          1.6,
+          0.15
+        ],
+        "size": [
+          4.2,
+          1.6,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_lodge_floor",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_lodge_floor.glb",
+      "nodeName": "prop_creatures_ranger_lodge_floor",
+      "label": "Ranger lodge floor",
+      "triangles": 260,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_meadow_grass",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_meadow_grass.glb",
+      "nodeName": "prop_creatures_meadow_grass",
+      "label": "Meadow grass",
+      "triangles": 454,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.7,
+          2
+        ],
+        "size": [
+          4,
+          0.7,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ridge_fir",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ridge_fir.glb",
+      "nodeName": "prop_creatures_ridge_fir",
+      "label": "Ridge fir",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -1.65
+        ],
+        "max": [
+          1.75,
+          8.7,
+          1.65
+        ],
+        "size": [
+          3.5,
+          8.7,
+          3.3
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_high_wooded_bank",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_high_wooded_bank.glb",
+      "nodeName": "prop_creatures_high_wooded_bank",
+      "label": "High wooded bank",
+      "triangles": 472,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2,
+          4.1,
+          1.2
+        ],
+        "size": [
+          4,
+          4.1,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_ridge_broadleaf",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ridge_broadleaf.glb",
+      "nodeName": "prop_creatures_ridge_broadleaf",
+      "label": "Ridge broadleaf",
+      "triangles": 526,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.45
+        ],
+        "max": [
+          1.7,
+          6,
+          1.45
+        ],
+        "size": [
+          3.4,
+          6,
+          2.9
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_field_samples_and_notebook",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_field_samples_and_notebook.glb",
+      "nodeName": "prop_creatures_field_samples_and_notebook",
+      "label": "Field samples and notebook",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.65,
+          0.5,
+          0.25
+        ],
+        "size": [
+          1.3,
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_survey_supply_rack",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_supply_rack.glb",
+      "nodeName": "prop_creatures_survey_supply_rack",
+      "label": "Survey supply rack",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.1,
+          1.2,
+          0.45
+        ],
+        "size": [
+          2.2,
+          1.2,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_creatures_worn_trail_entrance",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_worn_trail_entrance.glb",
+      "nodeName": "prop_creatures_worn_trail_entrance",
+      "label": "Worn trail entrance",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.2,
+          0.2,
+          0.95
+        ],
+        "size": [
+          2.4,
+          0.2,
+          1.9
+        ]
+      }
+    }
+  ],
   "presets": [
     {
       "id": "creature_guard_hound",

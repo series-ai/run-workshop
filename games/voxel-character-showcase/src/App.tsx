@@ -4,15 +4,16 @@ import { loadAllCatalogs, type PolyCatalogBundle } from './catalog'
 import { AnimationReviewerTab } from './tabs/AnimationReviewerTab'
 import { AvatarLabTab } from './tabs/AvatarLabTab'
 import { ContextStageTab } from './tabs/ContextStageTab'
+import { LevelKitsTab } from './tabs/LevelKitsTab'
 import { OverviewTab } from './tabs/OverviewTab'
 import { PerfBenchTab } from './tabs/PerfBenchTab'
 
-export type TabId = 'overview' | 'lab' | 'reviewer' | 'stage' | 'perf'
+export type TabId = 'overview' | 'lab' | 'reviewer' | 'stage' | 'levels' | 'perf'
 
 function readInitialTab(): TabId {
   try {
     const param = new URLSearchParams(window.location.search).get('tab')
-    if (param === 'overview' || param === 'lab' || param === 'reviewer' || param === 'stage' || param === 'perf') {
+    if (param === 'overview' || param === 'lab' || param === 'reviewer' || param === 'stage' || param === 'levels' || param === 'perf') {
       return param
     }
   } catch {
@@ -54,6 +55,9 @@ export function App() {
           <button className={`tab-btn ${tab === 'stage' ? 'active' : ''}`} onClick={() => setTab('stage')}>
             Context Stage (Heist · Industrial · Security · Creatures · Fantasy)
           </button>
+          <button className={`tab-btn ${tab === 'levels' ? 'active' : ''}`} onClick={() => setTab('levels')}>
+            Level Kits
+          </button>
           <button className={`tab-btn ${tab === 'perf' ? 'active' : ''}`} onClick={() => setTab('perf')}>
             S23 Ultra Perf Bench
           </button>
@@ -76,6 +80,7 @@ export function App() {
             {tab === 'lab' && <AvatarLabTab catalogs={bundle.ordered} index={index} />}
             {tab === 'reviewer' && <AnimationReviewerTab catalogs={bundle.ordered} index={index} />}
             {tab === 'stage' && <ContextStageTab catalogs={bundle.ordered} index={index} />}
+            {tab === 'levels' && <LevelKitsTab bundle={bundle} />}
             {tab === 'perf' && <PerfBenchTab catalogs={bundle.ordered} index={index} />}
           </>
         )}

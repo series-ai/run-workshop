@@ -32,6 +32,7 @@ const MOCK_CORE: PackCatalog = {
   ],
   heldItems: [],
   props: [],
+  levelKitProps: [],
   presets: [],
 }
 
@@ -49,6 +50,7 @@ const MOCK_HEIST: PackCatalog = {
   ],
   heldItems: [],
   props: [],
+  levelKitProps: [],
   presets: [],
 }
 

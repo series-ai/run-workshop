@@ -648,3 +648,26 @@ World props (`prop_*`, `PROP_VOX = 0.05 m`) stand on `y = 0` (`|min.y| <= 0.015 
 2. **Multi-shade / stepped silhouette (`minUniqueShades >= 3`)**: Break up boxes with stepped frames,
    recessed panels, iron bands, weathered planks, latches, or glowing emissive accents (`bake_ao = True`).
 3. **Triangle & byte budgets**: `<= 650` triangles, `<= 80 KB`, `1` shared `VoxChar_Atlas_Mat` material.
+
+### Level kits
+
+Make the route clear before you add small props. Give each scene an entrance,
+an open lane, side cover, and a destination that the player can see from the
+entrance. Use tall props at the back and low props near the open lane.
+
+Build walls and floors in 4 m modules on a 10 cm grid. Give separate models to
+stairs, rails, the upper landing, and the objects on it. Keep each model
+centered on X and Z. Put the bottom on Y = 0. The scene can put the base of
+a floor tile below the walking surface.
+
+Use the same palette for the scene and the separate models. Export vertex
+colors so the models show their colors in a viewer without the Cubix shader.
+
+| Pack | Demo | Pieces to reuse |
+| --- | --- | --- |
+| Core | Training yard | Concrete walls, doorway, cover, steps, ramp, landing, markers |
+| Heist | Demolition block | Brick walls, service opening, vault, loading dock, street furniture |
+| Industrial | Foundry yard | Ribbed panels, catwalk, press, conveyors, pipe racks, storage |
+| Security | Transit checkpoint | Secure dividers, scanner, rails, booth, control desk, equipment |
+| Creatures | Ranger outpost | Rock faces, pen gates, split rails, trees, bridge, field supplies |
+| Fantasy | Market keep | Stone walls, gatehouse, awning, stalls, well, shrine, wagon |

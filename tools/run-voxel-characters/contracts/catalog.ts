@@ -223,6 +223,16 @@ export const worldPropEntrySchema = z.object({
 })
 export type WorldPropEntry = z.infer<typeof worldPropEntrySchema>
 
+export const levelPropEntrySchema = worldPropEntrySchema.extend({
+  relativePath: z.string().regex(/^level-kit\/[a-z0-9_]+\.glb$/),
+  motion: z.object({
+    relativePath: z.string().regex(/^vehicles\/[a-z0-9_]+\.glb$/),
+    clips: z.array(z.string().min(1)).min(1).refine((clips) => new Set(clips).size === clips.length),
+    lights: z.array(z.string().regex(/^[a-z0-9_]+_light$/)).refine((lights) => new Set(lights).size === lights.length).default([]),
+  }).optional(),
+})
+export type LevelPropEntry = z.infer<typeof levelPropEntrySchema>
+
 export const characterPresetSchema = z.object({
   id: z.string().min(1),
   pack: z.enum(VOXCHAR_PACK_KEYS),
@@ -262,6 +272,12 @@ export const packCatalogSchema = z.object({
   parts: z.array(avatarPartEntrySchema),
   heldItems: z.array(heldItemEntrySchema),
   props: z.array(worldPropEntrySchema),
+  levelKitProps: z.array(levelPropEntrySchema).default([]),
   presets: z.array(characterPresetSchema),
 })
 export type PackCatalog = z.infer<typeof packCatalogSchema>
+
+export const buildManifestSchema = z.object({
+  version: z.literal(1),
+  packs: z.array(packCatalogSchema),
+})

@@ -1521,6 +1521,1660 @@
   ],
   "heldItems": [],
   "props": [],
+  "levelKitProps": [
+    {
+      "id": "prop_core_concrete_floor",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_concrete_floor.glb",
+      "nodeName": "prop_core_concrete_floor",
+      "label": "Concrete floor",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_training_wall",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_training_wall.glb",
+      "nodeName": "prop_core_training_wall",
+      "label": "Training wall",
+      "triangles": 206,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.5,
+          0.25
+        ],
+        "size": [
+          4,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_open_doorway",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_open_doorway.glb",
+      "nodeName": "prop_core_open_doorway",
+      "label": "Open doorway",
+      "triangles": 362,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          2.6,
+          0.3
+        ],
+        "size": [
+          4,
+          2.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_low_cover",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_low_cover.glb",
+      "nodeName": "prop_core_low_cover",
+      "label": "Low cover",
+      "triangles": 158,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.35
+        ],
+        "size": [
+          2.4,
+          0.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_core_short_steps",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_short_steps.glb",
+      "nodeName": "prop_core_short_steps",
+      "label": "Short steps",
+      "triangles": 220,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.9
+        ],
+        "size": [
+          1.6,
+          0.6,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_core_handrail",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_handrail.glb",
+      "nodeName": "prop_core_handrail",
+      "label": "Handrail",
+      "triangles": 194,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.5,
+          1.2,
+          0.15
+        ],
+        "size": [
+          3,
+          1.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_core_raised_landing",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_raised_landing.glb",
+      "nodeName": "prop_core_raised_landing",
+      "label": "Raised landing",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.25,
+          0.8,
+          0.85
+        ],
+        "size": [
+          2.5,
+          0.8,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_core_cover_block",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_cover_block.glb",
+      "nodeName": "prop_core_cover_block",
+      "label": "Cover block",
+      "triangles": 264,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.75,
+          1.1,
+          0.65
+        ],
+        "size": [
+          1.5,
+          1.1,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_core_short_pillar",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_short_pillar.glb",
+      "nodeName": "prop_core_short_pillar",
+      "label": "Short pillar",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.3,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.3,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_high_pillar",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_high_pillar.glb",
+      "nodeName": "prop_core_high_pillar",
+      "label": "High pillar",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          2.6,
+          0.25
+        ],
+        "size": [
+          0.5,
+          2.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_ramp_wedge",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_ramp_wedge.glb",
+      "nodeName": "prop_core_ramp_wedge",
+      "label": "Ramp wedge",
+      "triangles": 266,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -1.2
+        ],
+        "max": [
+          0.7,
+          0.8,
+          1.2
+        ],
+        "size": [
+          1.4,
+          0.8,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_test_plinth",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_test_plinth.glb",
+      "nodeName": "prop_core_test_plinth",
+      "label": "Test plinth",
+      "triangles": 358,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.85,
+          0.9,
+          0.7
+        ],
+        "size": [
+          1.7,
+          0.9,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_marker_cone",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_marker_cone.glb",
+      "nodeName": "prop_core_marker_cone",
+      "label": "Marker cone",
+      "triangles": 110,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          0.7,
+          0.25
+        ],
+        "size": [
+          0.5,
+          0.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_stripe_bollard",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_stripe_bollard.glb",
+      "nodeName": "prop_core_stripe_bollard",
+      "label": "Stripe bollard",
+      "triangles": 138,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.5,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_equipment_shelf",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_equipment_shelf.glb",
+      "nodeName": "prop_core_equipment_shelf",
+      "label": "Equipment shelf",
+      "triangles": 250,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.9,
+          1.6,
+          0.35
+        ],
+        "size": [
+          1.8,
+          1.6,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_core_training_bench",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_training_bench.glb",
+      "nodeName": "prop_core_training_bench",
+      "label": "Training bench",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.85,
+          1,
+          0.3
+        ],
+        "size": [
+          1.7,
+          1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_utility_cabinet",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_utility_cabinet.glb",
+      "nodeName": "prop_core_utility_cabinet",
+      "label": "Utility cabinet",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.55,
+          1.7,
+          0.45
+        ],
+        "size": [
+          1.1,
+          1.7,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_core_storage_bin",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_storage_bin.glb",
+      "nodeName": "prop_core_storage_bin",
+      "label": "Storage bin",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1,
+          0.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_field_case",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_field_case.glb",
+      "nodeName": "prop_core_field_case",
+      "label": "Field case",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.65,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1.3,
+          0.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_barrel_marker",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_barrel_marker.glb",
+      "nodeName": "prop_core_barrel_marker",
+      "label": "Barrel marker",
+      "triangles": 314,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          1.1,
+          0.5
+        ],
+        "size": [
+          1,
+          1.1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_site_light",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_site_light.glb",
+      "nodeName": "prop_core_site_light",
+      "label": "Site light",
+      "triangles": 186,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.6,
+          0.25
+        ],
+        "size": [
+          1,
+          2.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_training_board",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_training_board.glb",
+      "nodeName": "prop_core_training_board",
+      "label": "Training board",
+      "triangles": 210,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.85,
+          1.8,
+          0.35
+        ],
+        "size": [
+          1.7,
+          1.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_core_lane_stripe",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_lane_stripe.glb",
+      "nodeName": "prop_core_lane_stripe",
+      "label": "Lane stripe",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.15,
+          0.2,
+          0.2
+        ],
+        "size": [
+          2.3,
+          0.2,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_floor_hatch",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_floor_hatch.glb",
+      "nodeName": "prop_core_floor_hatch",
+      "label": "Floor hatch",
+      "triangles": 154,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.75,
+          0.2,
+          0.7
+        ],
+        "size": [
+          1.5,
+          0.2,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_checkpoint_arch",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_checkpoint_arch.glb",
+      "nodeName": "prop_core_checkpoint_arch",
+      "label": "Checkpoint arch",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.5,
+          2.3,
+          0.25
+        ],
+        "size": [
+          3,
+          2.3,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_workshop_window_wall",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_workshop_window_wall.glb",
+      "nodeName": "prop_core_workshop_window_wall",
+      "label": "Workshop window wall",
+      "triangles": 586,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          2.9,
+          0.4
+        ],
+        "size": [
+          4,
+          2.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_core_workshop_roof_section",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_workshop_roof_section.glb",
+      "nodeName": "prop_core_workshop_roof_section",
+      "label": "Workshop roof section",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.8
+        ],
+        "max": [
+          2,
+          0.3,
+          1.8
+        ],
+        "size": [
+          4,
+          0.3,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_workshop_column",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_workshop_column.glb",
+      "nodeName": "prop_core_workshop_column",
+      "label": "Workshop column",
+      "triangles": 202,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.45,
+          2.5,
+          0.45
+        ],
+        "size": [
+          0.9,
+          2.5,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_core_bay_divider",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_bay_divider.glb",
+      "nodeName": "prop_core_bay_divider",
+      "label": "Bay divider",
+      "triangles": 380,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.6,
+          2.1,
+          0.3
+        ],
+        "size": [
+          3.2,
+          2.1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_concrete_edge_unit",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_concrete_edge_unit.glb",
+      "nodeName": "prop_core_concrete_edge_unit",
+      "label": "Concrete edge unit",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.45
+        ],
+        "max": [
+          2,
+          0.3,
+          0.45
+        ],
+        "size": [
+          4,
+          0.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_core_target_backstop",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_target_backstop.glb",
+      "nodeName": "prop_core_target_backstop",
+      "label": "Target backstop",
+      "triangles": 270,
+      "bounds": {
+        "min": [
+          -2.7,
+          0,
+          -0.3
+        ],
+        "max": [
+          2.7,
+          3.4,
+          0.3
+        ],
+        "size": [
+          5.4,
+          3.4,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_repair_gantry",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_repair_gantry.glb",
+      "nodeName": "prop_core_repair_gantry",
+      "label": "Repair gantry",
+      "triangles": 440,
+      "bounds": {
+        "min": [
+          -2.05,
+          0,
+          -0.5
+        ],
+        "max": [
+          2.05,
+          3.3,
+          0.5
+        ],
+        "size": [
+          4.1,
+          3.3,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_corrugated_storage_wall",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_corrugated_storage_wall.glb",
+      "nodeName": "prop_core_corrugated_storage_wall",
+      "label": "Corrugated storage wall",
+      "triangles": 330,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.35
+        ],
+        "max": [
+          2,
+          3.2,
+          0.35
+        ],
+        "size": [
+          4,
+          3.2,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_core_workshop_pitched_roof",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_workshop_pitched_roof.glb",
+      "nodeName": "prop_core_workshop_pitched_roof",
+      "label": "Workshop pitched roof",
+      "triangles": 588,
+      "bounds": {
+        "min": [
+          -2.1,
+          0,
+          -2
+        ],
+        "max": [
+          2.1,
+          0.9,
+          2
+        ],
+        "size": [
+          4.2,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_loaded_parts_rack",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_loaded_parts_rack.glb",
+      "nodeName": "prop_core_loaded_parts_rack",
+      "label": "Loaded parts rack",
+      "triangles": 612,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_heavy_work_table",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_heavy_work_table.glb",
+      "nodeName": "prop_core_heavy_work_table",
+      "label": "Heavy work table",
+      "triangles": 602,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.3,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.6,
+          1.6,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_oil_pan",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_oil_pan.glb",
+      "nodeName": "prop_core_oil_pan",
+      "label": "Oil pan",
+      "triangles": 360,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.8,
+          1,
+          0.6
+        ],
+        "size": [
+          1.6,
+          1,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_core_concrete_floor_patch",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_concrete_floor_patch.glb",
+      "nodeName": "prop_core_concrete_floor_patch",
+      "label": "Concrete floor patch",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -1.25
+        ],
+        "max": [
+          0.9,
+          0.2,
+          1.25
+        ],
+        "size": [
+          1.8,
+          0.2,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_training_barrier_end",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_training_barrier_end.glb",
+      "nodeName": "prop_core_training_barrier_end",
+      "label": "Training barrier end",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.5,
+          1.3,
+          0.45
+        ],
+        "size": [
+          1,
+          1.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_core_flatbed_tool_cart",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_flatbed_tool_cart.glb",
+      "nodeName": "prop_core_flatbed_tool_cart",
+      "label": "Flatbed tool cart",
+      "triangles": 306,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.75,
+          0.5,
+          0.5
+        ],
+        "size": [
+          1.5,
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_utility_pickup",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_utility_pickup.glb",
+      "nodeName": "prop_core_utility_pickup",
+      "label": "Utility pickup",
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.85
+        ],
+        "max": [
+          0.95,
+          1.7,
+          1.85
+        ],
+        "size": [
+          1.9,
+          1.7,
+          3.7
+        ]
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_core_utility_pickup.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lower Tailgate"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_taillamp_03_light",
+          "vehicle_root_taillamp_04_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_core_yard_embankment",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_yard_embankment.glb",
+      "nodeName": "prop_core_yard_embankment",
+      "label": "Yard embankment",
+      "triangles": 468,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_ceiling",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_ceiling.glb",
+      "nodeName": "prop_core_motor_pool_ceiling",
+      "label": "Motor pool ceiling",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_solid",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_solid.glb",
+      "nodeName": "prop_core_motor_pool_solid",
+      "label": "Motor pool solid",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.4,
+          0.3
+        ],
+        "size": [
+          4,
+          3.4,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_window",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_window.glb",
+      "nodeName": "prop_core_motor_pool_window",
+      "label": "Motor pool window",
+      "triangles": 594,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_door",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_door.glb",
+      "nodeName": "prop_core_motor_pool_door",
+      "label": "Motor pool door",
+      "triangles": 496,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.4,
+          0.3
+        ],
+        "size": [
+          4,
+          3.4,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_pendant",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_pendant.glb",
+      "nodeName": "prop_core_motor_pool_pendant",
+      "label": "Motor pool pendant",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.3
+        ],
+        "max": [
+          1,
+          0.9,
+          0.3
+        ],
+        "size": [
+          2,
+          0.9,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_hydraulic_service_lift",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_hydraulic_service_lift.glb",
+      "nodeName": "prop_core_hydraulic_service_lift",
+      "label": "Hydraulic service lift",
+      "triangles": 364,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.8
+        ],
+        "max": [
+          1.45,
+          2.7,
+          0.8
+        ],
+        "size": [
+          2.9,
+          2.7,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_trade_sign",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_trade_sign.glb",
+      "nodeName": "prop_core_motor_pool_trade_sign",
+      "label": "Motor pool trade sign",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.25
+        ],
+        "size": [
+          2.4,
+          1.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_letter_board",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_letter_board.glb",
+      "nodeName": "prop_core_motor_pool_letter_board",
+      "label": "Motor pool letter board",
+      "triangles": 598,
+      "bounds": {
+        "min": [
+          -2.3,
+          0,
+          -0.15
+        ],
+        "max": [
+          2.3,
+          1.6,
+          0.15
+        ],
+        "size": [
+          4.6,
+          1.6,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_core_motor_pool_floor",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_motor_pool_floor.glb",
+      "nodeName": "prop_core_motor_pool_floor",
+      "label": "Motor pool floor",
+      "triangles": 288,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_service_road_asphalt",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_service_road_asphalt.glb",
+      "nodeName": "prop_core_service_road_asphalt",
+      "label": "Service road asphalt",
+      "triangles": 246,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_service_road_curb",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_service_road_curb.glb",
+      "nodeName": "prop_core_service_road_curb",
+      "label": "Service road curb",
+      "triangles": 232,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.45
+        ],
+        "max": [
+          2,
+          0.3,
+          0.45
+        ],
+        "size": [
+          4,
+          0.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_core_service_yard_boundary",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_service_yard_boundary.glb",
+      "nodeName": "prop_core_service_yard_boundary",
+      "label": "Service yard boundary",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.2,
+          0.3
+        ],
+        "size": [
+          4,
+          3.2,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_yard_poplar",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_yard_poplar.glb",
+      "nodeName": "prop_core_yard_poplar",
+      "label": "Yard poplar",
+      "triangles": 500,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -1.15
+        ],
+        "max": [
+          1.4,
+          6.7,
+          1.15
+        ],
+        "size": [
+          2.8,
+          6.7,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "prop_core_service_line_pole",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_service_line_pole.glb",
+      "nodeName": "prop_core_service_line_pole",
+      "label": "Service line pole",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.05,
+          5.6,
+          0.3
+        ],
+        "size": [
+          2.1,
+          5.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_covered_loading_stand",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_covered_loading_stand.glb",
+      "nodeName": "prop_core_covered_loading_stand",
+      "label": "Covered loading stand",
+      "triangles": 398,
+      "bounds": {
+        "min": [
+          -1.85,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.85,
+          3.3,
+          1.25
+        ],
+        "size": [
+          3.7,
+          3.3,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_loading_yard_wheel_track",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_loading_yard_wheel_track.glb",
+      "nodeName": "prop_core_loading_yard_wheel_track",
+      "label": "Loading yard wheel track",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.35,
+          0.2,
+          1.8
+        ],
+        "size": [
+          0.7,
+          0.2,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_roadside_earth_bed",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_roadside_earth_bed.glb",
+      "nodeName": "prop_core_roadside_earth_bed",
+      "label": "Roadside earth bed",
+      "triangles": 524,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_core_roadside_shade_tree",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_roadside_shade_tree.glb",
+      "nodeName": "prop_core_roadside_shade_tree",
+      "label": "Roadside shade tree",
+      "triangles": 488,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.5,
+          5.3,
+          1.25
+        ],
+        "size": [
+          3,
+          5.3,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_service_tools",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_service_tools.glb",
+      "nodeName": "prop_core_service_tools",
+      "label": "Service tools",
+      "triangles": 194,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.65,
+          0.5,
+          0.25
+        ],
+        "size": [
+          1.3,
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_tire_service_rack",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_tire_service_rack.glb",
+      "nodeName": "prop_core_tire_service_rack",
+      "label": "Tire service rack",
+      "triangles": 620,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.1,
+          1.5,
+          0.45
+        ],
+        "size": [
+          2.2,
+          1.5,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_core_service_bay_markings",
+      "pack": "core",
+      "leaf": "characters",
+      "relativePath": "level-kit/prop_core_service_bay_markings.glb",
+      "nodeName": "prop_core_service_bay_markings",
+      "label": "Service bay markings",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.2,
+          0.2,
+          0.95
+        ],
+        "size": [
+          2.4,
+          0.2,
+          1.9
+        ]
+      }
+    }
+  ],
   "presets": [
     {
       "id": "core_rookie",

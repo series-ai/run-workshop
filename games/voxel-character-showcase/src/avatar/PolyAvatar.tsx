@@ -533,6 +533,7 @@ export type PolyPropProps = Placement &
     item: WorldPropEntry | HeldItemEntry
     blobShadow?: boolean
     castShadow?: boolean
+    receiveShadow?: boolean
   }
 
 /** A static pack model (world prop or held item) with the palette shader. */
@@ -546,7 +547,7 @@ export function PolyProp(props: PolyPropProps) {
   return <LoadedProp {...props} url={urls[0]} />
 }
 
-function LoadedProp({ item, url, palette, material: sharedMaterial, blobShadow = false, castShadow = false, position, rotation, scale }: PolyPropProps & { url: string }) {
+function LoadedProp({ item, url, palette, material: sharedMaterial, blobShadow = false, castShadow = false, receiveShadow = false, position, rotation, scale }: PolyPropProps & { url: string }) {
   const gltf = readGltf(url)
   const geometry = findStaticMesh(gltf, item.nodeName).geometry
   const ownMaterial = useMemo(() => (sharedMaterial ? null : createPolyMaterial(palette)), [sharedMaterial]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -561,7 +562,7 @@ function LoadedProp({ item, url, palette, material: sharedMaterial, blobShadow =
   const blob = blobShadow ? getSharedBlobShadowResources() : null
   return (
     <group position={position} rotation={rotation} scale={scale}>
-      <mesh geometry={geometry} material={sharedMaterial ?? ownMaterial!} castShadow={castShadow} />
+      <mesh geometry={geometry} material={sharedMaterial ?? ownMaterial!} castShadow={castShadow} receiveShadow={receiveShadow} />
       {blob && <mesh geometry={blob.geometry} material={blob.material} position={[0, BLOB_Y, 0]} scale={footprint} />}
     </group>
   )

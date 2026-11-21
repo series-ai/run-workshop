@@ -12,7 +12,7 @@ export function OverviewTab({
 }) {
   const totalParts = catalogs.reduce((s, c) => s + c.parts.length, 0)
   const totalHeld = catalogs.reduce((s, c) => s + c.heldItems.length, 0)
-  const totalProps = catalogs.reduce((s, c) => s + c.props.length, 0)
+  const totalProps = catalogs.reduce((s, c) => s + c.props.length + c.levelKitProps.length, 0)
   const totalPresets = catalogs.reduce((s, c) => s + c.presets.length, 0)
   const voxelCm = Number((HUMANOID_VOXEL_SIZE * 100).toFixed(1))
 

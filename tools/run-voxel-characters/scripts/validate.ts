@@ -10,7 +10,7 @@ import {
   HUMANOID_SILHOUETTE,
   HUMANOID_VOXEL_SIZE,
   PROP_CRAFT,
-  packCatalogSchema,
+  buildManifestSchema,
   type AvatarPartEntry,
   type CharacterPreset,
   type HeldItemEntry,
@@ -30,11 +30,7 @@ import {
 import { auditCreatureGlb, firstNonRigidVertex, restPose } from '../src/creatureAudit'
 import { isIdentityTransform, nodeTriangleCount, parseGlb, readAccessor, type ParsedGlb } from '../src/glbInspect'
 import { META_DIR, STAGE_DIR } from '../src/paths'
-
-const buildManifestSchema = z.object({
-  version: z.literal(1),
-  packs: z.array(packCatalogSchema),
-})
+import { assertVehicleMotion } from '../src/vehicleAudit'
 
 function assertOrthogonalVoxelNormals(glb: ParsedGlb, nodeName: string): void {
   const node = glb.doc.nodes?.find((n) => n.name === nodeName)
@@ -826,7 +822,7 @@ async function main(): Promise<void> {
       }
     }
 
-    for (const prop of cat.props) {
+    for (const prop of [...cat.props, ...cat.levelKitProps]) {
       totalModels++
       const glb = loadCached(prop.leaf, prop.relativePath)
       assertFiniteWeightsAndPositions(glb, prop.nodeName, false, 0)
@@ -841,6 +837,12 @@ async function main(): Promise<void> {
       if (Math.abs(prop.bounds.min[1]) > 0.015) {
         throw new Error(`Prop "${prop.id}" not grounded on y=0 (min.y=${prop.bounds.min[1]})`)
       }
+    }
+
+    for (const { leaf: kind, motion } of cat.levelKitProps) {
+      if (!motion) continue
+      const leaf = leavesFor(cat.pack).find((candidate) => candidate.kind === kind)!
+      await assertVehicleMotion(join(STAGE_DIR, leaf.id, motion.relativePath), motion)
     }
 
     for (const preset of cat.presets) {
