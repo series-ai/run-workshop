@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "rigId": "chisel-serpent-12",
+  "source": "RUN Chisel Serpent Rig (LicenseRef-RUN-Repository-Supplemental-1.0 / CC0 Mesh2Motion clips)",
+  "jointCount": 12,
+  "joints": [
+    "root",
+    "pelvis",
+    "neck",
+    "head",
+    "jaw",
+    "spine_01",
+    "spine_02",
+    "tail_01",
+    "tail_02",
+    "tail_03",
+    "tail_04",
+    "tail_tip"
+  ],
+  "parents": {
+    "root": null,
+    "pelvis": "root",
+    "neck": "pelvis",
+    "head": "neck",
+    "jaw": "head",
+    "spine_01": "pelvis",
+    "spine_02": "spine_01",
+    "tail_01": "spine_02",
+    "tail_02": "tail_01",
+    "tail_03": "tail_02",
+    "tail_04": "tail_03",
+    "tail_tip": "tail_04"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pelvis": [
+      0.0,
+      0.08,
+      0.02
+    ],
+    "neck": [
+      0.0,
+      0.11,
+      0.14
+    ],
+    "head": [
+      0.0,
+      0.12,
+      0.24
+    ],
+    "jaw": [
+      0.0,
+      0.08,
+      0.3
+    ],
+    "spine_01": [
+      0.0,
+      0.075,
+      -0.18
+    ],
+    "spine_02": [
+      0.0,
+      0.072,
+      -0.44
+    ],
+    "tail_01": [
+      0.0,
+      0.068,
+      -0.72
+    ],
+    "tail_02": [
+      0.0,
+      0.064,
+      -1.0
+    ],
+    "tail_03": [
+      0.0,
+      0.06,
+      -1.3
+    ],
+    "tail_04": [
+      0.0,
+      0.056,
+      -1.6
+    ],
+    "tail_tip": [
+      0.0,
+      0.044,
+      -1.9
+    ]
+  },
+  "clips": [
+    {
+      "name": "Idle",
+      "duration": 2.2917
+    },
+    {
+      "name": "Coiled",
+      "duration": 1.625
+    },
+    {
+      "name": "Sidewinding",
+      "duration": 1.875
+    },
+    {
+      "name": "Bite",
+      "duration": 1.2083
+    },
+    {
+      "name": "Dance",
+      "duration": 1.9583
+    },
+    {
+      "name": "Hit",
+      "duration": 1.0
+    },
+    {
+      "name": "Death",
+      "duration": 2.25
+    }
+  ]
+}

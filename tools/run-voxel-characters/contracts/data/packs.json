@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "packs": {
+    "core": {
+      "dir": "run-cubix-core",
+      "label": "Core Rig & Voxel Bodies",
+      "description": "Canonical 53-joint Quaternius UAL1 rig, 95 CC0 clips (UAL1 + UAL2 + KayKit 2H), and orthogonal rigid-segment voxel bodies, sculpted voxel heads, and layered voxel hairstyles.",
+      "hasWorldLeaf": false,
+      "license": "CC0-1.0"
+    },
+    "heist": {
+      "dir": "run-cubix-heist",
+      "worldTheme": "heist",
+      "label": "Heist & Demolition",
+      "description": "Urban demolitionists, open jackets with scarves, belted tunics, tattoo vests, backpacks, sledgehammers, detonators, crowbars, and rubble props.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "industrial": {
+      "dir": "run-cubix-industrial",
+      "worldTheme": "industrial",
+      "label": "Workshop & Industrial",
+      "description": "Weathered work shirts, waist packs, work gloves, cargo pants, knit beanies, hard hats, pipe wrenches, blowtorches, drums, and crates.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "security": {
+      "dir": "run-cubix-security",
+      "worldTheme": "security",
+      "label": "Security & Cyber-Tech",
+      "description": "Collared guard uniforms, utility belts, knee-pad trousers, peaked caps, cyber-tech strap vests, riot helmets, pistols, and security terminals.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "creatures": {
+      "dir": "run-cubix-creatures",
+      "worldTheme": "creatures",
+      "label": "Voxel Beasts & Bots",
+      "description": "Orthogonal voxel creatures across 14 rigs: guard hound, scrap spider, demolition scrap-bot, fox, horse, wolf, dogs, cat, reef shark (aquatic), frost eagle (avian), cobra (serpent), ember dragon, and apex rex (kaiju).",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    },
+    "fantasy": {
+      "dir": "run-cubix-fantasy",
+      "worldTheme": "fantasy",
+      "label": "Fantasy & Medieval",
+      "description": "Armored knights, battle mages, necromancer, spirit shaman, swamp witch, sorceress, goblin scavengers and shamans, orc warriors, hulking trolls, and medieval props.",
+      "hasWorldLeaf": true,
+      "license": "LicenseRef-RUN-Repository-Supplemental-1.0"
+    }
+  }
+}

@@ -1,0 +1,742 @@
+{
+  "version": 1,
+  "rigId": "quaternius-ual1-53",
+  "source": "Quaternius UAL1 & UAL2 (CC0-1.0) + KayKit 2H Combat (CC0-1.0) + BodyMech Rig (CC0-1.0)",
+  "jointCount": 53,
+  "joints": [
+    "root",
+    "pelvis",
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "neck_01",
+    "Head",
+    "clavicle_l",
+    "upperarm_l",
+    "lowerarm_l",
+    "hand_l",
+    "thumb_01_l",
+    "thumb_02_l",
+    "thumb_03_l",
+    "index_01_l",
+    "index_02_l",
+    "index_03_l",
+    "middle_01_l",
+    "middle_02_l",
+    "middle_03_l",
+    "ring_01_l",
+    "ring_02_l",
+    "ring_03_l",
+    "pinky_01_l",
+    "pinky_02_l",
+    "pinky_03_l",
+    "clavicle_r",
+    "upperarm_r",
+    "lowerarm_r",
+    "hand_r",
+    "thumb_01_r",
+    "thumb_02_r",
+    "thumb_03_r",
+    "index_01_r",
+    "index_02_r",
+    "index_03_r",
+    "middle_01_r",
+    "middle_02_r",
+    "middle_03_r",
+    "ring_01_r",
+    "ring_02_r",
+    "ring_03_r",
+    "pinky_01_r",
+    "pinky_02_r",
+    "pinky_03_r",
+    "thigh_l",
+    "calf_l",
+    "foot_l",
+    "ball_l",
+    "thigh_r",
+    "calf_r",
+    "foot_r",
+    "ball_r"
+  ],
+  "worldPositions": {
+    "root": [
+      -0.0,
+      -0.0,
+      -0.0
+    ],
+    "pelvis": [
+      0.0,
+      1.03271,
+      -0.04471
+    ],
+    "spine_01": [
+      0.0,
+      1.27649,
+      0.01815
+    ],
+    "spine_02": [
+      0.0,
+      1.35819,
+      0.02824
+    ],
+    "spine_03": [
+      0.0,
+      1.46589,
+      0.0248
+    ],
+    "neck_01": [
+      -0.0,
+      1.61294,
+      0.02004
+    ],
+    "Head": [
+      -0.0,
+      1.70581,
+      0.02493
+    ],
+    "clavicle_l": [
+      0.01761,
+      1.55058,
+      0.06837
+    ],
+    "upperarm_l": [
+      0.1072,
+      1.52357,
+      0.04839
+    ],
+    "lowerarm_l": [
+      0.41915,
+      1.52357,
+      0.04304
+    ],
+    "hand_l": [
+      0.68668,
+      1.52357,
+      0.04765
+    ],
+    "thumb_01_l": [
+      0.71941,
+      1.52323,
+      0.10803
+    ],
+    "thumb_02_l": [
+      0.76575,
+      1.49721,
+      0.13202
+    ],
+    "thumb_03_l": [
+      0.79566,
+      1.48041,
+      0.14751
+    ],
+    "index_01_l": [
+      0.79713,
+      1.53278,
+      0.08655
+    ],
+    "index_02_l": [
+      0.85379,
+      1.53278,
+      0.08655
+    ],
+    "index_03_l": [
+      0.89163,
+      1.53278,
+      0.08655
+    ],
+    "middle_01_l": [
+      0.79995,
+      1.53317,
+      0.0577
+    ],
+    "middle_02_l": [
+      0.8509,
+      1.53317,
+      0.05529
+    ],
+    "middle_03_l": [
+      0.89033,
+      1.53317,
+      0.05354
+    ],
+    "ring_01_l": [
+      0.79847,
+      1.53323,
+      0.03278
+    ],
+    "ring_02_l": [
+      0.84992,
+      1.53323,
+      0.03095
+    ],
+    "ring_03_l": [
+      0.88966,
+      1.53323,
+      0.02954
+    ],
+    "pinky_01_l": [
+      0.79438,
+      1.53027,
+      0.0082
+    ],
+    "pinky_02_l": [
+      0.85072,
+      1.53027,
+      0.00441
+    ],
+    "pinky_03_l": [
+      0.88798,
+      1.53027,
+      0.00185
+    ],
+    "clavicle_r": [
+      -0.01761,
+      1.55058,
+      0.06837
+    ],
+    "upperarm_r": [
+      -0.1072,
+      1.52357,
+      0.04839
+    ],
+    "lowerarm_r": [
+      -0.41915,
+      1.52357,
+      0.04304
+    ],
+    "hand_r": [
+      -0.68668,
+      1.52357,
+      0.04765
+    ],
+    "thumb_01_r": [
+      -0.71941,
+      1.52323,
+      0.10803
+    ],
+    "thumb_02_r": [
+      -0.76575,
+      1.49721,
+      0.13202
+    ],
+    "thumb_03_r": [
+      -0.79566,
+      1.48041,
+      0.14751
+    ],
+    "index_01_r": [
+      -0.79713,
+      1.53278,
+      0.08655
+    ],
+    "index_02_r": [
+      -0.85379,
+      1.53278,
+      0.08655
+    ],
+    "index_03_r": [
+      -0.89163,
+      1.53278,
+      0.08655
+    ],
+    "middle_01_r": [
+      -0.79995,
+      1.53317,
+      0.0577
+    ],
+    "middle_02_r": [
+      -0.8509,
+      1.53317,
+      0.05529
+    ],
+    "middle_03_r": [
+      -0.89033,
+      1.53317,
+      0.05354
+    ],
+    "ring_01_r": [
+      -0.79847,
+      1.53323,
+      0.03278
+    ],
+    "ring_02_r": [
+      -0.84992,
+      1.53323,
+      0.03095
+    ],
+    "ring_03_r": [
+      -0.88966,
+      1.53323,
+      0.02954
+    ],
+    "pinky_01_r": [
+      -0.79437,
+      1.53027,
+      0.0082
+    ],
+    "pinky_02_r": [
+      -0.85072,
+      1.53027,
+      0.00441
+    ],
+    "pinky_03_r": [
+      -0.88798,
+      1.53027,
+      0.00185
+    ],
+    "thigh_l": [
+      0.09428,
+      1.08352,
+      -0.02078
+    ],
+    "calf_l": [
+      0.09428,
+      0.62691,
+      -0.02397
+    ],
+    "foot_l": [
+      0.09428,
+      0.16019,
+      -0.06148
+    ],
+    "ball_l": [
+      0.09428,
+      0.06867,
+      0.09262
+    ],
+    "thigh_r": [
+      -0.09428,
+      1.08352,
+      -0.02078
+    ],
+    "calf_r": [
+      -0.09428,
+      0.62691,
+      -0.02397
+    ],
+    "foot_r": [
+      -0.09428,
+      0.16019,
+      -0.06147
+    ],
+    "ball_r": [
+      -0.09428,
+      0.06867,
+      0.09262
+    ]
+  },
+  "heldSockets": {
+    "hand_r": {
+      "bone": "hand_r",
+      "palmOffset": [
+        -0.0399,
+        0.09,
+        0.0053
+      ],
+      "rotationEuler": [
+        -1.5708,
+        0,
+        -3.1102
+      ]
+    },
+    "hand_l": {
+      "bone": "hand_l",
+      "palmOffset": [
+        0.0399,
+        0.09,
+        0.0053
+      ],
+      "rotationEuler": [
+        -1.5708,
+        0,
+        3.1102
+      ]
+    }
+  },
+  "clips": [
+    {
+      "name": "A_TPose",
+      "duration": 2.5
+    },
+    {
+      "name": "Crouch_Fwd_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "Crouch_Idle_Loop",
+      "duration": 2.9333
+    },
+    {
+      "name": "Dance_Loop",
+      "duration": 1.0
+    },
+    {
+      "name": "Death01",
+      "duration": 2.4
+    },
+    {
+      "name": "Driving_Loop",
+      "duration": 1.6667
+    },
+    {
+      "name": "Fixing_Kneeling",
+      "duration": 5.2
+    },
+    {
+      "name": "Hit_Chest",
+      "duration": 0.3333
+    },
+    {
+      "name": "Hit_Head",
+      "duration": 0.4333
+    },
+    {
+      "name": "Idle_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Staff_Idle_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Talking_Loop",
+      "duration": 2.9333
+    },
+    {
+      "name": "Idle_Torch_Loop",
+      "duration": 1.2667
+    },
+    {
+      "name": "Interact",
+      "duration": 2.0
+    },
+    {
+      "name": "Jog_Fwd_Loop",
+      "duration": 0.9333
+    },
+    {
+      "name": "Jump_Land",
+      "duration": 1.2667
+    },
+    {
+      "name": "Jump_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Jump_Start",
+      "duration": 1.3333
+    },
+    {
+      "name": "PickUp_Table",
+      "duration": 0.8333
+    },
+    {
+      "name": "Pistol_Aim_Down",
+      "duration": 0.1667
+    },
+    {
+      "name": "Pistol_Aim_Neutral",
+      "duration": 0.1667
+    },
+    {
+      "name": "Pistol_Aim_Up",
+      "duration": 0.1667
+    },
+    {
+      "name": "Pistol_Idle_Loop",
+      "duration": 1.6667
+    },
+    {
+      "name": "Pistol_Reload",
+      "duration": 1.6667
+    },
+    {
+      "name": "Pistol_Shoot",
+      "duration": 0.6333
+    },
+    {
+      "name": "Punch_Cross",
+      "duration": 1.0
+    },
+    {
+      "name": "Punch_Jab",
+      "duration": 0.8667
+    },
+    {
+      "name": "Push_Loop",
+      "duration": 2.6667
+    },
+    {
+      "name": "Roll",
+      "duration": 1.4667
+    },
+    {
+      "name": "Sitting_Enter",
+      "duration": 1.3
+    },
+    {
+      "name": "Sitting_Exit",
+      "duration": 1.0333
+    },
+    {
+      "name": "Sitting_Idle_Loop",
+      "duration": 1.6667
+    },
+    {
+      "name": "Sitting_Talking_Loop",
+      "duration": 2.9333
+    },
+    {
+      "name": "Spell_Simple_Enter",
+      "duration": 0.5333
+    },
+    {
+      "name": "Spell_Simple_Exit",
+      "duration": 0.4333
+    },
+    {
+      "name": "Spell_Simple_Idle_Loop",
+      "duration": 2.1
+    },
+    {
+      "name": "Spell_Simple_Shoot",
+      "duration": 0.5
+    },
+    {
+      "name": "Sprint_Loop",
+      "duration": 0.6667
+    },
+    {
+      "name": "Swim_Fwd_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Swim_Idle_Loop",
+      "duration": 3.3333
+    },
+    {
+      "name": "Sword_Attack",
+      "duration": 1.5333
+    },
+    {
+      "name": "Sword_Idle",
+      "duration": 1.6667
+    },
+    {
+      "name": "Walk_Formal_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Walk_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Chest_Open",
+      "duration": 1.3667
+    },
+    {
+      "name": "ClimbUp_1m",
+      "duration": 0.6667
+    },
+    {
+      "name": "Consume",
+      "duration": 1.3333
+    },
+    {
+      "name": "Farm_Harvest",
+      "duration": 2.5
+    },
+    {
+      "name": "Farm_PlantSeed",
+      "duration": 2.7667
+    },
+    {
+      "name": "Farm_Watering",
+      "duration": 3.8
+    },
+    {
+      "name": "Hit_Knockback",
+      "duration": 0.8333
+    },
+    {
+      "name": "Idle_FoldArms_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Lantern_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_No_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Rail_Call",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Rail_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_Shield_Break",
+      "duration": 1.0667
+    },
+    {
+      "name": "Idle_Shield_Loop",
+      "duration": 2.5
+    },
+    {
+      "name": "Idle_TalkingPhone_Loop",
+      "duration": 2.9333
+    },
+    {
+      "name": "LayToIdle",
+      "duration": 1.5333
+    },
+    {
+      "name": "Melee_Hook",
+      "duration": 0.4667
+    },
+    {
+      "name": "Melee_Hook_Rec",
+      "duration": 0.6
+    },
+    {
+      "name": "NinjaJump_Idle_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "NinjaJump_Land",
+      "duration": 1.2667
+    },
+    {
+      "name": "NinjaJump_Start",
+      "duration": 0.9667
+    },
+    {
+      "name": "OverhandThrow",
+      "duration": 1.3333
+    },
+    {
+      "name": "Shield_Dash",
+      "duration": 1.1
+    },
+    {
+      "name": "Shield_OneShot",
+      "duration": 0.8333
+    },
+    {
+      "name": "Slide_Exit",
+      "duration": 0.5
+    },
+    {
+      "name": "Slide_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "Slide_Start",
+      "duration": 0.8333
+    },
+    {
+      "name": "Sword_Block",
+      "duration": 1.2333
+    },
+    {
+      "name": "Sword_Dash",
+      "duration": 1.5667
+    },
+    {
+      "name": "Sword_Heavy_Combo",
+      "duration": 4.3333
+    },
+    {
+      "name": "Sword_Regular_A",
+      "duration": 0.4333
+    },
+    {
+      "name": "Sword_Regular_A_Rec",
+      "duration": 0.9667
+    },
+    {
+      "name": "Sword_Regular_B",
+      "duration": 0.5333
+    },
+    {
+      "name": "Sword_Regular_B_Rec",
+      "duration": 1.0333
+    },
+    {
+      "name": "Sword_Regular_C",
+      "duration": 2.0
+    },
+    {
+      "name": "Sword_Regular_Combo",
+      "duration": 3.0
+    },
+    {
+      "name": "TreeChopping_Loop",
+      "duration": 0.9667
+    },
+    {
+      "name": "Walk_Carry_Loop",
+      "duration": 2.0
+    },
+    {
+      "name": "Yes",
+      "duration": 2.5
+    },
+    {
+      "name": "Zombie_Idle_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Zombie_Scratch",
+      "duration": 1.8
+    },
+    {
+      "name": "Zombie_Walk_Fwd_Loop",
+      "duration": 1.3333
+    },
+    {
+      "name": "Melee_2H_Attack_Chop",
+      "duration": 1.6333
+    },
+    {
+      "name": "Melee_2H_Attack_Slice",
+      "duration": 1.1
+    },
+    {
+      "name": "Melee_2H_Attack_Spin",
+      "duration": 2.4
+    },
+    {
+      "name": "Melee_2H_Attack_Spinning",
+      "duration": 0.6667
+    },
+    {
+      "name": "Melee_2H_Attack_Stab",
+      "duration": 1.6
+    },
+    {
+      "name": "Melee_2H_Idle",
+      "duration": 1.0667
+    },
+    {
+      "name": "Ranged_2H_Aiming",
+      "duration": 1.6
+    },
+    {
+      "name": "Ranged_2H_Reload",
+      "duration": 1.6
+    },
+    {
+      "name": "Ranged_2H_Shoot",
+      "duration": 1.0667
+    },
+    {
+      "name": "Ranged_2H_Shooting",
+      "duration": 1.0667
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+.env
+game.config.*.json
+.rundot/
+rundot/docs/
+.rundot-docs/

@@ -1,0 +1,462 @@
+{
+  "version": 1,
+  "rigId": "m2m-horse-56",
+  "source": "M2M Horse Rig (CC0-1.0)",
+  "jointCount": 56,
+  "joints": [
+    "root",
+    "hips",
+    "spine_1",
+    "spine_2",
+    "spine_3",
+    "ribcage_middle",
+    "ribcage_leaf",
+    "spine_4",
+    "spine_5",
+    "spine_6",
+    "head",
+    "ear_1_r",
+    "ear_2_r",
+    "ear_leaf_r",
+    "ear_1_l",
+    "ear_2_l",
+    "ear_leaf_l",
+    "nose",
+    "head_leaf",
+    "mouth",
+    "mouth_tip",
+    "front_scapula_l",
+    "front_humerus_l",
+    "front_leg_upper_l",
+    "front_leg_lower_l",
+    "front_leg_ankle_l",
+    "front_leg_foot_l",
+    "front_leg_leaf_l",
+    "front_scapula_r",
+    "front_humerus_r",
+    "front_leg_upper_r",
+    "front_leg_lower_r",
+    "front_leg_ankle_r",
+    "front_leg_foot_r",
+    "front_leg_leaf_r",
+    "ribcage_front",
+    "ribcage_front_leaf",
+    "tail_1",
+    "tail_2",
+    "tail_3",
+    "tail_4",
+    "tail_leaf",
+    "back_leg_pelvis_l",
+    "back_leg_upper_l",
+    "back_leg_lower_l",
+    "back_leg_ankle_l",
+    "back_leg_foot_l",
+    "back_leg_toe_l",
+    "back_leg_leaf_l",
+    "back_leg_pelvis_r",
+    "back_leg_upper_r",
+    "back_leg_lower_r",
+    "back_leg_ankle_r",
+    "back_leg_foot_r",
+    "back_leg_toe_r",
+    "back_leg_leaf_r"
+  ],
+  "parents": {
+    "root": null,
+    "hips": "root",
+    "spine_1": "hips",
+    "spine_2": "spine_1",
+    "spine_3": "spine_2",
+    "ribcage_middle": "spine_3",
+    "ribcage_leaf": "ribcage_middle",
+    "spine_4": "spine_3",
+    "spine_5": "spine_4",
+    "spine_6": "spine_5",
+    "head": "spine_6",
+    "ear_1_r": "head",
+    "ear_2_r": "ear_1_r",
+    "ear_leaf_r": "ear_2_r",
+    "ear_1_l": "head",
+    "ear_2_l": "ear_1_l",
+    "ear_leaf_l": "ear_2_l",
+    "nose": "head",
+    "head_leaf": "nose",
+    "mouth": "nose",
+    "mouth_tip": "mouth",
+    "front_scapula_l": "spine_4",
+    "front_humerus_l": "front_scapula_l",
+    "front_leg_upper_l": "front_humerus_l",
+    "front_leg_lower_l": "front_leg_upper_l",
+    "front_leg_ankle_l": "front_leg_lower_l",
+    "front_leg_foot_l": "front_leg_ankle_l",
+    "front_leg_leaf_l": "front_leg_foot_l",
+    "front_scapula_r": "spine_4",
+    "front_humerus_r": "front_scapula_r",
+    "front_leg_upper_r": "front_humerus_r",
+    "front_leg_lower_r": "front_leg_upper_r",
+    "front_leg_ankle_r": "front_leg_lower_r",
+    "front_leg_foot_r": "front_leg_ankle_r",
+    "front_leg_leaf_r": "front_leg_foot_r",
+    "ribcage_front": "spine_4",
+    "ribcage_front_leaf": "ribcage_front",
+    "tail_1": "hips",
+    "tail_2": "tail_1",
+    "tail_3": "tail_2",
+    "tail_4": "tail_3",
+    "tail_leaf": "tail_4",
+    "back_leg_pelvis_l": "hips",
+    "back_leg_upper_l": "back_leg_pelvis_l",
+    "back_leg_lower_l": "back_leg_upper_l",
+    "back_leg_ankle_l": "back_leg_lower_l",
+    "back_leg_foot_l": "back_leg_ankle_l",
+    "back_leg_toe_l": "back_leg_foot_l",
+    "back_leg_leaf_l": "back_leg_toe_l",
+    "back_leg_pelvis_r": "hips",
+    "back_leg_upper_r": "back_leg_pelvis_r",
+    "back_leg_lower_r": "back_leg_upper_r",
+    "back_leg_ankle_r": "back_leg_lower_r",
+    "back_leg_foot_r": "back_leg_ankle_r",
+    "back_leg_toe_r": "back_leg_foot_r",
+    "back_leg_leaf_r": "back_leg_toe_r"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.00016,
+      -0.00232
+    ],
+    "hips": [
+      -0.0,
+      1.30545,
+      -0.47317
+    ],
+    "spine_1": [
+      -0.0,
+      1.29068,
+      -0.25965
+    ],
+    "spine_2": [
+      0.0,
+      1.28491,
+      -0.00699
+    ],
+    "spine_3": [
+      0.0,
+      1.31198,
+      0.30747
+    ],
+    "ribcage_middle": [
+      -0.0,
+      1.08946,
+      0.27355
+    ],
+    "ribcage_leaf": [
+      -0.0,
+      0.87654,
+      0.26181
+    ],
+    "spine_4": [
+      0.0,
+      1.38565,
+      0.53361
+    ],
+    "spine_5": [
+      0.0,
+      1.50524,
+      0.74199
+    ],
+    "spine_6": [
+      0.0,
+      1.64347,
+      0.90318
+    ],
+    "head": [
+      0.0,
+      1.7564,
+      1.11287
+    ],
+    "ear_1_r": [
+      -0.07707,
+      1.89878,
+      1.19765
+    ],
+    "ear_2_r": [
+      -0.08544,
+      1.95225,
+      1.23191
+    ],
+    "ear_leaf_r": [
+      -0.09381,
+      2.00572,
+      1.26617
+    ],
+    "ear_1_l": [
+      0.07707,
+      1.89878,
+      1.19765
+    ],
+    "ear_2_l": [
+      0.08544,
+      1.95225,
+      1.23191
+    ],
+    "ear_leaf_l": [
+      0.09381,
+      2.00572,
+      1.26617
+    ],
+    "nose": [
+      0.0,
+      1.52456,
+      1.40343
+    ],
+    "head_leaf": [
+      0.0,
+      1.44575,
+      1.49881
+    ],
+    "mouth": [
+      -0.0,
+      1.47569,
+      1.37036
+    ],
+    "mouth_tip": [
+      -0.0,
+      1.41545,
+      1.38154
+    ],
+    "front_scapula_l": [
+      0.10532,
+      1.45078,
+      0.47773
+    ],
+    "front_humerus_l": [
+      0.18706,
+      1.10331,
+      0.77887
+    ],
+    "front_leg_upper_l": [
+      0.19819,
+      0.93624,
+      0.62465
+    ],
+    "front_leg_lower_l": [
+      0.14929,
+      0.51868,
+      0.60178
+    ],
+    "front_leg_ankle_l": [
+      0.14845,
+      0.22125,
+      0.55679
+    ],
+    "front_leg_foot_l": [
+      0.15047,
+      0.09508,
+      0.59909
+    ],
+    "front_leg_leaf_l": [
+      0.15047,
+      0.02447,
+      0.62237
+    ],
+    "front_scapula_r": [
+      -0.10532,
+      1.45078,
+      0.47773
+    ],
+    "front_humerus_r": [
+      -0.18706,
+      1.10331,
+      0.77887
+    ],
+    "front_leg_upper_r": [
+      -0.19819,
+      0.93624,
+      0.62465
+    ],
+    "front_leg_lower_r": [
+      -0.14929,
+      0.51868,
+      0.60178
+    ],
+    "front_leg_ankle_r": [
+      -0.14845,
+      0.22125,
+      0.5568
+    ],
+    "front_leg_foot_r": [
+      -0.15047,
+      0.09508,
+      0.59909
+    ],
+    "front_leg_leaf_r": [
+      -0.15047,
+      0.02447,
+      0.62237
+    ],
+    "ribcage_front": [
+      -0.0,
+      1.1073,
+      0.79086
+    ],
+    "ribcage_front_leaf": [
+      -0.0,
+      1.0406,
+      0.86932
+    ],
+    "tail_1": [
+      -0.0,
+      1.37928,
+      -0.63672
+    ],
+    "tail_2": [
+      -0.0,
+      1.38352,
+      -0.93342
+    ],
+    "tail_3": [
+      -0.0,
+      1.38327,
+      -1.24215
+    ],
+    "tail_4": [
+      -0.0,
+      1.39002,
+      -1.56455
+    ],
+    "tail_leaf": [
+      -0.0,
+      1.39059,
+      -1.78773
+    ],
+    "back_leg_pelvis_l": [
+      0.09239,
+      1.34602,
+      -0.34986
+    ],
+    "back_leg_upper_l": [
+      0.20058,
+      1.12966,
+      -0.55629
+    ],
+    "back_leg_lower_l": [
+      0.20062,
+      0.92474,
+      -0.49057
+    ],
+    "back_leg_ankle_l": [
+      0.20054,
+      0.52672,
+      -0.72892
+    ],
+    "back_leg_foot_l": [
+      0.20051,
+      0.15781,
+      -0.76605
+    ],
+    "back_leg_toe_l": [
+      0.20044,
+      0.07571,
+      -0.74251
+    ],
+    "back_leg_leaf_l": [
+      0.20044,
+      0.01066,
+      -0.75327
+    ],
+    "back_leg_pelvis_r": [
+      -0.09239,
+      1.34602,
+      -0.34986
+    ],
+    "back_leg_upper_r": [
+      -0.20058,
+      1.12966,
+      -0.55629
+    ],
+    "back_leg_lower_r": [
+      -0.20062,
+      0.92474,
+      -0.49057
+    ],
+    "back_leg_ankle_r": [
+      -0.20054,
+      0.52672,
+      -0.72892
+    ],
+    "back_leg_foot_r": [
+      -0.20051,
+      0.15781,
+      -0.76605
+    ],
+    "back_leg_toe_r": [
+      -0.20044,
+      0.07571,
+      -0.74252
+    ],
+    "back_leg_leaf_r": [
+      -0.20044,
+      0.01066,
+      -0.75327
+    ]
+  },
+  "clips": [
+    {
+      "name": "Death",
+      "duration": 1.4
+    },
+    {
+      "name": "Eating",
+      "duration": 2.6667
+    },
+    {
+      "name": "Head_But",
+      "duration": 1.0
+    },
+    {
+      "name": "Idle",
+      "duration": 2.6667
+    },
+    {
+      "name": "Kick",
+      "duration": 1.3
+    },
+    {
+      "name": "lay_to_idle",
+      "duration": 2.6667
+    },
+    {
+      "name": "Rear",
+      "duration": 2.9333
+    },
+    {
+      "name": "Rest_Pose",
+      "duration": 0.1667
+    },
+    {
+      "name": "Run",
+      "duration": 0.4333
+    },
+    {
+      "name": "Sleep",
+      "duration": 2.0
+    },
+    {
+      "name": "Trot",
+      "duration": 0.7
+    },
+    {
+      "name": "Turn_Left",
+      "duration": 4.6667
+    },
+    {
+      "name": "Turn_Right",
+      "duration": 4.6667
+    },
+    {
+      "name": "Walk",
+      "duration": 0.9667
+    }
+  ]
+}
