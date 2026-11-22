@@ -1,0 +1,991 @@
+{
+  "version": 1,
+  "shade": {
+    "uvMin": 0.15,
+    "uvMax": 0.85,
+    "dark": 0.56,
+    "bright": 1.16
+  },
+  "overview": {
+    "glow": "#293447",
+    "backdrop": "#101620",
+    "accent": "#9fb5cf",
+    "ground": [
+      "#45444a",
+      "#262733",
+      "#16171e"
+    ],
+    "key": "#fff1d9",
+    "fill": "#e7f2ff",
+    "rim": "#c6d7ef"
+  },
+  "packs": {
+    "medieval": {
+      "brief": {
+        "relationship": "Warm timber, leather and heraldry against cool stone, water and steel.",
+        "field": "Slate-green earth and dark canal water frame weathered limestone and timber.",
+        "support": "Saddle brown and dark iron separate gates, wheels, beams and armor joints.",
+        "focus": "Use a small brass highlight or one heraldic red or blue at the crossing.",
+        "characters": "Use cloth and heraldry for allegiance. Keep faces and steel edges visible against the gate.",
+        "avoid": "A full town of crimson roofs or equally bright banners.",
+        "review": "Follow the crossing past the open gate. Keep the guard, traveler and wagon distinct from the stone and ground."
+      },
+      "avatar": {
+        "skin": "#d8a67e",
+        "hair": "#4a2e1f",
+        "primary": "#9e332d",
+        "secondary": "#593e29",
+        "accent": "#d49d3b",
+        "metal": "#8a94a0",
+        "eye": "#2e5d8c"
+      },
+      "props": {
+        "default": {
+          "skin": "#a39c8c",
+          "hair": "#5b7a3a",
+          "primary": "#80562f",
+          "secondary": "#4e3524",
+          "accent": "#9e332d",
+          "metal": "#8a94a0",
+          "eye": "#1f2634"
+        },
+        "overrides": {
+          "prop_moat_water_tile": {
+            "skin": "#88877a",
+            "eye": "#4c6561"
+          },
+          "prop_castle_keep_tower": {
+            "skin": "#a9a69a",
+            "primary": "#705644",
+            "secondary": "#4e4336",
+            "accent": "#657b87",
+            "metal": "#8397a0"
+          },
+          "prop_cobble_road_tile": {
+            "skin": "#8e887a",
+            "secondary": "#746e63"
+          },
+          "prop_tavern_inn": {
+            "skin": "#d9bb92",
+            "primary": "#744d38",
+            "accent": "#8e4837"
+          },
+          "prop_thatched_cottage": {
+            "skin": "#c6b183",
+            "primary": "#805b3b",
+            "accent": "#a87843"
+          },
+          "prop_wooden_bridge": {
+            "primary": "#8f684d",
+            "secondary": "#583b2f",
+            "metal": "#747c79"
+          },
+          "prop_market_cloth_booth": {
+            "skin": "#a49883",
+            "primary": "#74624f",
+            "secondary": "#493b2f",
+            "accent": "#86574d"
+          },
+          "prop_market_bread_table": {
+            "skin": "#b09267",
+            "primary": "#8b694e",
+            "secondary": "#614834"
+          },
+          "prop_market_apple_bin": {
+            "hair": "#7a8f50",
+            "primary": "#896043",
+            "secondary": "#67513c",
+            "accent": "#b05043"
+          },
+          "prop_quay_crane": {
+            "primary": "#8c6549",
+            "secondary": "#4e3d30",
+            "metal": "#78817c"
+          },
+          "prop_castle_herald": {
+            "skin": "#b59e79",
+            "accent": "#4d657c",
+            "metal": "#85928d",
+            "primary": "#806955"
+          },
+          "prop_tree_oak": {
+            "hair": "#6b7452",
+            "skin": "#8b826c",
+            "primary": "#666e52",
+            "secondary": "#534939"
+          },
+          "prop_pine_tree": {
+            "hair": "#627263",
+            "primary": "#626d58",
+            "secondary": "#54473b"
+          }
+        }
+      },
+      "stage": {
+        "look": {
+          "glow": "#606966",
+          "backdrop": "#202923",
+          "accent": "#ebc683",
+          "ground": [
+            "#737566",
+            "#616254",
+            "#434641"
+          ],
+          "key": "#ffddad",
+          "fill": "#e2edf5",
+          "rim": "#fff1c5"
+        },
+        "groups": {
+          "floor": {
+            "skin": "#8b846f",
+            "hair": "#6e794d",
+            "primary": "#75654e",
+            "secondary": "#555748",
+            "accent": "#818c63",
+            "metal": "#8b9a92"
+          },
+          "structure": {
+            "skin": "#b5ab94",
+            "primary": "#865c3d",
+            "secondary": "#533c30",
+            "accent": "#a54e3d",
+            "metal": "#626d70"
+          },
+          "life": {
+            "skin": "#999d7a",
+            "hair": "#829253",
+            "primary": "#5c682f",
+            "secondary": "#695036",
+            "accent": "#a0a157"
+          }
+        },
+        "practicals": [],
+        "environment": {
+          "groundPatch": "#666b58",
+          "fog": [
+            12,
+            32
+          ],
+          "backdropTint": 0.22
+        }
+      }
+    },
+    "ww2": {
+      "brief": {
+        "relationship": "Low-chroma olive, khaki and grey with isolated warm markings.",
+        "field": "Grey dust and muted chalk carry the ground. Steel blue-grey separates structures from olive vehicles.",
+        "support": "Dark rubber, grey steel and worn timber separate vehicle parts and structures.",
+        "focus": "Use cream and muted red on the stop point. Keep brass and unit marks small.",
+        "characters": "Change cloth value between figures and the vehicle. Repeat one muted unit color.",
+        "avoid": "Clean high-chroma equipment, bright red walls or insignia that dominate the scene.",
+        "review": "Read the dispatch between the officer and driver. Keep the barrier visible and show the road behind the truck."
+      },
+      "avatar": {
+        "skin": "#d8a67e",
+        "hair": "#25262b",
+        "primary": "#566045",
+        "secondary": "#8a7c5a",
+        "accent": "#b8503c",
+        "metal": "#454c52",
+        "eye": "#1f2634"
+      },
+      "props": {
+        "default": {
+          "skin": "#b3a47c",
+          "hair": "#55683c",
+          "primary": "#566045",
+          "secondary": "#6b573a",
+          "accent": "#d4a24c",
+          "metal": "#454c52",
+          "eye": "#1f2634"
+        },
+        "overrides": {
+          "prop_supply_truck": {
+            "skin": "#b1aa87",
+            "primary": "#626e57",
+            "secondary": "#4d4d42",
+            "metal": "#444d4d",
+            "eye": "#364e57"
+          },
+          "prop_watchtower": {
+            "primary": "#68674e",
+            "secondary": "#554b3b",
+            "accent": "#9f8553",
+            "skin": "#a8a38a"
+          },
+          "prop_barrier_arm": {
+            "accent": "#ba5444",
+            "skin": "#d6c8a9",
+            "primary": "#556169"
+          },
+          "prop_guardhouse_booth": {
+            "primary": "#677a7c",
+            "secondary": "#46555b",
+            "skin": "#a39d8c",
+            "accent": "#937e65",
+            "eye": "#4b6570"
+          },
+          "prop_dirt_road_straight": {
+            "hair": "#757467",
+            "skin": "#948c7d",
+            "primary": "#898073",
+            "secondary": "#726b60"
+          },
+          "prop_village_station": {
+            "skin": "#b0a493",
+            "primary": "#6e7779",
+            "secondary": "#58514b",
+            "accent": "#88755e",
+            "eye": "#41545b"
+          },
+          "prop_orchard_farmhouse": {
+            "skin": "#bda884",
+            "primary": "#855c4d",
+            "secondary": "#685747",
+            "metal": "#75817a",
+            "eye": "#535d59"
+          },
+          "prop_checkpoint_board": {
+            "skin": "#d6c7a2",
+            "primary": "#64674e",
+            "secondary": "#4f5147",
+            "accent": "#9e5141",
+            "metal": "#6e6757"
+          },
+          "prop_field_tent": {
+            "primary": "#727268",
+            "secondary": "#535950",
+            "skin": "#8b8676",
+            "accent": "#82786a"
+          },
+          "prop_dirt_road_corner": {
+            "hair": "#757467",
+            "skin": "#948c7d",
+            "primary": "#898073",
+            "secondary": "#726b60"
+          },
+          "prop_dirt_road_crossroad": {
+            "hair": "#757467",
+            "skin": "#948c7d",
+            "primary": "#898073",
+            "secondary": "#726b60"
+          },
+          "prop_crater_ground_tile": {
+            "hair": "#757467",
+            "skin": "#948c7d",
+            "primary": "#898073",
+            "secondary": "#726b60"
+          }
+        }
+      },
+      "stage": {
+        "look": {
+          "glow": "#5e676a",
+          "backdrop": "#222a2b",
+          "accent": "#d9c28e",
+          "ground": [
+            "#777369",
+            "#635d53",
+            "#474843"
+          ],
+          "key": "#ffe5c1",
+          "fill": "#e0ecf2",
+          "rim": "#dcebe7"
+        },
+        "groups": {
+          "floor": {
+            "skin": "#8c7a61",
+            "hair": "#73765a",
+            "primary": "#6f583f",
+            "secondary": "#65513e",
+            "accent": "#887553",
+            "metal": "#726c59"
+          },
+          "structure": {
+            "skin": "#a39c83",
+            "primary": "#6a7053",
+            "secondary": "#514635",
+            "metal": "#5e6260"
+          },
+          "life": {
+            "skin": "#988569",
+            "hair": "#6e7355",
+            "primary": "#685b49",
+            "secondary": "#473f36"
+          }
+        },
+        "practicals": [],
+        "environment": {
+          "groundPatch": "#6c6e61",
+          "fog": [
+            12,
+            33
+          ],
+          "backdropTint": 0.34
+        }
+      }
+    },
+    "sim": {
+      "brief": {
+        "relationship": "Warm cream and terracotta balance denim blue and garden green.",
+        "field": "Use slate asphalt and warm mineral concrete for the open street. Keep shop walls neutral.",
+        "support": "Denim blue, terracotta and foliage separate facades, furniture and planting.",
+        "focus": "Use coral for one painted panel or garment. Reserve mint for small secondary details.",
+        "characters": "Use one vivid garment block against a neutral second block. Compare it with the adjacent facade.",
+        "avoid": "A different vivid hue on every storefront or street object.",
+        "review": "Follow the crossing from the curb to the café. Keep both people clear of the bus and the shop window."
+      },
+      "avatar": {
+        "skin": "#bc7751",
+        "hair": "#32273d",
+        "primary": "#fb6655",
+        "secondary": "#3348a1",
+        "accent": "#73e5be",
+        "metal": "#a3bfca",
+        "eye": "#426757"
+      },
+      "props": {
+        "default": {
+          "skin": "#c9c4b8",
+          "hair": "#4ca168",
+          "primary": "#c49164",
+          "secondary": "#56473c",
+          "accent": "#3348a1",
+          "metal": "#8da6b2",
+          "eye": "#426757"
+        },
+        "overrides": {
+          "prop_corner_bistro": {
+            "skin": "#c7b9a6",
+            "hair": "#778b65",
+            "primary": "#a47966",
+            "secondary": "#315b5b",
+            "accent": "#557b73",
+            "metal": "#899c9b",
+            "eye": "#395f67"
+          },
+          "prop_apartment_block": {
+            "skin": "#d8bb9b",
+            "primary": "#9f5844",
+            "secondary": "#3f626a",
+            "accent": "#d4a46c",
+            "eye": "#577476"
+          },
+          "prop_city_bus": {
+            "skin": "#d7d2b9",
+            "primary": "#b27442",
+            "secondary": "#394951",
+            "accent": "#6e8d88",
+            "metal": "#a9b5b0",
+            "eye": "#385b68"
+          },
+          "prop_bus_stop": {
+            "skin": "#b2b7aa",
+            "primary": "#567378",
+            "secondary": "#38494e",
+            "accent": "#bb814f",
+            "eye": "#59888b"
+          },
+          "prop_cafe_chair": {
+            "primary": "#a95b43",
+            "secondary": "#424f4e",
+            "metal": "#98aaa7"
+          },
+          "prop_market_bakery": {
+            "skin": "#c0b7a8",
+            "primary": "#988477",
+            "secondary": "#655a53",
+            "accent": "#668479",
+            "metal": "#929d97",
+            "eye": "#456d6d"
+          },
+          "prop_row_flat": {
+            "skin": "#b9ab9c",
+            "primary": "#9d8d80",
+            "secondary": "#59636b",
+            "accent": "#768982",
+            "metal": "#9fa7a0",
+            "eye": "#446478"
+          },
+          "prop_flower_stall": {
+            "skin": "#d7bb95",
+            "hair": "#629364",
+            "primary": "#5b8173",
+            "secondary": "#423f3d",
+            "accent": "#bc596b",
+            "eye": "#d7a55c"
+          },
+          "prop_parasol_table": {
+            "skin": "#c3b39a",
+            "primary": "#a5846f",
+            "secondary": "#5f5151",
+            "accent": "#9b5148",
+            "metal": "#638078",
+            "eye": "#a77a63"
+          },
+          "prop_road_straight": {
+            "skin": "#969589",
+            "secondary": "#565e62",
+            "metal": "#79807e"
+          },
+          "prop_road_crosswalk": {
+            "skin": "#a6a69b",
+            "secondary": "#565e62",
+            "metal": "#79807e"
+          },
+          "prop_sidewalk_tile": {
+            "skin": "#979a92",
+            "primary": "#91938b",
+            "secondary": "#818783",
+            "metal": "#828987"
+          },
+          "prop_road_corner": {
+            "skin": "#969589",
+            "secondary": "#565e62",
+            "metal": "#79807e"
+          },
+          "prop_road_tsplit": {
+            "skin": "#969589",
+            "secondary": "#565e62",
+            "metal": "#79807e"
+          },
+          "prop_road_junction": {
+            "skin": "#969589",
+            "secondary": "#565e62",
+            "metal": "#79807e"
+          },
+          "prop_sidewalk_corner": {
+            "skin": "#979a92",
+            "primary": "#91938b",
+            "secondary": "#818783",
+            "metal": "#828987",
+            "accent": "#9c9687"
+          }
+        }
+      },
+      "stage": {
+        "look": {
+          "glow": "#657982",
+          "backdrop": "#223b46",
+          "accent": "#b6e7d2",
+          "ground": [
+            "#82837d",
+            "#6c7169",
+            "#515854"
+          ],
+          "key": "#fff0d9",
+          "fill": "#daefff",
+          "rim": "#f5ffeb"
+        },
+        "groups": {
+          "floor": {
+            "skin": "#b9b9ad",
+            "hair": "#849766",
+            "primary": "#5c666f",
+            "secondary": "#747978",
+            "accent": "#d5bf95",
+            "metal": "#8c9698"
+          },
+          "structure": {
+            "skin": "#e0cab1",
+            "primary": "#b97d65",
+            "secondary": "#4c646c",
+            "accent": "#36796e",
+            "metal": "#788d98"
+          },
+          "life": {
+            "skin": "#b3a189",
+            "hair": "#578856",
+            "primary": "#729d59",
+            "secondary": "#725444",
+            "accent": "#d69d62"
+          }
+        },
+        "practicals": [],
+        "environment": {
+          "groundPatch": "#747d70",
+          "fog": [
+            12,
+            34
+          ],
+          "backdropTint": 0.32
+        }
+      }
+    },
+    "cyberpunk": {
+      "brief": {
+        "relationship": "Cool blue-green structure with warm amber service light and small mint signals.",
+        "field": "Use graphite and blue-grey paving. Keep broad seam and drain contrast low.",
+        "support": "Use cool slate and faded blue on adjacent surfaces. Keep rust-orange trim narrow.",
+        "focus": "Place amber light on the service counter. Use mint for small guide marks and glass.",
+        "characters": "Use a cool customer and warm vendor. Keep hands and bowls distinct against the counter.",
+        "avoid": "Full-bright neon on large walls or an equally bright light at every shop.",
+        "review": "Read the food exchange at 300 px. Keep the arcade separate from the counter and both gates visible at 390 px."
+      },
+      "avatar": {
+        "skin": "#744535",
+        "hair": "#f64c87",
+        "primary": "#5845bd",
+        "secondary": "#b9cfe2",
+        "accent": "#40f5ce",
+        "metal": "#889dca",
+        "eye": "#40f5ce"
+      },
+      "props": {
+        "default": {
+          "skin": "#747e96",
+          "hair": "#3b6f84",
+          "primary": "#495272",
+          "secondary": "#30344e",
+          "accent": "#329b8e",
+          "metal": "#889dca",
+          "eye": "#40f5ce"
+        },
+        "overrides": {
+          "prop_cyber_apartment": {
+            "skin": "#eac891",
+            "hair": "#513842",
+            "secondary": "#263340",
+            "eye": "#8ed6bb",
+            "primary": "#3d5d64",
+            "accent": "#ce7544",
+            "metal": "#87958d"
+          },
+          "prop_neon_archway": {
+            "skin": "#6d637b",
+            "primary": "#504865",
+            "secondary": "#3d3b5a",
+            "accent": "#cb679b",
+            "metal": "#7c7295",
+            "eye": "#f5ad66"
+          },
+          "prop_holo_billboard": {
+            "skin": "#64576b",
+            "primary": "#5f4f6f",
+            "secondary": "#35314b",
+            "accent": "#c55e91",
+            "metal": "#6e7998",
+            "eye": "#59f6d1"
+          },
+          "prop_cyber_bike": {
+            "skin": "#73778e",
+            "primary": "#6769aa",
+            "secondary": "#383147",
+            "accent": "#e3a85b",
+            "metal": "#80939d",
+            "eye": "#4dd0c0"
+          },
+          "prop_metal_grate_tile": {
+            "skin": "#706854",
+            "hair": "#57584b",
+            "primary": "#4c5050",
+            "secondary": "#383f40",
+            "accent": "#797a62",
+            "metal": "#686e68",
+            "eye": "#5c746e"
+          },
+          "prop_lantern_noodle_bar": {
+            "skin": "#eac891",
+            "hair": "#513842",
+            "secondary": "#263340",
+            "eye": "#8ed6bb",
+            "primary": "#3c5b62",
+            "accent": "#e78643",
+            "metal": "#84928c"
+          },
+          "prop_lantern_span": {
+            "skin": "#e3bd89",
+            "primary": "#4e5653",
+            "secondary": "#393b39",
+            "accent": "#d98c50",
+            "metal": "#8a7d63",
+            "eye": "#f8bf75"
+          },
+          "prop_steam_basket_counter": {
+            "skin": "#b2a387",
+            "hair": "#7a8d71",
+            "primary": "#617370",
+            "secondary": "#373c39",
+            "accent": "#966f53",
+            "metal": "#82877f",
+            "eye": "#8eaa9e"
+          },
+          "prop_market_stool": {
+            "primary": "#8b6e4f",
+            "accent": "#b47044",
+            "metal": "#686f66"
+          },
+          "prop_menu_easel": {
+            "primary": "#66564a",
+            "accent": "#c38b54",
+            "eye": "#eccf9e"
+          },
+          "prop_arc_lamp": {
+            "primary": "#596581",
+            "accent": "#d08091",
+            "metal": "#7a8c9f",
+            "eye": "#92eee6"
+          },
+          "prop_tech_workshop": {
+            "skin": "#eac891",
+            "hair": "#513842",
+            "secondary": "#263340",
+            "eye": "#8ed6bb",
+            "primary": "#4a6768",
+            "accent": "#dc8149",
+            "metal": "#88958b"
+          },
+          "prop_herb_trough": {
+            "skin": "#b5a787",
+            "hair": "#5f4b3b",
+            "primary": "#6f8b57",
+            "secondary": "#4a5954",
+            "accent": "#b48b58",
+            "metal": "#858576",
+            "eye": "#89a786"
+          },
+          "prop_capsule_locker": {
+            "skin": "#af9571",
+            "hair": "#697977",
+            "primary": "#57706c",
+            "secondary": "#34434a",
+            "accent": "#b27651",
+            "metal": "#858985",
+            "eye": "#9ad2b0"
+          },
+          "prop_transit_reader": {
+            "skin": "#b3a276",
+            "primary": "#5d7069",
+            "secondary": "#394341",
+            "accent": "#cc894e",
+            "metal": "#71776c",
+            "eye": "#99d2b9"
+          },
+          "prop_delivery_handcart": {
+            "skin": "#bfa885",
+            "primary": "#7f674b",
+            "secondary": "#3f4c45",
+            "accent": "#bd794e",
+            "metal": "#858976",
+            "eye": "#8da785"
+          },
+          "prop_channel_pavement": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55"
+          },
+          "prop_arcade_cabinet": {
+            "skin": "#828581",
+            "primary": "#48535e",
+            "secondary": "#3a424d",
+            "accent": "#677c77",
+            "eye": "#639995",
+            "metal": "#6a7379"
+          },
+          "prop_utility_pavement": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55"
+          },
+          "prop_cyber_road_straight": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55",
+            "eye": "#63767a"
+          },
+          "prop_cyber_road_corner": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55",
+            "eye": "#63767a"
+          },
+          "prop_cyber_road_tsplit": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55",
+            "eye": "#63767a"
+          },
+          "prop_cyber_road_junction": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55",
+            "eye": "#63767a"
+          },
+          "prop_cyber_road_crosswalk": {
+            "skin": "#42464f",
+            "primary": "#3d4249",
+            "secondary": "#333641",
+            "metal": "#444b55",
+            "eye": "#63767a"
+          }
+        }
+      },
+      "stage": {
+        "look": {
+          "glow": "#171f26",
+          "backdrop": "#101820",
+          "accent": "#efb565",
+          "ground": [
+            "#35393e",
+            "#2d3136",
+            "#22282d"
+          ],
+          "key": "#f2dbbd",
+          "fill": "#a2bbc5",
+          "rim": "#84bbc2"
+        },
+        "groups": {
+          "floor": {
+            "skin": "#42425d",
+            "hair": "#3d435f",
+            "primary": "#343951",
+            "secondary": "#31334d",
+            "accent": "#443f5b",
+            "metal": "#414663",
+            "eye": "#57627f"
+          },
+          "structure": {
+            "skin": "#666886",
+            "primary": "#555875",
+            "secondary": "#35364f",
+            "accent": "#7c7293",
+            "metal": "#838799"
+          },
+          "life": {
+            "skin": "#827299",
+            "primary": "#65516f",
+            "secondary": "#3e3a55",
+            "accent": "#d88096",
+            "metal": "#a08ab0",
+            "eye": "#8ff1d8"
+          }
+        },
+        "practicals": [
+          {
+            "position": [
+              3.43,
+              1.8,
+              0.72
+            ],
+            "intensity": 12,
+            "color": "#ffb572",
+            "distance": 6
+          },
+          {
+            "position": [
+              -1.58,
+              2.95,
+              -1.35
+            ],
+            "intensity": 9,
+            "color": "#9ecdd7",
+            "distance": 7
+          },
+          {
+            "position": [
+              -0.65,
+              2.55,
+              -7.14
+            ],
+            "intensity": 16,
+            "color": "#b981cb",
+            "distance": 8
+          }
+        ],
+        "environment": {
+          "groundPatch": "#343741",
+          "fog": [
+            10,
+            24
+          ],
+          "backdropTint": 0.20
+        }
+      }
+    },
+    "monsters": {
+      "brief": {
+        "relationship": "Warm ore and bone against cool ash, basalt and recesses.",
+        "field": "Use cool ash and basalt on the cavern floor. Keep the stone, bone litter and fungi subdued.",
+        "support": "Use olive hide, weathered wood and dusty bone to separate the nest, rail and creatures.",
+        "focus": "Place ember orange near the portal. Use warm ivory on the egg cluster or fossil edges.",
+        "characters": "Give chitin and skin a visible value step against the floor. Keep eyes and markings small.",
+        "avoid": "Pure black chitin, bright lava across the full ground or equal contrast on every egg.",
+        "review": "Read the spider and orc against the ash. Keep the warm entrance and the inner track visible behind them."
+      },
+      "avatar": {
+        "skin": "#4f6b3a",
+        "hair": "#232022",
+        "primary": "#6b492e",
+        "secondary": "#3d332c",
+        "accent": "#dfd3b2",
+        "metal": "#646d75",
+        "eye": "#8a5628"
+      },
+      "props": {
+        "default": {
+          "skin": "#6e6a60",
+          "hair": "#4a5a3a",
+          "primary": "#5c402c",
+          "secondary": "#2f2925",
+          "accent": "#dcd0b2",
+          "metal": "#5a636c",
+          "eye": "#f2642a"
+        },
+        "overrides": {
+          "prop_mine_tunnel_mouth": {
+            "skin": "#756861",
+            "primary": "#7f573d",
+            "secondary": "#4f3936",
+            "accent": "#b46f51",
+            "metal": "#777a78",
+            "eye": "#f98039"
+          },
+          "prop_spider_egg_sac": {
+            "skin": "#c2ad79",
+            "hair": "#806b57",
+            "secondary": "#635044",
+            "accent": "#9e9974",
+            "eye": "#d1975a"
+          },
+          "prop_stalagmite_cluster": {
+            "skin": "#757078",
+            "primary": "#5d535d",
+            "secondary": "#423c48"
+          },
+          "prop_shaman_shrine": {
+            "skin": "#7a6c65",
+            "primary": "#775740",
+            "secondary": "#493644",
+            "accent": "#da936b",
+            "metal": "#7e6976",
+            "eye": "#f6854d"
+          },
+          "prop_basalt_cliff_block": {
+            "skin": "#68656a",
+            "secondary": "#47444a",
+            "primary": "#59565b"
+          },
+          "prop_quarry_rock_shelf": {
+            "skin": "#666268",
+            "secondary": "#49444b",
+            "primary": "#5a5559"
+          },
+          "prop_quarry_stone_needle": {
+            "skin": "#6b676c",
+            "secondary": "#49464e",
+            "primary": "#59565c"
+          },
+          "prop_brood_nest": {
+            "skin": "#c2b098",
+            "hair": "#837161",
+            "primary": "#6c564d",
+            "secondary": "#5b4a47",
+            "eye": "#dbaa70"
+          },
+          "prop_mine_lamp_post": {
+            "primary": "#926b4f",
+            "secondary": "#4c3d38",
+            "metal": "#766b63",
+            "eye": "#ffad67"
+          },
+          "prop_mine_track": {
+            "primary": "#524747",
+            "secondary": "#3e393a",
+            "metal": "#515259"
+          },
+          "prop_mushroom_cluster": {
+            "accent": "#806659",
+            "eye": "#a38572",
+            "primary": "#6e5c58",
+            "secondary": "#554945"
+          },
+          "prop_fossil_rib_arc": {
+            "skin": "#b3a695",
+            "primary": "#887b70",
+            "secondary": "#625852",
+            "accent": "#a39382"
+          },
+          "prop_bone_pile": {
+            "skin": "#9b8e7e",
+            "primary": "#817266",
+            "secondary": "#665b55",
+            "accent": "#8f7967"
+          }
+        }
+      },
+      "stage": {
+        "look": {
+          "glow": "#4e4a51",
+          "backdrop": "#261f2c",
+          "accent": "#ffb18a",
+          "ground": [
+            "#626266",
+            "#474348",
+            "#36343a"
+          ],
+          "key": "#ffe1b9",
+          "fill": "#c6b7e0",
+          "rim": "#aab3bf"
+        },
+        "groups": {
+          "floor": {
+            "skin": "#6e6259",
+            "hair": "#625e51",
+            "primary": "#655750",
+            "secondary": "#4d4242",
+            "accent": "#9d614b",
+            "metal": "#74625f"
+          },
+          "structure": {
+            "skin": "#836e67",
+            "primary": "#655358",
+            "secondary": "#453b42",
+            "accent": "#cda48a",
+            "metal": "#6c6d77"
+          },
+          "life": {
+            "skin": "#95765a",
+            "hair": "#72664c",
+            "primary": "#674937",
+            "secondary": "#4d3b35",
+            "accent": "#d9b68c",
+            "eye": "#f27b42"
+          }
+        },
+        "practicals": [
+          {
+            "position": [
+              -1.32,
+              1.42,
+              -2.65
+            ],
+            "intensity": 3.15,
+            "color": "#e69b68",
+            "distance": 8
+          },
+          {
+            "position": [-0.36, 1.62, 1.35],
+            "intensity": 5.7,
+            "color": "#dfb596",
+            "distance": 5.0
+          }
+        ],
+        "environment": {
+          "groundPatch": "#5c5b60",
+          "fog": [
+            11,
+            28
+          ],
+          "backdropTint": 0.26
+        }
+      }
+    }
+  },
+  "ambientGround": "#655866"
+}

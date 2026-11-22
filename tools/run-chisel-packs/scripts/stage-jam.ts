@@ -19,9 +19,11 @@ import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join, relative, resolve } from 'node:path'
+import { buildManifestSchema } from '../contracts/catalog'
 import { leavesFor, POLY_PACK_KEYS, POLY_PACKS, type PolyPackKey } from '../contracts/packs'
 import { licenseTextFor, SOURCE } from '../src/licenses'
-import { STAGE_DIR } from '../src/paths'
+import { META_DIR, STAGE_DIR } from '../src/paths'
+import { assertStagedProps } from '../src/propColors'
 
 const PREVIEW_MAX_BYTES = 100 * 1024
 const PREVIEW_MAX_DIMENSION = 512
@@ -156,10 +158,15 @@ async function main(): Promise<void> {
   const packs = (p === -1 ? [...POLY_PACK_KEYS] : (process.argv[p + 1] ?? '').split(',')) as PolyPackKey[]
   const magickBin = checkMagick()
   const sharp = tryLoadTargetSharp(target)
+  const manifestPath = join(META_DIR, 'manifest.json')
+  if (!existsSync(manifestPath)) throw new Error('Run npm run build before staging packs.')
+  const manifest = buildManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')))
 
   // Pre-flight check before modifying target so nothing is half-staged.
   for (const pack of packs) {
     if (!POLY_PACK_KEYS.includes(pack)) throw new Error(`Unknown pack "${pack}"`)
+    const catalog = manifest.packs.find((entry) => entry.pack === pack)
+    if (!catalog) throw new Error(`Pack "${pack}" is missing from the build manifest. Run npm run build.`)
     const srcDir = join(STAGE_DIR, POLY_PACKS[pack].dir)
     if (!existsSync(srcDir)) throw new Error(`Pack "${pack}" not built at ${srcDir}; run \`npm run build\` first`)
     for (const leaf of leavesFor(pack)) {
@@ -173,6 +180,7 @@ async function main(): Promise<void> {
         )
       }
     }
+    assertStagedProps(catalog, STAGE_DIR)
   }
 
   mkdirSync(join(target, 'scripts/preview-inputs'), { recursive: true })

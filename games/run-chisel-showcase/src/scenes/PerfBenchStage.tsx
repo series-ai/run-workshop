@@ -1,6 +1,6 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { Object3D, PCFSoftShadowMap, type InstancedMesh, type Material, type Mesh } from 'three'
+import { Object3D, PCFSoftShadowMap, PerspectiveCamera, type InstancedMesh, type Material, type Mesh } from 'three'
 import type { PackCatalog } from '@chisel/contracts/catalog'
 import { PolyAvatar, type PolyAvatarLod, type PolyPerfSink } from '../avatar/PolyAvatar'
 import { selectionFromPreset, type PolyPartIndex } from '../avatar/composePolyAvatar'
@@ -35,6 +35,11 @@ const FRAME_WINDOW = 240
 const REPORT_SECONDS = 0.5
 const FULL_RATE_DISTANCE = 16
 const HALF_RATE_DISTANCE = 24
+const AVATAR_HALF_WIDTH = 1.9
+const AVATAR_MAX_HEIGHT = 2.8
+
+export const BENCH_CAMERA_POSITION: [number, number, number] = [0, 9, 20]
+export const BENCH_CAMERA_TARGET: [number, number, number] = [0, 1, 0]
 
 function gridPositions(count: number, aspect: number): [number, number, number][] {
   const widthFactor = Math.max(0.55, Math.min(1.6, aspect * 1.1))
@@ -51,6 +56,7 @@ function gridPositions(count: number, aspect: number): [number, number, number][
 export function PerfBenchStage({ catalogs, index, avatarCount, mobileMode, lodThrottle, onTelemetry }: PerfBenchStageProps) {
   const gl = useThree((state) => state.gl)
   const scene = useThree((state) => state.scene)
+  const camera = useThree((state) => state.camera)
   const aspect = useThree((state) => state.viewport.aspect)
   const presets = useMemo(() => {
     const contextPresets = catalogs.filter((catalog) => catalog.pack !== 'core').flatMap((catalog) => catalog.presets)
@@ -68,6 +74,21 @@ export function PerfBenchStage({ catalogs, index, avatarCount, mobileMode, lodTh
   const positions = useMemo(() => gridPositions(avatarCount, aspect), [avatarCount, aspect])
   const lods = useMemo<PolyAvatarLod[]>(() => positions.map(() => ({ mixerHz: 0 })), [positions])
   const perfSink = useMemo<PolyPerfSink>(() => ({ mixerMs: 0 }), [])
+
+  useLayoutEffect(() => {
+    if (!(camera instanceof PerspectiveCamera)) return
+    const [firstX, , frontZ] = positions[0]!
+    const elevation = BENCH_CAMERA_POSITION[1] - BENCH_CAMERA_TARGET[1]
+    const depth = BENCH_CAMERA_POSITION[2]
+    const distance = Math.hypot(elevation, depth)
+    const aboveTarget = AVATAR_MAX_HEIGHT - BENCH_CAMERA_TARGET[1]
+    const frontDistance = distance - (frontZ * depth + aboveTarget * elevation) / distance
+    const halfView = frontDistance * Math.tan(camera.fov * Math.PI / 360)
+    const halfWidth = Math.abs(firstX) + AVATAR_HALF_WIDTH
+    // Widen the lens to fit the front row. The camera distance controls mixer LOD.
+    camera.zoom = Math.min(1, Math.max(aspect, 0.01) * halfView / halfWidth)
+    camera.updateProjectionMatrix()
+  }, [aspect, camera, positions])
 
   // One instanced quad draws all blob shadows.
   const blob = getSharedBlobShadowResources()

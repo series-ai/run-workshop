@@ -5,6 +5,7 @@ import { leavesFor, POLY_PACK_KEYS } from '../contracts/packs'
 import { licenseTextFor } from '../src/licenses'
 import { META_DIR, SOURCE_KAYKIT_RANGED_GLB, SOURCE_RIG_GLB, SOURCE_UAL2_GLB, STAGE_DIR, TOOL_ROOT } from '../src/paths'
 import { populateManifestRagdoll } from '../src/resolveManifestRagdoll'
+import { assertPackColorAssignments } from '../src/propColors'
 
 function findBlender(): string {
   if (process.env.BLENDER_BIN) return process.env.BLENDER_BIN
@@ -63,6 +64,7 @@ function main(): void {
   ])
 
   const packs = populateManifestRagdoll(META_DIR)
+  packs.forEach(assertPackColorAssignments)
   const presetCount = packs.reduce((s, p) => s + p.presets.length, 0)
   console.log(`Build finished cleanly (${presetCount} presets with resolved ragdoll metadata).`)
 }

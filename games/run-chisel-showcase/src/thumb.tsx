@@ -148,7 +148,13 @@ function ThumbApp() {
 
   return (
     <ThumbErrorBoundary>
-      <Canvas style={{ width: '100%', height: '100%' }} dpr={1} gl={STUDIO_GL} camera={{ fov: 38, near: 0.02, far: 100 }}>
+      <Canvas
+        style={{ width: '100%', height: '100%' }}
+        dpr={1}
+        gl={STUDIO_GL}
+        orthographic={resolved.mode === 'lineup'}
+        camera={resolved.mode === 'lineup' ? { near: 0.02, far: 100 } : { fov: 38, near: 0.02, far: 100 }}
+      >
         <StudioLights reach={resolved.mode === 'lineup' ? 2.8 : 1.6} />
         <Suspense fallback={null}>
           {resolved.mode === 'lineup' ? (
@@ -178,4 +184,6 @@ function ThumbApp() {
   )
 }
 
-createRoot(document.getElementById('thumb-root')!).render(<ThumbApp />)
+const container = document.getElementById('thumb-root')!
+if (new URLSearchParams(window.location.search).has('lineup')) container.dataset.mode = 'lineup'
+createRoot(container).render(<ThumbApp />)

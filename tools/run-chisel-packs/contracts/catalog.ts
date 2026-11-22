@@ -3,6 +3,7 @@ import { LICENSES, POLY_PACK_KEYS } from './packs'
 import { paletteColorsSchema } from './palette'
 import { characterRagdollSchema, ragdollColliderMapSchema } from './ragdoll'
 import { RIG_IDS } from './rig'
+import { HUMAN_SCALE } from './worldScale'
 
 export const AVATAR_SLOTS = ['body', 'head', 'hair', 'torso', 'legs', 'headwear', 'back'] as const
 export type AvatarSlot = (typeof AVATAR_SLOTS)[number]
@@ -33,6 +34,7 @@ export const PROPORTION_DEFAULTS = {
 
 export const UAL1_STANDARD_PROPORTIONS = {
   ...PROPORTION_DEFAULTS,
+  height: HUMAN_SCALE.heightMultiplier,
   legRatio: 0.94,
   armLength: 0.96,
   shoulderWidth: 1.04,
@@ -150,3 +152,8 @@ export const packCatalogSchema = z.object({
   presets: z.array(characterPresetSchema),
 })
 export type PackCatalog = z.infer<typeof packCatalogSchema>
+
+export const buildManifestSchema = z.object({
+  version: z.literal(1),
+  packs: z.array(packCatalogSchema),
+})

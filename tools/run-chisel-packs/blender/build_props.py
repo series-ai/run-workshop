@@ -2,7 +2,7 @@
 
 Every prop follows the RUN Chisel prop contract:
   - Single mesh & single material (Poly_Atlas_Mat)
-  - Hard faceted normals, 7-region UV palette + AO ramp (PROP_PALETTES)
+  - Hard faceted normals, 7-region UV palette + AO ramp (color-direction.json)
   - Grounded at y = 0 and centered on X/Z
   - <= 650 triangles and <= 81,920 bytes per GLB
   - Animated props use PropWeightSolver + custom bone hierarchy + glTF LINEAR tracks
@@ -106,7 +106,7 @@ def build_static_prop(pack, world_dir, builder, label):
     low, high = mesh.positions.min(axis=0), mesh.positions.max(axis=0)
     mesh.positions -= np.array([(low[0] + high[0]) / 2.0, low[1], (low[2] + high[2]) / 2.0])
     rel = f'props/{mesh.name}.glb'
-    size = pk.write_static_glb(world_dir / rel, mesh)
+    size = pk.write_prop_glb(world_dir / rel, mesh, pack)
     return pk.prop_entry(mesh, pack, label, rel, size)
 
 
@@ -123,7 +123,7 @@ def build_animated_prop(pack, world_dir, builder, clips_builder, label):
         contract['worldPositions'][j] = [float(wp[0] + shift[0]), float(wp[1] + shift[1]), float(wp[2] + shift[2])]
     clips = clips_builder(contract)
     rel = f'props/{mesh.name}.glb'
-    size = pk.write_animated_prop_glb(world_dir / rel, mesh, contract, clips)
+    size = pk.write_prop_glb(world_dir / rel, mesh, pack, contract=contract, animations=clips)
     return pk.prop_entry(mesh, pack, label, rel, size, clips=[c['name'] for c in clips])
 
 
@@ -317,33 +317,65 @@ def prop_portcullis_gate(part):
         {'base': [0, 0, 0], 'gate': [0, 0, 0]},
     )
     with part.skinned(pk.rigid(base=1.0)):
-        # Stone gatehouse arch pillars + taller lintel housing (2.2m wide x 2.6m tall)
-        for sx in (-0.86, 0.86):
-            part.box(V(sx, 0.14, 0), (0.44, 0.28, 0.50), 'skin', bevel=0.02, ao=-0.08)
-            part.box(V(sx, 1.16, 0), (0.36, 1.76, 0.42), 'skin', ao=-0.02)
-        part.box(V(0, 2.26, 0), (2.20, 0.58, 0.48), 'skin', bevel=0.025, ao=0.04)
-        for x in (-0.82, 0.0, 0.82):
-            part.box(V(x, 2.62, 0), (0.40, 0.16, 0.44), 'skin', taper=0.90, ao=0.06)
-    with part.skinned(pk.rigid(gate=1.0)):
-        # Iron-shod timber grate inside opening; top y=1.94 retracts cleanly into lintel (1.97..2.55)
-        for x in (-0.52, -0.26, 0.0, 0.26, 0.52):
-            part.box(V(x, 1.06, 0), (0.07, 1.74, 0.07), 'primary', bevel=0.008)
-            spike(part, V(x, 0.19, 0), V(x, 0.02, 0), 0.042, 'metal', n=4, up=Z, ao=0.08)
-        for y in (0.46, 1.06, 1.66):
-            part.box(V(0, y, 0), (1.36, 0.075, 0.095), 'metal', bevel=0.008, ao=0.04)
+        # The deep arch rests on four courses of dressed stone.
+        for side in (-1, 1):
+            for bottom, top, width, depth, shade in (
+                (0, .29, .38, .50, -.08), (.29, .77, .32, .45, .01),
+                (.77, 1.28, .34, .46, -.04), (1.28, 1.48, .40, .50, .08),
+            ):
+                part.box(V(side*.90, (bottom+top)/2, 0), (width, top-bottom, depth),
+                         'skin', bevel=.014, ao=shade)
+
+        # The two stone arches leave a slot for the grate.
+        for i in range(7):
+            left = math.pi*i/7
+            right = math.pi*(i+1)/7
+            crown = i == 3
+            profile = []
+            for angle, outer in ((left, False), (left, True), (right, True), (right, False)):
+                rx = 1.09 if outer else .73
+                ry = (1.22/math.sin(3*math.pi/7) if crown else 1.14) if outer else .62
+                profile.append((rx*math.cos(angle), 1.48+ry*math.sin(angle)))
+            depth = .25 if crown else .235
+            middle = [V(x, y, depth-.025) for x, y in profile]
+            center = sum(middle, V(0, 0, 0))/4
+            bevel = [center+(v-center)*.93+Z*.025 for v in middle]
+            slot = .115
+            part.loft([[V(x, y, slot) for x, y in profile], middle, bevel], 'skin',
+                      cap_start=True, cap_end=True, ao=.10 if crown else .02-(i%3)*.045)
+            part.loft([[V(x, y, z) for x, y in profile] for z in (-depth, -slot)], 'skin',
+                      cap_start=True, cap_end=True, ao=.02-(i%3)*.045)
+
+        # Two timber beams guide the sections into the slot.
+        for z in (-.155, .155):
+            part.box(V(0, 2.47, z), (1.59, .45, .08), 'primary', ao=-.08)
+
+    # Each section slides behind the one below it. Uniform weights keep it rigid.
+    for bottom, top, z, travel in (
+        (.18, .81, .075, 1.0), (.64, 1.45, 0, 2/3), (1.28, 2.08, -.075, 1/3),
+    ):
+        with part.skinned(pk.rigid(base=1-travel, gate=travel)):
+            for x in (-.54, -.18, .18, .54):
+                part.box(V(x, (top+bottom)/2, z), (.095, top-bottom, .058), 'primary',
+                         cap_end=False)
+                if travel == 1.0:
+                    spike(part, V(x, bottom, z), V(x, .02, z), .052, 'metal', n=4, up=Z,
+                          flat=.55)
+            part.box(V(0, top-.045, z), (1.47, .09, .075), 'metal', ao=.04)
     return contract
 
 
 def _portcullis_clips(contract):
+    lift = 1.80
     return [
         sample_prop_clip(contract, 'Closed', 0.8, 12, lambda u, _t: {
             'gate': {'pos': (0.0, 0.0, 0.0)},
         }),
         sample_prop_clip(contract, 'Raise', 1.4, 20, lambda u, _t: {
-            'gate': {'pos': (0.0, 0.60 * ease(u), 0.0)},
+            'gate': {'pos': (0.0, lift * ease(u), 0.0)},
         }),
         sample_prop_clip(contract, 'Open', 1.2, 12, lambda u, _t: {
-            'gate': {'pos': (0.0, 0.60, 0.0)},
+            'gate': {'pos': (0.0, lift, 0.0)},
         }),
     ]
 
@@ -512,10 +544,10 @@ def prop_barbed_wire_fence(part):
 
 
 def prop_watchtower(part):
-    # Timber guard watchtower (~2.95m tall) with lookout deck & roof
+    # The posts support the roof above a standing guard.
     for sx in (-1, 1):
         for sz in (-1, 1):
-            part.tube([V(sx * 0.68, 0.0, sz * 0.68), V(sx * 0.50, 2.52, sz * 0.50)], [0.065, 0.052], 4,
+            part.tube([V(sx * 0.68, 0.0, sz * 0.68), V(sx * 0.50, 3.57, sz * 0.50)], [0.065, 0.052], 4,
                       'secondary', up=Z, cap_start=True, cap_end=True, ao=-0.06)
     # Cross braces
     for sz in (-0.58, 0.58):
@@ -524,17 +556,18 @@ def prop_watchtower(part):
     part.box(V(0, 1.56, 0), (1.36, 0.10, 1.36), 'primary', bevel=0.012, ao=0.02)
     # Sandbagged parapet walls around deck
     for sx in (-1, 1):
-        part.box(V(sx * 0.60, 1.84, 0), (0.12, 0.46, 1.24), 'primary', bevel=0.01)
-    for sz in (-1, 1):
-        part.box(V(0, 1.84, sz * 0.60), (1.24, 0.46, 0.12), 'primary', bevel=0.01)
+        part.box(V(sx * 0.60, 2.07, 0), (0.12, 0.94, 1.24), 'primary', bevel=0.01)
+    part.box(V(0, 2.07, -.60), (1.24,.94,.12), 'primary', bevel=.01)
+    for x in (-.47,.47):
+        part.box(V(x,2.07,.60), (.30,.94,.12), 'primary', bevel=.01)
     # Pitched hip roof
-    part.box(V(0, 2.56, 0), (1.36, 0.08, 1.36), 'secondary', bevel=0.01)
-    part.loft([pk.rect_ring(V(0, 2.60, 0), X, Z, 0.72, 0.72)], 'primary', tip_end=V(0, 3.04, 0), cap_start=True, ao=0.08)
-    # Front ladder rails + 4 rungs
+    part.box(V(0, 3.61, 0), (1.36, 0.08, 1.36), 'secondary', bevel=0.01)
+    part.loft([pk.rect_ring(V(0, 3.65, 0), X, Z, 0.72, 0.72)], 'primary', tip_end=V(0, 4.09, 0), cap_start=True, ao=0.08)
+    # The upper rung sits one step below the deck.
     for lx in (-0.20, 0.20):
         part.tube([V(lx, 0.0, 0.82), V(lx, 1.62, 0.62)], [0.028, 0.026], 4, 'secondary', up=X, cap_start=True, cap_end=True)
-    for k in range(4):
-        t = (k + 0.7) / 4.2
+    for k in range(5):
+        t = (.15 + k * .30) / 1.60
         part.box(V(0, t * 1.60, 0.82 - t * 0.20), (0.42, 0.036, 0.036), 'primary')
 
 
@@ -748,10 +781,13 @@ def prop_road_crosswalk(part):
 def prop_streetlamp(part):
     part.lathe([(0.20, 0.0), (0.18, 0.18), (0.11, 0.36), (0.07, 0.46), (0.05, 2.68)], 8, 'secondary',
                cap_start=True, band_ao=[-0.06, 0.0, -0.02, 0.02])
-    part.tube([V(0, 2.64, 0), V(0, 2.90, 0.16), V(0, 2.86, 0.48)], [0.042, 0.036, 0.030], 6, 'metal', up=X, cap_end=True)
-    # Lantern hood + glowing pane
-    part.lathe([(0.16, 2.62), (0.20, 2.78), (0.08, 2.88)], 6, 'skin', center=(0, 0, 0.48), cap_start=True, tip_end=V(0, 2.94, 0.48),
-               band_regions=['skin', 'secondary'], ao=0.14)
+    part.tube([V(0, 2.66, 0), V(0, 2.89, 0.16), V(0, 2.90, 0.41),
+               V(0, 2.81, 0.46)], [0.044, 0.038, 0.033, 0.030], 6, 'secondary', up=X)
+    # A shallow metal shade covers the glass diffuser.
+    part.lathe([(0.090, 2.54), (0.155, 2.59), (0.174, 2.66),
+                (0.20, 2.67), (0.13, 2.78), (0.047, 2.83)], 8, 'metal',
+               center=(0, 0, 0.46), cap_start=True, cap_end=True,
+               band_regions=['skin', 'skin', 'secondary', 'secondary', 'metal'])
 
 
 def prop_bus_stop(part):
@@ -1275,7 +1311,7 @@ def prop_dead_tree(part):
 
 
 def prop_cage_cart(part):
-    # Grounded 4-wheel timber cage cart (1.4m x 1.0m x 1.35m)
+    # Grounded 4-wheel timber cage cart
     for sx in (-0.48, 0.48):
         for sz in (-0.48, 0.48):
             with part.placed(Matrix.Translation(V(sx, 0.24, sz)) @ Matrix.Rotation(math.radians(90), 4, 'Z')):
@@ -1285,8 +1321,12 @@ def prop_cage_cart(part):
     # Iron cage bars + top roof frame
     for cx in (-0.38, -0.13, 0.13, 0.38):
         for cz in (-0.52, 0.52):
-            part.box(V(cx, 0.82, cz), (0.04, 0.90, 0.04), 'metal')
-    part.box(V(0, 1.29, 0), (0.88, 0.08, 1.14), 'secondary', bevel=0.01)
+            part.box(V(cx, 1.30, cz), (0.04, 1.86, 0.04), 'metal')
+    for cx in (-.38,.38):
+        for cz in (-.18,.18):
+            part.box(V(cx,1.30,cz), (.04,1.86,.04), 'metal')
+    part.box(V(0, 2.27, 0), (0.88, 0.08, 1.14), 'secondary', bevel=0.01)
+    part.box(V(0, .86, .52), (.76,.06,.04), 'metal')
     part.box(V(0, 0.86, 0.54), (0.16, 0.16, 0.08), 'accent', bevel=0.02, ao=0.10)
 
 
@@ -1569,9 +1609,30 @@ ANIMATED_PROPS = {
 
 
 def build_extra_props_for_pack(pack, world_dir):
+    from props_level_cyberpunk import CYBERPUNK_LEVEL_ANIMATED, CYBERPUNK_LEVEL_STATIC
+    from props_level_medieval import MEDIEVAL_LEVEL_ANIMATED, MEDIEVAL_LEVEL_STATIC
+    from props_level_monsters import MONSTERS_LEVEL_ANIMATED, MONSTERS_LEVEL_STATIC
+    from props_level_sim import SIM_LEVEL_ANIMATED, SIM_LEVEL_STATIC
+    from props_level_ww2 import WW2_LEVEL_ANIMATED, WW2_LEVEL_STATIC
+
+    level_static = {
+        'medieval': MEDIEVAL_LEVEL_STATIC,
+        'ww2': WW2_LEVEL_STATIC,
+        'sim': SIM_LEVEL_STATIC,
+        'cyberpunk': CYBERPUNK_LEVEL_STATIC,
+        'monsters': MONSTERS_LEVEL_STATIC,
+    }
+    level_animated = {
+        'medieval': MEDIEVAL_LEVEL_ANIMATED,
+        'ww2': WW2_LEVEL_ANIMATED,
+        'sim': SIM_LEVEL_ANIMATED,
+        'cyberpunk': CYBERPUNK_LEVEL_ANIMATED,
+        'monsters': MONSTERS_LEVEL_ANIMATED,
+    }
+
     entries = []
-    for builder, label in EXTRA_STATIC_PROPS.get(pack, ()):
+    for builder, label in [*EXTRA_STATIC_PROPS.get(pack, ()), *level_static.get(pack, ())]:
         entries.append(build_static_prop(pack, world_dir, builder, label))
-    for builder, clips_builder, label in ANIMATED_PROPS.get(pack, ()):
+    for builder, clips_builder, label in [*ANIMATED_PROPS.get(pack, ()), *level_animated.get(pack, ())]:
         entries.append(build_animated_prop(pack, world_dir, builder, clips_builder, label))
     return entries

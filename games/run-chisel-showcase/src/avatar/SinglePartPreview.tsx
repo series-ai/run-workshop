@@ -1,11 +1,12 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import { Box3, Group, Matrix4, Mesh, PerspectiveCamera, SkinnedMesh, Vector3 } from 'three'
-import type { AvatarPartEntry, CharacterPreset, HeldItemEntry, WorldPropEntry } from '@chisel/contracts/catalog'
-import { CONTEXT_DEFAULT_PALETTES, type PaletteColors } from '@chisel/contracts/palette'
+import { Box3, Group, Matrix4, Mesh, OrthographicCamera, PerspectiveCamera, SkinnedMesh, Vector3, type Object3D } from 'three'
+import { UAL1_STANDARD_PROPORTIONS, type AvatarPartEntry, type CharacterPreset, type HeldItemEntry, type WorldPropEntry } from '@chisel/contracts/catalog'
+import type { PaletteColors } from '@chisel/contracts/palette'
+import { COLOR_DIRECTION, propPaletteFor } from '@chisel/contracts/colorDirection'
 import type { ContextPackKey, PolyPackKey } from '@chisel/contracts/packs'
+import { HUMAN_SCALE } from '@chisel/contracts/worldScale'
 import { assetRefFor, type PolyPartIndex } from './composePolyAvatar'
-import { PROP_PALETTES } from '../scenes/contextPalettes'
 import { createPolyMaterial, getSharedBlobShadowResources, updatePolyMaterialPalette } from './polyMaterial'
 import { findSkinnedPart, readGltf } from './polyRig'
 import { PolyAvatar, PolyProp } from './PolyAvatar'
@@ -19,19 +20,18 @@ export type GalleryItem =
 
 export function paletteForPack(pack: PolyPackKey): PaletteColors {
   const key: ContextPackKey = pack === 'core' ? 'medieval' : pack
-  return CONTEXT_DEFAULT_PALETTES[key]
+  return COLOR_DIRECTION.packs[key].avatar
 }
 
-export function paletteForProp(pack: PolyPackKey): PaletteColors {
-  const key: ContextPackKey = pack === 'core' ? 'medieval' : pack
-  return PROP_PALETTES[key]
+function paletteForProp({ pack, id }: WorldPropEntry): PaletteColors {
+  return propPaletteFor(pack, id)
 }
 
 const _tmpV = new Vector3()
 const _tmpBox = new Box3()
 const _tmpM = new Matrix4()
 
-function hasRenderableMesh(root: Group): boolean {
+function hasRenderableMesh(root: Object3D): boolean {
   let count = 0
   root.traverse((obj) => {
     if (obj instanceof Mesh) {
@@ -86,6 +86,7 @@ export function FitItemCamera({
   fitKey,
   onReady,
   controlsRef,
+  readyWhen = hasRenderableMesh,
   margin = 1.38,
   yawDeg = 36,
   pitchDeg = 18,
@@ -94,6 +95,7 @@ export function FitItemCamera({
   fitKey: string
   onReady?: () => void
   controlsRef?: React.RefObject<{ target: Vector3; update: () => void } | null>
+  readyWhen?: (root: Group) => boolean
   margin?: number
   yawDeg?: number
   pitchDeg?: number
@@ -116,7 +118,7 @@ export function FitItemCamera({
     if (!root) return
 
     if (fittedKey.current !== fitKey) {
-      if (!hasRenderableMesh(root)) return
+      if (!readyWhen(root)) return
       // Give PolyAvatar 2 frames so AnimationMixer applies holdPhase/clip pose before measuring bounds.
       if (warmupFrames.current < 2) {
         warmupFrames.current++
@@ -135,6 +137,13 @@ export function FitItemCamera({
       camera.position.copy(center).addScaledVector(dir, dist)
       camera.near = Math.max(0.02, dist * 0.01)
       camera.far = Math.max(50, dist * 12)
+      if (camera instanceof OrthographicCamera) {
+        const right = new Vector3(0, 1, 0).cross(dir).normalize()
+        const up = new Vector3().crossVectors(dir, right)
+        const viewWidth = Math.abs(right.x) * size.x + Math.abs(right.z) * size.z
+        const viewHeight = Math.abs(up.x) * size.x + Math.abs(up.y) * size.y + Math.abs(up.z) * size.z
+        camera.zoom = Math.min((camera.right - camera.left) / viewWidth, (camera.top - camera.bottom) / viewHeight) / margin
+      }
       camera.updateProjectionMatrix()
       camera.lookAt(center)
       if (controlsRef?.current) {
@@ -311,7 +320,7 @@ export function GalleryStageContent({
     content = (
       <PolyProp
         item={item.entry}
-        palette={paletteForProp(item.entry.pack)}
+        palette={paletteForProp(item.entry)}
         clip={clipOverride ?? undefined}
         holdPhase={holdPhase}
         blobShadow
@@ -329,8 +338,13 @@ export function GalleryStageContent({
   )
 }
 
+const LINEUP_YAW_DEGREES = 14
+
 function estimateSlotWidth(item: GalleryItem): number {
-  if (item.kind === 'prop') return Math.max(0.9, item.entry.bounds.size[0] + 0.4)
+  if (item.kind === 'prop') {
+    const [width, , depth] = item.entry.bounds.size
+    return Math.max(0.9, width + depth * Math.tan(LINEUP_YAW_DEGREES * Math.PI / 180))
+  }
   if (item.kind === 'held') return 0.9
   if (item.kind === 'preset') {
     const rig = item.entry.rigId
@@ -365,6 +379,7 @@ export function LineupStageContent({
   onReady?: () => void
 }) {
   const groupRef = useRef<Group>(null)
+  const reference = presets.find(({ id }) => id === HUMAN_SCALE.referencePreset)
 
   const placements = useMemo(() => {
     let cursor = 1.4
@@ -382,31 +397,31 @@ export function LineupStageContent({
     <>
       <group ref={groupRef}>
         {/* 1.80m red height reference pillar */}
-        <mesh position={[-0.7, 0.9, 0]}>
-          <boxGeometry args={[0.16, 1.8, 0.16]} />
+        <mesh position={[-0.7, HUMAN_SCALE.referenceHeightM / 2, 0]}>
+          <boxGeometry args={[0.16, HUMAN_SCALE.referenceHeightM, 0.16]} />
           <meshStandardMaterial color="#d94e41" roughness={0.65} />
         </mesh>
-        {/* 1.80m UAL1 athletic reference avatar */}
-        <PolyAvatar
-          index={index}
-          holdPhase={holdPhase}
-          position={[0.15, 0, 0]}
-          selection={{
-            rigId: 'ual1',
-            clip: 'Idle_Loop',
-            body: 'body_athletic',
-            head: index.partsBySlot.get('head')?.find((h) => h.rigId === 'ual1')?.id ?? null,
-            hair: null,
-            torso: null,
-            legs: null,
-            headwear: null,
-            back: null,
-            heldRight: null,
-            heldLeft: null,
-            palette: paletteForPack('core'),
-            proportions: { height: 1, shoulderWidth: 1, torsoBulk: 1, waistScale: 1, headScale: 1, limbThickness: 1 },
-          }}
-        />
+        <group position={[0.15, 0, 0]}>
+          <PolyAvatar
+            index={index}
+            holdPhase={HUMAN_SCALE.referencePhase}
+            selection={{
+              rigId: 'ual1',
+              clip: HUMAN_SCALE.referenceClip,
+              body: HUMAN_SCALE.referenceParts[0],
+              head: HUMAN_SCALE.referenceParts[1],
+              hair: null,
+              torso: null,
+              legs: null,
+              headwear: null,
+              back: null,
+              heldRight: null,
+              heldLeft: null,
+              palette: paletteForPack('core'),
+              proportions: reference?.proportions ?? UAL1_STANDARD_PROPORTIONS,
+            }}
+          />
+        </group>
         {placements.map(({ item, x }, idx) => (
           <group key={`${item.kind}:${item.entry.id}:${idx}`} position={[x, 0, 0]}>
             {item.kind === 'preset' ? (
@@ -469,7 +484,7 @@ export function LineupStageContent({
             ) : item.kind === 'prop' ? (
               <PolyProp
                 item={item.entry}
-                palette={paletteForProp(item.entry.pack)}
+                palette={paletteForProp(item.entry)}
                 clip={clipOverride ?? undefined}
                 holdPhase={holdPhase}
                 blobShadow
@@ -480,7 +495,15 @@ export function LineupStageContent({
           </group>
         ))}
       </group>
-      <FitItemCamera targetRef={groupRef} fitKey={fitKey} margin={1.25} yawDeg={14} pitchDeg={14} onReady={onReady} />
+      <FitItemCamera
+        targetRef={groupRef}
+        fitKey={fitKey}
+        margin={1.12}
+        yawDeg={LINEUP_YAW_DEGREES}
+        pitchDeg={14}
+        readyWhen={(root) => root.children.length === placements.length + 2 && root.children.every(hasRenderableMesh)}
+        onReady={onReady}
+      />
     </>
   )
 }

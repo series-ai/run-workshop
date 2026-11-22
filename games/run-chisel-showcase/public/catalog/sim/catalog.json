@@ -940,22 +940,22 @@
       "relativePath": "props/prop_streetlamp.glb",
       "nodeName": "prop_streetlamp",
       "label": "Classic Streetlamp",
-      "triangles": 132,
+      "triangles": 198,
       "bounds": {
         "min": [
           -0.18478,
           0,
-          -0.43239
+          -0.41478
         ],
         "max": [
           0.18478,
-          2.94,
-          0.43239
+          2.93189,
+          0.41478
         ],
         "size": [
           0.36955,
-          2.94,
-          0.86478
+          2.93189,
+          0.82955
         ]
       }
     },
@@ -1112,6 +1112,1358 @@
           1.47821,
           1.44,
           1.47821
+        ]
+      }
+    },
+    {
+      "id": "prop_market_bakery",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_bakery.glb",
+      "nodeName": "prop_market_bakery",
+      "label": "Loaf Sign Market Bakery",
+      "triangles": 597,
+      "bounds": {
+        "min": [
+          -2.045,
+          0,
+          -2.205
+        ],
+        "max": [
+          2.045,
+          5.74,
+          2.205
+        ],
+        "size": [
+          4.09,
+          5.74,
+          4.41
+        ]
+      }
+    },
+    {
+      "id": "prop_arcade_cinema",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_arcade_cinema.glb",
+      "nodeName": "prop_arcade_cinema",
+      "label": "Arcade Picture House",
+      "triangles": 608,
+      "bounds": {
+        "min": [
+          -2.045,
+          0,
+          -2.11
+        ],
+        "max": [
+          2.045,
+          5.11,
+          2.11
+        ],
+        "size": [
+          4.09,
+          5.11,
+          4.22
+        ]
+      }
+    },
+    {
+      "id": "prop_row_flat",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_row_flat.glb",
+      "nodeName": "prop_row_flat",
+      "label": "Bay Window Row Flat",
+      "triangles": 474,
+      "bounds": {
+        "min": [
+          -2.0225,
+          0,
+          -1.9375
+        ],
+        "max": [
+          2.0225,
+          5.95,
+          1.9375
+        ],
+        "size": [
+          4.045,
+          5.95,
+          3.875
+        ]
+      }
+    },
+    {
+      "id": "prop_glasshouse",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_glasshouse.glb",
+      "nodeName": "prop_glasshouse",
+      "label": "Park Glasshouse",
+      "triangles": 248,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -1.45
+        ],
+        "max": [
+          1.25,
+          2.83,
+          1.45
+        ],
+        "size": [
+          2.5,
+          2.83,
+          2.9
+        ]
+      }
+    },
+    {
+      "id": "prop_flower_stall",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_flower_stall.glb",
+      "nodeName": "prop_flower_stall",
+      "label": "Striped Flower Stall",
+      "triangles": 481,
+      "bounds": {
+        "min": [
+          -1.03,
+          0,
+          -0.43472
+        ],
+        "max": [
+          1.03,
+          2.23429,
+          0.43472
+        ],
+        "size": [
+          2.06,
+          2.23429,
+          0.86944
+        ]
+      }
+    },
+    {
+      "id": "prop_park_pergola",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_pergola.glb",
+      "nodeName": "prop_park_pergola",
+      "label": "Timber Walk Pergola",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -1.44,
+          0,
+          -1.1
+        ],
+        "max": [
+          1.44,
+          2.63,
+          1.1
+        ],
+        "size": [
+          2.88,
+          2.63,
+          2.2
+        ]
+      }
+    },
+    {
+      "id": "prop_park_fountain",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_fountain.glb",
+      "nodeName": "prop_park_fountain",
+      "label": "Two Tier Park Fountain",
+      "triangles": 257,
+      "bounds": {
+        "min": [
+          -1.00456,
+          0,
+          -1.00456
+        ],
+        "max": [
+          1.00456,
+          1.32,
+          1.00456
+        ],
+        "size": [
+          2.00913,
+          1.32,
+          2.00913
+        ]
+      }
+    },
+    {
+      "id": "prop_parasol_table",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_parasol_table.glb",
+      "nodeName": "prop_parasol_table",
+      "label": "Parasol Cafe Table",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.91301,
+          0,
+          -0.96
+        ],
+        "max": [
+          0.91301,
+          2.36,
+          0.96
+        ],
+        "size": [
+          1.82603,
+          2.36,
+          1.92
+        ]
+      }
+    },
+    {
+      "id": "prop_book_return",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_book_return.glb",
+      "nodeName": "prop_book_return",
+      "label": "Library Return Box",
+      "triangles": 76,
+      "bounds": {
+        "min": [
+          -0.365,
+          0,
+          -0.345
+        ],
+        "max": [
+          0.365,
+          1.37,
+          0.345
+        ],
+        "size": [
+          0.73,
+          1.37,
+          0.69
+        ]
+      }
+    },
+    {
+      "id": "prop_ticket_meter",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_ticket_meter.glb",
+      "nodeName": "prop_ticket_meter",
+      "label": "Street Parking Meter",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.185,
+          0,
+          -0.18478
+        ],
+        "max": [
+          0.185,
+          1.73,
+          0.18478
+        ],
+        "size": [
+          0.37,
+          1.73,
+          0.36955
+        ]
+      }
+    },
+    {
+      "id": "prop_patio_screen",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_patio_screen.glb",
+      "nodeName": "prop_patio_screen",
+      "label": "Cafe Terrace Screen",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -1.02,
+          0,
+          -0.21
+        ],
+        "max": [
+          1.02,
+          0.96,
+          0.21
+        ],
+        "size": [
+          2.04,
+          0.96,
+          0.42
+        ]
+      }
+    },
+    {
+      "id": "prop_storm_grate",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_storm_grate.glb",
+      "nodeName": "prop_storm_grate",
+      "label": "Curb Storm Grate",
+      "triangles": 132,
+      "bounds": {
+        "min": [
+          -0.47,
+          0,
+          -0.27
+        ],
+        "max": [
+          0.47,
+          0.103,
+          0.27
+        ],
+        "size": [
+          0.94,
+          0.103,
+          0.54
+        ]
+      }
+    },
+    {
+      "id": "prop_tree_grille",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_tree_grille.glb",
+      "nodeName": "prop_tree_grille",
+      "label": "Open Tree Grille",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.65,
+          0.09,
+          0.65
+        ],
+        "size": [
+          1.3,
+          0.09,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_pedestrian_island",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pedestrian_island.glb",
+      "nodeName": "prop_pedestrian_island",
+      "label": "Pedestrian Refuge Island",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.54,
+          0,
+          -1
+        ],
+        "max": [
+          0.54,
+          0.99,
+          1
+        ],
+        "size": [
+          1.08,
+          0.99,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_bus_stop_flag",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bus_stop_flag.glb",
+      "nodeName": "prop_bus_stop_flag",
+      "label": "Bus Stop and Timetable",
+      "triangles": 100,
+      "bounds": {
+        "min": [
+          -0.3475,
+          0,
+          -0.0775
+        ],
+        "max": [
+          0.3475,
+          2.39,
+          0.0775
+        ],
+        "size": [
+          0.695,
+          2.39,
+          0.155
+        ]
+      }
+    },
+    {
+      "id": "prop_picnic_set",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_picnic_set.glb",
+      "nodeName": "prop_picnic_set",
+      "label": "Park Picnic Set",
+      "triangles": 132,
+      "bounds": {
+        "min": [
+          -0.96,
+          0,
+          -0.77
+        ],
+        "max": [
+          0.96,
+          0.88658,
+          0.77
+        ],
+        "size": [
+          1.92,
+          0.88658,
+          1.54
+        ]
+      }
+    },
+    {
+      "id": "prop_park_trellis",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_trellis.glb",
+      "nodeName": "prop_park_trellis",
+      "label": "Garden Trellis Panel",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.755,
+          0,
+          -0.075
+        ],
+        "max": [
+          0.755,
+          1.81,
+          0.075
+        ],
+        "size": [
+          1.51,
+          1.81,
+          0.15
+        ]
+      }
+    },
+    {
+      "id": "prop_bistro_menu",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bistro_menu.glb",
+      "nodeName": "prop_bistro_menu",
+      "label": "Folding Cafe Menu",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -0.325,
+          0,
+          -0.39647
+        ],
+        "max": [
+          0.325,
+          1.21069,
+          0.39647
+        ],
+        "size": [
+          0.65,
+          1.21069,
+          0.79294
+        ]
+      }
+    },
+    {
+      "id": "prop_magazine_rack",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_magazine_rack.glb",
+      "nodeName": "prop_magazine_rack",
+      "label": "Three Tier Magazine Rack",
+      "triangles": 168,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.325
+        ],
+        "max": [
+          0.4,
+          1.39,
+          0.325
+        ],
+        "size": [
+          0.8,
+          1.39,
+          0.65
+        ]
+      }
+    },
+    {
+      "id": "prop_fruit_display",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_fruit_display.glb",
+      "nodeName": "prop_fruit_display",
+      "label": "Greengrocer Fruit Table",
+      "triangles": 414,
+      "bounds": {
+        "min": [
+          -0.74,
+          0,
+          -0.36
+        ],
+        "max": [
+          0.74,
+          0.99,
+          0.36
+        ],
+        "size": [
+          1.48,
+          0.99,
+          0.72
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_shutter",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_shutter.glb",
+      "nodeName": "prop_shop_shutter",
+      "label": "Closed Shop Shutter Bay",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.22
+        ],
+        "max": [
+          1,
+          2.5,
+          0.22
+        ],
+        "size": [
+          2,
+          2.5,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_arcade_column",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_arcade_column.glb",
+      "nodeName": "prop_arcade_column",
+      "label": "Fluted Arcade Column",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -0.4026,
+          0,
+          -0.3782
+        ],
+        "max": [
+          0.4026,
+          2.78,
+          0.3782
+        ],
+        "size": [
+          0.8052,
+          2.78,
+          0.7564
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_clock",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_clock.glb",
+      "nodeName": "prop_shop_clock",
+      "label": "Two Face Street Clock",
+      "triangles": 248,
+      "bounds": {
+        "min": [
+          -0.41,
+          0,
+          -0.18
+        ],
+        "max": [
+          0.41,
+          3.14,
+          0.18
+        ],
+        "size": [
+          0.82,
+          3.14,
+          0.36
+        ]
+      }
+    },
+    {
+      "id": "prop_curb_ramp",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_curb_ramp.glb",
+      "nodeName": "prop_curb_ramp",
+      "label": "Pedestrian Curb Ramp",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.90037
+        ],
+        "max": [
+          1,
+          0.16,
+          0.90037
+        ],
+        "size": [
+          2,
+          0.16,
+          1.80074
+        ]
+      }
+    },
+    {
+      "id": "prop_park_drinking_font",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_drinking_font.glb",
+      "nodeName": "prop_park_drinking_font",
+      "label": "Park Drinking Fountain",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.30434,
+          0,
+          -0.32
+        ],
+        "max": [
+          0.30434,
+          1.18824,
+          0.32
+        ],
+        "size": [
+          0.60868,
+          1.18824,
+          0.64
+        ]
+      }
+    },
+    {
+      "id": "prop_road_straight",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_road_straight.glb",
+      "nodeName": "prop_road_straight",
+      "label": "Asphalt Straight Road",
+      "triangles": 56,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.09,
+          1
+        ],
+        "size": [
+          2,
+          0.09,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_road_corner",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_road_corner.glb",
+      "nodeName": "prop_road_corner",
+      "label": "Asphalt Corner Road",
+      "triangles": 58,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.09,
+          1
+        ],
+        "size": [
+          2,
+          0.09,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_road_tsplit",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_road_tsplit.glb",
+      "nodeName": "prop_road_tsplit",
+      "label": "Asphalt T-Intersection",
+      "triangles": 68,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.09,
+          1
+        ],
+        "size": [
+          2,
+          0.09,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_road_junction",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_road_junction.glb",
+      "nodeName": "prop_road_junction",
+      "label": "Asphalt 4-Way Junction",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.09,
+          1
+        ],
+        "size": [
+          2,
+          0.09,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_park_grass_tile",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_grass_tile.glb",
+      "nodeName": "prop_park_grass_tile",
+      "label": "Manicured Park Lawn Tile",
+      "triangles": 32,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.16,
+          1
+        ],
+        "size": [
+          2,
+          0.16,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_sidewalk_corner",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_sidewalk_corner.glb",
+      "nodeName": "prop_sidewalk_corner",
+      "label": "Corner Sidewalk Curb Tile",
+      "triangles": 56,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.164,
+          1
+        ],
+        "size": [
+          2,
+          0.164,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_wall_door",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_wall_door.glb",
+      "nodeName": "prop_shop_wall_door",
+      "label": "Modular Shop Wall & Door",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -1.03,
+          0,
+          -0.22
+        ],
+        "max": [
+          1.03,
+          2.585,
+          0.22
+        ],
+        "size": [
+          2.06,
+          2.585,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_wall_window",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_wall_window.glb",
+      "nodeName": "prop_shop_wall_window",
+      "label": "Modular Shop Display Wall",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -1.03,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.03,
+          2.55,
+          0.2
+        ],
+        "size": [
+          2.06,
+          2.55,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_wall_upper",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_wall_upper.glb",
+      "nodeName": "prop_shop_wall_upper",
+      "label": "Modular Upper Story Facade",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -1.04,
+          0,
+          -0.21
+        ],
+        "max": [
+          1.04,
+          1.87,
+          0.21
+        ],
+        "size": [
+          2.08,
+          1.87,
+          0.42
+        ]
+      }
+    },
+    {
+      "id": "prop_brick_wall",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_brick_wall.glb",
+      "nodeName": "prop_brick_wall",
+      "label": "Urban Brick Perimeter Wall",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -1.07,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.07,
+          1.26,
+          0.2
+        ],
+        "size": [
+          2.14,
+          1.26,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_picket_fence_corner",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_picket_fence_corner.glb",
+      "nodeName": "prop_picket_fence_corner",
+      "label": "Picket Fence Corner",
+      "triangles": 36,
+      "bounds": {
+        "min": [
+          -0.58,
+          0,
+          -0.58
+        ],
+        "max": [
+          0.58,
+          1,
+          0.58
+        ],
+        "size": [
+          1.16,
+          1,
+          1.16
+        ]
+      }
+    },
+    {
+      "id": "prop_corner_bistro",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_corner_bistro.glb",
+      "nodeName": "prop_corner_bistro",
+      "label": "Corner Cafe Bistro Building",
+      "triangles": 402,
+      "bounds": {
+        "min": [
+          -1.41,
+          0,
+          -1.4075
+        ],
+        "max": [
+          1.41,
+          3.165,
+          1.4075
+        ],
+        "size": [
+          2.82,
+          3.165,
+          2.815
+        ]
+      }
+    },
+    {
+      "id": "prop_suburban_house",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_suburban_house.glb",
+      "nodeName": "prop_suburban_house",
+      "label": "Suburban Gabled House",
+      "triangles": 132,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.42
+        ],
+        "max": [
+          1.5,
+          2.86,
+          1.42
+        ],
+        "size": [
+          3,
+          2.86,
+          2.84
+        ]
+      }
+    },
+    {
+      "id": "prop_apartment_block",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_apartment_block.glb",
+      "nodeName": "prop_apartment_block",
+      "label": "3-Story Apartment Block",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -1.41,
+          0,
+          -1.39
+        ],
+        "max": [
+          1.41,
+          4.165,
+          1.39
+        ],
+        "size": [
+          2.82,
+          4.165,
+          2.78
+        ]
+      }
+    },
+    {
+      "id": "prop_convenience_store",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_convenience_store.glb",
+      "nodeName": "prop_convenience_store",
+      "label": "Corner Convenience Store",
+      "triangles": 140,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -1.145
+        ],
+        "max": [
+          1.4,
+          2.885,
+          1.145
+        ],
+        "size": [
+          2.8,
+          2.885,
+          2.29
+        ]
+      }
+    },
+    {
+      "id": "prop_park_gazebo",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_gazebo.glb",
+      "nodeName": "prop_park_gazebo",
+      "label": "Octagonal Park Gazebo",
+      "triangles": 130,
+      "bounds": {
+        "min": [
+          -1.18257,
+          0,
+          -1.18257
+        ],
+        "max": [
+          1.18257,
+          2.62,
+          1.18257
+        ],
+        "size": [
+          2.36513,
+          2.62,
+          2.36513
+        ]
+      }
+    },
+    {
+      "id": "prop_city_sedan",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_city_sedan.glb",
+      "nodeName": "prop_city_sedan",
+      "label": "Commuter City Sedan",
+      "triangles": 410,
+      "bounds": {
+        "min": [
+          -0.90403,
+          0,
+          -1.947
+        ],
+        "max": [
+          0.90403,
+          1.56412,
+          1.947
+        ],
+        "size": [
+          1.80806,
+          1.56412,
+          3.894
+        ]
+      }
+    },
+    {
+      "id": "prop_city_taxi",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_city_taxi.glb",
+      "nodeName": "prop_city_taxi",
+      "label": "Downtown Yellow Taxi",
+      "triangles": 438,
+      "bounds": {
+        "min": [
+          -0.90403,
+          0,
+          -1.947
+        ],
+        "max": [
+          0.90403,
+          1.64412,
+          1.947
+        ],
+        "size": [
+          1.80806,
+          1.64412,
+          3.894
+        ]
+      }
+    },
+    {
+      "id": "prop_delivery_van",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_delivery_van.glb",
+      "nodeName": "prop_delivery_van",
+      "label": "Urban Delivery Van",
+      "triangles": 384,
+      "bounds": {
+        "min": [
+          -0.9164,
+          0,
+          -1.91
+        ],
+        "max": [
+          0.9164,
+          2.0426,
+          1.91
+        ],
+        "size": [
+          1.8328,
+          2.0426,
+          3.82
+        ]
+      }
+    },
+    {
+      "id": "prop_city_bus",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_city_bus.glb",
+      "nodeName": "prop_city_bus",
+      "label": "Metro Transit City Bus",
+      "triangles": 646,
+      "bounds": {
+        "min": [
+          -1.10173,
+          0,
+          -2.72904
+        ],
+        "max": [
+          1.10173,
+          2.68253,
+          2.72904
+        ],
+        "size": [
+          2.20347,
+          2.68253,
+          5.45808
+        ]
+      }
+    },
+    {
+      "id": "prop_bicycle_rack",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bicycle_rack.glb",
+      "nodeName": "prop_bicycle_rack",
+      "label": "Commuter Bicycle Rack",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -0.66,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.66,
+          0.705,
+          0.38
+        ],
+        "size": [
+          1.32,
+          0.705,
+          0.76
+        ]
+      }
+    },
+    {
+      "id": "prop_fire_hydrant",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_fire_hydrant.glb",
+      "nodeName": "prop_fire_hydrant",
+      "label": "Street Fire Hydrant",
+      "triangles": 74,
+      "bounds": {
+        "min": [
+          -0.19,
+          0,
+          -0.14782
+        ],
+        "max": [
+          0.19,
+          0.76,
+          0.14782
+        ],
+        "size": [
+          0.38,
+          0.76,
+          0.29564
+        ]
+      }
+    },
+    {
+      "id": "prop_cafe_chair",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_cafe_chair.glb",
+      "nodeName": "prop_cafe_chair",
+      "label": "Bistro Patio Chair",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -0.23,
+          0,
+          -0.23
+        ],
+        "max": [
+          0.23,
+          0.86,
+          0.23
+        ],
+        "size": [
+          0.46,
+          0.86,
+          0.46
+        ]
+      }
+    },
+    {
+      "id": "prop_flower_bed",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_flower_bed.glb",
+      "nodeName": "prop_flower_bed",
+      "label": "Boxed Street Flower Bed",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -0.71,
+          0,
+          -0.34
+        ],
+        "max": [
+          0.71,
+          0.5,
+          0.34
+        ],
+        "size": [
+          1.42,
+          0.5,
+          0.68
+        ]
+      }
+    },
+    {
+      "id": "prop_park_slide",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_park_slide.glb",
+      "nodeName": "prop_park_slide",
+      "label": "Playground Slide",
+      "triangles": 56,
+      "bounds": {
+        "min": [
+          -0.9157,
+          0,
+          -0.36
+        ],
+        "max": [
+          0.9157,
+          1.36,
+          0.36
+        ],
+        "size": [
+          1.8314,
+          1.36,
+          0.72
+        ]
+      }
+    },
+    {
+      "id": "prop_pine_urban_tree",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pine_urban_tree.glb",
+      "nodeName": "prop_pine_urban_tree",
+      "label": "Park Conifer Tree",
+      "triangles": 94,
+      "bounds": {
+        "min": [
+          -0.5889,
+          0,
+          -0.68
+        ],
+        "max": [
+          0.5889,
+          2.85,
+          0.68
+        ],
+        "size": [
+          1.17779,
+          2.85,
+          1.36
+        ]
+      }
+    },
+    {
+      "id": "prop_newsstand",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_newsstand.glb",
+      "nodeName": "prop_newsstand",
+      "label": "Corner Newsstand Kiosk",
+      "triangles": 66,
+      "bounds": {
+        "min": [
+          -0.61,
+          0,
+          -0.44
+        ],
+        "max": [
+          0.61,
+          1.63,
+          0.44
+        ],
+        "size": [
+          1.22,
+          1.63,
+          0.88
         ]
       }
     },
@@ -1290,7 +2642,7 @@
         "eye": "#426757"
       },
       "proportions": {
-        "height": 0.96,
+        "height": 0.892224,
         "legRatio": 0.95,
         "shoulderWidth": 1.04,
         "torsoBulk": 1,
@@ -1302,7 +2654,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 64.137,
+        "totalMassKg": 59.365,
         "bodies": [
           {
             "bone": "pelvis",
@@ -1312,20 +2664,20 @@
               0,
               0
             ],
-            "massKg": 10.9945,
+            "massKg": 10.6416,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0432,
-                0.0882,
-                0.0192
+                0.0857,
+                0.0198
               ],
               "b": [
                 0.0432,
-                0.0882,
-                0.0192
+                0.0857,
+                0.0198
               ],
-              "radius": 0.1244
+              "radius": 0.1223
             },
             "joint": null,
             "collisionGroup": 1
@@ -1335,23 +2687,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2542,
-              -0.0006
+              0.2466,
+              0.0013
             ],
-            "massKg": 8.8138,
+            "massKg": 7.2933,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.026,
-                0.0853,
-                0.0121
+                0.0711,
+                0.0139
               ],
               "b": [
                 0.026,
-                0.0853,
-                0.0121
+                0.0711,
+                0.0139
               ],
-              "radius": 0.0641
+              "radius": 0.0585
             },
             "joint": {
               "type": "cone_twist",
@@ -1383,23 +2735,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.1999,
-              -0.018
+              0.1656,
+              -0.0137
             ],
-            "massKg": 11.936,
+            "massKg": 11.4355,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0422,
-                0.0081,
+                0.0078,
                 0.0195
               ],
               "b": [
                 0.1121,
-                0.0081,
+                0.0078,
                 0.0195
               ],
-              "radius": 0.1576
+              "radius": 0.1543
             },
             "joint": {
               "type": "cone_twist",
@@ -1431,8 +2783,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2429,
-              0.008
+              0.2333,
+              0.0077
             ],
             "massKg": 5.3358,
             "collider": {
@@ -1479,21 +2831,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1128,
-              0.0581,
-              0.0255
+              0.0545,
+              0.0254
             ],
-            "massKg": 1.9907,
+            "massKg": 1.8026,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0158,
-                0.0547,
-                -0.0058
+                0.0496,
+                -0.0059
               ],
               "b": [
                 -0.016,
-                0.2334,
-                -0.0028
+                0.2113,
+                -0.0031
               ],
               "radius": 0.0496
             },
@@ -1527,21 +2879,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.2854,
-              -0.0005
+              0.2585,
+              -0.0009
             ],
-            "massKg": 1.2881,
+            "massKg": 1.1664,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0494,
-                -0.0001
+                0.0447,
+                0
               ],
               "b": [
                 -0.0009,
-                0.2083,
-                -0.0029
+                0.1886,
+                -0.0025
               ],
               "radius": 0.0448
             },
@@ -1575,8 +2927,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2448,
-              0.0004
+              0.2217,
+              0.0008
             ],
             "massKg": 0.512,
             "collider": {
@@ -1623,21 +2975,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1128,
-              0.0581,
-              0.0255
+              0.0545,
+              0.0254
             ],
-            "massKg": 1.9907,
+            "massKg": 1.8026,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0158,
-                0.0547,
-                -0.0058
+                0.0496,
+                -0.0059
               ],
               "b": [
                 0.016,
-                0.2334,
-                -0.0028
+                0.2113,
+                -0.0031
               ],
               "radius": 0.0496
             },
@@ -1671,21 +3023,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.2854,
-              -0.0005
+              0.2585,
+              -0.0009
             ],
-            "massKg": 1.2881,
+            "massKg": 1.1664,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0494,
-                -0.0001
+                0.0447,
+                0
               ],
               "b": [
                 0.0009,
-                0.2083,
-                -0.0029
+                0.1886,
+                -0.0025
               ],
               "radius": 0.0448
             },
@@ -1719,8 +3071,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2448,
-              0.0004
+              0.2217,
+              0.0008
             ],
             "massKg": 0.512,
             "collider": {
@@ -1767,21 +3119,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0557,
-              0.0104
+              0.0541,
+              0.0108
             ],
-            "massKg": 6.0238,
+            "massKg": 5.4136,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0119,
-                0.0553,
-                -0.0033
+                0.0497,
+                -0.0032
               ],
               "b": [
                 -0.0119,
-                0.323,
-                -0.0051
+                0.2902,
+                -0.0049
               ],
               "radius": 0.0565
             },
@@ -1815,21 +3167,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4093,
-              0.0003
+              0.3679,
+              0.0006
             ],
-            "massKg": 2.7538,
+            "massKg": 2.4748,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0005,
-                0.0754,
-                0.0161
+                0.0679,
+                0.0167
               ],
               "b": [
                 -0.0004,
-                0.3828,
-                -0.0087
+                0.3442,
+                -0.0056
               ],
               "radius": 0.06
             },
@@ -1863,8 +3215,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.42,
-              0.0039
+              0.3778,
+              0.0073
             ],
             "massKg": 0.96,
             "collider": {
@@ -1911,21 +3263,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0557,
-              0.0104
+              0.0541,
+              0.0108
             ],
-            "massKg": 6.0238,
+            "massKg": 5.4136,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0119,
-                0.0553,
-                -0.0033
+                0.0497,
+                -0.0032
               ],
               "b": [
                 0.0119,
-                0.323,
-                -0.0051
+                0.2902,
+                -0.0049
               ],
               "radius": 0.0565
             },
@@ -1959,21 +3311,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4093,
-              0.0003
+              0.3679,
+              0.0006
             ],
-            "massKg": 2.7538,
+            "massKg": 2.4748,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0005,
-                0.0754,
-                0.0161
+                0.0679,
+                0.0167
               ],
               "b": [
                 0.0004,
-                0.3828,
-                -0.0087
+                0.3442,
+                -0.0056
               ],
               "radius": 0.06
             },
@@ -2007,8 +3359,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.42,
-              0.0039
+              0.3778,
+              0.0073
             ],
             "massKg": 0.96,
             "collider": {
@@ -2144,7 +3496,7 @@
         "eye": "#305774"
       },
       "proportions": {
-        "height": 1.03,
+        "height": 0.9572820000000001,
         "legRatio": 0.94,
         "shoulderWidth": 1.06,
         "torsoBulk": 1,
@@ -2156,7 +3508,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 81.6103,
+        "totalMassKg": 75.4658,
         "bodies": [
           {
             "bone": "pelvis",
@@ -2166,20 +3518,20 @@
               0,
               0
             ],
-            "massKg": 13.469,
+            "massKg": 13.0148,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.047,
-                0.0919,
-                0.0208
+                0.0892,
+                0.0215
               ],
               "b": [
                 0.047,
-                0.0919,
-                0.0208
+                0.0892,
+                0.0215
               ],
-              "radius": 0.131
+              "radius": 0.1287
             },
             "joint": null,
             "collisionGroup": 1
@@ -2189,23 +3541,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2637,
-              -0.0027
+              0.2553,
+              -0.0005
             ],
-            "massKg": 12.5086,
+            "massKg": 10.5635,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0074,
-                0.1031,
-                0.0123
+                0.0875,
+                0.0142
               ],
               "b": [
                 0.0074,
-                0.1031,
-                0.0123
+                0.0875,
+                0.0142
               ],
-              "radius": 0.082
+              "radius": 0.0748
             },
             "joint": {
               "type": "cone_twist",
@@ -2237,23 +3589,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.242,
-              -0.0232
+              0.2045,
+              -0.0185
             ],
-            "massKg": 14.8633,
+            "massKg": 14.2162,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0371,
-                0.0085,
+                0.0081,
                 0.0217
               ],
               "b": [
                 0.0371,
-                0.0085,
+                0.0081,
                 0.0217
               ],
-              "radius": 0.1317
+              "radius": 0.1287
             },
             "joint": {
               "type": "cone_twist",
@@ -2285,8 +3637,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2546,
-              0.0084
+              0.2442,
+              0.008
             ],
             "massKg": 5.25,
             "collider": {
@@ -2333,21 +3685,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1156,
-              0.0625,
-              0.0256
+              0.0585,
+              0.0255
             ],
-            "massKg": 2.6725,
+            "massKg": 2.4256,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0182,
-                0.0647,
-                -0.0058
+                0.0588,
+                -0.0059
               ],
               "b": [
                 -0.0183,
-                0.2519,
-                -0.0026
+                0.2287,
+                -0.003
               ],
               "radius": 0.0503
             },
@@ -2381,21 +3733,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.3137,
-              -0.0001
+              0.2847,
+              -0.0006
             ],
-            "massKg": 1.7124,
+            "massKg": 1.5542,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0581,
-                -0.0006
+                0.0527,
+                -0.0005
               ],
               "b": [
                 -0.0009,
-                0.2251,
-                -0.0034
+                0.2043,
+                -0.0031
               ],
               "radius": 0.0445
             },
@@ -2429,8 +3781,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.269,
-              0
+              0.2442,
+              0.0005
             ],
             "massKg": 0.6127,
             "collider": {
@@ -2477,21 +3829,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1156,
-              0.0625,
-              0.0256
+              0.0585,
+              0.0255
             ],
-            "massKg": 2.6725,
+            "massKg": 2.4256,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0182,
-                0.0647,
-                -0.0058
+                0.0588,
+                -0.0059
               ],
               "b": [
                 0.0183,
-                0.2519,
-                -0.0026
+                0.2287,
+                -0.003
               ],
               "radius": 0.0503
             },
@@ -2525,21 +3877,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.3137,
-              -0.0001
+              0.2847,
+              -0.0006
             ],
-            "massKg": 1.7124,
+            "massKg": 1.5542,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0581,
-                -0.0006
+                0.0527,
+                -0.0005
               ],
               "b": [
                 0.0009,
-                0.2251,
-                -0.0034
+                0.2043,
+                -0.0031
               ],
               "radius": 0.0445
             },
@@ -2573,8 +3925,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.269,
-              0
+              0.2442,
+              0.0005
             ],
             "massKg": 0.6127,
             "collider": {
@@ -2621,21 +3973,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0577,
-              0.01
+              0.0559,
+              0.0104
             ],
-            "massKg": 7.9849,
+            "massKg": 7.1992,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0121,
-                0.0651,
+                0.0587,
                 -0.0033
               ],
               "b": [
                 -0.0121,
-                0.3484,
-                -0.0053
+                0.3141,
+                -0.0051
               ],
               "radius": 0.0575
             },
@@ -2669,21 +4021,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4474,
-              0.0001
+              0.4034,
+              0.0004
             ],
-            "massKg": 3.641,
+            "massKg": 3.2827,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0869,
-                0.0158
+                0.0785,
+                0.0165
               ],
               "b": [
                 0,
-                0.4137,
-                -0.0105
+                0.3732,
+                -0.0072
               ],
               "radius": 0.061
             },
@@ -2717,8 +4069,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4589,
-              0.0014
+              0.414,
+              0.005
             ],
             "massKg": 1.1363,
             "collider": {
@@ -2765,21 +4117,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0577,
-              0.01
+              0.0559,
+              0.0104
             ],
-            "massKg": 7.9849,
+            "massKg": 7.1992,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0121,
-                0.0651,
+                0.0587,
                 -0.0033
               ],
               "b": [
                 0.0121,
-                0.3484,
-                -0.0053
+                0.3141,
+                -0.0051
               ],
               "radius": 0.0575
             },
@@ -2813,21 +4165,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4474,
-              0.0001
+              0.4034,
+              0.0004
             ],
-            "massKg": 3.641,
+            "massKg": 3.2827,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0869,
-                0.0158
+                0.0785,
+                0.0165
               ],
               "b": [
                 0,
-                0.4137,
-                -0.0105
+                0.3732,
+                -0.0072
               ],
               "radius": 0.061
             },
@@ -2861,8 +4213,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4589,
-              0.0014
+              0.414,
+              0.005
             ],
             "massKg": 1.1363,
             "collider": {
@@ -2998,7 +4350,7 @@
         "eye": "#49352f"
       },
       "proportions": {
-        "height": 1,
+        "height": 0.9294,
         "legRatio": 0.93,
         "shoulderWidth": 1.04,
         "torsoBulk": 1.06,
@@ -3010,7 +4362,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 95.8648,
+        "totalMassKg": 88.619,
         "bodies": [
           {
             "bone": "pelvis",
@@ -3020,20 +4372,20 @@
               0,
               0
             ],
-            "massKg": 15.7647,
+            "massKg": 15.2354,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0467,
-                0.0934,
-                0.0294
+                0.0907,
+                0.0301
               ],
               "b": [
                 0.0467,
-                0.0934,
-                0.0294
+                0.0907,
+                0.0301
               ],
-              "radius": 0.1376
+              "radius": 0.1352
             },
             "joint": null,
             "collisionGroup": 1
@@ -3043,23 +4395,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2617,
-              -0.0018
+              0.2535,
+              0.0003
             ],
-            "massKg": 14.3729,
+            "massKg": 12.0783,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0048,
-                0.0995,
-                0.0151
+                0.0841,
+                0.017
               ],
               "b": [
                 0.0048,
-                0.0995,
-                0.0151
+                0.0841,
+                0.017
               ],
-              "radius": 0.0668
+              "radius": 0.061
             },
             "joint": {
               "type": "cone_twist",
@@ -3091,23 +4443,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2328,
-              -0.0221
+              0.1957,
+              -0.0175
             ],
-            "massKg": 18.3596,
+            "massKg": 17.5617,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0357,
-                0.0082,
+                0.0078,
                 0.0252
               ],
               "b": [
                 0.0357,
-                0.0082,
+                0.0078,
                 0.0252
               ],
-              "radius": 0.1289
+              "radius": 0.1261
             },
             "joint": {
               "type": "cone_twist",
@@ -3139,8 +4491,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2521,
-              0.0081
+              0.2417,
+              0.0077
             ],
             "massKg": 6.16,
             "collider": {
@@ -3187,21 +4539,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1149,
-              0.0614,
-              0.0275
+              0.0576,
+              0.0274
             ],
-            "massKg": 3.1454,
+            "massKg": 2.8521,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0201,
-                0.065,
-                -0.006
+                0.0589,
+                -0.0061
               ],
               "b": [
                 -0.0202,
-                0.24,
-                -0.003
+                0.2177,
+                -0.0034
               ],
               "radius": 0.0501
             },
@@ -3235,21 +4587,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.3021,
-              -0.0004
+              0.2739,
+              -0.0009
             ],
-            "massKg": 1.9964,
+            "massKg": 1.8102,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0565,
-                -0.0006
+                0.0513,
+                -0.0005
               ],
               "b": [
                 -0.0009,
-                0.2162,
-                -0.0033
+                0.196,
+                -0.0029
               ],
               "radius": 0.0431
             },
@@ -3283,8 +4635,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2591,
-              0.0003
+              0.2349,
+              0.0007
             ],
             "massKg": 0.734,
             "collider": {
@@ -3331,21 +4683,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1149,
-              0.0614,
-              0.0275
+              0.0576,
+              0.0274
             ],
-            "massKg": 3.1454,
+            "massKg": 2.8521,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0201,
-                0.065,
-                -0.006
+                0.0589,
+                -0.0061
               ],
               "b": [
                 0.0202,
-                0.24,
-                -0.003
+                0.2177,
+                -0.0034
               ],
               "radius": 0.0501
             },
@@ -3379,21 +4731,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.3021,
-              -0.0004
+              0.2739,
+              -0.0009
             ],
-            "massKg": 1.9964,
+            "massKg": 1.8102,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0565,
-                -0.0006
+                0.0513,
+                -0.0005
               ],
               "b": [
                 0.0009,
-                0.2162,
-                -0.0033
+                0.196,
+                -0.0029
               ],
               "radius": 0.0431
             },
@@ -3427,8 +4779,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2591,
-              0.0003
+              0.2349,
+              0.0007
             ],
             "massKg": 0.734,
             "collider": {
@@ -3475,21 +4827,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0573,
-              0.0102
+              0.0556,
+              0.0107
             ],
-            "massKg": 9.1977,
+            "massKg": 8.2818,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0121,
-                0.0626,
-                -0.0034
+                0.0564,
+                -0.0033
               ],
               "b": [
                 -0.0121,
-                0.3299,
-                -0.0052
+                0.297,
+                -0.005
               ],
               "radius": 0.0722
             },
@@ -3523,21 +4875,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4247,
-              0.0004
+              0.3824,
+              0.0006
             ],
-            "massKg": 4.1838,
+            "massKg": 3.7671,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0833,
-                0.0165
+                0.0752,
+                0.0172
               ],
               "b": [
                 0,
-                0.413,
-                -0.01
+                0.3721,
+                -0.0067
               ],
               "radius": 0.0539
             },
@@ -3571,8 +4923,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4358,
-              0.0038
+              0.3927,
+              0.0073
             ],
             "massKg": 1.3465,
             "collider": {
@@ -3619,21 +4971,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0573,
-              0.0102
+              0.0556,
+              0.0107
             ],
-            "massKg": 9.1977,
+            "massKg": 8.2818,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0121,
-                0.0626,
-                -0.0034
+                0.0564,
+                -0.0033
               ],
               "b": [
                 0.0121,
-                0.3299,
-                -0.0052
+                0.297,
+                -0.005
               ],
               "radius": 0.0722
             },
@@ -3667,21 +5019,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4247,
-              0.0004
+              0.3824,
+              0.0006
             ],
-            "massKg": 4.1838,
+            "massKg": 3.7671,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0833,
-                0.0165
+                0.0752,
+                0.0172
               ],
               "b": [
                 0,
-                0.413,
-                -0.01
+                0.3721,
+                -0.0067
               ],
               "radius": 0.0539
             },
@@ -3715,8 +5067,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4358,
-              0.0038
+              0.3927,
+              0.0073
             ],
             "massKg": 1.3465,
             "collider": {

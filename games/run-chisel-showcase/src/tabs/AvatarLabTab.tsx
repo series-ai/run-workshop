@@ -9,7 +9,8 @@ import {
   type CharacterPreset,
   type PackCatalog,
 } from '@chisel/contracts/catalog'
-import { CONTEXT_DEFAULT_PALETTES, EYE_PRESETS, HAIR_PRESETS, SKIN_PRESETS, type PaletteRegion } from '@chisel/contracts/palette'
+import { COLOR_DIRECTION } from '@chisel/contracts/colorDirection'
+import { EYE_PRESETS, HAIR_PRESETS, SKIN_PRESETS, type PaletteRegion } from '@chisel/contracts/palette'
 import { CONTEXT_PACK_KEYS } from '@chisel/contracts/packs'
 import { RIG_SPECS, type RigId } from '@chisel/contracts/rig'
 import { PolyAvatar } from '../avatar/PolyAvatar'
@@ -627,7 +628,7 @@ export function AvatarLabTab({
                   <button
                     key={ctx}
                     className="pill-btn"
-                    onClick={() => setSelection((s) => ({ ...s, palette: { ...CONTEXT_DEFAULT_PALETTES[ctx] } }))}
+                    onClick={() => setSelection((s) => ({ ...s, palette: { ...COLOR_DIRECTION.packs[ctx].avatar } }))}
                   >
                     {ctx}
                   </button>

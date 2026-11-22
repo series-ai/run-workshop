@@ -3954,7 +3954,7 @@
       "relativePath": "props/prop_cage_cart.glb",
       "nodeName": "prop_cage_cart",
       "label": "Iron Prisoner Cage",
-      "triangles": 372,
+      "triangles": 432,
       "bounds": {
         "min": [
           -0.53,
@@ -3963,12 +3963,12 @@
         ],
         "max": [
           0.53,
-          1.31173,
+          2.29173,
           0.70173
         ],
         "size": [
           1.06,
-          1.31173,
+          2.29173,
           1.40346
         ]
       }
@@ -3996,6 +3996,1254 @@
           0.72,
           1.38,
           0.68
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_track",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_track.glb",
+      "nodeName": "prop_mine_track",
+      "label": "Quarry Rail Section",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -0.525,
+          0,
+          -1
+        ],
+        "max": [
+          0.525,
+          0.1925,
+          1
+        ],
+        "size": [
+          1.05,
+          0.1925,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_track_bend",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_track_bend.glb",
+      "nodeName": "prop_mine_track_bend",
+      "label": "Quarter-Circle Mine Rail",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.76653,
+          0,
+          -0.76653
+        ],
+        "max": [
+          0.76653,
+          0.18046,
+          0.76653
+        ],
+        "size": [
+          1.53306,
+          0.18046,
+          1.53306
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_buffer",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_buffer.glb",
+      "nodeName": "prop_mine_buffer",
+      "label": "Timber Rail Buffer",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.685,
+          0,
+          -0.67
+        ],
+        "max": [
+          0.685,
+          0.935,
+          0.67
+        ],
+        "size": [
+          1.37,
+          0.935,
+          1.34
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_shoring",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_shoring.glb",
+      "nodeName": "prop_mine_shoring",
+      "label": "Tunnel Shoring Bent",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -1.04,
+          0,
+          -0.335
+        ],
+        "max": [
+          1.04,
+          2.285,
+          0.335
+        ],
+        "size": [
+          2.08,
+          2.285,
+          0.67
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_lagging_wall",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_lagging_wall.glb",
+      "nodeName": "prop_mine_lagging_wall",
+      "label": "Braced Lagging Wall",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -1.01,
+          0,
+          -0.1525
+        ],
+        "max": [
+          1.01,
+          1.86,
+          0.1525
+        ],
+        "size": [
+          2.02,
+          1.86,
+          0.305
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_ore_skip",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_ore_skip.glb",
+      "nodeName": "prop_mine_ore_skip",
+      "label": "Loaded Ore Skip",
+      "triangles": 540,
+      "bounds": {
+        "min": [
+          -0.57,
+          0,
+          -0.725
+        ],
+        "max": [
+          0.57,
+          1.38,
+          0.725
+        ],
+        "size": [
+          1.14,
+          1.38,
+          1.45
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_ore_chute",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_ore_chute.glb",
+      "nodeName": "prop_mine_ore_chute",
+      "label": "Gravity Ore Chute",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.68425,
+          0,
+          -0.79875
+        ],
+        "max": [
+          0.68425,
+          1.66333,
+          0.79875
+        ],
+        "size": [
+          1.36849,
+          1.66333,
+          1.5975
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_winding_drum",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_winding_drum.glb",
+      "nodeName": "prop_mine_winding_drum",
+      "label": "Hand Winding Drum",
+      "triangles": 456,
+      "bounds": {
+        "min": [
+          -0.79,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.79,
+          1.17196,
+          0.4
+        ],
+        "size": [
+          1.58,
+          1.17196,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_lamp_post",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_lamp_post.glb",
+      "nodeName": "prop_mine_lamp_post",
+      "label": "Pit Lamp Post",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.42562,
+          0,
+          -0.275
+        ],
+        "max": [
+          0.42562,
+          1.91,
+          0.275
+        ],
+        "size": [
+          0.85124,
+          1.91,
+          0.55
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_ladder",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_ladder.glb",
+      "nodeName": "prop_mine_ladder",
+      "label": "Inclined Mine Ladder",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -0.3295,
+          0,
+          -0.30848
+        ],
+        "max": [
+          0.3295,
+          2.54497,
+          0.30848
+        ],
+        "size": [
+          0.65899,
+          2.54497,
+          0.61696
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_drill_rack",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_drill_rack.glb",
+      "nodeName": "prop_quarry_drill_rack",
+      "label": "Rock Drill Rack",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.31
+        ],
+        "max": [
+          0.7,
+          1.43,
+          0.31
+        ],
+        "size": [
+          1.4,
+          1.43,
+          0.62
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_scree_fan",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_scree_fan.glb",
+      "nodeName": "prop_quarry_scree_fan",
+      "label": "Basalt Scree Fan",
+      "triangles": 624,
+      "bounds": {
+        "min": [
+          -0.99838,
+          0,
+          -0.8043
+        ],
+        "max": [
+          0.99838,
+          0.4574,
+          0.8043
+        ],
+        "size": [
+          1.99676,
+          0.4574,
+          1.6086
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_crystal_seam",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_crystal_seam.glb",
+      "nodeName": "prop_quarry_crystal_seam",
+      "label": "Ember Crystal Seam",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -0.86329,
+          0,
+          -0.63157
+        ],
+        "max": [
+          0.86329,
+          1.15,
+          0.63157
+        ],
+        "size": [
+          1.72658,
+          1.15,
+          1.26314
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_stone_needle",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_stone_needle.glb",
+      "nodeName": "prop_quarry_stone_needle",
+      "label": "Split Stone Needle",
+      "triangles": 102,
+      "bounds": {
+        "min": [
+          -0.707,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.707,
+          2.828,
+          0.45
+        ],
+        "size": [
+          1.414,
+          2.828,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_rock_shelf",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_rock_shelf.glb",
+      "nodeName": "prop_quarry_rock_shelf",
+      "label": "Overhanging Rock Shelf",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -1.246,
+          0,
+          -0.759
+        ],
+        "max": [
+          1.246,
+          1.229,
+          0.759
+        ],
+        "size": [
+          2.492,
+          1.229,
+          1.518
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_vent_stack",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_vent_stack.glb",
+      "nodeName": "prop_quarry_vent_stack",
+      "label": "Fumarole Chimneys",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -0.64663,
+          0,
+          -0.45085
+        ],
+        "max": [
+          0.64663,
+          1.04,
+          0.45085
+        ],
+        "size": [
+          1.29326,
+          1.04,
+          0.9017
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_flowstone",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_flowstone.glb",
+      "nodeName": "prop_quarry_flowstone",
+      "label": "Cavern Flowstone Curtain",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -0.91668,
+          0,
+          -0.52734
+        ],
+        "max": [
+          0.91668,
+          1.63647,
+          0.52734
+        ],
+        "size": [
+          1.83336,
+          1.63647,
+          1.05468
+        ]
+      }
+    },
+    {
+      "id": "prop_fossil_rib_arc",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_fossil_rib_arc.glb",
+      "nodeName": "prop_fossil_rib_arc",
+      "label": "Fossil Rib Arcade",
+      "triangles": 576,
+      "bounds": {
+        "min": [
+          -0.87739,
+          0,
+          -0.81508
+        ],
+        "max": [
+          0.87739,
+          1.54613,
+          0.81508
+        ],
+        "size": [
+          1.75477,
+          1.54613,
+          1.63016
+        ]
+      }
+    },
+    {
+      "id": "prop_fossil_jaw",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_fossil_jaw.glb",
+      "nodeName": "prop_fossil_jaw",
+      "label": "Ancient Lower Jaw",
+      "triangles": 404,
+      "bounds": {
+        "min": [
+          -0.66245,
+          0,
+          -0.70258
+        ],
+        "max": [
+          0.66245,
+          0.486,
+          0.70258
+        ],
+        "size": [
+          1.3249,
+          0.486,
+          1.40516
+        ]
+      }
+    },
+    {
+      "id": "prop_fossil_spine",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_fossil_spine.glb",
+      "nodeName": "prop_fossil_spine",
+      "label": "Exposed Vertebrae",
+      "triangles": 594,
+      "bounds": {
+        "min": [
+          -0.46095,
+          0,
+          -0.91448
+        ],
+        "max": [
+          0.46095,
+          0.5984,
+          0.91448
+        ],
+        "size": [
+          0.92189,
+          0.5984,
+          1.82897
+        ]
+      }
+    },
+    {
+      "id": "prop_fossil_tusk_marker",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_fossil_tusk_marker.glb",
+      "nodeName": "prop_fossil_tusk_marker",
+      "label": "Bound Tusk Cairn",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -0.49479,
+          0,
+          -0.40445
+        ],
+        "max": [
+          0.49479,
+          2.14,
+          0.40445
+        ],
+        "size": [
+          0.98958,
+          2.14,
+          0.80891
+        ]
+      }
+    },
+    {
+      "id": "prop_shrine_offering_bowl",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_shrine_offering_bowl.glb",
+      "nodeName": "prop_shrine_offering_bowl",
+      "label": "Crystal Offering Bowl",
+      "triangles": 266,
+      "bounds": {
+        "min": [
+          -0.56112,
+          0,
+          -0.59
+        ],
+        "max": [
+          0.56112,
+          1.17,
+          0.59
+        ],
+        "size": [
+          1.12225,
+          1.17,
+          1.18
+        ]
+      }
+    },
+    {
+      "id": "prop_shrine_ward_stone",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_shrine_ward_stone.glb",
+      "nodeName": "prop_shrine_ward_stone",
+      "label": "Carved Ember Ward",
+      "triangles": 140,
+      "bounds": {
+        "min": [
+          -0.56587,
+          0,
+          -0.47814
+        ],
+        "max": [
+          0.56587,
+          1.745,
+          0.47814
+        ],
+        "size": [
+          1.13174,
+          1.745,
+          0.95628
+        ]
+      }
+    },
+    {
+      "id": "prop_shrine_bone_chimes",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_shrine_bone_chimes.glb",
+      "nodeName": "prop_shrine_bone_chimes",
+      "label": "Bone Chime Gate",
+      "triangles": 602,
+      "bounds": {
+        "min": [
+          -0.8969,
+          0,
+          -0.23546
+        ],
+        "max": [
+          0.8969,
+          1.81334,
+          0.23546
+        ],
+        "size": [
+          1.7938,
+          1.81334,
+          0.47092
+        ]
+      }
+    },
+    {
+      "id": "prop_brood_nest",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_brood_nest.glb",
+      "nodeName": "prop_brood_nest",
+      "label": "Thorn-Rimmed Brood Nest",
+      "triangles": 329,
+      "bounds": {
+        "min": [
+          -0.86,
+          0,
+          -0.86
+        ],
+        "max": [
+          0.86,
+          0.64,
+          0.86
+        ],
+        "size": [
+          1.72,
+          0.64,
+          1.72
+        ]
+      }
+    },
+    {
+      "id": "prop_brood_spore_log",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_brood_spore_log.glb",
+      "nodeName": "prop_brood_spore_log",
+      "label": "Spore Nurse Log",
+      "triangles": 378,
+      "bounds": {
+        "min": [
+          -0.84901,
+          0,
+          -0.31769
+        ],
+        "max": [
+          0.84901,
+          0.76992,
+          0.31769
+        ],
+        "size": [
+          1.69802,
+          0.76992,
+          0.63539
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_floor_tile",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_floor_tile.glb",
+      "nodeName": "prop_basalt_floor_tile",
+      "label": "Cracked Basalt Floor Tile",
+      "triangles": 52,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.142,
+          1
+        ],
+        "size": [
+          2,
+          0.142,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_obsidian_dais_tile",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_obsidian_dais_tile.glb",
+      "nodeName": "prop_obsidian_dais_tile",
+      "label": "Obsidian Dais Terrace Tile",
+      "triangles": 38,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.242,
+          1
+        ],
+        "size": [
+          2,
+          0.242,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_obsidian_stairs",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_obsidian_stairs.glb",
+      "nodeName": "prop_obsidian_stairs",
+      "label": "Obsidian Temple Stairs",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -0.99,
+          0,
+          -0.705
+        ],
+        "max": [
+          0.99,
+          0.56,
+          0.705
+        ],
+        "size": [
+          1.98,
+          0.56,
+          1.41
+        ]
+      }
+    },
+    {
+      "id": "prop_lava_pool_tile",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_lava_pool_tile.glb",
+      "nodeName": "prop_lava_pool_tile",
+      "label": "Volcanic Magma Pool Tile",
+      "triangles": 78,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.14,
+          1
+        ],
+        "size": [
+          2,
+          0.14,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_lava_shore_tile",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_lava_shore_tile.glb",
+      "nodeName": "prop_lava_shore_tile",
+      "label": "Molten Lava Shore Tile",
+      "triangles": 50,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.16,
+          1
+        ],
+        "size": [
+          2,
+          0.16,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_swamp_sludge_tile",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_swamp_sludge_tile.glb",
+      "nodeName": "prop_swamp_sludge_tile",
+      "label": "Toxic Mire Canal Tile",
+      "triangles": 68,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.14,
+          1
+        ],
+        "size": [
+          2,
+          0.14,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_cliff_block",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_cliff_block.glb",
+      "nodeName": "prop_basalt_cliff_block",
+      "label": "Obsidian Basalt Cliff Block",
+      "triangles": 176,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -1.035
+        ],
+        "max": [
+          1.05,
+          1.7542,
+          1.035
+        ],
+        "size": [
+          2.1,
+          1.7542,
+          2.07
+        ]
+      }
+    },
+    {
+      "id": "prop_lava_bridge",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_lava_bridge.glb",
+      "nodeName": "prop_lava_bridge",
+      "label": "Charred Stone Chasm Bridge",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -1.19,
+          0,
+          -0.66
+        ],
+        "max": [
+          1.19,
+          1.09,
+          0.66
+        ],
+        "size": [
+          2.38,
+          1.09,
+          1.32
+        ]
+      }
+    },
+    {
+      "id": "prop_ruin_wall_straight",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_ruin_wall_straight.glb",
+      "nodeName": "prop_ruin_wall_straight",
+      "label": "Shattered Ruin Wall",
+      "triangles": 84,
+      "bounds": {
+        "min": [
+          -1.02,
+          0,
+          -0.23
+        ],
+        "max": [
+          1.02,
+          2.19,
+          0.23
+        ],
+        "size": [
+          2.04,
+          2.19,
+          0.46
+        ]
+      }
+    },
+    {
+      "id": "prop_ruin_wall_corner",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_ruin_wall_corner.glb",
+      "nodeName": "prop_ruin_wall_corner",
+      "label": "Shattered Ruin Corner",
+      "triangles": 36,
+      "bounds": {
+        "min": [
+          -0.64,
+          0,
+          -0.64
+        ],
+        "max": [
+          0.64,
+          2.19,
+          0.64
+        ],
+        "size": [
+          1.28,
+          2.19,
+          1.28
+        ]
+      }
+    },
+    {
+      "id": "prop_bone_fence",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_bone_fence.glb",
+      "nodeName": "prop_bone_fence",
+      "label": "Spiked Bone Fence",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.98,
+          0,
+          -0.11
+        ],
+        "max": [
+          0.98,
+          1.16,
+          0.11
+        ],
+        "size": [
+          1.96,
+          1.16,
+          0.22
+        ]
+      }
+    },
+    {
+      "id": "prop_cave_archway",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_cave_archway.glb",
+      "nodeName": "prop_cave_archway",
+      "label": "Jagged Cavern Archway",
+      "triangles": 84,
+      "bounds": {
+        "min": [
+          -1.15927,
+          0,
+          -0.4152
+        ],
+        "max": [
+          1.15927,
+          2.43,
+          0.4152
+        ],
+        "size": [
+          2.31855,
+          2.43,
+          0.8304
+        ]
+      }
+    },
+    {
+      "id": "prop_spiked_gate",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_spiked_gate.glb",
+      "nodeName": "prop_spiked_gate",
+      "label": "Spiked Orc Fortress Gate",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -1.11,
+          0,
+          -0.285
+        ],
+        "max": [
+          1.11,
+          2.5,
+          0.285
+        ],
+        "size": [
+          2.22,
+          2.5,
+          0.57
+        ]
+      }
+    },
+    {
+      "id": "prop_orc_war_hut",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_orc_war_hut.glb",
+      "nodeName": "prop_orc_war_hut",
+      "label": "Orc Hide War Pavilion",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -1.21952,
+          0,
+          -1.27976
+        ],
+        "max": [
+          1.21952,
+          2.715,
+          1.27976
+        ],
+        "size": [
+          2.43904,
+          2.715,
+          2.55952
+        ]
+      }
+    },
+    {
+      "id": "prop_ruined_keep_tower",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_ruined_keep_tower.glb",
+      "nodeName": "prop_ruined_keep_tower",
+      "label": "Ruined Watchtower Keep",
+      "triangles": 160,
+      "bounds": {
+        "min": [
+          -1.01924,
+          0,
+          -1.06962
+        ],
+        "max": [
+          1.01924,
+          3.835,
+          1.06962
+        ],
+        "size": [
+          2.03849,
+          3.835,
+          2.13924
+        ]
+      }
+    },
+    {
+      "id": "prop_shaman_shrine",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_shaman_shrine.glb",
+      "nodeName": "prop_shaman_shrine",
+      "label": "Horned Shaman Shrine",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -1.11,
+          0,
+          -1.01
+        ],
+        "max": [
+          1.11,
+          2.49,
+          1.01
+        ],
+        "size": [
+          2.22,
+          2.49,
+          2.02
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_tunnel_mouth",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_tunnel_mouth.glb",
+      "nodeName": "prop_mine_tunnel_mouth",
+      "label": "Cavern Mine Entrance",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -2.01,
+          0,
+          -1.17791
+        ],
+        "max": [
+          2.01,
+          2.72,
+          1.17791
+        ],
+        "size": [
+          4.02,
+          2.72,
+          2.35583
+        ]
+      }
+    },
+    {
+      "id": "prop_bone_war_wagon",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_bone_war_wagon.glb",
+      "nodeName": "prop_bone_war_wagon",
+      "label": "Spiked Orc War Wagon",
+      "triangles": 268,
+      "bounds": {
+        "min": [
+          -0.7472,
+          0,
+          -1.96292
+        ],
+        "max": [
+          0.7472,
+          1.1826,
+          1.96292
+        ],
+        "size": [
+          1.4944,
+          1.1826,
+          3.92584
+        ]
+      }
+    },
+    {
+      "id": "prop_siege_ballista",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_siege_ballista.glb",
+      "nodeName": "prop_siege_ballista",
+      "label": "Horned Siege Ballista",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -0.88,
+          0,
+          -0.795
+        ],
+        "max": [
+          0.88,
+          0.88,
+          0.795
+        ],
+        "size": [
+          1.76,
+          0.88,
+          1.59
+        ]
+      }
+    },
+    {
+      "id": "prop_obsidian_throne",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_obsidian_throne.glb",
+      "nodeName": "prop_obsidian_throne",
+      "label": "Obsidian Warlord Throne",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.61,
+          0,
+          -0.51
+        ],
+        "max": [
+          0.61,
+          2.05,
+          0.51
+        ],
+        "size": [
+          1.22,
+          2.05,
+          1.02
+        ]
+      }
+    },
+    {
+      "id": "prop_stalagmite_cluster",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_stalagmite_cluster.glb",
+      "nodeName": "prop_stalagmite_cluster",
+      "label": "Obsidian Stalagmite Cluster",
+      "triangles": 54,
+      "bounds": {
+        "min": [
+          -0.53899,
+          0,
+          -0.38972
+        ],
+        "max": [
+          0.53899,
+          1.82,
+          0.38972
+        ],
+        "size": [
+          1.07798,
+          1.82,
+          0.77944
+        ]
+      }
+    },
+    {
+      "id": "prop_mushroom_cluster",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mushroom_cluster.glb",
+      "nodeName": "prop_mushroom_cluster",
+      "label": "Glowing Cavern Mushrooms",
+      "triangles": 225,
+      "bounds": {
+        "min": [
+          -0.52919,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.52919,
+          0.96,
+          0.43
+        ],
+        "size": [
+          1.05837,
+          0.96,
+          0.86
         ]
       }
     },
@@ -4148,6 +5396,64 @@
       "clips": [
         "Idle",
         "Shatter"
+      ]
+    },
+    {
+      "id": "prop_bubbling_cauldron",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_bubbling_cauldron.glb",
+      "nodeName": "prop_bubbling_cauldron",
+      "label": "Bubbling Witch Cauldron",
+      "triangles": 84,
+      "bounds": {
+        "min": [
+          -0.46194,
+          0,
+          -0.46194
+        ],
+        "max": [
+          0.46194,
+          0.9,
+          0.46194
+        ],
+        "size": [
+          0.92388,
+          0.9,
+          0.92388
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_hanging_cage",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_hanging_cage.glb",
+      "nodeName": "prop_hanging_cage",
+      "label": "Iron Hanging Gibbet Cage",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.5875,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.5875,
+          2.45,
+          0.38
+        ],
+        "size": [
+          1.175,
+          2.45,
+          0.76
+        ]
+      },
+      "clips": [
+        "Idle"
       ]
     }
   ],
@@ -7075,7 +8381,7 @@
         "eye": "#f2b134"
       },
       "proportions": {
-        "height": 1,
+        "height": 1.55,
         "shoulderWidth": 1,
         "torsoBulk": 1,
         "waistScale": 1,
@@ -7085,7 +8391,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "quadruped",
-        "totalMassKg": 67.795,
+        "totalMassKg": 252.4601,
         "bodies": [
           {
             "bone": "pelvis",
@@ -7095,20 +8401,20 @@
               0,
               0
             ],
-            "massKg": 9.1,
+            "massKg": 33.8873,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.042,
-                -0.0452
+                0.0651,
+                -0.0701
               ],
               "b": [
                 0,
-                0.042,
-                0.0052
+                0.0651,
+                0.0081
               ],
-              "radius": 0.169
+              "radius": 0.262
             },
             "joint": null,
             "collisionGroup": 1
@@ -7118,23 +8424,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.02,
-              0.22
+              0.031,
+              0.341
             ],
-            "massKg": 7.15,
+            "massKg": 26.6257,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0293,
-                -0.0386
+                0.0454,
+                -0.0598
               ],
               "b": [
                 0,
-                0.0293,
-                0.0766
+                0.0454,
+                0.1187
               ],
-              "radius": 0.1878
+              "radius": 0.2911
             },
             "joint": {
               "type": "cone_twist",
@@ -7166,23 +8472,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.03,
-              0.22
+              0.0465,
+              0.341
             ],
-            "massKg": 7.15,
+            "massKg": 26.6257,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.013,
+                -0.0201,
                 0
               ],
               "b": [
                 0,
-                -0.013,
+                -0.0201,
                 0
               ],
-              "radius": 0.1738
+              "radius": 0.2694
             },
             "joint": {
               "type": "cone_twist",
@@ -7214,23 +8520,23 @@
             "parentBody": "spine_02",
             "parentAnchor": [
               0,
-              0.03,
-              0.22
+              0.0465,
+              0.341
             ],
-            "massKg": 13,
+            "massKg": 48.4104,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0155,
-                0.0151
+                0.024,
+                0.0234
               ],
               "b": [
                 0,
-                0.0155,
-                0.0399
+                0.024,
+                0.0618
               ],
-              "radius": 0.2017
+              "radius": 0.3126
             },
             "joint": {
               "type": "cone_twist",
@@ -7262,23 +8568,23 @@
             "parentBody": "chest",
             "parentAnchor": [
               0,
-              0.1,
-              0.16
+              0.155,
+              0.248
             ],
-            "massKg": 3.9,
+            "massKg": 14.5231,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.1059,
-                -0.0328
+                0.1641,
+                -0.0508
               ],
               "b": [
                 0,
-                0.1478,
-                0.026
+                0.2291,
+                0.0403
               ],
-              "radius": 0.1265
+              "radius": 0.1961
             },
             "joint": {
               "type": "cone_twist",
@@ -7310,23 +8616,23 @@
             "parentBody": "neck",
             "parentAnchor": [
               0,
-              0.1,
-              0.14
+              0.155,
+              0.217
             ],
-            "massKg": 4.875,
+            "massKg": 18.1539,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.087,
-                -0.0132
+                0.1349,
+                -0.0205
               ],
               "b": [
                 0,
-                0.087,
-                0.1566
+                0.1349,
+                0.2427
               ],
-              "radius": 0.1328
+              "radius": 0.2058
             },
             "joint": {
               "type": "cone_twist",
@@ -7358,23 +8664,23 @@
             "parentBody": "head",
             "parentAnchor": [
               0,
-              -0.07,
-              0.08
+              -0.1085,
+              0.124
             ],
-            "massKg": 0.975,
+            "massKg": 3.6308,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0202,
-                0.0115
+                0.0313,
+                0.0178
               ],
               "b": [
                 0,
-                0.0202,
-                0.1265
+                0.0313,
+                0.1961
               ],
-              "radius": 0.0585
+              "radius": 0.0907
             },
             "joint": {
               "type": "hinge",
@@ -7406,23 +8712,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.01,
-              -0.12
+              0.0155,
+              -0.186
             ],
-            "massKg": 0.975,
+            "massKg": 3.6308,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0033,
-                -0.021,
-                -0.0315
+                -0.0051,
+                -0.0325,
+                -0.0488
               ],
               "b": [
-                -0.0033,
-                -0.021,
-                -0.0764
+                -0.0051,
+                -0.0325,
+                -0.1184
               ],
-              "radius": 0.0679
+              "radius": 0.1052
             },
             "joint": {
               "type": "cone_twist",
@@ -7454,23 +8760,23 @@
             "parentBody": "tail_01",
             "parentAnchor": [
               0,
-              -0.06,
-              -0.2
+              -0.093,
+              -0.31
             ],
-            "massKg": 0.975,
+            "massKg": 3.6308,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.004,
-                -0.0159,
-                -0.026
+                -0.0062,
+                -0.0246,
+                -0.0403
               ],
               "b": [
-                -0.004,
-                -0.0159,
-                -0.066
+                -0.0062,
+                -0.0246,
+                -0.1023
               ],
-              "radius": 0.0859
+              "radius": 0.1331
             },
             "joint": {
               "type": "cone_twist",
@@ -7502,23 +8808,23 @@
             "parentBody": "tail_02",
             "parentAnchor": [
               0,
-              -0.08,
-              -0.18
+              -0.124,
+              -0.279
             ],
-            "massKg": 0.975,
+            "massKg": 3.6308,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0025,
+                -0.0039,
                 0,
-                -0.0069
+                -0.0107
               ],
               "b": [
-                -0.0025,
+                -0.0039,
                 0,
-                -0.0477
+                -0.0739
               ],
-              "radius": 0.0602
+              "radius": 0.0933
             },
             "joint": {
               "type": "cone_twist",
@@ -7549,24 +8855,24 @@
             "bone": "leg_fl_upper",
             "parentBody": "chest",
             "parentAnchor": [
-              0.135,
-              -0.12,
-              -0.02
+              0.2093,
+              -0.186,
+              -0.031
             ],
-            "massKg": 2.6,
+            "massKg": 9.6821,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0589,
-                0.0007
+                -0.0913,
+                0.0011
               ],
               "b": [
                 0,
-                -0.163,
-                -0.0193
+                -0.2527,
+                -0.0299
               ],
-              "radius": 0.078
+              "radius": 0.1209
             },
             "joint": {
               "type": "cone_twist",
@@ -7598,23 +8904,23 @@
             "parentBody": "leg_fl_upper",
             "parentAnchor": [
               0,
-              -0.26,
-              -0.05
+              -0.403,
+              -0.0775
             ],
-            "massKg": 1.43,
+            "massKg": 5.3251,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0289,
-                0.0097
+                -0.0448,
+                0.015
               ],
               "b": [
                 0,
-                -0.2219,
-                0.0469
+                -0.3439,
+                0.0727
               ],
-              "radius": 0.0432
+              "radius": 0.067
             },
             "joint": {
               "type": "hinge",
@@ -7646,23 +8952,23 @@
             "parentBody": "leg_fl_lower",
             "parentAnchor": [
               0,
-              -0.26,
-              0.05
+              -0.403,
+              0.0775
             ],
-            "massKg": 0.65,
+            "massKg": 2.4205,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.03,
-                -0.0165
+                -0.0465,
+                -0.0256
               ],
               "b": [
                 0,
-                -0.03,
-                0.0205
+                -0.0465,
+                0.0318
               ],
-              "radius": 0.0459
+              "radius": 0.0711
             },
             "joint": {
               "type": "cone_twist",
@@ -7693,24 +8999,24 @@
             "bone": "leg_fr_upper",
             "parentBody": "chest",
             "parentAnchor": [
-              -0.135,
-              -0.12,
-              -0.02
+              -0.2092,
+              -0.186,
+              -0.031
             ],
-            "massKg": 2.6,
+            "massKg": 9.6821,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0589,
-                0.0007
+                -0.0913,
+                0.0011
               ],
               "b": [
                 0,
-                -0.163,
-                -0.0193
+                -0.2527,
+                -0.0299
               ],
-              "radius": 0.078
+              "radius": 0.1209
             },
             "joint": {
               "type": "cone_twist",
@@ -7742,23 +9048,23 @@
             "parentBody": "leg_fr_upper",
             "parentAnchor": [
               0,
-              -0.26,
-              -0.05
+              -0.403,
+              -0.0775
             ],
-            "massKg": 1.43,
+            "massKg": 5.3251,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0289,
-                0.0097
+                -0.0448,
+                0.015
               ],
               "b": [
                 0,
-                -0.2219,
-                0.0469
+                -0.3439,
+                0.0727
               ],
-              "radius": 0.0432
+              "radius": 0.067
             },
             "joint": {
               "type": "hinge",
@@ -7790,23 +9096,23 @@
             "parentBody": "leg_fr_lower",
             "parentAnchor": [
               0,
-              -0.26,
-              0.05
+              -0.403,
+              0.0775
             ],
-            "massKg": 0.65,
+            "massKg": 2.4205,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.03,
-                -0.0165
+                -0.0465,
+                -0.0256
               ],
               "b": [
                 0,
-                -0.03,
-                0.0205
+                -0.0465,
+                0.0318
               ],
-              "radius": 0.0459
+              "radius": 0.0711
             },
             "joint": {
               "type": "cone_twist",
@@ -7837,24 +9143,24 @@
             "bone": "leg_bl_upper",
             "parentBody": "pelvis",
             "parentAnchor": [
-              0.135,
-              -0.01,
-              0.01
+              0.2093,
+              -0.0155,
+              0.0155
             ],
-            "massKg": 2.6,
+            "massKg": 9.6821,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0475,
-                -0.0112
+                -0.0736,
+                -0.0174
               ],
               "b": [
                 0,
-                -0.1754,
-                -0.0586
+                -0.2719,
+                -0.0908
               ],
-              "radius": 0.0892
+              "radius": 0.1383
             },
             "joint": {
               "type": "cone_twist",
@@ -7886,23 +9192,23 @@
             "parentBody": "leg_bl_upper",
             "parentAnchor": [
               0,
-              -0.27,
-              -0.1
+              -0.4185,
+              -0.155
             ],
-            "massKg": 1.43,
+            "massKg": 5.3251,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0273,
-                0.022
+                -0.0423,
+                0.0341
               ],
               "b": [
                 0,
-                -0.233,
-                0.0808
+                -0.3612,
+                0.1252
               ],
-              "radius": 0.0511
+              "radius": 0.0792
             },
             "joint": {
               "type": "hinge",
@@ -7934,23 +9240,23 @@
             "parentBody": "leg_bl_lower",
             "parentAnchor": [
               0,
-              -0.28,
-              0.08
+              -0.434,
+              0.124
             ],
-            "massKg": 0.65,
+            "massKg": 2.4205,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.03,
-                -0.0165
+                -0.0465,
+                -0.0256
               ],
               "b": [
                 0,
-                -0.03,
-                0.0205
+                -0.0465,
+                0.0318
               ],
-              "radius": 0.0459
+              "radius": 0.0711
             },
             "joint": {
               "type": "cone_twist",
@@ -7981,24 +9287,24 @@
             "bone": "leg_br_upper",
             "parentBody": "pelvis",
             "parentAnchor": [
-              -0.135,
-              -0.01,
-              0.01
+              -0.2092,
+              -0.0155,
+              0.0155
             ],
-            "massKg": 2.6,
+            "massKg": 9.6821,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0475,
-                -0.0112
+                -0.0736,
+                -0.0174
               ],
               "b": [
                 0,
-                -0.1754,
-                -0.0586
+                -0.2719,
+                -0.0908
               ],
-              "radius": 0.0892
+              "radius": 0.1383
             },
             "joint": {
               "type": "cone_twist",
@@ -8030,23 +9336,23 @@
             "parentBody": "leg_br_upper",
             "parentAnchor": [
               0,
-              -0.27,
-              -0.1
+              -0.4185,
+              -0.155
             ],
-            "massKg": 1.43,
+            "massKg": 5.3251,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0273,
-                0.022
+                -0.0423,
+                0.0341
               ],
               "b": [
                 0,
-                -0.233,
-                0.0808
+                -0.3612,
+                0.1252
               ],
-              "radius": 0.0511
+              "radius": 0.0792
             },
             "joint": {
               "type": "hinge",
@@ -8078,23 +9384,23 @@
             "parentBody": "leg_br_lower",
             "parentAnchor": [
               0,
-              -0.28,
-              0.08
+              -0.434,
+              0.124
             ],
-            "massKg": 0.65,
+            "massKg": 2.4205,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.03,
-                -0.0165
+                -0.0465,
+                -0.0256
               ],
               "b": [
                 0,
-                -0.03,
-                0.0205
+                -0.0465,
+                0.0318
               ],
-              "radius": 0.0459
+              "radius": 0.0711
             },
             "joint": {
               "type": "cone_twist",
@@ -9799,17 +11105,18 @@
         "eye": "#59e0ff"
       },
       "proportions": {
-        "height": 1,
+        "height": 0.7,
         "shoulderWidth": 1,
         "torsoBulk": 1,
         "waistScale": 1,
-        "headScale": 1,
-        "limbThickness": 1
+        "headScale": 0.9,
+        "limbThickness": 1,
+        "bodyLength": 0.76
       },
       "ragdoll": {
         "version": 1,
         "rigId": "avian",
-        "totalMassKg": 25.8,
+        "totalMassKg": 7.2373,
         "bodies": [
           {
             "bone": "pelvis",
@@ -9819,20 +11126,20 @@
               0,
               0
             ],
-            "massKg": 4.32,
+            "massKg": 1.1261,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0143,
-                -0.1288
+                0.01,
+                -0.0685
               ],
               "b": [
                 0,
-                0.0143,
-                -0.0412
+                0.01,
+                -0.0219
               ],
-              "radius": 0.1264
+              "radius": 0.0885
             },
             "joint": null,
             "collisionGroup": 1
@@ -9842,23 +11149,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.01,
-              0.2
+              0.007,
+              0.1064
             ],
-            "massKg": 3.36,
+            "massKg": 0.8759,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0226,
-                -0.1783
+                0.0158,
+                -0.0949
               ],
               "b": [
                 0,
-                0.0226,
-                -0.0617
+                0.0158,
+                -0.0328
               ],
-              "radius": 0.1479
+              "radius": 0.1035
             },
             "joint": {
               "type": "cone_twist",
@@ -9890,23 +11197,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.02,
-              0.2
+              0.014,
+              0.1064
             ],
-            "massKg": 5.28,
+            "massKg": 1.3764,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0092,
-                -0.1428
+                -0.0064,
+                -0.076
               ],
               "b": [
                 0,
-                -0.0092,
-                -0.0206
+                -0.0064,
+                -0.011
               ],
-              "radius": 0.1559
+              "radius": 0.1091
             },
             "joint": {
               "type": "cone_twist",
@@ -9938,23 +11245,23 @@
             "parentBody": "chest",
             "parentAnchor": [
               0,
-              0.05,
-              0.16
+              0.035,
+              0.0851
             ],
-            "massKg": 1.44,
+            "massKg": 0.3754,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0357,
-                0.0066
+                0.025,
+                0.0035
               ],
               "b": [
                 0,
-                0.0624,
-                0.069
+                0.0437,
+                0.0367
               ],
-              "radius": 0.0848
+              "radius": 0.0583
             },
             "joint": {
               "type": "cone_twist",
@@ -9986,23 +11293,23 @@
             "parentBody": "neck",
             "parentAnchor": [
               0,
-              0.06,
-              0.14
+              0.042,
+              0.0745
             ],
-            "massKg": 1.68,
+            "massKg": 0.4201,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.035,
-                -0.0356
+                0.0221,
+                -0.0224
               ],
               "b": [
                 0,
-                0.035,
-                0.2144
+                0.0221,
+                0.1351
               ],
-              "radius": 0.0845
+              "radius": 0.0532
             },
             "joint": {
               "type": "cone_twist",
@@ -10034,23 +11341,23 @@
             "parentBody": "head",
             "parentAnchor": [
               0,
-              -0.07,
-              0.12
+              -0.0441,
+              0.0756
             ],
-            "massKg": 0.36,
+            "massKg": 0.09,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.026,
-                0.0239
+                0.0164,
+                0.0151
               ],
               "b": [
                 0,
-                0.026,
-                0.0861
+                0.0164,
+                0.0542
               ],
-              "radius": 0.0363
+              "radius": 0.0229
             },
             "joint": {
               "type": "hinge",
@@ -10082,23 +11389,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.04,
-              -0.18
+              0.028,
+              -0.0958
             ],
-            "massKg": 0.6,
+            "massKg": 0.1564,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.004,
-                -0.1002
+                0.0028,
+                -0.0533
               ],
               "b": [
                 0,
-                0.004,
-                -0.1798
+                0.0028,
+                -0.0957
               ],
-              "radius": 0.0911
+              "radius": 0.0638
             },
             "joint": {
               "type": "cone_twist",
@@ -10130,23 +11437,23 @@
             "parentBody": "tail_01",
             "parentAnchor": [
               0,
-              0.04,
-              -0.22
+              0.028,
+              -0.117
             ],
-            "massKg": 0.6,
+            "massKg": 0.1564,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0033,
-                -0.0887
+                0.0023,
+                -0.0472
               ],
               "b": [
                 0,
-                0.0033,
-                -0.2517
+                0.0023,
+                -0.1339
               ],
-              "radius": 0.1458
+              "radius": 0.1021
             },
             "joint": {
               "type": "cone_twist",
@@ -10177,24 +11484,24 @@
             "bone": "wing_upper_l",
             "parentBody": "chest",
             "parentAnchor": [
-              0.12,
-              -0.01,
-              -0.04
+              0.084,
+              -0.007,
+              -0.0213
             ],
-            "massKg": 1.08,
+            "massKg": 0.3393,
             "collider": {
               "type": "capsule",
               "a": [
-                0.1496,
+                0.1047,
                 0.0001,
-                -0.1623
+                -0.1041
               ],
               "b": [
-                0.3751,
-                0.0411,
-                -0.1931
+                0.2626,
+                0.0288,
+                -0.1238
               ],
-              "radius": 0.1485
+              "radius": 0.0997
             },
             "joint": {
               "type": "cone_twist",
@@ -10225,24 +11532,24 @@
             "bone": "wing_mid_l",
             "parentBody": "wing_upper_l",
             "parentAnchor": [
-              0.44,
-              0.08,
-              -0.06
+              0.308,
+              0.056,
+              -0.0385
             ],
-            "massKg": 0.84,
+            "massKg": 0.2639,
             "collider": {
               "type": "capsule",
               "a": [
-                0.0895,
-                -0.0131,
-                -0.1576
+                0.0627,
+                -0.0092,
+                -0.1011
               ],
               "b": [
-                0.6141,
-                -0.0318,
-                -0.345
+                0.4299,
+                -0.0223,
+                -0.2212
               ],
-              "radius": 0.1622
+              "radius": 0.1093
             },
             "joint": {
               "type": "hinge",
@@ -10273,24 +11580,24 @@
             "bone": "wing_tip_l",
             "parentBody": "wing_mid_l",
             "parentAnchor": [
-              0.56,
-              -0.02,
-              -0.2
+              0.392,
+              -0.014,
+              -0.1282
             ],
-            "massKg": 0.48,
+            "massKg": 0.1508,
             "collider": {
               "type": "capsule",
               "a": [
-                0.1254,
-                -0.015,
-                -0.2
+                0.0878,
+                -0.0105,
+                -0.1282
               ],
               "b": [
-                0.2164,
-                -0.015,
-                -0.2
+                0.1515,
+                -0.0105,
+                -0.1282
               ],
-              "radius": 0.1907
+              "radius": 0.1279
             },
             "joint": {
               "type": "hinge",
@@ -10321,24 +11628,24 @@
             "bone": "wing_upper_r",
             "parentBody": "chest",
             "parentAnchor": [
-              -0.12,
-              -0.01,
-              -0.04
+              -0.084,
+              -0.007,
+              -0.0213
             ],
-            "massKg": 1.08,
+            "massKg": 0.3393,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1496,
+                -0.1047,
                 0.0001,
-                -0.1623
+                -0.1041
               ],
               "b": [
-                -0.3751,
-                0.0411,
-                -0.1931
+                -0.2626,
+                0.0288,
+                -0.1238
               ],
-              "radius": 0.1485
+              "radius": 0.0997
             },
             "joint": {
               "type": "cone_twist",
@@ -10369,24 +11676,24 @@
             "bone": "wing_mid_r",
             "parentBody": "wing_upper_r",
             "parentAnchor": [
-              -0.44,
-              0.08,
-              -0.06
+              -0.308,
+              0.056,
+              -0.0385
             ],
-            "massKg": 0.84,
+            "massKg": 0.2639,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0895,
-                -0.0131,
-                -0.1576
+                -0.0626,
+                -0.0092,
+                -0.1011
               ],
               "b": [
-                -0.6141,
-                -0.0318,
-                -0.345
+                -0.4299,
+                -0.0223,
+                -0.2212
               ],
-              "radius": 0.1622
+              "radius": 0.1093
             },
             "joint": {
               "type": "hinge",
@@ -10417,24 +11724,24 @@
             "bone": "wing_tip_r",
             "parentBody": "wing_mid_r",
             "parentAnchor": [
-              -0.56,
-              -0.02,
-              -0.2
+              -0.392,
+              -0.014,
+              -0.1282
             ],
-            "massKg": 0.48,
+            "massKg": 0.1508,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1254,
-                -0.015,
-                -0.2
+                -0.0878,
+                -0.0105,
+                -0.1282
               ],
               "b": [
-                -0.2164,
-                -0.015,
-                -0.2
+                -0.1515,
+                -0.0105,
+                -0.1282
               ],
-              "radius": 0.1907
+              "radius": 0.1279
             },
             "joint": {
               "type": "hinge",
@@ -10465,24 +11772,24 @@
             "bone": "leg_upper_l",
             "parentBody": "pelvis",
             "parentAnchor": [
-              0.09,
-              -0.07,
-              -0.02
+              0.063,
+              -0.049,
+              -0.0106
             ],
-            "massKg": 0.84,
+            "massKg": 0.2881,
             "collider": {
               "type": "capsule",
               "a": [
-                0.01,
-                0.0176,
-                -0.0097
+                0.007,
+                0.0123,
+                -0.0068
               ],
               "b": [
-                0.01,
-                -0.142,
-                -0.0601
+                0.007,
+                -0.0994,
+                -0.0421
               ],
-              "radius": 0.0737
+              "radius": 0.0516
             },
             "joint": {
               "type": "cone_twist",
@@ -10514,23 +11821,23 @@
             "parentBody": "leg_upper_l",
             "parentAnchor": [
               0,
-              -0.19,
-              -0.06
+              -0.133,
+              -0.042
             ],
-            "massKg": 0.48,
+            "massKg": 0.1646,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.021,
-                0.0015
+                -0.0147,
+                0.0011
               ],
               "b": [
                 0,
-                -0.1341,
-                0.0644
+                -0.0939,
+                0.0451
               ],
-              "radius": 0.0322
+              "radius": 0.0225
             },
             "joint": {
               "type": "hinge",
@@ -10562,23 +11869,23 @@
             "parentBody": "leg_lower_l",
             "parentAnchor": [
               0,
-              -0.18,
-              0.1
+              -0.126,
+              0.07
             ],
-            "massKg": 0.36,
+            "massKg": 0.1235,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.02,
-                -0.0172
+                -0.014,
+                -0.012
               ],
               "b": [
                 0,
-                -0.02,
-                0.1072
+                -0.014,
+                0.075
               ],
-              "radius": 0.0373
+              "radius": 0.0261
             },
             "joint": {
               "type": "cone_twist",
@@ -10609,24 +11916,24 @@
             "bone": "leg_upper_r",
             "parentBody": "pelvis",
             "parentAnchor": [
-              -0.09,
-              -0.07,
-              -0.02
+              -0.063,
+              -0.049,
+              -0.0106
             ],
-            "massKg": 0.84,
+            "massKg": 0.2881,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.01,
-                0.0176,
-                -0.0097
+                -0.007,
+                0.0123,
+                -0.0068
               ],
               "b": [
-                -0.01,
-                -0.142,
-                -0.0601
+                -0.007,
+                -0.0994,
+                -0.0421
               ],
-              "radius": 0.0737
+              "radius": 0.0516
             },
             "joint": {
               "type": "cone_twist",
@@ -10658,23 +11965,23 @@
             "parentBody": "leg_upper_r",
             "parentAnchor": [
               0,
-              -0.19,
-              -0.06
+              -0.133,
+              -0.042
             ],
-            "massKg": 0.48,
+            "massKg": 0.1646,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.021,
-                0.0015
+                -0.0147,
+                0.0011
               ],
               "b": [
                 0,
-                -0.1341,
-                0.0644
+                -0.0939,
+                0.0451
               ],
-              "radius": 0.0322
+              "radius": 0.0225
             },
             "joint": {
               "type": "hinge",
@@ -10706,23 +12013,23 @@
             "parentBody": "leg_lower_r",
             "parentAnchor": [
               0,
-              -0.18,
-              0.1
+              -0.126,
+              0.07
             ],
-            "massKg": 0.36,
+            "massKg": 0.1235,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.02,
-                -0.0172
+                -0.014,
+                -0.012
               ],
               "b": [
                 0,
-                -0.02,
-                0.1072
+                -0.014,
+                0.075
               ],
-              "radius": 0.0373
+              "radius": 0.0261
             },
             "joint": {
               "type": "cone_twist",
@@ -12357,7 +13664,7 @@
         "eye": "#f58b22"
       },
       "proportions": {
-        "height": 1,
+        "height": 1.2,
         "shoulderWidth": 1,
         "torsoBulk": 1,
         "waistScale": 1,
@@ -12367,7 +13674,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "kaiju",
-        "totalMassKg": 256.8,
+        "totalMassKg": 443.7504,
         "bodies": [
           {
             "bone": "pelvis",
@@ -12377,20 +13684,20 @@
               0,
               0
             ],
-            "massKg": 43.2,
+            "massKg": 74.6496,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.117,
-                0.0088
+                0.1404,
+                0.0106
               ],
               "b": [
                 0,
-                0.117,
-                0.0162
+                0.1404,
+                0.0194
               ],
-              "radius": 0.24
+              "radius": 0.288
             },
             "joint": null,
             "collisionGroup": 1
@@ -12400,23 +13707,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.18,
-              0.22
+              0.216,
+              0.264
             ],
-            "massKg": 33.6,
+            "massKg": 58.0608,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.1087,
-                -0.0218
+                0.1304,
+                -0.0262
               ],
               "b": [
                 0,
-                0.1087,
-                -0.0218
+                0.1304,
+                -0.0262
               ],
-              "radius": 0.24
+              "radius": 0.288
             },
             "joint": {
               "type": "cone_twist",
@@ -12448,23 +13755,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.26,
-              0.2
+              0.312,
+              0.24
             ],
-            "massKg": 43.2,
+            "massKg": 74.6496,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0072,
-                -0.0222
+                0.0086,
+                -0.0266
               ],
               "b": [
                 0,
-                0.0072,
-                -0.0222
+                0.0086,
+                -0.0266
               ],
-              "radius": 0.24
+              "radius": 0.288
             },
             "joint": {
               "type": "cone_twist",
@@ -12496,23 +13803,23 @@
             "parentBody": "chest",
             "parentAnchor": [
               0,
-              0.26,
-              0.1
+              0.312,
+              0.12
             ],
-            "massKg": 14.4,
+            "massKg": 24.8832,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.0449,
-                -0.0371
+                -0.0539,
+                -0.0445
               ],
               "b": [
                 0,
-                0.0928,
-                0.0088
+                0.1114,
+                0.0106
               ],
-              "radius": 0.1194
+              "radius": 0.1433
             },
             "joint": {
               "type": "cone_twist",
@@ -12544,23 +13851,23 @@
             "parentBody": "neck",
             "parentAnchor": [
               0,
-              0.18,
-              0.06
+              0.216,
+              0.072
             ],
-            "massKg": 19.2,
+            "massKg": 33.1776,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.006,
-                0.0575
+                0.0072,
+                0.069
               ],
               "b": [
                 0,
-                0.006,
-                0.2545
+                0.0072,
+                0.3054
               ],
-              "radius": 0.1597
+              "radius": 0.1916
             },
             "joint": {
               "type": "cone_twist",
@@ -12592,23 +13899,23 @@
             "parentBody": "head",
             "parentAnchor": [
               0,
-              -0.1,
-              0.1
+              -0.12,
+              0.12
             ],
-            "massKg": 4.8,
+            "massKg": 8.2944,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                -0.012,
-                0.0052
+                -0.0144,
+                0.0062
               ],
               "b": [
                 0,
-                -0.012,
-                0.1618
+                -0.0144,
+                0.1942
               ],
-              "radius": 0.1139
+              "radius": 0.1367
             },
             "joint": {
               "type": "hinge",
@@ -12640,23 +13947,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              -0.08,
-              -0.24
+              -0.096,
+              -0.288
             ],
-            "massKg": 9.6,
+            "massKg": 16.5888,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0537,
-                -0.0503
+                0.0644,
+                -0.0604
               ],
               "b": [
                 0,
-                0.0537,
-                -0.0947
+                0.0644,
+                -0.1136
               ],
-              "radius": 0.1698
+              "radius": 0.2038
             },
             "joint": {
               "type": "cone_twist",
@@ -12688,23 +13995,23 @@
             "parentBody": "tail_01",
             "parentAnchor": [
               0,
-              -0.1,
-              -0.4
+              -0.12,
+              -0.48
             ],
-            "massKg": 9.6,
+            "massKg": 16.5888,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0302,
-                -0.0403
+                0.0362,
+                -0.0484
               ],
               "b": [
                 0,
-                0.0302,
-                -0.1409
+                0.0362,
+                -0.1691
               ],
-              "radius": 0.1276
+              "radius": 0.1531
             },
             "joint": {
               "type": "cone_twist",
@@ -12736,23 +14043,23 @@
             "parentBody": "tail_02",
             "parentAnchor": [
               0,
-              -0.1,
-              -0.44
+              -0.12,
+              -0.528
             ],
-            "massKg": 9.6,
+            "massKg": 16.5888,
             "collider": {
               "type": "capsule",
               "a": [
                 0,
-                0.0355,
-                -0.0414
+                0.0426,
+                -0.0497
               ],
               "b": [
                 0,
-                0.0355,
-                -0.1339
+                0.0426,
+                -0.1607
               ],
-              "radius": 0.0752
+              "radius": 0.0902
             },
             "joint": {
               "type": "cone_twist",
@@ -12783,24 +14090,24 @@
             "bone": "arm_upper_l",
             "parentBody": "chest",
             "parentAnchor": [
-              0.18,
-              -0.02,
-              0.02
+              0.216,
+              -0.024,
+              0.024
             ],
-            "massKg": 3.6,
+            "massKg": 6.2208,
             "collider": {
               "type": "capsule",
               "a": [
-                0.039,
+                0.0468,
                 0,
-                0.0126
+                0.0151
               ],
               "b": [
-                0.0543,
+                0.0652,
                 0,
-                0.0156
+                0.0187
               ],
-              "radius": 0.0737
+              "radius": 0.0884
             },
             "joint": {
               "type": "cone_twist",
@@ -12831,24 +14138,24 @@
             "bone": "arm_lower_l",
             "parentBody": "arm_upper_l",
             "parentAnchor": [
-              0.2,
+              0.24,
               0,
-              0.04
+              0.048
             ],
-            "massKg": 3.6,
+            "massKg": 6.2208,
             "collider": {
               "type": "capsule",
               "a": [
-                0.033,
+                0.0396,
                 0,
-                0.0101
+                0.0121
               ],
               "b": [
-                0.0531,
+                0.0637,
                 0,
-                0.0152
+                0.0182
               ],
-              "radius": 0.0404
+              "radius": 0.0485
             },
             "joint": {
               "type": "cone_twist",
@@ -12879,24 +14186,24 @@
             "bone": "hand_l",
             "parentBody": "arm_lower_l",
             "parentAnchor": [
-              0.16,
+              0.192,
               0,
-              0.04
+              0.048
             ],
-            "massKg": 3.6,
+            "massKg": 6.2208,
             "collider": {
               "type": "capsule",
               "a": [
-                0.031,
-                -0.0085,
-                -0.0048
+                0.0372,
+                -0.0102,
+                -0.0058
               ],
               "b": [
-                0.031,
-                -0.0085,
-                0.0091
+                0.0372,
+                -0.0102,
+                0.0109
               ],
-              "radius": 0.0498
+              "radius": 0.0598
             },
             "joint": {
               "type": "cone_twist",
@@ -12927,24 +14234,24 @@
             "bone": "arm_upper_r",
             "parentBody": "chest",
             "parentAnchor": [
-              -0.18,
-              -0.02,
-              0.02
+              -0.216,
+              -0.024,
+              0.024
             ],
-            "massKg": 3.6,
+            "massKg": 6.2208,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.039,
+                -0.0468,
                 0,
-                0.0126
+                0.0151
               ],
               "b": [
-                -0.0543,
+                -0.0652,
                 0,
-                0.0156
+                0.0187
               ],
-              "radius": 0.0737
+              "radius": 0.0884
             },
             "joint": {
               "type": "cone_twist",
@@ -12975,24 +14282,24 @@
             "bone": "arm_lower_r",
             "parentBody": "arm_upper_r",
             "parentAnchor": [
-              -0.2,
+              -0.24,
               0,
-              0.04
+              0.048
             ],
-            "massKg": 3.6,
+            "massKg": 6.2208,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.033,
+                -0.0396,
                 0,
-                0.0101
+                0.0121
               ],
               "b": [
-                -0.0531,
+                -0.0637,
                 0,
-                0.0152
+                0.0182
               ],
-              "radius": 0.0404
+              "radius": 0.0485
             },
             "joint": {
               "type": "cone_twist",
@@ -13023,24 +14330,24 @@
             "bone": "hand_r",
             "parentBody": "arm_lower_r",
             "parentAnchor": [
-              -0.16,
+              -0.192,
               0,
-              0.04
+              0.048
             ],
-            "massKg": 3.6,
+            "massKg": 6.2208,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.031,
-                -0.0085,
-                -0.0048
+                -0.0372,
+                -0.0102,
+                -0.0058
               ],
               "b": [
-                -0.031,
-                -0.0085,
-                0.0091
+                -0.0372,
+                -0.0102,
+                0.0109
               ],
-              "radius": 0.0498
+              "radius": 0.0598
             },
             "joint": {
               "type": "cone_twist",
@@ -13071,24 +14378,24 @@
             "bone": "leg_upper_l",
             "parentBody": "pelvis",
             "parentAnchor": [
-              0.2,
-              0.04,
-              0.02
+              0.24,
+              0.048,
+              0.024
             ],
-            "massKg": 12,
+            "massKg": 20.736,
             "collider": {
               "type": "capsule",
               "a": [
-                0.0096,
-                -0.0769,
-                0.0416
+                0.0115,
+                -0.0923,
+                0.0499
               ],
               "b": [
-                0.0252,
-                -0.2017,
-                0.0728
+                0.0302,
+                -0.242,
+                0.0874
               ],
-              "radius": 0.1555
+              "radius": 0.1866
             },
             "joint": {
               "type": "cone_twist",
@@ -13119,24 +14426,24 @@
             "bone": "leg_lower_l",
             "parentBody": "leg_upper_l",
             "parentAnchor": [
-              0.04,
-              -0.32,
-              0.08
+              0.048,
+              -0.384,
+              0.096
             ],
-            "massKg": 7.2,
+            "massKg": 12.4416,
             "collider": {
               "type": "capsule",
               "a": [
-                0.0022,
-                -0.0356,
-                -0.0232
+                0.0026,
+                -0.0427,
+                -0.0278
               ],
               "b": [
-                0.0073,
-                -0.1207,
-                -0.0387
+                0.0088,
+                -0.1448,
+                -0.0464
               ],
-              "radius": 0.0926
+              "radius": 0.1111
             },
             "joint": {
               "type": "hinge",
@@ -13167,24 +14474,24 @@
             "bone": "foot_l",
             "parentBody": "leg_lower_l",
             "parentAnchor": [
-              0.02,
-              -0.33,
-              -0.06
+              0.024,
+              -0.396,
+              -0.072
             ],
-            "massKg": 4.8,
+            "massKg": 8.2944,
             "collider": {
               "type": "capsule",
               "a": [
-                0.0007,
-                -0.0311,
-                -0.0173
+                0.0008,
+                -0.0373,
+                -0.0208
               ],
               "b": [
-                0.0007,
-                -0.0311,
-                0.0339
+                0.0008,
+                -0.0373,
+                0.0407
               ],
-              "radius": 0.0648
+              "radius": 0.0778
             },
             "joint": {
               "type": "cone_twist",
@@ -13215,24 +14522,24 @@
             "bone": "leg_upper_r",
             "parentBody": "pelvis",
             "parentAnchor": [
-              -0.2,
-              0.04,
-              0.02
+              -0.24,
+              0.048,
+              0.024
             ],
-            "massKg": 12,
+            "massKg": 20.736,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0096,
-                -0.0769,
-                0.0416
+                -0.0115,
+                -0.0923,
+                0.0499
               ],
               "b": [
-                -0.0252,
-                -0.2017,
-                0.0728
+                -0.0302,
+                -0.242,
+                0.0874
               ],
-              "radius": 0.1555
+              "radius": 0.1866
             },
             "joint": {
               "type": "cone_twist",
@@ -13263,24 +14570,24 @@
             "bone": "leg_lower_r",
             "parentBody": "leg_upper_r",
             "parentAnchor": [
-              -0.04,
-              -0.32,
-              0.08
+              -0.048,
+              -0.384,
+              0.096
             ],
-            "massKg": 7.2,
+            "massKg": 12.4416,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0022,
-                -0.0356,
-                -0.0232
+                -0.0026,
+                -0.0427,
+                -0.0278
               ],
               "b": [
-                -0.0073,
-                -0.1207,
-                -0.0387
+                -0.0088,
+                -0.1448,
+                -0.0464
               ],
-              "radius": 0.0926
+              "radius": 0.1111
             },
             "joint": {
               "type": "hinge",
@@ -13311,24 +14618,24 @@
             "bone": "foot_r",
             "parentBody": "leg_lower_r",
             "parentAnchor": [
-              -0.02,
-              -0.33,
-              -0.06
+              -0.024,
+              -0.396,
+              -0.072
             ],
-            "massKg": 4.8,
+            "massKg": 8.2944,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.0007,
-                -0.0311,
-                -0.0173
+                -0.0008,
+                -0.0373,
+                -0.0208
               ],
               "b": [
-                -0.0007,
-                -0.0311,
-                0.0339
+                -0.0008,
+                -0.0373,
+                0.0407
               ],
-              "radius": 0.0648
+              "radius": 0.0778
             },
             "joint": {
               "type": "cone_twist",

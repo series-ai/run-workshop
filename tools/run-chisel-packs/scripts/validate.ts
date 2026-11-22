@@ -3,12 +3,14 @@ import { join, relative } from 'node:path'
 import { AnimationMixer, Euler, Matrix4, Mesh, Quaternion, SkinnedMesh, Vector3, type Object3D } from 'three'
 import { z } from 'zod'
 import { BUDGETS } from '../contracts/budgets'
-import { packCatalogSchema, type AvatarPartEntry, type AvatarProportions, type CharacterPreset, type HeldItemEntry, type PackCatalog } from '../contracts/catalog'
+import { buildManifestSchema, type AvatarPartEntry, type AvatarProportions, type CharacterPreset, type HeldItemEntry, type PackCatalog } from '../contracts/catalog'
+import { propPaletteFor } from '../contracts/colorDirection'
 import { leavesFor, POLY_PACK_KEYS } from '../contracts/packs'
 import { PALETTE_REGION_U } from '../contracts/palette'
 import { armThicknessFactorFor, heldSocketOffsetFor, isArmShieldHeldItem } from '../contracts/proportions'
 import { RAGDOLL_RIG_TEMPLATES } from '../contracts/ragdoll'
 import { RIG_SPECS, UAL1_RIG, type RigId } from '../contracts/rig'
+import { HUMAN_SCALE } from '../contracts/worldScale'
 import {
   auditRigClips,
   createAuditProportionController,
@@ -20,11 +22,8 @@ import {
 } from '../src/animationAudit'
 import { isIdentityTransform, nodeTriangleCount, parseGlb, readAccessor, type ParsedGlb } from '../src/glbInspect'
 import { META_DIR, STAGE_DIR } from '../src/paths'
-
-const buildManifestSchema = z.object({
-  version: z.literal(1),
-  packs: z.array(packCatalogSchema),
-})
+import { assertPackColorAssignments, assertPropColors } from '../src/propColors'
+import { assertPropScale } from '../src/propScale'
 
 function assertFiniteWeightsAndPositions(glb: ParsedGlb, nodeName: string, isSkinned: boolean, jointCount: number): void {
   const node = glb.doc.nodes?.find((n) => n.name === nodeName)
@@ -1314,6 +1313,44 @@ function skinMeshPositions(mesh: SkinnedMesh): Vec3Tuple[] {
   return out
 }
 
+async function assertAdultReferenceScale(
+  preset: CharacterPreset,
+  packs: PackCatalog[],
+  cache: Map<string, Awaited<ReturnType<typeof loadGlbHeadless>>>,
+): Promise<void> {
+  const [body, head] = HUMAN_SCALE.referenceParts
+  const reference = { ...preset, body, head, hair: null, torso: null, legs: null, headwear: null, back: null }
+  const { root, meshes, clips, rigId } = await loadPresetForAudit(reference, packs, STAGE_DIR, cache)
+  const bones = new Map<string, Object3D>()
+  root.traverse((object) => {
+    if (object.type === 'Bone') bones.set(object.name, object)
+  })
+  const idle = clips.find(({ name }) => name === HUMAN_SCALE.referenceClip)
+  if (!idle) throw new Error(`Missing adult reference clip ${HUMAN_SCALE.referenceClip}`)
+  const clip = optimizeClipForAudit(idle, bones)
+  const controller = createAuditProportionController(root, meshes, rigId, preset.proportions)
+  const mixer = new AnimationMixer(root)
+  mixer.clipAction(clip).play()
+  mixer.setTime(HUMAN_SCALE.referencePhase * clip.duration)
+  controller.scalePelvis()
+  root.updateMatrixWorld(true)
+
+  let sole = Infinity
+  let crown = -Infinity
+  for (const mesh of meshes) {
+    const positions = skinMeshPositions(mesh)
+    const indices = mesh.geometry.getIndex()?.array ?? positions.keys()
+    for (const index of indices) {
+      const y = positions[index]![1]
+      sole = Math.min(sole, y)
+      crown = Math.max(crown, y)
+    }
+  }
+  if (Math.abs(sole) > 0.015 || Math.abs(crown - sole - HUMAN_SCALE.referenceHeightM) > 0.015) {
+    throw new Error(`Adult reference measures ${(crown - sole).toFixed(3)} m with soles at ${sole.toFixed(3)} m`)
+  }
+}
+
 function buildMeshVertClassification(mesh: SkinnedMesh, side?: 'r' | 'l') {
   const posAttr = mesh.geometry.getAttribute('position')
   const jiAttr = mesh.geometry.getAttribute('skinIndex')
@@ -2232,6 +2269,7 @@ async function main(): Promise<void> {
   if (!existsSync(manifestPath)) throw new Error(`Missing build manifest: ${manifestPath}. Run npm run build first.`)
   const manifest = buildManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')))
   assertNoOrphanGlbs(manifest)
+  manifest.packs.forEach(assertPackColorAssignments)
 
   let totalModels = 0
   let totalParts = 0
@@ -2362,6 +2400,8 @@ async function main(): Promise<void> {
       }
       assertFiniteWeightsAndPositions(glb, prop.nodeName, isAnimated, jointCount)
       const node = glb.doc.nodes!.find((n) => n.name === prop.nodeName)!
+      assertPropColors(glb, prop.nodeName, propPaletteFor(prop.pack, prop.id))
+      assertPropScale(glb, prop)
       const tris = nodeTriangleCount(glb, node)
       if (tris > BUDGETS.classes.prop.maxTriangles) {
         throw new Error(`Prop "${prop.id}" has ${tris} tris > budget ${BUDGETS.classes.prop.maxTriangles}`)
@@ -2438,6 +2478,9 @@ async function main(): Promise<void> {
   // Geometry-accurate animation audits on creature clips and UAL1 presets
   const auditCache = new Map<string, Awaited<ReturnType<typeof import('../src/animationAudit').loadGlbHeadless>>>()
   const allPresets = manifest.packs.flatMap((p) => p.presets)
+  const coreAthletic = allPresets.find(({ id }) => id === HUMAN_SCALE.referencePreset)
+  if (!coreAthletic) throw new Error(`Missing adult reference preset ${HUMAN_SCALE.referencePreset}`)
+  await assertAdultReferenceScale(coreAthletic, manifest.packs, auditCache)
   await assertHeldPresetClips(allPresets, auditCache)
   await assertHeldBodyCollisionFree(allPresets, manifest.packs, auditCache)
   await assertAnimatedShoulderSleeveIntegrity(allPresets, manifest.packs, auditCache)
@@ -2648,7 +2691,6 @@ async function main(): Promise<void> {
     armLength: 1.3,
     bodyLength: 1,
   }
-  const coreAthletic = allPresets.find((p) => p.id === 'core_athletic')!
   const coreLoaded = await loadPresetForAudit(coreAthletic, manifest.packs, STAGE_DIR, auditCache)
   const extremeUal1Reports = auditRigClips(
     coreLoaded.root,

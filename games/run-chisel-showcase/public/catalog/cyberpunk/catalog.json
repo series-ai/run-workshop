@@ -1038,6 +1038,1514 @@
       }
     },
     {
+      "id": "prop_lantern_noodle_bar",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_lantern_noodle_bar.glb",
+      "nodeName": "prop_lantern_noodle_bar",
+      "label": "Lantern Exchange Noodle Bar",
+      "triangles": 647,
+      "bounds": {
+        "min": [
+          -1.43,
+          0,
+          -0.785
+        ],
+        "max": [
+          1.43,
+          2.411,
+          0.785
+        ],
+        "size": [
+          2.86,
+          2.411,
+          1.57
+        ]
+      }
+    },
+    {
+      "id": "prop_steam_basket_counter",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_steam_basket_counter.glb",
+      "nodeName": "prop_steam_basket_counter",
+      "label": "Steam Basket Counter",
+      "triangles": 572,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.495
+        ],
+        "max": [
+          0.85,
+          1.455,
+          0.495
+        ],
+        "size": [
+          1.7,
+          1.455,
+          0.99
+        ]
+      }
+    },
+    {
+      "id": "prop_market_stool",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_market_stool.glb",
+      "nodeName": "prop_market_stool",
+      "label": "Market Counter Stool",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -0.27716,
+          0,
+          -0.27716
+        ],
+        "max": [
+          0.27716,
+          0.64,
+          0.27716
+        ],
+        "size": [
+          0.55433,
+          0.64,
+          0.55433
+        ]
+      }
+    },
+    {
+      "id": "prop_tea_urn",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_tea_urn.glb",
+      "nodeName": "prop_tea_urn",
+      "label": "Countertop Tea Urn",
+      "triangles": 168,
+      "bounds": {
+        "min": [
+          -0.32336,
+          0,
+          -0.40168
+        ],
+        "max": [
+          0.32336,
+          0.9,
+          0.40168
+        ],
+        "size": [
+          0.64672,
+          0.9,
+          0.80336
+        ]
+      }
+    },
+    {
+      "id": "prop_menu_easel",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_menu_easel.glb",
+      "nodeName": "prop_menu_easel",
+      "label": "Market Menu Easel",
+      "triangles": 140,
+      "bounds": {
+        "min": [
+          -0.34,
+          0,
+          -0.28958
+        ],
+        "max": [
+          0.34,
+          1.17722,
+          0.28958
+        ],
+        "size": [
+          0.68,
+          1.17722,
+          0.57916
+        ]
+      }
+    },
+    {
+      "id": "prop_fish_display",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_fish_display.glb",
+      "nodeName": "prop_fish_display",
+      "label": "Fishmonger Display Table",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -0.85065,
+          0,
+          -0.4505
+        ],
+        "max": [
+          0.85065,
+          0.9925,
+          0.4505
+        ],
+        "size": [
+          1.7013,
+          0.9925,
+          0.901
+        ]
+      }
+    },
+    {
+      "id": "prop_market_scale",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_market_scale.glb",
+      "nodeName": "prop_market_scale",
+      "label": "Countertop Market Scale",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -0.32548,
+          0,
+          -0.23097
+        ],
+        "max": [
+          0.32548,
+          0.535,
+          0.23097
+        ],
+        "size": [
+          0.65097,
+          0.535,
+          0.46194
+        ]
+      }
+    },
+    {
+      "id": "prop_herb_trough",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_herb_trough.glb",
+      "nodeName": "prop_herb_trough",
+      "label": "Kitchen Herb Trough",
+      "triangles": 264,
+      "bounds": {
+        "min": [
+          -0.7521,
+          0,
+          -0.2915
+        ],
+        "max": [
+          0.7521,
+          0.74541,
+          0.2915
+        ],
+        "size": [
+          1.5042,
+          0.74541,
+          0.583
+        ]
+      }
+    },
+    {
+      "id": "prop_delivery_handcart",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_delivery_handcart.glb",
+      "nodeName": "prop_delivery_handcart",
+      "label": "Delivery Handcart",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -0.42,
+          0,
+          -0.3875
+        ],
+        "max": [
+          0.42,
+          1.235,
+          0.3875
+        ],
+        "size": [
+          0.84,
+          1.235,
+          0.775
+        ]
+      }
+    },
+    {
+      "id": "prop_capsule_locker",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_capsule_locker.glb",
+      "nodeName": "prop_capsule_locker",
+      "label": "Parcel Capsule Lockers",
+      "triangles": 244,
+      "bounds": {
+        "min": [
+          -0.655,
+          0,
+          -0.3925
+        ],
+        "max": [
+          0.655,
+          2.06,
+          0.3925
+        ],
+        "size": [
+          1.31,
+          2.06,
+          0.785
+        ]
+      }
+    },
+    {
+      "id": "prop_transit_reader",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_transit_reader.glb",
+      "nodeName": "prop_transit_reader",
+      "label": "Transit Fare Reader",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -0.23097,
+          0,
+          -0.23097
+        ],
+        "max": [
+          0.23097,
+          1.36887,
+          0.23097
+        ],
+        "size": [
+          0.46194,
+          1.36887,
+          0.46194
+        ]
+      }
+    },
+    {
+      "id": "prop_taxi_beacon",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_taxi_beacon.glb",
+      "nodeName": "prop_taxi_beacon",
+      "label": "Night Taxi Beacon",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -0.46,
+          0,
+          -0.26793
+        ],
+        "max": [
+          0.46,
+          2.355,
+          0.26793
+        ],
+        "size": [
+          0.92,
+          2.355,
+          0.53585
+        ]
+      }
+    },
+    {
+      "id": "prop_arc_lamp",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_arc_lamp.glb",
+      "nodeName": "prop_arc_lamp",
+      "label": "Cantilever Street Lamp",
+      "triangles": 184,
+      "bounds": {
+        "min": [
+          -0.25869,
+          0,
+          -0.71934
+        ],
+        "max": [
+          0.25869,
+          3.02495,
+          0.71934
+        ],
+        "size": [
+          0.51737,
+          3.02495,
+          1.43869
+        ]
+      }
+    },
+    {
+      "id": "prop_lantern_span",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_lantern_span.glb",
+      "nodeName": "prop_lantern_span",
+      "label": "Lantern Cable Span",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -2.02554,
+          0,
+          -0.17862
+        ],
+        "max": [
+          2.02554,
+          3.08323,
+          0.17862
+        ],
+        "size": [
+          4.05107,
+          3.08323,
+          0.35724
+        ]
+      }
+    },
+    {
+      "id": "prop_rain_shelter",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_rain_shelter.glb",
+      "nodeName": "prop_rain_shelter",
+      "label": "Rain Shelter Bench",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -1.255,
+          0,
+          -0.64778
+        ],
+        "max": [
+          1.255,
+          2.30757,
+          0.64778
+        ],
+        "size": [
+          2.51,
+          2.30757,
+          1.29556
+        ]
+      }
+    },
+    {
+      "id": "prop_safety_island",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_safety_island.glb",
+      "nodeName": "prop_safety_island",
+      "label": "Pedestrian Refuge Island",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.78,
+          0,
+          -0.305
+        ],
+        "max": [
+          0.78,
+          0.78,
+          0.305
+        ],
+        "size": [
+          1.56,
+          0.78,
+          0.61
+        ]
+      }
+    },
+    {
+      "id": "prop_channel_pavement",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_channel_pavement.glb",
+      "nodeName": "prop_channel_pavement",
+      "label": "Channel Drain Pavement",
+      "triangles": 268,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.128,
+          1
+        ],
+        "size": [
+          2,
+          0.128,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_utility_pavement",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_utility_pavement.glb",
+      "nodeName": "prop_utility_pavement",
+      "label": "Service Hatch Pavement",
+      "triangles": 160,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.155,
+          1
+        ],
+        "size": [
+          2,
+          0.155,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cable_ramp",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cable_ramp.glb",
+      "nodeName": "prop_cable_ramp",
+      "label": "Cable Crossing Ramp",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -0.88,
+          0,
+          -0.275
+        ],
+        "max": [
+          0.88,
+          0.1405,
+          0.275
+        ],
+        "size": [
+          1.76,
+          0.1405,
+          0.55
+        ]
+      }
+    },
+    {
+      "id": "prop_cooling_stack",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cooling_stack.glb",
+      "nodeName": "prop_cooling_stack",
+      "label": "Roof Cooling Stack",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -0.515,
+          0,
+          -0.48
+        ],
+        "max": [
+          0.515,
+          1.32,
+          0.48
+        ],
+        "size": [
+          1.03,
+          1.32,
+          0.96
+        ]
+      }
+    },
+    {
+      "id": "prop_pressure_station",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pressure_station.glb",
+      "nodeName": "prop_pressure_station",
+      "label": "Twin Pressure Vessels",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -0.62,
+          0,
+          -0.37
+        ],
+        "max": [
+          0.62,
+          1.389,
+          0.37
+        ],
+        "size": [
+          1.24,
+          1.389,
+          0.74
+        ]
+      }
+    },
+    {
+      "id": "prop_cell_charger",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cell_charger.glb",
+      "nodeName": "prop_cell_charger",
+      "label": "Swap Cell Charger",
+      "triangles": 376,
+      "bounds": {
+        "min": [
+          -0.78,
+          0,
+          -0.333
+        ],
+        "max": [
+          0.78,
+          0.95,
+          0.333
+        ],
+        "size": [
+          1.56,
+          0.95,
+          0.666
+        ]
+      }
+    },
+    {
+      "id": "prop_hose_reel",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_hose_reel.glb",
+      "nodeName": "prop_hose_reel",
+      "label": "Service Hose Reel",
+      "triangles": 296,
+      "bounds": {
+        "min": [
+          -0.3725,
+          0,
+          -0.41114
+        ],
+        "max": [
+          0.3725,
+          0.9514,
+          0.41114
+        ],
+        "size": [
+          0.745,
+          0.9514,
+          0.82227
+        ]
+      }
+    },
+    {
+      "id": "prop_transformer_frame",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_transformer_frame.glb",
+      "nodeName": "prop_transformer_frame",
+      "label": "Street Transformer Frame",
+      "triangles": 360,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.465
+        ],
+        "max": [
+          0.7,
+          1.41,
+          0.465
+        ],
+        "size": [
+          1.4,
+          1.41,
+          0.93
+        ]
+      }
+    },
+    {
+      "id": "prop_filter_bank",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_filter_bank.glb",
+      "nodeName": "prop_filter_bank",
+      "label": "Water Filter Bank",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -0.56,
+          0,
+          -0.33
+        ],
+        "max": [
+          0.56,
+          1.14794,
+          0.33
+        ],
+        "size": [
+          1.12,
+          1.14794,
+          0.66
+        ]
+      }
+    },
+    {
+      "id": "prop_sorting_chute",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_sorting_chute.glb",
+      "nodeName": "prop_sorting_chute",
+      "label": "Recycling Intake Chute",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -0.44,
+          0,
+          -0.48451
+        ],
+        "max": [
+          0.44,
+          1.30286,
+          0.48451
+        ],
+        "size": [
+          0.88,
+          1.30286,
+          0.96901
+        ]
+      }
+    },
+    {
+      "id": "prop_balcony_bay",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_balcony_bay.glb",
+      "nodeName": "prop_balcony_bay",
+      "label": "Bolt-on Balcony Bay",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.565
+        ],
+        "max": [
+          1,
+          0.95,
+          0.565
+        ],
+        "size": [
+          2,
+          0.95,
+          1.13
+        ]
+      }
+    },
+    {
+      "id": "prop_fire_ladder",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_fire_ladder.glb",
+      "nodeName": "prop_fire_ladder",
+      "label": "Service Access Ladder",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -0.335,
+          0,
+          -0.1625
+        ],
+        "max": [
+          0.335,
+          2.88,
+          0.1625
+        ],
+        "size": [
+          0.67,
+          2.88,
+          0.325
+        ]
+      }
+    },
+    {
+      "id": "prop_pod_upper_floor",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pod_upper_floor.glb",
+      "nodeName": "prop_pod_upper_floor",
+      "label": "Stackable Capsule Floor",
+      "triangles": 328,
+      "bounds": {
+        "min": [
+          -1.36954,
+          0,
+          -1.1775
+        ],
+        "max": [
+          1.36954,
+          1.44,
+          1.1775
+        ],
+        "size": [
+          2.73908,
+          1.44,
+          2.355
+        ]
+      }
+    },
+    {
+      "id": "prop_roof_cistern",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_roof_cistern.glb",
+      "nodeName": "prop_roof_cistern",
+      "label": "Elevated Roof Cistern",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -0.625,
+          0,
+          -0.641
+        ],
+        "max": [
+          0.625,
+          2.04114,
+          0.641
+        ],
+        "size": [
+          1.25,
+          2.04114,
+          1.282
+        ]
+      }
+    },
+    {
+      "id": "prop_dish_relay",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_dish_relay.glb",
+      "nodeName": "prop_dish_relay",
+      "label": "Roof Dish Relay",
+      "triangles": 248,
+      "bounds": {
+        "min": [
+          -0.58921,
+          0,
+          -0.50354
+        ],
+        "max": [
+          0.58921,
+          1.51919,
+          0.50354
+        ],
+        "size": [
+          1.17843,
+          1.51919,
+          1.00707
+        ]
+      }
+    },
+    {
+      "id": "prop_blade_sign",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_blade_sign.glb",
+      "nodeName": "prop_blade_sign",
+      "label": "Lantern Exchange Blade Sign",
+      "triangles": 220,
+      "bounds": {
+        "min": [
+          -0.5475,
+          0,
+          -0.1375
+        ],
+        "max": [
+          0.5475,
+          1.61,
+          0.1375
+        ],
+        "size": [
+          1.095,
+          1.61,
+          0.275
+        ]
+      }
+    },
+    {
+      "id": "prop_shutter_bay",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_shutter_bay.glb",
+      "nodeName": "prop_shutter_bay",
+      "label": "Modular Shop Shutter",
+      "triangles": 220,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.1625
+        ],
+        "max": [
+          1,
+          2.365,
+          0.1625
+        ],
+        "size": [
+          2,
+          2.365,
+          0.325
+        ]
+      }
+    },
+    {
+      "id": "prop_awning_fan",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_awning_fan.glb",
+      "nodeName": "prop_awning_fan",
+      "label": "Striped Shop Awning",
+      "triangles": 232,
+      "bounds": {
+        "min": [
+          -0.99817,
+          0,
+          -0.57216
+        ],
+        "max": [
+          0.99817,
+          0.86641,
+          0.57216
+        ],
+        "size": [
+          1.99634,
+          0.86641,
+          1.14432
+        ]
+      }
+    },
+    {
+      "id": "prop_tension_sail",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_tension_sail.glb",
+      "nodeName": "prop_tension_sail",
+      "label": "Three-post Market Sail",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -1.6799,
+          0,
+          -1.015
+        ],
+        "max": [
+          1.6799,
+          3.096,
+          1.015
+        ],
+        "size": [
+          3.35981,
+          3.096,
+          2.03
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_road_straight",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_road_straight.glb",
+      "nodeName": "prop_cyber_road_straight",
+      "label": "Cyber Asphalt Straight Road",
+      "triangles": 56,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.121,
+          1
+        ],
+        "size": [
+          2,
+          0.121,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_road_corner",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_road_corner.glb",
+      "nodeName": "prop_cyber_road_corner",
+      "label": "Cyber Asphalt Corner Road",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.1145,
+          1
+        ],
+        "size": [
+          2,
+          0.1145,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_road_tsplit",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_road_tsplit.glb",
+      "nodeName": "prop_cyber_road_tsplit",
+      "label": "Cyber Asphalt T-Intersection",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.1145,
+          1
+        ],
+        "size": [
+          2,
+          0.1145,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_road_junction",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_road_junction.glb",
+      "nodeName": "prop_cyber_road_junction",
+      "label": "Cyber Asphalt 4-Way Junction",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.1145,
+          1
+        ],
+        "size": [
+          2,
+          0.1145,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_road_crosswalk",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_road_crosswalk.glb",
+      "nodeName": "prop_cyber_road_crosswalk",
+      "label": "Neon Pedestrian Crosswalk",
+      "triangles": 52,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.123,
+          1
+        ],
+        "size": [
+          2,
+          0.123,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_catwalk_stairs",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_catwalk_stairs.glb",
+      "nodeName": "prop_catwalk_stairs",
+      "label": "Industrial Catwalk Stairs",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -0.89,
+          0,
+          -0.81
+        ],
+        "max": [
+          0.89,
+          1.1,
+          0.81
+        ],
+        "size": [
+          1.78,
+          1.1,
+          1.62
+        ]
+      }
+    },
+    {
+      "id": "prop_catwalk_railing",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_catwalk_railing.glb",
+      "nodeName": "prop_catwalk_railing",
+      "label": "Neon Safety Railing",
+      "triangles": 58,
+      "bounds": {
+        "min": [
+          -0.99,
+          0,
+          -0.06
+        ],
+        "max": [
+          0.99,
+          0.96,
+          0.06
+        ],
+        "size": [
+          1.98,
+          0.96,
+          0.12
+        ]
+      }
+    },
+    {
+      "id": "prop_vault_wall_panel",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_vault_wall_panel.glb",
+      "nodeName": "prop_vault_wall_panel",
+      "label": "Armored Vault Wall Panel",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.2475
+        ],
+        "max": [
+          1,
+          2.5,
+          0.2475
+        ],
+        "size": [
+          2,
+          2.5,
+          0.495
+        ]
+      }
+    },
+    {
+      "id": "prop_vault_wall_corner",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_vault_wall_corner.glb",
+      "nodeName": "prop_vault_wall_corner",
+      "label": "Armored Vault Wall Corner",
+      "triangles": 46,
+      "bounds": {
+        "min": [
+          -0.64,
+          0,
+          -0.64
+        ],
+        "max": [
+          0.64,
+          2.54,
+          0.64
+        ],
+        "size": [
+          1.28,
+          2.54,
+          1.28
+        ]
+      }
+    },
+    {
+      "id": "prop_vault_window_wall",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_vault_window_wall.glb",
+      "nodeName": "prop_vault_window_wall",
+      "label": "Armored Observation Wall",
+      "triangles": 92,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.23
+        ],
+        "max": [
+          1,
+          2.5,
+          0.23
+        ],
+        "size": [
+          2,
+          2.5,
+          0.46
+        ]
+      }
+    },
+    {
+      "id": "prop_alley_wall_panel",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_alley_wall_panel.glb",
+      "nodeName": "prop_alley_wall_panel",
+      "label": "Back-Alley Conduit Wall",
+      "triangles": 62,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.215
+        ],
+        "max": [
+          1,
+          2.4,
+          0.215
+        ],
+        "size": [
+          2,
+          2.4,
+          0.43
+        ]
+      }
+    },
+    {
+      "id": "prop_overhead_pipe_bridge",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_overhead_pipe_bridge.glb",
+      "nodeName": "prop_overhead_pipe_bridge",
+      "label": "Overhead Coolant Gantry",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.3075
+        ],
+        "max": [
+          1.2,
+          2.807,
+          0.3075
+        ],
+        "size": [
+          2.4,
+          2.807,
+          0.615
+        ]
+      }
+    },
+    {
+      "id": "prop_vault_bunker_hub",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_vault_bunker_hub.glb",
+      "nodeName": "prop_vault_bunker_hub",
+      "label": "Corporate Vault Bunker Hub",
+      "triangles": 130,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -1.165
+        ],
+        "max": [
+          1.45,
+          3.365,
+          1.165
+        ],
+        "size": [
+          2.9,
+          3.365,
+          2.33
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_apartment",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_apartment.glb",
+      "nodeName": "prop_cyber_apartment",
+      "label": "Megablock Apartment Tower",
+      "triangles": 646,
+      "bounds": {
+        "min": [
+          -1.4275,
+          0,
+          -1.3385
+        ],
+        "max": [
+          1.4275,
+          4.52,
+          1.3385
+        ],
+        "size": [
+          2.855,
+          4.52,
+          2.677
+        ]
+      }
+    },
+    {
+      "id": "prop_tech_workshop",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_tech_workshop.glb",
+      "nodeName": "prop_tech_workshop",
+      "label": "Ripperdoc Tech Garage",
+      "triangles": 630,
+      "bounds": {
+        "min": [
+          -1.4525,
+          0,
+          -1.306
+        ],
+        "max": [
+          1.4525,
+          2.98,
+          1.306
+        ],
+        "size": [
+          2.905,
+          2.98,
+          2.612
+        ]
+      }
+    },
+    {
+      "id": "prop_power_substation",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_power_substation.glb",
+      "nodeName": "prop_power_substation",
+      "label": "Neon Power Substation",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -1.06,
+          0,
+          -0.86
+        ],
+        "max": [
+          1.06,
+          1.78,
+          0.86
+        ],
+        "size": [
+          2.12,
+          1.78,
+          1.72
+        ]
+      }
+    },
+    {
+      "id": "prop_cyber_bike",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cyber_bike.glb",
+      "nodeName": "prop_cyber_bike",
+      "label": "Neon Street Speeder Bike",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -0.33,
+          0,
+          -0.89869
+        ],
+        "max": [
+          0.33,
+          1.00869,
+          0.89869
+        ],
+        "size": [
+          0.66,
+          1.00869,
+          1.79737
+        ]
+      }
+    },
+    {
+      "id": "prop_cargo_loader",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cargo_loader.glb",
+      "nodeName": "prop_cargo_loader",
+      "label": "Industrial Cargo Loader",
+      "triangles": 484,
+      "bounds": {
+        "min": [
+          -0.762,
+          0,
+          -1.59
+        ],
+        "max": [
+          0.762,
+          2.30336,
+          1.59
+        ],
+        "size": [
+          1.524,
+          2.30336,
+          3.18
+        ]
+      }
+    },
+    {
+      "id": "prop_arcade_cabinet",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_arcade_cabinet.glb",
+      "nodeName": "prop_arcade_cabinet",
+      "label": "Neon Street Arcade Cabinet",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -0.395,
+          0,
+          -0.375
+        ],
+        "max": [
+          0.395,
+          1.76,
+          0.375
+        ],
+        "size": [
+          0.79,
+          1.76,
+          0.75
+        ]
+      }
+    },
+    {
+      "id": "prop_cable_spool",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_cable_spool.glb",
+      "nodeName": "prop_cable_spool",
+      "label": "Heavy Power Cable Spool",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -0.38803,
+          0,
+          -0.38803
+        ],
+        "max": [
+          0.38803,
+          0.76,
+          0.38803
+        ],
+        "size": [
+          0.77606,
+          0.76,
+          0.77606
+        ]
+      }
+    },
+    {
+      "id": "prop_antenna_array",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_antenna_array.glb",
+      "nodeName": "prop_antenna_array",
+      "label": "Relay Antenna Array",
+      "triangles": 70,
+      "bounds": {
+        "min": [
+          -0.54401,
+          0,
+          -0.43
+        ],
+        "max": [
+          0.54401,
+          2.8,
+          0.43
+        ],
+        "size": [
+          1.08803,
+          2.8,
+          0.86
+        ]
+      }
+    },
+    {
+      "id": "prop_pipe_cluster",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pipe_cluster.glb",
+      "nodeName": "prop_pipe_cluster",
+      "label": "Coolant Pipe Manifold",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -0.71,
+          0,
+          -0.36
+        ],
+        "max": [
+          0.71,
+          1.34,
+          0.36
+        ],
+        "size": [
+          1.42,
+          1.34,
+          0.72
+        ]
+      }
+    },
+    {
+      "id": "prop_traffic_pylon",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_traffic_pylon.glb",
+      "nodeName": "prop_traffic_pylon",
+      "label": "Holo Hazard Pylon",
+      "triangles": 42,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.2,
+          0.72,
+          0.2
+        ],
+        "size": [
+          0.4,
+          0.72,
+          0.4
+        ]
+      }
+    },
+    {
       "id": "prop_blast_door",
       "pack": "cyberpunk",
       "leaf": "world",
@@ -1188,6 +2696,93 @@
         "Spin",
         "Hack"
       ]
+    },
+    {
+      "id": "prop_holo_billboard",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_holo_billboard.glb",
+      "nodeName": "prop_holo_billboard",
+      "label": "Animated Holo Sky-Billboard",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -1.04,
+          0,
+          -0.14
+        ],
+        "max": [
+          1.04,
+          3.12,
+          0.14
+        ],
+        "size": [
+          2.08,
+          3.12,
+          0.28
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_hover_car",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_hover_car.glb",
+      "nodeName": "prop_hover_car",
+      "label": "Spinner Hover Car",
+      "triangles": 424,
+      "bounds": {
+        "min": [
+          -0.99,
+          0,
+          -1.905
+        ],
+        "max": [
+          0.99,
+          1.61,
+          1.905
+        ],
+        "size": [
+          1.98,
+          1.61,
+          3.81
+        ]
+      },
+      "clips": [
+        "Hover"
+      ]
+    },
+    {
+      "id": "prop_neon_vending_booth",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_neon_vending_booth.glb",
+      "nodeName": "prop_neon_vending_booth",
+      "label": "Cyber Drink Vending Kiosk",
+      "triangles": 50,
+      "bounds": {
+        "min": [
+          -0.51,
+          0,
+          -0.375
+        ],
+        "max": [
+          0.51,
+          1.96,
+          0.375
+        ],
+        "size": [
+          1.02,
+          1.96,
+          0.75
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
     }
   ],
   "presets": [
@@ -1216,7 +2811,7 @@
         "eye": "#40f5ce"
       },
       "proportions": {
-        "height": 1.02,
+        "height": 0.947988,
         "legRatio": 0.94,
         "shoulderWidth": 1.08,
         "torsoBulk": 1.04,
@@ -1228,7 +2823,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 81.816,
+        "totalMassKg": 75.6688,
         "bodies": [
           {
             "bone": "pelvis",
@@ -1238,20 +2833,20 @@
               0,
               0
             ],
-            "massKg": 13.4066,
+            "massKg": 12.9568,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0496,
-                0.0916,
-                0.0209
+                0.0889,
+                0.0216
               ],
               "b": [
                 0.0496,
-                0.0916,
-                0.0209
+                0.0889,
+                0.0216
               ],
-              "radius": 0.1307
+              "radius": 0.1284
             },
             "joint": null,
             "collisionGroup": 1
@@ -1261,23 +2856,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2626,
-              -0.0024
+              0.2543,
+              -0.0003
             ],
-            "massKg": 12.3884,
+            "massKg": 10.439,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0344,
-                0.1009,
-                0.0127
+                0.0855,
+                0.0146
               ],
               "b": [
                 0.0344,
-                0.1009,
-                0.0127
+                0.0855,
+                0.0146
               ],
-              "radius": 0.07
+              "radius": 0.0639
             },
             "joint": {
               "type": "cone_twist",
@@ -1309,23 +2904,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2368,
-              -0.0226
+              0.1997,
+              -0.018
             ],
-            "massKg": 15.6776,
+            "massKg": 14.9976,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0395,
-                0.0084,
+                0.008,
                 0.0226
               ],
               "b": [
                 0.0395,
-                0.0084,
+                0.008,
                 0.0226
               ],
-              "radius": 0.2504
+              "radius": 0.2449
             },
             "joint": {
               "type": "cone_twist",
@@ -1357,8 +2952,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2532,
-              0.0082
+              0.2428,
+              0.0078
             ],
             "massKg": 5.25,
             "collider": {
@@ -1405,21 +3000,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1185,
-              0.0619,
-              0.0269
+              0.058,
+              0.0268
             ],
-            "massKg": 2.6386,
+            "massKg": 2.3941,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0182,
-                0.0639,
-                -0.0059
+                0.058,
+                -0.006
               ],
               "b": [
                 -0.0183,
-                0.2487,
-                -0.0027
+                0.2257,
+                -0.0031
               ],
               "radius": 0.053
             },
@@ -1453,21 +3048,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.3097,
-              -0.0002
+              0.281,
+              -0.0006
             ],
-            "massKg": 1.6906,
+            "massKg": 1.534,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0574,
-                -0.0006
+                0.0521,
+                -0.0005
               ],
               "b": [
                 -0.0009,
-                0.2222,
-                -0.0034
+                0.2017,
+                -0.003
               ],
               "radius": 0.0434
             },
@@ -1501,8 +3096,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2656,
-              0.0001
+              0.241,
+              0.0005
             ],
             "massKg": 0.6127,
             "collider": {
@@ -1549,21 +3144,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1185,
-              0.0619,
-              0.0269
+              0.058,
+              0.0268
             ],
-            "massKg": 2.6386,
+            "massKg": 2.3941,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0182,
-                0.0639,
-                -0.0059
+                0.058,
+                -0.006
               ],
               "b": [
                 0.0183,
-                0.2487,
-                -0.0027
+                0.2257,
+                -0.0031
               ],
               "radius": 0.053
             },
@@ -1597,21 +3192,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.3097,
-              -0.0002
+              0.281,
+              -0.0006
             ],
-            "massKg": 1.6906,
+            "massKg": 1.534,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0574,
-                -0.0006
+                0.0521,
+                -0.0005
               ],
               "b": [
                 0.0009,
-                0.2222,
-                -0.0034
+                0.2017,
+                -0.003
               ],
               "radius": 0.0434
             },
@@ -1645,8 +3240,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2656,
-              0.0001
+              0.241,
+              0.0005
             ],
             "massKg": 0.6127,
             "collider": {
@@ -1693,21 +3288,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0574,
-              0.01
+              0.0557,
+              0.0105
             ],
-            "massKg": 7.8768,
+            "massKg": 7.0987,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0121,
-                0.0642,
+                0.0578,
                 -0.0033
               ],
               "b": [
                 -0.0121,
-                0.4155,
-                -0.0058
+                0.3745,
+                -0.0055
               ],
               "radius": 0.0781
             },
@@ -1741,21 +3336,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4413,
-              0.0002
+              0.3977,
+              0.0005
             ],
-            "massKg": 3.5917,
+            "massKg": 3.2369,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0857,
-                0.0159
+                0.0774,
+                0.0166
               ],
               "b": [
                 0,
-                0.4082,
-                -0.01
+                0.368,
+                -0.0068
               ],
               "radius": 0.0653
             },
@@ -1789,8 +3384,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4527,
-              0.0019
+              0.4083,
+              0.0054
             ],
             "massKg": 1.1363,
             "collider": {
@@ -1837,21 +3432,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0574,
-              0.01
+              0.0557,
+              0.0105
             ],
-            "massKg": 7.8768,
+            "massKg": 7.0987,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0121,
-                0.0642,
+                0.0578,
                 -0.0033
               ],
               "b": [
                 0.0121,
-                0.4155,
-                -0.0058
+                0.3745,
+                -0.0055
               ],
               "radius": 0.0781
             },
@@ -1885,21 +3480,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4413,
-              0.0002
+              0.3977,
+              0.0005
             ],
-            "massKg": 3.5917,
+            "massKg": 3.2369,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0857,
-                0.0159
+                0.0774,
+                0.0166
               ],
               "b": [
                 0,
-                0.4082,
-                -0.01
+                0.368,
+                -0.0068
               ],
               "radius": 0.0653
             },
@@ -1933,8 +3528,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4527,
-              0.0018
+              0.4083,
+              0.0054
             ],
             "massKg": 1.1363,
             "collider": {
@@ -2070,7 +3665,7 @@
         "eye": "#40f5ce"
       },
       "proportions": {
-        "height": 0.97,
+        "height": 0.9015179999999999,
         "legRatio": 0.96,
         "shoulderWidth": 1.04,
         "torsoBulk": 1,
@@ -2082,7 +3677,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 62.5351,
+        "totalMassKg": 57.9046,
         "bodies": [
           {
             "bone": "pelvis",
@@ -2092,20 +3687,20 @@
               0,
               0
             ],
-            "massKg": 10.9848,
+            "massKg": 10.6344,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0432,
-                0.0881,
-                0.0192
+                0.0857,
+                0.0198
               ],
               "b": [
                 0.0432,
-                0.0881,
-                0.0192
+                0.0857,
+                0.0198
               ],
-              "radius": 0.1243
+              "radius": 0.1223
             },
             "joint": null,
             "collisionGroup": 1
@@ -2115,23 +3710,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.254,
-              -0.0006
+              0.2464,
+              0.0014
             ],
-            "massKg": 8.7717,
+            "massKg": 7.2623,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0342,
-                0.0849,
-                0.0122
+                0.0708,
+                0.0139
               ],
               "b": [
                 0.0342,
-                0.0849,
-                0.0122
+                0.0708,
+                0.0139
               ],
-              "radius": 0.0607
+              "radius": 0.0553
             },
             "joint": {
               "type": "cone_twist",
@@ -2163,23 +3758,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.199,
-              -0.0179
+              0.1649,
+              -0.0137
             ],
-            "massKg": 11.9221,
+            "massKg": 11.4253,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0338,
-                0.0081,
+                0.0077,
                 0.0195
               ],
               "b": [
                 0.0338,
-                0.0081,
+                0.0077,
                 0.0195
               ],
-              "radius": 0.24
+              "radius": 0.235
             },
             "joint": {
               "type": "cone_twist",
@@ -2211,8 +3806,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2426,
-              0.008
+              0.2331,
+              0.0077
             ],
             "massKg": 5.0394,
             "collider": {
@@ -2259,21 +3854,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1128,
-              0.058,
-              0.0255
+              0.0544,
+              0.0254
             ],
-            "massKg": 1.8503,
+            "massKg": 1.6761,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0151,
-                0.0554,
-                -0.0055
+                0.0502,
+                -0.0056
               ],
               "b": [
                 -0.0153,
-                0.2364,
-                -0.0024
+                0.2141,
+                -0.0028
               ],
               "radius": 0.0457
             },
@@ -2307,21 +3902,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.2891,
-              -0.0002
+              0.2619,
+              -0.0006
             ],
-            "massKg": 1.2224,
+            "massKg": 1.1073,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.05,
-                -0.0002
+                0.0453,
+                -0.0001
               ],
               "b": [
                 -0.0009,
-                0.211,
-                -0.0029
+                0.1911,
+                -0.0026
               ],
               "radius": 0.041
             },
@@ -2355,8 +3950,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2479,
-              0.0002
+              0.2246,
+              0.0006
             ],
             "massKg": 0.4908,
             "collider": {
@@ -2403,21 +3998,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1128,
-              0.058,
-              0.0255
+              0.0544,
+              0.0254
             ],
-            "massKg": 1.8503,
+            "massKg": 1.6761,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0151,
-                0.0554,
-                -0.0055
+                0.0502,
+                -0.0056
               ],
               "b": [
                 0.0153,
-                0.2364,
-                -0.0024
+                0.2141,
+                -0.0028
               ],
               "radius": 0.0457
             },
@@ -2451,21 +4046,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.2891,
-              -0.0002
+              0.2619,
+              -0.0006
             ],
-            "massKg": 1.2224,
+            "massKg": 1.1073,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.05,
-                -0.0002
+                0.0453,
+                -0.0001
               ],
               "b": [
                 0.0009,
-                0.211,
-                -0.0029
+                0.1911,
+                -0.0026
               ],
               "radius": 0.041
             },
@@ -2499,8 +4094,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2479,
-              0.0002
+              0.2246,
+              0.0006
             ],
             "massKg": 0.4908,
             "collider": {
@@ -2547,21 +4142,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0556,
-              0.0104
+              0.0541,
+              0.0108
             ],
-            "massKg": 5.7578,
+            "massKg": 5.177,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0116,
-                0.0567,
+                0.051,
                 -0.0031
               ],
               "b": [
                 -0.0116,
-                0.3313,
-                -0.0051
+                0.2978,
+                -0.0048
               ],
               "radius": 0.0558
             },
@@ -2595,21 +4190,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4198,
-              0.0001
+              0.3775,
+              0.0004
             ],
-            "massKg": 2.6465,
+            "massKg": 2.3796,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0005,
-                0.0772,
-                0.0152
+                0.0696,
+                0.0158
               ],
               "b": [
                 -0.0004,
-                0.3925,
-                -0.0101
+                0.3531,
+                -0.007
               ],
               "radius": 0.0587
             },
@@ -2643,8 +4238,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4306,
-              0.0018
+              0.3875,
+              0.0053
             ],
             "massKg": 0.9409,
             "collider": {
@@ -2691,21 +4286,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0556,
-              0.0104
+              0.0541,
+              0.0108
             ],
-            "massKg": 5.7578,
+            "massKg": 5.177,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0116,
-                0.0567,
+                0.051,
                 -0.0031
               ],
               "b": [
                 0.0116,
-                0.3313,
-                -0.0051
+                0.2978,
+                -0.0048
               ],
               "radius": 0.0558
             },
@@ -2739,21 +4334,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4198,
-              0.0001
+              0.3775,
+              0.0004
             ],
-            "massKg": 2.6465,
+            "massKg": 2.3796,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0005,
-                0.0772,
-                0.0152
+                0.0696,
+                0.0158
               ],
               "b": [
                 0.0004,
-                0.3925,
-                -0.0101
+                0.3531,
+                -0.007
               ],
               "radius": 0.0587
             },
@@ -2787,8 +4382,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4306,
-              0.0018
+              0.3875,
+              0.0053
             ],
             "massKg": 0.9409,
             "collider": {
@@ -2924,7 +4519,7 @@
         "eye": "#f54345"
       },
       "proportions": {
-        "height": 1.04,
+        "height": 0.966576,
         "legRatio": 0.94,
         "shoulderWidth": 1.1,
         "torsoBulk": 1.08,
@@ -2936,7 +4531,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 102.2427,
+        "totalMassKg": 94.5502,
         "bodies": [
           {
             "bone": "pelvis",
@@ -2946,20 +4541,20 @@
               0,
               0
             ],
-            "massKg": 16.0626,
+            "massKg": 15.5182,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0467,
-                0.0945,
-                0.0294
+                0.0917,
+                0.0301
               ],
               "b": [
                 0.0467,
-                0.0945,
-                0.0294
+                0.0917,
+                0.0301
               ],
-              "radius": 0.1389
+              "radius": 0.1365
             },
             "joint": null,
             "collisionGroup": 1
@@ -2969,23 +4564,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.265,
-              -0.0023
+              0.2566,
+              -0.0001
             ],
-            "massKg": 15.3525,
+            "massKg": 12.9925,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0049,
-                0.1054,
-                0.0144
+                0.0897,
+                0.0164
               ],
               "b": [
                 0.0049,
-                0.1054,
-                0.0144
+                0.0897,
+                0.0164
               ],
-              "radius": 0.0808
+              "radius": 0.0738
             },
             "joint": {
               "type": "cone_twist",
@@ -3017,23 +4612,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2471,
-              -0.0239
+              0.2093,
+              -0.0192
             ],
-            "massKg": 19.7179,
+            "massKg": 18.8562,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0307,
-                0.0084,
+                0.008,
                 0.0257
               ],
               "b": [
                 0.0307,
-                0.0084,
+                0.008,
                 0.0257
               ],
-              "radius": 0.1518
+              "radius": 0.1485
             },
             "joint": {
               "type": "cone_twist",
@@ -3065,8 +4660,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2561,
-              0.0081
+              0.2455,
+              0.0078
             ],
             "massKg": 6.16,
             "collider": {
@@ -3113,21 +4708,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1215,
-              0.0629,
-              0.0282
+              0.0589,
+              0.0281
             ],
-            "massKg": 3.4422,
+            "massKg": 3.1252,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0205,
-                0.0683,
-                -0.0061
+                0.062,
+                -0.0062
               ],
               "b": [
                 -0.0206,
-                0.2524,
-                -0.003
+                0.2292,
+                -0.0034
               ],
               "radius": 0.0623
             },
@@ -3161,21 +4756,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.3177,
-              -0.0002
+              0.2884,
+              -0.0007
             ],
-            "massKg": 2.1649,
+            "massKg": 1.9655,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.001,
-                0.0595,
-                -0.0006
+                -0.0011,
+                0.054,
+                -0.0005
               ],
               "b": [
-                -0.0009,
-                0.2274,
-                -0.0034
+                -0.001,
+                0.2064,
+                -0.0031
               ],
               "radius": 0.0447
             },
@@ -3209,8 +4804,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2724,
-              0.0001
+              0.2473,
+              0.0006
             ],
             "massKg": 0.7493,
             "collider": {
@@ -3257,21 +4852,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1215,
-              0.0629,
-              0.0282
+              0.0589,
+              0.0281
             ],
-            "massKg": 3.4422,
+            "massKg": 3.1252,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0205,
-                0.0683,
-                -0.0061
+                0.062,
+                -0.0062
               ],
               "b": [
                 0.0206,
-                0.2524,
-                -0.003
+                0.2292,
+                -0.0034
               ],
               "radius": 0.0623
             },
@@ -3305,21 +4900,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.3177,
-              -0.0002
+              0.2884,
+              -0.0007
             ],
-            "massKg": 2.1649,
+            "massKg": 1.9655,
             "collider": {
               "type": "capsule",
               "a": [
-                0.001,
-                0.0595,
-                -0.0006
+                0.0011,
+                0.054,
+                -0.0005
               ],
               "b": [
-                0.0009,
-                0.2274,
-                -0.0034
+                0.001,
+                0.2064,
+                -0.0031
               ],
               "radius": 0.0447
             },
@@ -3353,8 +4948,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2724,
-              0.0001
+              0.2473,
+              0.0006
             ],
             "massKg": 0.7493,
             "collider": {
@@ -3401,21 +4996,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.058,
-              0.0102
+              0.0562,
+              0.0106
             ],
-            "massKg": 10.1516,
+            "massKg": 9.1565,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0123,
-                0.0668,
-                -0.0035
+                0.0603,
+                -0.0034
               ],
               "b": [
                 -0.0123,
-                0.4269,
-                -0.006
+                0.3851,
+                -0.0057
               ],
               "radius": 0.0808
             },
@@ -3449,21 +5044,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4534,
-              0.0002
+              0.409,
+              0.0005
             ],
-            "massKg": 4.6069,
+            "massKg": 4.1553,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0889,
-                0.0164
+                0.0803,
+                0.0171
               ],
               "b": [
                 0,
-                0.4186,
-                -0.0101
+                0.3777,
+                -0.0068
               ],
               "radius": 0.0674
             },
@@ -3497,8 +5092,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4651,
-              0.0021
+              0.4198,
+              0.0057
             ],
             "massKg": 1.3599,
             "collider": {
@@ -3545,21 +5140,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.058,
-              0.0102
+              0.0562,
+              0.0106
             ],
-            "massKg": 10.1516,
+            "massKg": 9.1565,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0123,
-                0.0668,
-                -0.0035
+                0.0603,
+                -0.0034
               ],
               "b": [
                 0.0123,
-                0.4269,
-                -0.006
+                0.3851,
+                -0.0057
               ],
               "radius": 0.0808
             },
@@ -3593,21 +5188,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4534,
-              0.0002
+              0.409,
+              0.0005
             ],
-            "massKg": 4.6069,
+            "massKg": 4.1553,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0889,
-                0.0164
+                0.0803,
+                0.0171
               ],
               "b": [
                 0,
-                0.4186,
-                -0.0101
+                0.3777,
+                -0.0068
               ],
               "radius": 0.0674
             },
@@ -3641,8 +5236,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4651,
-              0.0021
+              0.4198,
+              0.0057
             ],
             "massKg": 1.3599,
             "collider": {
@@ -3778,7 +5373,7 @@
         "eye": "#ffe188"
       },
       "proportions": {
-        "height": 1.01,
+        "height": 0.938694,
         "legRatio": 0.94,
         "shoulderWidth": 1.06,
         "torsoBulk": 1,
@@ -3790,7 +5385,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 79.9204,
+        "totalMassKg": 73.8952,
         "bodies": [
           {
             "bone": "pelvis",
@@ -3800,20 +5395,20 @@
               0,
               0
             ],
-            "massKg": 13.3441,
+            "massKg": 12.8987,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0496,
-                0.0912,
-                0.021
+                0.0885,
+                0.0217
               ],
               "b": [
                 0.0496,
-                0.0912,
-                0.021
+                0.0885,
+                0.0217
               ],
-              "radius": 0.1304
+              "radius": 0.1281
             },
             "joint": null,
             "collisionGroup": 1
@@ -3823,23 +5418,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2614,
-              -0.0021
+              0.2532,
+              0
             ],
-            "massKg": 11.9736,
+            "massKg": 10.0663,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0074,
-                0.0988,
-                0.0128
+                0.0835,
+                0.0147
               ],
               "b": [
                 0.0074,
-                0.0988,
-                0.0128
+                0.0835,
+                0.0147
               ],
-              "radius": 0.069
+              "radius": 0.0629
             },
             "joint": {
               "type": "cone_twist",
@@ -3871,23 +5466,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2317,
-              -0.0219
+              0.1949,
+              -0.0174
             ],
-            "massKg": 14.6853,
+            "massKg": 14.0507,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0387,
-                0.0084,
+                0.008,
                 0.0217
               ],
               "b": [
                 0.0387,
-                0.0084,
+                0.008,
                 0.0217
               ],
-              "radius": 0.1267
+              "radius": 0.1239
             },
             "joint": {
               "type": "cone_twist",
@@ -3919,8 +5514,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2518,
-              0.0083
+              0.2415,
+              0.008
             ],
             "massKg": 5.25,
             "collider": {
@@ -3967,21 +5562,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1156,
-              0.0614,
-              0.0256
+              0.0575,
+              0.0255
             ],
-            "massKg": 2.6046,
+            "massKg": 2.3625,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0182,
-                0.0631,
-                -0.0059
+                0.0573,
+                -0.006
               ],
               "b": [
-                -0.0183,
-                0.2455,
-                -0.0027
+                -0.0182,
+                0.2227,
+                -0.0031
               ],
               "radius": 0.053
             },
@@ -4015,21 +5610,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.3057,
-              -0.0002
+              0.2773,
+              -0.0007
             ],
-            "massKg": 1.6689,
+            "massKg": 1.5138,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0566,
-                -0.0006
+                0.0514,
+                -0.0005
               ],
               "b": [
                 -0.0009,
-                0.2194,
-                -0.0033
+                0.199,
+                -0.003
               ],
               "radius": 0.0434
             },
@@ -4063,8 +5658,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2622,
-              0.0002
+              0.2378,
+              0.0006
             ],
             "massKg": 0.6127,
             "collider": {
@@ -4111,21 +5706,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1156,
-              0.0614,
-              0.0256
+              0.0575,
+              0.0255
             ],
-            "massKg": 2.6046,
+            "massKg": 2.3625,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0182,
-                0.0631,
-                -0.0059
+                0.0573,
+                -0.006
               ],
               "b": [
-                0.0183,
-                0.2455,
-                -0.0027
+                0.0182,
+                0.2227,
+                -0.0031
               ],
               "radius": 0.053
             },
@@ -4159,21 +5754,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.3057,
-              -0.0002
+              0.2773,
+              -0.0007
             ],
-            "massKg": 1.6689,
+            "massKg": 1.5138,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0566,
-                -0.0006
+                0.0514,
+                -0.0005
               ],
               "b": [
                 0.0009,
-                0.2194,
-                -0.0033
+                0.199,
+                -0.003
               ],
               "radius": 0.0434
             },
@@ -4207,8 +5802,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2622,
-              0.0002
+              0.2378,
+              0.0006
             ],
             "massKg": 0.6127,
             "collider": {
@@ -4255,21 +5850,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0572,
-              0.0101
+              0.0555,
+              0.0105
             ],
-            "massKg": 7.7688,
+            "massKg": 6.9983,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0121,
-                0.0633,
+                0.057,
                 -0.0033
               ],
               "b": [
                 -0.0121,
-                0.339,
-                -0.0052
+                0.3054,
+                -0.005
               ],
               "radius": 0.0588
             },
@@ -4303,21 +5898,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4353,
-              0.0002
+              0.3921,
+              0.0005
             ],
-            "massKg": 3.5424,
+            "massKg": 3.1911,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0846,
-                0.016
+                0.0764,
+                0.0166
               ],
               "b": [
                 0,
-                0.4026,
-                -0.0096
+                0.3628,
+                -0.0064
               ],
               "radius": 0.0616
             },
@@ -4351,8 +5946,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4465,
-              0.0024
+              0.4025,
+              0.0059
             ],
             "massKg": 1.1363,
             "collider": {
@@ -4399,21 +5994,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0572,
-              0.0101
+              0.0555,
+              0.0105
             ],
-            "massKg": 7.7688,
+            "massKg": 6.9983,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0121,
-                0.0633,
+                0.057,
                 -0.0033
               ],
               "b": [
                 0.0121,
-                0.339,
-                -0.0052
+                0.3054,
+                -0.005
               ],
               "radius": 0.0588
             },
@@ -4447,21 +6042,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4353,
-              0.0002
+              0.3921,
+              0.0005
             ],
-            "massKg": 3.5424,
+            "massKg": 3.1911,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0846,
-                0.016
+                0.0764,
+                0.0166
               ],
               "b": [
                 0,
-                0.4026,
-                -0.0096
+                0.3628,
+                -0.0064
               ],
               "radius": 0.0616
             },
@@ -4495,8 +6090,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4465,
-              0.0023
+              0.4025,
+              0.0059
             ],
             "massKg": 1.1363,
             "collider": {

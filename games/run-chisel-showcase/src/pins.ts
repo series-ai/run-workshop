@@ -1,17 +1,17 @@
 /**
- * Published jam-ready-assets pack versions per leaf ID.
- * Generated via `npm run sync-pins` (manifest commit: b77c0b8e572ecd22dcc90ebad70a977159b1f043).
+ * Jam-ready-assets content versions per leaf ID.
+ * Generated via `npm run sync-pins` (manifest commit: 427c1a2c5bee8d21edf013c61bdd5ea19eb35be3).
  */
 export const PINS: Readonly<Record<string, string>> = {
-  'run-chisel-core/3D/characters': '4f7787aa24bc',
-  'run-chisel-medieval/3D/characters': 'e55320fced32',
-  'run-chisel-medieval/3D/medieval': 'ef042a9c32e6',
-  'run-chisel-ww2/3D/characters': '98a5fb91f136',
-  'run-chisel-ww2/3D/ww2': '0bbcad5446d8',
-  'run-chisel-sim/3D/characters': '6c9e62eab224',
-  'run-chisel-sim/3D/sim': 'a70e5dbe6c87',
-  'run-chisel-cyberpunk/3D/characters': '5c7f80d32512',
-  'run-chisel-cyberpunk/3D/cyberpunk': 'ff4a9ea8cc6b',
-  'run-chisel-monsters/3D/characters': 'dcabfd53bbab',
-  'run-chisel-monsters/3D/monsters': '7a2a6abd9001',
+  'run-chisel-core/3D/characters': '36403b6261c7',
+  'run-chisel-medieval/3D/characters': 'f96e125ea767',
+  'run-chisel-medieval/3D/medieval': 'ea09da775480',
+  'run-chisel-ww2/3D/characters': 'f67ea14fa2ae',
+  'run-chisel-ww2/3D/ww2': '2238f8f9dcc9',
+  'run-chisel-sim/3D/characters': '5bda99efb07c',
+  'run-chisel-sim/3D/sim': '597c9fb3dc38',
+  'run-chisel-cyberpunk/3D/characters': '86b42c86e7fa',
+  'run-chisel-cyberpunk/3D/cyberpunk': '67c61a0d977e',
+  'run-chisel-monsters/3D/characters': '0b98e469e136',
+  'run-chisel-monsters/3D/monsters': 'a89d2582986a',
 }

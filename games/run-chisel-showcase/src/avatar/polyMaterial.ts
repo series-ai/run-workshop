@@ -1,28 +1,64 @@
-import { CanvasTexture, Color, FrontSide, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry } from 'three'
+import { CanvasTexture, Color, FrontSide, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, Vector3 } from 'three'
+import { COLOR_DIRECTION } from '@chisel/contracts/colorDirection'
 import { PALETTE_REGIONS, type PaletteColors } from '@chisel/contracts/palette'
 
 /**
  * 7-region UV palette shader (visual rule S3).
  *   uv.x selects one of seven palette colors (skin, hair, primary, secondary, accent, metal, eye).
  *   uv.y is a baked shade ramp: 0.15 is the darkest value and 0.85 is the brightest value.
- * All poly materials share one shader program. Only the palette uniform differs.
+ * The shader cache reuses the same material code for each palette and finish.
  * The material draws front faces only. Open cloth has a modelled inner lining (see polykit.py).
  */
 
 const PROGRAM_KEY = 'run-chisel-atlas-v3'
+const LIGHTWEIGHT_LIGHTING = new URLSearchParams(globalThis.location?.search).get('lighting') === 'fast'
+
+const DIFFUSE_LIGHTING = `#include <lights_physical_pars_fragment>
+  void RE_Direct_Chisel(
+    const in IncidentLight light, const in vec3 point, const in vec3 normal,
+    const in vec3 view, const in vec3 clearcoatNormal, const in PhysicalMaterial surface,
+    inout ReflectedLight reflected
+  ) {
+    float diffuse = saturate(dot(normal, light.direction));
+    reflected.directDiffuse += diffuse * light.color * BRDF_Lambert(surface.diffuseColor);
+  }
+  #undef RE_Direct
+  #define RE_Direct RE_Direct_Chisel
+  #undef RE_IndirectSpecular
+`
+
+const SIMPLE_FINISH = `
+  vec3 polyView = isOrthographic ? vec3(0.0, 0.0, 1.0) : normalize(vViewPosition);
+  float facing = saturate(dot(normal, polyView));
+  float edge = 1.0 - facing;
+  float rim = edge * edge * mix(0.26, 0.52, edge);
+  outgoingLight += (diffuseColor.rgb * 0.75 + vec3(0.022, 0.035, 0.051)) * rim;
+  #if NUM_DIR_LIGHTS > 0
+    vec3 key = directionalLights[0].direction;
+    float highlight = saturate(dot(normal, normalize(key + polyView)));
+    float broad = pow2(pow2(pow2(highlight)));
+    float narrow = broad * broad;
+    float gloss = (polyMetal * broad * 0.28 + polyEye * narrow * 0.08)
+      * saturate(dot(normal, key)) * mix(0.35, 1.0, polyRamp);
+    outgoingLight += gloss * directionalLights[0].color * mix(vec3(0.22), diffuseColor.rgb, polyMetal * 0.65);
+  #endif
+  float reflectedSky = smoothstep(-0.16, 0.58, dot(reflect(-polyView, normal), viewMatrix[1].xyz));
+  outgoingLight += polyEye * vec3(0.09, 0.15, 0.18)
+    * (0.08 + reflectedSky * (0.32 + 0.68 * edge * edge)) * uPolyOptics.x;
+  float emits = 1.0 - step(0.5, abs(float(polyRegion) - uPolyOptics.z));
+  outgoingLight += polyBase * emits * uPolyOptics.y;
+  #include <opaque_fragment>
+`
 
 /**
  * Look constants of the shared program. Every value is a GLSL literal, so all materials compile
  * to one program.
- *   ramp:       brightness at the dark end and at the bright end of the baked shade ramp.
  *   darkFloor:  linear RGB that the shader adds to very dark palette colors. Dark leather, fur and
  *               chitin then keep visible facets against a dark background.
  *   rim:        view-space rim. A facet that turns away from the camera gets a cool edge value.
  *   metal:      the metal region has lower roughness and a vertical studio reflection.
  */
 const LOOK = {
-  rampDark: 0.56,
-  rampBright: 1.16,
   darkFloor: 'vec3(0.020, 0.022, 0.030)',
   darkFloorLuma: 0.1,
   rimStrength: 0.62,
@@ -35,10 +71,18 @@ const LOOK = {
   eyeRoughness: 0.26,
 } as const
 
-const glsl = (value: number) => value.toFixed(3)
+const glsl = (value: number) => value.toFixed(8)
+const SHADE = COLOR_DIRECTION.shade
 
 interface PolyUniforms {
   uPolyPalette: { value: Color[] }
+}
+
+export interface PolyOptics {
+  /** Use the eye region for glazing on this prop. */
+  glass?: number
+  /** Palette region that emits light on a fixture. */
+  glow?: { region: keyof PaletteColors; strength: number }
 }
 
 function uniformsOf(material: MeshStandardMaterial): PolyUniforms {
@@ -53,7 +97,7 @@ function inject(source: string, chunk: string, replacement: string): string {
   return source.replace(chunk, replacement)
 }
 
-export function createPolyMaterial(palette: PaletteColors): MeshStandardMaterial {
+export function createPolyMaterial(palette: PaletteColors, optics?: PolyOptics): MeshStandardMaterial {
   const uniforms: PolyUniforms = {
     uPolyPalette: { value: PALETTE_REGIONS.map((region) => new Color(palette[region] ?? '#1f2634')) },
   }
@@ -76,13 +120,13 @@ export function createPolyMaterial(palette: PaletteColors): MeshStandardMaterial
       '#include <color_fragment>',
       `#include <color_fragment>
         int polyRegion = int(clamp(floor(vPolyUv.x * 7.0), 0.0, 6.0));
-        float polyRamp = clamp((vPolyUv.y - 0.15) / 0.7, 0.0, 1.0);
+        float polyRamp = clamp((vPolyUv.y - ${glsl(SHADE.uvMin)}) / ${glsl(SHADE.uvMax - SHADE.uvMin)}, 0.0, 1.0);
         float polyMetal = polyRegion == 5 ? 1.0 : 0.0;
         float polyEye = polyRegion == 6 ? 1.0 : 0.0;
         vec3 polyBase = uPolyPalette[polyRegion];
         float polyLuma = dot(polyBase, vec3(0.2126, 0.7152, 0.0722));
         polyBase += ${LOOK.darkFloor} * (1.0 - smoothstep(0.0, ${glsl(LOOK.darkFloorLuma)}, polyLuma));
-        diffuseColor.rgb = polyBase * mix(${glsl(LOOK.rampDark)}, ${glsl(LOOK.rampBright)}, polyRamp) * mix(1.0, ${glsl(LOOK.metalBoost)}, polyMetal);`,
+        diffuseColor.rgb = polyBase * mix(${glsl(SHADE.dark)}, ${glsl(SHADE.bright)}, polyRamp) * mix(1.0, ${glsl(LOOK.metalBoost)}, polyMetal);`,
     )
     fragment = inject(
       fragment,
@@ -91,6 +135,15 @@ export function createPolyMaterial(palette: PaletteColors): MeshStandardMaterial
         roughnessFactor = mix(mix(roughnessFactor, ${glsl(LOOK.metalRoughness)}, polyMetal), ${glsl(LOOK.eyeRoughness)}, polyEye);
         metalnessFactor = mix(metalnessFactor, ${glsl(LOOK.metalness)}, polyMetal);`,
     )
+    if (LIGHTWEIGHT_LIGHTING) {
+      const glowRegion = optics?.glow ? PALETTE_REGIONS.indexOf(optics.glow.region) : -1
+      shader.uniforms.uPolyOptics = { value: new Vector3(optics?.glass ?? 0, optics?.glow?.strength ?? 0, glowRegion) }
+      fragment = inject(fragment, '#include <lights_physical_pars_fragment>', DIFFUSE_LIGHTING)
+      fragment = inject(fragment, '#include <opaque_fragment>', SIMPLE_FINISH)
+      shader.fragmentShader = inject(fragment, '#include <common>', '#include <common>\nuniform vec3 uPolyOptics;')
+      return
+    }
+
     fragment = inject(
       fragment,
       '#include <opaque_fragment>',
@@ -104,7 +157,7 @@ export function createPolyMaterial(palette: PaletteColors): MeshStandardMaterial
     )
     shader.fragmentShader = fragment
   }
-  material.customProgramCacheKey = () => PROGRAM_KEY
+  material.customProgramCacheKey = () => LIGHTWEIGHT_LIGHTING ? `${PROGRAM_KEY}-fast` : PROGRAM_KEY
   return material
 }
 

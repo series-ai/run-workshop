@@ -29,6 +29,7 @@ export interface GlbDocument {
     bufferView?: number
     byteOffset?: number
     componentType: number
+    normalized?: boolean
     count: number
     type: string
   }[]

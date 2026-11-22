@@ -8,7 +8,7 @@ Reference guide for authoring modular low-poly characters, outfits, handheld ite
 
 - **Hard `FrontSide` rendering**: Both Blender exports (`polykit.py`: `'doubleSided': False`) and runtime materials (`polyMaterial.ts`: `THREE.FrontSide`) render front faces only.
 - **No zero-thickness sheets**: Every open cloth flap, cloak, skirt, kilt, trenchcoat lower hem, loincloth, or banner flag MUST be built with `two_sided=True` (e.g., `part.loft(..., two_sided=True, thickness=0.004..0.006, inner_ao=-0.2)`), generating an inward-offset solid lining with reversed winding and darker cavity AO so neither orbit camera angles nor animations reveal invisible backfaces.
-- **One shared palette shader**: Every mesh uses 1 primitive with `Poly_Atlas_Mat` (`maxMaterials: 1`). Palette assignment uses quantized `TEXCOORD_0` bands into the 7 color regions:
+- **One shared palette shader**: Every mesh uses 1 primitive with `Poly_Atlas_Mat` (`maxMaterials: 1`). Start with the pack's muted ground and background colors. Check the main shape and useful gaps at 128 px before you add trim. Read the [pack color brief](../contracts/data/color-direction.json) and the [color rules](visual-direction.md#3-color-and-context-cohesion-c). Palette assignment uses quantized `TEXCOORD_0` bands into the 7 color regions:
   - `skin`
   - `hair`
   - `primary`
@@ -92,10 +92,10 @@ npm run build:local
 
 Visual WebGL capture check:
 ```bash
-node tools/run-chisel-packs/scripts/verify-visual.mjs --out /tmp/chisel-renders
-node tools/run-chisel-packs/scripts/verify-visual.mjs --out /tmp/chisel-renders --only "06|07"   # wolf and spider shots only
+npm --prefix tools/run-chisel-packs run verify:visual -- --out /tmp/chisel-renders
+npm --prefix tools/run-chisel-packs run verify:visual -- --out /tmp/chisel-renders --only '^(06|07)'
 ```
-The lab shots use the `Hold pose` control, so each pose is the same on every run. Look at the PNG files: the script finds console errors, not bad art.
+Run these commands from the repository root. The lab shots use fixed poses. The scene shots cover desktop, 390 px, and 320 px. The command checks browser errors and compact controls. Use the PNG files to review the art.
 
 ---
 

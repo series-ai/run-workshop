@@ -10,27 +10,41 @@ npm run scaffold -- --list                                     # Print pack/budg
 npm run build                                                  # Headless Blender 5.1 -> out/jam-stage/ + out/meta/manifest.json
 npm run validate                                               # Verifies rig parity, 89+ creature clips, S23 Ultra budgets, weights, UVs, bounds
 npm run catalog                                                # Exports catalog JSONs to ../../games/run-chisel-showcase/public/catalog/
-npm run snapshot -- --out out/review/knight.png --views knight # Multi-angle / multi-phase Three.js contact sheet
+npm run snapshot -- --out out/review/knight.png --views medieval_knight # Multi-angle Three.js contact sheet
 npm run lineup -- --out out/review/scale.png monster_warhorse  # Side-by-side scale check next to 1.80m human gauge
+npm run verify:visual -- --only '^(09|10)'                     # Capture the scenes and crowd bench after build:local
 npm run stage -- --target ~/dev/jam-ready-assets               # Stage packs, License.txt, scripts/preview-inputs grids, preview-sources.json
 npm run sync-pins -- --target ~/dev/jam-ready-assets           # Sync published leaf pins into games/run-chisel-showcase/src/pins.ts
 npm test
 npm run typecheck
 ```
 
+## Compare shader lighting
+
+Use `?lighting=fast` in the showcase URL to try the lightweight shader. To capture the same scene views in both modes, run `npm run verify:visual -- --only '^09' --lighting standard --out out/review/standard` and repeat with `--lighting fast --out out/review/fast`. Compare at the same resolution and measure frame times on the target device before changing the default.
+
 ## Expanding Packs (`jam-ready-assets`)
 
-Whenever you add new assets or expand any `run-chisel-*` pack, **we recommend publishing those new/updated assets into the `jam-ready-assets` repo** (not leaving them local-only):
+Add new and updated assets to `jam-ready-assets`.
 
 1. `npm run build && npm run validate && npm run catalog`
-2. In `../../games/run-chisel-showcase`: `npm run thumbnails -- --all --force` (or `--pack <pack> --force`)
-3. `npm run stage -- --target ~/dev/jam-ready-assets`
-4. Inside `~/dev/jam-ready-assets`: `npm run previews:generate && node scripts/build-manifest.mjs && npm test`
-5. Back in `tools/run-chisel-packs`: `npm run sync-pins -- --target ~/dev/jam-ready-assets`, then verify `npm run build` in `games/run-chisel-showcase`
+2. In `../../games/run-chisel-showcase`, run `npm run thumbnails -- --all --force` (or `--pack <pack> --force`). Run `npm run build:local`.
+3. In `tools/run-chisel-packs`, run `npm run verify:visual -- --only '^(09|10)'`. Inspect the captures in `out/visual-check`. The command checks browser errors and compact controls. Use the [visual guide](docs/visual-direction.md#6-world-prop-and-scene-review) to review shapes and fit.
+4. Run `npm run stage -- --target ~/dev/jam-ready-assets`.
+5. In `~/dev/jam-ready-assets`, run `npm run previews:generate && node scripts/build-manifest.mjs && npm run previews:check && npm test`.
+6. In `tools/run-chisel-packs`, run `npm run sync-pins -- --target ~/dev/jam-ready-assets`. Verify `npm run build` in `games/run-chisel-showcase`.
+
+## Add a theme
+
+Use this sequence when the theme needs a new pack ID and its own catalog.
+
+1. Add the ID, license, and asset paths to [the pack registry](contracts/data/packs.json) and [its schema](contracts/packs.ts). Add a brief and palettes to [the color contract](contracts/data/color-direction.json).
+2. Wire the pack builders into [`build_packs.py`](blender/build_packs.py) and [`build_props.py`](blender/build_props.py). Reuse the Core rig for ordinary adults. Register each asset under a stable ID.
+3. Add a review scene to the [showcase layouts](../../games/run-chisel-showcase/src/scenes/sceneLayouts.ts). Define its [terrain](../../games/run-chisel-showcase/src/scenes/sceneTerrain.tsx) and [cameras](../../games/run-chisel-showcase/src/scenes/stageLook.ts). Check the scene and follow the staging sequence above to generate the leaf pins.
 
 ## Documentation & Skills
 
-- [Workshop Agent Skill](SKILL.md) (also mirrored in `.agents/skills/run-chisel-assets/SKILL.md`)
+- [Workshop Agent Skill](../../.agents/skills/run-chisel-assets/SKILL.md)
 - [Architecture & Pipeline Specification](docs/architecture.md)
 - [Visual Direction & S23 Ultra Performance Law](docs/visual-direction.md)
 - [Authoring & Hardening Guide](docs/PACK_AUTHOR_GUIDE.md)

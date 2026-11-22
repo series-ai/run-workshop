@@ -1,6 +1,6 @@
 /**
  * Reads `<target>/manifest/v2/index.json` in a jam-ready-assets checkout and updates
- * `games/run-chisel-showcase/src/pins.ts` with the published version hash for every
+ * `games/run-chisel-showcase/src/pins.ts` with the content version for every
  * `run-chisel-*` leaf so `npm run build` (pinned production mode) passes.
  *
  * Usage:
@@ -43,7 +43,7 @@ function main(): void {
   const outPath = join(REPO_ROOT, 'games/run-chisel-showcase/src/pins.ts')
   const lines = [
     '/**',
-    ' * Published jam-ready-assets pack versions per leaf ID.',
+    ' * Jam-ready-assets content versions per leaf ID.',
     ` * Generated via \`npm run sync-pins\` (manifest commit: ${index.commit ?? 'unknown'}).`,
     ' */',
     'export const PINS: Readonly<Record<string, string>> = {',

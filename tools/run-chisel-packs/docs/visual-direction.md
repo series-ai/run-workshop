@@ -2,7 +2,7 @@
 
 Every asset in `run-chisel-*` shares one cohesive stylized faceted low-poly visual language and one hard runtime envelope designed for **120 Hz (<= 8.33 ms) on Samsung Galaxy S23 Ultra (Adreno 740)** and better mobile devices.
 
-Every rule has a stable ID (`F1..F6`, `S1..S5`, `C1..C3`, `P1..P6`, `M1..M4`). Future agents authoring new outfits, heads, props, or genre packs MUST obey these rules and pass `npm run validate`.
+Every rule has a stable ID (`F1..F6`, `S1..S6`, `C1..C5`, `P1..P6`, `M1..M4`). Future agents authoring new outfits, heads, props, or genre packs MUST obey these rules and pass `npm run validate`.
 
 ---
 
@@ -51,23 +51,37 @@ Every rule has a stable ID (`F1..F6`, `S1..S5`, `C1..C3`, `P1..P6`, `M1..M4`). F
   - Faces use faceted geometry for nose bridge, brow ridge, eye sockets, and chin, plus crisp low-poly eye/brow wedges mapped to `Hair`/`Secondary` bands (`4–12` tris) — readable from 3rd-person distance without fragile alpha decals.
 - **S5 — Dark Values Keep Their Facets**:
   - Dark leather, iron, fur and chitin must show each plane against a dark background. The shared shader lifts very dark palette colors, adds a view-space rim and gives the `metal` region a studio reflection (`polyMaterial.ts`).
-  - Keep palette values at `V >= 0.22` (rule C1). Do not use baked AO below `-0.2` on a large dark surface such as a boot.
+  - Check dark values in the scene and in grayscale (rule C2). Do not use baked AO below `-0.2` on a large dark surface such as a boot.
+- **S6 — Material Detail at Scene Scale**:
+  - Give each main prop one feature that shows how it works. Model the opening, joint, fold, or edge that casts the most useful shade.
+  - Use a few large material marks. Use offset courses for stone, seams along planks for wood, or a folded lip and a rubbed edge for painted metal. Put wear where people touch the prop or where the material meets the ground.
+  - Bake surface shade into the UV ramp and vertex colors. Keep joints darker and the exposed edges lighter. Check the finish close up and at 128 px. Leave broad surfaces quiet around the material cues.
 
 ---
 
-## 3. Color & Context Cohesion (`C`)
+## 3. Color and context cohesion (C)
 
-- **C1 — Cohesive Saturation & Value Envelope**:
-  - Keep base primary/secondary colors in **medium-value, controlled saturation** (`S ∈ [0.18, 0.62]`, `V ∈ [0.22, 0.78]`) for grounded packs (`Medieval`, `WW2`, `Monsters`), reserving high saturation (`S > 0.70`) for small **Accent** details (`<= 15%` surface area).
-  - Stylized packs (`Sim`, `Cyberpunk`) may pair **one vivid painted primary or secondary block** with a contrasting dark/neutral partner so silhouettes pop cleanly at 128 px.
-  - Never use pure `#000000` (shadows crush to muddy flat blobs) or pure `#FFFFFF` (blows out under key light).
-- **C2 — Genre Palettes on One Rig**:
-  - **Medieval**: Warm iron/steel (`#8c96a3`), heraldic crimson/cobalt/forest primary, rich saddle leather secondary (`#5c3c24`), brass/gold accent (`#d9a441`).
-  - **WW2**: Olive drab (`#545e43`), field grey (`#5c635f`), khaki webbing (`#8c7d5b`), gunmetal (`#3a4046`), subdued unit insignia accent (`#b84a39` / `#d4a24c`).
-  - **Sim / Modern**: Bright coral/teal/royal streetwear paired with crisp denim/cream neutrals and mint/coral sneaker accents.
-  - **Cyberpunk**: Vivid violet/cyan/crimson-magenta blocks over ice-slate or deep indigo panels with crisp neon cyan/gold accents and subdued terminal props.
-- **C3 — Instant Cross-Context Compatibility**:
-  - Because `u` selects semantic role rather than fixed RGB, any Medieval helmet or WW2 trenchcoat automatically adopts a Sim or Faction color palette if desired, or uses its authored default palette from the pack catalog.
+**C1 — Field, support, and focus.** Choose the ground color before you color the objects on it. Keep broad paving, dirt, stone, and water subdued. Use a small value step between those surfaces and their seams, wear, or ripples. Add broader changes where the surface or route changes. Use a related or opposing hue on secondary surfaces to separate materials and layers. Put the strongest useful contrast at the action. Start at roughly 70% field, 25% support, and 5% focus by visible area in the main view. Adjust for the location and lighting.
+
+**C2 — Value before hue.** Group dark recesses, middle-value surfaces, and light edges. Keep people, doors, paths, and working parts distinct in grayscale. Check the value directly behind each important outline. Lighten or darken that background before you increase saturation on a character. Bring distant colors closer to the fog color. Leave enough value contrast to see their outlines and any route that continues behind the action. Use high saturation on small areas or one painted block when the pack calls for it. Use tinted off-white and near-black swatches.
+
+**C3 — Assign colors to materials.** Use `primary` for the main surface, `secondary` for support and trim, and `accent` for a small mark or painted edge. Use `metal` for hardware. On props, `skin` can carry masonry or fabric, `hair` can carry foliage or recesses, and `eye` can carry glazing or signals. Give each region a stable role within a prop family. Use the baked shade ramp for facets and recesses. The same UV regions let a character take a different pack palette at runtime. Keep character skin, hair, and eye choices available on the shared Core rig.
+
+**C4 — Color brief for each pack.** The color contract gives each theme its hue relationship, field, support, focal color, character treatment, and review target. The scaffold command prints the brief for the selected pack. The contract holds avatar defaults, prop defaults and overrides, stage material groups, lighting colors, and the shade ramp. Character presets and scene palettes can use local variations that follow the brief. Prop overrides take priority over stage material groups. [Color contract](../contracts/data/color-direction.json)
+
+| Pack | Field | Support | Focus |
+| --- | --- | --- | --- |
+| Medieval | Moss, stone, weathered oak | Cool steel, saddle leather | Brass and one heraldic color |
+| WW2 | Dust, khaki, olive drab | Field grey, worn timber, dark rubber | Cream and muted red at the stop point |
+| Sim | Warm concrete, cream walls | Denim, terracotta, garden green | One coral block with small mint details |
+| Cyberpunk | Charcoal, blue-grey, dark teal | Cool slate, narrow rust-orange trim | Amber on the service counter and small mint signals |
+| Monsters | Ash and dark mineral brown | Olive hide, weathered wood, dusty bone | Ember at the portal and pale fossil edges |
+
+**C5 — Review the exported set.** Check a prop at 128 px. Look for its main mass, a clear secondary mass, and gaps that show function. Shorten or remove details that fill those gaps. Review the props and a character together from the normal scene camera. Check desktop, 390 px, and grayscale views in the actual shader. Follow the route and check the clearance around faces, hands, wheels, and openings. Check that the ground and secondary props leave the strongest contrast at the action. If the color changes, rebuild the GLB and render its thumbnails again.
+
+The `stage.environment` entries set ground patch colors, fog distance, and the amount of fog color on distant props. Use the same ground family under the main scene and beyond its edges. Match the edge colors where straight, corner, and junction modules meet. Keep location-specific lights and accents in the stage palette. Keep colors used on exported modules in the prop palette so they also work in the gallery and in games.
+
+`npm run build` checks the pack color data and prop override IDs. `npm run validate` and `npm run stage` compare each prop's normalized vertex colors with its palette and UV shade ramp. Stage checks run before files are copied. Visual review checks area, context, and hierarchy. Use the capture command in the Chisel asset skill.
 
 ---
 
@@ -100,3 +114,53 @@ Every rule has a stable ID (`F1..F6`, `S1..S5`, `C1..C3`, `P1..P6`, `M1..M4`). F
 - **M3 — Canonical Held-Item Grip Frame (`hand_r` / `hand_l`)**:
   - Held props are rigid meshes with origin `(0, 0, 0)` at the **palm grip center**, forward/blade/barrel pointing along **`+Z`** (or **`+Y`** upright along weapon shaft — specifically: in T-pose `hand_r` points along `-X` with palm facing `-Y` and thumb `+Z`; our Blender builder and validator standardize held items in **canonical grip local space**: origin at palm center, handle axis along **`Y`**, forward/aim/blade edge along **`+Z`**, mounted to `hand_r` with a single deterministic grip quaternion in `contracts/data/ual1-rig.json`).
 - **M4 — Grounded World Props**: Every world prop sits with `min.y == 0` (±1 mm) and `X/Z` centered within ±2 cm so scene placement and `pack3d` layout helpers work identically across all genres.
+
+## 6. World prop and scene review
+
+Chisel assets use metres. Use the 1.80 m adult gauge in the native-scale lineup. Check the object beside an adult in the pose that uses it. Keep children, animals, and fantasy creatures at the scale that suits their role in the scene.
+
+| Feature | Chisel reference |
+| --- | --- |
+| Standard walk-in door | About 0.80–1.0 m wide and 1.95–2.15 m high. Measure clear space from the walking surface to the lowest obstruction. |
+| Chair or bench | Seat about 0.42–0.53 m above its floor or platform. Check the thigh and foot positions in a seated pose. |
+| Dining surface | About 0.75–0.89 m above the floor. Check it with the paired chair or bench. |
+| Service counter | About 0.85–1.10 m above the floor. Pair a high stool with the counter that it serves. |
+| Vehicle | Confirm that an adult fits in the seat and that the hands, boots, and head clear the cab. Measure wheels and doors separately. |
+| Road and terrain | Use the 2 m terrain module for joins. Give a vehicle lane room on both sides of the vehicle. |
+
+Keep the scale in the exported mesh and its rig. Use the catalog bounds to place assets. Check animated openings in their open pose. Check the saddle or harness height before you pair an animal with a rider or cart. Record low hatches and crouch passages as intentional dimensions.
+
+Run the native-scale lineup after a change to a vehicle, creature, entrance, or work surface. Validation and staging compare the catalog bounds with GLB vertex positions. The [vehicle envelopes](../contracts/worldScale.ts) catch vehicle meshes that fall outside their intended size range.
+
+Use one or more complete locations to review each pack. These reference packs show the expected range of parts and the level of detail in a finished location.
+
+| Chisel pack | Reference |
+| --- | --- |
+| Medieval | [Synty POLYGON Fantasy Kingdom](https://syntystore.com/products/polygon-fantasy-kingdom) |
+| WW2 | [Synty POLYGON War Pack](https://syntystore.com/products/polygon-war-pack) |
+| Sim | [Synty POLYGON City Pack](https://syntystore.com/products/polygon-city-pack) |
+| Cyberpunk | [Synty POLYGON Sci-Fi Cyber City](https://syntystore.com/products/polygon-sci-fi-cyber-city) |
+| Monsters | [Synty POLYGON Dungeon Realms](https://syntystore.com/products/polygon-dungeon-realms) |
+
+- Make new shapes, layouts, and details for Chisel.
+- Build sets with the parts needed to join walls and floors. Check corners, ends, changes in height, and door openings.
+- Give each main prop a clear outline, a second layer of form, and a small area of color contrast. Check the front, rear, and side.
+- Add small props where a person would use them. Keep paths and doorways clear.
+- Review the location from character height and from above. Render it at desktop, 390 px, and 320 px with `npm run verify:visual -- --only '^09'`.
+- At each width, check the outline of the main prop and the people or creatures that use it. Keep the parts that explain the action in frame. For example, show enough of a vehicle to identify it and keep the hands and working opening clear.
+- Count geometry variants separately from recolors. Report the parts that can build a full location and the parts that are still missing.
+
+Put each world prop override under `packs.<pack>.props.overrides` in the color contract. Change only the regions that need a different color. Blender stores the resulting colors in normalized glTF vertex colors. A standard glTF viewer displays the baked palette. The showcase uses the same UV regions for runtime recoloring.
+
+### Lantern Exchange
+
+The Cyberpunk demo shows a night transit market. The counter is the main point of interest. The lockers, workshop, and overhead sign show how people use the lane.
+
+- Use dark blue-green metal for frames and warm brown-orange paint for hoods, covers, and brackets.
+- Use pale cream for service signs. Repeat the lantern mark on the sign and the main props.
+- Use mint for glass and guide lights. Keep it on smaller surfaces.
+- Repeat recessed panels, thick seals, and angled edges across the counter, the workshop, and the apartment.
+- Give each building a shape you can identify with its sign covered. Use stacked window bays on the apartment and an open service bay on the workshop.
+- Use a thin fold for the noodle bar canopy and a metal lip above the cabinet seams. Leave space for the vendor's face beneath the canopy.
+- Use warm light at the counter. Use cool light along the route. Keep the spaces behind these points darker.
+- Check the action at 300 px and the route at 390 px. Show the hands and bowl between the two characters. Continue the paving and light one wall beyond the last gate.
