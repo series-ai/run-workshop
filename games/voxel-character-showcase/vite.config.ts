@@ -21,7 +21,7 @@ function localJamAssets(): Plugin {
     const match = /^\/jam\/(.+)$/.exec(url)
     if (!match?.[1]) return next()
     const rel = posix.normalize(match[1])
-    const contentType = MIME[posix.extname(rel)]
+    const contentType = rel.endsWith('/level-kit/demo.voxels.json') ? 'application/json' : MIME[posix.extname(rel)]
     if (!/^run-cubix-[a-z0-9-]+\//.test(rel) || !contentType || rel.includes('\\') || rel.split('/').some((s) => s.startsWith('.'))) {
       res.statusCode = 404
       return res.end('not a run-cubix asset path')

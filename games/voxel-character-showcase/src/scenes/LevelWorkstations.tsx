@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useThree } from '@react-three/fiber'
+import { useCallback, useMemo } from 'react'
 import type { VoxCharPackKey } from '@voxchar/contracts/packs'
 import { PolyAvatar } from '../avatar/PolyAvatar'
 import { selectionFromPreset, type PolyPartIndex } from '../avatar/composePolyAvatar'
@@ -58,6 +59,11 @@ export function LevelWorkstations({ pack, stop, bundle, index }: {
   bundle: PolyCatalogBundle
   index: PolyPartIndex
 }) {
+  const { gl, invalidate } = useThree()
+  const poseReady = useCallback(() => {
+    gl.shadowMap.needsUpdate = true
+    invalidate()
+  }, [gl, invalidate])
   const poses = useMemo(() => {
     const workstation = workstations[pack]
     if (workstation.stop !== stop) return []
@@ -74,7 +80,7 @@ export function LevelWorkstations({ pack, stop, bundle, index }: {
   }, [bundle, pack, stop])
 
   return poses.map(({ worker, selection }) => (
-    <PolyAvatar key={worker.preset} selection={selection} index={index} holdPhase={worker.phase} castShadow
+    <PolyAvatar key={worker.preset} selection={selection} index={index} holdPhase={worker.phase} castShadow onStats={poseReady}
       position={worker.position} rotation={[0, worker.yaw, 0]} />
   ))
 }

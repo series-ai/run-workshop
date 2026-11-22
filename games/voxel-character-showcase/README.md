@@ -32,4 +32,9 @@ Other scripts: `npm run build:local`, `npm run preview` (port `4195`), `npm run 
 - **Parametric Voxel Lab** — Mix & match body builds (`body_slim`, `body_athletic`, `body_heavy`, `body_orc_*`, `body_troll_*`, `body_scrap_bot`, `body_dire_wolf`, `body_giant_spider`, and 7 animal mounts/pets), sculpted voxel heads, hair, stepped 1-voxel outfits, hats, backpacks, and held weapons/tools/shields; tune parametric skeletal proportions and 10 semantic UV shader palette regions live; play all 43 UAL1 / creature clips.
 - **Animation Reviewer** — Inspect any preset or custom rig across all clips with ragdoll collider overlays and bounds readouts.
 - **Context Stage (Heist · Industrial · Security · Creatures · Fantasy)** — Side-by-side themed dioramas sharing the exact same rig, dual-UV shader, and blob-shadow policy.
+- **Level Kits** — Explore the six Cubix layouts. Select **Mesh** for the published
+  GLBs or **Voxel** to build the static level from its published cell data.
+  Both use the same camera, palette, and lights. Prop inspection still loads
+  the GLB. Select **Optimized rendering** to cache static shadows and reduce
+  shader work. The switch is available on both renderer paths.
 - **S23 Ultra Perf Bench** — Spawn 1–64 simultaneous animated voxel avatars with toggleable mobile policy (`DPR <= 1.5`, blob shadows, distance mixer throttling) and real-time FPS / p95 frame-ms / draw-call / triangle telemetry.
