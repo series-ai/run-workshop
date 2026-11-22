@@ -1,4 +1,4 @@
-import { useFrame, type GroupProps } from '@react-three/fiber'
+import { useFrame, useThree, type GroupProps } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import {
   AnimationMixer,
@@ -337,6 +337,7 @@ function LoadedAvatar({
 
   // Animation: shared clips, one mixer for each avatar.
   const mixer = useMemo(() => new AnimationMixer(rig.root), [rig])
+  const invalidate = useThree((state) => state.invalidate)
   const action = useRef<AnimationAction | null>(null)
   const lastSetup = useRef<{ clipName: string; replayKey: number; loopMode: 'auto' | 'repeat' | 'once' } | null>(null)
   const onProgressRef = useRef(onProgress)
@@ -386,7 +387,8 @@ function LoadedAvatar({
     action.current = next
     lastSetup.current = { clipName: clip.name, replayKey, loopMode }
     lastProgressEmit.current.time = -1
-  }, [mixer, core, plan.rigId, selection.clip, timeOffset, loopMode, replayKey])
+    invalidate()
+  }, [mixer, core, plan.rigId, selection.clip, timeOffset, loopMode, replayKey, invalidate])
 
   useEffect(
     () => () => {

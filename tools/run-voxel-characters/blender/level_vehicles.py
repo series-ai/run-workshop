@@ -23,6 +23,8 @@ WHEEL_CELL = CELL / 2
 TREAD_EDGE = vk.vox('hair', 0.38, mottle=False)
 RIM = vk.vox('metal', -0.25, mottle=False)
 VAN_PANEL = vk.vox('trim', -0.16)
+ROLL_CLIP = 'Roll and brake'
+ROLL_PIVOT = 'vehicle_travel'
 
 
 @dataclass
@@ -264,11 +266,28 @@ def pickup(*, ranger=False):
     else:
         box(13, 3, 4, METAL, y=10, z=-5, sculpt=body)
         trim.paint(span(11), 12, -7, FRAME)
+        # Door seals, handles, and front pillar mirrors.
+        for side in (-1, 1):
+            sill = 7 if side > 0 else -8
+            trim.paint(sill, (11, 13), 0, FRAME)
+            trim.paint(sill - side, (13, 15), 1, FRAME)
+            trim.paint(9 if side > 0 else -9, 9, (0, 2), FRAME)
+            trim.box((sill, sill + 2) if side > 0 else (sill - 2, sill), 12, 6, FRAME)
+            trim.box(sill + 2 * side, (12, 13), 5, METAL)
+        trim.paint((-5, 4), 11, (11, 14), PAINT_DARK)
     rig = wheeled(body, 9 if ranger else 8, -11, 11, 4, trim=trim, parked_bevel=False)
     rig.parts.append(Part('tailgate', (0, 11, -17), tailgate))
     rig.clips['Lower Tailgate'] = [
         angle_track('tailgate', 0, (0, 0.8, 1.6, 2.4), (0, -90, -90, 0)),
     ]
+    if not ranger:
+        times = (0, .2, .4, .6, .8, 1, 1.2, 1.5, 1.8, 2.1, 2.4, 2.7, 3, 3.3, 3.65, 4)
+        travel = (0, .025, .16, .45, .75, .95, 1.02, 1.05, 1.05, 1.04, .94, .68, .33, .095, .012, 0)
+        rotation = tuple(math.degrees(distance / rig.radius) for distance in travel)
+        rig.clips[ROLL_CLIP] = [
+            offset_track(ROLL_PIVOT, 2, times, travel),
+            *(angle_track(part.name, 0, times, rotation) for part in rig.parts if part.name.endswith('_spin')),
+        ]
     return rig
 
 

@@ -132,7 +132,10 @@ use separate pivots. The crane has a turntable, trolley, cable, and hook.
 The forklift has a fork carriage. The rover has a roof scanner.
 
 The utility pickup and ranger truck also have a named `tailgate` pivot and
-a **Lower Tailgate** clip.
+a **Lower Tailgate** clip. The utility pickup also has a **Roll and brake**
+preview. It moves the `vehicle_travel` pivot about 1 m forward, stops, then
+returns to the parked pose. The clip leaves `vehicle_root` available to
+the game controller.
 
 The vehicle bodies use 10 cm voxels. The driven wheel meshes use 5 cm voxels.
 The moving GLBs use vertex colors and baked voxel occlusion. Paint, rubber,

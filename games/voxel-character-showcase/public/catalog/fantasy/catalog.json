@@ -3149,7 +3149,7 @@
       "nodeName": "head_sorceress",
       "slot": "head",
       "label": "Royal Sorceress",
-      "triangles": 140,
+      "triangles": 152,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -3160,15 +3160,15 @@
           "type": "capsule",
           "a": [
             0,
-            -0.02743,
-            0.02598
+            -0.01529,
+            0.0506
           ],
           "b": [
             0,
-            0.08621,
-            0.02228
+            0.07571,
+            0.04764
           ],
-          "radius": 0.1175
+          "radius": 0.13703
         }
       }
     },
@@ -3335,7 +3335,7 @@
       "nodeName": "headwear_sorceress_tiara",
       "slot": "headwear",
       "label": "Celestial Tiara",
-      "triangles": 164,
+      "triangles": 130,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -4379,7 +4379,7 @@
       "nodeName": "back_sorceress_mantle",
       "slot": "back",
       "label": "Gilded Relic Wings",
-      "triangles": 286,
+      "triangles": 240,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -4389,16 +4389,16 @@
         "spine_03": {
           "type": "capsule",
           "a": [
-            -0.09795,
-            0.02471,
-            -0.17409
+            -0.15272,
+            0.00322,
+            -0.17479
           ],
           "b": [
-            0.09795,
-            0.02471,
-            -0.17409
+            0.10652,
+            0.00322,
+            -0.17479
           ],
-          "radius": 0.16154
+          "radius": 0.14894
         }
       }
     }
@@ -4655,7 +4655,7 @@
       "label": "Astral Star Scepter",
       "hand": "hand_r",
       "gripStyle": "handle",
-      "triangles": 100
+      "triangles": 238
     },
     {
       "id": "held_astral_orb",
@@ -7787,6 +7787,38 @@
           0.2,
           1.1
         ]
+      }
+    },
+    {
+      "id": "prop_fantasy_copper_quench_trough",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_copper_quench_trough.glb",
+      "nodeName": "prop_fantasy_copper_quench_trough",
+      "label": "Copper quench trough",
+      "triangles": 352,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.55,
+          1,
+          0.35
+        ],
+        "size": [
+          1.1,
+          1,
+          0.7
+        ]
+      },
+      "palette": {
+        "metal": "#b57953",
+        "leather": "#765639",
+        "visor": "#536f68",
+        "detail": "#945741"
       }
     },
     {
@@ -20879,12 +20911,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1029,
+                -0.1604,
                 0.0688,
                 0.0024
               ],
               "b": [
-                0.103,
+                0.1119,
                 0.0688,
                 0.0024
               ],

@@ -8430,6 +8430,39 @@
       }
     },
     {
+      "id": "prop_creatures_ranger_field_kit",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_field_kit.glb",
+      "nodeName": "prop_creatures_ranger_field_kit",
+      "label": "Ranger field kit",
+      "triangles": 286,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.4,
+          1,
+          0.35
+        ],
+        "size": [
+          0.8,
+          1,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#68714d",
+        "metal": "#a1ac99",
+        "trim": "#d6cda5",
+        "leather": "#735940",
+        "detail": "#82865d"
+      }
+    },
+    {
       "id": "prop_creatures_damp_woodland_trail",
       "pack": "creatures",
       "leaf": "world",

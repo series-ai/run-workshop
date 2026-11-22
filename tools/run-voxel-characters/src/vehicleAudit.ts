@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { AnimationMixer, Box3, LoopOnce, Mesh, MeshStandardMaterial, PropertyBinding, SpotLight, type Object3D } from 'three'
+import { AnimationMixer, Box3, LoopOnce, Mesh, MeshStandardMaterial, PropertyBinding, Quaternion, SpotLight, Vector3, type Object3D } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import type { LevelPropEntry } from '../contracts/catalog'
 
@@ -85,15 +85,52 @@ export async function assertVehicleMotion(path: string, expected: NonNullable<Le
     if (!clip.validate() || clip.duration <= 0 || clip.tracks.length === 0) {
       throw new Error(`${path}: invalid animation "${clip.name}".`)
     }
+    const isRoll = clip.name === 'Roll and brake'
     const targets = clip.tracks.map(({ name }) => {
       const { nodeName } = PropertyBinding.parseTrackName(name)
       const node = root.getObjectByName(nodeName)
-      if (!node || node === root) throw new Error(`${path}: animation has an invalid pivot "${nodeName}".`)
+      if (!node || node === root) {
+        throw new Error(`${path}: animation has an invalid pivot "${nodeName}".`)
+      }
       return { node, rest: localPose(node) }
     })
     const action = mixer.clipAction(clip).setLoop(LoopOnce, 1)
     action.clampWhenFinished = true
     action.reset().play()
+    if (isRoll) {
+      const travel = root.getObjectByName('vehicle_travel')
+      if (!travel || travel.parent !== root || root.children.length !== 1) {
+        throw new Error(`${path}: the roll pivot must contain the vehicle below its controller root.`)
+      }
+      const start = travel.position.clone()
+      const rootRest = localPose(root)
+      root.position.set(5, 0, -2)
+      const controllerPose = localPose(root)
+      const axle = new Vector3(1, 0, 0)
+      const expectedRotation = new Quaternion()
+      const spinNodes = wheels.map(({ nodeName }) => root.getObjectByName(nodeName)!)
+      const startRotations = spinNodes.map(node => node.quaternion.clone())
+      let maxTravel = 0
+      for (let frame = 0; frame < 40; frame++) {
+        mixer.setTime(clip.duration * frame / 40)
+        const distance = travel.position.z - start.z
+        maxTravel = Math.max(maxTravel, distance)
+        if (poseDistance(root, controllerPose) > 0.001) {
+          throw new Error(`${path}: roll must preserve the game controller pose.`)
+        }
+        if (Math.hypot(travel.position.x - start.x, travel.position.y - start.y) > 0.001 || distance < -0.001) {
+          throw new Error(`${path}: roll must stay on the ground and align with the forward axis.`)
+        }
+        for (const [i, node] of spinNodes.entries()) {
+          expectedRotation.setFromAxisAngle(axle, distance / radius).premultiply(startRotations[i]!)
+          if (node.quaternion.angleTo(expectedRotation) > 0.002) {
+            throw new Error(`${path}: wheel "${node.name}" does not match the roll distance.`)
+          }
+        }
+      }
+      root.position.copy(rootRest.position)
+      if (maxTravel < radius) throw new Error(`${path}: roll does not travel far enough to show wheel motion.`)
+    }
     mixer.setTime(clip.duration / 3)
     if (!targets.some(({ node, rest }) => poseDistance(node, rest) > 0.01)) {
       throw new Error(`${path}: animation "${clip.name}" must move its mechanism.`)

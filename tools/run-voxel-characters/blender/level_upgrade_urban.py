@@ -50,13 +50,21 @@ def tool_chest(g):
 
 
 def compressor(g):
-    parts = [(0, 2, 0, 18, 7, 7, g.BODY), (0, 3, 0, 20, 5, 9, g.BODY),
-             (1, 9, 0, 10, 2, 6, g.DARK), (3, 11, 0, 5, 4, 5, g.METAL),
-             (-3, 11, 0, 4, 3, 4, g.RUBBER), (-7, 9, 0, 2, 5, 2, g.METAL),
-             (-7, 13, 0, 4, 3, 2, g.CAP)]
-    for x in (-6, 6):
-        parts.append((x, 0, 0, 3, 3, 8, g.RUBBER))
-    return assembly(g, parts)
+    return assembly(g, [
+        (0, 3, 0, 18, 7, 7, g.BODY), (0, 4, 0, 20, 5, 9, g.BODY),
+        (0, 3, 0, 16, 7, 5, g.BODY), (6, 2, 0, 3, 2, 8, g.DARK),
+        (-6, 2, 0, 1, 1, 9, g.METAL),
+        *((-6, 0, side * 5, 3, 5, 2, g.RUBBER) for side in (-1, 1)),
+        *((-6, 1, side * 5, 5, 3, 2, g.RUBBER) for side in (-1, 1)),
+        *((-6, 2, face, 1, 1, 1, g.METAL) for face in (-6, 5)),
+        (1, 10, 0, 11, 1, 6, g.DARK),
+        (3, 11, 0, 5, 4, 5, g.METAL), (-3, 11, 0, 5, 3, 4, g.RUBBER),
+        (3, 12, 2, 5, 1, 1, g.DARK), (3, 14, 2, 5, 1, 1, g.DARK),
+        (-7, 9, 0, 2, 5, 2, g.METAL), (-7, 13, 1, 4, 4, 2, g.DARK),
+        (-7, 14, 2, 2, 2, 1, g.CAP), (-6, 12, 3, 2, 1, 2, g.MARK),
+        (10, 6, -2, 5, 1, 1, g.METAL), (10, 6, 2, 5, 1, 1, g.METAL),
+        (12, 6, 0, 1, 1, 5, g.RUBBER),
+    ])
 
 
 def sliding_leaf(g):
@@ -270,13 +278,13 @@ def motor_pool(kit, g, fixtures):
     service_body.cut((-6, 5), (8, 15), (8, 16))
     kit.add('Service pickup body', service_body, -8, -15.2, height=.55)
     resculpt(kit, g, 'Utility pickup', parked_shop_pickup(kit, g))
-    kit.set_palette('Service pickup body', primary='#8296a7', secondary='#525956', hair='#393c3c')
+    kit.set_palette('Service pickup body', primary='#779a9f', secondary='#596361', hair='#393c3c')
     kit.add('Raised pickup hood', assembly(g, [
         *((0, i*2, i, 13, 3, 2, g.BODY) for i in range(5)),
         (-4, 2, 0, 1, 6, 2, g.METAL), (4, 2, 0, 1, 6, 2, g.METAL),
         (0, 8, 2, 9, 1, 2, g.METAL),
     ]), -8.04, -14.26, height=1.63)
-    kit.set_palette('Raised pickup hood', primary='#688899')
+    kit.set_palette('Raised pickup hood', primary='#65898d')
     kit.add('Exposed steering knuckle', assembly(g, [
         (-2, 2, 0, 5, 3, 3, g.DARK), (1, 1, 0, 3, 5, 7, g.METAL),
         (1, 0, 0, 3, 7, 5, g.METAL), (3, 2, 0, 2, 3, 3, g.GRIT),
@@ -290,7 +298,8 @@ def motor_pool(kit, g, fixtures):
         (2, 3, 2, 2, 2, 2, g.METAL),
     ]), -8.05, -13.96, height=1.31)
     kit.add('Workshop drawer chest', tool_chest(g), -10.6, -16.5, 1)
-    kit.add('Wheel air compressor', compressor(g), -10.7, -13.8, 1)
+    kit.add('Wheel air compressor', compressor(g), -9.45, -13.22, 0)
+    kit.set_palette('Wheel air compressor', metal='#aaa99c', accent='#cb9c55')
     kit.add('Inspection light strip', assembly(g, [
         (0, 0, 0, 20, 1, 3, g.LAMP), (0, 1, 0, 22, 2, 4, g.METAL),
         (-8, 3, 0, 2, 11, 2, g.DARK), (8, 3, 0, 2, 11, 2, g.DARK),
@@ -368,8 +377,8 @@ def course_equipment(kit, g, fixtures):
     kit.add('Spare wheel cradle', assembly(g, [
         (0, 0, 0, 12, 2, 8, g.WOOD), (-5, 2, 0, 2, 2, 8, g.DARK),
         (5, 2, 0, 2, 2, 8, g.DARK),
-    ]), -8.45, -12.56, 1)
-    kit.place('Wheel balancing rim', -8.45, -12.56, 1, 0.19)
+    ]), -10.8, -12.9, 1)
+    kit.place('Wheel balancing rim', -10.8, -12.9, 1, 0.19)
     kit.add('Wheel alignment clamp', assembly(g, [
         (0, 0, 0, 1, 7, 4, g.DARK), (0, 2, 2, 1, 3, 3, g.DETAIL),
         (1, 2, 2, 1, 3, 2, g.METAL), (0, 0, -1, 1, 1, 3, g.METAL),
@@ -479,8 +488,8 @@ def motor_pool_services(kit, g, fixtures):
         (0, 0, 0, 5, 2, 5, g.DARK), (0, 2, 0, 2, 12, 2, g.METAL),
         (0, 14, 0, 5, 3, 4, g.GRIT), (0, 14, 2, 3, 2, 1, g.LAMP),
         (-2, 2, 0, 3, 1, 3, g.MARK),
-    ]), -7.8, -12.76, 2)
-    fixtures.append(dict(position=[-7.8, 1.54, -13.04], color='#ecf3e9', intensity=2.5, distance=2.7))
+    ]), -10.7, -14.5, 1)
+    fixtures.append(dict(position=[-10.42, 1.54, -14.5], color='#ecf3e9', intensity=2.5, distance=2.7))
     kit.add('Shop air main', assembly(g, [
         (0, 12, 0, 34, 2, 2, g.METAL), (13, 3, 0, 2, 10, 2, g.BODY),
         (13, 2, 1, 4, 3, 3, g.METAL), (12, 0, 2, 2, 3, 2, g.MARK),
@@ -1629,7 +1638,7 @@ def upgrade(kit, g, stops, fixtures):
         compressor_bench(kit, g, fixtures)
         views = (
             ('Wheel shop entrance', [-13.7, 1.65, -5.2], [-7.35, 2.05, -14.8]),
-            ('Wheel lift', [-4.72, 1.75, -13.6], [-8, 1.39, -15.02]),
+            ('Wheel lift', [-4.52, 2.05, -12.83], [-8.3, .93, -14.67]),
             ('Training lanes', [-1.22, 1.65, 6.2], [.35, 1.66, -.95]),
             ('Lubricant store', [-13.17, 1.65, -23.66], [-16.48, 1.35, -23.99]),
             ('Parts counter', [-2.8, 1.65, -15.72], [1.12, 1.72, -18.65]),
@@ -1650,7 +1659,7 @@ def upgrade(kit, g, stops, fixtures):
                 fixture['color'] = '#f2e5c8'
         views = (
             ('Print dispatch gallery', [-13.4, 1.85, -5.08], [-5.0, 2.63, -11.0]),
-            ('Rotary press line', [-2.9, 1.65, -8.2], [.2, 1.12, -11.3]),
+            ('Rotary press line', [-2.65, 1.73, -7.96], [.61, 1.13, -10.7]),
             ('Loading street', [1.9, 1.65, 9.6], [-1.1, 1.62, -.1]),
             ('Dispatch office', [1.2, 5.05, -10.65], [-1.7, 4.72, -13.05]),
             ('Ink mixing room', [-5.0, 1.65, -18.9], [-7.25, 1.35, -16.4]),

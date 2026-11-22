@@ -364,7 +364,7 @@ Keep the outside edge clear of the hand during the arm swing.
 | Necromancer | Ash-black robes and dull iron. Bone plates on one shoulder. | Peaked cowl, scythe, and skull censer. |
 | Spirit Shaman | Earth brown, sage, and bone. Short thigh wraps with a tattoo on one calf. | Beast-skull brow mask, crook, and hide drum. |
 | Swamp Witch | Moss, plum, and worn copper. Fitted vest and one-sided shawl with fungi. | Defined cheekbones, crooked hat, knotwood staff, and lantern flask. |
-| Sorceress | Wine, indigo, and antique gold. V-neck gown, long gloves, and upward ivory wings. | Tapered chin, pale blonde hair, low diadem, gold scepter, and orb. |
+| Sorceress | Wine, indigo, and antique gold. V-neck gown, long gloves, one raised ivory mantle tip, and a low fold on the other side. | Tapered chin, pale blonde hair, a narrow diadem above the brow, a wrapped scepter, and an orb. |
 
 Keep the face clear below the Archmage's front brim and the Necromancer's
 cowl. Trim the front edge in 2.5 cm steps. Check the eyes in the front and
@@ -650,6 +650,22 @@ World props (`prop_*`, `PROP_VOX = 0.05 m`) stand on `y = 0` (`|min.y| <= 0.015 
 3. **Triangle & byte budgets**: `<= 650` triangles, `<= 80 KB`, `1` shared `VoxChar_Atlas_Mat` material.
 
 ### Level kits
+
+Put the operator, the machine, and the work surface in the same view when
+you check scale. Keep the parts of the machine visible where the operator
+stands. Use a work area in each pack to show a task. Show the hose and removed wheel
+at the Core lift, a print proof at the Heist press, and cooling ingots on
+the Industrial casting floor. Show an open tray at the Security desks, a
+field kit at the Creatures survey table, and a quench trough at the Fantasy
+forge. Put each piece of equipment beside the surface that it serves.
+The showcase places the operators at the named viewpoints. The level
+exports contain the static placements.
+
+Keep vehicle door seams and mirrors on the body. Keep the wheels, steering
+pivots, and tailgate separate. Check the parked silhouette before you play
+each motion. Match the wheel rotation to the distance the vehicle travels.
+For held items, put collars outside the grip. Check the thumb
+and fingers against the grip at several points in the animation.
 
 Make the route clear before you add small props. Give each scene an entrance,
 an open lane, side cover, and a destination that the player can see from the

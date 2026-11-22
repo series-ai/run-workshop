@@ -1180,7 +1180,7 @@ def ranger_site(kit, g, stops, fixtures):
     kit.set_palette('Survey contour chart', primary='#98a661', visor='#4e8185', trim='#d7cda9', accent='#a8462b')
     kit.set_palette('Open geology case', trim='#cfc8ad', skin='#80959a', leather='#8a6748', detail='#b77a4b')
     stops[0].update(eye=[8.9, 1.8, -4.7], target=[1.8, 1.7, -10.9])
-    stops[1].update(eye=[3.6, 1.7, -16.7], target=[2.5, 1.45, -13.5])
+    stops[1].update(eye=[.63, 1.68, -15.88], target=[2.18, 1.12, -13.75])
     kit.placement_at('Lookout timber stairs', -5, -0.32, height=0).update(position=[-1.1, 0, 2.8], turn=0)
     stops.append(dict(label='Creek watchtower', eye=[-1.7, 3.75, 0.1], target=[-1, 1.4, 8.9]))
     stops.append(dict(label='Silt gauge pool',eye=[-4.6,1.56,8.35],target=[-3.15,0.03,5.35]))
@@ -1315,7 +1315,7 @@ def market_site(kit, g, stops, fixtures):
     stops[2].update(eye=[-3.2, 1.65, 11.4], target=[-0.2, 1.9, 4.3])
     stops.append(dict(label='Dyers terrace', eye=[11.3, 1.7, 10.8], target=[11.2, 2.65, 1]))
     stops.append(dict(label='Wool sorting room',eye=[15.12,2.85,3.68],target=[15.88,2.36,0.35]))
-    stops.append(dict(label='Coppersmith court', eye=[-8.75, 1.9, 7.05], target=[-9.3, 1.35, 4.4]))
+    stops.append(dict(label='Coppersmith court', eye=[-7.22, 1.78, 6.95], target=[-8.82, 1.04, 4.67]))
     instances(kit, 'Raised woad border', herb_border(g), [
         (10.1, 5.2, 1, 1.2), (13.9, 0.6, 3, 1.2), (8.1, 0.2),
         (7.8, -2.7, 2), (-5.2, -11.8, 1), (-4.5, -8.5)])

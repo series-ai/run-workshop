@@ -1855,7 +1855,7 @@ def security(kit, g, stops, fixtures):
     passenger_layby(kit, g, fixtures)
     parking_return(kit, g, fixtures)
     stops[0].update(label='Arrivals pavilion', eye=[9.15, 1.65, -8.65], target=[13.4, 2.4, -17.0])
-    stops[1].update(label='Screening desks', eye=[-1.9, 1.65, -11.3], target=[3.1, 1.65, -16.55])
+    stops[1].update(label='Screening desks', eye=[2.55, 1.72, -13.9], target=[2.95, 1.05, -16.23])
     stops[2].update(label='Passenger drop off', eye=[9.5, 1.6, -0.25], target=[14.6, 1.75, -8.0])
     stops.append(dict(label='Transfer sorting deck', eye=[-2.4, 4.65, -9.4], target=[-11, 3.2, -12]))
     stops.append(dict(label='Arrivals waiting room', eye=[14.4, 2.25, -16.2], target=[11.8, 1.8, -19.5]))

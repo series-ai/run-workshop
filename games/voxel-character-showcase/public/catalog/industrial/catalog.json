@@ -4311,6 +4311,38 @@
       }
     },
     {
+      "id": "prop_industrial_ingot_cooling_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ingot_cooling_rack.glb",
+      "nodeName": "prop_industrial_ingot_cooling_rack",
+      "label": "Ingot cooling rack",
+      "triangles": 504,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.7,
+          0.9,
+          0.45
+        ],
+        "size": [
+          1.4,
+          0.9,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#826e59",
+        "metal": "#6f786e",
+        "trim": "#c1aa82",
+        "detail": "#ac624a"
+      }
+    },
+    {
       "id": "prop_industrial_slag_stained_casting_slab",
       "pack": "industrial",
       "leaf": "world",

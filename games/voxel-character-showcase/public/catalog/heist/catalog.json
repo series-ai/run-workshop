@@ -5937,6 +5937,39 @@
       }
     },
     {
+      "id": "prop_heist_press_proofing_station",
+      "pack": "heist",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_heist_press_proofing_station.glb",
+      "nodeName": "prop_heist_press_proofing_station",
+      "label": "Press proofing station",
+      "triangles": 418,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.6,
+          1.2,
+          0.45
+        ],
+        "size": [
+          1.2,
+          1.2,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#576d68",
+        "accent": "#b08353",
+        "metal": "#8b8e80",
+        "trim": "#d9cfad",
+        "detail": "#403a37"
+      }
+    },
+    {
       "id": "prop_heist_sealed_asphalt_patch",
       "pack": "heist",
       "leaf": "world",

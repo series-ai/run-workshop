@@ -84,8 +84,8 @@ def head_sorceress():
     """The Sorceress has a shallow nose, soft cheeks, and a tapered chin."""
     part = vk.VoxelPart('head_sorceress', covers=(TAG_HEAD,))
     grid = core.head_base(part)
-    core.paint_face(grid, ('wLw', 'ELE', 'cLc', 'sms', 'wLw'), ('...',) * core.FACE_ROWS, {
-        'L': SKIN_LIGHT, 'E': vox('leather', -0.25, mottle=False),
+    core.paint_face(grid, ('wLw', 'EsE', 'cLc', 'sms', 'wLw'), core.NOSE_RELIEF, {
+        'L': SKIN_LIGHT, 'E': vox('leather', 0.0, mottle=False),
         's': SKIN, 'c': SKIN_CORAL, 'm': SKIN_LIP, 'w': SKIN_WARM,
     })
     for side in (-1, 1):
@@ -304,12 +304,12 @@ def held_brew_flask():
 
 
 def headwear_sorceress_tiara():
-    circlet = Sculpt().box((-4, 3), 72, 7, GOLD_DARK)
+    circlet = Sculpt().box((-4, 3), 73, 7, GOLD_DARK)
     for temple, tip in [(-5, -4), (4, 3)]:
         circlet.box(temple, 73, (-3, 5), GOLD_DARK)
-        circlet.box(temple, (72, 74), (4, 7), GOLD)
-        circlet.box(tip, (74, 76), (5, 6), GOLD)
-    circlet.box((-2, 1), 72, 7, GOLD).box((-1, 0), 71, 7, TRIM_DARK)
+        circlet.box(temple, (73, 74), (4, 7), GOLD)
+        circlet.box(tip, 74, (5, 6), GOLD)
+    circlet.box((-2, 1), 73, 7, GOLD).box((-1, 0), 74, 7, TRIM_DARK)
     return mage_headwear('headwear_sorceress_tiara', circlet, covers_hair=False)
 
 
@@ -339,16 +339,22 @@ def back_sorceress_mantle():
     cape = Sculpt().box((-2, 2), (24, 30), (-4, -2), ROBE_DARK)
     cape.box((-1, 1), (29, 31), -3, GOLD_DARK)
     cape.both((2, 4), (26, 30), -4, GOLD_DARK)
-    cape.both((4, 5), (27, 32), -5, TRIM_DARK)
-    cape.both((5, 6), (29, 34), -5, TRIM)
-    cape.both((6, 7), (32, 36), -6, TRIM)
-    cape.both(7, (35, 37), -6, GOLD)
-    cape.both(5, (27, 30), -6, GOLD_DARK)
+    cape.box((4, 5), (27, 32), -5, TRIM_DARK)
+    cape.box((5, 6), (29, 34), -5, TRIM)
+    cape.box((6, 7), (32, 36), -6, TRIM)
+    cape.box(7, (35, 37), -6, GOLD)
+    cape.box((-4, -2), (21, 29), -5, ROBE)
+    cape.box((-5, -4), (24, 29), -5, TRIM_DARK)
+    cape.box((-5, -4), 29, -4, GOLD)
     return cloak('back_sorceress_mantle', cape)
 
 
 def held_astral_scepter():
-    staff = Sculpt().box(0, (-16, 35), 0, GOLD_DARK).box(0, (-3, 3), 0, LEATHER_DARK)
+    staff = Sculpt().box(0, (-16, 35), 0, GOLD_DARK).box(0, (-6, 6), 0, LEATHER_DARK)
+    for y in (-5, -2, 1, 4):
+        staff.box(0, y, 0, LEATHER)
+    for y in (-7, 7):
+        staff.box((0, 1), y, 0, GOLD).box(0, y, (-1, 1), GOLD)
     staff.box((0, 2), 36, 0, GOLD).box((1, 3), 37, 0, GOLD)
     staff.box(3, (37, 42), 0, GOLD).box(2, (42, 44), 0, GOLD)
     staff.box(0, (36, 40), 0, GOLD).box(1, (40, 42), 0, TRIM)

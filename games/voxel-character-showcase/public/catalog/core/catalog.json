@@ -2627,7 +2627,8 @@
         "clips": [
           "Drive",
           "Steer",
-          "Lower Tailgate"
+          "Lower Tailgate",
+          "Roll and brake"
         ],
         "lights": [
           "vehicle_root_headlamp_01_light",
@@ -3489,8 +3490,8 @@
       },
       "palette": {
         "hair": "#393c3c",
-        "primary": "#8296a7",
-        "secondary": "#525956"
+        "primary": "#779a9f",
+        "secondary": "#596361"
       }
     },
     {
@@ -3615,26 +3616,28 @@
       "relativePath": "level-kit/prop_core_wheel_air_compressor.glb",
       "nodeName": "prop_core_wheel_air_compressor",
       "label": "Wheel air compressor",
-      "triangles": 492,
+      "triangles": 638,
       "bounds": {
         "min": [
-          -1,
+          -1.15,
           0,
-          -0.45
+          -0.6
         ],
         "max": [
-          1,
-          1.6,
-          0.45
+          1.15,
+          1.7,
+          0.6
         ],
         "size": [
-          2,
-          1.6,
-          0.9
+          2.3,
+          1.7,
+          1.2
         ]
       },
       "palette": {
-        "primary": "#996154"
+        "primary": "#996154",
+        "accent": "#cb9c55",
+        "metal": "#aaa99c"
       }
     },
     {
@@ -6043,6 +6046,69 @@
       },
       "palette": {
         "primary": "#a89774"
+      }
+    },
+    {
+      "id": "prop_core_service_air_hose",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_service_air_hose.glb",
+      "nodeName": "prop_core_service_air_hose",
+      "label": "Service air hose",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.95,
+          0.9,
+          0.35
+        ],
+        "size": [
+          1.9,
+          0.9,
+          0.7
+        ]
+      },
+      "palette": {
+        "hair": "#272c2d",
+        "accent": "#b99049",
+        "metal": "#a4aba5"
+      }
+    },
+    {
+      "id": "prop_core_air_impact_wrench",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_air_impact_wrench.glb",
+      "nodeName": "prop_core_air_impact_wrench",
+      "label": "Air impact wrench",
+      "triangles": 90,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.35,
+          0.5,
+          0.1
+        ],
+        "size": [
+          0.7,
+          0.5,
+          0.2
+        ]
+      },
+      "palette": {
+        "hair": "#292e2c",
+        "primary": "#a77038",
+        "accent": "#a18450",
+        "metal": "#a4aba5"
       }
     },
     {

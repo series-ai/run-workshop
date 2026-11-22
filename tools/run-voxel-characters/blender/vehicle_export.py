@@ -7,7 +7,7 @@ import numpy as np
 import voxchar as vk
 from creature_kit import Sculpt
 from level_geometry import CELL, grounded_center, make_mesh, vertex_colors
-from level_vehicles import LAMP, TAIL
+from level_vehicles import LAMP, ROLL_CLIP, ROLL_PIVOT, TAIL
 from vehicle_surfaces import apply_vehicle_wear
 
 
@@ -162,10 +162,11 @@ def write_vehicle(path, name, vehicle, palette):
     lights = []
 
     def add_rigid_part(part_name, shape, center, cell, parent_name=None):
+        surface_name = 'vehicle_root' if part_name == ROLL_PIVOT else part_name
         pivot = np.asarray(center) * (CELL / cell)
         body, lamp_parts = split_lamps(shape) if shape.ops else (None, [])
         if body is not None:
-            body = apply_vehicle_wear(name, part_name, body, pivot)
+            body = apply_vehicle_wear(name, surface_name, body, pivot)
         parent = indices.get(parent_name)
         index = add_part(builder, part_name, body, cell, pivot, parent, palette)
         indices[part_name] = index
@@ -178,16 +179,21 @@ def write_vehicle(path, name, vehicle, palette):
         for number, (color, patch) in enumerate(lamp_parts, 1):
             world_z = sum(point[2] + 0.5 for point in patch) / len(patch) * cell
             forward = color != TAIL and world_z >= origin[2] * CELL
-            light_name = f'{part_name}_{LAMP_LOOK[color].name}_{number:02d}'
+            light_name = f'{surface_name}_{LAMP_LOOK[color].name}_{number:02d}'
             lights.append(add_lamp(builder, index, light_name, color, patch, pivot, cell, forward, palette))
         return index
 
-    root = add_rigid_part('vehicle_root', vehicle.detailed_chassis(), origin, CELL)
+    has_travel = ROLL_CLIP in vehicle.clips
+    chassis = vehicle.detailed_chassis()
+    root = add_rigid_part('vehicle_root', Sculpt() if has_travel else chassis, origin, CELL)
+    if has_travel:
+        add_rigid_part(ROLL_PIVOT, chassis, origin, CELL, 'vehicle_root')
     doc['nodes'][root].setdefault('extras', {}).update(
         {'assetId': name, 'forward': '+Z', 'up': '+Y', 'wheelRadiusMeters': vehicle.radius},
     )
     for part in vehicle.parts:
-        add_rigid_part(part.name, part.shape, part.pivot, part.cell, part.parent)
+        parent = ROLL_PIVOT if has_travel and part.parent == 'vehicle_root' else part.parent
+        add_rigid_part(part.name, part.shape, part.pivot, part.cell, parent)
     if lights:
         doc['extensionsUsed'] = [LIGHT_EXTENSION]
 

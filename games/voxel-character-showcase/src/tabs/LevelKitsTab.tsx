@@ -8,11 +8,13 @@ import { BUDGETS } from '@voxchar/contracts/budgets'
 import { levelKitsSchema, resolveLevelKits, type ResolvedLevelKit } from '@voxchar/contracts/levelKits'
 import { VOXCHAR_PACK_KEYS, type VoxCharPackKey } from '@voxchar/contracts/packs'
 import { PolyProp } from '../avatar/PolyAvatar'
+import type { PolyPartIndex } from '../avatar/composePolyAvatar'
 import { clearFailedGltfLoads } from '../avatar/polyRig'
 import { createPolyMaterial } from '../avatar/polyMaterial'
 import type { PolyCatalogBundle } from '../catalog'
 import PALETTES from '@voxchar/contracts/data/level-palettes.json'
 import { LevelLightingEffects } from '../scenes/LevelLightingEffects'
+import { LevelWorkstations } from '../scenes/LevelWorkstations'
 import { LevelInstances, type LevelPlacement } from '../scenes/LevelInstances'
 import { createLevelSky } from '../scenes/levelSky'
 import { STUDIO_GL, StudioLights } from '../scenes/studio'
@@ -251,7 +253,7 @@ function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel }: {
   )
 }
 
-export function LevelKitsTab({ bundle }: { bundle: PolyCatalogBundle }) {
+export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; index: PolyPartIndex }) {
   const [state, setState] = useState<KitState>({ kind: 'loading' })
   const [layoutAttempt, setLayoutAttempt] = useState(0)
   const [pack, setPack] = useState<VoxCharPackKey>('core')
@@ -288,7 +290,8 @@ export function LevelKitsTab({ bundle }: { bundle: PolyCatalogBundle }) {
   const layout = state.kind === 'ready' ? state.levels.get(pack) : undefined
   const view = layout?.view
   const stops = view?.stops ?? []
-  const viewpoint = viewIndex === 0 ? undefined : stops[viewIndex - 2] ?? view
+  const viewStop = stops[viewIndex - 2]
+  const viewpoint = viewIndex === 0 ? undefined : viewStop ?? view
   const sceneReach = view ? Math.hypot(
     Math.abs(view.center[0]) + view.size[0] / 2,
     Math.abs(view.center[1]) + view.size[1] / 2,
@@ -371,6 +374,9 @@ export function LevelKitsTab({ bundle }: { bundle: PolyCatalogBundle }) {
               <Suspense fallback={<Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading models…</span></Html>}>
                 <KitModels key={sceneKey} pack={pack} layout={layout} subject={subject} motion={motion}
                   lightsOn={lightsOn} eyeLevel={viewpoint !== undefined} />
+              </Suspense>
+              <Suspense fallback={null}>
+                {!subject && <LevelWorkstations pack={pack} stop={viewStop?.label} bundle={bundle} index={index} />}
               </Suspense>
             </Canvas>
           </div>

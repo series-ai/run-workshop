@@ -80,7 +80,7 @@ export function App() {
             {tab === 'lab' && <AvatarLabTab catalogs={bundle.ordered} index={index} />}
             {tab === 'reviewer' && <AnimationReviewerTab catalogs={bundle.ordered} index={index} />}
             {tab === 'stage' && <ContextStageTab catalogs={bundle.ordered} index={index} />}
-            {tab === 'levels' && <LevelKitsTab bundle={bundle} />}
+            {tab === 'levels' && <LevelKitsTab bundle={bundle} index={index} />}
             {tab === 'perf' && <PerfBenchTab catalogs={bundle.ordered} index={index} />}
           </>
         )}

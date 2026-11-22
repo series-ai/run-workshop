@@ -8,6 +8,7 @@ from level_details import dress_activity
 from level_upgrade_infrastructure import upgrade as upgrade_infrastructure
 from level_upgrade_terrain import upgrade as upgrade_terrain
 from level_upgrade_urban import upgrade as upgrade_urban
+from level_workstations import WORKSTATIONS
 
 
 SITE_UPGRADES = {
@@ -494,6 +495,7 @@ def build_district(kit, g):
     for label, swatches in SITE_SWATCHES[kit.key].items():
         kit.set_palette(label, **swatches)
     SITE_UPGRADES[kit.key](kit, g, stops, fixtures)
+    WORKSTATIONS[kit.key](kit, g)
     dress_ground(kit, site['floor'])
     add_wall_finish(kit, name + ' solid')
     return stops, fixtures
