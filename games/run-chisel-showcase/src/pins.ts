@@ -1,6 +1,6 @@
 /**
  * Jam-ready-assets content versions per leaf ID.
- * Generated via `npm run sync-pins` (manifest commit: 427c1a2c5bee8d21edf013c61bdd5ea19eb35be3).
+ * Generated via `npm run sync-pins` (manifest commit: deb2e2028837a12b3b1bbde1c2e5843113146c37).
  */
 export const PINS: Readonly<Record<string, string>> = {
   'run-chisel-core/3D/characters': '36403b6261c7',
