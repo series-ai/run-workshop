@@ -89,9 +89,9 @@ def prop_pickup_cyberpunk_service_spool(p):
 
 # Each held grip follows +Y through the origin. The working face points along +Z.
 # Only the 32 mm grip crosses the palm between Y = -55 mm and Y = +55 mm.
-def grip(p):
+def grip(p, collar_top=.070):
     turned(p, [(.020, -.072), (.020, -.060), (.016, -.056),
-               (.016, .056), (.021, .061), (.021, .070)],
+               (.016, .056), (.021, .061), (.021, collar_top)],
            ['metal', 'accent', 'secondary', 'skin', 'metal'], 'secondary', 6)
 
 
@@ -103,28 +103,37 @@ def held_cyberpunk_pocket_beacon(p):
     p.box((0, .124, .036), (.030, .035, .013), 'eye')
 
 
-def held_cyberpunk_flux_fork(p):
-    grip(p)
-    p.box((0, .080, .018), (.100, .025, .078), 'primary', corner=.009)
+def flux_fork(p, head_y):
+    grip(p, collar_top=head_y - .010)
+    p.box((0, head_y, .018), (.100, .025, .078), 'primary', corner=.009)
     for x in (-.038, .038):
-        p.box((x, .082, .100), (.022, .020, .110), 'metal')
-        p.box((x, .082, .151), (.025, .024, .026), 'hair')
-        p.box((x, .082, .168), (.017, .016, .012), 'eye')
+        p.box((x, head_y + .002, .100), (.022, .020, .110), 'metal')
+        p.box((x, head_y + .002, .151), (.025, .024, .026), 'hair')
+        p.box((x, head_y + .002, .168), (.017, .016, .012), 'eye')
+
+
+def receipt_roller(p, head_y):
+    grip(p, collar_top=head_y - .010)
+    p.box((0, head_y, .005), (.101, .020, .035), 'primary')
+    for x in (-.046, .046):
+        p.box((x, head_y, .044), (.010, .016, .085), 'hair')
+    p.prism((-.045, head_y, .080), (.045, head_y, .080), .028, .028, 8, 'primary')
+    p.prism((-.025, head_y, .080), (-.009, head_y, .080), .030, .030, 8, 'eye')
+
+
+# Raise the held heads above the 78 mm palm boundary. Keep the grip at the origin.
+def held_cyberpunk_flux_fork(p):
+    flux_fork(p, head_y=.094)
 
 
 def held_cyberpunk_receipt_roller(p):
-    grip(p)
-    p.box((0, .080, .005), (.101, .020, .035), 'primary')
-    for x in (-.046, .046):
-        p.box((x, .080, .044), (.010, .016, .085), 'hair')
-    p.prism((-.045, .080, .080), (.045, .080, .080), .028, .028, 8, 'primary')
-    p.prism((-.025, .080, .080), (-.009, .080, .080), .030, .030, 8, 'eye')
+    receipt_roller(p, head_y=.094)
 
 
 def prop_pickup_cyberpunk_flux_fork(p):
     # The rear edge of the head and the grip collar support the fork.
     with p.placed(Matrix.Translation((0, .021, 0)) @ Matrix.Rotation(-pi / 2, 4, 'X')):
-        held_cyberpunk_flux_fork(p)
+        flux_fork(p, head_y=.080)
 
 
 def prop_pickup_cyberpunk_pocket_beacon(p):
@@ -135,7 +144,7 @@ def prop_pickup_cyberpunk_pocket_beacon(p):
 def prop_pickup_cyberpunk_receipt_roller(p):
     # The outer yoke rests on its side.
     with p.placed(Matrix.Translation((0, .051, 0)) @ Matrix.Rotation(pi / 2, 4, 'Z')):
-        held_cyberpunk_receipt_roller(p)
+        receipt_roller(p, head_y=.080)
 
 
 COLLECTIBLE_PROPS = [
