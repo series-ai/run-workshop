@@ -463,10 +463,14 @@ type PolyPropLook =
   | { material: MeshStandardMaterial; palette?: undefined }
 
 const ONE_SHOT_PROP_CLIPS = new Set([
-  'Activate', 'Disable', 'Dispense', 'Drop', 'Erupt', 'Fire', 'Hack', 'Hatch', 'Hit', 'Land',
-  'Opening', 'Pop', 'Raise', 'Reset', 'Shatter', 'SlideOpen', 'Snap', 'Stun',
+  'Disable', 'Dispense', 'Drop', 'Erupt', 'Hatch', 'Hit', 'Land',
+  'Opening', 'Pop', 'Raise', 'Reset', 'Shatter', 'SlideOpen', 'Snap',
 ])
-const PROPS_WITH_OPEN_TRANSITION = new Set(['prop_mailbox', 'prop_parachute_crate'])
+const ONE_SHOT_PROP_CLIPS_BY_ASSET = new Set([
+  'prop_catapult/Fire',
+  'prop_mailbox/Open',
+  'prop_parachute_crate/Open',
+])
 
 export type PolyPropProps = Placement &
   PolyPropLook & {
@@ -607,7 +611,7 @@ function LoadedAnimatedProp({
     const previous = actionRef.current
     if (previous !== next) {
       const playOnce = ONE_SHOT_PROP_CLIPS.has(selected.name)
-        || (selected.name === 'Open' && PROPS_WITH_OPEN_TRANSITION.has(item.id))
+        || ONE_SHOT_PROP_CLIPS_BY_ASSET.has(`${item.id}/${selected.name}`)
       next.reset()
       next.setLoop(playOnce ? LoopOnce : LoopRepeat, playOnce ? 1 : Infinity)
       next.clampWhenFinished = playOnce
