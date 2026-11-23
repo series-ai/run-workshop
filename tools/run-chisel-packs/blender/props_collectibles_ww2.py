@@ -25,18 +25,23 @@ def prop_pickup_ww2_thermos(p):
         held_ww2_thermos(p)
 
 
-def held_ww2_entry_stamp(p):
-    p.box((0, -.052, 0), (.088, .010, .048), 'eye')
-    p.box((0, -.040, 0), (.094, .016, .054), 'secondary', corner=.006)
-    p.lathe([(.018, -.034), (.018, -.025), (.020, -.019), (.020, .007),
+def entry_stamp(p, shaft_extension):
+    p.box((0, -.052 - shaft_extension, 0), (.088, .010, .048), 'eye')
+    p.box((0, -.040 - shaft_extension, 0), (.094, .016, .054), 'secondary', corner=.006)
+    p.lathe([(.018, -.034 - shaft_extension), (.018, -.025 - shaft_extension), (.020, -.019), (.020, .007),
              (.027, .021), (.028, .035), (.020, .043)], 8, 'secondary',
             band_regions=['metal', 'metal', 'secondary', 'secondary', 'secondary', 'skin'],
             cap_end=True)
 
 
+def held_ww2_entry_stamp(p):
+    # The longer shaft keeps the stamp base below the palm.
+    entry_stamp(p, .050)
+
+
 def prop_pickup_ww2_entry_stamp(p):
     with p.placed(Matrix.Translation(Y * .057)):
-        held_ww2_entry_stamp(p)
+        entry_stamp(p, 0)
 
 
 def held_ww2_signal_paddle(p):
