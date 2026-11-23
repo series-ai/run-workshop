@@ -274,7 +274,7 @@
       "nodeName": "torso_ind_coveralls",
       "slot": "torso",
       "label": "Zip Coveralls",
-      "triangles": 314,
+      "triangles": 320,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -4436,6 +4436,479 @@
       "palette": {
         "detail": "#877661"
       }
+    },
+    {
+      "id": "prop_industrial_foundry_transfer_paving",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_foundry_transfer_paving.glb",
+      "nodeName": "prop_industrial_foundry_transfer_paving",
+      "label": "Foundry transfer paving",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#848374",
+        "secondary": "#687078"
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_frame",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_frame.glb",
+      "nodeName": "prop_industrial_dispatch_frame",
+      "label": "Dispatch frame",
+      "triangles": 704,
+      "bounds": {
+        "min": [
+          -3,
+          0,
+          -0.65
+        ],
+        "max": [
+          3,
+          4.8,
+          0.65
+        ],
+        "size": [
+          6,
+          4.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_yard_badge",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_yard_badge.glb",
+      "nodeName": "prop_industrial_dispatch_yard_badge",
+      "label": "Dispatch yard badge",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.8,
+          1.2,
+          0.25
+        ],
+        "size": [
+          3.6,
+          1.2,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_stock_shed_canopy",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_stock_shed_canopy.glb",
+      "nodeName": "prop_industrial_stock_shed_canopy",
+      "label": "Stock shed canopy",
+      "triangles": 392,
+      "bounds": {
+        "min": [
+          -2.8,
+          0,
+          -2.5
+        ],
+        "max": [
+          2.8,
+          4.4,
+          2.5
+        ],
+        "size": [
+          5.6,
+          4.4,
+          5
+        ]
+      },
+      "palette": {
+        "trim": "#949483",
+        "detail": "#4c7068"
+      }
+    },
+    {
+      "id": "prop_industrial_stock_shed_cladding",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_stock_shed_cladding.glb",
+      "nodeName": "prop_industrial_stock_shed_cladding",
+      "label": "Stock shed cladding",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.35
+        ],
+        "max": [
+          2,
+          4,
+          0.35
+        ],
+        "size": [
+          4,
+          4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_weigh_deck",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_weigh_deck.glb",
+      "nodeName": "prop_industrial_dispatch_weigh_deck",
+      "label": "Dispatch weigh deck",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.35
+        ],
+        "max": [
+          1.7,
+          0.3,
+          1.35
+        ],
+        "size": [
+          3.4,
+          0.3,
+          2.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_weigh_deck_hoist_arch",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_weigh_deck_hoist_arch.glb",
+      "nodeName": "prop_industrial_weigh_deck_hoist_arch",
+      "label": "Weigh deck hoist arch",
+      "triangles": 314,
+      "bounds": {
+        "min": [
+          -2.9,
+          0,
+          -0.4
+        ],
+        "max": [
+          2.9,
+          4.2,
+          0.4
+        ],
+        "size": [
+          5.8,
+          4.2,
+          0.8
+        ]
+      },
+      "palette": {
+        "metal": "#728a8d",
+        "trim": "#ce9c50"
+      }
+    },
+    {
+      "id": "prop_industrial_tally_booth_frame",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tally_booth_frame.glb",
+      "nodeName": "prop_industrial_tally_booth_frame",
+      "label": "Tally booth frame",
+      "triangles": 830,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.3,
+          2.5,
+          1.05
+        ],
+        "size": [
+          2.6,
+          2.5,
+          2.1
+        ]
+      },
+      "palette": {
+        "primary": "#668078",
+        "secondary": "#515c58",
+        "visor": "#9cb3aa"
+      }
+    },
+    {
+      "id": "prop_industrial_tally_document_shelf",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tally_document_shelf.glb",
+      "nodeName": "prop_industrial_tally_document_shelf",
+      "label": "Tally document shelf",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.85,
+          1,
+          0.45
+        ],
+        "size": [
+          1.7,
+          1,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_shipping_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_shipping_rack.glb",
+      "nodeName": "prop_industrial_shipping_rack",
+      "label": "Shipping rack",
+      "triangles": 748,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_billet_bundle",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_billet_bundle.glb",
+      "nodeName": "prop_industrial_billet_bundle",
+      "label": "Billet bundle",
+      "triangles": 352,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.65
+        ],
+        "max": [
+          1,
+          0.8,
+          0.65
+        ],
+        "size": [
+          2,
+          0.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_forklift",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_forklift.glb",
+      "nodeName": "prop_industrial_dispatch_forklift",
+      "label": "Dispatch forklift",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.85,
+          2.8,
+          1.8
+        ],
+        "size": [
+          1.7,
+          2.8,
+          3.6
+        ]
+      },
+      "palette": {
+        "primary": "#b59b53",
+        "trim": "#e3c571"
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_industrial_dispatch_forklift.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lift Forks"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_pickup",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_pickup.glb",
+      "nodeName": "prop_industrial_dispatch_pickup",
+      "label": "Dispatch pickup",
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.85
+        ],
+        "max": [
+          0.95,
+          1.7,
+          1.85
+        ],
+        "size": [
+          1.9,
+          1.7,
+          3.7
+        ]
+      },
+      "palette": {
+        "primary": "#627a72",
+        "trim": "#cba867"
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_industrial_dispatch_pickup.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lower Tailgate",
+          "Roll and brake"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_taillamp_03_light",
+          "vehicle_root_taillamp_04_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_hoist_control_lever",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hoist_control_lever.glb",
+      "nodeName": "prop_industrial_hoist_control_lever",
+      "label": "Hoist control lever",
+      "triangles": 38,
+      "bounds": {
+        "min": [
+          -0.1,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.1,
+          0.3,
+          0.1
+        ],
+        "size": [
+          0.2,
+          0.3,
+          0.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_hot_test_billet",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hot_test_billet.glb",
+      "nodeName": "prop_industrial_hot_test_billet",
+      "label": "Hot test billet",
+      "triangles": 106,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.6,
+          0.3,
+          0.15
+        ],
+        "size": [
+          3.2,
+          0.3,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#99472d",
+        "accent": "#ffd15c",
+        "trim": "#ff8e34"
+      }
+    },
+    {
+      "id": "prop_industrial_billet_tally_ledger",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_billet_tally_ledger.glb",
+      "nodeName": "prop_industrial_billet_tally_ledger",
+      "label": "Billet tally ledger",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.3,
+          0.3,
+          0.2
+        ],
+        "size": [
+          0.6,
+          0.3,
+          0.4
+        ]
+      }
     }
   ],
   "presets": [
@@ -5322,7 +5795,7 @@
         "metal": "#9ca5b0",
         "trim": "#dfd6c1",
         "leather": "#593b27",
-        "visor": "#46c6eb",
+        "visor": "#447e8e",
         "detail": "#8a462e"
       },
       "proportions": {

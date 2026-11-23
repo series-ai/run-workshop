@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { levelPropEntrySchema, type PackCatalog, type LevelPropEntry } from './catalog'
+import { levelPropEntrySchema, type PackCatalog } from './catalog'
 import { resolveLevelKits, levelKitsSchema, withLevelProps, type LevelKits } from './levelKits'
 import { VOXCHAR_PACK_KEYS } from './packs'
 import { levelFinishesSchema } from './levelFinishes'
@@ -16,10 +16,10 @@ function fixture() {
     heldItems: [],
     presets: [],
     props: [],
-    levelKitProps: Array.from({ length: 24 }, (_, index): LevelPropEntry => ({
+    levelKitProps: Array.from({ length: 24 }, (_, index): PackCatalog['levelKitProps'][number] => ({
       id: `prop_${pack}_${index}`,
       pack,
-      leaf: 'characters',
+      leaf: 'world',
       relativePath: `level-kit/${index}.glb`,
       nodeName: `prop_${pack}_${index}`,
       label: `Model ${index + 1}`,
@@ -84,7 +84,7 @@ describe('Cubix level kit contracts', () => {
       skyFill: '#c2cbdb', groundFill: '#91816c', fillIntensity: 1.1,
       sunDirection: [-2.4, 1.8, 1.8], sunColor: '#fff0db', sunIntensity: 2.6,
     }
-    const core = { ...kits.core, view: { ...kits.core.view, stops: [stop] }, fixtures: [fixtureLight], environment }
+    const core = { ...kits.core, view: { ...kits.core.view, far: 240, stops: [stop] }, fixtures: [fixtureLight], environment }
 
     const parsed = levelKitsSchema.parse({ ...kits, core })
 
@@ -143,4 +143,18 @@ describe('Cubix level kit contracts', () => {
     expect(catalog.props).toEqual(worldProps)
     expect(catalog.levelKitProps).toEqual([kitProp])
   })
+})
+
+it('accepts a prop from a world-only Cubix pack', () => {
+  const { core } = fixture()
+  const prop = { ...core.levelKitProps[0], pack: 'caverns', leaf: 'world' }
+  expect(levelPropEntrySchema.safeParse(prop).success).toBe(true)
+})
+
+it('rejects a level kit prop outside the world leaf', () => {
+  const { core } = fixture()
+  for (const pack of ['core', 'caverns']) {
+    const prop = { ...core.levelKitProps[0], pack, leaf: 'characters' }
+    expect(levelPropEntrySchema.safeParse(prop).success).toBe(false)
+  }
 })

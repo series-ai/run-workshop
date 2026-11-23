@@ -14,10 +14,10 @@ import voxchar as vk
 from creature_kit import Sculpt
 
 from level_geometry import (CELL, ENVIRONMENTS, PALETTES, WATER_LABELS, box, make_grid,
-                            mesh_from_grid, overview_bounds, span, vertex_colors)
-from level_finish_glb import FINISHES, add_level_mesh, lamp_color, level_builder
-from level_scene_glb import append_environment
-from level_voxels import encode_prefab, write_voxel_scene
+                            mesh_from_grid, span, vertex_colors)
+from level_finish_glb import add_level_mesh, lamp_color, level_builder
+from level_scene_glb import append_environment, write_instanced_scene
+from level_voxels import encode_prefab
 from prop_surfaces import apply_finish
 import level_vehicles as vehicles
 from vehicle_export import write_vehicle
@@ -716,13 +716,16 @@ class Kit:
                 raise ValueError(f'{label}: invalid palette entry {region}={color}.')
         self.palettes.setdefault(prop_id, {}).update(colors)
 
+    def finish(self, label, sculpt):
+        apply_finish(self.key, label, sculpt)
+
     def add(self, label, sculpt, x, z, turn=0, height=0, *, vehicle=None, surface=None):
         prop_id = self.prop_id(label)
         finish = surface or ('water' if label in WATER_LABELS else None)
         if finish:
             self.surfaces[prop_id] = finish
         if vehicle is None:
-            apply_finish(self.key, label, sculpt)
+            self.finish(label, sculpt)
         else:
             self.vehicles[prop_id] = vehicle
         self.props.append((prop_id, label, sculpt))
@@ -1212,10 +1215,7 @@ def fantasy_kit():
     return kit
 
 
-LEVEL_FACTORIES = (core_kit, heist_kit, industrial_kit, security_kit, creatures_kit, fantasy_kit)
-
-
-def write_demo(path, kit, models, layout):
+def write_demo(path, kit, models, layout, *, instanced_path=None):
     builder = level_builder()
     source_nodes = {}
     scene_nodes = builder.doc['scenes'][0]['nodes']
@@ -1238,75 +1238,70 @@ def write_demo(path, kit, models, layout):
         })
     builder.doc['scenes'][0]['name'] = kit.title
     append_environment(builder.doc, layout)
+    if 'gameplay' in layout:
+        builder.doc['scenes'][0]['extras']['cubixGameplay'] = layout['gameplay']
     builder.write(path)
+    if instanced_path is not None:
+        write_instanced_scene(builder, instanced_path)
+
+
+def write_level_models(folder, kit, palette, *, budget=None):
+    leaf = 'world'
+    props = []
+    known = set()
+    models = {}
+    prefabs = {}
+    for prop_id, label, sculpt in kit.props:
+        if prop_id in known:
+            raise ValueError(f'Duplicate prop {prop_id}.')
+        known.add(prop_id)
+        grid = make_grid(sculpt)
+        prefab = encode_prefab(grid)
+        overrides = kit.palettes.get(prop_id)
+        surface = kit.surfaces.get(prop_id)
+        if overrides:
+            prefab['palette'] = overrides
+        if surface:
+            prefab['surface'] = surface
+        prefabs[prop_id] = prefab
+        mesh = mesh_from_grid(prop_id, grid)
+        relative = f'level-kit/{prop_id}.glb'
+        prop_palette = {**palette, **(overrides or {})}
+        colors = vertex_colors(mesh, prop_palette)
+        lamp = lamp_color(mesh, prop_palette)
+        models[prop_id] = mesh, colors, surface, lamp
+        builder = level_builder()
+        add_level_mesh(builder, mesh, colors, surface, lamp)
+        size = builder.write(folder / relative)
+        entry = vk.prop_entry(mesh, kit.key, label, relative, size, budget=budget)
+        entry['leaf'] = leaf
+        if overrides:
+            entry['palette'] = overrides
+        if surface:
+            entry['surface'] = surface
+        if prop_id in kit.vehicles:
+            vehicle = kit.vehicles[prop_id]
+            motion_path = f'vehicles/{prop_id}.glb'
+            lights = write_vehicle(folder / motion_path, prop_id, vehicle, prop_palette)
+            entry['motion'] = {'relativePath': motion_path, 'clips': list(vehicle.clips), 'lights': lights}
+        props.append(entry)
+    return props, models, prefabs
 
 
 def main():
+    from build_gameplay_boards import ORIGINAL_THEMES, prepare_original_board, write_board_level
+
     args = vk.script_args('Export the Cubix level kits.', 'stage', 'meta')
     scenes = {}
     entries = {}
-    for factory in LEVEL_FACTORIES:
-        kit = factory()
-        tour, fixtures = build_district(kit, sys.modules[__name__])
-        leaf = 'world'
-        folder = vk.leaf_dir(args.stage, kit.key, leaf)
-        (folder / 'level-kit').mkdir(parents=True, exist_ok=True)
-        props = []
-        known = set()
-        models = {}
-        prefabs = {}
-        palette = PALETTES[kit.key]
-        for prop_id, label, sculpt in kit.props:
-            if prop_id in known:
-                raise ValueError(f'Duplicate prop {prop_id}.')
-            known.add(prop_id)
-            grid = make_grid(sculpt)
-            prefab = encode_prefab(grid)
-            overrides = kit.palettes.get(prop_id)
-            surface = kit.surfaces.get(prop_id)
-            if overrides:
-                prefab['palette'] = overrides
-            if surface:
-                prefab['surface'] = surface
-            prefabs[prop_id] = prefab
-            mesh = mesh_from_grid(prop_id, grid)
-            relative = f'level-kit/{prop_id}.glb'
-            prop_palette = {**palette, **(overrides or {})}
-            colors = vertex_colors(mesh, prop_palette)
-            lamp = lamp_color(mesh, prop_palette)
-            models[prop_id] = mesh, colors, surface, lamp
-            builder = level_builder()
-            add_level_mesh(builder, mesh, colors, surface, lamp)
-            size = builder.write(folder / relative)
-            entry = vk.prop_entry(mesh, kit.key, label, relative, size)
-            entry['leaf'] = leaf
-            if overrides:
-                entry['palette'] = overrides
-            if surface:
-                entry['surface'] = surface
-            if prop_id in kit.vehicles:
-                vehicle = kit.vehicles[prop_id]
-                motion_path = f'vehicles/{prop_id}.glb'
-                lights = write_vehicle(folder / motion_path, prop_id, vehicle, prop_palette)
-                entry['motion'] = {'relativePath': motion_path, 'clips': list(vehicle.clips), 'lights': lights}
-            props.append(entry)
-        entries[kit.key] = props
-        scene = {
-            'title': kit.title, 'route': kit.use, 'placements': kit.placements,
-            'view': {**overview_bounds(kit.placements, prefabs), 'eye': tour[0]['eye'],
-                     'target': tour[0]['target'], 'stops': tour[1:]},
-            'fixtures': fixtures,
-            'environment': ENVIRONMENTS[kit.key],
-        }
-        scenes[kit.key] = scene
-        demo_path = folder / 'level-kit/demo.glb'
-        write_demo(demo_path, kit, models, scene)
-        write_voxel_scene(folder / 'level-kit/demo.voxels.json', kit.key, CELL, palette, prefabs, scene,
-                          finishes=FINISHES)
-        demo_dir = args.meta.parent / 'level-demos'
-        demo_dir.mkdir(parents=True, exist_ok=True)
-        copyfile(demo_path, demo_dir / f'{kit.key}.glb')
-        print(f'{kit.key}: {len(kit.props)} props and {len(kit.placements)} placements.')
+    demo_dir = args.meta.parent / 'level-demos'
+    demo_dir.mkdir(parents=True, exist_ok=True)
+    for key in ORIGINAL_THEMES:
+        board, content = prepare_original_board(sys.modules[__name__], key)
+        folder = vk.leaf_dir(args.stage, key, 'world')
+        entries[key], scenes[key] = write_board_level(
+            folder, board, actor_definitions=content.ACTORS, item_definitions=content.ITEMS)
+        copyfile(folder / 'level-kit/demo.glb', demo_dir / f'{key}.glb')
     (args.meta / 'level-props.json').write_text(json.dumps(entries, indent=2) + '\n')
     (args.meta / 'level-scenes.json').write_text(json.dumps(scenes, indent=2) + '\n')
 

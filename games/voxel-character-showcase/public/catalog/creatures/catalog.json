@@ -441,7 +441,7 @@
       "nodeName": "body_dire_wolf",
       "slot": "body",
       "label": "Guard Hound",
-      "triangles": 858,
+      "triangles": 850,
       "rigId": "quadruped",
       "rules": {
         "hidesHair": false,
@@ -508,15 +508,15 @@
           "type": "capsule",
           "a": [
             0,
-            -0.02829,
-            0.0204
+            -0.02743,
+            0.0216
           ],
           "b": [
             0,
-            0.02829,
-            0.0996
+            0.02743,
+            0.0984
           ],
-          "radius": 0.14859
+          "radius": 0.15113
         },
         "head": {
           "type": "capsule",
@@ -8550,6 +8550,2394 @@
       "palette": {
         "detail": "#7e7058"
       }
+    },
+    {
+      "id": "prop_creatures_reed_fen_meadow",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_reed_fen_meadow.glb",
+      "nodeName": "prop_creatures_reed_fen_meadow",
+      "label": "Reed fen meadow",
+      "triangles": 230,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_east_ridge_trail_shoulder",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_east_ridge_trail_shoulder.glb",
+      "nodeName": "prop_creatures_east_ridge_trail_shoulder",
+      "label": "East ridge trail shoulder",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_gravel_survey_trail",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_gravel_survey_trail.glb",
+      "nodeName": "prop_creatures_gravel_survey_trail",
+      "label": "Gravel survey trail",
+      "triangles": 222,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_pool_bed",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_pool_bed.glb",
+      "nodeName": "prop_creatures_fen_pool_bed",
+      "label": "Fen pool bed",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_observation_pool",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_observation_pool.glb",
+      "nodeName": "prop_creatures_fen_observation_pool",
+      "label": "Fen observation pool",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      },
+      "surface": "water"
+    },
+    {
+      "id": "prop_creatures_east_ridge_trail_marker",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_east_ridge_trail_marker.glb",
+      "nodeName": "prop_creatures_east_ridge_trail_marker",
+      "label": "East ridge trail marker",
+      "triangles": 244,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.3,
+          2.5,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_gear_pavilion",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_gear_pavilion.glb",
+      "nodeName": "prop_creatures_ranger_gear_pavilion",
+      "label": "Ranger gear pavilion",
+      "triangles": 1208,
+      "bounds": {
+        "min": [
+          -2.65,
+          0,
+          -2
+        ],
+        "max": [
+          2.65,
+          3.4,
+          2
+        ],
+        "size": [
+          5.3,
+          3.4,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_survey_delivery_table",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_delivery_table.glb",
+      "nodeName": "prop_creatures_survey_delivery_table",
+      "label": "Survey delivery table",
+      "triangles": 706,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.4,
+          1.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_dry_maps_wall_shelf",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_dry_maps_wall_shelf.glb",
+      "nodeName": "prop_creatures_dry_maps_wall_shelf",
+      "label": "Dry maps wall shelf",
+      "triangles": 574,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.3,
+          1.6,
+          0.4
+        ],
+        "size": [
+          2.6,
+          1.6,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_route_map_rack",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_route_map_rack.glb",
+      "nodeName": "prop_creatures_route_map_rack",
+      "label": "Route map rack",
+      "triangles": 384,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.85,
+          2,
+          0.55
+        ],
+        "size": [
+          1.7,
+          2,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_outgoing_sample_case",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_outgoing_sample_case.glb",
+      "nodeName": "prop_creatures_outgoing_sample_case",
+      "label": "Outgoing sample case",
+      "triangles": 302,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.55
+        ],
+        "size": [
+          1.6,
+          0.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_observation_trail_notice",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_observation_trail_notice.glb",
+      "nodeName": "prop_creatures_observation_trail_notice",
+      "label": "Observation trail notice",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.3,
+          2.5,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_meadow_rest_bench",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_meadow_rest_bench.glb",
+      "nodeName": "prop_creatures_meadow_rest_bench",
+      "label": "Meadow rest bench",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.9,
+          1,
+          0.3
+        ],
+        "size": [
+          1.8,
+          1,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_radio_mast",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_radio_mast.glb",
+      "nodeName": "prop_creatures_ranger_radio_mast",
+      "label": "Ranger radio mast",
+      "triangles": 274,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          4,
+          0.25
+        ],
+        "size": [
+          1,
+          4,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_filled_animal_feed_tray",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_filled_animal_feed_tray.glb",
+      "nodeName": "prop_creatures_filled_animal_feed_tray",
+      "label": "Filled animal feed tray",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1.4,
+          0.6,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_handwheel_feeding_hatch",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_handwheel_feeding_hatch.glb",
+      "nodeName": "prop_creatures_handwheel_feeding_hatch",
+      "label": "Handwheel feeding hatch",
+      "triangles": 444,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.25,
+          2.5,
+          0.45
+        ],
+        "size": [
+          2.5,
+          2.5,
+          0.9
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_marsh_deer_rest_shelter",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_marsh_deer_rest_shelter.glb",
+      "nodeName": "prop_creatures_marsh_deer_rest_shelter",
+      "label": "Marsh deer rest shelter",
+      "triangles": 1184,
+      "bounds": {
+        "min": [
+          -2.35,
+          0,
+          -1.75
+        ],
+        "max": [
+          2.35,
+          3.2,
+          1.75
+        ],
+        "size": [
+          4.7,
+          3.2,
+          3.5
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_reed_fen_deer",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_reed_fen_deer.glb",
+      "nodeName": "prop_creatures_reed_fen_deer",
+      "label": "Reed fen deer",
+      "triangles": 684,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.95
+        ],
+        "max": [
+          0.45,
+          2.6,
+          0.95
+        ],
+        "size": [
+          0.9,
+          2.6,
+          1.9
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#bb8352",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#f5dfb6",
+        "leather": "#d5a376",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_deer_forage_pile",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_deer_forage_pile.glb",
+      "nodeName": "prop_creatures_deer_forage_pile",
+      "label": "Deer forage pile",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.8,
+          0.5,
+          0.7
+        ],
+        "size": [
+          1.6,
+          0.5,
+          1.4
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_field_pen_keeper_bench",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_field_pen_keeper_bench.glb",
+      "nodeName": "prop_creatures_field_pen_keeper_bench",
+      "label": "Field pen keeper bench",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.05,
+          1,
+          0.45
+        ],
+        "size": [
+          2.1,
+          1,
+          0.9
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_field_pen_wash_basin",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_field_pen_wash_basin.glb",
+      "nodeName": "prop_creatures_field_pen_wash_basin",
+      "label": "Field pen wash basin",
+      "triangles": 382,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.55,
+          0.8,
+          0.55
+        ],
+        "size": [
+          1.1,
+          0.8,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_habitat_fence_rail",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_habitat_fence_rail.glb",
+      "nodeName": "prop_creatures_habitat_fence_rail",
+      "label": "Habitat fence rail",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.9,
+          1.3,
+          0.15
+        ],
+        "size": [
+          3.8,
+          1.3,
+          0.3
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_meadow_brush_island",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_meadow_brush_island.glb",
+      "nodeName": "prop_creatures_meadow_brush_island",
+      "label": "Meadow brush island",
+      "triangles": 454,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.75,
+          1,
+          0.65
+        ],
+        "size": [
+          1.5,
+          1,
+          1.3
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_boundary_boulder",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_boundary_boulder.glb",
+      "nodeName": "prop_creatures_fen_boundary_boulder",
+      "label": "Fen boundary boulder",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2,
+          4.1,
+          1.2
+        ],
+        "size": [
+          4,
+          4.1,
+          2.4
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_survey_sample_drying_rack",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_sample_drying_rack.glb",
+      "nodeName": "prop_creatures_survey_sample_drying_rack",
+      "label": "Survey sample drying rack",
+      "triangles": 730,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_warden_route_post",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_warden_route_post.glb",
+      "nodeName": "prop_creatures_warden_route_post",
+      "label": "Warden route post",
+      "triangles": 244,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.3,
+          2.5,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_doe",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_doe.glb",
+      "nodeName": "prop_creatures_fen_doe",
+      "label": "Fen doe",
+      "triangles": 556,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.95
+        ],
+        "max": [
+          0.3,
+          2,
+          0.95
+        ],
+        "size": [
+          0.6,
+          2,
+          1.9
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#b8855a",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#c1976c",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_keeper_grain_pail",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_keeper_grain_pail.glb",
+      "nodeName": "prop_creatures_keeper_grain_pail",
+      "label": "Keeper grain pail",
+      "triangles": 498,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.45,
+          1.1,
+          0.45
+        ],
+        "size": [
+          0.9,
+          1.1,
+          0.9
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_bird_blind",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_bird_blind.glb",
+      "nodeName": "prop_creatures_fen_bird_blind",
+      "label": "Fen bird blind",
+      "triangles": 1618,
+      "bounds": {
+        "min": [
+          -2.45,
+          0,
+          -1.7
+        ],
+        "max": [
+          2.45,
+          3.4,
+          1.7
+        ],
+        "size": [
+          4.9,
+          3.4,
+          3.4
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_blind_viewing_bench",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_blind_viewing_bench.glb",
+      "nodeName": "prop_creatures_blind_viewing_bench",
+      "label": "Blind viewing bench",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.15,
+          1,
+          0.3
+        ],
+        "size": [
+          2.3,
+          1,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_viewing_boardwalk",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_viewing_boardwalk.glb",
+      "nodeName": "prop_creatures_fen_viewing_boardwalk",
+      "label": "Fen viewing boardwalk",
+      "triangles": 382,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -2
+        ],
+        "max": [
+          1.4,
+          0.5,
+          2
+        ],
+        "size": [
+          2.8,
+          0.5,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_bird_sighting_ledger",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_bird_sighting_ledger.glb",
+      "nodeName": "prop_creatures_bird_sighting_ledger",
+      "label": "Bird sighting ledger",
+      "triangles": 772,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.4,
+          1.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_bird_survey_trail_sign",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_bird_survey_trail_sign.glb",
+      "nodeName": "prop_creatures_bird_survey_trail_sign",
+      "label": "Bird survey trail sign",
+      "triangles": 236,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.3,
+          2.5,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_marsh_pelican",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_marsh_pelican.glb",
+      "nodeName": "prop_creatures_fen_marsh_pelican",
+      "label": "Fen marsh pelican",
+      "triangles": 424,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.95
+        ],
+        "max": [
+          0.35,
+          1.9,
+          0.95
+        ],
+        "size": [
+          0.7,
+          1.9,
+          1.9
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_pelican_haul_out_rock",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_pelican_haul_out_rock.glb",
+      "nodeName": "prop_creatures_pelican_haul_out_rock",
+      "label": "Pelican haul out rock",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          0.9,
+          0.9
+        ],
+        "size": [
+          2.8,
+          0.9,
+          1.8
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fishing_marsh_pelican",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fishing_marsh_pelican.glb",
+      "nodeName": "prop_creatures_fishing_marsh_pelican",
+      "label": "Fishing marsh pelican",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.95
+        ],
+        "max": [
+          0.35,
+          1.3,
+          0.95
+        ],
+        "size": [
+          0.7,
+          1.3,
+          1.9
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_observation_pier",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_observation_pier.glb",
+      "nodeName": "prop_creatures_fen_observation_pier",
+      "label": "Fen observation pier",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -1.5
+        ],
+        "max": [
+          0.75,
+          0.5,
+          1.5
+        ],
+        "size": [
+          1.5,
+          0.5,
+          3
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_bird_count_binoculars",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_bird_count_binoculars.glb",
+      "nodeName": "prop_creatures_bird_count_binoculars",
+      "label": "Bird count binoculars",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.2,
+          0.2,
+          0.2
+        ],
+        "size": [
+          0.4,
+          0.2,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_basking_turtle_log",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_basking_turtle_log.glb",
+      "nodeName": "prop_creatures_basking_turtle_log",
+      "label": "Basking turtle log",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.1,
+          0.7,
+          0.5
+        ],
+        "size": [
+          2.2,
+          0.7,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_driftwood_branch",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_driftwood_branch.glb",
+      "nodeName": "prop_creatures_fen_driftwood_branch",
+      "label": "Fen driftwood branch",
+      "triangles": 196,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          1.8,
+          0.25
+        ],
+        "size": [
+          1,
+          1.8,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_high_reeds",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_high_reeds.glb",
+      "nodeName": "prop_creatures_fen_high_reeds",
+      "label": "Fen high reeds",
+      "triangles": 404,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.1,
+          0.5,
+          0.55
+        ],
+        "size": [
+          2.2,
+          0.5,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_low_rushes",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_low_rushes.glb",
+      "nodeName": "prop_creatures_fen_low_rushes",
+      "label": "Fen low rushes",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          0.5,
+          0.5
+        ],
+        "size": [
+          1.4,
+          0.5,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_floating_pads",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_floating_pads.glb",
+      "nodeName": "prop_creatures_fen_floating_pads",
+      "label": "Fen floating pads",
+      "triangles": 130,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.5,
+          0.2,
+          0.45
+        ],
+        "size": [
+          1,
+          0.2,
+          0.9
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_shoreline_ledge",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_shoreline_ledge.glb",
+      "nodeName": "prop_creatures_shoreline_ledge",
+      "label": "Shoreline ledge",
+      "triangles": 230,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          0.9,
+          0.9
+        ],
+        "size": [
+          2.8,
+          0.9,
+          1.8
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_channel_staff_gauge",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_channel_staff_gauge.glb",
+      "nodeName": "prop_creatures_fen_channel_staff_gauge",
+      "label": "Fen channel staff gauge",
+      "triangles": 612,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.4,
+          2.6,
+          0.5
+        ],
+        "size": [
+          2.8,
+          2.6,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_water_collection_station",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_water_collection_station.glb",
+      "nodeName": "prop_creatures_water_collection_station",
+      "label": "Water collection station",
+      "triangles": 720,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.4,
+          1.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_sampling_jar_cradle",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_sampling_jar_cradle.glb",
+      "nodeName": "prop_creatures_sampling_jar_cradle",
+      "label": "Sampling jar cradle",
+      "triangles": 340,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1.4,
+          0.6,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_water_station_canopy",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_water_station_canopy.glb",
+      "nodeName": "prop_creatures_water_station_canopy",
+      "label": "Water station canopy",
+      "triangles": 1076,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.5
+        ],
+        "max": [
+          1.5,
+          3.1,
+          1.5
+        ],
+        "size": [
+          3,
+          3.1,
+          3
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_wetland_spill_channel_stone",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_wetland_spill_channel_stone.glb",
+      "nodeName": "prop_creatures_wetland_spill_channel_stone",
+      "label": "Wetland spill channel stone",
+      "triangles": 206,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.3,
+          0.8,
+          0.4
+        ],
+        "size": [
+          2.6,
+          0.8,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#716d53",
+        "primary": "#748552",
+        "secondary": "#495f47",
+        "accent": "#bee0bc",
+        "metal": "#84968c",
+        "trim": "#bc9d63",
+        "leather": "#82724d",
+        "visor": "#497875",
+        "detail": "#9e9c50"
+      }
+    },
+    {
+      "id": "prop_creatures_gravel_switchback_marker",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_gravel_switchback_marker.glb",
+      "nodeName": "prop_creatures_gravel_switchback_marker",
+      "label": "Gravel switchback marker",
+      "triangles": 234,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.3,
+          2.5,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_gravel_edge_marker",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_gravel_edge_marker.glb",
+      "nodeName": "prop_creatures_fen_gravel_edge_marker",
+      "label": "Fen gravel edge marker",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          0.8,
+          0.25
+        ],
+        "size": [
+          0.5,
+          0.8,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_main_survey_trail_portal",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_main_survey_trail_portal.glb",
+      "nodeName": "prop_creatures_main_survey_trail_portal",
+      "label": "Main survey trail portal",
+      "triangles": 332,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.6,
+          3.1,
+          0.55
+        ],
+        "size": [
+          3.2,
+          3.1,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_woodland_permit_gate",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_woodland_permit_gate.glb",
+      "nodeName": "prop_creatures_woodland_permit_gate",
+      "label": "Woodland permit gate",
+      "triangles": 366,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.5,
+          2.9,
+          0.55
+        ],
+        "size": [
+          3,
+          2.9,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_survey_station_boundary_fence",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_station_boundary_fence.glb",
+      "nodeName": "prop_creatures_survey_station_boundary_fence",
+      "label": "Survey station boundary fence",
+      "triangles": 962,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.9,
+          1.9,
+          0.15
+        ],
+        "size": [
+          3.8,
+          1.9,
+          0.3
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_survey_station_boundary_post",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_survey_station_boundary_post.glb",
+      "nodeName": "prop_creatures_survey_station_boundary_post",
+      "label": "Survey station boundary post",
+      "triangles": 174,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          2.3,
+          0.25
+        ],
+        "size": [
+          0.5,
+          2.3,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_woodland_permit_box",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_woodland_permit_box.glb",
+      "nodeName": "prop_creatures_woodland_permit_box",
+      "label": "Woodland permit box",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.55,
+          1.5,
+          0.45
+        ],
+        "size": [
+          1.1,
+          1.5,
+          0.9
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_hollow_approach_marker",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_hollow_approach_marker.glb",
+      "nodeName": "prop_creatures_hollow_approach_marker",
+      "label": "Hollow approach marker",
+      "triangles": 242,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.65,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.3,
+          2.5,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_field_archive_cabin",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_field_archive_cabin.glb",
+      "nodeName": "prop_creatures_field_archive_cabin",
+      "label": "Field archive cabin",
+      "triangles": 1428,
+      "bounds": {
+        "min": [
+          -3.25,
+          0,
+          -2.1
+        ],
+        "max": [
+          3.25,
+          3.8,
+          2.1
+        ],
+        "size": [
+          6.5,
+          3.8,
+          4.2
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_archive_specimen_counter",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_archive_specimen_counter.glb",
+      "nodeName": "prop_creatures_archive_specimen_counter",
+      "label": "Archive specimen counter",
+      "triangles": 714,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.4,
+          1.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_submit_survey_desk",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_submit_survey_desk.glb",
+      "nodeName": "prop_creatures_submit_survey_desk",
+      "label": "Submit survey desk",
+      "triangles": 724,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.4,
+          1.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_archive_folder_crate",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_archive_folder_crate.glb",
+      "nodeName": "prop_creatures_archive_folder_crate",
+      "label": "Archive folder crate",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.75
+        ],
+        "max": [
+          0.9,
+          1.1,
+          0.75
+        ],
+        "size": [
+          1.8,
+          1.1,
+          1.5
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_archive_record_shelves",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_archive_record_shelves.glb",
+      "nodeName": "prop_creatures_archive_record_shelves",
+      "label": "Archive record shelves",
+      "triangles": 770,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      },
+      "palette": {
+        "skin": "#bab092",
+        "primary": "#879365",
+        "secondary": "#565b43",
+        "metal": "#92928a",
+        "trim": "#d3bd87",
+        "leather": "#8f7353",
+        "visor": "#70948a",
+        "detail": "#aab16b"
+      }
+    },
+    {
+      "id": "prop_creatures_ranger_camp_lantern",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_ranger_camp_lantern.glb",
+      "nodeName": "prop_creatures_ranger_camp_lantern",
+      "label": "Ranger camp lantern",
+      "triangles": 214,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          3,
+          0.25
+        ],
+        "size": [
+          1,
+          3,
+          0.5
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
+    },
+    {
+      "id": "prop_creatures_boardwalk_support_sleeper",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_boardwalk_support_sleeper.glb",
+      "nodeName": "prop_creatures_boardwalk_support_sleeper",
+      "label": "Boardwalk support sleeper",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -1.2
+        ],
+        "max": [
+          1.15,
+          0.5,
+          1.2
+        ],
+        "size": [
+          2.3,
+          0.5,
+          2.4
+        ]
+      },
+      "palette": {
+        "skin": "#969078",
+        "primary": "#526948",
+        "secondary": "#3d4f3b",
+        "accent": "#dfc784",
+        "metal": "#768785",
+        "trim": "#cfb074",
+        "leather": "#7e6446",
+        "visor": "#689997",
+        "detail": "#7e9055"
+      }
+    },
+    {
+      "id": "prop_creatures_fen_survey_banner",
+      "pack": "creatures",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_creatures_fen_survey_banner.glb",
+      "nodeName": "prop_creatures_fen_survey_banner",
+      "label": "Fen survey banner",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.95,
+          3.8,
+          0.2
+        ],
+        "size": [
+          1.9,
+          3.8,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#a6a08a",
+        "primary": "#54817d",
+        "secondary": "#4e5d54",
+        "accent": "#d9d78e",
+        "metal": "#849794",
+        "trim": "#e6b873",
+        "leather": "#927354",
+        "visor": "#6ca3a0",
+        "detail": "#8a9c63"
+      }
     }
   ],
   "presets": [
@@ -8772,15 +11160,15 @@
               "type": "capsule",
               "a": [
                 0,
-                -0.0283,
-                0.0204
+                -0.0274,
+                0.0216
               ],
               "b": [
                 0,
-                0.0283,
-                0.0996
+                0.0274,
+                0.0984
               ],
-              "radius": 0.1486
+              "radius": 0.1511
             },
             "joint": {
               "type": "cone_twist",

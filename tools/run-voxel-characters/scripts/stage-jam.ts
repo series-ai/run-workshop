@@ -6,7 +6,8 @@
  */
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { leavesFor, VOXCHAR_PACK_KEYS, type VoxCharPackKey } from '../contracts/packs'
+import { leavesFor } from '../contracts/packs'
+import { isBoardPack, LEVEL_PACK_KEYS, levelLeafId, type LevelPackKey } from '../contracts/levelPacks'
 import { licenseTextFor } from '../src/licenses'
 import { STAGE_DIR } from '../src/paths'
 
@@ -17,17 +18,29 @@ function main(): void {
     throw new Error('--target must point to a jam-ready-assets checkout')
   }
   const p = process.argv.indexOf('--packs')
-  const packs = (p === -1 ? [...VOXCHAR_PACK_KEYS] : (process.argv[p + 1] ?? '').split(',')) as VoxCharPackKey[]
+  const packs = (p === -1 ? [...LEVEL_PACK_KEYS] : (process.argv[p + 1] ?? '').split(',')) as LevelPackKey[]
 
   for (const pack of packs) {
-    if (!VOXCHAR_PACK_KEYS.includes(pack)) throw new Error(`Unknown pack "${pack}"`)
-    for (const leaf of leavesFor(pack)) {
-      const srcDir = join(STAGE_DIR, leaf.id)
+    if (!LEVEL_PACK_KEYS.includes(pack)) throw new Error(`Unknown pack "${pack}"`)
+    const ids = isBoardPack(pack) ? [levelLeafId(pack, 'world')] : leavesFor(pack).map((leaf) => leaf.id)
+    for (const id of ids) {
+      const srcDir = join(STAGE_DIR, id)
       if (!existsSync(srcDir)) throw new Error(`Pack "${pack}" not built at ${srcDir}. Run npm run build first.`)
     }
   }
 
   for (const pack of packs) {
+    if (isBoardPack(pack)) {
+      const id = levelLeafId(pack, 'world')
+      const dest = join(target, id)
+      rmSync(dest, { recursive: true, force: true })
+      mkdirSync(dest, { recursive: true })
+      cpSync(join(STAGE_DIR, id), dest, { recursive: true })
+      // The board builder writes License.txt. A leaf without it must not be published.
+      if (!existsSync(join(dest, 'License.txt'))) throw new Error(`Board leaf ${id} has no License.txt. Rebuild the board.`)
+      console.log(`Staged ${id} -> ${dest}`)
+      continue
+    }
     for (const leaf of leavesFor(pack)) {
       const from = join(STAGE_DIR, leaf.id)
       const dest = join(target, leaf.id)

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import proportionsJson from './data/proportions.json'
 import { LICENSES, VOXCHAR_PACK_KEYS } from './packs'
+import { LEVEL_KIT_LEAF, LEVEL_PACK_KEYS } from './levelPacks'
 import { paletteColorsSchema } from './palette'
 import { characterRagdollSchema, ragdollColliderMapSchema } from './ragdoll'
 import { RIG_IDS } from './rig'
@@ -224,6 +225,8 @@ export const worldPropEntrySchema = z.object({
 export type WorldPropEntry = z.infer<typeof worldPropEntrySchema>
 
 export const levelPropEntrySchema = worldPropEntrySchema.extend({
+  pack: z.enum(LEVEL_PACK_KEYS),
+  leaf: z.literal(LEVEL_KIT_LEAF),
   relativePath: z.string().regex(/^level-kit\/[a-z0-9_]+\.glb$/),
   palette: paletteColorsSchema.partial().strict().optional(),
   surface: z.enum(['water', 'glass']).optional(),
@@ -234,6 +237,7 @@ export const levelPropEntrySchema = worldPropEntrySchema.extend({
   }).optional(),
 })
 export type LevelPropEntry = z.infer<typeof levelPropEntrySchema>
+export const characterLevelPropEntrySchema = levelPropEntrySchema.extend({ pack: z.enum(VOXCHAR_PACK_KEYS) })
 
 export const characterPresetSchema = z.object({
   id: z.string().min(1),
@@ -274,7 +278,7 @@ export const packCatalogSchema = z.object({
   parts: z.array(avatarPartEntrySchema),
   heldItems: z.array(heldItemEntrySchema),
   props: z.array(worldPropEntrySchema),
-  levelKitProps: z.array(levelPropEntrySchema).default([]),
+  levelKitProps: z.array(characterLevelPropEntrySchema).default([]),
   presets: z.array(characterPresetSchema),
 })
 export type PackCatalog = z.infer<typeof packCatalogSchema>

@@ -61,22 +61,20 @@ def arm_band(part, bone, x, code, *, right=False, detail=None):
 
 
 def torso_heist_tee():
-    """Heavyweight crew-neck work tee: a chest stripe around the trunk, a flap pocket below it, a watch."""
+    """Work shirt with a dark shoulder yoke, flap pocket and watch."""
     part = vk.VoxelPart('torso_heist_tee', covers=core.TORSO_COVERS)
     shirt = vox('primary', 0.0)
     shade = vox('primary', -0.25)
-    trim = vox('trim', 0.125)
     torso = core.shirt_torso(part, shirt, hem=shade)                               # Untucked hem above the belt
-    stripe_y = SHOULDER_Y - 3                                                      # Top row of the trunk box
-    # The stripe is one full ring: front, back and both sides.
-    torso.fill(-CHEST_HALF_X, stripe_y, TORSO_BACK, CHEST_HALF_X, stripe_y, TORSO_FRONT, trim)
-    torso.fill(1, stripe_y - 3, TORSO_FRONT, 2, stripe_y - 2, TORSO_FRONT, shade)  # Left chest pocket, flush
-    torso.fill(1, stripe_y - 2, TORSO_FRONT, 2, stripe_y - 2, TORSO_FRONT, vox('primary', -0.5))   # Pocket flap
+    yoke_y = SHOULDER_Y - 3
+    torso.fill(-CHEST_HALF_X, yoke_y, TORSO_BACK, CHEST_HALF_X, yoke_y, TORSO_FRONT, shade)
+    torso.fill(1, yoke_y - 3, TORSO_FRONT, 2, yoke_y - 2, TORSO_FRONT, shade)
+    torso.set(2, yoke_y - 2, TORSO_FRONT, vox('accent', -0.25, mottle=False))
     # Tuck the side seams above the belt. Leave a short tail across the front.
     for side in (-CHEST_HALF_X, CHEST_HALF_X):
         torso.clear(side, TORSO_Y[0], TORSO_BACK, side, TORSO_Y[0] + 1, TORSO_BACK)
     torso.fill(-2, TORSO_Y[0], OUTER_FRONT, 2, TORSO_Y[0], OUTER_FRONT, shirt)
-    core.short_sleeves(part, shirt, trim)                                          # Cuffs match the chest stripe
+    core.short_sleeves(part, shirt, shade)
     arm_band(
         part, 'upperarm_l', (7, 8), vox('hair', -0.25),
         detail=lambda band: band.fill(7, ARM_Y[0], ARM_Z[0], 7, ARM_Y[1], ARM_Z[1], vox('detail', 0.0)),   # Ink stripe
@@ -456,14 +454,14 @@ def held_sledgehammer():
 
 def held_detonator():
     part = vk.VoxelPart('held_detonator')
-    grid = static_grid(part, (0, 1), (-3, 7), (-1, 1), HELD_VOX)
-    grid.fill(0, -3, 0, 0, 0, 0, vox('leather', -0.45))                            # Grip
-    grid.fill(0, 1, -1, 1, 3, 1, vox('metal', -0.35))                              # Housing
-    grid.fill(0, 1, -1, 1, 1, 1, vox('detail', 0.05))                              # Hazard stripe
-    grid.fill(1, 2, 0, 1, 2, 0, vox('trim', 0.45, mottle=False))                   # Keypad
-    grid.set(1, 3, 1, vox('accent', emissive=True))                                # Armed LED
-    grid.fill(0, 4, -1, 0, 7, -1, vox('metal', 0.35))                              # Antenna
-    grid.set(0, 4, 1, vox('detail', 0.25, mottle=False))                           # Red trigger button
+    grid = static_grid(part, (0, 3), (-3, 8), (-2, 2), HELD_VOX)
+    grid.fill(0, -3, 0, 0, 1, 0, vox('leather', -0.45))
+    grid.fill(0, 1, -2, 2, 4, 2, vox('metal', -0.35))
+    grid.fill(0, 1, -2, 2, 1, 2, vox('accent', 0.15))
+    grid.fill(3, 2, -1, 3, 4, 1, vox('leather', -0.4))
+    grid.fill(3, 3, 0, 3, 4, 1, vox('accent', 0.2, mottle=False))
+    grid.set(3, 2, 0, vox('visor', emissive=True))
+    grid.fill(1, 5, -2, 1, 8, -2, vox('metal', 0.35))
     return part
 
 
@@ -482,19 +480,24 @@ def held_crowbar():
 
 
 def held_duffel_bag():
-    """Duffel bag for the left hand, hanging cleanly on the palm side (-X)."""
+    """Hang the bag on the palm side of the left hand."""
     part = vk.VoxelPart('held_duffel_bag')
-    grid = static_grid(part, (-2, 0), (-6, 6), (0, 6), HELD_VOX)
-    canvas = vox('primary', -0.35)
+    grid = static_grid(part, (-6, 0), (-14, 4), (0, 11), HELD_VOX)
+    canvas = vox('leather', 0.3)
     strap = vox('leather', -0.4)
-    grid.fill(-2, -6, 2, 0, 6, 6, canvas)                                          # Bag body
-    for y in (-6, 6):
-        grid.fill(-2, y, 2, 0, y, 6, vox('primary', -0.1))                         # End caps
-    grid.fill(-1, -5, 2, -1, 5, 2, vox('accent', 0.15, mottle=False))              # Brass zip
-    grid.fill(-1, -2, 0, -1, 2, 0, strap)                                          # Handle
-    for y in (-2, 2):
-        grid.fill(-1, y, 0, -1, y, 1, strap)
-        grid.fill(-2, y, 2, 0, y, 6, strap)                                        # Strap bands
+    grid.fill(-2, -13, 3, 0, 3, 11, canvas)
+    # Leave room for the thigh at the front of the bag.
+    for inner, start, end in ((-6, -11, -8), (-5, -7, -5), (-4, -4, -2), (-3, -1, 1)):
+        grid.fill(inner, start, 4, -2, end, 10, canvas)
+    for y in (-14, 4):
+        grid.fill(-1, y, 4, 0, y, 10, vox('leather', 0.05))
+    for y in (-8, 0):
+        grid.paint_if_filled(-6, y, 3, 0, y, 11, strap)
+    grid.fill(0, -12, 5, 0, 2, 5, vox('accent', 0.15, mottle=False))
+    grid.fill(0, 1, 5, 0, 2, 6, vox('metal', 0.35))
+    grid.fill(-1, -3, 0, -1, 2, 0, strap)
+    for y in (-3, 2):
+        grid.fill(-1, y, 0, -1, y, 3, strap)
     return part
 
 
@@ -610,6 +613,7 @@ PRESETS = (
         body='body_athletic', head='head_rugged_hero', hair='hair_cropped_fade',
         torso='torso_heist_tee', legs='legs_heist_holster_jeans',
         held_right='held_sledgehammer',
+        proportions={'height': 0.95, 'legRatio': 0.86, 'torsoBulk': 1.1, 'waistScale': 1.05},
     ),
     core.preset(
         'heist_fixer', PACK, 'Heist Fixer', 'Walk_Formal_Loop',
@@ -619,6 +623,7 @@ PRESETS = (
         body='body_athletic', head='head_scarred_veteran', hair='hair_slick_back',
         torso='torso_heist_open_jacket', legs='legs_heist_denim_sneakers',
         held_left='held_duffel_bag',
+        proportions={'height': 1.015, 'legRatio': 0.96, 'shoulderWidth': 1.43, 'waistScale': 0.94},
     ),
     core.preset(
         'heist_lookout', PACK, 'Heist Lookout', 'Idle_Loop',

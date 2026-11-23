@@ -33,7 +33,7 @@ VERIFY_PORT=5211 node tools/run-voxel-characters/scripts/verify-visual.mjs
 
 ## Level kit exports
 
-`npm run build` writes `out/cubix-level-kits.zip`. Each pack has a `demo.glb` scene and a `demo.voxels.json` file with the occupied cells, materials, and placements. The same pair is in `level-kit/` in each staged pack leaf. Use the GLB with a mesh loader. Use the voxel file to build the scene from cells. See the [voxel file format](docs/level-voxel-format.md).
+`npm run build` writes `out/cubix-level-kits.zip`. Each world has a `demo.glb` scene and a `demo.voxels.json` file with the occupied cells, materials, and placements. The same pair is in `level-kit/` in each staged pack leaf. Each world also has an instanced scene, actor and equipment files, and `level-kit/gameplay.json`. The gameplay file contains interaction points and routes. See the [gameplay board guide](docs/gameplay-boards.md) and [voxel file format](docs/level-voxel-format.md).
 
 The build verifies the voxel round trip before it replaces the ZIP. To check an existing archive, run this command.
 
@@ -152,3 +152,9 @@ change it independently. The market wagon has wood and metal surfaces.
 
 `npm run validate` checks the exported GLBs with a standard glTF loader.
 It checks wheel pivots, clip motion, parked poses, and lamp mounts.
+
+### Gameplay boards
+
+The six original worlds and the four standalone boards export mesh scenes,
+raw voxels, and stable IDs for points, routes, equipment, actors, and vehicles.
+See the [gameplay board guide](docs/gameplay-boards.md) for builds and engine import.

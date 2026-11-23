@@ -9,12 +9,14 @@ from zipfile import ZIP_DEFLATED, ZipFile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import voxchar as vk
+from level_scene_glb import INSTANCED_DEMO
 from verify_level_voxels import verify_archive
 
 
 def main():
     args = vk.script_args('Package the Cubix level kits.', 'stage', 'meta')
     entries = json.loads((args.meta / 'level-props.json').read_bytes())
+    layouts = json.loads((args.meta / 'level-scenes.json').read_bytes())
     output = args.meta.parent / 'cubix-level-kits.zip'
 
     with NamedTemporaryFile(dir=output.parent, suffix='.zip', delete=False) as temp:
@@ -26,6 +28,11 @@ def main():
                 for file in ('demo.glb', 'demo.voxels.json'):
                     archive.write(folder / 'level-kit' / file, f'{pack}/{file}')
                 archive.write(folder / 'License.txt', f'{pack}/License.txt')
+                if gameplay := layouts[pack].get('gameplay'):
+                    files = {path for asset in gameplay['assets'].values() for path in asset['files'].values()}
+                    files.update((INSTANCED_DEMO, 'level-kit/gameplay.json'))
+                    for file in sorted(files):
+                        archive.write(folder / file, f'{pack}/{file}')
                 catalog = []
                 for prop in props:
                     path = folder / prop['relativePath']
@@ -34,7 +41,8 @@ def main():
                     catalog.append({**prop, 'relativePath': relative})
                     if 'motion' in prop:
                         motion = folder / prop['motion']['relativePath']
-                        archive.write(motion, f'{pack}/vehicles/{motion.name}')
+                        if not gameplay:
+                            archive.write(motion, f'{pack}/vehicles/{motion.name}')
                 archive.writestr(f'{pack}/props.json', json.dumps(
                     {'version': 1, 'pack': pack, 'props': catalog}, separators=(',', ':')))
             archive.write(args.meta / 'level-scenes.json', 'level-scenes.json')

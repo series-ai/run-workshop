@@ -304,7 +304,7 @@ PRESETS = (
                    height=1.10, legRatio=0.78, shoulderWidth=1.62, torsoBulk=1.32,
                    waistScale=0.82, headScale=1.14, limbThickness=1.32, armLength=1.16),
     monster_preset('cave_troll', 'Cave Troll', 'body_troll_cave', '#6a7d8c', '#3f4552', '#5ec7e8',
-                   'Idle_Torch_Loop', 'held_troll_club',
+                   'Idle_Loop', 'held_troll_club',
                    height=1.14, legRatio=0.78, shoulderWidth=1.64, torsoBulk=1.34,
                    waistScale=0.82, headScale=1.14, limbThickness=1.32, armLength=1.18),
 )

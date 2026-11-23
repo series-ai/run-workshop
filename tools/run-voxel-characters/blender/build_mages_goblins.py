@@ -159,8 +159,10 @@ def hood():
     hood = Sculpt().box((-4, 3), (70, 73), (-4, 6), ROBE)
     hood.box((-3, 2), (74, 75), (-4, 5), ROBE_LIGHT)
     hood.box((-4, 3), (64, 70), (-4, -2), ROBE_DARK)
-    for side in (-4, 3):
+    for side, rim in zip(core.HAT_SHELL_X, core.HAT_BRIM_X, strict=True):
         hood.box(side, (65, 71), (-2, 6), ROBE)
+        hood.box(rim, (65, 71), (-2, 2), ROBE_DARK)
+        hood.box(rim, 71, (-1, 2), ROBE_LIGHT)
     return hood
 
 
@@ -200,7 +202,7 @@ def legs_mage_boots():
 
 
 def held_arcane_staff():
-    # Two intersecting meridians surround a suspended stone.
+    # Two rings hold the stone in a metal setting.
     staff = Sculpt().box(0, (-17, 35), 0, LEATHER).box(0, (-17, -16), 0, IRON)
     staff.box((0, 1), (35, 37), (-1, 1), IRON)
     for sign in (-1, 1):
@@ -210,7 +212,9 @@ def held_arcane_staff():
     staff.box(1, 47, (-2, 2), STEEL).box(1, 37, (-2, 2), STEEL)
     staff.box((1, 4), 39, 0, IRON).box(4, (40, 44), 0, IRON)
     staff.box((1, 4), 45, 0, IRON)
+    staff.box(1, (37, 39), 0, IRON)
     staff.box((0, 1), (41, 43), (-1, 1), STOLE).box(1, 42, 0, GLOW)
+    staff.box(1, 42, (2, 4), STEEL).box(1, 42, (-4, -2), STEEL)
     return mage_weapon('held_arcane_staff', staff)
 
 
@@ -225,6 +229,8 @@ def headwear_furnace_helm():
     helm = Sculpt().box((-4, 3), (69, 72), (-3, 6), IRON)
     helm.box((-3, 2), 73, (-3, 5), STEEL).box((-2, 1), 74, (-2, 3), IRON)
     helm.box((-4, 3), (65, 68), (-3, 2), IRON)
+    for rim in core.HAT_BRIM_X:
+        helm.box(rim, (65, 71), (-2, 2), IRON).box(rim, (70, 71), (-1, 1), STEEL)
     helm.box((-3, 2), (65, 69), (4, 7), IRON).box((-2, 1), 68, 7, GLOW)
     helm.box((-3, 2), 69, (5, 7), STEEL).box((-1, 0), (64, 67), 7, STEEL)
     return mage_headwear('headwear_furnace_helm', helm)
@@ -251,9 +257,12 @@ def legs_furnace_greaves():
 
 def held_cinder_cleaver():
     blade = Sculpt().box(0, (-6, 5), 0, LEATHER_DARK).box((0, 4), 5, 0, GOLD_DARK)
-    blade.box((0, 3), (6, 27), 0, IRON).box(3, (7, 28), 0, STEEL)
-    blade.box((1, 3), (28, 30), 0, IRON).box(3, (30, 32), 0, STEEL)
-    blade.box(1, (6, 23), 1, IRON)
+    blade.box((0, 3), (6, 25), (-1, 1), IRON)
+    blade.box((0, 3), (18, 27), (-2, 1), IRON)
+    blade.box((1, 3), (26, 29), (-2, 0), IRON).box((2, 3), 30, -1, STEEL)
+    blade.box(3, (8, 26), (-1, 1), STEEL)
+    blade.box(3, (18, 28), -2, GOLD_DARK)
+    blade.box(3, (10, 23), 1, vox('detail', 0.25, mottle=False))
     return mage_weapon('held_cinder_cleaver', blade)
 
 
@@ -323,11 +332,24 @@ def held_glacier_lance():
 
 
 def held_rime_aegis():
-    shield = Sculpt().box(0, (-1, 1), (-2, 2), LEATHER)
-    for half, lo, hi in [(2, -7, 7), (4, -5, 5), (5, -3, 3)]:
-        shield.box((-5 - half, -5 + half), (lo, hi), (1, 2), STEEL)
-    shield.box((-7, -3), (-4, 4), 3, CLOTH_SEC).box(-5, (-3, 3), 4, STOLE)
-    return mage_weapon('held_rime_aegis', shield)
+    shield = Sculpt()
+    shield.box(0, (-2, 2), 0, LEATHER_DARK)
+    shield.box((1, 3), -2, 0, IRON)
+    shield.box(-1, (-2, 3), -8, LEATHER_DARK)
+    shield.box((0, 3), -2, -8, LEATHER_DARK).box((0, 3), 3, -8, LEATHER_DARK)
+
+    # The plate lies on the outside of the left forearm.
+    shield.box(4, (-2, 2), (-12, 2), STEEL)
+    shield.box(4, (-4, 4), (-10, 0), STEEL)
+    shield.paint(4, (-3, 3), (-9, -1), CLOTH_SEC)
+    shield.box(5, 0, (-10, 0), STOLE)
+    shield.box(5, (-2, 2), (-6, -4), STOLE)
+    part = vk.VoxelPart('held_rime_aegis')
+    x, y, z = shield.bounds()
+    grid = vk.VoxelGrid(*x, *y, *z,
+                        voxel_size=core.HELD_VOX, center_x=True, center_y=True, center_z=True)
+    shield.write(part.add_grid(grid))
+    return part
 
 
 def headwear_eclipse_mask():
@@ -504,6 +526,7 @@ def held_goblin_dagger():
     grid.fill(0, 4, 2, 0, 11, 2, GOB_STEEL)
     grid.set(0, 7, 2, 0)                                                  # Jagged notch
     grid.fill(0, 10, 1, 0, 13, 1, GOB_STEEL)
+    grid.set(0, 13, 0, GOB_STEEL)
     grid.set(0, 14, 0, GOB_STEEL)
     return part
 
@@ -554,7 +577,7 @@ HELD = (
     ('Cinder Cleaver', 'hand_r', held_cinder_cleaver),
     ('Brazier', 'hand_l', held_brazier),
     ('Glacier Lance', 'hand_r', held_glacier_lance),
-    ('Rime Aegis', 'hand_l', held_rime_aegis),
+    ('Rime Aegis', 'hand_l', held_rime_aegis, {'grip_style': 'forearm_shield'}),
     ('Storm Fork', 'hand_l', held_storm_fork),
     ('Void Lantern', 'hand_r', held_void_lantern),
     ('Goblin Shiv', 'hand_r', held_goblin_dagger),

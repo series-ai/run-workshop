@@ -49,21 +49,29 @@ export function meshVoxelPrefab(prefab: VoxelPrefab, voxelSize: number): VoxelGe
   for (const [axis, [uAxis, vAxis]] of axes.entries()) {
     const [depth, width, height] = [size[axis]!, size[uAxis], size[vAxis]]
     const keys = new Uint16Array(width * height)
+    const depthStride = strides[axis]!
+    const rowStride = strides[uAxis]!
+    const columnStride = strides[vAxis]!
     const cell = (d: number, u: number, v: number) => (
       d < 0 || d >= depth || u < 0 || u >= width || v < 0 || v >= height
-        ? 0 : grid[d * strides[axis]! + u * strides[uAxis]! + v * strides[vAxis]!]!
+        ? 0 : grid[d * depthStride + u * rowStride + v * columnStride]!
     )
     for (const sign of [1, -1]) {
       for (let plane = 0; plane <= depth; plane++) {
         const outside = sign > 0 ? plane : plane - 1
         const inside = outside - sign
         if (inside < 0 || inside >= depth) continue
+        const outsideInBounds = outside >= 0 && outside < depth
+        let hasFaces = false
         for (let u = 0; u < width; u++) {
+          const insideRow = inside * depthStride + u * rowStride
+          const outsideRow = outside * depthStride + u * rowStride
           for (let v = 0; v < height; v++) {
+            const column = v * columnStride
+            const code = grid[insideRow + column]!
+            if (!code || (outsideInBounds && grid[outsideRow + column])) continue
             const offset = u * height + v
-            keys[offset] = 0
-            const code = cell(inside, u, v)
-            if (!code || cell(outside, u, v)) continue
+            hasFaces = true
             const raw = code - 1
             const shade = (raw >> 1) & 127
             if (shade === 31) {
@@ -86,6 +94,8 @@ export function meshVoxelPrefab(prefab: VoxelPrefab, voxelSize: number): VoxelGe
           }
         }
 
+        // The greedy pass clears every face key before the next plane.
+        if (!hasFaces) continue
         for (let u = 0; u < width; u++) {
           for (let v = 0; v < height; v++) {
             const key = keys[u * height + v]!

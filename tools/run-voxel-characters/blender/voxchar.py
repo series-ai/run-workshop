@@ -1382,9 +1382,11 @@ def held_entry(mesh: MeshData, pack: str, label: str, hand: str, path: str, size
     }
 
 
-def prop_entry(mesh: MeshData, pack: str, label: str, path: str, size: int):
-    finish_budget('prop', mesh)
-    limit = BUDGETS['classes']['prop']['maxBytes']
+def prop_entry(mesh: MeshData, pack: str, label: str, path: str, size: int, *, budget=None):
+    limits = BUDGETS['classes']['prop'] if budget is None else budget
+    if mesh.triangles > limits['maxTriangles']:
+        raise ValueError(f"{mesh.name}: {mesh.triangles} triangles exceed the prop budget ({limits['maxTriangles']}).")
+    limit = limits['maxBytes']
     if size > limit:
         raise ValueError(f'{mesh.name}: {size} bytes exceed the prop budget ({limit}).')
     bounds = mesh.bounds()

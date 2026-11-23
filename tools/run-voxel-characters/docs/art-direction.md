@@ -276,6 +276,9 @@ above the face. **All humanoid headwear uses `HAT_VOX = 0.025 m`** (`CHAR_VOX / 
     at `z = 7..8` (clearing proud brows at `y = 70..71, z = 6..7`), or start their front band/cuff at
     `HAT_CROWN_Y = 72` while dropping side/nape cuffs to `y = 70..71` behind `z = 5`.
   - Keep `headwearToChestWidth` in `[0.55, 0.92]` and `maxHeadwearHeight <= 0.36 m` (`<= 360` tris).
+- **Caster hoods**: Cover both ears out to `HAT_BRIM_X` at rows `66..69`
+  and depth cells `0..1`. Keep the edge in front of each ear at `HAT_SHELL_X`
+  so the hood frames the face. Check both sides of the exported headwear.
 - **Full & visored helmets (`sallet`, `greathelm`, `riot_helmet`)**:
   - **Ear & cyber-pod clearance**: Skull ears (`|x| = 0.125 m, y = 66..69, z = 0..1`) and
     `head_cyber_visor`'s temple pod (`x = -0.125..-0.075, y = 66..69, z = 0..3`) reach `HAT_BRIM_X`.
