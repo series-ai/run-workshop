@@ -4780,6 +4780,32 @@
       }
     },
     {
+      "id": "prop_basalt_buttressed_bay",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_buttressed_bay.glb",
+      "nodeName": "prop_basalt_buttressed_bay",
+      "label": "Buttressed Basalt Bay",
+      "triangles": 400,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.89
+        ],
+        "max": [
+          1,
+          3.76,
+          0.89
+        ],
+        "size": [
+          2,
+          3.76,
+          1.78
+        ]
+      }
+    },
+    {
       "id": "prop_basalt_corner_bay",
       "pack": "monsters",
       "leaf": "world",
@@ -16346,7 +16372,7 @@
       {
         "id": "mine_branch",
         "title": "Lampwright’s Siding",
-        "width": 10,
+        "width": 14,
         "depth": 10,
         "props": [
           {
@@ -16475,6 +16501,79 @@
               4,
               0,
               4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -4,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -4,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -6,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -6,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -6,
+              0.14,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -4,
+              0.14,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_basalt_buttressed_bay",
+            "position": [
+              -4,
+              0.14,
+              0
+            ]
+          },
+          {
+            "id": "prop_brood_nest",
+            "position": [
+              -5.78,
+              0.14,
+              -1.65
+            ]
+          },
+          {
+            "id": "prop_brood_husk",
+            "position": [
+              -6.24,
+              0.14,
+              -0.35
             ]
           },
           {
@@ -16640,6 +16739,16 @@
           [
             -4.6,
             0.14,
+            -1.7
+          ],
+          [
+            -4,
+            0.14,
+            -1.2
+          ],
+          [
+            -4,
+            0.14,
             2.08
           ],
           [
@@ -16679,8 +16788,8 @@
           ]
         ],
         "view": [
-          0.66,
-          0.83,
+          -0.6,
+          1.02,
           1
         ]
       },
@@ -16688,7 +16797,7 @@
         "id": "brood_shrine",
         "title": "The Molted Shrine",
         "width": 6,
-        "depth": 14,
+        "depth": 18,
         "props": [
           {
             "id": "prop_basalt_floor_tile",
@@ -16892,6 +17001,22 @@
               -6
             ],
             "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              0,
+              0,
+              -8
+            ]
+          },
+          {
+            "id": "prop_basalt_buttressed_bay",
+            "position": [
+              0,
+              0.94,
+              -8
+            ]
           },
           {
             "id": "prop_shaman_shrine",
