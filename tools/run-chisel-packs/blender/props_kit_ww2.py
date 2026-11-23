@@ -66,6 +66,39 @@ def prop_village_broken_wall(p):
         p.box((x, y, .10), (.22, .10, .024), 'secondary', ao=.10)
 
 
+def _window_end_wall(p, damaged):
+    # Both walls fit the 3.60 m bay. The door stays clear from x = -.56 to .76.
+    p.box((-1.18, .44, 0), (1.24, .88, .20), 'skin')
+    p.box((-1.18, .89, 0), (1.24, .12, .28), 'secondary')
+    p.box((-1.69, 1.47, 0), (.22, 1.04, .20), 'skin')
+    if damaged:
+        # The sill and one jamb survive. Broken brick courses step down to the door.
+        for x, y, width in [(-1.69, 2.06, .22), (-1.73, 2.20, .14),
+                            (-.71, 1.02, .30), (-.77, 1.16, .18)]:
+            p.box((x, y, 0), (width, .14, .21), 'secondary', ao=.12)
+        p.box((1.28, .70, 0), (1.04, 1.40, .20), 'skin')
+        for row, count in enumerate((4, 3, 2, 2, 1)):
+            for column in range(count):
+                p.box((1.67 - column * .26, 1.49 + row * .18, 0),
+                      (.255, .18, .22), 'secondary', ao=.08 * ((row + column) % 2))
+    else:
+        p.box((-.67, 1.47, 0), (.22, 1.04, .20), 'skin')
+        p.box((-1.18, 2.295, 0), (1.24, .61, .20), 'skin')
+        p.box((-1.18, 1.47, 0), (.065, 1.04, .085), 'secondary')
+        p.box((-1.18, 1.56, 0), (.80, .065, .085), 'secondary')
+        p.box((1.28, 1.30, 0), (1.04, 2.60, .20), 'skin')
+        p.box((.10, 2.41, 0), (1.32, .38, .20), 'skin')
+        p.box((.10, 2.22, 0), (1.56, .14, .26), 'secondary')
+
+
+def prop_village_window_end(p):
+    _window_end_wall(p, damaged=False)
+
+
+def prop_village_broken_window_end(p):
+    _window_end_wall(p, damaged=True)
+
+
 def prop_village_slate_roof(p):
     gable_roof(p, 0, 0, 0, 4, 4, 1.20, 'metal', overhang=.18)
     for side in (-1, 1):
@@ -80,10 +113,18 @@ def prop_village_slate_roof(p):
                 8, 'secondary', center=(x, 0, -.73), cap_end=True)
 
 
-def prop_goods_office_plinth(p):
-    tile_base(p, 4, 4, .465, 'secondary')
+def _flagstone_floor(p, depth):
+    tile_base(p, 4, depth, .465, 'secondary')
     for i in range(5):
-        p.box(((i - 2) * .80, .49, 0), (.80, .05, 4), 'skin', ao=.025 * (i % 3))
+        p.box(((i - 2) * .80, .49, 0), (.80, .05, depth), 'skin', ao=.025 * (i % 3))
+
+
+def prop_goods_office_plinth(p):
+    _flagstone_floor(p, 4)
+
+
+def prop_depot_landing(p):
+    _flagstone_floor(p, 2)
 
 
 def prop_porter_ramp(p):
@@ -203,6 +244,9 @@ WW2_KIT_STATIC = [
     (prop_station_luggage, 'Leather Station Trunks'),
     (prop_village_door_wall, 'Timber Lintel Door Wall'),
     (prop_village_broken_wall, 'Broken Limewash Wall'),
+    (prop_village_window_end, 'Village Casement End Wall'),
+    (prop_village_broken_window_end, 'Broken Casement End Wall'),
+    (prop_depot_landing, 'Goods Platform Landing'),
     (prop_village_slate_roof, 'Lift-Off Slate Roof'),
     (prop_goods_office_plinth, 'Goods Office Flagstone Floor'),
     (prop_porter_ramp, 'Porter Ramp with Handrails'),
