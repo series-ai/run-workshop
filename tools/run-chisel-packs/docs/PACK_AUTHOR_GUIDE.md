@@ -126,3 +126,11 @@ npm run sync-pins -- --target ~/dev/jam-ready-assets
 cd ../../games/run-chisel-showcase
 npm run build
 ```
+
+## Loose pickups and held items
+
+Use the pack's `props_collectibles_<pack>.py` module. Register loose world models in `COLLECTIBLE_PROPS`. Use the `prop_pickup_<pack>_` prefix for these models. Set the lowest point to ground level.
+
+Register hand models in `COLLECTIBLE_HELD` for the intended hand. Set the grip point at the origin. Match the outline and the main details when an item has both forms. The world model uses the prop palette. The held model uses the avatar palette.
+
+Check world pickups at native scale and at thumbnail size. Run `npm run validate` to check hand clearance and the cross-pack triangle budget. Search the Asset Gallery for `prop_pickup` to find the world models. Select the held items in the Avatar Lab to check their placement on the rig.

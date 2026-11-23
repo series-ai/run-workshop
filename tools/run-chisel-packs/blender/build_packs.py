@@ -1284,8 +1284,156 @@ def prop_neon_bollard(part):
 
 
 # --------------------------------------------------------------------------
-# Pack tables
+# Work clothes
 # --------------------------------------------------------------------------
+
+def work_shirt(part, body, *, rolled=False, field='primary', sleeve='secondary'):
+    part.covers = ['chest', 'upperarm', 'legs_waist']
+    hole = torso_stack(part, body, [
+        ('hips', .017, {'y': 1.075, 'hem': .012}), ('belt', .021), ('waist', .016),
+        ('ribs', .014), ('chest', .016), ('shoulder', .014), ('neck_base', .007),
+    ], field, sleeves=True)
+    sleeve_rows = [(0, .012), (1, .016), (2, .018), (3, .014)]
+    if rolled:
+        sleeve_rows.extend([(3.05, .024), (3.28, .024), (3.30, .004)])
+    else:
+        part.covers.append('forearm')
+        sleeve_rows.extend([(4, .012), (5, .013), (6, .009), (6, .001, .654)])
+    with part.mirrored():
+        arm_stack(part, body, sleeve_rows, sleeve, armhole=hole)
+
+
+def work_straps(part, body, region, x, half, bottom):
+    heights = [bottom] + [station.y for station in (body.torso[k] for k in ('ribs', 'chest', 'shoulder'))
+                          if station.y > bottom]
+    rings, refs = [], []
+    for side, rows in [('back', heights), ('front', reversed(heights))]:
+        for y in rows:
+            outer = min(x + half, pk.station_at(body, y).w * .89)
+            xs = (outer - 2 * half, outer)
+            rings.append([pk.torso_point(body, y, px, .029, side) for px in xs])
+            refs.append([pk.torso_point(body, y, px, 0, side) for px in xs])
+        if side == 'back':
+            middle = body.torso['shoulder']
+            rings.append([V(px, middle.y + .030, middle.zc) for px in xs])
+            refs.append([V(px, middle.y, middle.zc) for px in xs])
+    with part.mirrored(), part.skinned(pk.SKIN_TORSO):
+        shoulder = len(heights) - 1
+        for start, stop, direction in [(0, shoulder + 1, -Z), (shoulder, shoulder + 3, Y),
+                                       (shoulder + 2, len(rings), Z)]:
+            part.loft(rings[start:stop], region, refs=refs[start:stop], closed=False, toward=direction, ao=-.04)
+
+
+def bib(part, body, widths, region):
+    heights = (1.079, 1.135, 1.215, 1.38, 1.465, 1.50)
+    rings, refs = [], []
+    for height, width in zip(heights, widths):
+        half = min(width, pk.station_at(body, height).w * .78)
+        xs = (half, half * .52, 0, -half * .52, -half)
+        rings.append([pk.torso_point(body, height, x, .034) for x in xs])
+        refs.append([pk.torso_point(body, height, x) for x in xs])
+    with part.skinned(pk.SKIN_TORSO):
+        part.loft(rings, region, refs=refs, closed=False, toward=Z,
+                  two_sided=True, thickness=.004, inner_ao=-.20)
+    work_straps(part, body, region, .057, .013, 1.485)
+
+
+def torso_sim_counter_apron(part, body):
+    work_shirt(part, body, rolled=True, sleeve='primary')
+    bib(part, body, (.122, .115, .106, .083, .079, .071), 'secondary')
+    torso_plate(part, body, 1.427, 2, .043, .060, .029, .005, 'accent')
+
+
+def torso_sim_road_vest(part, body):
+    work_shirt(part, body)
+    work_straps(part, body, 'accent', .083, .025, 1.275)
+    belt(part, body, 1.275, .022, .042, 'accent', bulge=.004, flat=False)
+    with part.mirrored():
+        torso_plate(part, body, 1.162, 1, .026, .072, .075, .024, 'primary', corner=.012)
+
+
+def torso_medieval_inn_doublet(part, body):
+    work_shirt(part, body, rolled=True, sleeve='accent')
+    # The padded collar folds out over the linen yoke.
+    torso_stack(part, body, [(1.507, .023), ('shoulder', .032), ('neck_base', .012)], 'secondary')
+    belt(part, body, 1.155, .022, .081, 'secondary', flat=False)
+    front_strip(part, body, [(1.19, .018, .026), (1.38, .026, .025), (1.51, .032, .028)], 'secondary')
+    for height in (1.31, 1.414):
+        torso_plate(part, body, height, 2, .034, .047, .013, .006, 'metal')
+
+
+def torso_medieval_smith_apron(part, body):
+    work_shirt(part, body, rolled=True, field='secondary', sleeve='secondary')
+    bib(part, body, (.145, .128, .111, .091, .077, .073), 'primary')
+    belt(part, body, 1.196, .039, .037, 'accent', flat=False)
+    torso_plate(part, body, 1.155, 3, .038, .067, .092, .029, 'secondary', corner=.012)
+
+
+def torso_cyber_bench_harness(part, body):
+    work_shirt(part, body, rolled=True, field='secondary')
+    work_straps(part, body, 'primary', .073, .024, 1.245)
+    # A wide diagnostic screen spans the harness rails.
+    torso_plate(part, body, 1.396, 2, .048, .176, .100, .027, 'metal', corner=.018)
+    torso_plate(part, body, 1.396, 2, .079, .133, .065, .006, 'accent', corner=.010)
+    belt(part, body, 1.245, .023, .054, 'primary', flat=False)
+
+
+def wrap_panel(part, body, rows, region, **options):
+    fitted = []
+    for height, left, right, base, top in rows:
+        scale = pk.station_at(body, height).w / .165
+        fitted.append((height, left * scale, right * scale, base, top))
+    front_bevel_panel(part, body, fitted, region, **options)
+
+
+def torso_cyber_transit_shell(part, body):
+    work_shirt(part, body)
+    neck = body.torso['neck_base'].y
+    torso_stack(part, body, [(1.477, .025), ('shoulder', .033), ('neck_base', .018),
+                             ('neck_base', .028, {'y': neck + .036, 'skin': SKIN_NECK})],
+                'primary', band_regions=['metal', 'primary', 'accent'])
+    wrap_panel(part, body, [(1.08, .081, .040, .027, .039), (1.215, .064, .030, .021, .029),
+                                   (1.38, -.020, -.055, .021, .029), (1.49, -.067, -.10, .022, .034)],
+                      'secondary', inset=.004, cap_start=True)
+
+
+def torso_ww2_rail_bibs(part, body):
+    work_shirt(part, body, field='secondary')
+    bib(part, body, (.129, .125, .114, .103, .089, .082), 'primary')
+    torso_plate(part, body, 1.394, 2, .044, .113, .064, .011, 'primary', corner=.009)
+    with part.mirrored():
+        with part.skinned(pk.SKIN_TORSO):
+            part.plate(pk.torso_point(body, 1.50, .057, .042), Z, Y, .031, .022, .007, 'metal')
+
+
+def torso_ww2_orderly_wrap(part, body):
+    work_shirt(part, body, rolled=True, sleeve='primary')
+    # The overlap crosses from the left collar to the opposite waist tie.
+    wrap_panel(part, body, [
+        (1.082, .099, -.071, .024, .034), (1.135, .094, -.072, .024, .034),
+        (1.215, .090, -.067, .021, .030), (1.38, .104, -.009, .021, .030),
+        (1.465, .089, .026, .021, .030), (1.538, .069, .044, .021, .030),
+    ], 'primary', inset=.007, cap_start=True)
+    belt(part, body, 1.214, .032, .038, 'secondary', flat=False)
+    torso_plate(part, body, 1.411, 3, .028, .058, .072, .010, 'secondary', corner=.009)
+
+
+def headwear_rail_flatcap(part, shape=ENVELOPE):
+    part.skin = pk.SKIN_HEAD
+    low = BROW + .002
+    base = pk.head_ring(shape, low, .014)
+    band = pk.head_ring(shape, low + .020, .017)
+    crown = [V(p.x * 1.18, low + .064 - (p.z - pk.HEAD_Z) * .18, p.z + .018) for p in band]
+    top = pk.head_ring(shape, pk.HEAD_Y['crown'], .018)
+    top = [p + V(0, .013, 0) for p in top]
+    part.loft([base, band, crown, top], 'primary', band_regions=['secondary', 'primary', 'primary'],
+              tip_end=V(0, pk.HEAD_Y['crown'] + .026, pk.HEAD_Z - .016))
+    front = pk.head_front_z(shape, low, .015)
+    part.slab([V(.069, low, front - .023), V(.053, low - .012, front + .044),
+               V(-.053, low - .012, front + .044), V(-.069, low, front - .023)],
+              .009, 'secondary', normal=Y, back=True)
+    hat_hair(part, shape)
+
 
 def proportions(**changes):
     values = {'height': 1.0, 'legRatio': 0.94, 'armLength': 0.96, 'shoulderWidth': 1.04, 'torsoBulk': 1.0,
@@ -1313,6 +1461,8 @@ PACK_TABLE = {
             ('headwear', headwear_great_helm, 'Great Helm', {'hides_hair': True}),
             ('headwear', headwear_kettle_helm, 'Kettle Helm', {'hides_hair': True}),
             ('back', back_medieval_cloak, 'Travel Cloak', {}),
+            ('torso', torso_medieval_inn_doublet, 'Inn Doublet', {}),
+            ('torso', torso_medieval_smith_apron, 'Leather Smith Apron', {}),
         ],
         'held': [(held_broadsword, 'Broadsword', 'hand_r'), (held_heater_shield, 'Heater Shield', 'hand_l'),
                  (held_torch, 'Torch', 'hand_l')],
@@ -1339,6 +1489,14 @@ PACK_TABLE = {
                    legs='legs_medieval_greaves', headwear='headwear_kettle_helm', right='held_broadsword',
                    left='held_heater_shield', legRatio=0.94, armLength=1.02, shoulderWidth=1.08, torsoBulk=1.06,
                    limbThickness=1.0),
+            preset('medieval', 'medieval_innkeeper', 'Innkeeper', 'Idle_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['medieval']['avatar'], primary='#71484a', secondary='#533a2a', accent='#d5bc91'),
+                   body='body_athletic', head='head_cheerful', hair='hair_short_part',
+                   torso='torso_medieval_inn_doublet', legs='legs_medieval_breeches', legRatio=0.88, shoulderWidth=0.96),
+            preset('medieval', 'medieval_village_smith', 'Village Smith', 'Idle_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['medieval']['avatar'], primary='#8f5837', secondary='#989786', accent='#483321'),
+                   body='body_athletic', head='head_stern', hair='hair_swept',
+                   torso='torso_medieval_smith_apron', legs='legs_medieval_breeches', legRatio=0.88, shoulderWidth=0.96),
         ],
     },
     'ww2': {
@@ -1350,6 +1508,9 @@ PACK_TABLE = {
             ('headwear', headwear_m1_helmet, 'M1 Steel Helmet', {'hides_hair': True}),
             ('headwear', headwear_officer_cap, 'Officer Peaked Cap', {'hides_hair': True}),
             ('back', back_ww2_field_pack, 'Field Pack', {}),
+            ('torso', torso_ww2_rail_bibs, 'Railway Bib Overalls', {}),
+            ('torso', torso_ww2_orderly_wrap, 'Wrap Work Smock', {}),
+            ('headwear', headwear_rail_flatcap, 'Railway Flat Cap', {'hides_hair': True}),
         ],
         'held': [(held_rifle, 'Service Rifle', 'hand_r'), (held_smg, 'Submachine Gun', 'hand_r'),
                  (held_pistol, 'Service Pistol', 'hand_r'), (held_ammo_can, 'Ammo Can', 'hand_l'),
@@ -1375,6 +1536,14 @@ PACK_TABLE = {
                    body='body_heavy', head='head_cheerful', hair='hair_short_part', torso='torso_ww2_field_jacket',
                    legs='legs_ww2_field_trousers', headwear='headwear_m1_helmet', right='held_smg', left='held_ammo_can',
                    legRatio=0.95, armLength=1.02, torsoBulk=1.06, limbThickness=1.06),
+            preset('ww2', 'ww2_rail_worker', 'Civilian Rail Worker', 'Walk_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['ww2']['avatar'], primary='#3c5265', secondary='#ac9f83', accent='#716444'),
+                   body='body_athletic', head='head_stern', hair='hair_short_part',
+                   torso='torso_ww2_rail_bibs', legs='legs_ww2_field_trousers', headwear='headwear_rail_flatcap', legRatio=0.88, shoulderWidth=0.96),
+            preset('ww2', 'ww2_depot_orderly', 'Depot Medical Orderly', 'Idle_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['ww2']['avatar'], primary='#dbd5bd', secondary='#6a796f', accent='#966652'),
+                   body='body_slim', head='head_cheerful', hair='hair_short_part',
+                   torso='torso_ww2_orderly_wrap', legs='legs_ww2_field_trousers', legRatio=0.88),
         ],
     },
     'sim': {
@@ -1387,6 +1556,8 @@ PACK_TABLE = {
             ('headwear', headwear_sim_cap, 'Baseball Cap', {'hides_hair': True}),
             ('headwear', headwear_sim_beanie, 'Pom Beanie', {'hides_hair': True}),
             ('back', back_sim_daypack, 'Daypack', {}),
+            ('torso', torso_sim_counter_apron, 'Counter Apron', {}),
+            ('torso', torso_sim_road_vest, 'Reflective Road Vest', {}),
         ],
         'held': [(held_coffee_cup, 'Coffee Cup', 'hand_r'), (held_phone, 'Phone', 'hand_l'),
                  (held_briefcase, 'Briefcase', 'hand_l')],
@@ -1409,6 +1580,14 @@ PACK_TABLE = {
                     'metal': '#e6ecef', 'eye': '#49352f'},
                    body='body_heavy', head='head_hero', hair='hair_ponytail', torso='torso_sim_varsity',
                    legs='legs_sim_shorts', headwear='headwear_sim_beanie', legRatio=0.93, torsoBulk=1.06, limbThickness=1.04),
+            preset('sim', 'sim_shopkeeper', 'Shopkeeper', 'Idle_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['sim']['avatar'], primary='#eff0da', secondary='#34675f', accent='#ed855d'),
+                   body='body_slim', head='head_cheerful', hair='hair_bob',
+                   torso='torso_sim_counter_apron', legs='legs_sim_jeans', legRatio=0.88),
+            preset('sim', 'sim_street_worker', 'Street Service Worker', 'Walk_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['sim']['avatar'], primary='#e99541', secondary='#344553', accent='#f1e9aa'),
+                   body='body_athletic', head='head_hero', hair='hair_short_part',
+                   torso='torso_sim_road_vest', legs='legs_sim_jeans', headwear='headwear_sim_cap', legRatio=0.88, shoulderWidth=0.96),
         ],
     },
     'cyberpunk': {
@@ -1421,6 +1600,8 @@ PACK_TABLE = {
             ('headwear', headwear_cyber_helm, 'Oni Cyber Helm', {'hides_hair': True}),
             ('headwear', headwear_cyber_visor, 'Neon AR Visor', {'hides_hair': False}),
             ('back', back_cyber_deck, 'Neural Relay Pack', {}),
+            ('torso', torso_cyber_bench_harness, 'Diagnostic Harness', {}),
+            ('torso', torso_cyber_transit_shell, 'Transit Shell', {}),
         ],
         'held': [(held_cyber_katana, 'Thermal Katana', 'hand_r'), (held_smart_smg, 'Smart Pulse SMG', 'hand_r'),
                  (held_holo_deck, 'Holo Cyberdeck', 'hand_l')],
@@ -1451,6 +1632,14 @@ PACK_TABLE = {
                    body='body_athletic', head='head_stern', hair='hair_ponytail', torso='torso_cyber_edgerunner',
                    legs='legs_cyber_cyberlegs', right='held_cyber_katana',
                    height=1.01, shoulderWidth=1.06, limbThickness=1.02),
+            preset('cyberpunk', 'cyber_bench_technician', 'Bench Technician', 'Idle_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['cyberpunk']['avatar'], primary='#6963b7', secondary='#333452', accent='#62e2ce'),
+                   body='body_slim', head='head_hero', hair='hair_swept',
+                   torso='torso_cyber_bench_harness', legs='legs_cyber_cargo', headwear='headwear_cyber_visor', legRatio=0.88, shoulderWidth=0.96),
+            preset('cyberpunk', 'cyber_transit_worker', 'Transit Worker', 'Walk_Loop',
+                   dict(pk.COLOR_DIRECTION['packs']['cyberpunk']['avatar'], primary='#48788c', secondary='#393953', accent='#f6c977'),
+                   body='body_heavy', head='head_stern', hair='hair_short_part',
+                   torso='torso_cyber_transit_shell', legs='legs_cyber_cyberlegs', legRatio=0.84, shoulderWidth=0.92, armLength=1.02),
         ],
     },
 }
@@ -1461,6 +1650,8 @@ PACK_TABLE = {
 # --------------------------------------------------------------------------
 
 def build_pack(pack, table, core, solver, stage):
+    from collectibles import COLLECTIBLES_BY_PACK
+
     characters = pk.leaf_dir(stage, pack, 'characters')
     world = pk.leaf_dir(stage, pack, 'world')
     parts_file = f'{pack}-parts.glb'
@@ -1479,7 +1670,7 @@ def build_pack(pack, table, core, solver, stage):
         raise ValueError(f'{parts_file}: the inverse bind matrices changed.')
 
     held = []
-    for build, label, hand in table['held']:
+    for build, label, hand in (*table['held'], *COLLECTIBLES_BY_PACK[pack].COLLECTIBLE_HELD):
         part = pk.Part(build.__name__)
         build(part)
         mesh = part.to_mesh()

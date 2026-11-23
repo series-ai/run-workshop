@@ -49,3 +49,16 @@ Use this sequence when the theme needs a new pack ID and its own catalog.
 - [Visual Direction & S23 Ultra Performance Law](docs/visual-direction.md)
 - [Authoring & Hardening Guide](docs/PACK_AUTHOR_GUIDE.md)
 - [Creature Rigging, Skinning & Retargeting Guide](docs/CREATURE_RIGGING_AND_RETARGETING.md)
+
+## Construction kits
+
+A construction kit gives a creator two layouts that reuse parts from the same pack. Author the GLBs in the pack's Blender module. Put the layout recipes in `contracts/data/kits/<pack>.json`.
+
+- List each prop by catalog ID. Give its position in metres and its optional yaw in radians.
+- Use the layout's `route` to mark the floor height at each turn, step, or landing. Use `view` for the direction from the scene to the orthographic camera.
+- Set `hideWithRoof` to `true` for a removable roof and any props that rest on it. Leave walkable decks in both views.
+- Check the same structural pieces in two different assemblies. Join the room, doorway, and floor to the outside route.
+
+Run `npm run build`, `npm run validate`, `npm run verify:kits`, and `npm run catalog` in this directory. Pass a pack after `--` to check its routes only. The route check samples the exported meshes for floor support, steps, obstructions, headroom, and width for the adult reference.
+
+In the showcase, open **Context Stage**, select the pack, and choose a **Layout**. The **Roofs** control shows removable roof pieces where the recipe has them. Build the showcase with `npm run build:local`, then run `npm run verify:visual -- --only '^09-kit-'` in this directory to capture the desktop and 390 px views.

@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { packCatalogSchema } from '../contracts/catalog'
+import { buildManifestSchema } from '../contracts/catalog'
+import { withConstructionKit } from '../src/constructionKitCatalog'
 import { META_DIR, SHOWCASE_CATALOG_DIR } from '../src/paths'
 
 function main(): void {
@@ -8,12 +9,11 @@ function main(): void {
   if (!existsSync(manifestPath)) {
     throw new Error(`Missing ${manifestPath}; run npm run build first.`)
   }
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { version: number; packs: unknown[] }
+  const packs = buildManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8'))).packs.map(withConstructionKit)
   mkdirSync(SHOWCASE_CATALOG_DIR, { recursive: true })
   const packIndex: { pack: string; label: string; path: string }[] = []
 
-  for (const rawPack of manifest.packs) {
-    const pack = packCatalogSchema.parse(rawPack)
+  for (const pack of packs) {
     const dir = join(SHOWCASE_CATALOG_DIR, pack.pack)
     mkdirSync(dir, { recursive: true })
     writeFileSync(join(dir, 'catalog.json'), JSON.stringify(pack, null, 2) + '\n')

@@ -16,7 +16,8 @@
     "scaffold": "node --import tsx scripts/scaffold.ts",
     "snapshot": "node --import tsx scripts/snapshot.ts",
     "lineup": "node --import tsx scripts/lineup.ts",
-    "verify:visual": "node scripts/verify-visual.mjs"
+    "verify:visual": "node scripts/verify-visual.mjs",
+    "verify:kits": "node --import tsx scripts/verify-construction-kits.ts"
   },
   "dependencies": {
     "@gltf-transform/core": "^4.5.0",

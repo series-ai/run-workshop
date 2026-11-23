@@ -641,6 +641,295 @@
           "radius": 0.0383
         }
       }
+    },
+    {
+      "id": "torso_ww2_rail_bibs",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "torso_ww2_rail_bibs",
+      "slot": "torso",
+      "label": "Railway Bib Overalls",
+      "triangles": 426,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0329,
+            0.1317,
+            0.0211
+          ],
+          "b": [
+            0.0329,
+            0.1317,
+            0.0211
+          ],
+          "radius": 0.1164
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.041,
+            0.0226,
+            0.0315
+          ],
+          "b": [
+            0.041,
+            0.0226,
+            0.0315
+          ],
+          "radius": 0.1145
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.0119,
+            0.1188,
+            0.0319
+          ],
+          "b": [
+            0.0119,
+            0.1188,
+            0.0319
+          ],
+          "radius": 0.0813
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0854,
+            0.0305
+          ],
+          "b": [
+            0,
+            -0.0854,
+            0.0305
+          ],
+          "radius": 0.0608
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0197,
+            0.0763,
+            -0.0056
+          ],
+          "b": [
+            -0.0199,
+            0.2387,
+            -0.0028
+          ],
+          "radius": 0.0525
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.001,
+            0.0677,
+            -0.0002
+          ],
+          "b": [
+            -0.0009,
+            0.214,
+            -0.0027
+          ],
+          "radius": 0.0441
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0197,
+            0.0763,
+            -0.0056
+          ],
+          "b": [
+            0.0199,
+            0.2387,
+            -0.0028
+          ],
+          "radius": 0.0525
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.001,
+            0.0677,
+            -0.0002
+          ],
+          "b": [
+            0.0009,
+            0.214,
+            -0.0027
+          ],
+          "radius": 0.0441
+        }
+      }
+    },
+    {
+      "id": "torso_ww2_orderly_wrap",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "torso_ww2_orderly_wrap",
+      "slot": "torso",
+      "label": "Wrap Work Smock",
+      "triangles": 350,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0367,
+            0.1327,
+            0.0248
+          ],
+          "b": [
+            0.0367,
+            0.1327,
+            0.0248
+          ],
+          "radius": 0.1121
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.0355,
+            0.0077,
+            0.0277
+          ],
+          "b": [
+            0.0355,
+            0.0077,
+            0.0277
+          ],
+          "radius": 0.1234
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.0528,
+            0.1281,
+            0.0217
+          ],
+          "b": [
+            0.0033,
+            0.1281,
+            0.0217
+          ],
+          "radius": 0.0757
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0899,
+            0.0306
+          ],
+          "b": [
+            0,
+            -0.0899,
+            0.0306
+          ],
+          "radius": 0.0608
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0148,
+            0.0793,
+            -0.0058
+          ],
+          "b": [
+            -0.0149,
+            0.2525,
+            -0.0028
+          ],
+          "radius": 0.0559
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "b": [
+            -0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "radius": 0.0562
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0148,
+            0.0793,
+            -0.0058
+          ],
+          "b": [
+            0.0149,
+            0.2525,
+            -0.0028
+          ],
+          "radius": 0.0559
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "b": [
+            0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "radius": 0.0562
+        }
+      }
+    },
+    {
+      "id": "headwear_rail_flatcap",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "headwear_rail_flatcap",
+      "slot": "headwear",
+      "label": "Railway Flat Cap",
+      "triangles": 124,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": true,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.1523,
+            0.0279
+          ],
+          "b": [
+            0,
+            0.2261,
+            0.0255
+          ],
+          "radius": 0.1275
+        }
+      }
     }
   ],
   "heldItems": [
@@ -693,6 +982,36 @@
       "label": "Inspection Dispatch",
       "hand": "hand_l",
       "triangles": 78
+    },
+    {
+      "id": "held_ww2_thermos",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ww2_thermos.glb",
+      "nodeName": "held_ww2_thermos",
+      "label": "Platform Thermos",
+      "hand": "hand_r",
+      "triangles": 192
+    },
+    {
+      "id": "held_ww2_entry_stamp",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ww2_entry_stamp.glb",
+      "nodeName": "held_ww2_entry_stamp",
+      "label": "Entry Stamp",
+      "hand": "hand_r",
+      "triangles": 142
+    },
+    {
+      "id": "held_ww2_signal_paddle",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ww2_signal_paddle.glb",
+      "nodeName": "held_ww2_signal_paddle",
+      "label": "Signal Paddle",
+      "hand": "hand_l",
+      "triangles": 144
     }
   ],
   "props": [
@@ -1581,6 +1900,500 @@
       }
     },
     {
+      "id": "prop_village_room",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_room.glb",
+      "nodeName": "prop_village_room",
+      "label": "Plastered Village Room",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          2.6,
+          2
+        ],
+        "size": [
+          4,
+          2.6,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_village_damaged_room",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_damaged_room.glb",
+      "nodeName": "prop_village_damaged_room",
+      "label": "Weathered Village Room",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          2.6,
+          2
+        ],
+        "size": [
+          4,
+          2.6,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_station_luggage",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_station_luggage.glb",
+      "nodeName": "prop_station_luggage",
+      "label": "Leather Station Trunks",
+      "triangles": 352,
+      "bounds": {
+        "min": [
+          -0.64,
+          0,
+          -0.393
+        ],
+        "max": [
+          0.64,
+          0.808,
+          0.393
+        ],
+        "size": [
+          1.28,
+          0.808,
+          0.786
+        ]
+      }
+    },
+    {
+      "id": "prop_village_door_wall",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_door_wall.glb",
+      "nodeName": "prop_village_door_wall",
+      "label": "Timber Lintel Door Wall",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.13
+        ],
+        "max": [
+          1.8,
+          2.6,
+          0.13
+        ],
+        "size": [
+          3.6,
+          2.6,
+          0.26
+        ]
+      }
+    },
+    {
+      "id": "prop_village_broken_wall",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_broken_wall.glb",
+      "nodeName": "prop_village_broken_wall",
+      "label": "Broken Limewash Wall",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.106
+        ],
+        "max": [
+          1.8,
+          2.6,
+          0.106
+        ],
+        "size": [
+          3.6,
+          2.6,
+          0.212
+        ]
+      }
+    },
+    {
+      "id": "prop_village_window_end",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_window_end.glb",
+      "nodeName": "prop_village_window_end",
+      "label": "Village Casement End Wall",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.14
+        ],
+        "max": [
+          1.8,
+          2.6,
+          0.14
+        ],
+        "size": [
+          3.6,
+          2.6,
+          0.28
+        ]
+      }
+    },
+    {
+      "id": "prop_village_broken_window_end",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_broken_window_end.glb",
+      "nodeName": "prop_village_broken_window_end",
+      "label": "Broken Casement End Wall",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.14
+        ],
+        "max": [
+          1.8,
+          2.3,
+          0.14
+        ],
+        "size": [
+          3.6,
+          2.3,
+          0.28
+        ]
+      }
+    },
+    {
+      "id": "prop_depot_landing",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_depot_landing.glb",
+      "nodeName": "prop_depot_landing",
+      "label": "Goods Platform Landing",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1
+        ],
+        "max": [
+          2,
+          0.515,
+          1
+        ],
+        "size": [
+          4,
+          0.515,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_village_slate_roof",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_slate_roof.glb",
+      "nodeName": "prop_village_slate_roof",
+      "label": "Lift-Off Slate Roof",
+      "triangles": 224,
+      "bounds": {
+        "min": [
+          -2.18,
+          0,
+          -2.18
+        ],
+        "max": [
+          2.18,
+          1.95,
+          2.18
+        ],
+        "size": [
+          4.36,
+          1.95,
+          4.36
+        ]
+      }
+    },
+    {
+      "id": "prop_goods_office_plinth",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_goods_office_plinth.glb",
+      "nodeName": "prop_goods_office_plinth",
+      "label": "Goods Office Flagstone Floor",
+      "triangles": 72,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.515,
+          2
+        ],
+        "size": [
+          4,
+          0.515,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_porter_ramp",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_porter_ramp.glb",
+      "nodeName": "prop_porter_ramp",
+      "label": "Porter Ramp with Handrails",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -2
+        ],
+        "max": [
+          1,
+          1.37324,
+          2
+        ],
+        "size": [
+          2,
+          1.37324,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_depot_siding",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_depot_siding.glb",
+      "nodeName": "prop_depot_siding",
+      "label": "Village Goods Siding",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1
+        ],
+        "max": [
+          2,
+          0.31,
+          1
+        ],
+        "size": [
+          4,
+          0.31,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_village_lane_tee",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_lane_tee.glb",
+      "nodeName": "prop_village_lane_tee",
+      "label": "Village Lane T Junction",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.144,
+          1
+        ],
+        "size": [
+          2,
+          0.144,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_village_verge",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_village_verge.glb",
+      "nodeName": "prop_village_verge",
+      "label": "Village Grass Verge",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.131,
+          1
+        ],
+        "size": [
+          2,
+          0.131,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_parcel_sorter",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_parcel_sorter.glb",
+      "nodeName": "prop_parcel_sorter",
+      "label": "Parcel Sorting Shelves",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.795,
+          0,
+          -0.31
+        ],
+        "max": [
+          0.795,
+          1.885,
+          0.31
+        ],
+        "size": [
+          1.59,
+          1.885,
+          0.62
+        ]
+      }
+    },
+    {
+      "id": "prop_waiting_bench",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_waiting_bench.glb",
+      "nodeName": "prop_waiting_bench",
+      "label": "Station Waiting Bench",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -0.88,
+          0,
+          -0.245
+        ],
+        "max": [
+          0.88,
+          0.95,
+          0.245
+        ],
+        "size": [
+          1.76,
+          0.95,
+          0.49
+        ]
+      }
+    },
+    {
+      "id": "prop_enamel_washstand",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_enamel_washstand.glb",
+      "nodeName": "prop_enamel_washstand",
+      "label": "Enamel Basin Washstand",
+      "triangles": 216,
+      "bounds": {
+        "min": [
+          -0.47,
+          0,
+          -0.295
+        ],
+        "max": [
+          0.47,
+          1.15,
+          0.295
+        ],
+        "size": [
+          0.94,
+          1.15,
+          0.59
+        ]
+      }
+    },
+    {
+      "id": "prop_pollard_willow",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pollard_willow.glb",
+      "nodeName": "prop_pollard_willow",
+      "label": "Pollarded Village Willow",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -1.40539,
+          0,
+          -1.34381
+        ],
+        "max": [
+          1.40539,
+          4.48,
+          1.34381
+        ],
+        "size": [
+          2.81078,
+          4.48,
+          2.68763
+        ]
+      }
+    },
+    {
+      "id": "prop_shelter_gallery",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_shelter_gallery.glb",
+      "nodeName": "prop_shelter_gallery",
+      "label": "Civil Shelter Arch Bay",
+      "triangles": 576,
+      "bounds": {
+        "min": [
+          -1.575,
+          0,
+          -2
+        ],
+        "max": [
+          1.575,
+          2.675,
+          2
+        ],
+        "size": [
+          3.15,
+          2.675,
+          4
+        ]
+      }
+    },
+    {
       "id": "prop_dirt_road_straight",
       "pack": "ww2",
       "leaf": "world",
@@ -2175,6 +2988,292 @@
           1.9128,
           1.2,
           0.5691
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_thermos",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_thermos.glb",
+      "nodeName": "prop_pickup_ww2_thermos",
+      "label": "Platform Thermos",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.07058,
+          0,
+          -0.04065
+        ],
+        "max": [
+          0.07058,
+          0.247,
+          0.04065
+        ],
+        "size": [
+          0.14115,
+          0.247,
+          0.0813
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_entry_stamp",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_entry_stamp.glb",
+      "nodeName": "prop_pickup_ww2_entry_stamp",
+      "label": "Entry Stamp",
+      "triangles": 142,
+      "bounds": {
+        "min": [
+          -0.047,
+          0,
+          -0.027
+        ],
+        "max": [
+          0.047,
+          0.1,
+          0.027
+        ],
+        "size": [
+          0.094,
+          0.1,
+          0.054
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_signal_paddle",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_signal_paddle.glb",
+      "nodeName": "prop_pickup_ww2_signal_paddle",
+      "label": "Signal Paddle",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -0.08341,
+          0,
+          -0.18985
+        ],
+        "max": [
+          0.08341,
+          0.048,
+          0.18985
+        ],
+        "size": [
+          0.16681,
+          0.048,
+          0.37969
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_ration_tin",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_ration_tin.glb",
+      "nodeName": "prop_pickup_ww2_ration_tin",
+      "label": "Civilian Ration Tin",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -0.095,
+          0,
+          -0.0585
+        ],
+        "max": [
+          0.095,
+          0.08,
+          0.0585
+        ],
+        "size": [
+          0.19,
+          0.08,
+          0.117
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_rail_keys",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_rail_keys.glb",
+      "nodeName": "prop_pickup_ww2_rail_keys",
+      "label": "Rail Keys",
+      "triangles": 312,
+      "bounds": {
+        "min": [
+          -0.05857,
+          0,
+          -0.08382
+        ],
+        "max": [
+          0.05857,
+          0.014,
+          0.08382
+        ],
+        "size": [
+          0.11715,
+          0.014,
+          0.16764
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_luggage_tags",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_luggage_tags.glb",
+      "nodeName": "prop_pickup_ww2_luggage_tags",
+      "label": "Luggage Tags",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -0.04946,
+          0,
+          -0.08094
+        ],
+        "max": [
+          0.04946,
+          0.013,
+          0.08094
+        ],
+        "size": [
+          0.09893,
+          0.013,
+          0.16188
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_travel_pass",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_travel_pass.glb",
+      "nodeName": "prop_pickup_ww2_travel_pass",
+      "label": "Checkpoint Travel Pass",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.0995,
+          0,
+          -0.0685
+        ],
+        "max": [
+          0.0995,
+          0.015,
+          0.0685
+        ],
+        "size": [
+          0.199,
+          0.015,
+          0.137
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_dressing_pouch",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_dressing_pouch.glb",
+      "nodeName": "prop_pickup_ww2_dressing_pouch",
+      "label": "Field Dressing Pouch",
+      "triangles": 202,
+      "bounds": {
+        "min": [
+          -0.093,
+          0,
+          -0.0445
+        ],
+        "max": [
+          0.093,
+          0.1225,
+          0.0445
+        ],
+        "size": [
+          0.186,
+          0.1225,
+          0.089
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_binoculars",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_binoculars.glb",
+      "nodeName": "prop_pickup_ww2_binoculars",
+      "label": "Platform Binoculars",
+      "triangles": 428,
+      "bounds": {
+        "min": [
+          -0.08,
+          0,
+          -0.079
+        ],
+        "max": [
+          0.08,
+          0.072,
+          0.079
+        ],
+        "size": [
+          0.16,
+          0.072,
+          0.158
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_flap_holster",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_flap_holster.glb",
+      "nodeName": "prop_pickup_ww2_flap_holster",
+      "label": "Closed Sidearm Holster",
+      "triangles": 98,
+      "bounds": {
+        "min": [
+          -0.0765,
+          0,
+          -0.127
+        ],
+        "max": [
+          0.0765,
+          0.059,
+          0.127
+        ],
+        "size": [
+          0.153,
+          0.059,
+          0.254
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_blanket_roll",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_blanket_roll.glb",
+      "nodeName": "prop_pickup_ww2_blanket_roll",
+      "label": "Shelter Blanket Roll",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -0.1485,
+          0,
+          -0.084
+        ],
+        "max": [
+          0.1485,
+          0.168,
+          0.084
+        ],
+        "size": [
+          0.297,
+          0.168,
+          0.168
         ]
       }
     },
@@ -4950,6 +6049,3059 @@
           "foot_r"
         ]
       }
+    },
+    {
+      "id": "ww2_rail_worker",
+      "pack": "ww2",
+      "label": "Civilian Rail Worker",
+      "rigId": "ual1",
+      "clip": "Walk_Loop",
+      "body": "body_athletic",
+      "head": "head_stern",
+      "hair": "hair_short_part",
+      "torso": "torso_ww2_rail_bibs",
+      "legs": "legs_ww2_field_trousers",
+      "headwear": "headwear_rail_flatcap",
+      "back": null,
+      "heldRight": null,
+      "heldLeft": null,
+      "palette": {
+        "skin": "#d8a67e",
+        "hair": "#25262b",
+        "primary": "#3c5265",
+        "secondary": "#ac9f83",
+        "accent": "#716444",
+        "metal": "#454c52",
+        "eye": "#1f2634"
+      },
+      "proportions": {
+        "height": 0.9294,
+        "legRatio": 0.88,
+        "shoulderWidth": 0.96,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.02,
+        "armLength": 0.96
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 73.8664,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.2519,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.047,
+                0.0906,
+                0.0212
+              ],
+              "b": [
+                0.047,
+                0.0906,
+                0.0212
+              ],
+              "radius": 0.1299
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2597,
+              -0.0017
+            ],
+            "massKg": 11.5787,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0119,
+                0.0956,
+                0.0132
+              ],
+              "b": [
+                0.0119,
+                0.0956,
+                0.0132
+              ],
+              "radius": 0.0889
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.224,
+              -0.021
+            ],
+            "massKg": 13.779,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0401,
+                0.0083,
+                0.0217
+              ],
+              "b": [
+                0.0401,
+                0.0083,
+                0.0217
+              ],
+              "radius": 0.1219
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2496,
+              0.0082
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0861,
+                0.0109
+              ],
+              "b": [
+                0,
+                0.2253,
+                0.0005
+              ],
+              "radius": 0.1275
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.105,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.3479,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0182,
+                0.0569,
+                -0.006
+              ],
+              "b": [
+                -0.0182,
+                0.2214,
+                -0.0031
+              ],
+              "radius": 0.0536
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.5044,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                0.0511,
+                -0.0005
+              ],
+              "b": [
+                -0.0009,
+                0.1978,
+                -0.0029
+              ],
+              "radius": 0.0448
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.105,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.3479,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0182,
+                0.0569,
+                -0.006
+              ],
+              "b": [
+                0.0182,
+                0.2214,
+                -0.0031
+              ],
+              "radius": 0.0536
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.5044,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                0.0511,
+                -0.0005
+              ],
+              "b": [
+                0.0009,
+                0.1978,
+                -0.0029
+              ],
+              "radius": 0.0448
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                -0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 6.4576,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0121,
+                0.0526,
+                -0.0033
+              ],
+              "b": [
+                -0.0121,
+                0.2818,
+                -0.0048
+              ],
+              "radius": 0.059
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.9446,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0002,
+                0.0706,
+                0.0171
+              ],
+              "b": [
+                0,
+                0.3349,
+                -0.0041
+              ],
+              "radius": 0.0703
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              -0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 6.4576,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0121,
+                0.0526,
+                -0.0033
+              ],
+              "b": [
+                0.0121,
+                0.2818,
+                -0.0048
+              ],
+              "radius": 0.059
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.9446,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0002,
+                0.0706,
+                0.0171
+              ],
+              "b": [
+                0,
+                0.3349,
+                -0.0041
+              ],
+              "radius": 0.0703
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                -0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    },
+    {
+      "id": "ww2_depot_orderly",
+      "pack": "ww2",
+      "label": "Depot Medical Orderly",
+      "rigId": "ual1",
+      "clip": "Idle_Loop",
+      "body": "body_slim",
+      "head": "head_cheerful",
+      "hair": "hair_short_part",
+      "torso": "torso_ww2_orderly_wrap",
+      "legs": "legs_ww2_field_trousers",
+      "headwear": null,
+      "back": null,
+      "heldRight": null,
+      "heldLeft": null,
+      "palette": {
+        "skin": "#d8a67e",
+        "hair": "#25262b",
+        "primary": "#dbd5bd",
+        "secondary": "#6a796f",
+        "accent": "#966652",
+        "metal": "#454c52",
+        "eye": "#1f2634"
+      },
+      "proportions": {
+        "height": 0.9294,
+        "legRatio": 0.88,
+        "shoulderWidth": 1.04,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.02,
+        "armLength": 0.96
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 63.5616,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 11.3083,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0432,
+                0.09,
+                0.019
+              ],
+              "b": [
+                0.0432,
+                0.09,
+                0.019
+              ],
+              "radius": 0.1261
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2597,
+              -0.0017
+            ],
+            "massKg": 9.8805,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0528,
+                0.0953,
+                0.0109
+              ],
+              "b": [
+                0.0083,
+                0.0953,
+                0.0109
+              ],
+              "radius": 0.0828
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.224,
+              -0.021
+            ],
+            "massKg": 12.2871,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0363,
+                0.0084,
+                0.0195
+              ],
+              "b": [
+                0.0363,
+                0.0084,
+                0.0195
+              ],
+              "radius": 0.1261
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2496,
+              0.0082
+            ],
+            "massKg": 4.48,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0908,
+                0.005
+              ],
+              "b": [
+                0,
+                0.231,
+                -0.0059
+              ],
+              "radius": 0.1099
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.1128,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.0035,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0161,
+                0.0528,
+                -0.006
+              ],
+              "b": [
+                -0.0163,
+                0.2253,
+                -0.0031
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.2837,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                -0.0095,
+                0.0009
+              ],
+              "b": [
+                -0.0009,
+                0.2011,
+                -0.0027
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.5228,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0158,
+                0.0032,
+                0.0376
+              ],
+              "b": [
+                0.0158,
+                0.1746,
+                0.0376
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.1128,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.0035,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0161,
+                0.0528,
+                -0.006
+              ],
+              "b": [
+                0.0163,
+                0.2253,
+                -0.0031
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.2837,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                -0.0095,
+                0.0009
+              ],
+              "b": [
+                0.0009,
+                0.2011,
+                -0.0027
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.5228,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0158,
+                0.0032,
+                0.0376
+              ],
+              "b": [
+                -0.0158,
+                0.1746,
+                0.0376
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 5.5105,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0121,
+                0.0489,
+                -0.0033
+              ],
+              "b": [
+                -0.0121,
+                0.2855,
+                -0.0049
+              ],
+              "radius": 0.059
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.5127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0005,
+                0.0669,
+                0.0171
+              ],
+              "b": [
+                -0.0005,
+                0.3386,
+                -0.0048
+              ],
+              "radius": 0.0703
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              -0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 0.9696,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 5.5105,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0121,
+                0.0489,
+                -0.0033
+              ],
+              "b": [
+                0.0121,
+                0.2855,
+                -0.0049
+              ],
+              "radius": 0.059
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.5127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0005,
+                0.0669,
+                0.0171
+              ],
+              "b": [
+                0.0005,
+                0.3386,
+                -0.0048
+              ],
+              "radius": 0.0703
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 0.9696,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                -0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
     }
-  ]
+  ],
+  "constructionKit": {
+    "pack": "ww2",
+    "layouts": [
+      {
+        "id": "village-rail-depot",
+        "title": "Village Rail Depot",
+        "width": 16,
+        "depth": 14,
+        "props": [
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -3,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_depot_siding",
+            "position": [
+              -6,
+              0,
+              -5
+            ]
+          },
+          {
+            "id": "prop_depot_siding",
+            "position": [
+              -2,
+              0,
+              -5
+            ]
+          },
+          {
+            "id": "prop_depot_siding",
+            "position": [
+              2,
+              0,
+              -5
+            ]
+          },
+          {
+            "id": "prop_depot_siding",
+            "position": [
+              6,
+              0,
+              -5
+            ]
+          },
+          {
+            "id": "prop_goods_office_plinth",
+            "position": [
+              -2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_goods_office_plinth",
+            "position": [
+              2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_room",
+            "position": [
+              -2,
+              0.515,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_room",
+            "position": [
+              2,
+              0.515,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_slate_roof",
+            "position": [
+              2,
+              3.115,
+              -2
+            ],
+            "hideWithRoof": true
+          },
+          {
+            "id": "prop_village_window_end",
+            "position": [
+              2,
+              0.515,
+              -0.1
+            ]
+          },
+          {
+            "id": "prop_depot_landing",
+            "position": [
+              -2,
+              0,
+              1
+            ]
+          },
+          {
+            "id": "prop_depot_landing",
+            "position": [
+              2,
+              0,
+              1
+            ]
+          },
+          {
+            "id": "prop_porter_ramp",
+            "position": [
+              -2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_parcel_sorter",
+            "position": [
+              -3.27,
+              0.515,
+              -2
+            ],
+            "rotationY": 1.57079633
+          },
+          {
+            "id": "prop_inspection_desk",
+            "position": [
+              -1.1,
+              0.515,
+              -3.13
+            ]
+          },
+          {
+            "id": "prop_linen_bales",
+            "position": [
+              0.99,
+              0.515,
+              -2.99
+            ]
+          },
+          {
+            "id": "prop_postal_sacks",
+            "position": [
+              3.28,
+              0.515,
+              -2.94
+            ]
+          },
+          {
+            "id": "prop_weigh_scale",
+            "position": [
+              -3.32,
+              0.515,
+              0.97
+            ]
+          },
+          {
+            "id": "prop_sack_barrow",
+            "position": [
+              3.17,
+              0.515,
+              1.09
+            ]
+          },
+          {
+            "id": "prop_milk_churns",
+            "position": [
+              4.88,
+              0,
+              1.34
+            ]
+          },
+          {
+            "id": "prop_post_van",
+            "position": [
+              5.95,
+              0,
+              -1.63
+            ]
+          },
+          {
+            "id": "prop_depot_clock",
+            "position": [
+              -4.69,
+              0,
+              0.91
+            ]
+          },
+          {
+            "id": "prop_waiting_bench",
+            "position": [
+              -5.62,
+              0,
+              2.28
+            ],
+            "rotationY": 0.35
+          },
+          {
+            "id": "prop_station_luggage",
+            "position": [
+              -4.88,
+              0,
+              3.33
+            ]
+          },
+          {
+            "id": "prop_goods_trailer",
+            "position": [
+              3.96,
+              0,
+              4.44
+            ],
+            "rotationY": 1.16
+          },
+          {
+            "id": "prop_telegraph_pole",
+            "position": [
+              -6.83,
+              0,
+              -3.32
+            ]
+          }
+        ],
+        "route": [
+          [
+            -2,
+            0,
+            6
+          ],
+          [
+            -2,
+            0.515,
+            2
+          ],
+          [
+            -2,
+            0.515,
+            -2.34
+          ],
+          [
+            -2,
+            0.515,
+            1
+          ],
+          [
+            2,
+            0.515,
+            1
+          ],
+          [
+            2,
+            0.515,
+            -2.34
+          ]
+        ],
+        "view": [
+          0.42,
+          0.83,
+          1
+        ]
+      },
+      {
+        "id": "rural-checkpoint",
+        "title": "Rural Checkpoint and Civil Shelter",
+        "width": 16,
+        "depth": 14,
+        "props": [
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -3,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              -6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -3,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              -4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -3,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              -2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_lane_tee",
+            "position": [
+              -3,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -1,
+              -0.123,
+              0
+            ],
+            "rotationY": 1.57079633
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              1,
+              -0.123,
+              0
+            ],
+            "rotationY": 1.57079633
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              3,
+              -0.123,
+              0
+            ],
+            "rotationY": 1.57079633
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              5,
+              -0.123,
+              0
+            ],
+            "rotationY": 1.57079633
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              0
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -3,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              2
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -3,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              4
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -7,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -5,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_dirt_road_straight",
+            "position": [
+              -3,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              -1,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              1,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              3,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              5,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_verge",
+            "position": [
+              7,
+              -0.123,
+              6
+            ]
+          },
+          {
+            "id": "prop_village_damaged_room",
+            "position": [
+              0,
+              0,
+              -3.3
+            ]
+          },
+          {
+            "id": "prop_village_broken_window_end",
+            "position": [
+              0,
+              0,
+              -1.4
+            ]
+          },
+          {
+            "id": "prop_inspection_desk",
+            "position": [
+              0.92,
+              0,
+              -4.47
+            ]
+          },
+          {
+            "id": "prop_enamel_washstand",
+            "position": [
+              -1.19,
+              0,
+              -4.64
+            ]
+          },
+          {
+            "id": "prop_waiting_bench",
+            "position": [
+              -1.42,
+              0,
+              -3.08
+            ],
+            "rotationY": 1.57079633
+          },
+          {
+            "id": "prop_shelter_gallery",
+            "position": [
+              3,
+              0,
+              0
+            ],
+            "rotationY": -1.57079633
+          },
+          {
+            "id": "prop_waiting_bench",
+            "position": [
+              3,
+              0,
+              -1
+            ]
+          },
+          {
+            "id": "prop_postal_sacks",
+            "position": [
+              4.44,
+              0,
+              0.83
+            ]
+          },
+          {
+            "id": "prop_checkpoint_board",
+            "position": [
+              -0.78,
+              0,
+              1.84
+            ]
+          },
+          {
+            "id": "prop_boundary_stone",
+            "position": [
+              -4.64,
+              0,
+              -2.8
+            ]
+          },
+          {
+            "id": "prop_fingerpost",
+            "position": [
+              -4.96,
+              0,
+              0.45
+            ]
+          },
+          {
+            "id": "prop_pollard_willow",
+            "position": [
+              6.4,
+              0,
+              4.73
+            ]
+          },
+          {
+            "id": "prop_pollard_willow",
+            "position": [
+              -6.36,
+              0,
+              -3.8
+            ]
+          },
+          {
+            "id": "prop_orchard_gate",
+            "position": [
+              2.72,
+              0,
+              3.18
+            ]
+          },
+          {
+            "id": "prop_rural_wall",
+            "position": [
+              5.66,
+              0,
+              3.18
+            ]
+          },
+          {
+            "id": "prop_milk_churns",
+            "position": [
+              1.98,
+              0,
+              2.53
+            ]
+          },
+          {
+            "id": "prop_orchard_farmhouse",
+            "position": [
+              5.18,
+              0,
+              -4.36
+            ]
+          }
+        ],
+        "route": [
+          [
+            -3,
+            0,
+            5.8
+          ],
+          [
+            -3,
+            0,
+            0
+          ],
+          [
+            -1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            3,
+            0,
+            0
+          ],
+          [
+            5.5,
+            0,
+            0
+          ]
+        ],
+        "view": [
+          -0.64,
+          0.87,
+          1
+        ]
+      }
+    ]
+  }
 }

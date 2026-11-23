@@ -3,6 +3,7 @@
 import math
 from mathutils import Matrix
 
+from props_kit_sim import SIM_KIT_STATIC
 from props_sim_market import SIM_MARKET_STATIC
 
 import polykit as pk
@@ -427,6 +428,7 @@ def prop_city_bus(part):
 
 SIM_LEVEL_STATIC = [
     *SIM_MARKET_STATIC,
+    *SIM_KIT_STATIC,
     (prop_road_straight, 'Asphalt Straight Road'),
     (prop_road_corner, 'Asphalt Corner Road'),
     (prop_road_tsplit, 'Asphalt T-Intersection'),

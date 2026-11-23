@@ -1609,6 +1609,7 @@ ANIMATED_PROPS = {
 
 
 def build_extra_props_for_pack(pack, world_dir):
+    from collectibles import COLLECTIBLES_BY_PACK
     from props_level_cyberpunk import CYBERPUNK_LEVEL_ANIMATED, CYBERPUNK_LEVEL_STATIC
     from props_level_medieval import MEDIEVAL_LEVEL_ANIMATED, MEDIEVAL_LEVEL_STATIC
     from props_level_monsters import MONSTERS_LEVEL_ANIMATED, MONSTERS_LEVEL_STATIC
@@ -1630,8 +1631,10 @@ def build_extra_props_for_pack(pack, world_dir):
         'monsters': MONSTERS_LEVEL_ANIMATED,
     }
 
+    collectibles = COLLECTIBLES_BY_PACK.get(pack)
+    loose_items = collectibles.COLLECTIBLE_PROPS if collectibles else ()
     entries = []
-    for builder, label in [*EXTRA_STATIC_PROPS.get(pack, ()), *level_static.get(pack, ())]:
+    for builder, label in [*EXTRA_STATIC_PROPS.get(pack, ()), *level_static.get(pack, ()), *loose_items]:
         entries.append(build_static_prop(pack, world_dir, builder, label))
     for builder, clips_builder, label in [*ANIMATED_PROPS.get(pack, ()), *level_animated.get(pack, ())]:
         entries.append(build_animated_prop(pack, world_dir, builder, clips_builder, label))

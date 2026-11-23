@@ -5,6 +5,7 @@ from mathutils import Matrix
 
 from build_props import make_contract, sample_prop_clip
 from props_ww2_depot import WW2_DEPOT_STATIC
+from props_kit_ww2 import WW2_KIT_STATIC
 
 import polykit as pk
 from polykit import X, Y, Z, V
@@ -283,6 +284,7 @@ def prop_dirt_road_crossroad(part):
 
 WW2_LEVEL_STATIC = [
     *WW2_DEPOT_STATIC,
+    *WW2_KIT_STATIC,
     (prop_dirt_road_straight, 'Dirt Convoy Road'),
     (prop_dirt_road_corner, 'Dirt Road Corner'),
     (prop_dirt_road_crossroad, 'Dirt Road 4-Way Crossroad'),

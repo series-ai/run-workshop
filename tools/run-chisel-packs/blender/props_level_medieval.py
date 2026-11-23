@@ -4,6 +4,7 @@ import math
 from mathutils import Matrix
 
 from build_props import make_contract, sample_prop_clip
+from props_kit_medieval import KIT_PROPS
 from props_medieval_quay import QUAY_PROPS, prop_castle_keep_tower, prop_thatched_cottage
 import polykit as pk
 from polykit import X, Y, Z, V
@@ -397,6 +398,7 @@ def _windmill_clips(contract):
 
 MEDIEVAL_LEVEL_STATIC = [
     *QUAY_PROPS,
+    *KIT_PROPS,
     (prop_grass_tile, 'Meadow Grass Tile'),
     (prop_dirt_path_tile, 'Village Dirt Path Tile'),
     (prop_cobble_road_tile, 'Cobblestone Street Tile'),

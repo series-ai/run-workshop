@@ -3736,6 +3736,36 @@
       "label": "Spiked Buckler",
       "hand": "hand_l",
       "triangles": 103
+    },
+    {
+      "id": "held_monsters_seam_pick",
+      "pack": "monsters",
+      "leaf": "characters",
+      "relativePath": "held/held_monsters_seam_pick.glb",
+      "nodeName": "held_monsters_seam_pick",
+      "label": "Seam Pick",
+      "hand": "hand_r",
+      "triangles": 128
+    },
+    {
+      "id": "held_monsters_echo_fork",
+      "pack": "monsters",
+      "leaf": "characters",
+      "relativePath": "held/held_monsters_echo_fork.glb",
+      "nodeName": "held_monsters_echo_fork",
+      "label": "Echo Fork",
+      "hand": "hand_r",
+      "triangles": 162
+    },
+    {
+      "id": "held_monsters_wick_lamp",
+      "pack": "monsters",
+      "leaf": "characters",
+      "relativePath": "held/held_monsters_wick_lamp.glb",
+      "nodeName": "held_monsters_wick_lamp",
+      "label": "Wick Lamp",
+      "hand": "hand_l",
+      "triangles": 148
     }
   ],
   "props": [
@@ -4676,6 +4706,318 @@
       }
     },
     {
+      "id": "prop_mine_turnout",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_turnout.glb",
+      "nodeName": "prop_mine_turnout",
+      "label": "Three-Way Mine Turnout",
+      "triangles": 432,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.54,
+          1
+        ],
+        "size": [
+          2,
+          0.54,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_grade_crossing",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_grade_crossing.glb",
+      "nodeName": "prop_mine_grade_crossing",
+      "label": "Planked Mine Crossing",
+      "triangles": 304,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.1925,
+          1
+        ],
+        "size": [
+          2,
+          0.1925,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_mine_sill_stop",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_mine_sill_stop.glb",
+      "nodeName": "prop_mine_sill_stop",
+      "label": "Braced Sill Stop",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -0.79,
+          0,
+          -1
+        ],
+        "max": [
+          0.79,
+          0.895,
+          1
+        ],
+        "size": [
+          1.58,
+          0.895,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_ring_door",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_ring_door.glb",
+      "nodeName": "prop_basalt_ring_door",
+      "label": "Basalt Ring Doorway",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.23
+        ],
+        "max": [
+          1,
+          2.53718,
+          0.23
+        ],
+        "size": [
+          2,
+          2.53718,
+          0.46
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_buttressed_bay",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_buttressed_bay.glb",
+      "nodeName": "prop_basalt_buttressed_bay",
+      "label": "Buttressed Basalt Bay",
+      "triangles": 400,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.89
+        ],
+        "max": [
+          1,
+          3.76,
+          0.89
+        ],
+        "size": [
+          2,
+          3.76,
+          1.78
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_corner_bay",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_corner_bay.glb",
+      "nodeName": "prop_basalt_corner_bay",
+      "label": "Coursed Basalt Corner",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          2.15,
+          1
+        ],
+        "size": [
+          2,
+          2.15,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_vault_bay",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_vault_bay.glb",
+      "nodeName": "prop_basalt_vault_bay",
+      "label": "Basalt Vault Passage",
+      "triangles": 264,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          2.54,
+          1
+        ],
+        "size": [
+          2,
+          2.54,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_processional_stair",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_processional_stair.glb",
+      "nodeName": "prop_basalt_processional_stair",
+      "label": "Processional Stair",
+      "triangles": 340,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          1.05,
+          1
+        ],
+        "size": [
+          2,
+          1.05,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_basalt_high_landing",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_basalt_high_landing.glb",
+      "nodeName": "prop_basalt_high_landing",
+      "label": "Raised Basalt Landing",
+      "triangles": 36,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.94,
+          1
+        ],
+        "size": [
+          2,
+          0.94,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_pit_lamp_bench",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pit_lamp_bench.glb",
+      "nodeName": "prop_pit_lamp_bench",
+      "label": "Pit Lamp Repair Bench",
+      "triangles": 220,
+      "bounds": {
+        "min": [
+          -0.74,
+          0,
+          -0.282
+        ],
+        "max": [
+          0.74,
+          1.28462,
+          0.282
+        ],
+        "size": [
+          1.48,
+          1.28462,
+          0.564
+        ]
+      }
+    },
+    {
+      "id": "prop_brood_husk",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_brood_husk.glb",
+      "nodeName": "prop_brood_husk",
+      "label": "Split Brood Husk",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -0.45583,
+          0,
+          -0.3888
+        ],
+        "max": [
+          0.45583,
+          0.85,
+          0.3888
+        ],
+        "size": [
+          0.91166,
+          0.85,
+          0.7776
+        ]
+      }
+    },
+    {
+      "id": "prop_shrine_tusk_lamp",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_shrine_tusk_lamp.glb",
+      "nodeName": "prop_shrine_tusk_lamp",
+      "label": "Tusk Shrine Lamp",
+      "triangles": 266,
+      "bounds": {
+        "min": [
+          -0.38803,
+          0,
+          -0.38803
+        ],
+        "max": [
+          0.38803,
+          1.32,
+          0.38803
+        ],
+        "size": [
+          0.77606,
+          1.32,
+          0.77606
+        ]
+      }
+    },
+    {
       "id": "prop_basalt_floor_tile",
       "pack": "monsters",
       "leaf": "world",
@@ -5244,6 +5586,292 @@
           1.05837,
           0.96,
           0.86
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_cinder_ore",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_cinder_ore.glb",
+      "nodeName": "prop_pickup_monsters_cinder_ore",
+      "label": "Cinder Ore",
+      "triangles": 174,
+      "bounds": {
+        "min": [
+          -0.144,
+          0,
+          -0.096
+        ],
+        "max": [
+          0.144,
+          0.20295,
+          0.096
+        ],
+        "size": [
+          0.288,
+          0.20295,
+          0.192
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_malachite_slice",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_malachite_slice.glb",
+      "nodeName": "prop_pickup_monsters_malachite_slice",
+      "label": "Malachite Slice",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -0.14664,
+          0,
+          -0.10192
+        ],
+        "max": [
+          0.14664,
+          0.07,
+          0.10192
+        ],
+        "size": [
+          0.29328,
+          0.07,
+          0.20384
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_lamp_fuel",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_lamp_fuel.glb",
+      "nodeName": "prop_pickup_monsters_lamp_fuel",
+      "label": "Sealed Lamp Fuel",
+      "triangles": 182,
+      "bounds": {
+        "min": [
+          -0.11178,
+          0,
+          -0.07016
+        ],
+        "max": [
+          0.11178,
+          0.224,
+          0.07016
+        ],
+        "size": [
+          0.22357,
+          0.224,
+          0.14032
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_seam_pick",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_seam_pick.glb",
+      "nodeName": "prop_pickup_monsters_seam_pick",
+      "label": "Seam Pick",
+      "triangles": 128,
+      "bounds": {
+        "min": [
+          -0.28093,
+          0,
+          -0.19294
+        ],
+        "max": [
+          0.28093,
+          0.078,
+          0.19294
+        ],
+        "size": [
+          0.56185,
+          0.078,
+          0.38588
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_echo_fork",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_echo_fork.glb",
+      "nodeName": "prop_pickup_monsters_echo_fork",
+      "label": "Echo Fork",
+      "triangles": 162,
+      "bounds": {
+        "min": [
+          -0.26632,
+          0,
+          -0.10139
+        ],
+        "max": [
+          0.26632,
+          0.07275,
+          0.10139
+        ],
+        "size": [
+          0.53264,
+          0.07275,
+          0.20278
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_wick_lamp",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_wick_lamp.glb",
+      "nodeName": "prop_pickup_monsters_wick_lamp",
+      "label": "Wick Lamp",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.06928,
+          0,
+          -0.11851
+        ],
+        "max": [
+          0.06928,
+          0.203,
+          0.11851
+        ],
+        "size": [
+          0.13856,
+          0.203,
+          0.23702
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_molt",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_molt.glb",
+      "nodeName": "prop_pickup_monsters_molt",
+      "label": "Split Wing Cases",
+      "triangles": 216,
+      "bounds": {
+        "min": [
+          -0.10763,
+          0,
+          -0.15322
+        ],
+        "max": [
+          0.10763,
+          0.09445,
+          0.15322
+        ],
+        "size": [
+          0.21526,
+          0.09445,
+          0.30644
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_brood_cup",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_brood_cup.glb",
+      "nodeName": "prop_pickup_monsters_brood_cup",
+      "label": "Empty Brood Shell",
+      "triangles": 176,
+      "bounds": {
+        "min": [
+          -0.108,
+          0,
+          -0.0832
+        ],
+        "max": [
+          0.108,
+          0.171,
+          0.0832
+        ],
+        "size": [
+          0.216,
+          0.171,
+          0.1664
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_coil_fossil",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_coil_fossil.glb",
+      "nodeName": "prop_pickup_monsters_coil_fossil",
+      "label": "Coil Fossil",
+      "triangles": 394,
+      "bounds": {
+        "min": [
+          -0.12996,
+          0,
+          -0.11199
+        ],
+        "max": [
+          0.12996,
+          0.07865,
+          0.11199
+        ],
+        "size": [
+          0.25992,
+          0.07865,
+          0.22398
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_shrine_token",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_shrine_token.glb",
+      "nodeName": "prop_pickup_monsters_shrine_token",
+      "label": "Pierced Shrine Token",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -0.1007,
+          0,
+          -0.1007
+        ],
+        "max": [
+          0.1007,
+          0.036,
+          0.1007
+        ],
+        "size": [
+          0.20141,
+          0.036,
+          0.20141
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_votive_eye",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_votive_eye.glb",
+      "nodeName": "prop_pickup_monsters_votive_eye",
+      "label": "Votive Eye",
+      "triangles": 190,
+      "bounds": {
+        "min": [
+          -0.09915,
+          0,
+          -0.058
+        ],
+        "max": [
+          0.09915,
+          0.19179,
+          0.058
+        ],
+        "size": [
+          0.1983,
+          0.19179,
+          0.116
         ]
       }
     },
@@ -16053,5 +16681,774 @@
         ]
       }
     }
-  ]
+  ],
+  "constructionKit": {
+    "pack": "monsters",
+    "layouts": [
+      {
+        "id": "mine_branch",
+        "title": "Lampwright’s Siding",
+        "width": 14,
+        "depth": 10,
+        "props": [
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -2,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              4,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -4,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              4,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              4,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -4,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -4,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -6,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -6,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -6,
+              0.14,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -4,
+              0.14,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_basalt_buttressed_bay",
+            "position": [
+              -4,
+              0.14,
+              0
+            ]
+          },
+          {
+            "id": "prop_brood_nest",
+            "position": [
+              -5.78,
+              0.14,
+              -1.65
+            ]
+          },
+          {
+            "id": "prop_brood_husk",
+            "position": [
+              -6.24,
+              0.14,
+              -0.35
+            ]
+          },
+          {
+            "id": "prop_mine_sill_stop",
+            "position": [
+              0,
+              0.14,
+              -4
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_mine_track",
+            "position": [
+              0,
+              0.14,
+              -2
+            ]
+          },
+          {
+            "id": "prop_mine_shoring",
+            "position": [
+              0,
+              0.14,
+              -2
+            ]
+          },
+          {
+            "id": "prop_mine_turnout",
+            "position": [
+              0,
+              0.14,
+              0
+            ]
+          },
+          {
+            "id": "prop_mine_track",
+            "position": [
+              2,
+              0.14,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_mine_sill_stop",
+            "position": [
+              4,
+              0.14,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_mine_grade_crossing",
+            "position": [
+              0,
+              0.14,
+              2
+            ]
+          },
+          {
+            "id": "prop_mine_track",
+            "position": [
+              0,
+              0.14,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_vault_bay",
+            "position": [
+              -2,
+              0.14,
+              2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_basalt_ring_door",
+            "position": [
+              -3.23,
+              0.14,
+              2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -2,
+              0.14,
+              -2
+            ]
+          },
+          {
+            "id": "prop_mine_lagging_wall",
+            "position": [
+              -2,
+              0.14,
+              -0.66
+            ]
+          },
+          {
+            "id": "prop_quarry_crystal_seam",
+            "position": [
+              -1.82,
+              0.14,
+              -1.96
+            ]
+          },
+          {
+            "id": "prop_mine_ore_chute",
+            "position": [
+              2,
+              0.14,
+              -2
+            ]
+          },
+          {
+            "id": "prop_pit_lamp_bench",
+            "position": [
+              3.8,
+              0.14,
+              2.74
+            ]
+          },
+          {
+            "id": "prop_quarry_drill_rack",
+            "position": [
+              2.5,
+              0.14,
+              4.26
+            ]
+          },
+          {
+            "id": "prop_mine_winding_drum",
+            "position": [
+              -2,
+              0.14,
+              0.34
+            ]
+          },
+          {
+            "id": "prop_mine_lamp_post",
+            "position": [
+              1.72,
+              0.14,
+              3.15
+            ]
+          },
+          {
+            "id": "prop_mine_ore_skip",
+            "position": [
+              2,
+              0.3325,
+              0
+            ],
+            "rotationY": 1.570796327
+          }
+        ],
+        "route": [
+          [
+            -4.6,
+            0.14,
+            -1.7
+          ],
+          [
+            -4,
+            0.14,
+            -1.2
+          ],
+          [
+            -4,
+            0.14,
+            2.08
+          ],
+          [
+            -1.01,
+            0.14,
+            2.08
+          ],
+          [
+            -1,
+            0.158,
+            2.08
+          ],
+          [
+            -0.62,
+            0.33,
+            2.08
+          ],
+          [
+            0.62,
+            0.33,
+            2.08
+          ],
+          [
+            1,
+            0.158,
+            2.08
+          ],
+          [
+            1.03,
+            0.14,
+            2.08
+          ],
+          [
+            4,
+            0.14,
+            2.08
+          ]
+        ],
+        "view": [
+          -0.6,
+          1.02,
+          1
+        ]
+      },
+      {
+        "id": "brood_shrine",
+        "title": "The Molted Shrine",
+        "width": 6,
+        "depth": 18,
+        "props": [
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              6
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              -2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_floor_tile",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              -2,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              -2,
+              0,
+              -6
+            ]
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              0,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              0,
+              0,
+              -6
+            ]
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              2,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              2,
+              0,
+              -6
+            ]
+          },
+          {
+            "id": "prop_basalt_processional_stair",
+            "position": [
+              0,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_basalt_ring_door",
+            "position": [
+              0,
+              0.14,
+              5.4
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -2,
+              0.14,
+              2
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              2,
+              0.14,
+              2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_basalt_vault_bay",
+            "position": [
+              0,
+              0.14,
+              0
+            ]
+          },
+          {
+            "id": "prop_brood_nest",
+            "position": [
+              -1.84,
+              0.14,
+              2.34
+            ]
+          },
+          {
+            "id": "prop_brood_husk",
+            "position": [
+              -1.63,
+              0.14,
+              3.61
+            ]
+          },
+          {
+            "id": "prop_brood_spore_log",
+            "position": [
+              2,
+              0.14,
+              2.54
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_mushroom_cluster",
+            "position": [
+              1.62,
+              0.14,
+              3.92
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              -2,
+              0.94,
+              -6
+            ]
+          },
+          {
+            "id": "prop_basalt_corner_bay",
+            "position": [
+              2,
+              0.94,
+              -6
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_basalt_high_landing",
+            "position": [
+              0,
+              0,
+              -8
+            ]
+          },
+          {
+            "id": "prop_basalt_buttressed_bay",
+            "position": [
+              0,
+              0.94,
+              -8
+            ]
+          },
+          {
+            "id": "prop_shaman_shrine",
+            "position": [
+              0,
+              0.94,
+              -5.91
+            ]
+          },
+          {
+            "id": "prop_shrine_tusk_lamp",
+            "position": [
+              -1.12,
+              0.94,
+              -4.49
+            ]
+          },
+          {
+            "id": "prop_shrine_tusk_lamp",
+            "position": [
+              1.12,
+              0.94,
+              -4.49
+            ]
+          },
+          {
+            "id": "prop_shrine_ward_stone",
+            "position": [
+              2,
+              0.94,
+              -5.75
+            ]
+          },
+          {
+            "id": "prop_shrine_bone_chimes",
+            "position": [
+              -1.89,
+              0.94,
+              -5.72
+            ],
+            "rotationY": 1.570796327
+          }
+        ],
+        "route": [
+          [
+            0,
+            0.14,
+            6.6
+          ],
+          [
+            0,
+            0.14,
+            -0.999
+          ],
+          [
+            0,
+            0.3,
+            -1.001
+          ],
+          [
+            0,
+            0.3,
+            -1.399
+          ],
+          [
+            0,
+            0.46,
+            -1.401
+          ],
+          [
+            0,
+            0.46,
+            -1.799
+          ],
+          [
+            0,
+            0.62,
+            -1.801
+          ],
+          [
+            0,
+            0.62,
+            -2.199
+          ],
+          [
+            0,
+            0.78,
+            -2.201
+          ],
+          [
+            0,
+            0.78,
+            -2.599
+          ],
+          [
+            0,
+            0.94,
+            -2.601
+          ],
+          [
+            0,
+            0.94,
+            -2.999
+          ],
+          [
+            0,
+            0.94,
+            -4.6
+          ]
+        ],
+        "view": [
+          0.68,
+          0.87,
+          1
+        ]
+      }
+    ]
+  }
 }

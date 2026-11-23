@@ -3,13 +3,14 @@ import { Html, OrbitControls } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { Color, MathUtils, OrthographicCamera, PerspectiveCamera as ThreePerspectiveCamera, Vector3 } from 'three'
+import type { ConstructionLayout } from '@chisel/contracts/constructionKit'
 import type { PackCatalog, WorldPropEntry } from '@chisel/contracts/catalog'
 import { CONTEXT_PACK_KEYS, type ContextPackKey } from '@chisel/contracts/packs'
 import { PALETTE_REGIONS } from '@chisel/contracts/palette'
 import { PolyAvatar, PolyProp } from '../avatar/PolyAvatar'
 import { selectionFromPreset, type PolyPartIndex } from '../avatar/composePolyAvatar'
 import { createPolyMaterial, type PolyOptics } from '../avatar/polyMaterial'
-import { DIORAMA_SPACING, isFloorTileId, SCENE_BACKDROPS, SCENE_DEPTH, SCENE_LAYOUTS, SCENE_WIDTH, type PropPlacement } from './sceneLayouts'
+import { DIORAMA_SPACING, isFloorTileId, SCENE_BACKDROPS, SCENE_DEPTH, SCENE_LAYOUTS, SCENE_WIDTH, type ContextSceneLayout, type PropPlacement } from './sceneLayouts'
 import { SCENE_CAMERAS, stagePropKind, stagePropPalette, STAGE_LOOK, type StageContext } from './stageLook'
 import { ContextTerrain } from './sceneTerrain'
 import { CornerCafeSkyline } from './CornerCafeSkyline'
@@ -23,6 +24,8 @@ export interface MultiContextStageProps {
   activeContext: StageContext
   shadowMode: 'blob' | 'none'
   closeView: boolean
+  kitLayout?: ConstructionLayout
+  showRoofs?: boolean
 }
 
 const AMBIENT_CLIP_ORDER = ['Idle', 'Hover', 'Spin', 'Sweep', 'Swing', 'Loop', 'Pulse', 'Active', 'Open', 'Closed', 'Down', 'Armed']
@@ -51,15 +54,24 @@ function Diorama({
   blobShadow,
   label,
   showBackdrop,
+  kitLayout,
+  showRoofs,
 }: {
   catalog: PackCatalog
   index: PolyPartIndex
   blobShadow: boolean
   label: boolean
   showBackdrop: boolean
+  kitLayout?: ConstructionLayout
+  showRoofs?: boolean
 }) {
   const context = catalog.pack as ContextPackKey
-  const layout = SCENE_LAYOUTS[context]
+  const layout = useMemo<ContextSceneLayout>(
+    () => kitLayout
+      ? { ...kitLayout, props: showRoofs ? kitLayout.props : kitLayout.props.filter(({ hideWithRoof }) => !hideWithRoof), avatars: [] }
+      : SCENE_LAYOUTS[context],
+    [context, kitLayout, showRoofs],
+  )
   const placements = useMemo(
     () => showBackdrop ? [...layout.props, ...SCENE_BACKDROPS[context]] : layout.props,
     [context, layout.props, showBackdrop],
@@ -86,7 +98,7 @@ function Diorama({
   const propById = useMemo(() => new Map(catalog.props.map((p) => [p.id, p])), [catalog.props])
   const materials = useMemo(() => {
     const result: Record<string, ReturnType<typeof createPolyMaterial>> = {
-      base: createPolyMaterial(stagePropPalette(context, 'base')),
+      base: createPolyMaterial(kitLayout ? COLOR_DIRECTION.packs[context].props.default : stagePropPalette(context, 'base')),
       floor: createPolyMaterial(stagePropPalette(context, 'floor')),
       structure: createPolyMaterial(stagePropPalette(context, 'structure')),
       life: createPolyMaterial(stagePropPalette(context, 'life')),
@@ -96,7 +108,7 @@ function Diorama({
       const palette = overrides[id]
       const optics = STAGE_OPTICS[id]
       if ((palette || optics) && !result[id]) {
-        const colors = palette ? propPaletteFor(context, id) : stagePropPalette(context, stagePropKind(id, isFloorTileId(id)))
+        const colors = palette || kitLayout ? propPaletteFor(context, id) : stagePropPalette(context, stagePropKind(id, isFloorTileId(id)))
         result[id] = createPolyMaterial(colors, optics)
       }
     }
@@ -114,7 +126,7 @@ function Diorama({
       result[key] = createPolyMaterial(palette)
     }
     return result
-  }, [context, layout.props.length, placements])
+  }, [context, layout.props.length, kitLayout, placements])
   useEffect(() => () => Object.values(materials).forEach((material) => material.dispose()), [materials])
 
   const propGroups = useMemo(() => {
@@ -129,21 +141,21 @@ function Diorama({
       if (!item) throw new Error(`Missing prop "${placement.id}" in "${context}" catalog.`)
       const floor = isFloorTileId(item.id)
       const materialKey = i >= layout.props.length ? `backdrop:${item.id}`
-        : materials[item.id] ? item.id : stagePropKind(item.id, floor)
+        : materials[item.id] ? item.id : kitLayout ? 'base' : stagePropKind(item.id, floor)
       const [x, , z] = placement.position
       const column = Math.floor(x / TILE_BATCH_SPAN)
       const row = Math.floor(z / TILE_BATCH_SPAN)
-      const key = floor && !item.clips?.length && !placement.clip ? `${materialKey}/${item.id}/${column}/${row}` : String(i)
+      const key = (floor || kitLayout) && !item.clips?.length && !placement.clip ? `${materialKey}/${item.id}/${column}/${row}` : String(i)
       const group = groups.get(key)
       if (group) group.placements.push(placement)
       else groups.set(key, { item, material: materials[materialKey]!, firstIndex: i, placements: [placement] })
     })
     return groups
-  }, [context, layout.props.length, materials, placements, propById])
+  }, [context, kitLayout, layout.props.length, materials, placements, propById])
 
   return (
     <group>
-      <ContextTerrain context={context} width={layout.width} depth={layout.depth} />
+      {!kitLayout && <ContextTerrain context={context} width={layout.width} depth={layout.depth} />}
       {showBackdrop && (
         <mesh position={[0, -0.025, -50]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[160, 160]} />
@@ -213,8 +225,8 @@ function StageLights({ context }: { context: StageContext }) {
 const ROW_GAP = SCENE_DEPTH + 5
 const STAGE_BOTTOM = -0.8
 
-function stageFrame(context: StageContext, columns: number, catalog?: PackCatalog) {
-  const direction = new Vector3(...STAGE_LOOK[context].view).normalize()
+function stageFrame(context: StageContext, columns: number, catalog?: PackCatalog, kitLayout?: ConstructionLayout) {
+  const direction = new Vector3(...(kitLayout?.view ?? STAGE_LOOK[context].view)).normalize()
   const right = new Vector3(0, 1, 0).cross(direction).normalize()
   const up = new Vector3().crossVectors(direction, right)
   const point = new Vector3()
@@ -257,16 +269,21 @@ function stageFrame(context: StageContext, columns: number, catalog?: PackCatalo
     const depth = (rows - 1) * ROW_GAP + SCENE_DEPTH + 1
     include([-width / 2, STAGE_BOTTOM, -depth / 2], [width / 2, 5, depth / 2])
   } else {
-    const layout = SCENE_LAYOUTS[context]
-    const x = layout.width / 2 + 0.15
-    const z = layout.depth / 2 + 0.15
-    include([-x, STAGE_BOTTOM, -z], [x, 0, z])
+    const layout = kitLayout ?? SCENE_LAYOUTS[context]
+    if (!kitLayout || !catalog) {
+      const x = layout.width / 2 + 0.15
+      const z = layout.depth / 2 + 0.15
+      include([-x, STAGE_BOTTOM, -z], [x, 0, z])
+    }
     const props = new Map(catalog?.props.map((prop) => [prop.id, prop.bounds]))
-    for (const placement of layout.props) {
+    const placements: readonly PropPlacement[] = layout.props
+    for (const placement of placements) {
       const bounds = props.get(placement.id)
       if (bounds) include(bounds.min, bounds.max, placement.position, placement.rotationY, placement.scale)
     }
-    for (const avatar of layout.avatars) include([-0.8, 0, -0.8], [0.8, 2.55, 0.8], avatar.position)
+    if ('avatars' in layout) {
+      for (const avatar of layout.avatars) include([-0.8, 0, -0.8], [0.8, 2.55, 0.8], avatar.position)
+    }
   }
 
   const center = right.multiplyScalar((left + rightmost) / 2).addScaledVector(up, (low + high) / 2)
@@ -274,11 +291,11 @@ function stageFrame(context: StageContext, columns: number, catalog?: PackCatalo
 }
 
 function StageCamera({
-  context, columns, reset, catalog, closeView,
-}: { context: StageContext; columns: number; reset: number; catalog?: PackCatalog; closeView: boolean }) {
+  context, columns, reset, catalog, closeView, kitLayout,
+}: { context: StageContext; columns: number; reset: number; catalog?: PackCatalog; closeView: boolean; kitLayout?: ConstructionLayout }) {
   const set = useThree((state) => state.set)
   const size = useThree((state) => state.size)
-  const frame = useMemo(() => stageFrame(context, columns, catalog), [catalog, columns, context])
+  const frame = useMemo(() => stageFrame(context, columns, catalog, kitLayout), [catalog, columns, context, kitLayout])
   const sceneCamera = context !== 'all' && closeView ? SCENE_CAMERAS[context] : null
   const portrait = size.width < size.height ? sceneCamera?.portrait : undefined
   const close = portrait ?? sceneCamera
@@ -313,7 +330,7 @@ function StageCamera({
 
   return (
     <OrbitControls
-      key={`${context}-${reset}-${closeView}-${size.width}-${size.height}`}
+      key={`${context}-${kitLayout?.id ?? ''}-${reset}-${closeView}-${size.width}-${size.height}`}
       camera={camera}
       target={target}
       enablePan={false}
@@ -327,7 +344,7 @@ function StageCamera({
 }
 
 export function MultiContextStage({
-  catalogs, index, activeContext, shadowMode, reset, closeView,
+  catalogs, index, activeContext, shadowMode, reset, closeView, kitLayout, showRoofs,
 }: MultiContextStageProps & { reset: number }) {
   const shown = activeContext === 'all' ? CONTEXT_PACK_KEYS : [activeContext]
   const width = useThree((state) => state.size.width)
@@ -341,7 +358,7 @@ export function MultiContextStage({
         <fog attach="fog" args={[STAGE_LOOK[activeContext].glow, ...environment.fog]} />
       )}
       <StageLights context={activeContext} />
-      <StageCamera context={activeContext} columns={columns} reset={reset} closeView={closeView} catalog={catalogs.find((item) => item.pack === activeContext)} />
+      <StageCamera context={activeContext} columns={columns} reset={reset} closeView={closeView} kitLayout={kitLayout} catalog={catalogs.find((item) => item.pack === activeContext)} />
       {shown.map((key, i) => {
         const catalog = catalogs.find((item) => item.pack === key)
         if (!catalog) throw new Error(`The "${key}" pack catalog is missing.`)
@@ -351,7 +368,7 @@ export function MultiContextStage({
         const z = (row - (rows - 1) / 2) * ROW_GAP
         return (
           <group key={key} position={[x, 0, z]}>
-            <Diorama catalog={catalog} index={index} blobShadow={shadowMode === 'blob'} label={shown.length > 1} showBackdrop={closeView && activeContext !== 'all'} />
+            <Diorama catalog={catalog} index={index} blobShadow={shadowMode === 'blob'} label={shown.length > 1} showBackdrop={closeView && activeContext !== 'all'} kitLayout={kitLayout} showRoofs={showRoofs} />
           </group>
         )
       })}

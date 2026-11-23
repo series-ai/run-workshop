@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { constructionKitSchema } from './constructionKit'
 import { LICENSES, POLY_PACK_KEYS } from './packs'
 import { paletteColorsSchema } from './palette'
 import { characterRagdollSchema, ragdollColliderMapSchema } from './ragdoll'
@@ -150,6 +151,25 @@ export const packCatalogSchema = z.object({
   heldItems: z.array(heldItemEntrySchema),
   props: z.array(worldPropEntrySchema),
   presets: z.array(characterPresetSchema),
+  constructionKit: constructionKitSchema.optional(),
+}).superRefine((catalog, ctx) => {
+  const kit = catalog.constructionKit
+  if (!kit) return
+  if (kit.pack !== catalog.pack) {
+    ctx.addIssue({ code: 'custom', path: ['constructionKit', 'pack'], message: `Kit for "${kit.pack}" is in the "${catalog.pack}" catalog` })
+  }
+  const IDs = new Set(catalog.props.map(({ id }) => id))
+  kit.layouts.forEach((layout, layoutIndex) => {
+    layout.props.forEach(({ id }, placementIndex) => {
+      if (!IDs.has(id)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['constructionKit', 'layouts', layoutIndex, 'props', placementIndex, 'id'],
+          message: `Layout "${layout.id}" refers to missing prop "${id}"`,
+        })
+      }
+    })
+  })
 })
 export type PackCatalog = z.infer<typeof packCatalogSchema>
 

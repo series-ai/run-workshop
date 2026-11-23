@@ -742,6 +742,264 @@
           "radius": 0.0569
         }
       }
+    },
+    {
+      "id": "torso_sim_counter_apron",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "sim-parts.glb",
+      "nodeName": "torso_sim_counter_apron",
+      "slot": "torso",
+      "label": "Counter Apron",
+      "triangles": 370,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0329,
+            0.1317,
+            0.0211
+          ],
+          "b": [
+            0.0329,
+            0.1317,
+            0.0211
+          ],
+          "radius": 0.1164
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.0394,
+            0.0227,
+            0.0293
+          ],
+          "b": [
+            0.0394,
+            0.0227,
+            0.0293
+          ],
+          "radius": 0.117
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.0192,
+            0.0948,
+            0.024
+          ],
+          "b": [
+            0.0192,
+            0.0948,
+            0.024
+          ],
+          "radius": 0.0696
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0854,
+            0.0305
+          ],
+          "b": [
+            0,
+            -0.0854,
+            0.0305
+          ],
+          "radius": 0.0608
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0148,
+            0.0793,
+            -0.0058
+          ],
+          "b": [
+            -0.0149,
+            0.2525,
+            -0.0028
+          ],
+          "radius": 0.0559
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "b": [
+            -0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "radius": 0.0562
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0148,
+            0.0793,
+            -0.0058
+          ],
+          "b": [
+            0.0149,
+            0.2525,
+            -0.0028
+          ],
+          "radius": 0.0559
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "b": [
+            0.0019,
+            -0.0107,
+            0.0095
+          ],
+          "radius": 0.0562
+        }
+      }
+    },
+    {
+      "id": "torso_sim_road_vest",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "sim-parts.glb",
+      "nodeName": "torso_sim_road_vest",
+      "slot": "torso",
+      "label": "Reflective Road Vest",
+      "triangles": 396,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0348,
+            0.1521,
+            0.0199
+          ],
+          "b": [
+            0.0348,
+            0.1521,
+            0.0199
+          ],
+          "radius": 0.1142
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.0298,
+            0.0229,
+            0.0222
+          ],
+          "b": [
+            0.0298,
+            0.0229,
+            0.0222
+          ],
+          "radius": 0.1326
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.0387,
+            0.0409,
+            0.0166
+          ],
+          "b": [
+            0.0387,
+            0.0409,
+            0.0166
+          ],
+          "radius": 0.0814
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0854,
+            0.0305
+          ],
+          "b": [
+            0,
+            -0.0854,
+            0.0305
+          ],
+          "radius": 0.0608
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0197,
+            0.0763,
+            -0.0056
+          ],
+          "b": [
+            -0.0199,
+            0.2387,
+            -0.0028
+          ],
+          "radius": 0.0525
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.001,
+            0.0677,
+            -0.0002
+          ],
+          "b": [
+            -0.0009,
+            0.214,
+            -0.0027
+          ],
+          "radius": 0.0441
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0197,
+            0.0763,
+            -0.0056
+          ],
+          "b": [
+            0.0199,
+            0.2387,
+            -0.0028
+          ],
+          "radius": 0.0525
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.001,
+            0.0677,
+            -0.0002
+          ],
+          "b": [
+            0.0009,
+            0.214,
+            -0.0027
+          ],
+          "radius": 0.0441
+        }
+      }
     }
   ],
   "heldItems": [
@@ -774,6 +1032,36 @@
       "label": "Briefcase",
       "hand": "hand_l",
       "triangles": 152
+    },
+    {
+      "id": "held_sim_loyalty_stamp",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "held/held_sim_loyalty_stamp.glb",
+      "nodeName": "held_sim_loyalty_stamp",
+      "label": "Café Loyalty Stamp",
+      "hand": "hand_r",
+      "triangles": 142
+    },
+    {
+      "id": "held_sim_watering_can",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "held/held_sim_watering_can.glb",
+      "nodeName": "held_sim_watering_can",
+      "label": "Window Box Watering Can",
+      "hand": "hand_r",
+      "triangles": 190
+    },
+    {
+      "id": "held_sim_pocket_camera",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "held/held_sim_pocket_camera.glb",
+      "nodeName": "held_sim_pocket_camera",
+      "label": "Pocket Camera",
+      "hand": "hand_l",
+      "triangles": 148
     }
   ],
   "props": [
@@ -1766,6 +2054,734 @@
       }
     },
     {
+      "id": "prop_market_stair_bay",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_stair_bay.glb",
+      "nodeName": "prop_market_stair_bay",
+      "label": "Loading Dock Stair Bay",
+      "triangles": 368,
+      "bounds": {
+        "min": [
+          -0.81,
+          0,
+          -2
+        ],
+        "max": [
+          0.81,
+          4.20376,
+          2
+        ],
+        "size": [
+          1.62,
+          4.20376,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_market_upper_landing",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_upper_landing.glb",
+      "nodeName": "prop_market_upper_landing",
+      "label": "Raised Gallery Landing",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          4.19,
+          1
+        ],
+        "size": [
+          2,
+          4.19,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_market_loggia",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_loggia.glb",
+      "nodeName": "prop_market_loggia",
+      "label": "Recessed Market Gallery",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          2.67,
+          1
+        ],
+        "size": [
+          2,
+          2.67,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_price_board",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_price_board.glb",
+      "nodeName": "prop_price_board",
+      "label": "Framed Price Board",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.69,
+          0,
+          -0.08
+        ],
+        "max": [
+          0.69,
+          0.8,
+          0.08
+        ],
+        "size": [
+          1.38,
+          0.8,
+          0.16
+        ]
+      }
+    },
+    {
+      "id": "prop_bakery_oven",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bakery_oven.glb",
+      "nodeName": "prop_bakery_oven",
+      "label": "Double Deck Bakery Oven",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.54,
+          0,
+          -0.41125
+        ],
+        "max": [
+          0.54,
+          1.01,
+          0.41125
+        ],
+        "size": [
+          1.08,
+          1.01,
+          0.8225
+        ]
+      }
+    },
+    {
+      "id": "prop_sack_trolley",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_sack_trolley.glb",
+      "nodeName": "prop_sack_trolley",
+      "label": "Loaded Sack Trolley",
+      "triangles": 300,
+      "bounds": {
+        "min": [
+          -0.305,
+          0,
+          -0.3325
+        ],
+        "max": [
+          0.305,
+          1.2,
+          0.3325
+        ],
+        "size": [
+          0.61,
+          1.2,
+          0.665
+        ]
+      }
+    },
+    {
+      "id": "prop_market_hood",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_hood.glb",
+      "nodeName": "prop_market_hood",
+      "label": "Folded Zinc Market Hood",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.28375
+        ],
+        "max": [
+          0.9,
+          0.34064,
+          0.28375
+        ],
+        "size": [
+          1.8,
+          0.34064,
+          0.5675
+        ]
+      }
+    },
+    {
+      "id": "prop_preserve_island",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_preserve_island.glb",
+      "nodeName": "prop_preserve_island",
+      "label": "Two Tier Preserve Display",
+      "triangles": 476,
+      "bounds": {
+        "min": [
+          -0.72,
+          0,
+          -0.42
+        ],
+        "max": [
+          0.72,
+          1.1,
+          0.42
+        ],
+        "size": [
+          1.44,
+          1.1,
+          0.84
+        ]
+      }
+    },
+    {
+      "id": "prop_curb_apron",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_curb_apron.glb",
+      "nodeName": "prop_curb_apron",
+      "label": "Flush Crossing Apron",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.128,
+          1
+        ],
+        "size": [
+          2,
+          0.128,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_paving_service",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_paving_service.glb",
+      "nodeName": "prop_paving_service",
+      "label": "Service Cover Pavement",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.142,
+          1
+        ],
+        "size": [
+          2,
+          0.142,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_steps",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_steps.glb",
+      "nodeName": "prop_shop_steps",
+      "label": "Two Stone Entry Steps",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -0.77,
+          0,
+          -0.3015
+        ],
+        "max": [
+          0.77,
+          0.3,
+          0.3015
+        ],
+        "size": [
+          1.54,
+          0.3,
+          0.603
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_landing",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_landing.glb",
+      "nodeName": "prop_shop_landing",
+      "label": "Stone Entry Landing",
+      "triangles": 24,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.8,
+          0.3,
+          0.38
+        ],
+        "size": [
+          1.6,
+          0.3,
+          0.76
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_post",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_post.glb",
+      "nodeName": "prop_shop_post",
+      "label": "Shop Bay Pier",
+      "triangles": 36,
+      "bounds": {
+        "min": [
+          -0.1025,
+          0,
+          -0.1025
+        ],
+        "max": [
+          0.1025,
+          2.8,
+          0.1025
+        ],
+        "size": [
+          0.205,
+          2.8,
+          0.205
+        ]
+      }
+    },
+    {
+      "id": "prop_plaster_bay",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_plaster_bay.glb",
+      "nodeName": "prop_plaster_bay",
+      "label": "Plaster and Timber Bay",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.1
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.2
+        ]
+      }
+    },
+    {
+      "id": "prop_sash_bay",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_sash_bay.glb",
+      "nodeName": "prop_sash_bay",
+      "label": "Display Sash with Open Transom",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.09
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.09
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.18
+        ]
+      }
+    },
+    {
+      "id": "prop_service_portal",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_service_portal.glb",
+      "nodeName": "prop_service_portal",
+      "label": "Open Service Doorway",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.105
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.105
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.21
+        ]
+      }
+    },
+    {
+      "id": "prop_cafe_portal",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_cafe_portal.glb",
+      "nodeName": "prop_cafe_portal",
+      "label": "Cup and Saucer Entry",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.12914
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.12914
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.25829
+        ]
+      }
+    },
+    {
+      "id": "prop_market_portal",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_portal.glb",
+      "nodeName": "prop_market_portal",
+      "label": "Greengrocer Entry",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.1375
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.1375
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.275
+        ]
+      }
+    },
+    {
+      "id": "prop_stripe_canopy",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_stripe_canopy.glb",
+      "nodeName": "prop_stripe_canopy",
+      "label": "Striped Canvas Canopy",
+      "triangles": 44,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.9,
+          0.34,
+          0.35
+        ],
+        "size": [
+          1.8,
+          0.34,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_oak_floor",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_oak_floor.glb",
+      "nodeName": "prop_oak_floor",
+      "label": "Staggered Oak Floor",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.428,
+          1
+        ],
+        "size": [
+          2,
+          0.428,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_floor",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_floor.glb",
+      "nodeName": "prop_quarry_floor",
+      "label": "Quarry Tile Floor",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.428,
+          1
+        ],
+        "size": [
+          2,
+          0.428,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cafe_roof",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_cafe_roof.glb",
+      "nodeName": "prop_cafe_roof",
+      "label": "Cafe Clerestory Roof",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -3.16,
+          0,
+          -3.16
+        ],
+        "max": [
+          3.16,
+          0.78,
+          3.16
+        ],
+        "size": [
+          6.32,
+          0.78,
+          6.32
+        ]
+      }
+    },
+    {
+      "id": "prop_market_roof",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_roof.glb",
+      "nodeName": "prop_market_roof",
+      "label": "Market Plant Roof",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -4.16,
+          0,
+          -3.16
+        ],
+        "max": [
+          4.16,
+          0.86,
+          3.16
+        ],
+        "size": [
+          8.32,
+          0.86,
+          6.32
+        ]
+      }
+    },
+    {
+      "id": "prop_espresso_bar",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_espresso_bar.glb",
+      "nodeName": "prop_espresso_bar",
+      "label": "Twin Group Espresso Bar",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.39
+        ],
+        "max": [
+          0.95,
+          1.46,
+          0.39
+        ],
+        "size": [
+          1.9,
+          1.46,
+          0.78
+        ]
+      }
+    },
+    {
+      "id": "prop_bread_hutch",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bread_hutch.glb",
+      "nodeName": "prop_bread_hutch",
+      "label": "Bakery Loaf Hutch",
+      "triangles": 432,
+      "bounds": {
+        "min": [
+          -0.78,
+          0,
+          -0.29
+        ],
+        "max": [
+          0.78,
+          1.73,
+          0.29
+        ],
+        "size": [
+          1.56,
+          1.73,
+          0.58
+        ]
+      }
+    },
+    {
+      "id": "prop_stock_rack",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_stock_rack.glb",
+      "nodeName": "prop_stock_rack",
+      "label": "Carton Storage Rack",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -0.84,
+          0,
+          -0.31
+        ],
+        "max": [
+          0.84,
+          1.9,
+          0.31
+        ],
+        "size": [
+          1.68,
+          1.9,
+          0.62
+        ]
+      }
+    },
+    {
+      "id": "prop_checkout",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_checkout.glb",
+      "nodeName": "prop_checkout",
+      "label": "Market Checkout",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -0.76,
+          0,
+          -0.39
+        ],
+        "max": [
+          0.76,
+          1.38944,
+          0.39
+        ],
+        "size": [
+          1.52,
+          1.38944,
+          0.78
+        ]
+      }
+    },
+    {
+      "id": "prop_wash_station",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_wash_station.glb",
+      "nodeName": "prop_wash_station",
+      "label": "Sink and Draining Board",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -0.78,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.78,
+          1.23245,
+          0.35
+        ],
+        "size": [
+          1.56,
+          1.23245,
+          0.7
+        ]
+      }
+    },
+    {
       "id": "prop_road_straight",
       "pack": "sim",
       "leaf": "world",
@@ -2464,6 +3480,266 @@
           1.22,
           1.63,
           0.88
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_bread_sleeve",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_bread_sleeve.glb",
+      "nodeName": "prop_pickup_sim_bread_sleeve",
+      "label": "Bakery Bread Sleeve",
+      "triangles": 198,
+      "bounds": {
+        "min": [
+          -0.07797,
+          0,
+          -0.04855
+        ],
+        "max": [
+          0.07797,
+          0.307,
+          0.04855
+        ],
+        "size": [
+          0.15594,
+          0.307,
+          0.0971
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_loyalty_stamp",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_loyalty_stamp.glb",
+      "nodeName": "prop_pickup_sim_loyalty_stamp",
+      "label": "Café Loyalty Stamp",
+      "triangles": 142,
+      "bounds": {
+        "min": [
+          -0.047,
+          0,
+          -0.0315
+        ],
+        "max": [
+          0.047,
+          0.116,
+          0.0315
+        ],
+        "size": [
+          0.094,
+          0.116,
+          0.063
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_pear_punnet",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_pear_punnet.glb",
+      "nodeName": "prop_pickup_sim_pear_punnet",
+      "label": "Market Pear Punnet",
+      "triangles": 287,
+      "bounds": {
+        "min": [
+          -0.1115,
+          0,
+          -0.082
+        ],
+        "max": [
+          0.1115,
+          0.19676,
+          0.082
+        ],
+        "size": [
+          0.223,
+          0.19676,
+          0.164
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_market_voucher",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_market_voucher.glb",
+      "nodeName": "prop_pickup_sim_market_voucher",
+      "label": "Market Voucher Book",
+      "triangles": 182,
+      "bounds": {
+        "min": [
+          -0.079,
+          0,
+          -0.038
+        ],
+        "max": [
+          0.079,
+          0.012,
+          0.038
+        ],
+        "size": [
+          0.158,
+          0.012,
+          0.076
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_shop_key",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_shop_key.glb",
+      "nodeName": "prop_pickup_sim_shop_key",
+      "label": "Shop Door Key",
+      "triangles": 100,
+      "bounds": {
+        "min": [
+          -0.0565,
+          0,
+          -0.031
+        ],
+        "max": [
+          0.0565,
+          0.012,
+          0.031
+        ],
+        "size": [
+          0.113,
+          0.012,
+          0.062
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_transit_fare",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_transit_fare.glb",
+      "nodeName": "prop_pickup_sim_transit_fare",
+      "label": "Bus Fare Tokens",
+      "triangles": 244,
+      "bounds": {
+        "min": [
+          -0.03608,
+          0,
+          -0.03208
+        ],
+        "max": [
+          0.03608,
+          0.0126,
+          0.03208
+        ],
+        "size": [
+          0.07216,
+          0.0126,
+          0.06416
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_park_cup",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_park_cup.glb",
+      "nodeName": "prop_pickup_sim_park_cup",
+      "label": "Park Doubles Cup",
+      "triangles": 226,
+      "bounds": {
+        "min": [
+          -0.08908,
+          0,
+          -0.063
+        ],
+        "max": [
+          0.08908,
+          0.177,
+          0.063
+        ],
+        "size": [
+          0.17816,
+          0.177,
+          0.126
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_shuttlecock",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_shuttlecock.glb",
+      "nodeName": "prop_pickup_sim_shuttlecock",
+      "label": "Park Shuttlecock",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -0.035,
+          0,
+          -0.03386
+        ],
+        "max": [
+          0.035,
+          0.077,
+          0.03386
+        ],
+        "size": [
+          0.07,
+          0.077,
+          0.06771
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_watering_can",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_watering_can.glb",
+      "nodeName": "prop_pickup_sim_watering_can",
+      "label": "Window Box Watering Can",
+      "triangles": 190,
+      "bounds": {
+        "min": [
+          -0.18646,
+          0,
+          -0.08559
+        ],
+        "max": [
+          0.18646,
+          0.21133,
+          0.08559
+        ],
+        "size": [
+          0.37292,
+          0.21133,
+          0.17117
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_pocket_camera",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_pocket_camera.glb",
+      "nodeName": "prop_pickup_sim_pocket_camera",
+      "label": "Pocket Camera",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.07,
+          0,
+          -0.05625
+        ],
+        "max": [
+          0.07,
+          0.088,
+          0.05625
+        ],
+        "size": [
+          0.14,
+          0.088,
+          0.1125
         ]
       }
     },
@@ -5178,6 +6454,3315 @@
           "foot_r"
         ]
       }
+    },
+    {
+      "id": "sim_shopkeeper",
+      "pack": "sim",
+      "label": "Shopkeeper",
+      "rigId": "ual1",
+      "clip": "Idle_Loop",
+      "body": "body_slim",
+      "head": "head_cheerful",
+      "hair": "hair_bob",
+      "torso": "torso_sim_counter_apron",
+      "legs": "legs_sim_jeans",
+      "headwear": null,
+      "back": null,
+      "heldRight": null,
+      "heldLeft": null,
+      "palette": {
+        "skin": "#bc7751",
+        "hair": "#32273d",
+        "primary": "#eff0da",
+        "secondary": "#34675f",
+        "accent": "#ed855d",
+        "metal": "#a3bfca",
+        "eye": "#426757"
+      },
+      "proportions": {
+        "height": 0.9294,
+        "legRatio": 0.88,
+        "shoulderWidth": 1.04,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.02,
+        "armLength": 0.96
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 63.5616,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 11.3083,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0432,
+                0.09,
+                0.019
+              ],
+              "b": [
+                0.0432,
+                0.09,
+                0.019
+              ],
+              "radius": 0.1261
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2597,
+              -0.0017
+            ],
+            "massKg": 9.8805,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0192,
+                0.0953,
+                0.0109
+              ],
+              "b": [
+                0.0192,
+                0.0953,
+                0.0109
+              ],
+              "radius": 0.0761
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.224,
+              -0.021
+            ],
+            "massKg": 12.2871,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0403,
+                0.0084,
+                0.0195
+              ],
+              "b": [
+                0.0403,
+                0.0084,
+                0.0195
+              ],
+              "radius": 0.12
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2496,
+              0.0082
+            ],
+            "massKg": 4.48,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0863,
+                0.0049
+              ],
+              "b": [
+                0,
+                0.1962,
+                -0.0047
+              ],
+              "radius": 0.1205
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.1128,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.0035,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0161,
+                0.0528,
+                -0.006
+              ],
+              "b": [
+                -0.0163,
+                0.2253,
+                -0.0031
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.2837,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                -0.0095,
+                0.0009
+              ],
+              "b": [
+                -0.0009,
+                0.2011,
+                -0.0027
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.5228,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0158,
+                0.0032,
+                0.0376
+              ],
+              "b": [
+                0.0158,
+                0.1746,
+                0.0376
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.1128,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.0035,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0161,
+                0.0528,
+                -0.006
+              ],
+              "b": [
+                0.0163,
+                0.2253,
+                -0.0031
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.2837,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                -0.0095,
+                0.0009
+              ],
+              "b": [
+                0.0009,
+                0.2011,
+                -0.0027
+              ],
+              "radius": 0.0571
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.5228,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0158,
+                0.0032,
+                0.0376
+              ],
+              "b": [
+                -0.0158,
+                0.1746,
+                0.0376
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 5.5105,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0121,
+                0.0489,
+                -0.0033
+              ],
+              "b": [
+                -0.0121,
+                0.2855,
+                -0.0049
+              ],
+              "radius": 0.0575
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.5127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0005,
+                0.0669,
+                0.0171
+              ],
+              "b": [
+                -0.0005,
+                0.3386,
+                -0.0048
+              ],
+              "radius": 0.061
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              -0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 0.9696,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0396,
+                0.083
+              ],
+              "b": [
+                0.0008,
+                0.2156,
+                -0.0214
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 5.5105,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0121,
+                0.0489,
+                -0.0033
+              ],
+              "b": [
+                0.0121,
+                0.2855,
+                -0.0049
+              ],
+              "radius": 0.0575
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.5127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0005,
+                0.0669,
+                0.0171
+              ],
+              "b": [
+                0.0005,
+                0.3386,
+                -0.0048
+              ],
+              "radius": 0.061
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 0.9696,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0396,
+                0.083
+              ],
+              "b": [
+                -0.0008,
+                0.2156,
+                -0.0214
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    },
+    {
+      "id": "sim_street_worker",
+      "pack": "sim",
+      "label": "Street Service Worker",
+      "rigId": "ual1",
+      "clip": "Walk_Loop",
+      "body": "body_athletic",
+      "head": "head_hero",
+      "hair": "hair_short_part",
+      "torso": "torso_sim_road_vest",
+      "legs": "legs_sim_jeans",
+      "headwear": "headwear_sim_cap",
+      "back": null,
+      "heldRight": null,
+      "heldLeft": null,
+      "palette": {
+        "skin": "#bc7751",
+        "hair": "#32273d",
+        "primary": "#e99541",
+        "secondary": "#344553",
+        "accent": "#f1e9aa",
+        "metal": "#a3bfca",
+        "eye": "#426757"
+      },
+      "proportions": {
+        "height": 0.9294,
+        "legRatio": 0.88,
+        "shoulderWidth": 0.96,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.02,
+        "armLength": 0.96
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 73.8664,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.2519,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.047,
+                0.0906,
+                0.0212
+              ],
+              "b": [
+                0.047,
+                0.0906,
+                0.0212
+              ],
+              "radius": 0.1299
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2597,
+              -0.0017
+            ],
+            "massKg": 11.5787,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0387,
+                0.0956,
+                0.0132
+              ],
+              "b": [
+                0.0387,
+                0.0956,
+                0.0132
+              ],
+              "radius": 0.089
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.224,
+              -0.021
+            ],
+            "massKg": 13.779,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0291,
+                0.0083,
+                0.0217
+              ],
+              "b": [
+                0.0291,
+                0.0083,
+                0.0217
+              ],
+              "radius": 0.1355
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2496,
+              0.0082
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0861,
+                0.0109
+              ],
+              "b": [
+                0,
+                0.2241,
+                0.0006
+              ],
+              "radius": 0.1454
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.105,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.3479,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0182,
+                0.0569,
+                -0.006
+              ],
+              "b": [
+                -0.0182,
+                0.2214,
+                -0.0031
+              ],
+              "radius": 0.0536
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.5044,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                0.0511,
+                -0.0005
+              ],
+              "b": [
+                -0.0009,
+                0.1978,
+                -0.0029
+              ],
+              "radius": 0.0448
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.105,
+              0.0606,
+              0.0256
+            ],
+            "massKg": 2.3479,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0182,
+                0.0569,
+                -0.006
+              ],
+              "b": [
+                0.0182,
+                0.2214,
+                -0.0031
+              ],
+              "radius": 0.0536
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2756,
+              -0.0007
+            ],
+            "massKg": 1.5044,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                0.0511,
+                -0.0005
+              ],
+              "b": [
+                0.0009,
+                0.1978,
+                -0.0029
+              ],
+              "radius": 0.0448
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2363,
+              0.0006
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                -0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 6.4576,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0121,
+                0.0526,
+                -0.0033
+              ],
+              "b": [
+                -0.0121,
+                0.2818,
+                -0.0048
+              ],
+              "radius": 0.0575
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.9446,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0002,
+                0.0706,
+                0.0171
+              ],
+              "b": [
+                0,
+                0.3349,
+                -0.0041
+              ],
+              "radius": 0.061
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              -0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0396,
+                0.083
+              ],
+              "b": [
+                0.0008,
+                0.2156,
+                -0.0214
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0568,
+              0.0102
+            ],
+            "massKg": 6.4576,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0121,
+                0.0526,
+                -0.0033
+              ],
+              "b": [
+                0.0121,
+                0.2818,
+                -0.0048
+              ],
+              "radius": 0.0575
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3618,
+              0.0007
+            ],
+            "massKg": 2.9446,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0002,
+                0.0706,
+                0.0171
+              ],
+              "b": [
+                0,
+                0.3349,
+                -0.0041
+              ],
+              "radius": 0.061
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0.0001,
+              0.3717,
+              0.0084
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0396,
+                0.083
+              ],
+              "b": [
+                -0.0008,
+                0.2156,
+                -0.0214
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
     }
-  ]
+  ],
+  "constructionKit": {
+    "pack": "sim",
+    "layouts": [
+      {
+        "id": "cafe-corner",
+        "title": "Café Corner",
+        "width": 14,
+        "depth": 10,
+        "props": [
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -2,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              -2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              -2,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -2,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_stripe_canopy",
+            "position": [
+              -2,
+              2.72,
+              1.44
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              0,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              0,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              0,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_cafe_portal",
+            "position": [
+              0,
+              0.428,
+              1.0225
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              2,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_stripe_canopy",
+            "position": [
+              2,
+              2.72,
+              1.44
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -3,
+              0.428,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -3,
+              0.428,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -3,
+              0.428,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -2,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_service_portal",
+            "position": [
+              0,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_cafe_roof",
+            "position": [
+              0,
+              3.228,
+              -2
+            ],
+            "hideWithRoof": true
+          },
+          {
+            "id": "prop_price_board",
+            "position": [
+              1.83,
+              1.91,
+              -2.84
+            ]
+          },
+          {
+            "id": "prop_bakery_oven",
+            "position": [
+              0.23,
+              0.428,
+              -4.51
+            ]
+          },
+          {
+            "id": "prop_espresso_bar",
+            "position": [
+              1.8,
+              0.428,
+              -1.43
+            ]
+          },
+          {
+            "id": "prop_bread_hutch",
+            "position": [
+              2.5,
+              0.428,
+              0.02
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_wash_station",
+            "position": [
+              1.86,
+              0.428,
+              -4.5
+            ]
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              -1.66,
+              0.428,
+              -4.51
+            ]
+          },
+          {
+            "id": "prop_cafe_table",
+            "position": [
+              -1.62,
+              0.428,
+              -1.98
+            ]
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -2.27,
+              0.428,
+              -1.98
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -0.97,
+              0.428,
+              -1.98
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_cafe_table",
+            "position": [
+              -1.62,
+              0.428,
+              -0.05
+            ]
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -2.27,
+              0.428,
+              -0.05
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -0.97,
+              0.428,
+              -0.05
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -1,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -1,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -1,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              1,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              1,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              1,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_curb_apron",
+            "position": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_crosswalk",
+            "position": [
+              0,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -4,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -4,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              4,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              4,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -4,
+              0,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              4,
+              0,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              -4,
+              0,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              4,
+              0,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -4,
+              0,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              4,
+              0,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_corner",
+            "position": [
+              -6,
+              0,
+              4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_shop_landing",
+            "position": [
+              0,
+              0.128,
+              1.38
+            ]
+          },
+          {
+            "id": "prop_shop_steps",
+            "position": [
+              0,
+              0.128,
+              2.061
+            ]
+          },
+          {
+            "id": "prop_bistro_menu",
+            "position": [
+              1.4,
+              0.128,
+              2.05
+            ],
+            "rotationY": -0.22
+          },
+          {
+            "id": "prop_flower_bed",
+            "position": [
+              -2.2,
+              0.128,
+              1.62
+            ]
+          },
+          {
+            "id": "prop_streetlamp",
+            "position": [
+              -4.55,
+              0.128,
+              2.62
+            ]
+          },
+          {
+            "id": "prop_planter",
+            "position": [
+              3.86,
+              0.128,
+              0.16
+            ]
+          }
+        ],
+        "route": [
+          [
+            0.04,
+            0.07,
+            4
+          ],
+          [
+            0.04,
+            0.07,
+            3.22
+          ],
+          [
+            0.04,
+            0.09,
+            3.01
+          ],
+          [
+            0.04,
+            0.09,
+            3
+          ],
+          [
+            0.04,
+            0.128,
+            2.38
+          ],
+          [
+            0.04,
+            0.128,
+            2.365
+          ],
+          [
+            0.04,
+            0.278,
+            2.355
+          ],
+          [
+            0.04,
+            0.278,
+            2.066
+          ],
+          [
+            0.04,
+            0.428,
+            2.055
+          ],
+          [
+            0.04,
+            0.428,
+            1.42
+          ],
+          [
+            0.04,
+            0.428,
+            0.68
+          ],
+          [
+            0.04,
+            0.428,
+            -1.45
+          ],
+          [
+            0.04,
+            0.428,
+            -3.35
+          ],
+          [
+            0.04,
+            0.428,
+            -3.76
+          ],
+          [
+            0.74,
+            0.428,
+            -3.76
+          ]
+        ],
+        "view": [
+          -0.58,
+          0.78,
+          1
+        ]
+      },
+      {
+        "id": "market-block",
+        "title": "Market Block",
+        "width": 12,
+        "depth": 10,
+        "props": [
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -3,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -3,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -3,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -3,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_market_hood",
+            "position": [
+              -3,
+              2.72,
+              1.365
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -1,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -1,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -1,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -1,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_market_portal",
+            "position": [
+              -1,
+              0.428,
+              1.0325
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              1,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              1,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              1,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              1,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_market_hood",
+            "position": [
+              1,
+              2.72,
+              1.365
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              3,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              3,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              3,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_market_hood",
+            "position": [
+              3,
+              2.72,
+              1.365
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -4,
+              0.428,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -4,
+              0.428,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -4,
+              0.428,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_service_portal",
+            "position": [
+              4,
+              0.428,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              4,
+              0.428,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              4,
+              0.428,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_service_portal",
+            "position": [
+              2,
+              0.428,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_market_roof",
+            "position": [
+              0,
+              3.228,
+              -2
+            ],
+            "hideWithRoof": true
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              5,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_market_stair_bay",
+            "position": [
+              5,
+              0.128,
+              -1
+            ]
+          },
+          {
+            "id": "prop_market_upper_landing",
+            "position": [
+              5,
+              0.128,
+              2
+            ]
+          },
+          {
+            "id": "prop_market_upper_landing",
+            "position": [
+              3,
+              0.128,
+              2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_market_loggia",
+            "position": [
+              3,
+              3.388,
+              2
+            ]
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              3.54,
+              0.428,
+              -0.18
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_price_board",
+            "position": [
+              -0.99,
+              1.85,
+              -4.84
+            ]
+          },
+          {
+            "id": "prop_sack_trolley",
+            "position": [
+              2.66,
+              0.428,
+              -4.51
+            ],
+            "rotationY": 0.18
+          },
+          {
+            "id": "prop_preserve_island",
+            "position": [
+              -1.02,
+              0.428,
+              -3.51
+            ]
+          },
+          {
+            "id": "prop_checkout",
+            "position": [
+              0.78,
+              0.428,
+              -0.28
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_magazine_rack",
+            "position": [
+              -0.1,
+              0.428,
+              0.5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_fruit_display",
+            "position": [
+              -2.98,
+              0.428,
+              -0.72
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_fruit_display",
+            "position": [
+              -2.98,
+              0.428,
+              -2.62
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_bread_hutch",
+            "position": [
+              -2.68,
+              0.428,
+              -4.48
+            ]
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              0.73,
+              0.428,
+              -4.44
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -2,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              0,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              0,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -3,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -3,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_curb_apron",
+            "position": [
+              -1,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_crosswalk",
+            "position": [
+              -1,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              1,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              1,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              3,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              3,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -5,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -5,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              5,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              5,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -5,
+              0,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              -5,
+              0,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              5,
+              0,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -5,
+              0,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              5,
+              0,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_shop_landing",
+            "position": [
+              -1,
+              0.128,
+              1.38
+            ]
+          },
+          {
+            "id": "prop_shop_steps",
+            "position": [
+              -1,
+              0.128,
+              2.061
+            ]
+          },
+          {
+            "id": "prop_fruit_display",
+            "position": [
+              -3.02,
+              0.128,
+              1.72
+            ]
+          },
+          {
+            "id": "prop_ticket_meter",
+            "position": [
+              4.67,
+              0.128,
+              2.46
+            ]
+          },
+          {
+            "id": "prop_bicycle_rack",
+            "position": [
+              2.91,
+              0.128,
+              1.71
+            ]
+          }
+        ],
+        "route": [
+          [
+            -0.96,
+            0.07,
+            4
+          ],
+          [
+            -0.96,
+            0.07,
+            3.22
+          ],
+          [
+            -0.96,
+            0.09,
+            3.01
+          ],
+          [
+            -0.96,
+            0.09,
+            3
+          ],
+          [
+            -0.96,
+            0.128,
+            2.38
+          ],
+          [
+            -0.96,
+            0.128,
+            2.365
+          ],
+          [
+            -0.96,
+            0.278,
+            2.355
+          ],
+          [
+            -0.96,
+            0.278,
+            2.066
+          ],
+          [
+            -0.96,
+            0.428,
+            2.055
+          ],
+          [
+            -0.96,
+            0.428,
+            1.42
+          ],
+          [
+            -0.96,
+            0.428,
+            0.68
+          ],
+          [
+            -0.96,
+            0.428,
+            -2.04
+          ],
+          [
+            1.54,
+            0.428,
+            -2.04
+          ],
+          [
+            2.84,
+            0.428,
+            -2.04
+          ],
+          [
+            2.84,
+            0.428,
+            -3.56
+          ],
+          [
+            2.84,
+            0.428,
+            -3.95
+          ],
+          [
+            5,
+            0.428,
+            -3.95
+          ],
+          [
+            5,
+            0.428,
+            -3.005
+          ],
+          [
+            5,
+            0.613,
+            -2.995
+          ],
+          [
+            5,
+            3.388,
+            0.88
+          ],
+          [
+            5,
+            3.388,
+            2
+          ],
+          [
+            3,
+            3.388,
+            2
+          ]
+        ],
+        "view": [
+          0.95,
+          0.9,
+          1
+        ]
+      }
+    ]
+  }
 }

@@ -4,6 +4,7 @@ import math
 from mathutils import Matrix
 
 from build_props import make_contract, sample_prop_clip
+from props_kit_monsters import KIT_PROPS
 from props_monsters_quarry import QUARRY_PROPS, prop_mine_tunnel_mouth, prop_basalt_cliff_block
 import polykit as pk
 from polykit import X, Y, Z, V
@@ -233,6 +234,7 @@ def prop_lava_bridge(part):
 
 MONSTERS_LEVEL_STATIC = [
     *QUARRY_PROPS,
+    *KIT_PROPS,
     (prop_basalt_floor_tile, 'Cracked Basalt Floor Tile'),
     (prop_obsidian_dais_tile, 'Obsidian Dais Terrace Tile'),
     (prop_obsidian_stairs, 'Obsidian Temple Stairs'),
