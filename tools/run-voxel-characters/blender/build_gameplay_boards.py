@@ -30,7 +30,7 @@ from vehicle_surfaces import apply_vehicle_wear
 
 FACTORIES = {'caverns': caverns.make_board, 'apocalypse': apocalypse.make_board, 'ww2': ww2.make_board,
              'medieval': medieval.make_board}
-THEMES = {'caverns': 'dungeon', 'apocalypse': 'post-apocalypse', 'ww2': 'misc', 'medieval': 'fantasy'}
+THEMES = vk.load_json('board-themes.json')
 ORIGINAL_THEMES = {key: spec['worldTheme'] for key, spec in vk.PACKS.items() if spec['hasWorldLeaf']}
 README = Path(__file__).resolve().parents[1] / 'docs/gameplay-boards.md'
 LICENSE = Path(__file__).resolve().parents[3] / 'LICENSE.md'
@@ -277,10 +277,12 @@ def prepare_original_board(source, key):
     return board, content
 
 
-def build_board(stage, board):
+def build_board(stage, board, *, catalog=None):
     leaf = f'run-cubix-{board.key}/3D/{THEMES[board.key]}'
     folder = stage / leaf
-    write_board_level(folder, board)
+    props, layout = write_board_level(folder, board)
+    if catalog is not None:
+        catalog[board.key] = {'palette': board.palette, 'props': props, 'layout': layout}
     write_board_license(folder, board, 'LicenseRef-RUN-Repository-Supplemental-1.0')
     return leaf
 
@@ -335,11 +337,15 @@ def main():
     parser.add_argument('--stage', type=Path, default=Path(__file__).resolve().parents[1] / 'out/board-stage')
     parser.add_argument('--board', choices=(*FACTORIES, *ORIGINAL_THEMES), action='append')
     parser.add_argument('--archive', type=Path)
+    parser.add_argument('--catalog', type=Path)
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else [])
+    catalog = {} if args.catalog else None
     leaves = [
-        build_board(args.stage, FACTORIES[key]()) if key in FACTORIES else build_original_board(args.stage, key)
+        build_board(args.stage, FACTORIES[key](), catalog=catalog) if key in FACTORIES else build_original_board(args.stage, key)
         for key in args.board or FACTORIES
     ]
+    if args.catalog:
+        write_json(args.catalog, catalog)
     if args.archive:
         write_archive(args.stage, leaves, args.archive)
 

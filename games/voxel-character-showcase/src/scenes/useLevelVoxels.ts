@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { VoxCharPackKey } from '@voxchar/contracts/packs'
+import type { LevelPackKey } from '@voxchar/contracts/levelPacks'
 import { resolveAssetUrl } from '../assetSource'
 import { assetRefFor } from '../avatar/composePolyAvatar'
 import type { VoxelWorkerResult } from './levelVoxels.worker'
 
-export function useLevelVoxels(pack: VoxCharPackKey | undefined) {
-  const [result, setResult] = useState<{ pack: VoxCharPackKey; value: VoxelWorkerResult }>()
+export function useLevelVoxels(pack: LevelPackKey | undefined) {
+  const [result, setResult] = useState<{ pack: LevelPackKey; value: VoxelWorkerResult }>()
 
   useEffect(() => {
     if (!pack) return

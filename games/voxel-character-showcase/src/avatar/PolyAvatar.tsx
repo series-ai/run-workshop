@@ -17,7 +17,7 @@ import {
   type MeshStandardMaterial,
 } from 'three'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import type { AvatarPartEntry, HeldItemEntry, WorldPropEntry } from '@voxchar/contracts/catalog'
+import type { AvatarPartEntry, HeldItemEntry, LevelPropEntry, WorldPropEntry } from '@voxchar/contracts/catalog'
 import type { PaletteColors } from '@voxchar/contracts/palette'
 import { RIG_SPECS, UAL1_RIG, type RigId } from '@voxchar/contracts/rig'
 import type { AssetRef } from '../assetSource'
@@ -532,7 +532,7 @@ type PolyPropLook =
 
 export type PolyPropProps = Placement &
   PolyPropLook & {
-    item: WorldPropEntry | HeldItemEntry
+    item: WorldPropEntry | HeldItemEntry | LevelPropEntry
     blobShadow?: boolean
     castShadow?: boolean
     receiveShadow?: boolean

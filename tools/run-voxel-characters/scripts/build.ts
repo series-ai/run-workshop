@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { z } from 'zod'
-import { packCatalogSchema, levelPropEntrySchema } from '../contracts/catalog'
+import { packCatalogSchema, characterLevelPropEntrySchema } from '../contracts/catalog'
 import { resolveLevelKits, levelKitsSchema, withLevelProps } from '../contracts/levelKits'
 import { humanoidSculptPose } from '../contracts/humanoidPose'
 import { leafFor, leavesFor, VOXCHAR_PACK_KEYS } from '../contracts/packs'
@@ -83,7 +83,12 @@ function main(): void {
     '--meta', META_DIR,
   ])
 
-  const levelProps = z.record(z.enum(VOXCHAR_PACK_KEYS), z.array(levelPropEntrySchema))
+  runBlender(join(TOOL_ROOT, 'blender/build_gameplay_boards.py'), [
+    '--stage', STAGE_DIR,
+    '--catalog', join(META_DIR, 'board-scenes.json'),
+  ])
+
+  const levelProps = z.record(z.enum(VOXCHAR_PACK_KEYS), z.array(characterLevelPropEntrySchema))
     .parse(JSON.parse(readFileSync(join(META_DIR, 'level-props.json'), 'utf8')))
   const packMetas = VOXCHAR_PACK_KEYS.map((pack) => {
     const p = join(META_DIR, `${pack}.json`)

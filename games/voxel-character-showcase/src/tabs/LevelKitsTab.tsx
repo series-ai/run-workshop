@@ -5,8 +5,10 @@ import type { MeshStandardMaterial } from 'three'
 import { ZodError } from 'zod'
 import type { LevelPropEntry } from '@voxchar/contracts/catalog'
 import { BUDGETS } from '@voxchar/contracts/budgets'
-import { levelKitsSchema, resolveLevelKits, type ResolvedLevelKit } from '@voxchar/contracts/levelKits'
+import { boardKitsSchema, levelKitsSchema, resolveLevelKit, resolveLevelKits, type ResolvedLevelKit } from '@voxchar/contracts/levelKits'
 import { VOXCHAR_PACK_KEYS, type VoxCharPackKey } from '@voxchar/contracts/packs'
+import { BOARD_PACK_KEYS, isCharacterPack, LEVEL_PACK_KEYS, type LevelPackKey } from '@voxchar/contracts/levelPacks'
+import type { PaletteColors } from '@voxchar/contracts/palette'
 import { PolyProp } from '../avatar/PolyAvatar'
 import type { PolyPartIndex } from '../avatar/composePolyAvatar'
 import { clearFailedGltfLoads } from '../avatar/polyRig'
@@ -29,7 +31,11 @@ const PACK_LABELS = {
   security: 'Security',
   creatures: 'Creatures',
   fantasy: 'Fantasy',
-} satisfies Record<VoxCharPackKey, string>
+  caverns: 'Emberdeep',
+  apocalypse: 'Last Light',
+  ww2: 'Estuary Front',
+  medieval: 'Alderwick',
+} satisfies Record<LevelPackKey, string>
 
 type Viewpoint = Pick<ResolvedLevelKit['view'], 'eye' | 'target'>
 const LOCAL_VIEW_DISTANCE = 30
@@ -72,17 +78,32 @@ const LEVEL_LIGHTS: Record<VoxCharPackKey, LevelLight> = {
   },
 }
 
-function LevelEnvironment({ pack, reach, eyeLevel, fixtures, environment }: {
-  pack: VoxCharPackKey
+function LevelEnvironment({ pack, reach, eyeLevel, fixtures, environment, viewpoint }: {
+  pack: LevelPackKey
   reach: number
   eyeLevel: boolean
   fixtures: ResolvedLevelKit['fixtures']
   environment: ResolvedLevelKit['environment']
+  viewpoint?: Viewpoint
 }) {
-  const legacy = LEVEL_LIGHTS[pack]
+  const standalone = !isCharacterPack(pack)
+  const legacy = LEVEL_LIGHTS[isCharacterPack(pack) ? pack : 'core']
   const { zenith, horizon } = environment ?? legacy
   const defaultFixtures = legacy.fixtures
-  const lights = fixtures ?? defaultFixtures.map(([position, color]) => ({ position, color, intensity: 8, distance: 4.5 }))
+  const allFixtures = fixtures ?? defaultFixtures.map(([position, color]) => ({ position, color, intensity: 8, distance: 4.5 }))
+  const lights = useMemo(() => {
+    if (!standalone) return allFixtures
+    if (!eyeLevel || !viewpoint) return []
+    const distanceFromShot = (position: Viewpoint['eye']) => Math.min(
+      ...[viewpoint.eye, viewpoint.target].map((point) => Math.hypot(...point.map((value, axis) => value - position[axis]!))),
+    )
+    return allFixtures
+      .map((fixture) => ({ fixture, distance: distanceFromShot(fixture.position) }))
+      .filter(({ fixture, distance }) => distance <= fixture.distance)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 8)
+      .map(({ fixture }) => ({ ...fixture, intensity: Math.min(fixture.intensity * 0.045, 100) }))
+  }, [allFixtures, eyeLevel, standalone, viewpoint])
   const shadowSize = useThree((state) => state.size.width < 640 ? 1024 : 2048)
   const [x, y, z] = environment?.sunDirection ?? legacy.sun
   const sky = useMemo(
@@ -92,7 +113,7 @@ function LevelEnvironment({ pack, reach, eyeLevel, fixtures, environment }: {
   useEffect(() => () => sky?.dispose(), [sky])
 
   const color = environment?.sunColor ?? legacy.sun[3]
-  const sunIntensity = environment?.sunIntensity ?? (pack === 'security' ? 1.55 : 2.75)
+  const sunIntensity = (environment?.sunIntensity ?? (pack === 'security' ? 1.55 : 2.75)) * (standalone ? 0.6 : 1)
   const hemisphere: [string, string, number] = environment
     ? [environment.skyFill, environment.groundFill, environment.fillIntensity]
     : ['#b5cfed', '#746447', pack === 'security' ? 0.64 : 1.04]
@@ -125,7 +146,18 @@ function LevelEnvironment({ pack, reach, eyeLevel, fixtures, environment }: {
   )
 }
 
-type KitState = { kind: 'loading' } | { kind: 'ready'; levels: ReturnType<typeof resolveLevelKits> } | { kind: 'error'; detail: string }
+type ReadyKits = {
+  kind: 'ready'
+  levels: ReadonlyMap<LevelPackKey, ResolvedLevelKit>
+  boards: ReturnType<typeof boardKitsSchema.parse>
+}
+type KitState = { kind: 'loading' } | ReadyKits | { kind: 'error'; detail: string }
+
+async function loadLayoutFile(file: string, signal: AbortSignal): Promise<unknown> {
+  const response = await fetch(`catalog/${file}.json`, { signal })
+  if (!response.ok) throw new Error(`Level layout request failed (${file}, ${response.status}).`)
+  return response.json()
+}
 
 function describeIssue(error: unknown): string {
   if (error instanceof ZodError) {
@@ -215,8 +247,9 @@ function LevelShadowCache({ revision }: { revision: string }) {
   return null
 }
 
-function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel, renderer, optimized }: {
-  pack: VoxCharPackKey
+function KitModels({ pack, palette, layout, subject, motion, lightsOn, eyeLevel, renderer, optimized }: {
+  pack: LevelPackKey
+  palette: PaletteColors
   layout?: ResolvedLevelKit
   subject?: LevelPropEntry
   motion: string
@@ -237,18 +270,18 @@ function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel, renderer
   }, [layout])
   const reflection = useLevelWater(layout, eyeLevel && !subject)
   const materials = useMemo(() => {
-    const base = createPolyMaterial(PALETTES[pack], 'level', optimized)
+    const base = createPolyMaterial(palette, 'level', optimized)
     const overrides = new Map<string, MeshStandardMaterial>()
     const models = subject ? [subject] : groups.map(({ item }) => item)
-    const { zenith, horizon } = layout?.environment ?? LEVEL_LIGHTS[pack]
+    const { zenith, horizon } = layout?.environment ?? LEVEL_LIGHTS[isCharacterPack(pack) ? pack : 'core']
     for (const item of models) {
       if (item.palette || item.surface) {
         const surface = item.surface === 'water' ? { water: { zenith, horizon, reflection } } : item.surface ?? 'level'
-        overrides.set(item.id, createPolyMaterial({ ...PALETTES[pack], ...item.palette }, surface, optimized))
+        overrides.set(item.id, createPolyMaterial({ ...palette, ...item.palette }, surface, optimized))
       }
     }
     return { base, overrides }
-  }, [groups, layout?.environment, optimized, pack, reflection, subject])
+  }, [groups, layout?.environment, optimized, pack, palette, reflection, subject])
   useEffect(() => () => {
     materials.base.dispose()
     for (const material of materials.overrides.values()) material.dispose()
@@ -287,31 +320,32 @@ function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel, renderer
 export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; index: PolyPartIndex }) {
   const [state, setState] = useState<KitState>({ kind: 'loading' })
   const [layoutAttempt, setLayoutAttempt] = useState(0)
-  const [pack, setPack] = useState<VoxCharPackKey>('core')
+  const [pack, setPack] = useState<LevelPackKey>('core')
   const [selected, setSelected] = useState('')
   const [motion, setMotion] = useState('')
   const [lightsOn, setLightsOn] = useState(false)
   const [viewIndex, setViewIndex] = useState(0)
   const [renderer, setRenderer] = useState<'mesh' | 'voxel'>('mesh')
   const [optimized, setOptimized] = useState(false)
-  const items = useMemo(() => new Map(
-    bundle.packs[pack].levelKitProps
-      .map((prop) => [prop.id, prop]),
-  ), [bundle, pack])
+  const board = state.kind === 'ready' && !isCharacterPack(pack) ? state.boards[pack] : undefined
+  const palette = board?.palette ?? PALETTES[isCharacterPack(pack) ? pack : 'core']
+  const props = isCharacterPack(pack) ? bundle.packs[pack].levelKitProps : board?.props
+  const items = useMemo(() => new Map(props?.map((prop) => [prop.id, prop])), [props])
   const subject = items.get(selected)
   const sceneKey = `${pack}:${selected}`
 
   useEffect(() => {
     const controller = new AbortController()
-    fetch('catalog/level-scenes.json', { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error(`Level layout request failed (${response.status})`)
-        return response.json()
-      })
-      .then((json: unknown) => {
-        const levels = resolveLevelKits(levelKitsSchema.parse(json), VOXCHAR_PACK_KEYS.map((key) => bundle.packs[key]))
-        if (!controller.signal.aborted) setState({ kind: 'ready', levels })
-      })
+    Promise.all([
+      loadLayoutFile('level-scenes', controller.signal),
+      loadLayoutFile('board-scenes', controller.signal),
+    ]).then(([levelData, boardData]) => {
+      const original = resolveLevelKits(levelKitsSchema.parse(levelData), VOXCHAR_PACK_KEYS.map((key) => bundle.packs[key]))
+      const boards = boardKitsSchema.parse(boardData)
+      const levels = new Map<LevelPackKey, ResolvedLevelKit>(original)
+      for (const key of BOARD_PACK_KEYS) levels.set(key, resolveLevelKit(key, boards[key].layout, boards[key].props))
+      if (!controller.signal.aborted) setState({ kind: 'ready', levels, boards })
+    })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
         console.error('Could not load the Cubix level layouts:', error)
@@ -343,7 +377,7 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
     <section className="level-kit" aria-label="Cubix level kits">
       <div className="level-kit-controls">
         <div className="level-kit-packs" role="group" aria-label="Prop pack">
-          {VOXCHAR_PACK_KEYS.map((key) => (
+          {LEVEL_PACK_KEYS.map((key) => (
             <button
               key={key}
               className={`pill-btn ${key === pack ? 'active' : ''}`}
@@ -416,17 +450,17 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
                 </>
               ) : (
                 <LevelEnvironment pack={pack} reach={lightReach} eyeLevel={eyeLevel}
-                  fixtures={layout?.fixtures} environment={layout?.environment} />
+                  fixtures={layout?.fixtures} environment={layout?.environment} viewpoint={viewpoint} />
               )}
               <KitCamera key={`${sceneKey}:${viewIndex}`} subject={subject} view={view} viewpoint={viewpoint} />
               {!subject && eyeLevel && <LevelLightingEffects />}
               {!subject && optimized && <LevelShadowCache revision={`${pack}:${renderer}:${viewIndex}`} />}
               <Suspense fallback={<Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading models…</span></Html>}>
-                <KitModels key={sceneKey} pack={pack} layout={layout} subject={subject} motion={motion}
+                <KitModels key={sceneKey} pack={pack} palette={palette} layout={layout} subject={subject} motion={motion}
                   lightsOn={lightsOn} eyeLevel={eyeLevel} renderer={renderer} optimized={!subject && optimized} />
               </Suspense>
               <Suspense fallback={null}>
-                {!subject && <LevelWorkstations pack={pack} stop={viewStop?.label} bundle={bundle} index={index} />}
+                {!subject && isCharacterPack(pack) && <LevelWorkstations pack={pack} stop={viewStop?.label} bundle={bundle} index={index} />}
               </Suspense>
             </Canvas>
           </div>

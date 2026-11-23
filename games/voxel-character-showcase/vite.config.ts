@@ -6,6 +6,7 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { rundotGameLibrariesPlugin } from '@series-inc/rundot-game-sdk/vite'
 import { PINS } from './src/pins'
+import { BOARD_PACK_KEYS, levelLeafId } from '../../tools/run-voxel-characters/contracts/levelPacks'
 
 const ROOT = import.meta.dirname
 const CONTRACTS = resolve(ROOT, '../../tools/run-voxel-characters/contracts')
@@ -55,7 +56,7 @@ function requirePins(): Plugin {
       const packsJson = JSON.parse(readFileSync(join(CONTRACTS, 'data/packs.json'), 'utf8')) as {
         packs: Record<string, { dir: string; worldTheme?: string; hasWorldLeaf: boolean }>
       }
-      const leaves: string[] = []
+      const leaves = BOARD_PACK_KEYS.map((pack) => levelLeafId(pack, 'world'))
       for (const def of Object.values(packsJson.packs)) {
         leaves.push(`${def.dir}/3D/characters`)
         if (def.hasWorldLeaf && def.worldTheme) {

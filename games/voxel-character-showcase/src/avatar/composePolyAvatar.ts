@@ -9,7 +9,8 @@ import {
   type HeldItemEntry,
   type PackCatalog,
 } from '@voxchar/contracts/catalog'
-import { leafFor, type VoxCharPackKey } from '@voxchar/contracts/packs'
+import { type VoxCharPackKey } from '@voxchar/contracts/packs'
+import { levelLeafId, type LevelPackKey } from '@voxchar/contracts/levelPacks'
 import { CONTEXT_DEFAULT_PALETTES, type PaletteColors } from '@voxchar/contracts/palette'
 import type { RigId } from '@voxchar/contracts/rig'
 import type { AssetRef } from '../assetSource'
@@ -131,8 +132,8 @@ export function resolveVisibleParts(
   return { parts, totalTriangles, extraCovered }
 }
 
-export function assetRefFor(pack: VoxCharPackKey, leaf: 'characters' | 'world', relativePath: string): AssetRef {
-  return { leafId: leafFor(pack, leaf).id, path: relativePath }
+export function assetRefFor(pack: LevelPackKey, leaf: 'characters' | 'world', relativePath: string): AssetRef {
+  return { leafId: levelLeafId(pack, leaf), path: relativePath }
 }
 
 export function createDefaultSelection(

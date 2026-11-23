@@ -1324,7 +1324,7 @@
       "nodeName": "torso_runner_tee",
       "slot": "torso",
       "label": "Fitted Runner Tee",
-      "triangles": 242,
+      "triangles": 238,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -6201,6 +6201,554 @@
       "palette": {
         "detail": "#908d80"
       }
+    },
+    {
+      "id": "prop_core_certification_yard_concrete",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_yard_concrete.glb",
+      "nodeName": "prop_core_certification_yard_concrete",
+      "label": "Certification yard concrete",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#8e9791",
+        "secondary": "#576765"
+      }
+    },
+    {
+      "id": "prop_core_certification_bay_roof",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_bay_roof.glb",
+      "nodeName": "prop_core_certification_bay_roof",
+      "label": "Certification bay roof",
+      "triangles": 456,
+      "bounds": {
+        "min": [
+          -2.9,
+          0,
+          -2.1
+        ],
+        "max": [
+          2.9,
+          4.4,
+          2.1
+        ],
+        "size": [
+          5.8,
+          4.4,
+          4.2
+        ]
+      },
+      "palette": {
+        "primary": "#4b6c81",
+        "trim": "#a2aeb2"
+      }
+    },
+    {
+      "id": "prop_core_certification_wall",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_wall.glb",
+      "nodeName": "prop_core_certification_wall",
+      "label": "Certification wall",
+      "triangles": 332,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.7,
+          0.3
+        ],
+        "size": [
+          4,
+          3.7,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_certification_gable_sash",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_gable_sash.glb",
+      "nodeName": "prop_core_certification_gable_sash",
+      "label": "Certification gable sash",
+      "triangles": 630,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          2.9,
+          0.4
+        ],
+        "size": [
+          4,
+          2.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_core_certification_window_infill",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_window_infill.glb",
+      "nodeName": "prop_core_certification_window_infill",
+      "label": "Certification window infill",
+      "triangles": 12,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.05
+        ],
+        "max": [
+          1.8,
+          1.5,
+          0.05
+        ],
+        "size": [
+          3.6,
+          1.5,
+          0.1
+        ]
+      },
+      "palette": {
+        "visor": "#4d6976"
+      }
+    },
+    {
+      "id": "prop_core_certification_gable_coping",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_gable_coping.glb",
+      "nodeName": "prop_core_certification_gable_coping",
+      "label": "Certification gable coping",
+      "triangles": 332,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.6
+        ],
+        "max": [
+          2,
+          0.3,
+          0.6
+        ],
+        "size": [
+          4,
+          0.3,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_core_brake_roller_bed",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_brake_roller_bed.glb",
+      "nodeName": "prop_core_brake_roller_bed",
+      "label": "Brake roller bed",
+      "triangles": 820,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.1
+        ],
+        "max": [
+          2,
+          0.8,
+          1.1
+        ],
+        "size": [
+          4,
+          0.8,
+          2.2
+        ]
+      }
+    },
+    {
+      "id": "prop_core_roller_test_pickup",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_roller_test_pickup.glb",
+      "nodeName": "prop_core_roller_test_pickup",
+      "label": "Roller test pickup",
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.85
+        ],
+        "max": [
+          0.95,
+          1.7,
+          1.85
+        ],
+        "size": [
+          1.9,
+          1.7,
+          3.7
+        ]
+      },
+      "palette": {
+        "primary": "#ad603c",
+        "trim": "#deab60"
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_core_roller_test_pickup.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lower Tailgate",
+          "Roll and brake"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_taillamp_03_light",
+          "vehicle_root_taillamp_04_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_core_roller_test_display",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_roller_test_display.glb",
+      "nodeName": "prop_core_roller_test_display",
+      "label": "Roller test display",
+      "triangles": 394,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.2,
+          3.2,
+          0.5
+        ],
+        "size": [
+          2.4,
+          3.2,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_certification_badge",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_badge.glb",
+      "nodeName": "prop_core_certification_badge",
+      "label": "Certification badge",
+      "triangles": 406,
+      "bounds": {
+        "min": [
+          -2.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          2.25,
+          1.1,
+          0.25
+        ],
+        "size": [
+          4.5,
+          1.1,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_brake_bay_toolboard",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_brake_bay_toolboard.glb",
+      "nodeName": "prop_core_brake_bay_toolboard",
+      "label": "Brake bay toolboard",
+      "triangles": 634,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          2.9,
+          0.4
+        ],
+        "size": [
+          4,
+          2.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_core_brake_test_console",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_brake_test_console.glb",
+      "nodeName": "prop_core_brake_test_console",
+      "label": "Brake test console",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.65,
+          1.6,
+          0.55
+        ],
+        "size": [
+          1.3,
+          1.6,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_core_road_test_gantry",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_road_test_gantry.glb",
+      "nodeName": "prop_core_road_test_gantry",
+      "label": "Road test gantry",
+      "triangles": 490,
+      "bounds": {
+        "min": [
+          -2.4,
+          0,
+          -0.4
+        ],
+        "max": [
+          2.4,
+          3.4,
+          0.4
+        ],
+        "size": [
+          4.8,
+          3.4,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#587786",
+        "primary": "#235b72",
+        "trim": "#e4ad4a"
+      }
+    },
+    {
+      "id": "prop_core_road_test_shelter",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_road_test_shelter.glb",
+      "nodeName": "prop_core_road_test_shelter",
+      "label": "Road test shelter",
+      "triangles": 364,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -1.8
+        ],
+        "max": [
+          1.75,
+          3.2,
+          1.8
+        ],
+        "size": [
+          3.5,
+          3.2,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_core_certification_pickup",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_certification_pickup.glb",
+      "nodeName": "prop_core_certification_pickup",
+      "label": "Certification pickup",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -1.85
+        ],
+        "max": [
+          1.05,
+          2,
+          1.85
+        ],
+        "size": [
+          2.1,
+          2,
+          3.7
+        ]
+      },
+      "palette": {
+        "primary": "#527486",
+        "trim": "#e6b461"
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_core_certification_pickup.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lower Tailgate"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_headlamp_03_light",
+          "vehicle_root_taillamp_04_light",
+          "vehicle_root_taillamp_05_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_core_brake_pressure_dial",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_brake_pressure_dial.glb",
+      "nodeName": "prop_core_brake_pressure_dial",
+      "label": "Brake pressure dial",
+      "triangles": 154,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.4,
+          0.7,
+          0.25
+        ],
+        "size": [
+          0.8,
+          0.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_roller_gauge_pedestal",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_roller_gauge_pedestal.glb",
+      "nodeName": "prop_core_roller_gauge_pedestal",
+      "label": "Roller gauge pedestal",
+      "triangles": 90,
+      "bounds": {
+        "min": [
+          -0.15,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.15,
+          0.9,
+          0.15
+        ],
+        "size": [
+          0.3,
+          0.9,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_core_roller_test_air_line",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_roller_test_air_line.glb",
+      "nodeName": "prop_core_roller_test_air_line",
+      "label": "Roller test air line",
+      "triangles": 54,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.3,
+          0.2,
+          0.25
+        ],
+        "size": [
+          0.6,
+          0.2,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_core_release_ignition_key",
+      "pack": "core",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_core_release_ignition_key.glb",
+      "nodeName": "prop_core_release_ignition_key",
+      "label": "Release ignition key",
+      "triangles": 38,
+      "bounds": {
+        "min": [
+          -0.2,
+          0,
+          -0.05
+        ],
+        "max": [
+          0.2,
+          0.2,
+          0.05
+        ],
+        "size": [
+          0.4,
+          0.2,
+          0.1
+        ]
+      }
     }
   ],
   "presets": [
@@ -7948,12 +8496,12 @@
         "detail": "#9e3e2d"
       },
       "proportions": {
-        "height": 0.97,
+        "height": 1.01,
         "legRatio": 0.9,
         "build": 0,
-        "shoulderWidth": 1.46,
-        "torsoBulk": 1,
-        "waistScale": 1,
+        "shoulderWidth": 1.52,
+        "torsoBulk": 1.08,
+        "waistScale": 1.07,
         "headScale": 1,
         "limbThickness": 1,
         "armLength": 0.95
@@ -7961,7 +8509,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 91.4051,
+        "totalMassKg": 101.5871,
         "bodies": [
           {
             "bone": "pelvis",
@@ -7971,20 +8519,20 @@
               0,
               0
             ],
-            "massKg": 15.6142,
+            "massKg": 17.2323,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1086,
-                0.1417,
-                0.0612
+                -0.112,
+                0.1453,
+                0.0651
               ],
               "b": [
-                0.1086,
-                0.1417,
-                0.0612
+                0.112,
+                0.1453,
+                0.0651
               ],
-              "radius": 0.1499
+              "radius": 0.155
             },
             "joint": null,
             "collisionGroup": 1
@@ -7994,23 +8542,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2621,
-              -0.0027
+              0.2678,
+              -0.0009
             ],
-            "massKg": 13.3133,
+            "massKg": 16.309,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1174,
-                0.0461,
-                0.0264
+                -0.1258,
+                0.0493,
+                0.0283
               ],
               "b": [
-                0.1174,
-                0.0461,
-                0.0264
+                0.1258,
+                0.0493,
+                0.0283
               ],
-              "radius": 0.1342
+              "radius": 0.1434
             },
             "joint": {
               "type": "cone_twist",
@@ -8042,23 +8590,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2196,
-              -0.0204
+              0.2343,
+              -0.0218
             ],
-            "massKg": 19.9602,
+            "massKg": 23.6551,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.096,
-                0.0768,
-                0.0278
+                -0.0988,
+                0.082,
+                0.0299
               ],
               "b": [
-                0.096,
-                0.0768,
-                0.0278
+                0.0988,
+                0.082,
+                0.0299
               ],
-              "radius": 0.1867
+              "radius": 0.2004
             },
             "joint": {
               "type": "cone_twist",
@@ -8090,8 +8638,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2684,
-              0.0088
+              0.282,
+              0.009
             ],
             "massKg": 6.16,
             "collider": {
@@ -8137,22 +8685,22 @@
             "bone": "upperarm_l",
             "parentBody": "spine_03",
             "parentAnchor": [
-              0.2241,
-              0.0663,
-              0.0258
+              0.2396,
+              0.0707,
+              0.0288
             ],
-            "massKg": 2.7624,
+            "massKg": 2.916,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0051,
-                -0.0073,
+                -0.0077,
                 0.0012
               ],
               "b": [
                 -0.0053,
-                0.2592,
-                0.0058
+                0.2736,
+                0.0061
               ],
               "radius": 0.0665
             },
@@ -8186,21 +8734,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.2881,
-              -0.0004
+              0.3041,
+              -0.0001
             ],
-            "massKg": 1.7874,
+            "massKg": 1.8868,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0052,
-                0.0048,
+                0.005,
                 0.0068
               ],
               "b": [
                 -0.0051,
-                0.2212,
-                0.0031
+                0.2335,
+                0.0028
               ],
               "radius": 0.0665
             },
@@ -8234,8 +8782,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.247,
-              0.0004
+              0.2608,
+              0.0001
             ],
             "massKg": 0.704,
             "collider": {
@@ -8281,22 +8829,22 @@
             "bone": "upperarm_r",
             "parentBody": "spine_03",
             "parentAnchor": [
-              -0.2241,
-              0.0663,
-              0.0258
+              -0.2396,
+              0.0707,
+              0.0288
             ],
-            "massKg": 2.7624,
+            "massKg": 2.916,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0051,
-                -0.0073,
+                -0.0077,
                 0.0012
               ],
               "b": [
                 0.0053,
-                0.2592,
-                0.0058
+                0.2736,
+                0.0061
               ],
               "radius": 0.0665
             },
@@ -8330,21 +8878,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.2881,
-              -0.0004
+              0.3041,
+              -0.0001
             ],
-            "massKg": 1.7874,
+            "massKg": 1.8868,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0052,
-                0.0048,
+                0.005,
                 0.0068
               ],
               "b": [
                 0.0051,
-                0.2212,
-                0.0031
+                0.2335,
+                0.0028
               ],
               "radius": 0.0665
             },
@@ -8378,8 +8926,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.247,
-              0.0004
+              0.2608,
+              0.0001
             ],
             "massKg": 0.704,
             "collider": {
@@ -8425,22 +8973,22 @@
             "bone": "thigh_l",
             "parentBody": "pelvis",
             "parentAnchor": [
-              0.0943,
-              0.0573,
-              0.0099
+              0.0972,
+              0.0586,
+              0.0108
             ],
-            "massKg": 7.9641,
+            "massKg": 8.4333,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0059,
-                0.3471,
-                -0.0732
+                0.3676,
+                -0.0734
               ],
               "b": [
                 0.0058,
-                0.064,
-                -0.0712
+                0.0678,
+                -0.0713
               ],
               "radius": 0.1175
             },
@@ -8474,20 +9022,20 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.3936,
-              0.0004
+              0.4168,
+              0.0003
             ],
-            "massKg": 3.6407,
+            "massKg": 3.8552,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0061,
-                0.4202,
-                -0.0578
+                0.445,
+                -0.0598
               ],
               "b": [
                 0.0059,
-                -0.0005,
+                -0.0004,
                 -0.024
               ],
               "radius": 0.0665
@@ -8522,8 +9070,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.404,
-              0.0052
+              0.4276,
+              0.0033
             ],
             "massKg": 1.32,
             "collider": {
@@ -8569,22 +9117,22 @@
             "bone": "thigh_r",
             "parentBody": "pelvis",
             "parentAnchor": [
-              -0.0943,
-              0.0573,
-              0.0099
+              -0.0972,
+              0.0586,
+              0.0108
             ],
-            "massKg": 7.9641,
+            "massKg": 8.4333,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0059,
-                0.3471,
-                -0.0732
+                0.3676,
+                -0.0734
               ],
               "b": [
                 -0.0058,
-                0.064,
-                -0.0712
+                0.0678,
+                -0.0713
               ],
               "radius": 0.1175
             },
@@ -8618,20 +9166,20 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.3936,
-              0.0004
+              0.4168,
+              0.0003
             ],
-            "massKg": 3.6407,
+            "massKg": 3.8552,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0061,
-                0.4202,
-                -0.0578
+                0.445,
+                -0.0598
               ],
               "b": [
                 -0.0059,
-                -0.0005,
+                -0.0004,
                 -0.024
               ],
               "radius": 0.0665
@@ -8666,8 +9214,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.404,
-              0.0052
+              0.4276,
+              0.0033
             ],
             "massKg": 1.32,
             "collider": {

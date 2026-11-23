@@ -1,13 +1,13 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
 import { AnimationMixer, Mesh, MeshStandardMaterial, SpotLight } from 'three'
-import type { WorldPropEntry } from '@voxchar/contracts/catalog'
+import type { LevelPropEntry } from '@voxchar/contracts/catalog'
 import { assetRefFor } from '../avatar/composePolyAvatar'
 import { readGltf } from '../avatar/polyRig'
 import { useAssetUrls } from '../useAssetUrl'
 
 type VehicleProps = {
-  item: Pick<WorldPropEntry, 'pack' | 'leaf'>
+  item: Pick<LevelPropEntry, 'pack' | 'leaf'>
   path: string
   clipName: string
   lightsOn: boolean

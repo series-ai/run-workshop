@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { levelPropEntrySchema, type PackCatalog, type LevelPropEntry } from './catalog'
+import { levelPropEntrySchema, type PackCatalog } from './catalog'
 import { resolveLevelKits, levelKitsSchema, withLevelProps, type LevelKits } from './levelKits'
 import { VOXCHAR_PACK_KEYS } from './packs'
 import { levelFinishesSchema } from './levelFinishes'
@@ -16,7 +16,7 @@ function fixture() {
     heldItems: [],
     presets: [],
     props: [],
-    levelKitProps: Array.from({ length: 24 }, (_, index): LevelPropEntry => ({
+    levelKitProps: Array.from({ length: 24 }, (_, index): PackCatalog['levelKitProps'][number] => ({
       id: `prop_${pack}_${index}`,
       pack,
       leaf: 'characters',
@@ -143,4 +143,10 @@ describe('Cubix level kit contracts', () => {
     expect(catalog.props).toEqual(worldProps)
     expect(catalog.levelKitProps).toEqual([kitProp])
   })
+})
+
+it('accepts a prop from a world-only Cubix pack', () => {
+  const { core } = fixture()
+  const prop = { ...core.levelKitProps[0], pack: 'caverns', leaf: 'world' }
+  expect(levelPropEntrySchema.safeParse(prop).success).toBe(true)
 })
