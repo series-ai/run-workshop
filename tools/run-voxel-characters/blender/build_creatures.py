@@ -181,12 +181,12 @@ def build_guard_hound(rig):
     """Guard hound. Cells are world lattice cells (see lattice_anchor). The left legs are mirrored to the right.
 
     Palette roles: primary = coat, skin = tan marks and lower legs, secondary = harness, hair = nose, pads and
-    mouth, accent = collar and glowing eyes, metal = armour plates, collar tag and fangs.
+    mouth, accent = status lamp and eyes, metal = armour plates, collar tag and fangs.
     """
     part = vk.VoxelPart('body_dire_wolf')
     coat, coat_dark, tan = vox('primary'), vox('primary', -0.3), vox('skin')
     harness, black = vox('secondary'), vox('hair', -0.2)
-    collar, plate = vox('accent', -0.1), vox('metal')
+    collar, plate = vox('secondary', -0.25), vox('metal', -0.25)
     bright = vox('metal', 0.5, mottle=False)
     eye = vox('accent', emissive=True, mottle=False)
 
@@ -206,13 +206,13 @@ def build_guard_hound(rig):
         .box((-4, 4), (12, 21), (8, 13), coat)
         .paint((-2, 2), (12, 16), 13, tan), role='trunk')
 
-    # ---- neck with a studded collar and a tag --------------------------------------------------------------------
+    # ---- neck with a status lamp and a tag --------------------------------------------------------------------
     seg('neck', Sculpt()
         .box((-2, 2), (17, 22), (12, 15), coat)
         .box((-3, 3), (19, 20), (11, 16), collar)
-        .paint_both(3, 20, 15, bright)
-        .paint_both(2, 20, 16, bright)
-        .box(0, 18, 16, bright))
+        .paint_both(3, 20, 15, plate)
+        .box(0, 18, 16, plate)
+        .paint(0, 19, 16, eye))
 
     # ---- head: skull, upper muzzle, nose, fangs, cyber-eyes below a brow, pointed ears ---------------------------
     seg('head', Sculpt()

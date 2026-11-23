@@ -831,8 +831,14 @@ async function main(): Promise<void> {
       assertPropCraft(glb, prop)
       const node = glb.doc.nodes!.find((n) => n.name === prop.nodeName)!
       const tris = nodeTriangleCount(glb, node)
-      if (tris > BUDGETS.classes.prop.maxTriangles) {
-        throw new Error(`Prop "${prop.id}" has ${tris} tris > budget ${BUDGETS.classes.prop.maxTriangles}`)
+      const budget = prop.relativePath.startsWith('level-kit/') ? BUDGETS.classes.levelProp : BUDGETS.classes.prop
+      if (tris > budget.maxTriangles) {
+        throw new Error(`Prop "${prop.id}" has ${tris} tris > budget ${budget.maxTriangles}`)
+      }
+      const leaf = leavesFor(cat.pack).find((candidate) => candidate.kind === prop.leaf)!
+      const bytes = statSync(join(STAGE_DIR, leaf.id, prop.relativePath)).size
+      if (bytes > (budget.maxBytes ?? Infinity)) {
+        throw new Error(`Prop "${prop.id}" is ${bytes} bytes > budget`)
       }
       if (Math.abs(prop.bounds.min[1]) > 0.015) {
         throw new Error(`Prop "${prop.id}" not grounded on y=0 (min.y=${prop.bounds.min[1]})`)

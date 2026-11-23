@@ -84,7 +84,7 @@ describe('Cubix level kit contracts', () => {
       skyFill: '#c2cbdb', groundFill: '#91816c', fillIntensity: 1.1,
       sunDirection: [-2.4, 1.8, 1.8], sunColor: '#fff0db', sunIntensity: 2.6,
     }
-    const core = { ...kits.core, view: { ...kits.core.view, stops: [stop] }, fixtures: [fixtureLight], environment }
+    const core = { ...kits.core, view: { ...kits.core.view, far: 240, stops: [stop] }, fixtures: [fixtureLight], environment }
 
     const parsed = levelKitsSchema.parse({ ...kits, core })
 

@@ -19,6 +19,7 @@
     "headwear": { "maxTriangles": 360, "maxMaterials": 1, "maxWeightError": 0.0001 },
     "back": { "maxTriangles": 320, "maxMaterials": 1, "maxWeightError": 0.0001 },
     "held": { "maxTriangles": 400, "maxMaterials": 1, "maxBytes": 65536 },
-    "prop": { "maxTriangles": 650, "maxMaterials": 1, "maxBytes": 81920 }
+    "prop": { "maxTriangles": 650, "maxMaterials": 1, "maxBytes": 81920 },
+    "levelProp": { "maxTriangles": 3600, "maxMaterials": 1, "maxBytes": 524288 }
   }
 }

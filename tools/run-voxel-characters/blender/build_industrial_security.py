@@ -144,7 +144,7 @@ IND_SHIRT_DARK = c('primary', -0.28)
 IND_SKIN = c('skin')
 IND_APRON = c('leather', 0.25)
 IND_APRON_GRIME = c('leather', -0.25)
-IND_APRON_BLEACH = c('trim', 0.15)
+IND_APRON_WEAR = c('leather', 0.5)
 IND_PACK = c('leather', 0.5)
 IND_PACK_FLAP = c('leather', -0.125)
 IND_RED = c('detail', 0.05)
@@ -192,7 +192,7 @@ def torso_ind_work_apron() -> vk.VoxelPart:
     torso.set(2, y0 + 5, OUTER_FRONT, IND_STEEL)                        # Chest pocket rule clip
     torso.fill(-2, y0 + 3, OUTER_FRONT, -1, y0 + 3, OUTER_FRONT, IND_APRON_GRIME)
     torso.set(-2, y0 + 4, OUTER_FRONT, IND_APRON_GRIME)
-    torso.set(-1, bib_y - 1, OUTER_FRONT, IND_APRON_BLEACH)
+    torso.set(-1, bib_y - 1, OUTER_FRONT, IND_APRON_WEAR)
     torso.set(1, bib_y, OUTER_FRONT, IND_APRON_GRIME)
     torso.fill(-2, y0, OUTER_FRONT + 1, 0, y0 + 2, OUTER_FRONT + 1, IND_PACK)   # Bulging waist pack
     torso.fill(-3, y0 + 2, OUTER_FRONT + 1, 0, y0 + 2, OUTER_FRONT + 1, IND_PACK_FLAP)
@@ -285,7 +285,7 @@ def headwear_welding_cap() -> vk.VoxelPart:
     cloth_dark = c('detail', -0.3)
     strap = c('leather', -0.45)
     frame = c('metal', -0.35, mottle=False)
-    lens = c('visor', 0.15, mottle=False)
+    lens = c('visor', -0.2, mottle=False)
     band = core.HAT_CROWN_Y - 1                                                    # Seat band on upper forehead (y = 71)
     grid = core.hat_seg(part, core.HAT_SHELL_X, (core.HAT_BROW_Y - 1, band + 3), (-3, core.HAT_VISOR_Z))
     # Nape flap above neck/ears.
@@ -311,7 +311,9 @@ def torso_ind_coveralls() -> vk.VoxelPart:
     y0 = TORSO_Y[0]
 
     torso = core.shirt_torso(part, IND_SHIRT, hem=IND_SHIRT_DARK, grid_y=(BELT_Y, SHOULDER_Y), z=TORSO_OUTER_Z)
-    torso.fill(-CHEST_HALF_X, y0 + 3, TORSO_BACK, CHEST_HALF_X, y0 + 3, TORSO_FRONT, IND_REFLECTIVE)   # Reflective waist stripe
+    for side in (-1, 1):
+        x0, x1 = sorted((side * 2, side * CHEST_HALF_X))
+        torso.fill(x0, y0 + 3, TORSO_BACK, x1, y0 + 3, TORSO_FRONT, IND_REFLECTIVE)
     torso.fill(0, y0 + 1, TORSO_FRONT, 0, SHOULDER_Y - 1, TORSO_FRONT, IND_STEEL)   # Center zip
     torso.fill(2, SHOULDER_Y - 2, OUTER_FRONT, 3, SHOULDER_Y - 1, OUTER_FRONT, IND_SHIRT)   # Chest pocket
     torso.fill(2, SHOULDER_Y - 1, OUTER_FRONT, 3, SHOULDER_Y - 1, OUTER_FRONT, IND_SHIRT_DARK)
@@ -508,7 +510,7 @@ SEC_SKIN = c('skin')
 SEC_UNDERSHIRT = c('trim', 0.45)
 SEC_BADGE = c('accent', 0.42, mottle=False)
 SEC_BADGE_DARK = c('accent', -0.15, mottle=False)
-SEC_BAND = c('trim', 0.45)
+SEC_BAND = c('primary', 0.3)
 SEC_PANTS = c('secondary')
 SEC_PANTS_DARK = c('secondary', -0.28)
 SEC_BELT = c('leather', -0.35)
@@ -873,7 +875,7 @@ INDUSTRIAL = PackSpec(
             palette={
                 'skin': '#d49062', 'hair': '#382419', 'primary': '#4b5f76',
                 'secondary': '#3b424c', 'accent': '#3996e8', 'metal': '#9ca5b0',
-                'trim': '#dfd6c1', 'leather': '#593b27', 'visor': '#46c6eb', 'detail': '#8a462e',
+                'trim': '#dfd6c1', 'leather': '#593b27', 'visor': '#447e8e', 'detail': '#8a462e',
             },
         ),
         preset(

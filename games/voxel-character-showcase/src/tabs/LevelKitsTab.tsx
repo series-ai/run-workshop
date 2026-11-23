@@ -32,6 +32,11 @@ const PACK_LABELS = {
 } satisfies Record<VoxCharPackKey, string>
 
 type Viewpoint = Pick<ResolvedLevelKit['view'], 'eye' | 'target'>
+const LOCAL_VIEW_DISTANCE = 30
+
+function viewDistance(viewpoint: Viewpoint): number {
+  return Math.hypot(...viewpoint.eye.map((value, axis) => value - viewpoint.target[axis]!))
+}
 
 type LevelLight = {
   zenith: string
@@ -172,12 +177,14 @@ function KitCamera({ subject, view, viewpoint }: {
   const targetY = subject ? subject.bounds.size[1] / 2 : 0
   const extent = subject ? Math.max(...subject.bounds.size) : Math.max(...(view?.size ?? [12]))
   const zoom = Math.min(width / (extent * 1.39), height / (extent * 1.09))
+  const far = subject ? 100 : (view?.far ?? 100)
 
   if (viewpoint && !subject) {
+    const maxDistance = Math.max(LOCAL_VIEW_DISTANCE, viewDistance(viewpoint) * 1.25)
     return (
       <>
-        <PerspectiveCamera makeDefault position={viewpoint.eye} fov={54} near={0.04} far={100} />
-        <OrbitControls makeDefault target={viewpoint.target} minDistance={0.5} maxDistance={30} enableDamping />
+        <PerspectiveCamera makeDefault position={viewpoint.eye} fov={54} near={0.04} far={far} />
+        <OrbitControls makeDefault target={viewpoint.target} minDistance={0.5} maxDistance={maxDistance} enableDamping />
       </>
     )
   }
@@ -185,7 +192,7 @@ function KitCamera({ subject, view, viewpoint }: {
   const distance = subject ? 1 : Math.max(1, extent / 16)
   return (
     <>
-      <OrthographicCamera makeDefault position={[x + 7 * distance, (subject?.motion ? 4 : 7 * distance) + targetY, z + 12 * distance]} zoom={zoom} near={0.1} far={100} />
+      <OrthographicCamera makeDefault position={[x + 7 * distance, (subject?.motion ? 4 : 7 * distance) + targetY, z + 12 * distance]} zoom={zoom} near={0.1} far={far} />
       <OrbitControls makeDefault target={[x, targetY, z]} minZoom={zoom * 0.65} maxZoom={zoom * 5} enableDamping />
     </>
   )
@@ -318,6 +325,7 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
   const stops = view?.stops ?? []
   const viewStop = stops[viewIndex - 2]
   const viewpoint = viewIndex === 0 ? undefined : viewStop ?? view
+  const eyeLevel = viewpoint !== undefined && viewDistance(viewpoint) <= LOCAL_VIEW_DISTANCE
   const sceneReach = view ? Math.hypot(
     Math.abs(view.center[0]) + view.size[0] / 2,
     Math.abs(view.center[1]) + view.size[1] / 2,
@@ -407,15 +415,15 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
                   <StudioLights reach={lightReach} heroShadows />
                 </>
               ) : (
-                <LevelEnvironment pack={pack} reach={lightReach} eyeLevel={viewpoint !== undefined}
+                <LevelEnvironment pack={pack} reach={lightReach} eyeLevel={eyeLevel}
                   fixtures={layout?.fixtures} environment={layout?.environment} />
               )}
               <KitCamera key={`${sceneKey}:${viewIndex}`} subject={subject} view={view} viewpoint={viewpoint} />
-              {!subject && viewpoint && <LevelLightingEffects />}
+              {!subject && eyeLevel && <LevelLightingEffects />}
               {!subject && optimized && <LevelShadowCache revision={`${pack}:${renderer}:${viewIndex}`} />}
               <Suspense fallback={<Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading models…</span></Html>}>
                 <KitModels key={sceneKey} pack={pack} layout={layout} subject={subject} motion={motion}
-                  lightsOn={lightsOn} eyeLevel={viewpoint !== undefined} renderer={renderer} optimized={!subject && optimized} />
+                  lightsOn={lightsOn} eyeLevel={eyeLevel} renderer={renderer} optimized={!subject && optimized} />
               </Suspense>
               <Suspense fallback={null}>
                 {!subject && <LevelWorkstations pack={pack} stop={viewStop?.label} bundle={bundle} index={index} />}

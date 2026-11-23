@@ -1049,12 +1049,12 @@ def runner_sleeves(part, shirt, cuff):
 
 
 def torso_core_tee(*, fitted=False):
-    """Ringer athletic tee: contrast neck band and sleeve cuffs, darker side panels, a flush two-voxel chest mark."""
+    """Ringer athletic tee: contrast neck band and sleeve cuffs, darker side panels, a small chest mark."""
     covers = (TAG_CHEST, TAG_ARMS_UPPER) if fitted else TORSO_COVERS
     part = vk.VoxelPart('torso_runner_tee' if fitted else 'torso_core_tee', covers=covers)
     shirt = vox('primary', 0.0)
     shade = vox('primary', -0.25)
-    ringer = vox('trim', 0.25)
+    ringer = vox('primary', 0.26 if fitted else -0.24)
     hem_y = TAIL_Y[1] if fitted else TORSO_Y[0]
     torso = shirt_torso(part, shirt, hem=shade, y=(hem_y, SHOULDER_Y))
     torso.fill(-1, SHOULDER_Y - 1, TORSO_FRONT, 1, SHOULDER_Y - 1, TORSO_FRONT, ringer)   # Neck band below the neckline
@@ -1071,7 +1071,7 @@ def torso_core_tee(*, fitted=False):
     else:
         short_sleeves(part, shirt, ringer)
     mark_z = TORSO_FRONT + 1 if fitted else TORSO_FRONT
-    torso.fill(1, SHOULDER_Y - 3, mark_z, 2, SHOULDER_Y - 3, mark_z, vox('accent', 0.125, mottle=False))
+    torso.set(2, SHOULDER_Y - 3, mark_z, vox('accent', 0.0, mottle=False))
     return part
 
 
@@ -1175,6 +1175,7 @@ PRESETS = (
          'visor': '#334955', 'detail': '#9e3e2d'},
         body='body_heavy', head='head_scarred_veteran', hair='hair_buzz_crew',
         torso='torso_core_tee', legs='legs_core_shorts',
+        proportions={'height': 1.01, 'shoulderWidth': 1.52, 'torsoBulk': 1.08, 'waistScale': 1.07},
     ),
 )
 

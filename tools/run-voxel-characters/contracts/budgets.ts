@@ -30,6 +30,7 @@ const budgetsSchema = z.object({
     back: classBudgetSchema,
     held: classBudgetSchema,
     prop: classBudgetSchema,
+    levelProp: classBudgetSchema,
   }),
 })
 

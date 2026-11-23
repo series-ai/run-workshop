@@ -29,6 +29,7 @@ const layout = z.object({
   view: viewpoint.extend({
     center: z.tuple([z.number(), z.number()]),
     size: z.tuple([z.number().positive(), z.number().positive()]),
+    far: z.number().positive().optional(),
     stops: z.array(viewpoint.extend({ label: z.string().min(1) })).optional(),
   }),
   fixtures: z.array(lightFixture).optional(),

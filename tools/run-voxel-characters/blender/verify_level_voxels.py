@@ -18,7 +18,7 @@ from level_districts import build_district
 from level_geometry import CELL, ENVIRONMENTS, PALETTES, make_grid, mesh_from_grid, overview_bounds, vertex_colors
 from level_finish_glb import (EMISSIVE_STRENGTH, FINISHES, GRAIN_REPEAT, GRAIN_TRANSFORM,
                               finish_png, grain_png, lamp_color, lamp_png)
-from level_scene_glb import LIGHT_EXTENSION, linear_color
+from level_scene_glb import INSTANCED_DEMO, LIGHT_EXTENSION, linear_color
 
 
 def require(valid, message):
@@ -144,20 +144,35 @@ def restore(asset, data, size_m, expected_size):
     return grid
 
 
-def check_pack(archive, layouts, factory):
-    kit = factory()
-    build_district(kit, props)
-    layout = layouts[kit.key]
+def check_pack(archive, layouts, key):
+    layout = layouts[key]
+    gameplay = layout.get('gameplay')
+    if gameplay is None:
+        kit = getattr(props, f'{key}_kit')()
+        build_district(kit, props)
+        base_palette, environment = PALETTES[key], ENVIRONMENTS[key]
+    else:
+        from build_gameplay_boards import prepare_original_board
+
+        kit, _ = prepare_original_board(props, key)
+        base_palette, environment = kit.palette, kit.environment
+        available = set(archive.namelist())
+        require(f'{key}/{INSTANCED_DEMO}' in available, f'{key}: missing instanced scene')
+        require(json.loads(archive.read(f'{key}/level-kit/gameplay.json')) == gameplay,
+                f'{key}: gameplay document differs')
+        for asset in gameplay['assets'].values():
+            for file in asset['files'].values():
+                require(f'{key}/{file}' in available, f'{key}: missing gameplay asset {file}')
     voxel = json.loads(archive.read(f'{kit.key}/demo.voxels.json'))
     require(voxel['format'] == 'cubix-level-voxels' and voxel['version'] == 1,
             f'{kit.key}: wrong voxel format')
     require(voxel['pack'] == kit.key and voxel['voxelSize'] == CELL, f'{kit.key}: wrong pack or cell size')
-    require(voxel['regions'] == list(vk.REGIONS) and voxel['palette'] == PALETTES[kit.key],
+    require(voxel['regions'] == list(vk.REGIONS) and voxel['palette'] == base_palette,
             f'{kit.key}: wrong material palette')
     require(voxel.get('finishes') == FINISHES, f'{kit.key}: raw scene material finishes differ')
     require(voxel['scene'] == layout and layout['placements'] == kit.placements,
             f'{kit.key}: scene layout differs')
-    require(layout['environment'] == ENVIRONMENTS[kit.key], f'{kit.key}: atmosphere differs')
+    require(layout['environment'] == environment, f'{kit.key}: atmosphere differs')
     require(set(voxel['prefabs']) == {asset for asset, _, _ in kit.props}, f'{kit.key}: prefab list differs')
     require(all(layout['view'][key] == value
                 for key, value in overview_bounds(layout['placements'], voxel['prefabs']).items()),
@@ -173,6 +188,7 @@ def check_pack(archive, layouts, factory):
     require(len(demo_meshes) == len(demo['meshes']) and set(demo_meshes) == set(voxel['prefabs']),
             f'{kit.key}: demo GLB prefab list differs')
     scene = demo['scenes'][demo['scene']]
+    require(scene['extras'].get('cubixGameplay') == gameplay, f'{key}: mesh gameplay differs')
     model_nodes = [demo['nodes'][i] for i in scene['nodes'] if 'mesh' in demo['nodes'][i]]
     for node, placement in zip(model_nodes, layout['placements'], strict=True):
         name = placement['propId']
@@ -225,8 +241,9 @@ def verify_archive(path):
         corrupt = archive.testzip()
         require(corrupt is None, f'Invalid archive entry: {corrupt}')
         layouts = json.loads(archive.read('level-scenes.json'))
-        for factory in props.LEVEL_FACTORIES:
-            check_pack(archive, layouts, factory)
+        for key, spec in vk.PACKS.items():
+            if spec['hasWorldLeaf']:
+                check_pack(archive, layouts, key)
 
 
 if __name__ == '__main__':

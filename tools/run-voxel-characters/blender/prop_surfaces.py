@@ -130,7 +130,7 @@ CONTACT_LINES = {
 }
 
 
-def apply_finish(kit, label, sculpt):
+def apply_finish(kit, label, sculpt, *, triangle_limit=None):
     cells = sculpt.cells()
     bounds = sculpt.bounds()
     seed = crc32(label.encode())
@@ -198,7 +198,7 @@ def apply_finish(kit, label, sculpt):
 
     patches.sort(key=lambda entry: entry[0])
     original = len(sculpt.ops)
-    limit = vk.BUDGETS['classes']['prop']['maxTriangles']
+    limit = triangle_limit if triangle_limit is not None else vk.BUDGETS['classes']['prop']['maxTriangles']
     while patches:
         for _, patch in patches:
             for x, y, z, color in patch:
