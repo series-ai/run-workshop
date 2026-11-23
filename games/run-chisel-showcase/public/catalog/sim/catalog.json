@@ -1032,6 +1032,36 @@
       "label": "Briefcase",
       "hand": "hand_l",
       "triangles": 152
+    },
+    {
+      "id": "held_sim_loyalty_stamp",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "held/held_sim_loyalty_stamp.glb",
+      "nodeName": "held_sim_loyalty_stamp",
+      "label": "Café Loyalty Stamp",
+      "hand": "hand_r",
+      "triangles": 142
+    },
+    {
+      "id": "held_sim_watering_can",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "held/held_sim_watering_can.glb",
+      "nodeName": "held_sim_watering_can",
+      "label": "Window Box Watering Can",
+      "hand": "hand_r",
+      "triangles": 190
+    },
+    {
+      "id": "held_sim_pocket_camera",
+      "pack": "sim",
+      "leaf": "characters",
+      "relativePath": "held/held_sim_pocket_camera.glb",
+      "nodeName": "held_sim_pocket_camera",
+      "label": "Pocket Camera",
+      "hand": "hand_l",
+      "triangles": 148
     }
   ],
   "props": [
@@ -3450,6 +3480,266 @@
           1.22,
           1.63,
           0.88
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_bread_sleeve",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_bread_sleeve.glb",
+      "nodeName": "prop_pickup_sim_bread_sleeve",
+      "label": "Bakery Bread Sleeve",
+      "triangles": 198,
+      "bounds": {
+        "min": [
+          -0.07797,
+          0,
+          -0.04855
+        ],
+        "max": [
+          0.07797,
+          0.307,
+          0.04855
+        ],
+        "size": [
+          0.15594,
+          0.307,
+          0.0971
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_loyalty_stamp",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_loyalty_stamp.glb",
+      "nodeName": "prop_pickup_sim_loyalty_stamp",
+      "label": "Café Loyalty Stamp",
+      "triangles": 142,
+      "bounds": {
+        "min": [
+          -0.047,
+          0,
+          -0.0315
+        ],
+        "max": [
+          0.047,
+          0.116,
+          0.0315
+        ],
+        "size": [
+          0.094,
+          0.116,
+          0.063
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_pear_punnet",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_pear_punnet.glb",
+      "nodeName": "prop_pickup_sim_pear_punnet",
+      "label": "Market Pear Punnet",
+      "triangles": 287,
+      "bounds": {
+        "min": [
+          -0.1115,
+          0,
+          -0.082
+        ],
+        "max": [
+          0.1115,
+          0.19676,
+          0.082
+        ],
+        "size": [
+          0.223,
+          0.19676,
+          0.164
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_market_voucher",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_market_voucher.glb",
+      "nodeName": "prop_pickup_sim_market_voucher",
+      "label": "Market Voucher Book",
+      "triangles": 182,
+      "bounds": {
+        "min": [
+          -0.079,
+          0,
+          -0.038
+        ],
+        "max": [
+          0.079,
+          0.012,
+          0.038
+        ],
+        "size": [
+          0.158,
+          0.012,
+          0.076
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_shop_key",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_shop_key.glb",
+      "nodeName": "prop_pickup_sim_shop_key",
+      "label": "Shop Door Key",
+      "triangles": 100,
+      "bounds": {
+        "min": [
+          -0.0565,
+          0,
+          -0.031
+        ],
+        "max": [
+          0.0565,
+          0.012,
+          0.031
+        ],
+        "size": [
+          0.113,
+          0.012,
+          0.062
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_transit_fare",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_transit_fare.glb",
+      "nodeName": "prop_pickup_sim_transit_fare",
+      "label": "Bus Fare Tokens",
+      "triangles": 244,
+      "bounds": {
+        "min": [
+          -0.03608,
+          0,
+          -0.03208
+        ],
+        "max": [
+          0.03608,
+          0.0126,
+          0.03208
+        ],
+        "size": [
+          0.07216,
+          0.0126,
+          0.06416
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_park_cup",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_park_cup.glb",
+      "nodeName": "prop_pickup_sim_park_cup",
+      "label": "Park Doubles Cup",
+      "triangles": 226,
+      "bounds": {
+        "min": [
+          -0.08908,
+          0,
+          -0.063
+        ],
+        "max": [
+          0.08908,
+          0.177,
+          0.063
+        ],
+        "size": [
+          0.17816,
+          0.177,
+          0.126
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_shuttlecock",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_shuttlecock.glb",
+      "nodeName": "prop_pickup_sim_shuttlecock",
+      "label": "Park Shuttlecock",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -0.035,
+          0,
+          -0.03386
+        ],
+        "max": [
+          0.035,
+          0.077,
+          0.03386
+        ],
+        "size": [
+          0.07,
+          0.077,
+          0.06771
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_watering_can",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_watering_can.glb",
+      "nodeName": "prop_pickup_sim_watering_can",
+      "label": "Window Box Watering Can",
+      "triangles": 190,
+      "bounds": {
+        "min": [
+          -0.18646,
+          0,
+          -0.08559
+        ],
+        "max": [
+          0.18646,
+          0.21133,
+          0.08559
+        ],
+        "size": [
+          0.37292,
+          0.21133,
+          0.17117
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_sim_pocket_camera",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_sim_pocket_camera.glb",
+      "nodeName": "prop_pickup_sim_pocket_camera",
+      "label": "Pocket Camera",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.07,
+          0,
+          -0.05625
+        ],
+        "max": [
+          0.07,
+          0.088,
+          0.05625
+        ],
+        "size": [
+          0.14,
+          0.088,
+          0.1125
         ]
       }
     },

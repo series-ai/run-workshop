@@ -982,6 +982,36 @@
       "label": "Inspection Dispatch",
       "hand": "hand_l",
       "triangles": 78
+    },
+    {
+      "id": "held_ww2_thermos",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ww2_thermos.glb",
+      "nodeName": "held_ww2_thermos",
+      "label": "Platform Thermos",
+      "hand": "hand_r",
+      "triangles": 192
+    },
+    {
+      "id": "held_ww2_entry_stamp",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ww2_entry_stamp.glb",
+      "nodeName": "held_ww2_entry_stamp",
+      "label": "Entry Stamp",
+      "hand": "hand_r",
+      "triangles": 142
+    },
+    {
+      "id": "held_ww2_signal_paddle",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ww2_signal_paddle.glb",
+      "nodeName": "held_ww2_signal_paddle",
+      "label": "Signal Paddle",
+      "hand": "hand_l",
+      "triangles": 144
     }
   ],
   "props": [
@@ -2958,6 +2988,292 @@
           1.9128,
           1.2,
           0.5691
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_thermos",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_thermos.glb",
+      "nodeName": "prop_pickup_ww2_thermos",
+      "label": "Platform Thermos",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.07058,
+          0,
+          -0.04065
+        ],
+        "max": [
+          0.07058,
+          0.247,
+          0.04065
+        ],
+        "size": [
+          0.14115,
+          0.247,
+          0.0813
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_entry_stamp",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_entry_stamp.glb",
+      "nodeName": "prop_pickup_ww2_entry_stamp",
+      "label": "Entry Stamp",
+      "triangles": 142,
+      "bounds": {
+        "min": [
+          -0.047,
+          0,
+          -0.027
+        ],
+        "max": [
+          0.047,
+          0.1,
+          0.027
+        ],
+        "size": [
+          0.094,
+          0.1,
+          0.054
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_signal_paddle",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_signal_paddle.glb",
+      "nodeName": "prop_pickup_ww2_signal_paddle",
+      "label": "Signal Paddle",
+      "triangles": 144,
+      "bounds": {
+        "min": [
+          -0.08341,
+          0,
+          -0.18985
+        ],
+        "max": [
+          0.08341,
+          0.048,
+          0.18985
+        ],
+        "size": [
+          0.16681,
+          0.048,
+          0.37969
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_ration_tin",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_ration_tin.glb",
+      "nodeName": "prop_pickup_ww2_ration_tin",
+      "label": "Civilian Ration Tin",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -0.095,
+          0,
+          -0.0585
+        ],
+        "max": [
+          0.095,
+          0.08,
+          0.0585
+        ],
+        "size": [
+          0.19,
+          0.08,
+          0.117
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_rail_keys",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_rail_keys.glb",
+      "nodeName": "prop_pickup_ww2_rail_keys",
+      "label": "Rail Keys",
+      "triangles": 312,
+      "bounds": {
+        "min": [
+          -0.05857,
+          0,
+          -0.08382
+        ],
+        "max": [
+          0.05857,
+          0.014,
+          0.08382
+        ],
+        "size": [
+          0.11715,
+          0.014,
+          0.16764
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_luggage_tags",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_luggage_tags.glb",
+      "nodeName": "prop_pickup_ww2_luggage_tags",
+      "label": "Luggage Tags",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -0.04946,
+          0,
+          -0.08094
+        ],
+        "max": [
+          0.04946,
+          0.013,
+          0.08094
+        ],
+        "size": [
+          0.09893,
+          0.013,
+          0.16188
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_travel_pass",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_travel_pass.glb",
+      "nodeName": "prop_pickup_ww2_travel_pass",
+      "label": "Checkpoint Travel Pass",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.0995,
+          0,
+          -0.0685
+        ],
+        "max": [
+          0.0995,
+          0.015,
+          0.0685
+        ],
+        "size": [
+          0.199,
+          0.015,
+          0.137
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_dressing_pouch",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_dressing_pouch.glb",
+      "nodeName": "prop_pickup_ww2_dressing_pouch",
+      "label": "Field Dressing Pouch",
+      "triangles": 202,
+      "bounds": {
+        "min": [
+          -0.093,
+          0,
+          -0.0445
+        ],
+        "max": [
+          0.093,
+          0.1225,
+          0.0445
+        ],
+        "size": [
+          0.186,
+          0.1225,
+          0.089
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_binoculars",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_binoculars.glb",
+      "nodeName": "prop_pickup_ww2_binoculars",
+      "label": "Platform Binoculars",
+      "triangles": 428,
+      "bounds": {
+        "min": [
+          -0.08,
+          0,
+          -0.079
+        ],
+        "max": [
+          0.08,
+          0.072,
+          0.079
+        ],
+        "size": [
+          0.16,
+          0.072,
+          0.158
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_flap_holster",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_flap_holster.glb",
+      "nodeName": "prop_pickup_ww2_flap_holster",
+      "label": "Closed Sidearm Holster",
+      "triangles": 98,
+      "bounds": {
+        "min": [
+          -0.0765,
+          0,
+          -0.127
+        ],
+        "max": [
+          0.0765,
+          0.059,
+          0.127
+        ],
+        "size": [
+          0.153,
+          0.059,
+          0.254
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_ww2_blanket_roll",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_ww2_blanket_roll.glb",
+      "nodeName": "prop_pickup_ww2_blanket_roll",
+      "label": "Shelter Blanket Roll",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -0.1485,
+          0,
+          -0.084
+        ],
+        "max": [
+          0.1485,
+          0.168,
+          0.084
+        ],
+        "size": [
+          0.297,
+          0.168,
+          0.168
         ]
       }
     },

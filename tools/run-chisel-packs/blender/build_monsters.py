@@ -1594,12 +1594,15 @@ def main():
         for rig_id, rig_file, rig_name, contract, clips, body_builders, floor_clamp, settle_clips in creature_specs
     ]
 
-    # 4. Held weapons
+    # 4. Held items
+    from collectibles import COLLECTIBLES_BY_PACK
+
     held = []
     for build, label, hand in (
         (held_orc_cleaver, 'Orc Cleaver', 'hand_r'),
         (held_troll_club, 'Troll Spiked Club', 'hand_r'),
         (held_spiked_buckler, 'Spiked Buckler', 'hand_l'),
+        *COLLECTIBLES_BY_PACK[PACK].COLLECTIBLE_HELD,
     ):
         part = pk.Part(build.__name__)
         build(part)

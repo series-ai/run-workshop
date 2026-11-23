@@ -50,6 +50,15 @@
           "eye": "#1f2634"
         },
         "overrides": {
+          "prop_pickup_medieval_crown_mace": {
+            "accent": "#d49d3b"
+          },
+          "prop_pickup_medieval_thorn_dagger": {
+            "accent": "#d49d3b"
+          },
+          "prop_pickup_medieval_watch_bell": {
+            "accent": "#d49d3b"
+          },
           "prop_moat_water_tile": {
             "skin": "#88877a",
             "eye": "#4c6561"
@@ -200,6 +209,17 @@
           "eye": "#1f2634"
         },
         "overrides": {
+          "prop_pickup_ww2_signal_paddle": {
+            "accent": "#a34e41",
+            "skin": "#cec6a7"
+          },
+          "prop_pickup_ww2_travel_pass": {
+            "accent": "#945249",
+            "skin": "#c2b594"
+          },
+          "prop_pickup_ww2_flap_holster": {
+            "secondary": "#71513d"
+          },
           "prop_supply_truck": {
             "skin": "#b1aa87",
             "primary": "#626e57",
@@ -589,6 +609,96 @@
           "eye": "#40f5ce"
         },
         "overrides": {
+          "prop_pickup_cyberpunk_koi_pin": {
+            "skin": "#efc48c",
+            "primary": "#99513f",
+            "secondary": "#493843",
+            "hair": "#46595a",
+            "accent": "#e49342",
+            "metal": "#adb0a4",
+            "eye": "#92efd0"
+          },
+          "prop_pickup_cyberpunk_steam_bun": {
+            "skin": "#efc48c",
+            "primary": "#99513f",
+            "secondary": "#493843",
+            "hair": "#46595a",
+            "accent": "#e49342",
+            "metal": "#adb0a4",
+            "eye": "#92efd0"
+          },
+          "prop_pickup_cyberpunk_broth_cell": {
+            "skin": "#efc48c",
+            "primary": "#99513f",
+            "secondary": "#493843",
+            "hair": "#46595a",
+            "accent": "#e49342",
+            "metal": "#adb0a4",
+            "eye": "#92efd0"
+          },
+          "prop_pickup_cyberpunk_transfer_credit": {
+            "skin": "#efc48c",
+            "primary": "#99513f",
+            "secondary": "#493843",
+            "hair": "#46595a",
+            "accent": "#e49342",
+            "metal": "#adb0a4",
+            "eye": "#92efd0"
+          },
+          "prop_pickup_cyberpunk_gate_fob": {
+            "skin": "#caab76",
+            "primary": "#406672",
+            "secondary": "#2c3849",
+            "hair": "#364459",
+            "accent": "#cb7844",
+            "metal": "#92a9ab",
+            "eye": "#8be6c3"
+          },
+          "prop_pickup_cyberpunk_memory_wafer": {
+            "skin": "#caab76",
+            "primary": "#406672",
+            "secondary": "#2c3849",
+            "hair": "#364459",
+            "accent": "#cb7844",
+            "metal": "#92a9ab",
+            "eye": "#8be6c3"
+          },
+          "prop_pickup_cyberpunk_service_spool": {
+            "skin": "#caab76",
+            "primary": "#406672",
+            "secondary": "#2c3849",
+            "hair": "#364459",
+            "accent": "#cb7844",
+            "metal": "#92a9ab",
+            "eye": "#8be6c3"
+          },
+          "prop_pickup_cyberpunk_pocket_beacon": {
+            "skin": "#efc48c",
+            "primary": "#99513f",
+            "secondary": "#493843",
+            "hair": "#46595a",
+            "accent": "#e49342",
+            "metal": "#adb0a4",
+            "eye": "#92efd0"
+          },
+          "prop_pickup_cyberpunk_flux_fork": {
+            "skin": "#caab76",
+            "primary": "#406672",
+            "secondary": "#2c3849",
+            "hair": "#364459",
+            "accent": "#cb7844",
+            "metal": "#92a9ab",
+            "eye": "#8be6c3"
+          },
+          "prop_pickup_cyberpunk_receipt_roller": {
+            "skin": "#efc48c",
+            "primary": "#99513f",
+            "secondary": "#493843",
+            "hair": "#46595a",
+            "accent": "#e49342",
+            "metal": "#adb0a4",
+            "eye": "#92efd0"
+          },
           "prop_cyber_apartment": {
             "skin": "#eac891",
             "hair": "#513842",
@@ -885,6 +995,13 @@
           "eye": "#f2642a"
         },
         "overrides": {
+          "prop_pickup_monsters_malachite_slice": {
+            "metal": "#477B67",
+            "eye": "#B2CC9D"
+          },
+          "prop_pickup_monsters_brood_cup": {
+            "eye": "#866951"
+          },
           "prop_mine_tunnel_mouth": {
             "skin": "#756861",
             "primary": "#7f573d",

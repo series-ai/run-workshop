@@ -1650,6 +1650,8 @@ PACK_TABLE = {
 # --------------------------------------------------------------------------
 
 def build_pack(pack, table, core, solver, stage):
+    from collectibles import COLLECTIBLES_BY_PACK
+
     characters = pk.leaf_dir(stage, pack, 'characters')
     world = pk.leaf_dir(stage, pack, 'world')
     parts_file = f'{pack}-parts.glb'
@@ -1668,7 +1670,7 @@ def build_pack(pack, table, core, solver, stage):
         raise ValueError(f'{parts_file}: the inverse bind matrices changed.')
 
     held = []
-    for build, label, hand in table['held']:
+    for build, label, hand in (*table['held'], *COLLECTIBLES_BY_PACK[pack].COLLECTIBLE_HELD):
         part = pk.Part(build.__name__)
         build(part)
         mesh = part.to_mesh()

@@ -959,6 +959,36 @@
       "label": "Torch",
       "hand": "hand_l",
       "triangles": 87
+    },
+    {
+      "id": "held_medieval_crown_mace",
+      "pack": "medieval",
+      "leaf": "characters",
+      "relativePath": "held/held_medieval_crown_mace.glb",
+      "nodeName": "held_medieval_crown_mace",
+      "label": "Crown Mace",
+      "hand": "hand_r",
+      "triangles": 188
+    },
+    {
+      "id": "held_medieval_thorn_dagger",
+      "pack": "medieval",
+      "leaf": "characters",
+      "relativePath": "held/held_medieval_thorn_dagger.glb",
+      "nodeName": "held_medieval_thorn_dagger",
+      "label": "Thorn Punch Dagger",
+      "hand": "hand_r",
+      "triangles": 126
+    },
+    {
+      "id": "held_medieval_watch_bell",
+      "pack": "medieval",
+      "leaf": "characters",
+      "relativePath": "held/held_medieval_watch_bell.glb",
+      "nodeName": "held_medieval_watch_bell",
+      "label": "Watch Bell",
+      "hand": "hand_l",
+      "triangles": 151
     }
   ],
   "props": [
@@ -2961,6 +2991,318 @@
           1.42,
           0.86,
           0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_gate_key",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_gate_key.glb",
+      "nodeName": "prop_pickup_medieval_gate_key",
+      "label": "Portcullis Key",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -0.119,
+          0,
+          -0.043
+        ],
+        "max": [
+          0.119,
+          0.024,
+          0.043
+        ],
+        "size": [
+          0.238,
+          0.024,
+          0.086
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_sealed_writ",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_sealed_writ.glb",
+      "nodeName": "prop_pickup_medieval_sealed_writ",
+      "label": "Wax-Sealed Writ",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -0.116,
+          0,
+          -0.07725
+        ],
+        "max": [
+          0.116,
+          0.041,
+          0.07725
+        ],
+        "size": [
+          0.232,
+          0.041,
+          0.1545
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_rye_loaf",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_rye_loaf.glb",
+      "nodeName": "prop_pickup_medieval_rye_loaf",
+      "label": "Split Rye Loaf",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.15316,
+          0,
+          -0.085
+        ],
+        "max": [
+          0.15316,
+          0.101,
+          0.085
+        ],
+        "size": [
+          0.30632,
+          0.101,
+          0.17
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_orchard_pear",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_orchard_pear.glb",
+      "nodeName": "prop_pickup_medieval_orchard_pear",
+      "label": "Orchard Pear",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -0.05636,
+          0,
+          -0.05636
+        ],
+        "max": [
+          0.05636,
+          0.17236,
+          0.05636
+        ],
+        "size": [
+          0.11271,
+          0.17236,
+          0.11271
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_ferry_tokens",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_ferry_tokens.glb",
+      "nodeName": "prop_pickup_medieval_ferry_tokens",
+      "label": "Ferry Toll Tokens",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -0.0865,
+          0,
+          -0.0715
+        ],
+        "max": [
+          0.0865,
+          0.03,
+          0.0715
+        ],
+        "size": [
+          0.173,
+          0.03,
+          0.143
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_mason_square",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_mason_square.glb",
+      "nodeName": "prop_pickup_medieval_mason_square",
+      "label": "Mason’s Square",
+      "triangles": 104,
+      "bounds": {
+        "min": [
+          -0.1385,
+          0,
+          -0.096
+        ],
+        "max": [
+          0.1385,
+          0.029,
+          0.096
+        ],
+        "size": [
+          0.277,
+          0.029,
+          0.192
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_scribe_ink",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_scribe_ink.glb",
+      "nodeName": "prop_pickup_medieval_scribe_ink",
+      "label": "Scribe’s Ink",
+      "triangles": 102,
+      "bounds": {
+        "min": [
+          -0.051,
+          0,
+          -0.04548
+        ],
+        "max": [
+          0.051,
+          0.126,
+          0.04548
+        ],
+        "size": [
+          0.102,
+          0.126,
+          0.09097
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_star_brooch",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_star_brooch.glb",
+      "nodeName": "prop_pickup_medieval_star_brooch",
+      "label": "Five-Point Brooch",
+      "triangles": 146,
+      "bounds": {
+        "min": [
+          -0.07038,
+          0,
+          -0.06838
+        ],
+        "max": [
+          0.07038,
+          0.037,
+          0.06838
+        ],
+        "size": [
+          0.14076,
+          0.037,
+          0.13677
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_oil_flask",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_oil_flask.glb",
+      "nodeName": "prop_pickup_medieval_oil_flask",
+      "label": "Oil Flask",
+      "triangles": 186,
+      "bounds": {
+        "min": [
+          -0.09246,
+          0,
+          -0.08371
+        ],
+        "max": [
+          0.09246,
+          0.231,
+          0.08371
+        ],
+        "size": [
+          0.18493,
+          0.231,
+          0.16742
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_crown_mace",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_crown_mace.glb",
+      "nodeName": "prop_pickup_medieval_crown_mace",
+      "label": "Crown Mace",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -0.27203,
+          0,
+          -0.074
+        ],
+        "max": [
+          0.27203,
+          0.13665,
+          0.074
+        ],
+        "size": [
+          0.54406,
+          0.13665,
+          0.148
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_thorn_dagger",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_thorn_dagger.glb",
+      "nodeName": "prop_pickup_medieval_thorn_dagger",
+      "label": "Thorn Punch Dagger",
+      "triangles": 126,
+      "bounds": {
+        "min": [
+          -0.08504,
+          0,
+          -0.181
+        ],
+        "max": [
+          0.08504,
+          0.03984,
+          0.181
+        ],
+        "size": [
+          0.17008,
+          0.03984,
+          0.362
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_medieval_watch_bell",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_medieval_watch_bell.glb",
+      "nodeName": "prop_pickup_medieval_watch_bell",
+      "label": "Watch Bell",
+      "triangles": 151,
+      "bounds": {
+        "min": [
+          -0.07015,
+          0,
+          -0.081
+        ],
+        "max": [
+          0.07015,
+          0.265,
+          0.081
+        ],
+        "size": [
+          0.1403,
+          0.265,
+          0.162
         ]
       }
     },

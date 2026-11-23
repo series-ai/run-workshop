@@ -1032,6 +1032,36 @@
       "label": "Holo Cyberdeck",
       "hand": "hand_l",
       "triangles": 90
+    },
+    {
+      "id": "held_cyberpunk_pocket_beacon",
+      "pack": "cyberpunk",
+      "leaf": "characters",
+      "relativePath": "held/held_cyberpunk_pocket_beacon.glb",
+      "nodeName": "held_cyberpunk_pocket_beacon",
+      "label": "Pocket Beacon",
+      "hand": "hand_l",
+      "triangles": 148
+    },
+    {
+      "id": "held_cyberpunk_flux_fork",
+      "pack": "cyberpunk",
+      "leaf": "characters",
+      "relativePath": "held/held_cyberpunk_flux_fork.glb",
+      "nodeName": "held_cyberpunk_flux_fork",
+      "label": "Flux Test Fork",
+      "hand": "hand_r",
+      "triangles": 168
+    },
+    {
+      "id": "held_cyberpunk_receipt_roller",
+      "pack": "cyberpunk",
+      "leaf": "characters",
+      "relativePath": "held/held_cyberpunk_receipt_roller.glb",
+      "nodeName": "held_cyberpunk_receipt_roller",
+      "label": "Receipt Roller",
+      "hand": "hand_r",
+      "triangles": 160
     }
   ],
   "props": [
@@ -3112,6 +3142,266 @@
           0.4,
           0.72,
           0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_koi_pin",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_koi_pin.glb",
+      "nodeName": "prop_pickup_cyberpunk_koi_pin",
+      "label": "Koi Enamel Pin",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.06102,
+          0,
+          -0.0275
+        ],
+        "max": [
+          0.06102,
+          0.025,
+          0.0275
+        ],
+        "size": [
+          0.12204,
+          0.025,
+          0.055
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_steam_bun",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_steam_bun.glb",
+      "nodeName": "prop_pickup_cyberpunk_steam_bun",
+      "label": "Cultured Steam Bun",
+      "triangles": 226,
+      "bounds": {
+        "min": [
+          -0.0685,
+          0,
+          -0.054
+        ],
+        "max": [
+          0.0685,
+          0.07596,
+          0.054
+        ],
+        "size": [
+          0.137,
+          0.07596,
+          0.108
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_broth_cell",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_broth_cell.glb",
+      "nodeName": "prop_pickup_cyberpunk_broth_cell",
+      "label": "Broth Cell",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -0.04804,
+          0,
+          -0.04804
+        ],
+        "max": [
+          0.04804,
+          0.14,
+          0.04804
+        ],
+        "size": [
+          0.09608,
+          0.14,
+          0.09608
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_transfer_credit",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_transfer_credit.glb",
+      "nodeName": "prop_pickup_cyberpunk_transfer_credit",
+      "label": "Court Transfer Credit",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.06675,
+          0,
+          -0.03525
+        ],
+        "max": [
+          0.06675,
+          0.019,
+          0.03525
+        ],
+        "size": [
+          0.1335,
+          0.019,
+          0.0705
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_gate_fob",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_gate_fob.glb",
+      "nodeName": "prop_pickup_cyberpunk_gate_fob",
+      "label": "East Gate Fob",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -0.05537,
+          0,
+          -0.043
+        ],
+        "max": [
+          0.05537,
+          0.0325,
+          0.043
+        ],
+        "size": [
+          0.11074,
+          0.0325,
+          0.086
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_memory_wafer",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_memory_wafer.glb",
+      "nodeName": "prop_pickup_cyberpunk_memory_wafer",
+      "label": "Memory Wafer",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.04725,
+          0,
+          -0.0365
+        ],
+        "max": [
+          0.04725,
+          0.021,
+          0.0365
+        ],
+        "size": [
+          0.0945,
+          0.021,
+          0.073
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_service_spool",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_service_spool.glb",
+      "nodeName": "prop_pickup_cyberpunk_service_spool",
+      "label": "Service Wire Spool",
+      "triangles": 284,
+      "bounds": {
+        "min": [
+          -0.05167,
+          0,
+          -0.04435
+        ],
+        "max": [
+          0.05167,
+          0.07,
+          0.04435
+        ],
+        "size": [
+          0.10335,
+          0.07,
+          0.08869
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_pocket_beacon",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_pocket_beacon.glb",
+      "nodeName": "prop_pickup_cyberpunk_pocket_beacon",
+      "label": "Pocket Beacon",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.04244,
+          0,
+          -0.049
+        ],
+        "max": [
+          0.04244,
+          0.239,
+          0.049
+        ],
+        "size": [
+          0.08487,
+          0.239,
+          0.098
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_flux_fork",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_flux_fork.glb",
+      "nodeName": "prop_pickup_cyberpunk_flux_fork",
+      "label": "Flux Test Fork",
+      "triangles": 168,
+      "bounds": {
+        "min": [
+          -0.0505,
+          0,
+          -0.083
+        ],
+        "max": [
+          0.0505,
+          0.195,
+          0.083
+        ],
+        "size": [
+          0.101,
+          0.195,
+          0.166
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_cyberpunk_receipt_roller",
+      "pack": "cyberpunk",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_cyberpunk_receipt_roller.glb",
+      "nodeName": "prop_pickup_cyberpunk_receipt_roller",
+      "label": "Receipt Roller",
+      "triangles": 160,
+      "bounds": {
+        "min": [
+          -0.091,
+          0,
+          -0.0655
+        ],
+        "max": [
+          0.091,
+          0.102,
+          0.0655
+        ],
+        "size": [
+          0.182,
+          0.102,
+          0.131
         ]
       }
     },

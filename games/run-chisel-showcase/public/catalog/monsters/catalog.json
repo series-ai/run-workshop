@@ -3736,6 +3736,36 @@
       "label": "Spiked Buckler",
       "hand": "hand_l",
       "triangles": 103
+    },
+    {
+      "id": "held_monsters_seam_pick",
+      "pack": "monsters",
+      "leaf": "characters",
+      "relativePath": "held/held_monsters_seam_pick.glb",
+      "nodeName": "held_monsters_seam_pick",
+      "label": "Seam Pick",
+      "hand": "hand_r",
+      "triangles": 128
+    },
+    {
+      "id": "held_monsters_echo_fork",
+      "pack": "monsters",
+      "leaf": "characters",
+      "relativePath": "held/held_monsters_echo_fork.glb",
+      "nodeName": "held_monsters_echo_fork",
+      "label": "Echo Fork",
+      "hand": "hand_r",
+      "triangles": 162
+    },
+    {
+      "id": "held_monsters_wick_lamp",
+      "pack": "monsters",
+      "leaf": "characters",
+      "relativePath": "held/held_monsters_wick_lamp.glb",
+      "nodeName": "held_monsters_wick_lamp",
+      "label": "Wick Lamp",
+      "hand": "hand_l",
+      "triangles": 148
     }
   ],
   "props": [
@@ -5556,6 +5586,292 @@
           1.05837,
           0.96,
           0.86
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_cinder_ore",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_cinder_ore.glb",
+      "nodeName": "prop_pickup_monsters_cinder_ore",
+      "label": "Cinder Ore",
+      "triangles": 174,
+      "bounds": {
+        "min": [
+          -0.144,
+          0,
+          -0.096
+        ],
+        "max": [
+          0.144,
+          0.20295,
+          0.096
+        ],
+        "size": [
+          0.288,
+          0.20295,
+          0.192
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_malachite_slice",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_malachite_slice.glb",
+      "nodeName": "prop_pickup_monsters_malachite_slice",
+      "label": "Malachite Slice",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -0.14664,
+          0,
+          -0.10192
+        ],
+        "max": [
+          0.14664,
+          0.07,
+          0.10192
+        ],
+        "size": [
+          0.29328,
+          0.07,
+          0.20384
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_lamp_fuel",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_lamp_fuel.glb",
+      "nodeName": "prop_pickup_monsters_lamp_fuel",
+      "label": "Sealed Lamp Fuel",
+      "triangles": 182,
+      "bounds": {
+        "min": [
+          -0.11178,
+          0,
+          -0.07016
+        ],
+        "max": [
+          0.11178,
+          0.224,
+          0.07016
+        ],
+        "size": [
+          0.22357,
+          0.224,
+          0.14032
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_seam_pick",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_seam_pick.glb",
+      "nodeName": "prop_pickup_monsters_seam_pick",
+      "label": "Seam Pick",
+      "triangles": 128,
+      "bounds": {
+        "min": [
+          -0.28093,
+          0,
+          -0.19294
+        ],
+        "max": [
+          0.28093,
+          0.078,
+          0.19294
+        ],
+        "size": [
+          0.56185,
+          0.078,
+          0.38588
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_echo_fork",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_echo_fork.glb",
+      "nodeName": "prop_pickup_monsters_echo_fork",
+      "label": "Echo Fork",
+      "triangles": 162,
+      "bounds": {
+        "min": [
+          -0.26632,
+          0,
+          -0.10139
+        ],
+        "max": [
+          0.26632,
+          0.07275,
+          0.10139
+        ],
+        "size": [
+          0.53264,
+          0.07275,
+          0.20278
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_wick_lamp",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_wick_lamp.glb",
+      "nodeName": "prop_pickup_monsters_wick_lamp",
+      "label": "Wick Lamp",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.06928,
+          0,
+          -0.11851
+        ],
+        "max": [
+          0.06928,
+          0.203,
+          0.11851
+        ],
+        "size": [
+          0.13856,
+          0.203,
+          0.23702
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_molt",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_molt.glb",
+      "nodeName": "prop_pickup_monsters_molt",
+      "label": "Split Wing Cases",
+      "triangles": 216,
+      "bounds": {
+        "min": [
+          -0.10763,
+          0,
+          -0.15322
+        ],
+        "max": [
+          0.10763,
+          0.09445,
+          0.15322
+        ],
+        "size": [
+          0.21526,
+          0.09445,
+          0.30644
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_brood_cup",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_brood_cup.glb",
+      "nodeName": "prop_pickup_monsters_brood_cup",
+      "label": "Empty Brood Shell",
+      "triangles": 176,
+      "bounds": {
+        "min": [
+          -0.108,
+          0,
+          -0.0832
+        ],
+        "max": [
+          0.108,
+          0.171,
+          0.0832
+        ],
+        "size": [
+          0.216,
+          0.171,
+          0.1664
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_coil_fossil",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_coil_fossil.glb",
+      "nodeName": "prop_pickup_monsters_coil_fossil",
+      "label": "Coil Fossil",
+      "triangles": 394,
+      "bounds": {
+        "min": [
+          -0.12996,
+          0,
+          -0.11199
+        ],
+        "max": [
+          0.12996,
+          0.07865,
+          0.11199
+        ],
+        "size": [
+          0.25992,
+          0.07865,
+          0.22398
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_shrine_token",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_shrine_token.glb",
+      "nodeName": "prop_pickup_monsters_shrine_token",
+      "label": "Pierced Shrine Token",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -0.1007,
+          0,
+          -0.1007
+        ],
+        "max": [
+          0.1007,
+          0.036,
+          0.1007
+        ],
+        "size": [
+          0.20141,
+          0.036,
+          0.20141
+        ]
+      }
+    },
+    {
+      "id": "prop_pickup_monsters_votive_eye",
+      "pack": "monsters",
+      "leaf": "world",
+      "relativePath": "props/prop_pickup_monsters_votive_eye.glb",
+      "nodeName": "prop_pickup_monsters_votive_eye",
+      "label": "Votive Eye",
+      "triangles": 190,
+      "bounds": {
+        "min": [
+          -0.09915,
+          0,
+          -0.058
+        ],
+        "max": [
+          0.09915,
+          0.19179,
+          0.058
+        ],
+        "size": [
+          0.1983,
+          0.19179,
+          0.116
         ]
       }
     },
