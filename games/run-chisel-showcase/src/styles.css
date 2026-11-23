@@ -883,6 +883,25 @@ input[type='range'] {
   line-height: 1;
 }
 
+.context-stage-layout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.context-stage-layout select {
+  max-width: min(220px, 60vw);
+  min-height: 32px;
+  border: 1px solid #ffffff35;
+  border-radius: 7px;
+  padding-inline: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
 .context-stage-actions {
   display: flex;
   flex-shrink: 0;

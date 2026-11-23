@@ -71,7 +71,7 @@
         {"id": "prop_goods_office_plinth", "position": [2, 0, -2]},
         {"id": "prop_village_room", "position": [-2, 0.515, -2]},
         {"id": "prop_village_room", "position": [2, 0.515, -2]},
-        {"id": "prop_village_slate_roof", "position": [2, 3.115, -2]},
+        {"id": "prop_village_slate_roof", "position": [2, 3.115, -2], "hideWithRoof": true},
         {"id": "prop_village_door_wall", "position": [2, 0.515, -0.1]},
         {"id": "prop_porter_ramp", "position": [-2, 0, 2]},
         {"id": "prop_parcel_sorter", "position": [-3.27, 0.515, -2], "rotationY": 1.57079633},

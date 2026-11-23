@@ -1766,6 +1766,656 @@
       }
     },
     {
+      "id": "prop_price_board",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_price_board.glb",
+      "nodeName": "prop_price_board",
+      "label": "Framed Price Board",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.69,
+          0,
+          -0.08
+        ],
+        "max": [
+          0.69,
+          0.8,
+          0.08
+        ],
+        "size": [
+          1.38,
+          0.8,
+          0.16
+        ]
+      }
+    },
+    {
+      "id": "prop_bakery_oven",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bakery_oven.glb",
+      "nodeName": "prop_bakery_oven",
+      "label": "Double Deck Bakery Oven",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.54,
+          0,
+          -0.41125
+        ],
+        "max": [
+          0.54,
+          1.01,
+          0.41125
+        ],
+        "size": [
+          1.08,
+          1.01,
+          0.8225
+        ]
+      }
+    },
+    {
+      "id": "prop_sack_trolley",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_sack_trolley.glb",
+      "nodeName": "prop_sack_trolley",
+      "label": "Loaded Sack Trolley",
+      "triangles": 300,
+      "bounds": {
+        "min": [
+          -0.305,
+          0,
+          -0.3325
+        ],
+        "max": [
+          0.305,
+          1.2,
+          0.3325
+        ],
+        "size": [
+          0.61,
+          1.2,
+          0.665
+        ]
+      }
+    },
+    {
+      "id": "prop_market_hood",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_hood.glb",
+      "nodeName": "prop_market_hood",
+      "label": "Folded Zinc Market Hood",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.28375
+        ],
+        "max": [
+          0.9,
+          0.34064,
+          0.28375
+        ],
+        "size": [
+          1.8,
+          0.34064,
+          0.5675
+        ]
+      }
+    },
+    {
+      "id": "prop_preserve_island",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_preserve_island.glb",
+      "nodeName": "prop_preserve_island",
+      "label": "Two Tier Preserve Display",
+      "triangles": 476,
+      "bounds": {
+        "min": [
+          -0.72,
+          0,
+          -0.42
+        ],
+        "max": [
+          0.72,
+          1.1,
+          0.42
+        ],
+        "size": [
+          1.44,
+          1.1,
+          0.84
+        ]
+      }
+    },
+    {
+      "id": "prop_curb_apron",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_curb_apron.glb",
+      "nodeName": "prop_curb_apron",
+      "label": "Flush Crossing Apron",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.128,
+          1
+        ],
+        "size": [
+          2,
+          0.128,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_paving_service",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_paving_service.glb",
+      "nodeName": "prop_paving_service",
+      "label": "Service Cover Pavement",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.142,
+          1
+        ],
+        "size": [
+          2,
+          0.142,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_steps",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_steps.glb",
+      "nodeName": "prop_shop_steps",
+      "label": "Two Stone Entry Steps",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -0.77,
+          0,
+          -0.3015
+        ],
+        "max": [
+          0.77,
+          0.3,
+          0.3015
+        ],
+        "size": [
+          1.54,
+          0.3,
+          0.603
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_landing",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_landing.glb",
+      "nodeName": "prop_shop_landing",
+      "label": "Stone Entry Landing",
+      "triangles": 24,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.8,
+          0.3,
+          0.38
+        ],
+        "size": [
+          1.6,
+          0.3,
+          0.76
+        ]
+      }
+    },
+    {
+      "id": "prop_shop_post",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_shop_post.glb",
+      "nodeName": "prop_shop_post",
+      "label": "Shop Bay Pier",
+      "triangles": 36,
+      "bounds": {
+        "min": [
+          -0.1025,
+          0,
+          -0.1025
+        ],
+        "max": [
+          0.1025,
+          2.8,
+          0.1025
+        ],
+        "size": [
+          0.205,
+          2.8,
+          0.205
+        ]
+      }
+    },
+    {
+      "id": "prop_plaster_bay",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_plaster_bay.glb",
+      "nodeName": "prop_plaster_bay",
+      "label": "Plaster and Timber Bay",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.1
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.2
+        ]
+      }
+    },
+    {
+      "id": "prop_sash_bay",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_sash_bay.glb",
+      "nodeName": "prop_sash_bay",
+      "label": "Display Sash with Open Transom",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.09
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.09
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.18
+        ]
+      }
+    },
+    {
+      "id": "prop_service_portal",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_service_portal.glb",
+      "nodeName": "prop_service_portal",
+      "label": "Open Service Doorway",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.105
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.105
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.21
+        ]
+      }
+    },
+    {
+      "id": "prop_cafe_portal",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_cafe_portal.glb",
+      "nodeName": "prop_cafe_portal",
+      "label": "Cup and Saucer Entry",
+      "triangles": 114,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.12914
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.12914
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.25829
+        ]
+      }
+    },
+    {
+      "id": "prop_market_portal",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_portal.glb",
+      "nodeName": "prop_market_portal",
+      "label": "Greengrocer Entry",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.1375
+        ],
+        "max": [
+          0.9,
+          2.8,
+          0.1375
+        ],
+        "size": [
+          1.8,
+          2.8,
+          0.275
+        ]
+      }
+    },
+    {
+      "id": "prop_stripe_canopy",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_stripe_canopy.glb",
+      "nodeName": "prop_stripe_canopy",
+      "label": "Striped Canvas Canopy",
+      "triangles": 44,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.9,
+          0.34,
+          0.35
+        ],
+        "size": [
+          1.8,
+          0.34,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_oak_floor",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_oak_floor.glb",
+      "nodeName": "prop_oak_floor",
+      "label": "Staggered Oak Floor",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.428,
+          1
+        ],
+        "size": [
+          2,
+          0.428,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_quarry_floor",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_quarry_floor.glb",
+      "nodeName": "prop_quarry_floor",
+      "label": "Quarry Tile Floor",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.428,
+          1
+        ],
+        "size": [
+          2,
+          0.428,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cafe_roof",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_cafe_roof.glb",
+      "nodeName": "prop_cafe_roof",
+      "label": "Cafe Clerestory Roof",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -3.16,
+          0,
+          -3.16
+        ],
+        "max": [
+          3.16,
+          0.78,
+          3.16
+        ],
+        "size": [
+          6.32,
+          0.78,
+          6.32
+        ]
+      }
+    },
+    {
+      "id": "prop_market_roof",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_market_roof.glb",
+      "nodeName": "prop_market_roof",
+      "label": "Market Plant Roof",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -4.16,
+          0,
+          -3.16
+        ],
+        "max": [
+          4.16,
+          0.86,
+          3.16
+        ],
+        "size": [
+          8.32,
+          0.86,
+          6.32
+        ]
+      }
+    },
+    {
+      "id": "prop_espresso_bar",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_espresso_bar.glb",
+      "nodeName": "prop_espresso_bar",
+      "label": "Twin Group Espresso Bar",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.39
+        ],
+        "max": [
+          0.95,
+          1.46,
+          0.39
+        ],
+        "size": [
+          1.9,
+          1.46,
+          0.78
+        ]
+      }
+    },
+    {
+      "id": "prop_bread_hutch",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_bread_hutch.glb",
+      "nodeName": "prop_bread_hutch",
+      "label": "Bakery Loaf Hutch",
+      "triangles": 432,
+      "bounds": {
+        "min": [
+          -0.78,
+          0,
+          -0.29
+        ],
+        "max": [
+          0.78,
+          1.73,
+          0.29
+        ],
+        "size": [
+          1.56,
+          1.73,
+          0.58
+        ]
+      }
+    },
+    {
+      "id": "prop_stock_rack",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_stock_rack.glb",
+      "nodeName": "prop_stock_rack",
+      "label": "Carton Storage Rack",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -0.84,
+          0,
+          -0.31
+        ],
+        "max": [
+          0.84,
+          1.9,
+          0.31
+        ],
+        "size": [
+          1.68,
+          1.9,
+          0.62
+        ]
+      }
+    },
+    {
+      "id": "prop_checkout",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_checkout.glb",
+      "nodeName": "prop_checkout",
+      "label": "Market Checkout",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -0.76,
+          0,
+          -0.39
+        ],
+        "max": [
+          0.76,
+          1.38944,
+          0.39
+        ],
+        "size": [
+          1.52,
+          1.38944,
+          0.78
+        ]
+      }
+    },
+    {
+      "id": "prop_wash_station",
+      "pack": "sim",
+      "leaf": "world",
+      "relativePath": "props/prop_wash_station.glb",
+      "nodeName": "prop_wash_station",
+      "label": "Sink and Draining Board",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -0.78,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.78,
+          1.23245,
+          0.35
+        ],
+        "size": [
+          1.56,
+          1.23245,
+          0.7
+        ]
+      }
+    },
+    {
       "id": "prop_road_straight",
       "pack": "sim",
       "leaf": "world",
@@ -5179,5 +5829,1548 @@
         ]
       }
     }
-  ]
+  ],
+  "constructionKit": {
+    "pack": "sim",
+    "layouts": [
+      {
+        "id": "cafe-corner",
+        "title": "Café Corner",
+        "width": 14,
+        "depth": 10,
+        "props": [
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -2,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              -2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              -2,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -2,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_stripe_canopy",
+            "position": [
+              -2,
+              2.72,
+              1.44
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              0,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              0,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              0,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_cafe_portal",
+            "position": [
+              0,
+              0.428,
+              1.0225
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              2,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              2,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_oak_floor",
+            "position": [
+              2,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_stripe_canopy",
+            "position": [
+              2,
+              2.72,
+              1.44
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -3,
+              0.428,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -3,
+              0.428,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -3,
+              0.428,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -2,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_service_portal",
+            "position": [
+              0,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_cafe_roof",
+            "position": [
+              0,
+              3.228,
+              -2
+            ],
+            "hideWithRoof": true
+          },
+          {
+            "id": "prop_price_board",
+            "position": [
+              1.83,
+              1.91,
+              -2.84
+            ]
+          },
+          {
+            "id": "prop_bakery_oven",
+            "position": [
+              0.23,
+              0.428,
+              -4.51
+            ]
+          },
+          {
+            "id": "prop_espresso_bar",
+            "position": [
+              1.8,
+              0.428,
+              -1.43
+            ]
+          },
+          {
+            "id": "prop_bread_hutch",
+            "position": [
+              2.5,
+              0.428,
+              0.02
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_wash_station",
+            "position": [
+              1.86,
+              0.428,
+              -4.5
+            ]
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              -1.66,
+              0.428,
+              -4.51
+            ]
+          },
+          {
+            "id": "prop_cafe_table",
+            "position": [
+              -1.62,
+              0.428,
+              -1.98
+            ]
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -2.27,
+              0.428,
+              -1.98
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -0.97,
+              0.428,
+              -1.98
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_cafe_table",
+            "position": [
+              -1.62,
+              0.428,
+              -0.05
+            ]
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -2.27,
+              0.428,
+              -0.05
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_cafe_chair",
+            "position": [
+              -0.97,
+              0.428,
+              -0.05
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -1,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -1,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -1,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              1,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              1,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              1,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_curb_apron",
+            "position": [
+              0,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_crosswalk",
+            "position": [
+              0,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              2,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              2,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -4,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -4,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              4,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              4,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -4,
+              0,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              4,
+              0,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              -4,
+              0,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              4,
+              0,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -4,
+              0,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              4,
+              0,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -6,
+              0,
+              2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_road_corner",
+            "position": [
+              -6,
+              0,
+              4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_shop_landing",
+            "position": [
+              0,
+              0.128,
+              1.38
+            ]
+          },
+          {
+            "id": "prop_shop_steps",
+            "position": [
+              0,
+              0.128,
+              2.061
+            ]
+          },
+          {
+            "id": "prop_bistro_menu",
+            "position": [
+              1.4,
+              0.128,
+              2.05
+            ],
+            "rotationY": -0.22
+          },
+          {
+            "id": "prop_flower_bed",
+            "position": [
+              -2.2,
+              0.128,
+              1.62
+            ]
+          },
+          {
+            "id": "prop_streetlamp",
+            "position": [
+              -4.55,
+              0.128,
+              2.62
+            ]
+          },
+          {
+            "id": "prop_planter",
+            "position": [
+              3.86,
+              0.128,
+              0.16
+            ]
+          }
+        ],
+        "route": [
+          [
+            0.04,
+            0.07,
+            4
+          ],
+          [
+            0.04,
+            0.07,
+            3.22
+          ],
+          [
+            0.04,
+            0.09,
+            3.01
+          ],
+          [
+            0.04,
+            0.09,
+            3
+          ],
+          [
+            0.04,
+            0.128,
+            2.38
+          ],
+          [
+            0.04,
+            0.128,
+            2.365
+          ],
+          [
+            0.04,
+            0.278,
+            2.355
+          ],
+          [
+            0.04,
+            0.278,
+            2.066
+          ],
+          [
+            0.04,
+            0.428,
+            2.055
+          ],
+          [
+            0.04,
+            0.428,
+            1.42
+          ],
+          [
+            0.04,
+            0.428,
+            0.68
+          ],
+          [
+            0.04,
+            0.428,
+            -1.45
+          ],
+          [
+            0.04,
+            0.428,
+            -3.35
+          ],
+          [
+            0.04,
+            0.428,
+            -3.76
+          ],
+          [
+            0.74,
+            0.428,
+            -3.76
+          ]
+        ],
+        "view": [
+          -0.58,
+          0.78,
+          1
+        ]
+      },
+      {
+        "id": "market-block",
+        "title": "Market Block",
+        "width": 12,
+        "depth": 10,
+        "props": [
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -3,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -3,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -3,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -3,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              -3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_market_hood",
+            "position": [
+              -3,
+              2.72,
+              1.365
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -1,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -1,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              -1,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -1,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_market_portal",
+            "position": [
+              -1,
+              0.428,
+              1.0325
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              1,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              1,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              1,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              1,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              1,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_market_hood",
+            "position": [
+              1,
+              2.72,
+              1.365
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              3,
+              0,
+              -4
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              3,
+              0,
+              -2
+            ]
+          },
+          {
+            "id": "prop_quarry_floor",
+            "position": [
+              3,
+              0,
+              0
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              3,
+              0.428,
+              -5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_sash_bay",
+            "position": [
+              3,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_market_hood",
+            "position": [
+              3,
+              2.72,
+              1.365
+            ]
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -4,
+              0.428,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -4,
+              0.428,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              -4,
+              0.428,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              4,
+              0.428,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              4,
+              0.428,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              4,
+              0.428,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_service_portal",
+            "position": [
+              2,
+              0.428,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_plaster_bay",
+            "position": [
+              2,
+              0.428,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_market_roof",
+            "position": [
+              0,
+              3.228,
+              -2
+            ],
+            "hideWithRoof": true
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              3.54,
+              0.428,
+              -3.9
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              3.54,
+              0.428,
+              -0.18
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_price_board",
+            "position": [
+              -0.99,
+              1.85,
+              -4.84
+            ]
+          },
+          {
+            "id": "prop_sack_trolley",
+            "position": [
+              2.66,
+              0.428,
+              -4.51
+            ],
+            "rotationY": 0.18
+          },
+          {
+            "id": "prop_preserve_island",
+            "position": [
+              -1.02,
+              0.428,
+              -3.51
+            ]
+          },
+          {
+            "id": "prop_checkout",
+            "position": [
+              0.78,
+              0.428,
+              -0.28
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_magazine_rack",
+            "position": [
+              -0.1,
+              0.428,
+              0.5
+            ],
+            "rotationY": 3.141592654
+          },
+          {
+            "id": "prop_fruit_display",
+            "position": [
+              -2.98,
+              0.428,
+              -0.72
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_fruit_display",
+            "position": [
+              -2.98,
+              0.428,
+              -2.62
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_bread_hutch",
+            "position": [
+              -2.68,
+              0.428,
+              -4.48
+            ]
+          },
+          {
+            "id": "prop_stock_rack",
+            "position": [
+              0.73,
+              0.428,
+              -4.44
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -4,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -2,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              -2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              0,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              0,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              2,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              -5
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              -3
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              -1
+            ]
+          },
+          {
+            "id": "prop_shop_post",
+            "position": [
+              4,
+              0.428,
+              1
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -3,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -3,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_curb_apron",
+            "position": [
+              -1,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_crosswalk",
+            "position": [
+              -1,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              1,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              1,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              3,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              3,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -5,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              -5,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              5,
+              0,
+              2
+            ]
+          },
+          {
+            "id": "prop_road_straight",
+            "position": [
+              5,
+              0,
+              4
+            ]
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -5,
+              0,
+              -4
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              5,
+              0,
+              -4
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              -5,
+              0,
+              -2
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_paving_service",
+            "position": [
+              5,
+              0,
+              -2
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              -5,
+              0,
+              0
+            ],
+            "rotationY": -1.570796327
+          },
+          {
+            "id": "prop_sidewalk_tile",
+            "position": [
+              5,
+              0,
+              0
+            ],
+            "rotationY": 1.570796327
+          },
+          {
+            "id": "prop_shop_landing",
+            "position": [
+              -1,
+              0.128,
+              1.38
+            ]
+          },
+          {
+            "id": "prop_shop_steps",
+            "position": [
+              -1,
+              0.128,
+              2.061
+            ]
+          },
+          {
+            "id": "prop_fruit_display",
+            "position": [
+              -3.02,
+              0.128,
+              1.72
+            ]
+          },
+          {
+            "id": "prop_ticket_meter",
+            "position": [
+              4.67,
+              0.128,
+              2.46
+            ]
+          },
+          {
+            "id": "prop_bicycle_rack",
+            "position": [
+              2.91,
+              0.128,
+              1.71
+            ]
+          }
+        ],
+        "route": [
+          [
+            -0.96,
+            0.07,
+            4
+          ],
+          [
+            -0.96,
+            0.07,
+            3.22
+          ],
+          [
+            -0.96,
+            0.09,
+            3.01
+          ],
+          [
+            -0.96,
+            0.09,
+            3
+          ],
+          [
+            -0.96,
+            0.128,
+            2.38
+          ],
+          [
+            -0.96,
+            0.128,
+            2.365
+          ],
+          [
+            -0.96,
+            0.278,
+            2.355
+          ],
+          [
+            -0.96,
+            0.278,
+            2.066
+          ],
+          [
+            -0.96,
+            0.428,
+            2.055
+          ],
+          [
+            -0.96,
+            0.428,
+            1.42
+          ],
+          [
+            -0.96,
+            0.428,
+            0.68
+          ],
+          [
+            -0.96,
+            0.428,
+            -2.04
+          ],
+          [
+            1.54,
+            0.428,
+            -2.04
+          ],
+          [
+            2.84,
+            0.428,
+            -2.04
+          ],
+          [
+            2.84,
+            0.428,
+            -3.56
+          ]
+        ],
+        "view": [
+          0.42,
+          0.74,
+          1
+        ]
+      }
+    ]
+  }
 }

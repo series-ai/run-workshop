@@ -225,6 +225,41 @@
             "accent": "#937e65",
             "eye": "#4b6570"
           },
+          "prop_village_lane_tee": {
+            "hair": "#757467",
+            "skin": "#948c7d",
+            "primary": "#898073",
+            "secondary": "#726b60"
+          },
+          "prop_village_verge": {
+            "hair": "#757467"
+          },
+          "prop_village_room": {
+            "skin": "#c9bea3",
+            "secondary": "#72614e"
+          },
+          "prop_village_damaged_room": {
+            "skin": "#c9bea3",
+            "secondary": "#72614e"
+          },
+          "prop_village_door_wall": {
+            "skin": "#c9bea3",
+            "secondary": "#72614e"
+          },
+          "prop_village_broken_wall": {
+            "skin": "#c3b79e",
+            "secondary": "#976e55"
+          },
+          "prop_village_slate_roof": {
+            "metal": "#57616a",
+            "secondary": "#906b54"
+          },
+          "prop_shelter_gallery": {
+            "metal": "#697271"
+          },
+          "prop_goods_office_plinth": {
+            "skin": "#a9a393"
+          },
           "prop_dirt_road_straight": {
             "hair": "#757467",
             "skin": "#948c7d",
@@ -432,6 +467,18 @@
             "skin": "#a6a69b",
             "secondary": "#565e62",
             "metal": "#79807e"
+          },
+          "prop_curb_apron": {
+            "skin": "#979a92",
+            "primary": "#91938b",
+            "secondary": "#818783",
+            "metal": "#828987"
+          },
+          "prop_paving_service": {
+            "skin": "#979a92",
+            "primary": "#91938b",
+            "secondary": "#818783",
+            "metal": "#828987"
           },
           "prop_sidewalk_tile": {
             "skin": "#979a92",
@@ -893,6 +940,48 @@
             "secondary": "#4c3d38",
             "metal": "#766b63",
             "eye": "#ffad67"
+          },
+          "prop_basalt_floor_tile": {
+            "skin": "#68656a",
+            "secondary": "#59565b"
+          },
+          "prop_basalt_ring_door": {
+            "skin": "#68656a",
+            "secondary": "#59565b"
+          },
+          "prop_basalt_corner_bay": {
+            "skin": "#68656a",
+            "secondary": "#59565b"
+          },
+          "prop_basalt_vault_bay": {
+            "skin": "#68656a",
+            "secondary": "#59565b"
+          },
+          "prop_basalt_processional_stair": {
+            "skin": "#68656a",
+            "secondary": "#59565b"
+          },
+          "prop_basalt_high_landing": {
+            "skin": "#68656a",
+            "secondary": "#59565b"
+          },
+          "prop_mine_turnout": {
+            "primary": "#524747",
+            "secondary": "#3e393a",
+            "metal": "#515259",
+            "skin": "#605b5c"
+          },
+          "prop_mine_sill_stop": {
+            "primary": "#524747",
+            "secondary": "#3e393a",
+            "metal": "#515259",
+            "skin": "#605b5c"
+          },
+          "prop_mine_grade_crossing": {
+            "primary": "#524747",
+            "secondary": "#3e393a",
+            "metal": "#515259",
+            "skin": "#605b5c"
           },
           "prop_mine_track": {
             "primary": "#524747",

@@ -131,6 +131,22 @@ async function main() {
       }
     }
 
+    const kitLayouts = contexts.flatMap((context) => {
+      const catalog = JSON.parse(readFileSync(resolve(showcaseDir, 'public/catalog', context, 'catalog.json'), 'utf8'))
+      return (catalog.constructionKit?.layouts ?? []).map((layout) => ({ context, layout }))
+    })
+    const constructionLayout = (context, layout, viewport, showRoofs = false) => async () => {
+      await stage(context, viewport)()
+      await page.getByLabel('Layout', { exact: true }).selectOption(layout.id)
+      await page.getByRole('heading', { name: layout.title, exact: true }).waitFor()
+      if (showRoofs) {
+        await page.getByRole('button', { name: 'Roofs', pressed: false, exact: true }).click()
+        await page.getByRole('button', { name: 'Roofs', pressed: true, exact: true }).waitFor()
+      }
+      await page.getByRole('status').filter({ hasText: 'Loading scene' }).waitFor({ state: 'hidden' })
+      await page.waitForLoadState('networkidle')
+    }
+
     /** Open a lab preset. `clip` selects a clip, `hold` holds it at a phase (0 to 1). */
     const lab = async (preset, { clip, hold } = {}) => {
       await tab('Parametric Avatar Lab')
@@ -244,6 +260,13 @@ async function main() {
       ...contexts.map((context) => [`09-phone-${context}`, stage(context, phone), { scale: 'css' }]),
       ...contexts.map((context) => [`09-phone-320-${context}`, stage(context, compactPhone), { scale: 'css' }]),
       ['09-phone-320-all-contexts', stage(`All ${contexts.length}`, compactPhone), { scale: 'css' }],
+      ...kitLayouts.flatMap(({ context, layout }) => [
+        [`09-kit-${context}-${layout.id}-desktop`, constructionLayout(context, layout, desktop)],
+        [`09-kit-${context}-${layout.id}-390`, constructionLayout(context, layout, phone), { scale: 'css' }],
+        ...(layout.props.some(({ hideWithRoof }) => hideWithRoof)
+          ? [[`09-kit-${context}-${layout.id}-roof`, constructionLayout(context, layout, desktop, true)]]
+          : []),
+      ]),
       ...contexts.map((context) => [`09-value-${context}`, stage(context, desktop), {
         style: '.context-stage-canvas { filter: grayscale(1); }',
       }]),

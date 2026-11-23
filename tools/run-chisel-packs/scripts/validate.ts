@@ -20,6 +20,7 @@ import {
   serializeReportSummary,
   triTriIntersect,
 } from '../src/animationAudit'
+import { withConstructionKit } from '../src/constructionKitCatalog'
 import { isIdentityTransform, nodeTriangleCount, parseGlb, readAccessor, type ParsedGlb } from '../src/glbInspect'
 import { META_DIR, STAGE_DIR } from '../src/paths'
 import { assertPackColorAssignments, assertPropColors } from '../src/propColors'
@@ -2269,7 +2270,7 @@ async function main(): Promise<void> {
   if (!existsSync(manifestPath)) throw new Error(`Missing build manifest: ${manifestPath}. Run npm run build first.`)
   const manifest = buildManifestSchema.parse(JSON.parse(readFileSync(manifestPath, 'utf8')))
   assertNoOrphanGlbs(manifest)
-  manifest.packs.forEach(assertPackColorAssignments)
+  for (const catalog of manifest.packs) assertPackColorAssignments(withConstructionKit(catalog))
 
   let totalModels = 0
   let totalParts = 0
