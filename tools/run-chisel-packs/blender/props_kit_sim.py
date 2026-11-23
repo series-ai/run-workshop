@@ -37,6 +37,55 @@ def prop_shop_landing(p):
     p.box((0, .29, 0), (1.6, .02, .76), 'skin')
 
 
+def prop_market_stair_bay(p):
+    # The first tread meets a loading dock 0.30 m above the pavement.
+    for i in range(16):
+        h = .30 + (i + 1) * .185
+        z = -2 + (i + .5) * .25
+        p.box((0, h - .095, z), (1.62, .19, .25), 'skin')
+    for x in (-.74, .74):
+        for i in (0, 5, 10, 15):
+            z = -2 + (i + .5) * .25
+            h = .30 + (i + 1) * .185
+            p.box((x, (h + .91) / 2, z), (.08, h + .91, .08), 'secondary')
+        for height, radius, role in ((.47, .065, 'secondary'), (1.395, .042, 'metal')):
+            # The lower beam supports the treads. The upper beam is a handrail.
+            p.prism(V(x, height, -1.875), V(x, height + 2.775, 1.875),
+                    radius, radius, 6, role, up=X)
+
+
+def prop_market_upper_landing(p):
+    # Four columns carry the landing over the pavement.
+    for x in (-.89, .89):
+        for z in (-.89, .89):
+            p.box((x, 1.51, z), (.16, 3.02, .16), 'secondary')
+    p.box((0, 3.08, 0), (2, .12, 2), 'primary')
+    p.box((0, 3.20, 0), (2, .12, 2), 'skin')
+    for x in (-.9, 0, .9):
+        p.box((x, 3.71, .92), (.06, .90, .06), 'secondary')
+    for z in (-.9, 0):
+        p.box((.90, 3.71, z), (.06, .90, .06), 'secondary')
+    for h in (3.68, 4.16):
+        p.box((.90, h, 0), (.07, .06, 1.88), 'metal')
+        p.box((0, h, .92), (1.88, .06, .07), 'metal')
+
+
+def prop_market_loggia(p):
+    # A recessed gallery opens to the next bay. A high sash lights the return wall.
+    for x in (-.90, .90):
+        for z in (-.90, .90):
+            p.box((x, 1.13, z), (.17, 2.26, .17), 'secondary')
+    p.box((-.90, .47, 0), (.15, .94, 1.64), 'skin')
+    p.box((-.90, 1.55, 0), (.06, 1.22, 1.64), 'eye')
+    p.box((-.90, 1.55, 0), (.12, 1.22, .07), 'primary')
+    for z in (-.9, .9):
+        p.box((0, 2.19, z), (1.64, .14, .15), 'primary')
+    # The raised centre and stepped cornice mark the street front.
+    p.box((0, 2.31, 0), (2.00, .16, 2.00), 'skin')
+    p.box((0, 2.43, 0), (1.86, .08, 1.86), 'metal')
+    p.box((0, 2.57, .86), (1.18, .20, .12), 'skin')
+
+
 def prop_shop_post(p):
     p.box((0, 1.40, 0), (.20, 2.80, .20), 'secondary')
     for y, h in ((.14, .28), (2.67, .26)):
@@ -269,6 +318,9 @@ def prop_sack_trolley(p):
 
 
 SIM_KIT_STATIC = [
+    (prop_market_stair_bay, 'Loading Dock Stair Bay'),
+    (prop_market_upper_landing, 'Raised Gallery Landing'),
+    (prop_market_loggia, 'Recessed Market Gallery'),
     (prop_price_board, 'Framed Price Board'),
     (prop_bakery_oven, 'Double Deck Bakery Oven'),
     (prop_sack_trolley, 'Loaded Sack Trolley'),

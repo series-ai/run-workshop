@@ -139,14 +139,18 @@
         {"id": "prop_plaster_bay", "position": [-4.0, 0.428, -4], "rotationY": -1.570796327},
         {"id": "prop_plaster_bay", "position": [-4.0, 0.428, -2], "rotationY": -1.570796327},
         {"id": "prop_plaster_bay", "position": [-4.0, 0.428, 0], "rotationY": -1.570796327},
-        {"id": "prop_plaster_bay", "position": [4.0, 0.428, -4], "rotationY": 1.570796327},
+        {"id": "prop_service_portal", "position": [4.0, 0.428, -4], "rotationY": 1.570796327},
         {"id": "prop_plaster_bay", "position": [4.0, 0.428, -2], "rotationY": 1.570796327},
         {"id": "prop_plaster_bay", "position": [4.0, 0.428, 0], "rotationY": 1.570796327},
         {"id": "prop_plaster_bay", "position": [2, 0.428, -4], "rotationY": 1.570796327},
         {"id": "prop_service_portal", "position": [2, 0.428, -2], "rotationY": 1.570796327},
         {"id": "prop_plaster_bay", "position": [2, 0.428, 0], "rotationY": 1.570796327},
         {"id": "prop_market_roof", "position": [0, 3.228, -2], "hideWithRoof": true},
-        {"id": "prop_stock_rack", "position": [3.54, 0.428, -3.9], "rotationY": -1.570796327},
+        {"id": "prop_quarry_floor", "position": [5, 0, -4]},
+        {"id": "prop_market_stair_bay", "position": [5, 0.128, -1]},
+        {"id": "prop_market_upper_landing", "position": [5, 0.128, 2]},
+        {"id": "prop_market_upper_landing", "position": [3, 0.128, 2], "rotationY": -1.570796327},
+        {"id": "prop_market_loggia", "position": [3, 3.388, 2]},
         {"id": "prop_stock_rack", "position": [3.54, 0.428, -0.18], "rotationY": -1.570796327},
         {"id": "prop_price_board", "position": [-0.99, 1.85, -4.84]},
         {"id": "prop_sack_trolley", "position": [2.66, 0.428, -4.51], "rotationY": 0.18},
@@ -186,7 +190,6 @@
         {"id": "prop_sidewalk_tile", "position": [5, 0, 2]},
         {"id": "prop_road_straight", "position": [5, 0, 4]},
         {"id": "prop_sidewalk_tile", "position": [-5.0, 0, -4], "rotationY": -1.570796327},
-        {"id": "prop_sidewalk_tile", "position": [5.0, 0, -4], "rotationY": 1.570796327},
         {"id": "prop_paving_service", "position": [-5.0, 0, -2], "rotationY": -1.570796327},
         {"id": "prop_paving_service", "position": [5.0, 0, -2], "rotationY": 1.570796327},
         {"id": "prop_sidewalk_tile", "position": [-5.0, 0, 0], "rotationY": -1.570796327},
@@ -212,9 +215,16 @@
         [-0.96, 0.428, -2.04],
         [1.54, 0.428, -2.04],
         [2.84, 0.428, -2.04],
-        [2.84, 0.428, -3.56]
+        [2.84, 0.428, -3.56],
+        [2.84, 0.428, -3.95],
+        [5, 0.428, -3.95],
+        [5, 0.428, -3.005],
+        [5, 0.613, -2.995],
+        [5, 3.388, 0.88],
+        [5, 3.388, 2],
+        [3, 3.388, 2]
       ],
-      "view": [0.42, 0.74, 1]
+      "view": [0.95, 0.90, 1]
     }
   ]
 }
