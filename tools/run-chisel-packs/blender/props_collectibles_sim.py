@@ -15,7 +15,8 @@ def _loyalty_stamp(p):
 
 
 def held_sim_loyalty_stamp(p):
-    with p.placed(Matrix.Translation(V(-0.014, 0, 0.015)) @ Matrix.Rotation(pi / 2, 4, 'Y')):
+    pose = Matrix.Translation(Y * 0.010) @ Matrix.Scale(0.80, 4) @ Matrix.Rotation(pi / 2, 4, 'Y')
+    with p.placed(pose):
         _loyalty_stamp(p)
 
 
