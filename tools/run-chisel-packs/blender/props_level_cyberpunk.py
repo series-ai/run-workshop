@@ -5,6 +5,7 @@ from mathutils import Matrix
 
 from build_props import make_contract, sample_prop_clip
 from props_cyber_district import DISTRICT_PROPS, prop_cyber_apartment, prop_tech_workshop
+from props_kit_cyberpunk import KIT_PROPS
 import polykit as pk
 from polykit import X, Y, Z, V
 from props_level_common import door_unit, l_corner_wall, tile_base
@@ -302,6 +303,7 @@ def prop_traffic_pylon(part):
 
 CYBERPUNK_LEVEL_STATIC = [
     *DISTRICT_PROPS,
+    *KIT_PROPS,
     (prop_cyber_road_straight, 'Cyber Asphalt Straight Road'),
     (prop_cyber_road_corner, 'Cyber Asphalt Corner Road'),
     (prop_cyber_road_tsplit, 'Cyber Asphalt T-Intersection'),
