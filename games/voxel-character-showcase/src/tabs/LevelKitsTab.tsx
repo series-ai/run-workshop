@@ -159,6 +159,21 @@ async function loadLayoutFile(file: string, signal: AbortSignal): Promise<unknow
   return response.json()
 }
 
+const viewportCenter = (_el: unknown, _camera: unknown, size: { width: number; height: number }) => [size.width / 2, size.height / 2]
+const keepVisible = () => undefined
+
+/**
+ * Shows a loading status in the middle of the canvas. drei places Html at a world anchor and hides it
+ * when the anchor is behind the camera, so the status uses the viewport center and ignores occlusion.
+ */
+function ViewportStatus({ children }: { children: ReactNode }) {
+  return (
+    <Html center calculatePosition={viewportCenter} onOcclude={keepVisible}>
+      <span className="level-kit-status level-kit-status-overlay" role="status">{children}</span>
+    </Html>
+  )
+}
+
 function describeIssue(error: unknown): string {
   if (error instanceof ZodError) {
     const issue = error.issues[0]
@@ -302,7 +317,7 @@ function KitModels({ pack, palette, layout, subject, motion, lightsOn, eyeLevel,
 
   if (renderer === 'voxel') {
     if (raw?.kind === 'error') throw new Error(raw.message)
-    if (!raw) return <Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading voxel models…</span></Html>
+    if (!raw) return <ViewportStatus>Loading voxel models…</ViewportStatus>
   }
 
   return groups.map(({ item, placements }) => {
@@ -455,7 +470,7 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
               <KitCamera key={`${sceneKey}:${viewIndex}`} subject={subject} view={view} viewpoint={viewpoint} />
               {!subject && eyeLevel && <LevelLightingEffects />}
               {!subject && optimized && <LevelShadowCache revision={`${pack}:${renderer}:${viewIndex}`} />}
-              <Suspense fallback={<Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading models…</span></Html>}>
+              <Suspense fallback={<ViewportStatus>Loading models…</ViewportStatus>}>
                 <KitModels key={sceneKey} pack={pack} palette={palette} layout={layout} subject={subject} motion={motion}
                   lightsOn={lightsOn} eyeLevel={eyeLevel} renderer={renderer} optimized={!subject && optimized} />
               </Suspense>

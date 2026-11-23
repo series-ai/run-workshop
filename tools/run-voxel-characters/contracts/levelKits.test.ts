@@ -19,7 +19,7 @@ function fixture() {
     levelKitProps: Array.from({ length: 24 }, (_, index): PackCatalog['levelKitProps'][number] => ({
       id: `prop_${pack}_${index}`,
       pack,
-      leaf: 'characters',
+      leaf: 'world',
       relativePath: `level-kit/${index}.glb`,
       nodeName: `prop_${pack}_${index}`,
       label: `Model ${index + 1}`,
@@ -149,4 +149,12 @@ it('accepts a prop from a world-only Cubix pack', () => {
   const { core } = fixture()
   const prop = { ...core.levelKitProps[0], pack: 'caverns', leaf: 'world' }
   expect(levelPropEntrySchema.safeParse(prop).success).toBe(true)
+})
+
+it('rejects a level kit prop outside the world leaf', () => {
+  const { core } = fixture()
+  for (const pack of ['core', 'caverns']) {
+    const prop = { ...core.levelKitProps[0], pack, leaf: 'characters' }
+    expect(levelPropEntrySchema.safeParse(prop).success).toBe(false)
+  }
 })

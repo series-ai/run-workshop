@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import proportionsJson from './data/proportions.json'
 import { LICENSES, VOXCHAR_PACK_KEYS } from './packs'
-import { LEVEL_PACK_KEYS } from './levelPacks'
+import { LEVEL_KIT_LEAF, LEVEL_PACK_KEYS } from './levelPacks'
 import { paletteColorsSchema } from './palette'
 import { characterRagdollSchema, ragdollColliderMapSchema } from './ragdoll'
 import { RIG_IDS } from './rig'
@@ -226,6 +226,7 @@ export type WorldPropEntry = z.infer<typeof worldPropEntrySchema>
 
 export const levelPropEntrySchema = worldPropEntrySchema.extend({
   pack: z.enum(LEVEL_PACK_KEYS),
+  leaf: z.literal(LEVEL_KIT_LEAF),
   relativePath: z.string().regex(/^level-kit\/[a-z0-9_]+\.glb$/),
   palette: paletteColorsSchema.partial().strict().optional(),
   surface: z.enum(['water', 'glass']).optional(),
