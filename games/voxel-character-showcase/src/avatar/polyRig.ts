@@ -51,6 +51,12 @@ export function readGltf(url: string): GLTF {
   return entry.gltf
 }
 
+export function clearFailedGltfLoads(): void {
+  for (const [url, entry] of gltfCache) {
+    if (entry.status === 'failed') gltfCache.delete(url)
+  }
+}
+
 // ---- clips ----------------------------------------------------------------
 
 const TRACK_EPSILON = 1e-4

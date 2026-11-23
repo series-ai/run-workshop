@@ -3149,7 +3149,7 @@
       "nodeName": "head_sorceress",
       "slot": "head",
       "label": "Royal Sorceress",
-      "triangles": 140,
+      "triangles": 152,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -3160,15 +3160,15 @@
           "type": "capsule",
           "a": [
             0,
-            -0.02743,
-            0.02598
+            -0.01529,
+            0.0506
           ],
           "b": [
             0,
-            0.08621,
-            0.02228
+            0.07571,
+            0.04764
           ],
-          "radius": 0.1175
+          "radius": 0.13703
         }
       }
     },
@@ -3335,7 +3335,7 @@
       "nodeName": "headwear_sorceress_tiara",
       "slot": "headwear",
       "label": "Celestial Tiara",
-      "triangles": 164,
+      "triangles": 130,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -4379,7 +4379,7 @@
       "nodeName": "back_sorceress_mantle",
       "slot": "back",
       "label": "Gilded Relic Wings",
-      "triangles": 286,
+      "triangles": 240,
       "rigId": "ual1",
       "rules": {
         "hidesHair": false,
@@ -4389,16 +4389,16 @@
         "spine_03": {
           "type": "capsule",
           "a": [
-            -0.09795,
-            0.02471,
-            -0.17409
+            -0.15272,
+            0.00322,
+            -0.17479
           ],
           "b": [
-            0.09795,
-            0.02471,
-            -0.17409
+            0.10652,
+            0.00322,
+            -0.17479
           ],
-          "radius": 0.16154
+          "radius": 0.14894
         }
       }
     }
@@ -4655,7 +4655,7 @@
       "label": "Astral Star Scepter",
       "hand": "hand_r",
       "gripStyle": "handle",
-      "triangles": 100
+      "triangles": 238
     },
     {
       "id": "held_astral_orb",
@@ -4746,6 +4746,3168 @@
           0.6,
           0.35
         ]
+      }
+    }
+  ],
+  "levelKitProps": [
+    {
+      "id": "prop_fantasy_flagstone_tile",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_flagstone_tile.glb",
+      "nodeName": "prop_fantasy_flagstone_tile",
+      "label": "Flagstone tile",
+      "triangles": 296,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_keep_wall",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_keep_wall.glb",
+      "nodeName": "prop_fantasy_keep_wall",
+      "label": "Keep wall",
+      "triangles": 394,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.5,
+          0.25
+        ],
+        "size": [
+          4,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_stone_doorframe",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_stone_doorframe.glb",
+      "nodeName": "prop_fantasy_stone_doorframe",
+      "label": "Stone doorframe",
+      "triangles": 616,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          2.8,
+          0.3
+        ],
+        "size": [
+          4,
+          2.8,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_battlement_cover",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_battlement_cover.glb",
+      "nodeName": "prop_fantasy_battlement_cover",
+      "label": "Battlement cover",
+      "triangles": 142,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.35
+        ],
+        "size": [
+          2.4,
+          0.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_stone_steps",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_stone_steps.glb",
+      "nodeName": "prop_fantasy_stone_steps",
+      "label": "Stone steps",
+      "triangles": 236,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.9
+        ],
+        "size": [
+          1.6,
+          0.6,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_timber_rail",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_timber_rail.glb",
+      "nodeName": "prop_fantasy_timber_rail",
+      "label": "Timber rail",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.5,
+          1.2,
+          0.15
+        ],
+        "size": [
+          3,
+          1.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_shrine_landing",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_shrine_landing.glb",
+      "nodeName": "prop_fantasy_shrine_landing",
+      "label": "Shrine landing",
+      "triangles": 250,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.25,
+          0.8,
+          0.85
+        ],
+        "size": [
+          2.5,
+          0.8,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_castle_gatehouse",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_castle_gatehouse.glb",
+      "nodeName": "prop_fantasy_castle_gatehouse",
+      "label": "Castle gatehouse",
+      "triangles": 602,
+      "bounds": {
+        "min": [
+          -2.1,
+          0,
+          -0.9
+        ],
+        "max": [
+          2.1,
+          3.2,
+          0.9
+        ],
+        "size": [
+          4.2,
+          3.2,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_market_awning",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_awning.glb",
+      "nodeName": "prop_fantasy_market_awning",
+      "label": "Market awning",
+      "triangles": 490,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.4,
+          2.3,
+          0.85
+        ],
+        "size": [
+          2.8,
+          2.3,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_merchant_counter",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_merchant_counter.glb",
+      "nodeName": "prop_fantasy_merchant_counter",
+      "label": "Merchant counter",
+      "triangles": 558,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.4
+        ],
+        "max": [
+          1,
+          1.6,
+          0.4
+        ],
+        "size": [
+          2,
+          1.6,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_rune_monument",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_rune_monument.glb",
+      "nodeName": "prop_fantasy_rune_monument",
+      "label": "Rune monument",
+      "triangles": 246,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.65,
+          2.4,
+          0.55
+        ],
+        "size": [
+          1.3,
+          2.4,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_courtyard_well",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_courtyard_well.glb",
+      "nodeName": "prop_fantasy_courtyard_well",
+      "label": "Courtyard well",
+      "triangles": 450,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.8
+        ],
+        "max": [
+          0.8,
+          0.9,
+          0.8
+        ],
+        "size": [
+          1.6,
+          0.9,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wooden_bridge",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wooden_bridge.glb",
+      "nodeName": "prop_fantasy_wooden_bridge",
+      "label": "Wooden bridge",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          1.5,
+          0.9
+        ],
+        "size": [
+          2.8,
+          1.5,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_barrel_stand",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_barrel_stand.glb",
+      "nodeName": "prop_fantasy_barrel_stand",
+      "label": "Barrel stand",
+      "triangles": 528,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.6,
+          1.2,
+          0.6
+        ],
+        "size": [
+          1.2,
+          1.2,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_market_crate",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_crate.glb",
+      "nodeName": "prop_fantasy_market_crate",
+      "label": "Market crate",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.6,
+          0.8,
+          0.6
+        ],
+        "size": [
+          1.2,
+          0.8,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_sign",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_sign.glb",
+      "nodeName": "prop_fantasy_guild_sign",
+      "label": "Guild sign",
+      "triangles": 194,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.3,
+          0.25
+        ],
+        "size": [
+          1,
+          2.3,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_courtyard_brazier",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_courtyard_brazier.glb",
+      "nodeName": "prop_fantasy_courtyard_brazier",
+      "label": "Courtyard brazier",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.4,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_stone_tomb",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_stone_tomb.glb",
+      "nodeName": "prop_fantasy_stone_tomb",
+      "label": "Stone tomb",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.6
+        ],
+        "max": [
+          1,
+          0.9,
+          0.6
+        ],
+        "size": [
+          2,
+          0.9,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wagon_frame",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wagon_frame.glb",
+      "nodeName": "prop_fantasy_wagon_frame",
+      "label": "Wagon frame",
+      "triangles": 620,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.85
+        ],
+        "max": [
+          0.95,
+          2.4,
+          1.85
+        ],
+        "size": [
+          1.9,
+          2.4,
+          3.7
+        ]
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_fantasy_wagon_frame.glb",
+        "clips": [
+          "Drive",
+          "Steer"
+        ],
+        "lights": []
+      }
+    },
+    {
+      "id": "prop_fantasy_old_stone_pile",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_old_stone_pile.glb",
+      "nodeName": "prop_fantasy_old_stone_pile",
+      "label": "Old stone pile",
+      "triangles": 160,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.8,
+          0.8,
+          0.65
+        ],
+        "size": [
+          1.6,
+          0.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wooden_bookcase",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wooden_bookcase.glb",
+      "nodeName": "prop_fantasy_wooden_bookcase",
+      "label": "Wooden bookcase",
+      "triangles": 382,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.7,
+          1.6,
+          0.35
+        ],
+        "size": [
+          1.4,
+          1.6,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_square_lantern",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_square_lantern.glb",
+      "nodeName": "prop_fantasy_square_lantern",
+      "label": "Square lantern",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          2.1,
+          0.25
+        ],
+        "size": [
+          0.5,
+          2.1,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_banner_support",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_banner_support.glb",
+      "nodeName": "prop_fantasy_banner_support",
+      "label": "Banner support",
+      "triangles": 314,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.8,
+          2.5,
+          0.2
+        ],
+        "size": [
+          1.6,
+          2.5,
+          0.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_market_bench",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_bench.glb",
+      "nodeName": "prop_fantasy_market_bench",
+      "label": "Market bench",
+      "triangles": 282,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.85,
+          1,
+          0.3
+        ],
+        "size": [
+          1.7,
+          1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_shrine_arcade",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_shrine_arcade.glb",
+      "nodeName": "prop_fantasy_shrine_arcade",
+      "label": "Shrine arcade",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -0.8
+        ],
+        "max": [
+          1.55,
+          3.5,
+          0.8
+        ],
+        "size": [
+          3.1,
+          3.5,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_arcade_roof_slab",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_arcade_roof_slab.glb",
+      "nodeName": "prop_fantasy_arcade_roof_slab",
+      "label": "Arcade roof slab",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.2
+        ],
+        "max": [
+          1.7,
+          0.3,
+          1.2
+        ],
+        "size": [
+          3.4,
+          0.3,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_weathered_stone_column",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_weathered_stone_column.glb",
+      "nodeName": "prop_fantasy_weathered_stone_column",
+      "label": "Weathered stone column",
+      "triangles": 210,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.45,
+          2.5,
+          0.45
+        ],
+        "size": [
+          0.9,
+          2.5,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_limestone_terrace_wall",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_limestone_terrace_wall.glb",
+      "nodeName": "prop_fantasy_limestone_terrace_wall",
+      "label": "Limestone terrace wall",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.5
+        ],
+        "max": [
+          2,
+          1.3,
+          0.5
+        ],
+        "size": [
+          4,
+          1.3,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_market_stone_lane",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_stone_lane.glb",
+      "nodeName": "prop_fantasy_market_stone_lane",
+      "label": "Market stone lane",
+      "triangles": 318,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -2
+        ],
+        "max": [
+          1.4,
+          0.2,
+          2
+        ],
+        "size": [
+          2.8,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#8f8577",
+        "trim": "#b7a790"
+      }
+    },
+    {
+      "id": "prop_fantasy_lower_gate_passage",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_lower_gate_passage.glb",
+      "nodeName": "prop_fantasy_lower_gate_passage",
+      "label": "Lower gate passage",
+      "triangles": 348,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.45,
+          2.6,
+          0.85
+        ],
+        "size": [
+          2.9,
+          2.6,
+          1.7
+        ]
+      },
+      "palette": {
+        "primary": "#847c70"
+      }
+    },
+    {
+      "id": "prop_fantasy_gate_tower_foot",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_gate_tower_foot.glb",
+      "nodeName": "prop_fantasy_gate_tower_foot",
+      "label": "Gate tower foot",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -2.15,
+          0,
+          -0.85
+        ],
+        "max": [
+          2.15,
+          3.6,
+          0.85
+        ],
+        "size": [
+          4.3,
+          3.6,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_gate_tower_cap",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_gate_tower_cap.glb",
+      "nodeName": "prop_fantasy_gate_tower_cap",
+      "label": "Gate tower cap",
+      "triangles": 548,
+      "bounds": {
+        "min": [
+          -2.15,
+          0,
+          -0.8
+        ],
+        "max": [
+          2.15,
+          2.3,
+          0.8
+        ],
+        "size": [
+          4.3,
+          2.3,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_keep_high_window_bay",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_keep_high_window_bay.glb",
+      "nodeName": "prop_fantasy_keep_high_window_bay",
+      "label": "Keep high window bay",
+      "triangles": 584,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          2.9,
+          0.4
+        ],
+        "size": [
+          4,
+          2.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_stone_stair_return",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_stone_stair_return.glb",
+      "nodeName": "prop_fantasy_stone_stair_return",
+      "label": "Stone stair return",
+      "triangles": 380,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.6
+        ],
+        "max": [
+          1.4,
+          2.6,
+          0.6
+        ],
+        "size": [
+          2.8,
+          2.6,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_keep_outer_return",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_keep_outer_return.glb",
+      "nodeName": "prop_fantasy_keep_outer_return",
+      "label": "Keep outer return",
+      "triangles": 408,
+      "bounds": {
+        "min": [
+          -1.95,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.95,
+          3.3,
+          0.45
+        ],
+        "size": [
+          3.9,
+          3.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_terracotta_market_awning",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_terracotta_market_awning.glb",
+      "nodeName": "prop_fantasy_terracotta_market_awning",
+      "label": "Terracotta market awning",
+      "triangles": 552,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.1
+        ],
+        "max": [
+          1.5,
+          0.9,
+          1.1
+        ],
+        "size": [
+          3,
+          0.9,
+          2.2
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_produce_stall_frame",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_produce_stall_frame.glb",
+      "nodeName": "prop_fantasy_produce_stall_frame",
+      "label": "Produce stall frame",
+      "triangles": 428,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.4,
+          2.4,
+          0.85
+        ],
+        "size": [
+          2.8,
+          2.4,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_spice_box",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_spice_box.glb",
+      "nodeName": "prop_fantasy_spice_box",
+      "label": "Spice box",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1.4,
+          0.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_cloth_goods_box",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_cloth_goods_box.glb",
+      "nodeName": "prop_fantasy_cloth_goods_box",
+      "label": "Cloth goods box",
+      "triangles": 304,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1.4,
+          0.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_empty_market_bin",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_empty_market_bin.glb",
+      "nodeName": "prop_fantasy_empty_market_bin",
+      "label": "Empty market bin",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          0.6,
+          0.5
+        ],
+        "size": [
+          1.4,
+          0.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_market_table",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_table.glb",
+      "nodeName": "prop_fantasy_market_table",
+      "label": "Market table",
+      "triangles": 312,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.4
+        ],
+        "max": [
+          1,
+          1,
+          0.4
+        ],
+        "size": [
+          2,
+          1,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_damaged_wall_end",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_damaged_wall_end.glb",
+      "nodeName": "prop_fantasy_damaged_wall_end",
+      "label": "Damaged wall end",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2,
+          4.1,
+          1.2
+        ],
+        "size": [
+          4,
+          4.1,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_yard_embankment",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_yard_embankment.glb",
+      "nodeName": "prop_fantasy_yard_embankment",
+      "label": "Yard embankment",
+      "triangles": 468,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_ceiling",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_ceiling.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_ceiling",
+      "label": "Guild bakehouse ceiling",
+      "triangles": 594,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -2.2
+        ],
+        "max": [
+          2.2,
+          2.6,
+          2.2
+        ],
+        "size": [
+          4.4,
+          2.6,
+          4.4
+        ]
+      },
+      "palette": {
+        "leather": "#67513d",
+        "detail": "#935b49"
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_solid",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_solid.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_solid",
+      "label": "Guild bakehouse solid",
+      "triangles": 600,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_window",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_window.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_window",
+      "label": "Guild bakehouse window",
+      "triangles": 578,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_door",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_door.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_door",
+      "label": "Guild bakehouse door",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_pendant",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_pendant.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_pendant",
+      "label": "Guild bakehouse pendant",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.45,
+          0.9,
+          0.3
+        ],
+        "size": [
+          0.9,
+          0.9,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_bread_oven",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_bread_oven.glb",
+      "nodeName": "prop_fantasy_bread_oven",
+      "label": "Bread oven",
+      "triangles": 592,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.5,
+          2.9,
+          1.05
+        ],
+        "size": [
+          3,
+          2.9,
+          2.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_chimney",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_chimney.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_chimney",
+      "label": "Guild bakehouse chimney",
+      "triangles": 418,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.55,
+          4.1,
+          0.55
+        ],
+        "size": [
+          1.1,
+          4.1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_trade_sign",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_trade_sign.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_trade_sign",
+      "label": "Guild bakehouse trade sign",
+      "triangles": 412,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.25
+        ],
+        "size": [
+          2.4,
+          1.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_letter_board",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_letter_board.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_letter_board",
+      "label": "Guild bakehouse letter board",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.8,
+          1.6,
+          0.15
+        ],
+        "size": [
+          3.6,
+          1.6,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_bakehouse_floor",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_bakehouse_floor.glb",
+      "nodeName": "prop_fantasy_guild_bakehouse_floor",
+      "label": "Guild bakehouse floor",
+      "triangles": 316,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_ridge_fir",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_ridge_fir.glb",
+      "nodeName": "prop_fantasy_ridge_fir",
+      "label": "Ridge fir",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -1.65
+        ],
+        "max": [
+          1.75,
+          8.7,
+          1.65
+        ],
+        "size": [
+          3.5,
+          8.7,
+          3.3
+        ]
+      },
+      "palette": {
+        "primary": "#63794b",
+        "secondary": "#3c533b",
+        "leather": "#665039"
+      }
+    },
+    {
+      "id": "prop_fantasy_high_wooded_bank",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_high_wooded_bank.glb",
+      "nodeName": "prop_fantasy_high_wooded_bank",
+      "label": "High wooded bank",
+      "triangles": 472,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2,
+          4.1,
+          1.2
+        ],
+        "size": [
+          4,
+          4.1,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_ridge_broadleaf",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_ridge_broadleaf.glb",
+      "nodeName": "prop_fantasy_ridge_broadleaf",
+      "label": "Ridge broadleaf",
+      "triangles": 626,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.7,
+          5.6,
+          0.9
+        ],
+        "size": [
+          3.4,
+          5.6,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#78824d",
+        "secondary": "#53643b",
+        "leather": "#72573c"
+      }
+    },
+    {
+      "id": "prop_fantasy_bread_boards_and_flour_bowls",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_bread_boards_and_flour_bowls.glb",
+      "nodeName": "prop_fantasy_bread_boards_and_flour_bowls",
+      "label": "Bread boards and flour bowls",
+      "triangles": 178,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.65,
+          0.4,
+          0.25
+        ],
+        "size": [
+          1.3,
+          0.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_market_produce_crates",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_produce_crates.glb",
+      "nodeName": "prop_fantasy_market_produce_crates",
+      "label": "Market produce crates",
+      "triangles": 370,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.1,
+          1.2,
+          0.45
+        ],
+        "size": [
+          2.2,
+          1.2,
+          0.9
+        ]
+      },
+      "palette": {
+        "accent": "#a97947",
+        "detail": "#995a46"
+      }
+    },
+    {
+      "id": "prop_fantasy_market_doorstep",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_doorstep.glb",
+      "nodeName": "prop_fantasy_market_doorstep",
+      "label": "Market doorstep",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.2,
+          0.2,
+          0.95
+        ],
+        "size": [
+          2.4,
+          0.2,
+          1.9
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_weathered_gate_footing",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_weathered_gate_footing.glb",
+      "nodeName": "prop_fantasy_weathered_gate_footing",
+      "label": "Weathered gate footing",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.6,
+          1.2,
+          0.4
+        ],
+        "size": [
+          1.2,
+          1.2,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#a09780",
+        "primary": "#768551",
+        "secondary": "#5c6c47",
+        "trim": "#c0af90"
+      }
+    },
+    {
+      "id": "prop_fantasy_market_well_winch",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_market_well_winch.glb",
+      "nodeName": "prop_fantasy_market_well_winch",
+      "label": "Market well winch",
+      "triangles": 588,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.4,
+          3,
+          0.85
+        ],
+        "size": [
+          2.8,
+          3,
+          1.7
+        ]
+      },
+      "palette": {
+        "metal": "#858b86",
+        "detail": "#83574c"
+      }
+    },
+    {
+      "id": "prop_fantasy_gate_market_bell_turret",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_gate_market_bell_turret.glb",
+      "nodeName": "prop_fantasy_gate_market_bell_turret",
+      "label": "Gate market bell turret",
+      "triangles": 614,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.05,
+          2.7,
+          0.85
+        ],
+        "size": [
+          2.1,
+          2.7,
+          1.7
+        ]
+      },
+      "palette": {
+        "primary": "#657b78",
+        "secondary": "#454946",
+        "metal": "#b48d57"
+      }
+    },
+    {
+      "id": "prop_fantasy_coppersmith_roof_and_return",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_coppersmith_roof_and_return.glb",
+      "nodeName": "prop_fantasy_coppersmith_roof_and_return",
+      "label": "Coppersmith roof and return",
+      "triangles": 548,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.8,
+          3,
+          1.05
+        ],
+        "size": [
+          3.6,
+          3,
+          2.1
+        ]
+      },
+      "palette": {
+        "skin": "#a4927a",
+        "secondary": "#714e42"
+      }
+    },
+    {
+      "id": "prop_fantasy_leather_forge_bellows",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_leather_forge_bellows.glb",
+      "nodeName": "prop_fantasy_leather_forge_bellows",
+      "label": "Leather forge bellows",
+      "triangles": 408,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.2,
+          1.3,
+          0.5
+        ],
+        "size": [
+          2.4,
+          1.3,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_hanging_copper_pans",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_hanging_copper_pans.glb",
+      "nodeName": "prop_fantasy_hanging_copper_pans",
+      "label": "Hanging copper pans",
+      "triangles": 380,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.85,
+          1.2,
+          0.15
+        ],
+        "size": [
+          1.7,
+          1.2,
+          0.3
+        ]
+      },
+      "palette": {
+        "secondary": "#43474a",
+        "accent": "#80988a",
+        "metal": "#b4774e"
+      }
+    },
+    {
+      "id": "prop_fantasy_coppersmith_hearth",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_coppersmith_hearth.glb",
+      "nodeName": "prop_fantasy_coppersmith_hearth",
+      "label": "Coppersmith hearth",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.05,
+          4.3,
+          0.85
+        ],
+        "size": [
+          2.1,
+          4.3,
+          1.7
+        ]
+      },
+      "palette": {
+        "trim": "#ffc88a",
+        "detail": "#9b6450"
+      }
+    },
+    {
+      "id": "prop_fantasy_forge_coal_bed",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_forge_coal_bed.glb",
+      "nodeName": "prop_fantasy_forge_coal_bed",
+      "label": "Forge coal bed",
+      "triangles": 262,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.6,
+          0.3,
+          0.3
+        ],
+        "size": [
+          1.2,
+          0.3,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#746956",
+        "hair": "#2a2825",
+        "secondary": "#45433d",
+        "accent": "#b4532c",
+        "trim": "#c96a2c",
+        "detail": "#773a28"
+      }
+    },
+    {
+      "id": "prop_fantasy_coppersmith_stake_anvil",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_coppersmith_stake_anvil.glb",
+      "nodeName": "prop_fantasy_coppersmith_stake_anvil",
+      "label": "Coppersmith stake anvil",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1,
+          1.4,
+          0.45
+        ],
+        "size": [
+          2,
+          1.4,
+          0.9
+        ]
+      },
+      "palette": {
+        "secondary": "#414a48",
+        "metal": "#838e91",
+        "leather": "#7b6047"
+      }
+    },
+    {
+      "id": "prop_fantasy_beaten_copper_bowl",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_beaten_copper_bowl.glb",
+      "nodeName": "prop_fantasy_beaten_copper_bowl",
+      "label": "Beaten copper bowl",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.35,
+          0.5,
+          0.35
+        ],
+        "size": [
+          0.7,
+          0.5,
+          0.7
+        ]
+      },
+      "palette": {
+        "accent": "#bf9369",
+        "metal": "#b27a55",
+        "detail": "#82543d"
+      }
+    },
+    {
+      "id": "prop_fantasy_planished_copper_basins",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_planished_copper_basins.glb",
+      "nodeName": "prop_fantasy_planished_copper_basins",
+      "label": "Planished copper basins",
+      "triangles": 324,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          0.4,
+          0.5
+        ],
+        "size": [
+          1.8,
+          0.4,
+          1
+        ]
+      },
+      "palette": {
+        "accent": "#739183",
+        "metal": "#bc7754",
+        "leather": "#784c36"
+      }
+    },
+    {
+      "id": "prop_fantasy_orchard_fruit_trays",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_orchard_fruit_trays.glb",
+      "nodeName": "prop_fantasy_orchard_fruit_trays",
+      "label": "Orchard fruit trays",
+      "triangles": 526,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.9,
+          0.6,
+          0.45
+        ],
+        "size": [
+          1.8,
+          0.6,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#9bab51",
+        "accent": "#c9803c"
+      }
+    },
+    {
+      "id": "prop_fantasy_dyed_market_pennants",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyed_market_pennants.glb",
+      "nodeName": "prop_fantasy_dyed_market_pennants",
+      "label": "Dyed market pennants",
+      "triangles": 436,
+      "bounds": {
+        "min": [
+          -2.7,
+          0,
+          -0.2
+        ],
+        "max": [
+          2.7,
+          3.2,
+          0.2
+        ],
+        "size": [
+          5.4,
+          3.2,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#556b86",
+        "trim": "#cfb889",
+        "detail": "#b86c51"
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_stone_terrace",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_stone_terrace.glb",
+      "nodeName": "prop_fantasy_dyers_stone_terrace",
+      "label": "Dyers stone terrace",
+      "triangles": 246,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -1.9
+        ],
+        "max": [
+          2.2,
+          1.2,
+          1.9
+        ],
+        "size": [
+          4.4,
+          1.2,
+          3.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_arcade",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_arcade.glb",
+      "nodeName": "prop_fantasy_dyers_arcade",
+      "label": "Dyers arcade",
+      "triangles": 648,
+      "bounds": {
+        "min": [
+          -2.25,
+          0,
+          -0.55
+        ],
+        "max": [
+          2.25,
+          3.7,
+          0.55
+        ],
+        "size": [
+          4.5,
+          3.7,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_tiled_roof",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_tiled_roof.glb",
+      "nodeName": "prop_fantasy_dyers_tiled_roof",
+      "label": "Dyers tiled roof",
+      "triangles": 610,
+      "bounds": {
+        "min": [
+          -2.4,
+          0,
+          -2.1
+        ],
+        "max": [
+          2.4,
+          0.9,
+          2.1
+        ],
+        "size": [
+          4.8,
+          0.9,
+          4.2
+        ]
+      },
+      "palette": {
+        "leather": "#714e35",
+        "detail": "#9b5141"
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_store_cellar",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_store_cellar.glb",
+      "nodeName": "prop_fantasy_wool_store_cellar",
+      "label": "Wool store cellar",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -1.8
+        ],
+        "max": [
+          1.8,
+          1.2,
+          1.8
+        ],
+        "size": [
+          3.6,
+          1.2,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_loading_dock",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_loading_dock.glb",
+      "nodeName": "prop_fantasy_wool_loading_dock",
+      "label": "Wool loading dock",
+      "triangles": 322,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.75,
+          1.2,
+          0.5
+        ],
+        "size": [
+          3.5,
+          1.2,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_store_gate",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_store_gate.glb",
+      "nodeName": "prop_fantasy_wool_store_gate",
+      "label": "Wool store gate",
+      "triangles": 584,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.7,
+          3.4,
+          0.35
+        ],
+        "size": [
+          3.4,
+          3.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_store_clerestory",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_store_clerestory.glb",
+      "nodeName": "prop_fantasy_wool_store_clerestory",
+      "label": "Wool store clerestory",
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.7,
+          3.4,
+          0.3
+        ],
+        "size": [
+          3.4,
+          3.4,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#9d9282",
+        "trim": "#c4b395"
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_loft_joists",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_loft_joists.glb",
+      "nodeName": "prop_fantasy_wool_loft_joists",
+      "label": "Wool loft joists",
+      "triangles": 306,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.7
+        ],
+        "max": [
+          1.7,
+          0.3,
+          1.7
+        ],
+        "size": [
+          3.4,
+          0.3,
+          3.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_loft_hoist",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_loft_hoist.glb",
+      "nodeName": "prop_fantasy_wool_loft_hoist",
+      "label": "Wool loft hoist",
+      "triangles": 412,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.75
+        ],
+        "max": [
+          0.3,
+          2.6,
+          0.75
+        ],
+        "size": [
+          0.6,
+          2.6,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_sorting_bench",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_sorting_bench.glb",
+      "nodeName": "prop_fantasy_wool_sorting_bench",
+      "label": "Wool sorting bench",
+      "triangles": 498,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1,
+          1.4,
+          0.45
+        ],
+        "size": [
+          2,
+          1.4,
+          0.9
+        ]
+      },
+      "palette": {
+        "skin": "#b9aa91",
+        "metal": "#697777",
+        "trim": "#d3c4a6",
+        "leather": "#785c43"
+      }
+    },
+    {
+      "id": "prop_fantasy_dyestuff_delivery_trays",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyestuff_delivery_trays.glb",
+      "nodeName": "prop_fantasy_dyestuff_delivery_trays",
+      "label": "Dyestuff delivery trays",
+      "triangles": 328,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.75,
+          0.4,
+          0.5
+        ],
+        "size": [
+          1.5,
+          0.4,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#87995a",
+        "leather": "#a5815c",
+        "detail": "#aa6850"
+      }
+    },
+    {
+      "id": "prop_fantasy_weavers_skein_reel",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_weavers_skein_reel.glb",
+      "nodeName": "prop_fantasy_weavers_skein_reel",
+      "label": "Weavers skein reel",
+      "triangles": 364,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.5,
+          1.1,
+          0.2
+        ],
+        "size": [
+          1,
+          1.1,
+          0.4
+        ]
+      },
+      "palette": {
+        "metal": "#626f68",
+        "trim": "#b98c68",
+        "leather": "#755136"
+      }
+    },
+    {
+      "id": "prop_fantasy_folded_weavers_lengths",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_folded_weavers_lengths.glb",
+      "nodeName": "prop_fantasy_folded_weavers_lengths",
+      "label": "Folded weavers lengths",
+      "triangles": 528,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.1,
+          1.7,
+          0.35
+        ],
+        "size": [
+          2.2,
+          1.7,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#566f88",
+        "trim": "#c6b99e",
+        "detail": "#a35f55"
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_loft_shutters",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_loft_shutters.glb",
+      "nodeName": "prop_fantasy_wool_loft_shutters",
+      "label": "Wool loft shutters",
+      "triangles": 628,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.8,
+          2.3,
+          0.4
+        ],
+        "size": [
+          3.6,
+          2.3,
+          0.8
+        ]
+      },
+      "palette": {
+        "trim": "#c2b499",
+        "detail": "#9a5a48"
+      }
+    },
+    {
+      "id": "prop_fantasy_wool_store_slate_roof",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_wool_store_slate_roof.glb",
+      "nodeName": "prop_fantasy_wool_store_slate_roof",
+      "label": "Wool store slate roof",
+      "triangles": 568,
+      "bounds": {
+        "min": [
+          -1.95,
+          0,
+          -1.85
+        ],
+        "max": [
+          1.95,
+          1.8,
+          1.85
+        ],
+        "size": [
+          3.9,
+          1.8,
+          3.7
+        ]
+      },
+      "palette": {
+        "secondary": "#5e727a",
+        "leather": "#68554a"
+      }
+    },
+    {
+      "id": "prop_fantasy_tied_wool_bales",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_tied_wool_bales.glb",
+      "nodeName": "prop_fantasy_tied_wool_bales",
+      "label": "Tied wool bales",
+      "triangles": 474,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.5
+        ],
+        "max": [
+          1,
+          1.2,
+          0.5
+        ],
+        "size": [
+          2,
+          1.2,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#677990",
+        "trim": "#c8c2a5",
+        "detail": "#9b6963"
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_carved_arch_stones",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_carved_arch_stones.glb",
+      "nodeName": "prop_fantasy_dyers_carved_arch_stones",
+      "label": "Dyers carved arch stones",
+      "triangles": 178,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.6,
+          1,
+          0.15
+        ],
+        "size": [
+          3.2,
+          1,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_stair_cheek",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_stair_cheek.glb",
+      "nodeName": "prop_fantasy_dyers_stair_cheek",
+      "label": "Dyers stair cheek",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -1.2
+        ],
+        "max": [
+          0.25,
+          1.6,
+          1.2
+        ],
+        "size": [
+          0.5,
+          1.6,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_entry_steps",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_entry_steps.glb",
+      "nodeName": "prop_fantasy_dyers_entry_steps",
+      "label": "Dyers entry steps",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -1.2
+        ],
+        "max": [
+          1.25,
+          1.2,
+          1.2
+        ],
+        "size": [
+          2.5,
+          1.2,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_indigo_vat",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_indigo_vat.glb",
+      "nodeName": "prop_fantasy_indigo_vat",
+      "label": "Indigo vat",
+      "triangles": 550,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.9,
+          1.7,
+          0.9
+        ],
+        "size": [
+          1.8,
+          1.7,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_dyed_wool_rack",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyed_wool_rack.glb",
+      "nodeName": "prop_fantasy_dyed_wool_rack",
+      "label": "Dyed wool rack",
+      "triangles": 544,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.6,
+          2.5,
+          0.25
+        ],
+        "size": [
+          3.2,
+          2.5,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#3d577f",
+        "visor": "#9976aa",
+        "detail": "#ac423e"
+      }
+    },
+    {
+      "id": "prop_fantasy_peel_and_proofing_bench",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_peel_and_proofing_bench.glb",
+      "nodeName": "prop_fantasy_peel_and_proofing_bench",
+      "label": "Peel and proofing bench",
+      "triangles": 626,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.1,
+          3.1,
+          0.55
+        ],
+        "size": [
+          2.2,
+          3.1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_oil_lantern",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_oil_lantern.glb",
+      "nodeName": "prop_fantasy_guild_oil_lantern",
+      "label": "Guild oil lantern",
+      "triangles": 168,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.35,
+          1.4,
+          0.35
+        ],
+        "size": [
+          0.7,
+          1.4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_orchard_boundary_wall",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_orchard_boundary_wall.glb",
+      "nodeName": "prop_fantasy_orchard_boundary_wall",
+      "label": "Orchard boundary wall",
+      "triangles": 380,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.55,
+          1.1,
+          0.35
+        ],
+        "size": [
+          3.1,
+          1.1,
+          0.7
+        ]
+      },
+      "palette": {
+        "skin": "#958d78",
+        "primary": "#8d846a",
+        "trim": "#aaa28b"
+      }
+    },
+    {
+      "id": "prop_fantasy_pruned_pear_espalier",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_pruned_pear_espalier.glb",
+      "nodeName": "prop_fantasy_pruned_pear_espalier",
+      "label": "Pruned pear espalier",
+      "triangles": 342,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.4,
+          2.7,
+          0.3
+        ],
+        "size": [
+          2.8,
+          2.7,
+          0.6
+        ]
+      },
+      "palette": {
+        "leather": "#80654d"
+      }
+    },
+    {
+      "id": "prop_fantasy_pear_leaf_spurs",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_pear_leaf_spurs.glb",
+      "nodeName": "prop_fantasy_pear_leaf_spurs",
+      "label": "Pear leaf spurs",
+      "triangles": 412,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.7,
+          1.1,
+          0.3
+        ],
+        "size": [
+          1.4,
+          1.1,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#839a50",
+        "secondary": "#506a3b",
+        "accent": "#bcad63"
+      }
+    },
+    {
+      "id": "prop_fantasy_garden_bank_groundcover",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_garden_bank_groundcover.glb",
+      "nodeName": "prop_fantasy_garden_bank_groundcover",
+      "label": "Garden bank groundcover",
+      "triangles": 556,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.1,
+          0.8,
+          0.35
+        ],
+        "size": [
+          2.2,
+          0.8,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#81965a",
+        "secondary": "#536b41",
+        "leather": "#806f51"
+      }
+    },
+    {
+      "id": "prop_fantasy_bakers_serving_hatch",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_bakers_serving_hatch.glb",
+      "nodeName": "prop_fantasy_bakers_serving_hatch",
+      "label": "Bakers serving hatch",
+      "triangles": 620,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.6,
+          2.6,
+          0.55
+        ],
+        "size": [
+          3.2,
+          2.6,
+          1.1
+        ]
+      },
+      "palette": {
+        "secondary": "#544439",
+        "metal": "#677170",
+        "leather": "#866543"
+      }
+    },
+    {
+      "id": "prop_fantasy_loaves_on_a_wicker_tray",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_loaves_on_a_wicker_tray.glb",
+      "nodeName": "prop_fantasy_loaves_on_a_wicker_tray",
+      "label": "Loaves on a wicker tray",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.9,
+          0.4,
+          0.3
+        ],
+        "size": [
+          1.8,
+          0.4,
+          0.6
+        ]
+      },
+      "palette": {
+        "accent": "#d6975b",
+        "trim": "#d9b88a",
+        "detail": "#ad7350"
+      }
+    },
+    {
+      "id": "prop_fantasy_bakers_yard_drain",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_bakers_yard_drain.glb",
+      "nodeName": "prop_fantasy_bakers_yard_drain",
+      "label": "Bakers yard drain",
+      "triangles": 502,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.4,
+          0.2,
+          0.85
+        ],
+        "size": [
+          2.8,
+          0.2,
+          1.7
+        ]
+      },
+      "palette": {
+        "skin": "#a0917b",
+        "primary": "#88765c",
+        "metal": "#606966",
+        "leather": "#6c5947"
+      }
+    },
+    {
+      "id": "prop_fantasy_bakehouse_split_firewood",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_bakehouse_split_firewood.glb",
+      "nodeName": "prop_fantasy_bakehouse_split_firewood",
+      "label": "Bakehouse split firewood",
+      "triangles": 588,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.45,
+          1.7,
+          0.55
+        ],
+        "size": [
+          2.9,
+          1.7,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_twin_bread_oven_flue",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_twin_bread_oven_flue.glb",
+      "nodeName": "prop_fantasy_twin_bread_oven_flue",
+      "label": "Twin bread oven flue",
+      "triangles": 550,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.75,
+          4.2,
+          0.7
+        ],
+        "size": [
+          1.5,
+          4.2,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_timber_solar",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_timber_solar.glb",
+      "nodeName": "prop_fantasy_guild_timber_solar",
+      "label": "Guild timber solar",
+      "triangles": 598,
+      "bounds": {
+        "min": [
+          -2.05,
+          0,
+          -0.45
+        ],
+        "max": [
+          2.05,
+          2.4,
+          0.45
+        ],
+        "size": [
+          4.1,
+          2.4,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_solar_boarded_return",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_solar_boarded_return.glb",
+      "nodeName": "prop_fantasy_solar_boarded_return",
+      "label": "Solar boarded return",
+      "triangles": 286,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -1
+        ],
+        "max": [
+          0.3,
+          2.6,
+          1
+        ],
+        "size": [
+          0.6,
+          2.6,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_guild_solar_roof",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_guild_solar_roof.glb",
+      "nodeName": "prop_fantasy_guild_solar_roof",
+      "label": "Guild solar roof",
+      "triangles": 572,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -1.2
+        ],
+        "max": [
+          2.2,
+          0.9,
+          1.2
+        ],
+        "size": [
+          4.4,
+          0.9,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_dyers_side_passage",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_dyers_side_passage.glb",
+      "nodeName": "prop_fantasy_dyers_side_passage",
+      "label": "Dyers side passage",
+      "triangles": 422,
+      "bounds": {
+        "min": [
+          -1.95,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.95,
+          3.1,
+          0.4
+        ],
+        "size": [
+          3.9,
+          3.1,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_raised_woad_border",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_raised_woad_border.glb",
+      "nodeName": "prop_fantasy_raised_woad_border",
+      "label": "Raised woad border",
+      "triangles": 600,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.5
+        ],
+        "max": [
+          1.4,
+          1.9,
+          0.5
+        ],
+        "size": [
+          2.8,
+          1.9,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#789449",
+        "secondary": "#446241",
+        "accent": "#d6ad4a"
+      }
+    },
+    {
+      "id": "prop_fantasy_worn_courtyard_setts",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_worn_courtyard_setts.glb",
+      "nodeName": "prop_fantasy_worn_courtyard_setts",
+      "label": "Worn courtyard setts",
+      "triangles": 154,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.3,
+          0.2,
+          0.55
+        ],
+        "size": [
+          2.6,
+          0.2,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_fantasy_copper_quench_trough",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_copper_quench_trough.glb",
+      "nodeName": "prop_fantasy_copper_quench_trough",
+      "label": "Copper quench trough",
+      "triangles": 352,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.55,
+          1,
+          0.35
+        ],
+        "size": [
+          1.1,
+          1,
+          0.7
+        ]
+      },
+      "palette": {
+        "metal": "#b57953",
+        "leather": "#765639",
+        "visor": "#536f68",
+        "detail": "#945741"
+      }
+    },
+    {
+      "id": "prop_fantasy_mended_market_flagstone",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_mended_market_flagstone.glb",
+      "nodeName": "prop_fantasy_mended_market_flagstone",
+      "label": "Mended market flagstone",
+      "triangles": 436,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#9c8c73",
+        "detail": "#b3a183"
+      }
+    },
+    {
+      "id": "prop_fantasy_damp_gate_flagstone",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_damp_gate_flagstone.glb",
+      "nodeName": "prop_fantasy_damp_gate_flagstone",
+      "label": "Damp gate flagstone",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "leather": "#897758",
+        "detail": "#918267"
+      }
+    },
+    {
+      "id": "prop_fantasy_sooted_bakehouse_wall",
+      "pack": "fantasy",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_fantasy_sooted_bakehouse_wall.glb",
+      "nodeName": "prop_fantasy_sooted_bakehouse_wall",
+      "label": "Sooted bakehouse wall",
+      "triangles": 628,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      },
+      "palette": {
+        "detail": "#8f8067"
       }
     }
   ],
@@ -17749,12 +20911,12 @@
             "collider": {
               "type": "capsule",
               "a": [
-                -0.1029,
+                -0.1604,
                 0.0688,
                 0.0024
               ],
               "b": [
-                0.103,
+                0.1119,
                 0.0688,
                 0.0024
               ],

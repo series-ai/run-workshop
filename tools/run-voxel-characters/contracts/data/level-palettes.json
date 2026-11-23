@@ -1,0 +1,8 @@
+{
+  "core": {"skin":"#84929d","hair":"#232830","primary":"#6b7982","secondary":"#343b46","accent":"#e9af49","metal":"#a4aeb8","trim":"#d9cbb0","leather":"#594938","visor":"#59b5d9","detail":"#af4b42"},
+  "heist": {"skin":"#907564","hair":"#2e2b29","primary":"#ad643f","secondary":"#5e554c","accent":"#d9a426","metal":"#848d96","trim":"#b88f5a","leather":"#6e4930","visor":"#f3c178","detail":"#a83428"},
+  "industrial": {"skin":"#9d9586","hair":"#2c2c2e","primary":"#a47646","secondary":"#475969","accent":"#e7943c","metal":"#929aa3","trim":"#bfa67a","leather":"#5c3f2b","visor":"#4ebae0","detail":"#a8362a"},
+  "security": {"skin":"#687e96","hair":"#232830","primary":"#394957","secondary":"#43536d","accent":"#2cb5e8","metal":"#a4aeb8","trim":"#d2dae2","leather":"#302824","visor":"#2cb5e8","detail":"#b83830"},
+  "creatures": {"skin":"#7a7267","hair":"#272422","primary":"#537448","secondary":"#3e5d51","accent":"#e85826","metal":"#76808a","trim":"#8d7b64","leather":"#725235","visor":"#5ba7c3","detail":"#6d3e2c"},
+  "fantasy": {"skin":"#978775","hair":"#2d2825","primary":"#355487","secondary":"#4b5059","accent":"#f08c2b","metal":"#8c949e","trim":"#d6c6a5","leather":"#7a5132","visor":"#9e80c4","detail":"#aa453d"}
+}

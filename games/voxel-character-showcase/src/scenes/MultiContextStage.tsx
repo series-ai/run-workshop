@@ -140,7 +140,9 @@ function Diorama({
   }, [catalog, isCreatures, isFantasy])
 
   const propPlacements = useMemo(() => {
-    const sorted = [...catalog.props].sort((a, b) => reach(b) - reach(a))
+    const sorted = catalog.props
+      .slice()
+      .sort((a, b) => reach(b) - reach(a))
     const slots = isFantasy ? FANTASY_PROP_SLOTS : PROP_SLOTS
     const list = isCreatures ? sorted : sorted.slice(0, slots.length)
     return list.map((prop, i) => {

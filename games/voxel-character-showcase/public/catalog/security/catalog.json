@@ -508,6 +508,3789 @@
       }
     }
   ],
+  "levelKitProps": [
+    {
+      "id": "prop_security_station_tile",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_station_tile.glb",
+      "nodeName": "prop_security_station_tile",
+      "label": "Station tile",
+      "triangles": 288,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#919a9e",
+        "primary": "#6d7982",
+        "trim": "#b7c4c9"
+      }
+    },
+    {
+      "id": "prop_security_secure_divider",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_secure_divider.glb",
+      "nodeName": "prop_security_secure_divider",
+      "label": "Secure divider",
+      "triangles": 256,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.5,
+          0.25
+        ],
+        "size": [
+          4,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_access_doorway",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_access_doorway.glb",
+      "nodeName": "prop_security_access_doorway",
+      "label": "Access doorway",
+      "triangles": 358,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          2.6,
+          0.3
+        ],
+        "size": [
+          4,
+          2.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_lane_divider",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_lane_divider.glb",
+      "nodeName": "prop_security_lane_divider",
+      "label": "Lane divider",
+      "triangles": 282,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.35
+        ],
+        "size": [
+          2.4,
+          0.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_security_service_steps",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_service_steps.glb",
+      "nodeName": "prop_security_service_steps",
+      "label": "Service steps",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.9
+        ],
+        "size": [
+          1.6,
+          0.6,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_queue_rail",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_queue_rail.glb",
+      "nodeName": "prop_security_queue_rail",
+      "label": "Queue rail",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.5,
+          1.2,
+          0.15
+        ],
+        "size": [
+          3,
+          1.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_security_inspection_deck",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_inspection_deck.glb",
+      "nodeName": "prop_security_inspection_deck",
+      "label": "Inspection deck",
+      "triangles": 248,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.75
+        ],
+        "size": [
+          2.4,
+          0.8,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_scanner_arch",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_scanner_arch.glb",
+      "nodeName": "prop_security_scanner_arch",
+      "label": "Scanner arch",
+      "triangles": 244,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.5,
+          2.7,
+          0.35
+        ],
+        "size": [
+          3,
+          2.7,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_security_people_counter",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_people_counter.glb",
+      "nodeName": "prop_security_people_counter",
+      "label": "People counter",
+      "triangles": 108,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.9,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.9,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_ticket_kiosk",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_ticket_kiosk.glb",
+      "nodeName": "prop_security_ticket_kiosk",
+      "label": "Ticket kiosk",
+      "triangles": 260,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.6,
+          1.9,
+          0.55
+        ],
+        "size": [
+          1.2,
+          1.9,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_control_desk",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_control_desk.glb",
+      "nodeName": "prop_security_control_desk",
+      "label": "Control desk",
+      "triangles": 416,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.25,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.5,
+          1.6,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_equipment_cabinet",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_equipment_cabinet.glb",
+      "nodeName": "prop_security_equipment_cabinet",
+      "label": "Equipment cabinet",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.75,
+          2.1,
+          0.55
+        ],
+        "size": [
+          1.5,
+          2.1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_battery_locker",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_battery_locker.glb",
+      "nodeName": "prop_security_battery_locker",
+      "label": "Battery locker",
+      "triangles": 218,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.65,
+          1.5,
+          0.6
+        ],
+        "size": [
+          1.3,
+          1.5,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_security_guard_booth",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_guard_booth.glb",
+      "nodeName": "prop_security_guard_booth",
+      "label": "Guard booth",
+      "triangles": 338,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.1,
+          2.5,
+          0.45
+        ],
+        "size": [
+          2.2,
+          2.5,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_security_survey_mast",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_survey_mast.glb",
+      "nodeName": "prop_security_survey_mast",
+      "label": "Survey mast",
+      "triangles": 186,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.6,
+          0.25
+        ],
+        "size": [
+          1,
+          2.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_waiting_bench",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_waiting_bench.glb",
+      "nodeName": "prop_security_waiting_bench",
+      "label": "Waiting bench",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.9,
+          1,
+          0.3
+        ],
+        "size": [
+          1.8,
+          1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_metal_fence",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_metal_fence.glb",
+      "nodeName": "prop_security_metal_fence",
+      "label": "Metal fence",
+      "triangles": 646,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.3,
+          2.2,
+          0.15
+        ],
+        "size": [
+          2.6,
+          2.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_security_gate_post",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_gate_post.glb",
+      "nodeName": "prop_security_gate_post",
+      "label": "Gate post",
+      "triangles": 170,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.8,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.8,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_camera_pod",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_camera_pod.glb",
+      "nodeName": "prop_security_camera_pod",
+      "label": "Camera pod",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.5,
+          0.25
+        ],
+        "size": [
+          1,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_server_bank",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_server_bank.glb",
+      "nodeName": "prop_security_server_bank",
+      "label": "Server bank",
+      "triangles": 284,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.7,
+          2.4,
+          0.65
+        ],
+        "size": [
+          1.4,
+          2.4,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_security_evidence_case",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_evidence_case.glb",
+      "nodeName": "prop_security_evidence_case",
+      "label": "Evidence case",
+      "triangles": 232,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.7,
+          0.7,
+          0.55
+        ],
+        "size": [
+          1.4,
+          0.7,
+          1.1
+        ]
+      },
+      "palette": {
+        "primary": "#526e73",
+        "secondary": "#344a53",
+        "detail": "#bea96b"
+      }
+    },
+    {
+      "id": "prop_security_knee_barrier",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_knee_barrier.glb",
+      "nodeName": "prop_security_knee_barrier",
+      "label": "Knee barrier",
+      "triangles": 196,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.4
+        ],
+        "max": [
+          1,
+          0.6,
+          0.4
+        ],
+        "size": [
+          2,
+          0.6,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_indicator_plate",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_indicator_plate.glb",
+      "nodeName": "prop_security_indicator_plate",
+      "label": "Indicator plate",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.25
+        ],
+        "max": [
+          1,
+          0.2,
+          0.25
+        ],
+        "size": [
+          2,
+          0.2,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_rotor_pod",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_rotor_pod.glb",
+      "nodeName": "prop_security_rotor_pod",
+      "label": "Rotor pod",
+      "triangles": 494,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.95
+        ],
+        "max": [
+          1,
+          2.2,
+          0.95
+        ],
+        "size": [
+          2,
+          2.2,
+          1.9
+        ]
+      }
+    },
+    {
+      "id": "prop_security_control_room_shell",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_control_room_shell.glb",
+      "nodeName": "prop_security_control_room_shell",
+      "label": "Control room shell",
+      "triangles": 508,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.3,
+          2.5,
+          1.05
+        ],
+        "size": [
+          2.6,
+          2.5,
+          2.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_inspection_hall_canopy",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_inspection_hall_canopy.glb",
+      "nodeName": "prop_security_inspection_hall_canopy",
+      "label": "Inspection hall canopy",
+      "triangles": 416,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -1.8
+        ],
+        "max": [
+          1.9,
+          0.3,
+          1.8
+        ],
+        "size": [
+          3.8,
+          0.3,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_partition_windows",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_partition_windows.glb",
+      "nodeName": "prop_security_partition_windows",
+      "label": "Partition windows",
+      "triangles": 612,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          2.9,
+          0.4
+        ],
+        "size": [
+          4,
+          2.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_service_bulkhead",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_service_bulkhead.glb",
+      "nodeName": "prop_security_service_bulkhead",
+      "label": "Service bulkhead",
+      "triangles": 292,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.6,
+          3,
+          0.55
+        ],
+        "size": [
+          3.2,
+          3,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_wall_lights",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_wall_lights.glb",
+      "nodeName": "prop_security_wall_lights",
+      "label": "Wall lights",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.9,
+          1,
+          0.55
+        ],
+        "size": [
+          3.8,
+          1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_inspection_lane_floor",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_inspection_lane_floor.glb",
+      "nodeName": "prop_security_inspection_lane_floor",
+      "label": "Inspection lane floor",
+      "triangles": 250,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -2
+        ],
+        "max": [
+          1,
+          0.2,
+          2
+        ],
+        "size": [
+          2,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_glazed_inspection_booth",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_glazed_inspection_booth.glb",
+      "nodeName": "prop_security_glazed_inspection_booth",
+      "label": "Glazed inspection booth",
+      "triangles": 580,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.3,
+          2.5,
+          1.05
+        ],
+        "size": [
+          2.6,
+          2.5,
+          2.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_lane_signal_beam",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_lane_signal_beam.glb",
+      "nodeName": "prop_security_lane_signal_beam",
+      "label": "Lane signal beam",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.7,
+          0.6,
+          0.35
+        ],
+        "size": [
+          3.4,
+          0.6,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_security_parking_barrier_arm",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_barrier_arm.glb",
+      "nodeName": "prop_security_parking_barrier_arm",
+      "label": "Parking barrier arm",
+      "triangles": 162,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.1,
+          1,
+          0.3
+        ],
+        "size": [
+          2.2,
+          1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_recessed_service_door",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_recessed_service_door.glb",
+      "nodeName": "prop_security_recessed_service_door",
+      "label": "Recessed service door",
+      "triangles": 340,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.4,
+          2.9,
+          0.55
+        ],
+        "size": [
+          2.8,
+          2.9,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_fabrication_wall_return",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_fabrication_wall_return.glb",
+      "nodeName": "prop_security_fabrication_wall_return",
+      "label": "Fabrication wall return",
+      "triangles": 270,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.8,
+          3.1,
+          0.35
+        ],
+        "size": [
+          3.6,
+          3.1,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_security_terminal_wall_panel",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_terminal_wall_panel.glb",
+      "nodeName": "prop_security_terminal_wall_panel",
+      "label": "Terminal wall panel",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          2.9,
+          0.4
+        ],
+        "size": [
+          4,
+          2.9,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_inspector_storage_rack",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_inspector_storage_rack.glb",
+      "nodeName": "prop_security_inspector_storage_rack",
+      "label": "Inspector storage rack",
+      "triangles": 612,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_transit_bench_island",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_transit_bench_island.glb",
+      "nodeName": "prop_security_transit_bench_island",
+      "label": "Transit bench island",
+      "triangles": 210,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.25,
+          1,
+          0.3
+        ],
+        "size": [
+          2.5,
+          1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_utility_ceiling_spine",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_utility_ceiling_spine.glb",
+      "nodeName": "prop_security_utility_ceiling_spine",
+      "label": "Utility ceiling spine",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.9,
+          1,
+          0.55
+        ],
+        "size": [
+          3.8,
+          1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_inspection_row_marker",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_inspection_row_marker.glb",
+      "nodeName": "prop_security_inspection_row_marker",
+      "label": "Inspection row marker",
+      "triangles": 118,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.75,
+          0.2,
+          0.35
+        ],
+        "size": [
+          1.5,
+          0.2,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_security_patrol_rover",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_patrol_rover.glb",
+      "nodeName": "prop_security_patrol_rover",
+      "label": "Patrol rover",
+      "triangles": 556,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.6
+        ],
+        "max": [
+          0.95,
+          2,
+          1.6
+        ],
+        "size": [
+          1.9,
+          2,
+          3.2
+        ]
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_security_patrol_rover.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Scan"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_taillamp_03_light",
+          "vehicle_root_taillamp_04_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_security_yard_embankment",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_yard_embankment.glb",
+      "nodeName": "prop_security_yard_embankment",
+      "label": "Yard embankment",
+      "triangles": 468,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_ceiling",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_ceiling.glb",
+      "nodeName": "prop_security_baggage_hall_ceiling",
+      "label": "Baggage hall ceiling",
+      "triangles": 372,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_solid",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_solid.glb",
+      "nodeName": "prop_security_baggage_hall_solid",
+      "label": "Baggage hall solid",
+      "triangles": 540,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.4,
+          0.3
+        ],
+        "size": [
+          4,
+          3.4,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_door",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_door.glb",
+      "nodeName": "prop_security_baggage_hall_door",
+      "label": "Baggage hall door",
+      "triangles": 364,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_window",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_window.glb",
+      "nodeName": "prop_security_baggage_hall_window",
+      "label": "Baggage hall window",
+      "triangles": 470,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          3.4,
+          0.25
+        ],
+        "size": [
+          4,
+          3.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_window_glass",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_window_glass.glb",
+      "nodeName": "prop_security_baggage_hall_window_glass",
+      "label": "Baggage hall window glass",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1.35,
+          0,
+          -0.05
+        ],
+        "max": [
+          1.35,
+          1.5,
+          0.05
+        ],
+        "size": [
+          2.7,
+          1.5,
+          0.1
+        ]
+      },
+      "palette": {
+        "visor": "#8ca8b0"
+      },
+      "surface": "glass"
+    },
+    {
+      "id": "prop_security_baggage_hall_pendant",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_pendant.glb",
+      "nodeName": "prop_security_baggage_hall_pendant",
+      "label": "Baggage hall pendant",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.3
+        ],
+        "max": [
+          1,
+          0.9,
+          0.3
+        ],
+        "size": [
+          2,
+          0.9,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_parcel_x_ray_tunnel",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parcel_x_ray_tunnel.glb",
+      "nodeName": "prop_security_parcel_x_ray_tunnel",
+      "label": "Parcel X ray tunnel",
+      "triangles": 418,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.5,
+          2.5,
+          0.7
+        ],
+        "size": [
+          3,
+          2.5,
+          1.4
+        ]
+      },
+      "palette": {
+        "primary": "#737e80",
+        "secondary": "#424a52",
+        "metal": "#a7b4bb"
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_trade_sign",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_trade_sign.glb",
+      "nodeName": "prop_security_baggage_hall_trade_sign",
+      "label": "Baggage hall trade sign",
+      "triangles": 348,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.25
+        ],
+        "size": [
+          2.4,
+          1.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_letter_board",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_letter_board.glb",
+      "nodeName": "prop_security_baggage_hall_letter_board",
+      "label": "Baggage hall letter board",
+      "triangles": 548,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.7,
+          1.6,
+          0.15
+        ],
+        "size": [
+          3.4,
+          1.6,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_security_baggage_hall_floor",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_hall_floor.glb",
+      "nodeName": "prop_security_baggage_hall_floor",
+      "label": "Baggage hall floor",
+      "triangles": 330,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#969e9c",
+        "secondary": "#525c63"
+      }
+    },
+    {
+      "id": "prop_security_service_road_asphalt",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_service_road_asphalt.glb",
+      "nodeName": "prop_security_service_road_asphalt",
+      "label": "Service road asphalt",
+      "triangles": 198,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_service_road_curb",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_service_road_curb.glb",
+      "nodeName": "prop_security_service_road_curb",
+      "label": "Service road curb",
+      "triangles": 198,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.45
+        ],
+        "max": [
+          2,
+          0.3,
+          0.45
+        ],
+        "size": [
+          4,
+          0.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_security_service_yard_boundary",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_service_yard_boundary.glb",
+      "nodeName": "prop_security_service_yard_boundary",
+      "label": "Service yard boundary",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.2,
+          0.3
+        ],
+        "size": [
+          4,
+          3.2,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_yard_poplar",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_yard_poplar.glb",
+      "nodeName": "prop_security_yard_poplar",
+      "label": "Yard poplar",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          6.3,
+          0.9
+        ],
+        "size": [
+          2.8,
+          6.3,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#64734b",
+        "secondary": "#454f37",
+        "leather": "#665a49"
+      }
+    },
+    {
+      "id": "prop_security_service_line_pole",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_service_line_pole.glb",
+      "nodeName": "prop_security_service_line_pole",
+      "label": "Service line pole",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.05,
+          5.6,
+          0.3
+        ],
+        "size": [
+          2.1,
+          5.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_covered_loading_stand",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_covered_loading_stand.glb",
+      "nodeName": "prop_security_covered_loading_stand",
+      "label": "Covered loading stand",
+      "triangles": 398,
+      "bounds": {
+        "min": [
+          -1.85,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.85,
+          3.3,
+          1.25
+        ],
+        "size": [
+          3.7,
+          3.3,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_loading_yard_wheel_track",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_loading_yard_wheel_track.glb",
+      "nodeName": "prop_security_loading_yard_wheel_track",
+      "label": "Loading yard wheel track",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.35,
+          0.2,
+          1.8
+        ],
+        "size": [
+          0.7,
+          0.2,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_security_roadside_earth_bed",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_roadside_earth_bed.glb",
+      "nodeName": "prop_security_roadside_earth_bed",
+      "label": "Roadside earth bed",
+      "triangles": 524,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_roadside_shade_tree",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_roadside_shade_tree.glb",
+      "nodeName": "prop_security_roadside_shade_tree",
+      "label": "Roadside shade tree",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.5,
+          4.9,
+          0.9
+        ],
+        "size": [
+          3,
+          4.9,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#748051",
+        "secondary": "#4c593c",
+        "leather": "#695846"
+      }
+    },
+    {
+      "id": "prop_security_screening_trays_and_forms",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_screening_trays_and_forms.glb",
+      "nodeName": "prop_security_screening_trays_and_forms",
+      "label": "Screening trays and forms",
+      "triangles": 118,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.65,
+          0.5,
+          0.25
+        ],
+        "size": [
+          1.3,
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_luggage_staging_rack",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_luggage_staging_rack.glb",
+      "nodeName": "prop_security_luggage_staging_rack",
+      "label": "Luggage staging rack",
+      "triangles": 418,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.1,
+          1.2,
+          0.45
+        ],
+        "size": [
+          2.2,
+          1.2,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_security_passenger_queue_markings",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_passenger_queue_markings.glb",
+      "nodeName": "prop_security_passenger_queue_markings",
+      "label": "Passenger queue markings",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.2,
+          0.2,
+          0.95
+        ],
+        "size": [
+          2.4,
+          0.2,
+          1.9
+        ]
+      }
+    },
+    {
+      "id": "prop_security_transfer_sorting_deck",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_transfer_sorting_deck.glb",
+      "nodeName": "prop_security_transfer_sorting_deck",
+      "label": "Transfer sorting deck",
+      "triangles": 620,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.05
+        ],
+        "max": [
+          2,
+          3,
+          1.05
+        ],
+        "size": [
+          4,
+          3,
+          2.1
+        ]
+      },
+      "palette": {
+        "skin": "#a69578",
+        "secondary": "#43514e",
+        "trim": "#d1bc8f"
+      }
+    },
+    {
+      "id": "prop_security_transfer_deck_guard",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_transfer_deck_guard.glb",
+      "nodeName": "prop_security_transfer_deck_guard",
+      "label": "Transfer deck guard",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.9,
+          1.2,
+          0.15
+        ],
+        "size": [
+          3.8,
+          1.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_security_apron_access_stairs",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_apron_access_stairs.glb",
+      "nodeName": "prop_security_apron_access_stairs",
+      "label": "Apron access stairs",
+      "triangles": 534,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -1.5
+        ],
+        "max": [
+          0.75,
+          2.5,
+          1.5
+        ],
+        "size": [
+          1.5,
+          2.5,
+          3
+        ]
+      },
+      "palette": {
+        "metal": "#949c9d",
+        "trim": "#d6ae5c"
+      }
+    },
+    {
+      "id": "prop_security_apron_stair_bearers",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_apron_stair_bearers.glb",
+      "nodeName": "prop_security_apron_stair_bearers",
+      "label": "Apron stair bearers",
+      "triangles": 440,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -1.45
+        ],
+        "max": [
+          0.7,
+          1.5,
+          1.45
+        ],
+        "size": [
+          1.4,
+          1.5,
+          2.9
+        ]
+      }
+    },
+    {
+      "id": "prop_security_apron_cantilever_canopy",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_apron_cantilever_canopy.glb",
+      "nodeName": "prop_security_apron_cantilever_canopy",
+      "label": "Apron cantilever canopy",
+      "triangles": 524,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.75
+        ],
+        "max": [
+          2,
+          3.4,
+          1.75
+        ],
+        "size": [
+          4,
+          3.4,
+          3.5
+        ]
+      },
+      "palette": {
+        "primary": "#675f4d",
+        "accent": "#d69c44",
+        "trim": "#d9d3bf"
+      }
+    },
+    {
+      "id": "prop_security_inclined_transfer_conveyor",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_inclined_transfer_conveyor.glb",
+      "nodeName": "prop_security_inclined_transfer_conveyor",
+      "label": "Inclined transfer conveyor",
+      "triangles": 448,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -3.2
+        ],
+        "max": [
+          0.9,
+          4.2,
+          3.2
+        ],
+        "size": [
+          1.8,
+          4.2,
+          6.4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_parcel_transfer_rollers",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parcel_transfer_rollers.glb",
+      "nodeName": "prop_security_parcel_transfer_rollers",
+      "label": "Parcel transfer rollers",
+      "triangles": 498,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -2
+        ],
+        "max": [
+          0.9,
+          1.3,
+          2
+        ],
+        "size": [
+          1.8,
+          1.3,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_red_tagged_suitcase",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_red_tagged_suitcase.glb",
+      "nodeName": "prop_security_red_tagged_suitcase",
+      "label": "Red tagged suitcase",
+      "triangles": 134,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.35,
+          0.9,
+          0.25
+        ],
+        "size": [
+          0.7,
+          0.9,
+          0.5
+        ]
+      },
+      "palette": {
+        "trim": "#e2d8b9",
+        "detail": "#a64b38"
+      }
+    },
+    {
+      "id": "prop_security_blue_tagged_suitcase",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_blue_tagged_suitcase.glb",
+      "nodeName": "prop_security_blue_tagged_suitcase",
+      "label": "Blue tagged suitcase",
+      "triangles": 146,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.35,
+          0.9,
+          0.25
+        ],
+        "size": [
+          0.7,
+          0.9,
+          0.5
+        ]
+      },
+      "palette": {
+        "accent": "#277b86",
+        "trim": "#e2d8b9"
+      }
+    },
+    {
+      "id": "prop_security_airside_luggage_trailer",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_airside_luggage_trailer.glb",
+      "nodeName": "prop_security_airside_luggage_trailer",
+      "label": "Airside luggage trailer",
+      "triangles": 496,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -1.6
+        ],
+        "max": [
+          0.8,
+          2,
+          1.6
+        ],
+        "size": [
+          1.6,
+          2,
+          3.2
+        ]
+      },
+      "palette": {
+        "accent": "#dda546",
+        "trim": "#b9b7a8"
+      }
+    },
+    {
+      "id": "prop_security_departure_information_board",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_departure_information_board.glb",
+      "nodeName": "prop_security_departure_information_board",
+      "label": "Departure information board",
+      "triangles": 376,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.1
+        ],
+        "max": [
+          1.45,
+          1.8,
+          0.1
+        ],
+        "size": [
+          2.9,
+          1.8,
+          0.2
+        ]
+      },
+      "palette": {
+        "accent": "#eac767",
+        "trim": "#dce3d0"
+      }
+    },
+    {
+      "id": "prop_security_check_in_desk",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_check_in_desk.glb",
+      "nodeName": "prop_security_check_in_desk",
+      "label": "Check in desk",
+      "triangles": 516,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.15,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.3,
+          1.6,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_security_desk_terminal",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_desk_terminal.glb",
+      "nodeName": "prop_security_desk_terminal",
+      "label": "Desk terminal",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.5,
+          0.8,
+          0.35
+        ],
+        "size": [
+          1,
+          0.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_security_passenger_drop_off_canopy",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_passenger_drop_off_canopy.glb",
+      "nodeName": "prop_security_passenger_drop_off_canopy",
+      "label": "Passenger drop off canopy",
+      "triangles": 418,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2.2
+        ],
+        "max": [
+          2,
+          3.9,
+          2.2
+        ],
+        "size": [
+          4,
+          3.9,
+          4.4
+        ]
+      },
+      "palette": {
+        "accent": "#7d9f8d",
+        "trim": "#dfdcd0",
+        "detail": "#b76a3e"
+      }
+    },
+    {
+      "id": "prop_security_transit_stop_pylon",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_transit_stop_pylon.glb",
+      "nodeName": "prop_security_transit_stop_pylon",
+      "label": "Transit stop pylon",
+      "triangles": 346,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.65,
+          4,
+          0.4
+        ],
+        "size": [
+          1.3,
+          4,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_terminal_seat_row",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_terminal_seat_row.glb",
+      "nodeName": "prop_security_terminal_seat_row",
+      "label": "Terminal seat row",
+      "triangles": 332,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.3,
+          1.3,
+          0.3
+        ],
+        "size": [
+          2.6,
+          1.3,
+          0.6
+        ]
+      },
+      "palette": {
+        "metal": "#b5a998",
+        "detail": "#ad603d"
+      }
+    },
+    {
+      "id": "prop_security_boarding_tactile_strip",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_boarding_tactile_strip.glb",
+      "nodeName": "prop_security_boarding_tactile_strip",
+      "label": "Boarding tactile strip",
+      "triangles": 248,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.6,
+          0.3,
+          0.35
+        ],
+        "size": [
+          3.2,
+          0.3,
+          0.7
+        ]
+      },
+      "palette": {
+        "accent": "#b39254",
+        "trim": "#d6b66d"
+      }
+    },
+    {
+      "id": "prop_security_boarding_clock",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_boarding_clock.glb",
+      "nodeName": "prop_security_boarding_clock",
+      "label": "Boarding clock",
+      "triangles": 282,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.6,
+          1.7,
+          0.25
+        ],
+        "size": [
+          1.2,
+          1.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_boarding_pass_reader",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_boarding_pass_reader.glb",
+      "nodeName": "prop_security_boarding_pass_reader",
+      "label": "Boarding pass reader",
+      "triangles": 136,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.3,
+          1.6,
+          0.3
+        ],
+        "size": [
+          0.6,
+          1.6,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#7e8983",
+        "detail": "#b96845"
+      }
+    },
+    {
+      "id": "prop_security_terrazzo_concourse_bay",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_terrazzo_concourse_bay.glb",
+      "nodeName": "prop_security_terrazzo_concourse_bay",
+      "label": "Terrazzo concourse bay",
+      "triangles": 250,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#aba99a",
+        "metal": "#888e85",
+        "trim": "#cfc9b7",
+        "leather": "#827657"
+      }
+    },
+    {
+      "id": "prop_security_concourse_guidance_ribs",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_concourse_guidance_ribs.glb",
+      "nodeName": "prop_security_concourse_guidance_ribs",
+      "label": "Concourse guidance ribs",
+      "triangles": 130,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.6,
+          0.3,
+          0.35
+        ],
+        "size": [
+          3.2,
+          0.3,
+          0.7
+        ]
+      },
+      "palette": {
+        "accent": "#ba9354",
+        "trim": "#cfac67"
+      }
+    },
+    {
+      "id": "prop_security_concourse_transom_frame",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_concourse_transom_frame.glb",
+      "nodeName": "prop_security_concourse_transom_frame",
+      "label": "Concourse transom frame",
+      "triangles": 556,
+      "bounds": {
+        "min": [
+          -1.95,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.95,
+          2.1,
+          0.2
+        ],
+        "size": [
+          3.9,
+          2.1,
+          0.4
+        ]
+      },
+      "palette": {
+        "metal": "#92978a",
+        "trim": "#b2c4b9",
+        "visor": "#749b95"
+      }
+    },
+    {
+      "id": "prop_security_covered_waiting_perch",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_covered_waiting_perch.glb",
+      "nodeName": "prop_security_covered_waiting_perch",
+      "label": "Covered waiting perch",
+      "triangles": 498,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.5,
+          1.4,
+          0.3
+        ],
+        "size": [
+          3,
+          1.4,
+          0.6
+        ]
+      },
+      "palette": {
+        "metal": "#8e998a",
+        "leather": "#ad8059"
+      }
+    },
+    {
+      "id": "prop_security_passenger_luggage_trolley",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_passenger_luggage_trolley.glb",
+      "nodeName": "prop_security_passenger_luggage_trolley",
+      "label": "Passenger luggage trolley",
+      "triangles": 476,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.45,
+          1.3,
+          0.65
+        ],
+        "size": [
+          0.9,
+          1.3,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_security_luggage_trolley_corral",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_luggage_trolley_corral.glb",
+      "nodeName": "prop_security_luggage_trolley_corral",
+      "label": "Luggage trolley corral",
+      "triangles": 274,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.2,
+          0.9,
+          0.7
+        ],
+        "size": [
+          2.4,
+          0.9,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_security_dispatch_manifest_ledge",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_dispatch_manifest_ledge.glb",
+      "nodeName": "prop_security_dispatch_manifest_ledge",
+      "label": "Dispatch manifest ledge",
+      "triangles": 328,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.6,
+          1.6,
+          0.4
+        ],
+        "size": [
+          1.2,
+          1.6,
+          0.8
+        ]
+      },
+      "palette": {
+        "trim": "#eee2bb",
+        "visor": "#78ada1"
+      }
+    },
+    {
+      "id": "prop_security_baggage_reclaim_carousel",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_reclaim_carousel.glb",
+      "nodeName": "prop_security_baggage_reclaim_carousel",
+      "label": "Baggage reclaim carousel",
+      "triangles": 554,
+      "bounds": {
+        "min": [
+          -2.25,
+          0,
+          -0.75
+        ],
+        "max": [
+          2.25,
+          1.1,
+          0.75
+        ],
+        "size": [
+          4.5,
+          1.1,
+          1.5
+        ]
+      },
+      "palette": {
+        "skin": "#8b9b94",
+        "secondary": "#505c55",
+        "metal": "#afb5a7"
+      }
+    },
+    {
+      "id": "prop_security_baggage_reclaim_indicator",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_reclaim_indicator.glb",
+      "nodeName": "prop_security_baggage_reclaim_indicator",
+      "label": "Baggage reclaim indicator",
+      "triangles": 286,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.1,
+          1.5,
+          0.15
+        ],
+        "size": [
+          2.2,
+          1.5,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#3d6259",
+        "trim": "#e4d8b2",
+        "detail": "#dfa24f"
+      }
+    },
+    {
+      "id": "prop_security_sorting_control_cabin",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_sorting_control_cabin.glb",
+      "nodeName": "prop_security_sorting_control_cabin",
+      "label": "Sorting control cabin",
+      "triangles": 618,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.7,
+          2.8,
+          1.25
+        ],
+        "size": [
+          3.4,
+          2.8,
+          2.5
+        ]
+      },
+      "palette": {
+        "skin": "#a79d88",
+        "primary": "#587369",
+        "trim": "#dbd8c5"
+      }
+    },
+    {
+      "id": "prop_security_cargo_handling_bay",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_cargo_handling_bay.glb",
+      "nodeName": "prop_security_cargo_handling_bay",
+      "label": "Cargo handling bay",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -2.45,
+          0,
+          -0.4
+        ],
+        "max": [
+          2.45,
+          4.8,
+          0.4
+        ],
+        "size": [
+          4.9,
+          4.8,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#afae98",
+        "primary": "#657e74",
+        "metal": "#7b8e88",
+        "trim": "#c7bda4"
+      }
+    },
+    {
+      "id": "prop_security_cargo_bay_roof",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_cargo_bay_roof.glb",
+      "nodeName": "prop_security_cargo_bay_roof",
+      "label": "Cargo bay roof",
+      "triangles": 462,
+      "bounds": {
+        "min": [
+          -2.4,
+          0,
+          -1.9
+        ],
+        "max": [
+          2.4,
+          0.3,
+          1.9
+        ],
+        "size": [
+          4.8,
+          0.3,
+          3.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_depot_service_slab",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_depot_service_slab.glb",
+      "nodeName": "prop_security_depot_service_slab",
+      "label": "Depot service slab",
+      "triangles": 206,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -2.4
+        ],
+        "max": [
+          1,
+          0.2,
+          2.4
+        ],
+        "size": [
+          2,
+          0.2,
+          4.8
+        ]
+      }
+    },
+    {
+      "id": "prop_security_cargo_loading_cage",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_cargo_loading_cage.glb",
+      "nodeName": "prop_security_cargo_loading_cage",
+      "label": "Cargo loading cage",
+      "triangles": 602,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.1,
+          1.8,
+          0.75
+        ],
+        "size": [
+          2.2,
+          1.8,
+          1.5
+        ]
+      },
+      "palette": {
+        "skin": "#b79a66",
+        "primary": "#6d846d",
+        "detail": "#9b583d"
+      }
+    },
+    {
+      "id": "prop_security_depot_roller_shutter",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_depot_roller_shutter.glb",
+      "nodeName": "prop_security_depot_roller_shutter",
+      "label": "Depot roller shutter",
+      "triangles": 238,
+      "bounds": {
+        "min": [
+          -1.65,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.65,
+          1.9,
+          0.15
+        ],
+        "size": [
+          3.3,
+          1.9,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#829a8e",
+        "metal": "#9ca79c"
+      }
+    },
+    {
+      "id": "prop_security_aircraft_hold_container",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_aircraft_hold_container.glb",
+      "nodeName": "prop_security_aircraft_hold_container",
+      "label": "Aircraft hold container",
+      "triangles": 466,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.8
+        ],
+        "max": [
+          1,
+          2.2,
+          0.8
+        ],
+        "size": [
+          2,
+          2.2,
+          1.6
+        ]
+      },
+      "palette": {
+        "primary": "#58816b",
+        "metal": "#b3b9ac",
+        "trim": "#d7d6c3"
+      }
+    },
+    {
+      "id": "prop_security_baggage_transfer_sign",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_baggage_transfer_sign.glb",
+      "nodeName": "prop_security_baggage_transfer_sign",
+      "label": "Baggage transfer sign",
+      "triangles": 392,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.45,
+          1.9,
+          0.15
+        ],
+        "size": [
+          2.9,
+          1.9,
+          0.3
+        ]
+      },
+      "palette": {
+        "secondary": "#284c45",
+        "accent": "#edc360",
+        "trim": "#fff2d6"
+      }
+    },
+    {
+      "id": "prop_security_passenger_screening_desk",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_passenger_screening_desk.glb",
+      "nodeName": "prop_security_passenger_screening_desk",
+      "label": "Passenger screening desk",
+      "triangles": 310,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.6
+        ],
+        "max": [
+          1.2,
+          2.1,
+          0.6
+        ],
+        "size": [
+          2.4,
+          2.1,
+          1.2
+        ]
+      },
+      "palette": {
+        "skin": "#87988a",
+        "accent": "#a87648",
+        "trim": "#d7d0b9",
+        "visor": "#82c9ca"
+      }
+    },
+    {
+      "id": "prop_security_desk_one_marker",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_desk_one_marker.glb",
+      "nodeName": "prop_security_desk_one_marker",
+      "label": "Desk one marker",
+      "triangles": 154,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.55,
+          1.7,
+          0.15
+        ],
+        "size": [
+          1.1,
+          1.7,
+          0.3
+        ]
+      },
+      "palette": {
+        "accent": "#a46843",
+        "trim": "#ffedcc"
+      }
+    },
+    {
+      "id": "prop_security_desk_two_marker",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_desk_two_marker.glb",
+      "nodeName": "prop_security_desk_two_marker",
+      "label": "Desk two marker",
+      "triangles": 138,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.55,
+          1.7,
+          0.15
+        ],
+        "size": [
+          1.1,
+          1.7,
+          0.3
+        ]
+      },
+      "palette": {
+        "accent": "#a46843",
+        "trim": "#ffedcc"
+      }
+    },
+    {
+      "id": "prop_security_arrivals_access_ramp",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_arrivals_access_ramp.glb",
+      "nodeName": "prop_security_arrivals_access_ramp",
+      "label": "Arrivals access ramp",
+      "triangles": 610,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.95,
+          1.4,
+          1.8
+        ],
+        "size": [
+          1.9,
+          1.4,
+          3.6
+        ]
+      },
+      "palette": {
+        "skin": "#c0baa8",
+        "metal": "#9da69a",
+        "leather": "#ab8161"
+      }
+    },
+    {
+      "id": "prop_security_ramp_shelter",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_ramp_shelter.glb",
+      "nodeName": "prop_security_ramp_shelter",
+      "label": "Ramp shelter",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -1.85
+        ],
+        "max": [
+          1.2,
+          3.3,
+          1.85
+        ],
+        "size": [
+          2.4,
+          3.3,
+          3.7
+        ]
+      },
+      "palette": {
+        "primary": "#63816b",
+        "metal": "#939f8d",
+        "trim": "#e3d6ba",
+        "leather": "#ad7c59"
+      }
+    },
+    {
+      "id": "prop_security_arrivals_plinth",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_arrivals_plinth.glb",
+      "nodeName": "prop_security_arrivals_plinth",
+      "label": "Arrivals plinth",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.4
+        ],
+        "max": [
+          1.5,
+          0.6,
+          1.4
+        ],
+        "size": [
+          3,
+          0.6,
+          2.8
+        ]
+      },
+      "palette": {
+        "skin": "#b6b4a2",
+        "metal": "#7f9788",
+        "trim": "#d2c8a9"
+      }
+    },
+    {
+      "id": "prop_security_arrivals_entrance_frame",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_arrivals_entrance_frame.glb",
+      "nodeName": "prop_security_arrivals_entrance_frame",
+      "label": "Arrivals entrance frame",
+      "triangles": 386,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.5,
+          3.3,
+          0.3
+        ],
+        "size": [
+          3,
+          3.3,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#4a7268",
+        "metal": "#b1b6a3",
+        "visor": "#a1bcab"
+      }
+    },
+    {
+      "id": "prop_security_arrivals_curtain_wall",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_arrivals_curtain_wall.glb",
+      "nodeName": "prop_security_arrivals_curtain_wall",
+      "label": "Arrivals curtain wall",
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.5,
+          3.3,
+          0.2
+        ],
+        "size": [
+          3,
+          3.3,
+          0.4
+        ]
+      },
+      "palette": {
+        "metal": "#8b9b91",
+        "trim": "#dce1ca",
+        "leather": "#ab7d56",
+        "visor": "#81a59e"
+      }
+    },
+    {
+      "id": "prop_security_arrivals_clerestory_roof",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_arrivals_clerestory_roof.glb",
+      "nodeName": "prop_security_arrivals_clerestory_roof",
+      "label": "Arrivals clerestory roof",
+      "triangles": 386,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -2.85
+        ],
+        "max": [
+          1.6,
+          1,
+          2.85
+        ],
+        "size": [
+          3.2,
+          1,
+          5.7
+        ]
+      },
+      "palette": {
+        "primary": "#768e7a",
+        "trim": "#dbd2bd",
+        "visor": "#97b3a6"
+      }
+    },
+    {
+      "id": "prop_security_hall_link_steps",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_hall_link_steps.glb",
+      "nodeName": "prop_security_hall_link_steps",
+      "label": "Hall link steps",
+      "triangles": 178,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -1.2
+        ],
+        "max": [
+          0.9,
+          0.6,
+          1.2
+        ],
+        "size": [
+          1.8,
+          0.6,
+          2.4
+        ]
+      },
+      "palette": {
+        "skin": "#b6b4a2",
+        "trim": "#dad0a9"
+      }
+    },
+    {
+      "id": "prop_security_passenger_entrance_sign",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_passenger_entrance_sign.glb",
+      "nodeName": "prop_security_passenger_entrance_sign",
+      "label": "Passenger entrance sign",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.65,
+          1.1,
+          0.1
+        ],
+        "size": [
+          1.3,
+          1.1,
+          0.2
+        ]
+      },
+      "palette": {
+        "primary": "#385e51",
+        "accent": "#eab75b",
+        "trim": "#f2ead0"
+      }
+    },
+    {
+      "id": "prop_security_arrivals_fascia",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_arrivals_fascia.glb",
+      "nodeName": "prop_security_arrivals_fascia",
+      "label": "Arrivals fascia",
+      "triangles": 308,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.75,
+          1,
+          0.15
+        ],
+        "size": [
+          3.5,
+          1,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#3e6858",
+        "trim": "#f1e7c9",
+        "leather": "#b78d5d"
+      }
+    },
+    {
+      "id": "prop_security_timber_waiting_wall",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_timber_waiting_wall.glb",
+      "nodeName": "prop_security_timber_waiting_wall",
+      "label": "Timber waiting wall",
+      "triangles": 330,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.2
+        ],
+        "max": [
+          1.5,
+          2,
+          0.2
+        ],
+        "size": [
+          3,
+          2,
+          0.4
+        ]
+      },
+      "palette": {
+        "primary": "#756045",
+        "metal": "#a4a591",
+        "leather": "#a47a54"
+      }
+    },
+    {
+      "id": "prop_security_pavilion_route_map",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_pavilion_route_map.glb",
+      "nodeName": "prop_security_pavilion_route_map",
+      "label": "Pavilion route map",
+      "triangles": 422,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.05,
+          1.5,
+          0.15
+        ],
+        "size": [
+          2.1,
+          1.5,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#567561",
+        "accent": "#689383",
+        "trim": "#d8d2b8"
+      }
+    },
+    {
+      "id": "prop_security_terminal_garden_bed",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_terminal_garden_bed.glb",
+      "nodeName": "prop_security_terminal_garden_bed",
+      "label": "Terminal garden bed",
+      "triangles": 626,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.9,
+          1.9,
+          0.75
+        ],
+        "size": [
+          3.8,
+          1.9,
+          1.5
+        ]
+      },
+      "palette": {
+        "skin": "#bdb9a1",
+        "primary": "#768b61",
+        "leather": "#746751"
+      }
+    },
+    {
+      "id": "prop_security_lounge_ceiling_light",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_lounge_ceiling_light.glb",
+      "nodeName": "prop_security_lounge_ceiling_light",
+      "label": "Lounge ceiling light",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.25,
+          0.5,
+          0.25
+        ],
+        "size": [
+          2.5,
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_security_drop_off_kerb",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_drop_off_kerb.glb",
+      "nodeName": "prop_security_drop_off_kerb",
+      "label": "Drop off kerb",
+      "triangles": 540,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.6,
+          1.1,
+          0.55
+        ],
+        "size": [
+          3.2,
+          1.1,
+          1.1
+        ]
+      },
+      "palette": {
+        "skin": "#acae9e",
+        "accent": "#b49255",
+        "trim": "#e0d8b6"
+      }
+    },
+    {
+      "id": "prop_security_dropped_kerb_crossing",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_dropped_kerb_crossing.glb",
+      "nodeName": "prop_security_dropped_kerb_crossing",
+      "label": "Dropped kerb crossing",
+      "triangles": 184,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.65
+        ],
+        "max": [
+          1.2,
+          0.2,
+          0.65
+        ],
+        "size": [
+          2.4,
+          0.2,
+          1.3
+        ]
+      },
+      "palette": {
+        "skin": "#bfc0aa",
+        "accent": "#b59256",
+        "trim": "#dbd4b3"
+      }
+    },
+    {
+      "id": "prop_security_set_down_landing",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_set_down_landing.glb",
+      "nodeName": "prop_security_set_down_landing",
+      "label": "Set down landing",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.55,
+          0.2,
+          1.25
+        ],
+        "size": [
+          3.1,
+          0.2,
+          2.5
+        ]
+      },
+      "palette": {
+        "skin": "#adae9f",
+        "secondary": "#747c72"
+      }
+    },
+    {
+      "id": "prop_security_kerbside_waiting_shelter",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_kerbside_waiting_shelter.glb",
+      "nodeName": "prop_security_kerbside_waiting_shelter",
+      "label": "Kerbside waiting shelter",
+      "triangles": 630,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.4
+        ],
+        "max": [
+          1.7,
+          3.1,
+          1.4
+        ],
+        "size": [
+          3.4,
+          3.1,
+          2.8
+        ]
+      },
+      "palette": {
+        "primary": "#466c62",
+        "trim": "#d1cbb5",
+        "leather": "#9a724d"
+      }
+    },
+    {
+      "id": "prop_security_set_down_marker",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_set_down_marker.glb",
+      "nodeName": "prop_security_set_down_marker",
+      "label": "Set down marker",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.8,
+          0.25
+        ],
+        "size": [
+          1,
+          2.8,
+          0.5
+        ]
+      },
+      "palette": {
+        "primary": "#35665d",
+        "accent": "#c58948",
+        "trim": "#ece7c9",
+        "visor": "#69918a"
+      }
+    },
+    {
+      "id": "prop_security_parking_return_lane_arrow",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_return_lane_arrow.glb",
+      "nodeName": "prop_security_parking_return_lane_arrow",
+      "label": "Parking return lane arrow",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#686d66",
+        "secondary": "#484f51",
+        "trim": "#c1ba9c"
+      }
+    },
+    {
+      "id": "prop_security_set_down_kerb_return",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_set_down_kerb_return.glb",
+      "nodeName": "prop_security_set_down_kerb_return",
+      "label": "Set down kerb return",
+      "triangles": 304,
+      "bounds": {
+        "min": [
+          -1.25,
+          0,
+          -1.2
+        ],
+        "max": [
+          1.25,
+          0.2,
+          1.2
+        ],
+        "size": [
+          2.5,
+          0.2,
+          2.4
+        ]
+      },
+      "palette": {
+        "skin": "#acae9e",
+        "trim": "#e0d8b6"
+      }
+    },
+    {
+      "id": "prop_security_parking_entrance_canopy",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_entrance_canopy.glb",
+      "nodeName": "prop_security_parking_entrance_canopy",
+      "label": "Parking entrance canopy",
+      "triangles": 578,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -1.95
+        ],
+        "max": [
+          2.2,
+          5,
+          1.95
+        ],
+        "size": [
+          4.4,
+          5,
+          3.9
+        ]
+      },
+      "palette": {
+        "skin": "#a7947d",
+        "primary": "#50776c",
+        "accent": "#c99754",
+        "metal": "#63756e",
+        "trim": "#c9c8b3"
+      }
+    },
+    {
+      "id": "prop_security_parking_deck_bay",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_deck_bay.glb",
+      "nodeName": "prop_security_parking_deck_bay",
+      "label": "Parking deck bay",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -2.25,
+          0,
+          -1.95
+        ],
+        "max": [
+          2.25,
+          5,
+          1.95
+        ],
+        "size": [
+          4.5,
+          5,
+          3.9
+        ]
+      },
+      "palette": {
+        "skin": "#a7947d",
+        "primary": "#50776c",
+        "accent": "#c99754",
+        "metal": "#63756e",
+        "trim": "#c9c8b3"
+      }
+    },
+    {
+      "id": "prop_security_parking_ventilation_screen",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_ventilation_screen.glb",
+      "nodeName": "prop_security_parking_ventilation_screen",
+      "label": "Parking ventilation screen",
+      "triangles": 540,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -0.2
+        ],
+        "max": [
+          2.2,
+          5.4,
+          0.2
+        ],
+        "size": [
+          4.4,
+          5.4,
+          0.4
+        ]
+      },
+      "palette": {
+        "skin": "#ad9f89",
+        "primary": "#778e82"
+      }
+    },
+    {
+      "id": "prop_security_parking_stair_tower",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_stair_tower.glb",
+      "nodeName": "prop_security_parking_stair_tower",
+      "label": "Parking stair tower",
+      "triangles": 580,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -1.15
+        ],
+        "max": [
+          1.6,
+          7,
+          1.15
+        ],
+        "size": [
+          3.2,
+          7,
+          2.3
+        ]
+      },
+      "palette": {
+        "skin": "#ab8872",
+        "primary": "#537569",
+        "metal": "#9b9a84",
+        "visor": "#738b87"
+      }
+    },
+    {
+      "id": "prop_security_parking_tree_strip",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_tree_strip.glb",
+      "nodeName": "prop_security_parking_tree_strip",
+      "label": "Parking tree strip",
+      "triangles": 428,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.8,
+          0.6,
+          0.95
+        ],
+        "size": [
+          3.6,
+          0.6,
+          1.9
+        ]
+      },
+      "palette": {
+        "skin": "#95846d",
+        "secondary": "#6b7353",
+        "leather": "#7e7155"
+      }
+    },
+    {
+      "id": "prop_security_parking_entrance_sign",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_parking_entrance_sign.glb",
+      "nodeName": "prop_security_parking_entrance_sign",
+      "label": "Parking entrance sign",
+      "triangles": 266,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -0.15
+        ],
+        "max": [
+          0.95,
+          1,
+          0.15
+        ],
+        "size": [
+          1.9,
+          1,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#38645b",
+        "accent": "#dfb461",
+        "trim": "#f0e7cb"
+      }
+    },
+    {
+      "id": "prop_security_secondary_inspection_station",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_secondary_inspection_station.glb",
+      "nodeName": "prop_security_secondary_inspection_station",
+      "label": "Secondary inspection station",
+      "triangles": 412,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.65,
+          1.4,
+          0.4
+        ],
+        "size": [
+          1.3,
+          1.4,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#426070",
+        "accent": "#b5dec9",
+        "metal": "#a0aeb0",
+        "trim": "#d5c8ab",
+        "detail": "#b2754d"
+      }
+    },
+    {
+      "id": "prop_security_terrazzo_tile_with_inlay",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_terrazzo_tile_with_inlay.glb",
+      "nodeName": "prop_security_terrazzo_tile_with_inlay",
+      "label": "Terrazzo tile with inlay",
+      "triangles": 340,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#919a9e",
+        "primary": "#727d7f",
+        "secondary": "#555b60",
+        "trim": "#aeb1a8"
+      }
+    },
+    {
+      "id": "prop_security_repaired_station_tile",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_repaired_station_tile.glb",
+      "nodeName": "prop_security_repaired_station_tile",
+      "label": "Repaired station tile",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#919a9e",
+        "primary": "#6d7982",
+        "secondary": "#505d61",
+        "trim": "#b7c4c9",
+        "detail": "#899793"
+      }
+    },
+    {
+      "id": "prop_security_repaired_baggage_hall_wall",
+      "pack": "security",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_security_repaired_baggage_hall_wall.glb",
+      "nodeName": "prop_security_repaired_baggage_hall_wall",
+      "label": "Repaired baggage hall wall",
+      "triangles": 578,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.4,
+          0.3
+        ],
+        "size": [
+          4,
+          3.4,
+          0.6
+        ]
+      },
+      "palette": {
+        "detail": "#a2a9a5"
+      }
+    }
+  ],
   "presets": [
     {
       "id": "sec_night_guard",

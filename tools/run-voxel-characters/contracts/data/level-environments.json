@@ -1,0 +1,32 @@
+{
+  "core": {
+    "zenith": "#6f94b8", "horizon": "#c4cbc2", "fogDensity": 0.02,
+    "skyFill": "#d4dbe3", "groundFill": "#918575", "fillIntensity": 1.08,
+    "sunDirection": [-2.7, 2.85, 1.75], "sunColor": "#fff1d9", "sunIntensity": 2.7
+  },
+  "heist": {
+    "zenith": "#7f8598", "horizon": "#d6bfab", "fogDensity": 0.024,
+    "skyFill": "#c0cce2", "groundFill": "#938472", "fillIntensity": 1.16,
+    "sunDirection": [-2.6, 1.55, 1.55], "sunColor": "#ffdfb7", "sunIntensity": 2.88
+  },
+  "industrial": {
+    "zenith": "#8195a1", "horizon": "#afb7b8", "fogDensity": 0.031,
+    "skyFill": "#d4e0ea", "groundFill": "#887d70", "fillIntensity": 1.15,
+    "sunDirection": [2.3, 1.7, 1.6], "sunColor": "#f4f1e8", "sunIntensity": 2.4
+  },
+  "security": {
+    "zenith": "#7089a5", "horizon": "#c1c7c5", "fogDensity": 0.021,
+    "skyFill": "#c9dbf0", "groundFill": "#968b80", "fillIntensity": 1.16,
+    "sunDirection": [-2.0, 2.24, 1.85], "sunColor": "#f1ecdf", "sunIntensity": 2.47
+  },
+  "creatures": {
+    "zenith": "#638ea7", "horizon": "#c6ccb6", "fogDensity": 0.025,
+    "skyFill": "#d1e1e1", "groundFill": "#838268", "fillIntensity": 1.24,
+    "sunDirection": [-2.3, 2.8, 1.25], "sunColor": "#ffeec6", "sunIntensity": 2.8
+  },
+  "fantasy": {
+    "zenith": "#818ca5", "horizon": "#d5c2a5", "fogDensity": 0.023,
+    "skyFill": "#d3d2e3", "groundFill": "#8f816a", "fillIntensity": 1.15,
+    "sunDirection": [-2.1, 2.7, 2.15], "sunColor": "#ffe5bd", "sunIntensity": 2.65
+  }
+}

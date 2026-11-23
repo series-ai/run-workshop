@@ -3,9 +3,10 @@
   "packs": {
     "core": {
       "dir": "run-cubix-core",
+      "worldTheme": "prototype-blocks",
       "label": "Core Rig & Voxel Bodies",
       "description": "Canonical 53-joint Quaternius UAL1 rig, 95 CC0 clips (UAL1 + UAL2 + KayKit 2H), and orthogonal rigid-segment voxel bodies, sculpted voxel heads, and layered voxel hairstyles.",
-      "hasWorldLeaf": false,
+      "hasWorldLeaf": true,
       "license": "CC0-1.0"
     },
     "heist": {

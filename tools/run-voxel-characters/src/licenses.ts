@@ -9,13 +9,15 @@ const TODAY = new Date().toISOString().slice(0, 10)
 export const RUN_LICENSE = 'LicenseRef-RUN-Repository-Supplemental-1.0'
 const REPO_LICENSE = join(TOOL_ROOT, '../../LICENSE.md')
 
-const CC0_TEXT = `SPDX-License-Identifier: CC0-1.0
+const CC0_HEADER = `SPDX-License-Identifier: CC0-1.0
 Source: ${SOURCE}
 Verified-by: ${VERIFIED_BY}, ${TODAY}
 
 Creative Commons Zero v1.0 Universal (CC0 1.0 Public Domain Dedication)
 https://creativecommons.org/publicdomain/zero/1.0/
+`
 
+const CC0_CHARACTER_TEXT = `${CC0_HEADER}
 Contains:
 - Canonical 53-joint Quaternius UAL1 armature & 95 CC0 motion clips:
   - 43 clips from Quaternius Universal Animation Library Standard (CC0-1.0)
@@ -25,6 +27,11 @@ Contains:
   authored for RUN Cubix (dedicated to CC0-1.0).
 `
 
+const CC0_WORLD_TEXT = `${CC0_HEADER}
+Contains original RUN Cubix Core level props, vehicle rigs, and demo scenes.
+The Cubix authors dedicate these assets to CC0-1.0.
+`
+
 const UAL_RIG_NOTICE = `Third-Party Materials: character skinning uses the Quaternius Universal
 Animation Library Standard 53-joint armature convention (CC0 1.0 Universal,
 https://quaternius.com/packs/universalanimationlibrary.html).
@@ -32,7 +39,7 @@ https://quaternius.com/packs/universalanimationlibrary.html).
 
 export function licenseTextFor(pack: VoxCharPackKey, kind: VoxCharLeafKind): string {
   const def = PACK_DEFS[pack]
-  if (def.license === 'CC0-1.0') return CC0_TEXT
+  if (def.license === 'CC0-1.0') return kind === 'characters' ? CC0_CHARACTER_TEXT : CC0_WORLD_TEXT
   const license = readFileSync(REPO_LICENSE, 'utf8')
   const spdx = `SPDX-License-Identifier: ${RUN_LICENSE}`
   if (!license.includes(spdx)) {

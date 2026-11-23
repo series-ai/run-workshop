@@ -462,13 +462,17 @@ class GlbBuilder:
                 clips.append({'name': clip['name'], 'samplers': samplers, 'channels': channels})
             self.doc['animations'] = clips
 
-    def add_mesh(self, mesh: MeshData, node_extras=None):
+    def add_mesh(self, mesh: MeshData, node_extras=None, *, colors=None, material_groups=None):
         attributes = {
             'POSITION': self._accessor(mesh.positions.astype(np.float32), 'VEC3', ARRAY_BUFFER, bounds=True),
             'NORMAL': self._accessor(mesh.normals.astype(np.float32), 'VEC3', ARRAY_BUFFER),
             'TEXCOORD_0': self._accessor(mesh.uvs.astype(np.float32), 'VEC2', ARRAY_BUFFER),
             'TEXCOORD_1': self._accessor(mesh.uv1s.astype(np.float32), 'VEC2', ARRAY_BUFFER),
         }
+        if colors is not None:
+            if colors.shape != mesh.positions.shape:
+                raise ValueError(f'{mesh.name}: expected one RGB color per vertex.')
+            attributes['COLOR_0'] = self._accessor(colors.astype(np.float32), 'VEC3', ARRAY_BUFFER)
         skinned = mesh.joints is not None
         if skinned:
             if self.rig_root is None:
@@ -476,17 +480,23 @@ class GlbBuilder:
             attributes['JOINTS_0'] = self._accessor(mesh.joints.astype(np.uint8), 'VEC4', ARRAY_BUFFER)
             attributes['WEIGHTS_0'] = self._accessor(mesh.weights.astype(np.float32), 'VEC4', ARRAY_BUFFER)
         index_type = np.uint16 if len(mesh.positions) < 65535 else np.uint32
-        primitive = {
-            'attributes': attributes,
-            'material': 0,
-            'indices': self._accessor(mesh.indices.astype(index_type), 'SCALAR', ELEMENT_ARRAY_BUFFER),
-        }
-        definition = {'name': mesh.name, 'primitives': [primitive]}
+        groups = [(0, mesh.indices)] if material_groups is None else material_groups
+        primitives = [
+            {
+                'attributes': attributes,
+                'material': material,
+                'indices': self._accessor(indices.astype(index_type), 'SCALAR', ELEMENT_ARRAY_BUFFER),
+            }
+            for material, indices in groups
+        ]
+        definition = {'name': mesh.name, 'primitives': primitives}
         if mesh.morphs:
-            primitive['targets'] = [
+            targets = [
                 {'POSITION': self._accessor(delta.astype(np.float32), 'VEC3', ARRAY_BUFFER, bounds=True)}
                 for delta in mesh.morphs.values()
             ]
+            for primitive in primitives:
+                primitive['targets'] = targets
             definition['weights'] = [0.0] * len(mesh.morphs)
             definition['extras'] = {'targetNames': list(mesh.morphs)}
         self.doc['meshes'].append(definition)
@@ -511,9 +521,9 @@ class GlbBuilder:
         return path.stat().st_size
 
 
-def write_static_glb(path, mesh: MeshData):
+def write_static_glb(path, mesh: MeshData, *, colors=None):
     builder = GlbBuilder()
-    builder.add_mesh(mesh)
+    builder.add_mesh(mesh, colors=colors)
     return builder.write(path)
 
 

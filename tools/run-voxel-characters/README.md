@@ -31,6 +31,16 @@ node tools/run-voxel-characters/scripts/verify-visual.mjs
 VERIFY_PORT=5211 node tools/run-voxel-characters/scripts/verify-visual.mjs
 ```
 
+## Level kit exports
+
+`npm run build` writes `out/cubix-level-kits.zip`. Each pack has a `demo.glb` scene and a `demo.voxels.json` file with the occupied cells, materials, and placements. The same pair is in `level-kit/` in each staged pack leaf. Use the GLB with a mesh loader. Use the voxel file to build the scene from cells. See the [voxel file format](docs/level-voxel-format.md).
+
+The build verifies the voxel round trip before it replaces the ZIP. To check an existing archive, run this command.
+
+```bash
+blender --background --factory-startup --python-exit-code 1 --python blender/verify_level_voxels.py -- --archive out/cubix-level-kits.zip
+```
+
 ---
 
 ## Expanding Packs & Publishing to `jam-ready-assets`
@@ -83,3 +93,62 @@ Whenever you add new characters, outfits, gear, creatures, props, or packs—or 
 - [`docs/architecture.md`](file:///Users/pany/.t3/worktrees/run-workshop/t3-50caaa3c-814705892dd61b3d/tools/run-voxel-characters/docs/architecture.md) — End-to-end Blender-to-WebGL pipeline, rigid-segment greedy mesher, `TEXCOORD_0`/`TEXCOORD_1` shader encoding, orthogonal morphs, `SculptPose`, ragdoll fitter, `jam-ready-assets` staging/pinning, and S23 Ultra performance & validation contracts.
 - [`blender/creature_kit.py`](file:///Users/pany/.t3/worktrees/run-workshop/t3-50caaa3c-814705892dd61b3d/tools/run-voxel-characters/blender/creature_kit.py) — Creature kit: one world lattice, one authoring space (`+Z` forward, also for `+X` rigs), the `inverse(W_j @ IBM_j)` bind for external glTF rigs, and build-time quadruped checks.
 - [`docs/AUTHORING_GUIDE.md`](file:///Users/pany/.t3/worktrees/run-workshop/t3-50caaa3c-814705892dd61b3d/tools/run-voxel-characters/docs/AUTHORING_GUIDE.md) — Step-by-step Python recipes using `voxchar.py`, `build_core.py`, and `creature_kit.py` plus the `jam-ready-assets` release flow so any LLM or artist can author and ship matching humans, headwear, outfits, forearm shields, bipedal monsters, creatures, and props.
+
+## Level kits
+
+Run `npm run build` and `npm run catalog`. The **Level Kits** tab of the local
+showcase opens a demo for each pack. Use **Viewpoint** to check the route.
+Select a model to see it alone and check its dimensions. See the [level kit art guide](docs/art-direction.md#level-kits)
+for the grid, pivots, and scene layouts.
+
+Find the individual GLBs in each staged world leaf's `level-kit/` folder.
+The Core world leaf is `run-cubix-core/3D/prototype-blocks`. It uses
+the CC0 license. Keep the leaf license with any copies. Find the complete
+scenes in `out/level-demos/`. Each scene uses the same models and transforms
+as the showcase. The GLBs include vertex colors for use with a standard
+glTF material.
+
+Publish the updated leaves and update the showcase pins before releasing a
+production build that uses the new models.
+
+See the [level reference study](docs/level-reference-study.md) for the six
+comparisons and the changes to routes, surfaces, and materials.
+
+### Vehicles
+
+The level demos use parked vehicle meshes. Select a vehicle in **Level Kits**
+and use **Vehicle motion** to play a clip or return to the parked pose.
+
+Use the animated GLBs in the same leaf's `vehicles/` directory in a game.
+Each GLB has an unskinned `vehicle_root` at ground level. +Z is forward and
++Y is up. The root stores `wheelRadiusMeters`. Rotate each `*_spin` child
+around local X. Turn the steering parents around local Y. The forklift steers
+at the rear. The market wagon turns the entire front axle.
+
+The **Drive** clip spins the wheels in place. Move `vehicle_root` with your
+game's controller. For a rolling wheel, use distance in meters divided by
+wheel radius as its rotation in radians. The steering and equipment clips
+use separate pivots. The crane has a turntable, trolley, cable, and hook.
+The forklift has a fork carriage. The rover has a roof scanner.
+
+The utility pickup and ranger truck also have a named `tailgate` pivot and
+a **Lower Tailgate** clip. The utility pickup also has a **Roll and brake**
+preview. It moves the `vehicle_travel` pivot about 1 m forward, stops, then
+returns to the parked pose. The clip leaves `vehicle_root` available to
+the game controller.
+
+The vehicle bodies use 10 cm voxels. The driven wheel meshes use 5 cm voxels.
+The moving GLBs use vertex colors and baked voxel occlusion. Paint, rubber,
+metal, glass, wood, and lamp lenses use separate glTF materials. A rigid
+part can contain more than one surface material and still has one pivot.
+
+Road and industrial vehicles have named lamp nodes and separate lens meshes.
+Use **Vehicle lights** to see them in the showcase. The GLBs use
+`KHR_lights_punctual` spotlights with an intensity of zero at rest. Read
+`intensityOn` from each lamp node's extras to turn on that lamp. The lens with
+the matching name ends in `_lens`. Its `emissiveOn` value gives the linear
+RGB emission for that lens. Clone the lens material per vehicle instance to
+change it independently. The market wagon has wood and metal surfaces.
+
+`npm run validate` checks the exported GLBs with a standard glTF loader.
+It checks wheel pivots, clip motion, parked poses, and lamp mounts.

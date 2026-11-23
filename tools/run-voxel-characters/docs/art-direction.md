@@ -364,7 +364,7 @@ Keep the outside edge clear of the hand during the arm swing.
 | Necromancer | Ash-black robes and dull iron. Bone plates on one shoulder. | Peaked cowl, scythe, and skull censer. |
 | Spirit Shaman | Earth brown, sage, and bone. Short thigh wraps with a tattoo on one calf. | Beast-skull brow mask, crook, and hide drum. |
 | Swamp Witch | Moss, plum, and worn copper. Fitted vest and one-sided shawl with fungi. | Defined cheekbones, crooked hat, knotwood staff, and lantern flask. |
-| Sorceress | Wine, indigo, and antique gold. V-neck gown, long gloves, and upward ivory wings. | Tapered chin, pale blonde hair, low diadem, gold scepter, and orb. |
+| Sorceress | Wine, indigo, and antique gold. V-neck gown, long gloves, one raised ivory mantle tip, and a low fold on the other side. | Tapered chin, pale blonde hair, a narrow diadem above the brow, a wrapped scepter, and an orb. |
 
 Keep the face clear below the Archmage's front brim and the Necromancer's
 cowl. Trim the front edge in 2.5 cm steps. Check the eyes in the front and
@@ -648,3 +648,76 @@ World props (`prop_*`, `PROP_VOX = 0.05 m`) stand on `y = 0` (`|min.y| <= 0.015 
 2. **Multi-shade / stepped silhouette (`minUniqueShades >= 3`)**: Break up boxes with stepped frames,
    recessed panels, iron bands, weathered planks, latches, or glowing emissive accents (`bake_ao = True`).
 3. **Triangle & byte budgets**: `<= 650` triangles, `<= 80 KB`, `1` shared `VoxChar_Atlas_Mat` material.
+
+### Level kits
+
+Put the operator, the machine, and the work surface in the same view when
+you check scale. Keep the parts of the machine visible where the operator
+stands. Use a work area in each pack to show a task. Show the hose and removed wheel
+at the Core lift, a print proof at the Heist press, and cooling ingots on
+the Industrial casting floor. Show an open tray at the Security desks, a
+field kit at the Creatures survey table, and a quench trough at the Fantasy
+forge. Put each piece of equipment beside the surface that it serves.
+The showcase places the operators at the named viewpoints. The level
+exports contain the static placements.
+
+Keep vehicle door seams and mirrors on the body. Keep the wheels, steering
+pivots, and tailgate separate. Check the parked silhouette before you play
+each motion. Match the wheel rotation to the distance the vehicle travels.
+For held items, put collars outside the grip. Check the thumb
+and fingers against the grip at several points in the animation.
+
+Make the route clear before you add small props. Give each scene an entrance,
+an open lane, side cover, and a destination that the player can see from the
+entrance. Use tall props at the back and low props near the open lane.
+
+Build walls and floors in 4 m modules on a 10 cm grid. Give separate models to
+stairs, rails, the upper landing, and the objects on it. Keep each model
+centered on X and Z. Put the bottom on Y = 0. The scene can put the base of
+a floor tile below the walking surface.
+
+Use the same palette for the scene and the separate models. Export vertex
+colors so the models show their colors in a viewer without the Cubix shader.
+
+Give the route three depth layers. Use a low object near the camera, a clear
+opening or work area in the middle, and a roof, tree, or building farther
+away. Keep the opening visible from the previous stop. Put the edges of the
+level behind terrain or part of the site.
+
+Show one complete job at each main work area. Put stock, tools, equipment,
+and finished work where they belong. Show a clear connection between them.
+Match the shapes and colors of the parts to that job. Put wear where a tire,
+hand, tool, or load would touch the surface. Give repeated floor sections
+some plain tiles and a few tiles with repair marks or traffic stains.
+Use staggered paving joints at some edges to show the size of each stone.
+Keep the marks on the 10 cm grid.
+
+Use thin sills, rails, and joints to show changes in material or elevation.
+Keep openings clear. Let light through the spaces between supports. Set a
+light at a fixture's position. Keep bright color on the light or on the
+surface that needs attention. Give nearby surfaces a lower intensity.
+Use a small glow on bright lights. Keep the fixture and work surface clear.
+
+Give important materials their own colors. Use a different color or
+roughness where a part changes from paint to steel, glass, timber, or
+stone. Use the 10 cm grid for grain, stains, and chipped corners. Keep
+labels and lenses sharp. See [Cubix level kit files](level-voxel-format.md).
+
+Check the same camera positions after each revision. Check the entrance from
+eye level, at least one working area, and the route back. Use the overview
+to check where large parts meet. Use the exported cells to check that stairs
+reach the decks and that mounted objects have support.
+
+Use `Kit.placement_at` or `Kit.remove_at` when a scene change refers to a
+specific placement. Include the height if two placements share the same
+position on the ground. The builder stops if the location has zero or more
+than one match.
+
+| Pack | Surfaces and color | Work areas and connecting pieces |
+| --- | --- | --- |
+| Core | Cool concrete, muted teal paint, and yellow traffic marks | Wheel shop, compressor bench, parts counter, and test lane |
+| Heist | Warm brick, darkened timber, and worn terra-cotta pavers | Press floor, ink room, dispatch gallery, and loading alley |
+| Industrial | Oxidized steel, stained concrete, and warm furnace light | Casting floor, pump aisle, crane runway, and rail yard |
+| Security | Pale terrazzo, dark asphalt, and blue-green signs | Screening desks, arrivals hall, passenger curb, and parking return |
+| Creatures | Damp stone, timber, muted green water, and layered foliage | Map table, bridge, watchtower, and wildlife blind |
+| Fantasy | Warm stone, dark timber, and small accents in cloth or copper | Bakehouse, market, pear garden, wool loft, and coppersmith court |
