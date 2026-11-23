@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "rigId": "gobkit-corgi-16",
+  "source": "Gobkit Corgi Rig (CC0-1.0)",
+  "jointCount": 16,
+  "joints": [
+    "Root",
+    "Spine",
+    "LeftLegB",
+    "LeftLegF",
+    "RightLegB",
+    "RightLegF",
+    "Tail",
+    "Mouth",
+    "RightEar",
+    "LeftEar",
+    "Head",
+    "RightHand",
+    "LeftHand",
+    "RightEye",
+    "LeftEye",
+    "Hips"
+  ],
+  "parents": {
+    "Root": null,
+    "Spine": "Hips",
+    "LeftLegB": "Hips",
+    "LeftLegF": "Hips",
+    "RightLegB": "Hips",
+    "RightLegF": "Hips",
+    "Tail": "Spine",
+    "Mouth": "Spine",
+    "RightEar": "Spine",
+    "LeftEar": "Spine",
+    "Head": "Spine",
+    "RightHand": "Spine",
+    "LeftHand": "Spine",
+    "RightEye": "Spine",
+    "LeftEye": "Spine",
+    "Hips": "Root"
+  },
+  "worldPositions": {
+    "Root": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "Spine": [
+      0.0,
+      0.15811,
+      -0.0
+    ],
+    "LeftLegB": [
+      0.09298,
+      0.2158,
+      -0.10658
+    ],
+    "LeftLegF": [
+      0.09298,
+      0.2158,
+      0.10018
+    ],
+    "RightLegB": [
+      -0.09298,
+      0.2158,
+      -0.10658
+    ],
+    "RightLegF": [
+      -0.09298,
+      0.2158,
+      0.10018
+    ],
+    "Tail": [
+      0.0,
+      0.25448,
+      -0.1494
+    ],
+    "Mouth": [
+      0.0,
+      0.2282,
+      0.17269
+    ],
+    "RightEar": [
+      -0.09298,
+      0.39023,
+      0.1274
+    ],
+    "LeftEar": [
+      0.09298,
+      0.39023,
+      0.1274
+    ],
+    "Head": [
+      0.0,
+      0.46891,
+      0.05837
+    ],
+    "RightHand": [
+      -0.19348,
+      0.2755,
+      -0.0
+    ],
+    "LeftHand": [
+      0.19353,
+      0.2755,
+      -0.0
+    ],
+    "RightEye": [
+      -0.09298,
+      0.29622,
+      0.17685
+    ],
+    "LeftEye": [
+      0.09298,
+      0.29622,
+      0.17685
+    ],
+    "Hips": [
+      0.0,
+      0.14247,
+      -0.0
+    ]
+  },
+  "clips": [
+    {
+      "name": "idle",
+      "duration": 1.2083
+    },
+    {
+      "name": "attack",
+      "duration": 1.2083
+    },
+    {
+      "name": "dead",
+      "duration": 1.2083
+    },
+    {
+      "name": "walk",
+      "duration": 1.2083
+    }
+  ]
+}
