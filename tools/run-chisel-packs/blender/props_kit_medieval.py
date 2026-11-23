@@ -22,6 +22,63 @@ def prop_curtain_corner(p):
         p.box((x, 2.055, z), (.44, .31, .44), 'skin', bevel=.018)
 
 
+# The back corners meet two 2 m curtain wall sections. The rear stays open.
+_KEEP_BAY_PLAN = ((-2, -.22), (-2, .65), (-1.12, 2.22),
+                  (1.12, 2.22), (2, .65), (2, -.22))
+_KEEP_EAVES = 2.88
+
+
+def _bay_ring(y, scale=1):
+    return [V(x * scale, y, -.22 + (z + .22) * scale) for x, z in _KEEP_BAY_PLAN]
+
+
+def prop_keep_bay(p):
+    floor = [[V(x, y, max(0, z)) for x, z in _KEEP_BAY_PLAN] for y in (0, .122)]
+    p.loft(floor, 'skin', cap_start=True, cap_end=True)
+    outer, inner = _bay_ring(0), _bay_ring(0, .85)
+    for i in range(len(outer) - 1):
+        def masonry(y0, y1, start=0, end=1, shade=0):
+            foot = [outer[i].lerp(outer[i + 1], start), outer[i].lerp(outer[i + 1], end),
+                    inner[i].lerp(inner[i + 1], end), inner[i].lerp(inner[i + 1], start)]
+            p.loft([[v + V(0, y, 0) for v in foot] for y in (y0, y1)], 'skin',
+                   cap_start=True, cap_end=True, ao=shade)
+
+        masonry(.122, 1.38, shade=-.06)
+        masonry(1.38, 2.36, 0, .41)
+        masonry(1.38, 2.36, .59, 1)
+        masonry(2.36, _KEEP_EAVES, shade=.10)
+
+
+def prop_keep_bay_roof(p):
+    # Keep the eaves centered on the bay after the exporter centers each mesh.
+    def overhang(y):
+        return [V(x * 1.06, y, 1 + (z - 1) * 1.06) for x, z in _KEEP_BAY_PLAN]
+
+    p.loft([overhang(0), overhang(.16)], 'secondary',
+           cap_start=True, cap_end=True)
+    # Two slate courses meet a short ridge above the open gallery.
+    ridge = [V(v.x * .25, 1.48, .48 + v.z * .10) for v in _bay_ring(0)]
+    eaves = overhang(.16)
+    seam = [a.lerp(b, .42) for a, b in zip(eaves, ridge)]
+    p.loft([eaves, seam], 'eye', cap_start=True, ao=.05)
+    lip = [V(v.x * 1.04, v.y + .04, .5 + (v.z - .5) * 1.04) for v in seam]
+    p.loft([seam, lip, ridge], 'eye', cap_end=True, ao=.16)
+
+
+def prop_timber_gate(p):
+    for side in (-1, 1):
+        for z in (-.38, .38):
+            p.box((side * .86, 1.36, z), (.28, 2.72, .24), 'secondary')
+            p.prism((side * .86, 1.97, z), (side * .40, 2.60, z),
+                    .095, .095, 4, 'primary', up=Z)
+    for z in (-.38, .38):
+        p.box((0, 2.69, z), (2.32, .22, .26), 'primary')
+
+
+def prop_timber_gate_roof(p):
+    gable_roof(p, 0, 0, 0, 2.42, 1.26, .86, 'primary', along='z')
+
+
 def prop_open_stone_arch(p):
     # Radial blocks form a clear opening above the spring line.
     for side in (-1, 1):
@@ -168,6 +225,10 @@ def prop_charter_desk(p):
 
 
 KIT_PROPS = [
+    (prop_keep_bay, 'Faceted Keep Guard Bay'),
+    (prop_keep_bay_roof, 'Hipped Slate Guard Roof'),
+    (prop_timber_gate, 'Braced Timber Village Gate'),
+    (prop_timber_gate_roof, 'Village Gate Gable Roof'),
     (prop_curtain_corner, 'Curtain Wall Return'),
     (prop_open_stone_arch, 'Open Voussoir Arch'),
     (prop_hall_steps, 'Six-Tread Hall Steps'),
