@@ -4,7 +4,7 @@
     {
       "id": "mine_branch",
       "title": "Lampwright’s Siding",
-      "width": 10,
+      "width": 14,
       "depth": 10,
       "props": [
         {"id": "prop_basalt_floor_tile", "position": [0, 0, -4]},
@@ -23,6 +23,15 @@
         {"id": "prop_basalt_floor_tile", "position": [0, 0, 4]},
         {"id": "prop_basalt_floor_tile", "position": [2, 0, 4]},
         {"id": "prop_basalt_floor_tile", "position": [4, 0, 4]},
+        {"id": "prop_basalt_floor_tile", "position": [-4, 0, 0]},
+        {"id": "prop_basalt_floor_tile", "position": [-4, 0, -2]},
+        {"id": "prop_basalt_floor_tile", "position": [-6, 0, 0]},
+        {"id": "prop_basalt_floor_tile", "position": [-6, 0, -2]},
+        {"id": "prop_basalt_corner_bay", "position": [-6, 0.14, -2]},
+        {"id": "prop_basalt_corner_bay", "position": [-4, 0.14, -2], "rotationY": -1.570796327},
+        {"id": "prop_basalt_buttressed_bay", "position": [-4, 0.14, 0]},
+        {"id": "prop_brood_nest", "position": [-5.78, 0.14, -1.65]},
+        {"id": "prop_brood_husk", "position": [-6.24, 0.14, -0.35]},
         {"id": "prop_mine_sill_stop", "position": [0, 0.14, -4], "rotationY": 3.141592654},
         {"id": "prop_mine_track", "position": [0, 0.14, -2]},
         {"id": "prop_mine_shoring", "position": [0, 0.14, -2]},
@@ -44,7 +53,9 @@
         {"id": "prop_mine_ore_skip", "position": [2, 0.3325, 0], "rotationY": 1.570796327}
       ],
       "route": [
-        [-4.6, 0.14, 2.08],
+        [-4.6, 0.14, -1.7],
+        [-4, 0.14, -1.2],
+        [-4, 0.14, 2.08],
         [-1.01, 0.14, 2.08],
         [-1, 0.158, 2.08],
         [-0.62, 0.33, 2.08],
@@ -53,13 +64,13 @@
         [1.03, 0.14, 2.08],
         [4, 0.14, 2.08]
       ],
-      "view": [0.66, 0.83, 1]
+      "view": [-0.60, 1.02, 1]
     },
     {
       "id": "brood_shrine",
       "title": "The Molted Shrine",
       "width": 6,
-      "depth": 14,
+      "depth": 18,
       "props": [
         {"id": "prop_basalt_floor_tile", "position": [0, 0, 6]},
         {"id": "prop_basalt_floor_tile", "position": [-2, 0, 4]},
@@ -86,6 +97,8 @@
         {"id": "prop_mushroom_cluster", "position": [1.62, 0.14, 3.92]},
         {"id": "prop_basalt_corner_bay", "position": [-2, 0.94, -6]},
         {"id": "prop_basalt_corner_bay", "position": [2, 0.94, -6], "rotationY": -1.570796327},
+        {"id": "prop_basalt_high_landing", "position": [0, 0, -8]},
+        {"id": "prop_basalt_buttressed_bay", "position": [0, 0.94, -8]},
         {"id": "prop_shaman_shrine", "position": [0, 0.94, -5.91]},
         {"id": "prop_shrine_tusk_lamp", "position": [-1.12, 0.94, -4.49]},
         {"id": "prop_shrine_tusk_lamp", "position": [1.12, 0.94, -4.49]},

@@ -84,6 +84,31 @@ def prop_basalt_corner_bay(p):
                   'skin', bevel=.013, ao=-.04*(i%2))
 
 
+def prop_basalt_buttressed_bay(p):
+    # The buttress feet spread along the passage and stay inside the tile.
+    for side in (-1, 1):
+        for i in range(4):
+            block(p, side*.82, (i+.5)*.55, 0, .36, .55, .48, 'skin',
+                  bevel=.012, ao=-.035*(i%2))
+        for end in (-1, 1):
+            profile = [(.24, 0), (.89, 0), (.89, .54), (.62, .87),
+                       (.62, 1.32), (.24, 2.08)]
+            p.loft([[V(side*x, y, end*z) for z, y in profile] for x in (.69, .97)],
+                   'skin', cap_start=True, cap_end=True, ao=-.06)
+        # Separate wedge stones carry the pointed arch up to the crown.
+        ribs = [(.64, 2.20, 1, 2.20), (.55, 2.55, .92, 2.69),
+                (.37, 2.83, .72, 3.02), (.13, 3.09, .18, 3.57)]
+        for a, b in zip(ribs, ribs[1:]):
+            p.loft([[V(side*x, y, z) for x, y, z in
+                     ((xi, yi, -.25), (xo, yo, -.25), (xo, yo, .25), (xi, yi, .25))]
+                    for xi, yi, xo, yo in (a, b)], 'skin', cap_start=True, cap_end=True)
+    half = [(0, 3.22), (.13, 3.09), (.18, 3.57), (0, 3.76)]
+    # Split the concave crown at its centre so each end cap stays convex.
+    for side in (-1, 1):
+        p.loft([[V(side*x, y, z) for x, y in half] for z in (-.30, .30)],
+               'skin', cap_start=True, cap_end=True, ao=.08)
+
+
 def prop_basalt_vault_bay(p):
     # The inner roof has a faceted soffit. Both ends open onto the tile edge.
     for side in (-1, 1):
@@ -154,6 +179,7 @@ KIT_PROPS = [
     (prop_mine_grade_crossing, 'Planked Mine Crossing'),
     (prop_mine_sill_stop, 'Braced Sill Stop'),
     (prop_basalt_ring_door, 'Basalt Ring Doorway'),
+    (prop_basalt_buttressed_bay, 'Buttressed Basalt Bay'),
     (prop_basalt_corner_bay, 'Coursed Basalt Corner'),
     (prop_basalt_vault_bay, 'Basalt Vault Passage'),
     (prop_basalt_processional_stair, 'Processional Stair'),
