@@ -32,8 +32,13 @@ function main(): void {
   for (const pack of packs) {
     if (isBoardPack(pack)) {
       const id = levelLeafId(pack, 'world')
-      cpSync(join(STAGE_DIR, id), join(target, id), { recursive: true })
-      console.log(`Staged ${id}`)
+      const dest = join(target, id)
+      rmSync(dest, { recursive: true, force: true })
+      mkdirSync(dest, { recursive: true })
+      cpSync(join(STAGE_DIR, id), dest, { recursive: true })
+      // The board builder writes License.txt. A leaf without it must not be published.
+      if (!existsSync(join(dest, 'License.txt'))) throw new Error(`Board leaf ${id} has no License.txt. Rebuild the board.`)
+      console.log(`Staged ${id} -> ${dest}`)
       continue
     }
     for (const leaf of leavesFor(pack)) {

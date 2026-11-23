@@ -440,7 +440,7 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
         {!subject && layout && <p>{items.size} props · {layout.route}</p>}
       </div>
       {layout || subject ? (
-        <SceneBoundary sceneKey={`${sceneKey}:${renderer}`}>
+        <SceneBoundary sceneKey={`${sceneKey}:${renderer}:${motion}`}>
           <div className="level-kit-view">
             <Canvas dpr={[1, BUDGETS.mobilePolicy.maxDpr]} gl={STUDIO_GL} shadows frameloop="demand">
               {subject ? (
