@@ -1,6 +1,6 @@
 import {
   CanvasTexture, Color, DataTexture, DoubleSide, FrontSide, LinearMipmapLinearFilter, MeshBasicMaterial,
-  MeshStandardMaterial, NearestFilter, PlaneGeometry, RepeatWrapping, SRGBColorSpace, Vector2,
+  MeshStandardMaterial, NearestFilter, PlaneGeometry, RepeatWrapping, ShaderChunk, SRGBColorSpace, Vector2,
 } from 'three'
 import { PALETTE_REGIONS, resolvePaletteColors, type PaletteColors } from '@voxchar/contracts/palette'
 import { LEVEL_FINISHES } from '@voxchar/contracts/levelFinishes'
@@ -54,11 +54,13 @@ const LOOK = {
   emissiveGain: 1.65,
 } as const
 
+const LEVEL_DARK_FLOOR = [0.017, 0.019, 0.022] as const
+
 const LEVEL_LOOK = {
   ...LOOK,
   rampDark: 0.49,
   rampBright: 1.16,
-  darkFloor: 'vec3(0.017, 0.019, 0.022)',
+  darkFloor: `vec3(${LEVEL_DARK_FLOOR.join(', ')})`,
   darkMottleGain: 1.24,
   rimStrength: 0.14,
   metalBoost: 1.1,
@@ -72,6 +74,18 @@ const glsl = (value: number) => value.toFixed(3)
 
 interface PolyUniforms {
   uPolyPalette: { value: Color[] }
+  uLiftedPalette?: { value: Color[] }
+}
+
+function liftLevelColor(color: Color, target = new Color()): Color {
+  const luma = 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b
+  const t = Math.max(0, Math.min(1, luma / LEVEL_LOOK.darkFloorLuma))
+  const lift = 1 - t * t * (3 - 2 * t)
+  return target.setRGB(
+    color.r + LEVEL_DARK_FLOOR[0] * lift,
+    color.g + LEVEL_DARK_FLOOR[1] * lift,
+    color.b + LEVEL_DARK_FLOOR[2] * lift,
+  )
 }
 
 function uniformsOf(material: MeshStandardMaterial): PolyUniforms {
@@ -103,8 +117,9 @@ function createGrainTexture() {
 
 let levelGrain: DataTexture | undefined
 
-export function createPolyMaterial(palette: PaletteColors, surface: PolySurface = 'avatar'): MeshStandardMaterial {
+export function createPolyMaterial(palette: PaletteColors, surface: PolySurface = 'avatar', optimizeLevel = false): MeshStandardMaterial {
   const isLevel = surface !== 'avatar'
+  const optimized = isLevel && optimizeLevel
   const glass = surface === 'glass'
   const look = isLevel ? LEVEL_LOOK : LOOK
   const grain = isLevel ? (levelGrain ??= createGrainTexture()) : undefined
@@ -122,6 +137,10 @@ export function createPolyMaterial(palette: PaletteColors, surface: PolySurface 
   const uniforms: PolyUniforms = {
     uPolyPalette: { value: PALETTE_REGIONS.map((region) => new Color(resolved[region])) },
   }
+  const liftedPalette = optimized
+    ? { value: uniforms.uPolyPalette.value.map(color => liftLevelColor(color)) }
+    : undefined
+  uniforms.uLiftedPalette = liftedPalette
   const material = new MeshStandardMaterial({
     color: 0xffffff, metalness: 0, roughness: 0.8, side: glass ? DoubleSide : FrontSide,
     opacity: glass ? LEVEL_FINISHES.glassOpacity : 1,
@@ -132,6 +151,7 @@ export function createPolyMaterial(palette: PaletteColors, surface: PolySurface 
   material.userData.polyUniforms = uniforms
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uPolyPalette = uniforms.uPolyPalette
+    if (liftedPalette) shader.uniforms.uLiftedPalette = liftedPalette
     if (grain) shader.uniforms.uLevelGrain = { value: grain }
     if (regionFinishes) shader.uniforms.uLevelFinishes = regionFinishes
     if (waterSky) {
@@ -167,6 +187,7 @@ export function createPolyMaterial(palette: PaletteColors, surface: PolySurface 
       '#include <common>',
       `#include <common>
         uniform vec3 uPolyPalette[10];
+        ${liftedPalette ? 'uniform vec3 uLiftedPalette[10];' : ''}
         varying vec2 vPolyUv;
         varying vec2 vVoxelGrid;
         ${grain ? 'uniform sampler2D uLevelGrain;' : ''}
@@ -185,10 +206,10 @@ export function createPolyMaterial(palette: PaletteColors, surface: PolySurface 
         float polySkin = ${surface === 'avatar' ? '(polyRegion == 0 ? 1.0 : 0.0)' : '0.0'};
         float polyLeather = polyRegion == 7 ? 1.0 : 0.0;
         float polyGloss = ${waterSky ? '0.0' : '(polyRegion == 8 ? 1.0 : 0.0)'};
-        vec3 polyBase = uPolyPalette[polyRegion];
+        ${liftedPalette ? 'vec3 polyBase = uLiftedPalette[polyRegion];' : `vec3 polyBase = uPolyPalette[polyRegion];
         float polyLuma = dot(polyBase, vec3(0.2126, 0.7152, 0.0722));
         float polyDark = 1.0 - smoothstep(0.0, ${glsl(look.darkFloorLuma)}, polyLuma);
-        polyBase += ${look.darkFloor} * polyDark;
+        polyBase += ${look.darkFloor} * polyDark;`}
         float voxMottle = 0.0;
         vec3 voxHueShift = vec3(1.0);
         if (vVoxelGrid.x > -100.0 && polyEmissive < 0.5) {
@@ -249,18 +270,32 @@ export function createPolyMaterial(palette: PaletteColors, surface: PolySurface 
           max(waterNormal.y, 0.0) * (0.07 + 0.44 * waterFresnel));` : ''}
         #include <opaque_fragment>`,
     )
+    if (optimized) {
+      const lights = inject(ShaderChunk.lights_fragment_begin, 'pointLight = pointLights[ i ];', `{
+        pointLight = pointLights[ i ];
+        vec3 lightOffset = pointLight.position - geometryPosition;
+        if (pointLight.distance <= 0.0 || dot(lightOffset, lightOffset) < pointLight.distance * pointLight.distance) {
+      `)
+      const pointEnd = 'material, reflectedLight );'
+      fragment = inject(fragment, '#include <lights_fragment_begin>', inject(lights, pointEnd, pointEnd + '\n        }\n        }'))
+    }
     shader.fragmentShader = fragment
   }
-  material.customProgramCacheKey = () => waterSky ? `${PROGRAM_KEY}-water${reflection ? '-reflect' : ''}`
+  const key = waterSky ? `${PROGRAM_KEY}-water${reflection ? '-reflect' : ''}`
     : isLevel ? `${PROGRAM_KEY}-${surface}` : PROGRAM_KEY
+  material.customProgramCacheKey = () => optimized ? `${key}-optimized` : key
   return material
 }
 
 /** Change the palette colors in place. No shader compile occurs. */
 export function updatePolyMaterialPalette(material: MeshStandardMaterial, palette: PaletteColors): void {
   const resolved = resolvePaletteColors(palette)
-  const colors = uniformsOf(material).uPolyPalette.value
-  PALETTE_REGIONS.forEach((region, index) => colors[index]!.set(resolved[region]))
+  const { uPolyPalette, uLiftedPalette } = uniformsOf(material)
+  PALETTE_REGIONS.forEach((region, index) => {
+    const color = uPolyPalette.value[index]!.set(resolved[region])
+    const lifted = uLiftedPalette?.value[index]
+    if (lifted) liftLevelColor(color, lifted)
+  })
 }
 
 export interface BlobShadowResources {

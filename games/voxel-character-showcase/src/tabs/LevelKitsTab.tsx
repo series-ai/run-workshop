@@ -1,6 +1,6 @@
 import { Html, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei'
 import { Canvas, useThree } from '@react-three/fiber'
-import { Component, Suspense, useEffect, useMemo, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, Suspense, useEffect, useLayoutEffect, useMemo, useState, type ErrorInfo, type ReactNode } from 'react'
 import type { MeshStandardMaterial } from 'three'
 import { ZodError } from 'zod'
 import type { LevelPropEntry } from '@voxchar/contracts/catalog'
@@ -15,9 +15,10 @@ import type { PolyCatalogBundle } from '../catalog'
 import PALETTES from '@voxchar/contracts/data/level-palettes.json'
 import { LevelLightingEffects } from '../scenes/LevelLightingEffects'
 import { LevelWorkstations } from '../scenes/LevelWorkstations'
-import { LevelInstances, type LevelPlacement } from '../scenes/LevelInstances'
+import { LevelInstances, LevelVoxelInstances, type LevelPlacement } from '../scenes/LevelInstances'
 import { createLevelSky } from '../scenes/levelSky'
 import { STUDIO_GL, StudioLights } from '../scenes/studio'
+import { useLevelVoxels } from '../scenes/useLevelVoxels'
 import { useLevelWater } from '../scenes/useLevelWater'
 import { KitVehicle } from './KitVehicle'
 
@@ -190,14 +191,34 @@ function KitCamera({ subject, view, viewpoint }: {
   )
 }
 
-function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel }: {
+function LevelShadowCache({ revision }: { revision: string }) {
+  const { gl, invalidate } = useThree()
+  const mobileShadow = useThree(state => state.size.width < 640)
+  useLayoutEffect(() => {
+    const previous = gl.shadowMap.autoUpdate
+    gl.shadowMap.autoUpdate = false
+    gl.shadowMap.needsUpdate = true
+    invalidate()
+    return () => {
+      gl.shadowMap.autoUpdate = previous
+      gl.shadowMap.needsUpdate = true
+      invalidate()
+    }
+  }, [gl, invalidate, mobileShadow, revision])
+  return null
+}
+
+function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel, renderer, optimized }: {
   pack: VoxCharPackKey
   layout?: ResolvedLevelKit
   subject?: LevelPropEntry
   motion: string
   lightsOn: boolean
   eyeLevel: boolean
+  renderer: 'mesh' | 'voxel'
+  optimized: boolean
 }) {
+  const raw = useLevelVoxels(renderer === 'voxel' && layout && !subject ? pack : undefined)
   const groups = useMemo(() => {
     const byId = new Map<string, { item: LevelPropEntry; placements: LevelPlacement[] }>()
     for (const placement of layout?.placements ?? []) {
@@ -209,18 +230,18 @@ function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel }: {
   }, [layout])
   const reflection = useLevelWater(layout, eyeLevel && !subject)
   const materials = useMemo(() => {
-    const base = createPolyMaterial(PALETTES[pack], 'level')
+    const base = createPolyMaterial(PALETTES[pack], 'level', optimized)
     const overrides = new Map<string, MeshStandardMaterial>()
     const models = subject ? [subject] : groups.map(({ item }) => item)
     const { zenith, horizon } = layout?.environment ?? LEVEL_LIGHTS[pack]
     for (const item of models) {
       if (item.palette || item.surface) {
         const surface = item.surface === 'water' ? { water: { zenith, horizon, reflection } } : item.surface ?? 'level'
-        overrides.set(item.id, createPolyMaterial({ ...PALETTES[pack], ...item.palette }, surface))
+        overrides.set(item.id, createPolyMaterial({ ...PALETTES[pack], ...item.palette }, surface, optimized))
       }
     }
     return { base, overrides }
-  }, [groups, layout?.environment, pack, reflection, subject])
+  }, [groups, layout?.environment, optimized, pack, reflection, subject])
   useEffect(() => () => {
     materials.base.dispose()
     for (const material of materials.overrides.values()) material.dispose()
@@ -239,18 +260,21 @@ function KitModels({ pack, layout, subject, motion, lightsOn, eyeLevel }: {
   }
   if (subject) return <PolyProp item={subject} material={materials.overrides.get(subject.id) ?? materials.base} blobShadow />
 
-  return (
-    <>
-      {groups.map(({ item, placements }) => (
-        <LevelInstances
-          key={item.id}
-          item={item}
-          placements={placements}
-          material={materials.overrides.get(item.id) ?? materials.base}
-        />
-      ))}
-    </>
-  )
+  if (renderer === 'voxel') {
+    if (raw?.kind === 'error') throw new Error(raw.message)
+    if (!raw) return <Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading voxel models…</span></Html>
+  }
+
+  return groups.map(({ item, placements }) => {
+    const material = materials.overrides.get(item.id) ?? materials.base
+    const mesh = raw?.kind === 'ready' ? raw.meshes[item.id] : undefined
+    if (renderer === 'voxel') {
+      if (!mesh) throw new Error(`Missing voxel prefab ${item.id}.`)
+      return <LevelVoxelInstances key={item.id} item={item} placements={placements} material={material}
+        mesh={mesh} />
+    }
+    return <LevelInstances key={item.id} item={item} placements={placements} material={material} />
+  })
 }
 
 export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; index: PolyPartIndex }) {
@@ -261,6 +285,8 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
   const [motion, setMotion] = useState('')
   const [lightsOn, setLightsOn] = useState(false)
   const [viewIndex, setViewIndex] = useState(0)
+  const [renderer, setRenderer] = useState<'mesh' | 'voxel'>('mesh')
+  const [optimized, setOptimized] = useState(false)
   const items = useMemo(() => new Map(
     bundle.packs[pack].levelKitProps
       .map((prop) => [prop.id, prop]),
@@ -330,6 +356,21 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
             </select>
           </label>
         )}
+        {layout && !subject && (
+          <>
+            <label className="level-kit-picker">
+              Renderer
+              <select value={renderer} onChange={(event) => setRenderer(event.target.value === 'voxel' ? 'voxel' : 'mesh')}>
+                <option value="mesh">Mesh</option>
+                <option value="voxel">Voxel</option>
+              </select>
+            </label>
+            <label className="level-kit-picker">
+              <input type="checkbox" checked={optimized} onChange={(event) => setOptimized(event.target.checked)} />
+              Optimized rendering
+            </label>
+          </>
+        )}
         <label className="level-kit-picker">
           Inspect prop
           <select value={selected} onChange={(event) => selectProp(event.target.value)}>
@@ -357,7 +398,7 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
         {!subject && layout && <p>{items.size} props · {layout.route}</p>}
       </div>
       {layout || subject ? (
-        <SceneBoundary sceneKey={sceneKey}>
+        <SceneBoundary sceneKey={`${sceneKey}:${renderer}`}>
           <div className="level-kit-view">
             <Canvas dpr={[1, BUDGETS.mobilePolicy.maxDpr]} gl={STUDIO_GL} shadows frameloop="demand">
               {subject ? (
@@ -371,9 +412,10 @@ export function LevelKitsTab({ bundle, index }: { bundle: PolyCatalogBundle; ind
               )}
               <KitCamera key={`${sceneKey}:${viewIndex}`} subject={subject} view={view} viewpoint={viewpoint} />
               {!subject && viewpoint && <LevelLightingEffects />}
+              {!subject && optimized && <LevelShadowCache revision={`${pack}:${renderer}:${viewIndex}`} />}
               <Suspense fallback={<Html center><span className="level-kit-status level-kit-status-overlay" role="status">Loading models…</span></Html>}>
                 <KitModels key={sceneKey} pack={pack} layout={layout} subject={subject} motion={motion}
-                  lightsOn={lightsOn} eyeLevel={viewpoint !== undefined} />
+                  lightsOn={lightsOn} eyeLevel={viewpoint !== undefined} renderer={renderer} optimized={!subject && optimized} />
               </Suspense>
               <Suspense fallback={null}>
                 {!subject && <LevelWorkstations pack={pack} stop={viewStop?.label} bundle={bundle} index={index} />}
