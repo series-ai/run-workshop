@@ -47,7 +47,7 @@
         {"id": "prop_foundry_corner", "position": [0.0, 0, -3.0], "rotationY": -1.57079633},
         {"id": "prop_clerestory_wall", "position": [-2.9, 0, -1.0], "rotationY": -1.57079633},
         {"id": "prop_clerestory_wall", "position": [0.9, 0, -1.0], "rotationY": 1.57079633},
-        {"id": "prop_exchange_portal", "position": [-1.0, 0, -0.16]},
+        {"id": "prop_lantern_shop_bay", "position": [-1.0, 0, 0.64]},
         {"id": "prop_service_roof", "position": [-1, 2.6, -3]},
         {"id": "prop_service_roof", "position": [-1, 2.6, -1]},
         {"id": "prop_foundry_corner", "position": [0.0, 2.8, -1.0], "rotationY": 3.14159265},
@@ -72,8 +72,6 @@
         {"id": "prop_service_meter", "position": [0.45, 0, -3.55]},
         {"id": "prop_lantern_noodle_bar", "position": [-4.7, 0, 2.5], "rotationY": 1.57079633},
         {"id": "prop_lantern_span", "position": [-1, 0, 4.7]},
-        {"id": "prop_awning_fan", "position": [-1.5, 2.26, 0.54]},
-        {"id": "prop_blade_sign", "position": [0.3, 3.03, 0.54], "rotationY": -1.57079633},
         {"id": "prop_tension_sail", "position": [4.45, 0, 0.3], "rotationY": -1.57079633},
         {"id": "prop_cyber_apartment", "position": [4.65, 0, -4.15], "rotationY": -1.57079633},
         {"id": "prop_fish_display", "position": [4.6, 0, 0.3], "rotationY": -1.57079633},
@@ -180,6 +178,7 @@
         {"id": "prop_service_guard", "position": [-1, 2.8, -1.05]},
         {"id": "prop_service_guard", "position": [-1.95, 2.8, -2], "rotationY": 1.57079633},
         {"id": "prop_service_guard", "position": [1.95, 2.8, -2], "rotationY": 1.57079633},
+        {"id": "prop_exposed_service_bay", "position": [-2.46, 0, -0.67]},
         {"id": "prop_pressure_station", "position": [-1.04, 0, -4.17]},
         {"id": "prop_hose_reel", "position": [1.35, 0, -3.75]},
         {"id": "prop_cell_charger", "position": [-1.45, 0, -2.35], "rotationY": 1.57079633},
@@ -225,7 +224,7 @@
         [1, 2.8, -2],
         [0.25, 2.8, -3.9]
       ],
-      "view": [-0.7, 0.85, 1]
+      "view": [0.24, 0.78, 1]
     }
   ]
 }

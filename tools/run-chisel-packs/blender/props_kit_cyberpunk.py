@@ -1,7 +1,7 @@
 """District bays on a two-metre grid. Each storey has a 2.80 m pitch."""
 
 from props_cyber_district import box, exchange_stamp, grille, inset, rod, window_strip
-from polykit import Z
+from polykit import V, Y, Z
 
 
 def prop_exchange_portal(p):
@@ -15,6 +15,56 @@ def prop_exchange_portal(p):
     exchange_stamp(p, -1.06, 2.42, 0.164, 0.23)
     for x in (0.03, 0.31, 0.59):
         box(p, (x, 2.39, 0.145), (0.18, 0.035, 0.02), 'accent')
+
+
+def prop_lantern_shop_bay(p):
+    prop_exchange_portal(p)
+    # Fold the canopy down at the street edge. Keep the display case open.
+    sections = [(-1.78, 0.82), (-1.45, 1.29), (0.42, 1.29), (0.78, 0.94)]
+    p.loft([[V(x, 2.55, 0.12), V(x, 2.47, 0.12),
+             V(x, 2.19, depth), V(x, 2.33, depth)] for x, depth in sections],
+           'hair', cap_start=True, cap_end=True)
+    for x in (-1.63, 0.48):
+        rod(p, (x, 2.46, 0.12), (x, 2.25, 0.96), 0.05, 'metal', 4)
+
+    # Hang the two-sided bowl sign from a bent arm above the canopy.
+    x = -0.98
+    rod(p, (x, 2.54, 0.05), (x, 3.72, 0.26), 0.08, 'metal', 4)
+    rod(p, (x, 3.72, 0.26), (x, 3.72, 1.36), 0.08, 'metal', 4)
+    root = V(x, 3.40, 1.36)
+    right = V(0.92, 0, -0.39).normalized()
+    normal = right.cross(Y)
+    # Two chopsticks connect the bowl rim to the crossbar.
+    rod(p, root - right * 0.37 + Y * 0.32, root + right * 0.37 + Y * 0.32,
+        0.055, 'metal', 4)
+    for offset in (-0.28, 0.10):
+        rod(p, root + right * offset, root + right * (offset + 0.10) + Y * 0.36,
+            0.047, 'metal', 4)
+    profile = [(-0.76, 0), (0.76, 0), (0.52, -0.42),
+               (0.23, -0.60), (-0.23, -0.60), (-0.52, -0.42)]
+    p.loft([[root + right * u + Y * v + normal * depth for u, v in profile]
+            for depth in (-0.11, 0.11)], 'metal', cap_start=True, cap_end=True)
+    box(p, root, (1.57, 0.10, 0.26), 'eye', right=right)
+
+
+def prop_exposed_service_bay(p):
+    # The open lifting frame carries the drum and the hanging chain block.
+    box(p, (0, 0.12, 0), (1.74, 0.24, 0.85), 'secondary', corner=0.09)
+    for z in (-0.27, 0.27):
+        rod(p, (0.64, 0.19, z), (0.46, 2.54, z), 0.10, 'metal', 4)
+        rod(p, (0.49, 1.47, z), (-0.78, 2.74, z), 0.08, 'hair', 4)
+        rod(p, (0.46, 2.54, z), (-0.78, 2.74, z), 0.10, 'metal', 4)
+    rod(p, (-0.71, 2.70, -0.31), (-0.71, 2.70, 0.31), 0.14, 'secondary')
+    for x in (-0.78, -0.64):
+        rod(p, (x, 2.62, 0), (x, 1.69, 0), 0.027, 'metal')
+    box(p, (-0.71, 1.61, 0), (0.31, 0.28, 0.25), 'accent', taper=0.74)
+    for z in (-0.29, 0.29):
+        box(p, (0.29, 0.48, z), (0.48, 0.57, 0.12), 'primary', taper=0.62)
+    p.prism((0.29, 0.80, -0.31), (0.29, 0.80, 0.31), 0.28, 0.28, 10, 'hair', up=Y)
+    for z in (-0.32, 0.32):
+        p.prism((0.29, 0.80, z - 0.04), (0.29, 0.80, z + 0.04),
+                0.37, 0.37, 10, 'metal', up=Y)
+    rod(p, (0.19, 1.05, 0), (-0.71, 2.67, 0), 0.033, 'metal')
 
 
 def prop_rollup_portal(p):
@@ -116,6 +166,8 @@ def prop_service_meter(p):
 
 
 KIT_PROPS = [
+    (prop_lantern_shop_bay, 'Lantern Bowl Shop Bay'),
+    (prop_exposed_service_bay, 'Open Winch Service Bay'),
     (prop_exchange_portal, 'Exchange Display Entrance'),
     (prop_rollup_portal, 'Raised Workshop Shutter'),
     (prop_foundry_corner, 'Foundry Return with Pipe Elbows'),
