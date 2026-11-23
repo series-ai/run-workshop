@@ -59,6 +59,6 @@ A construction kit gives a creator two layouts that reuse parts from the same pa
 - Set `hideWithRoof` to `true` for a removable roof and any props that rest on it. Leave walkable decks in both views.
 - Check the same structural pieces in two different assemblies. Join the room, doorway, and floor to the outside route.
 
-Run `npm run build`, `npm run validate`, `npm run verify:kits`, and `npm run catalog` in this directory. Pass a pack after `--` to check its routes only. The route check samples the exported meshes for floor support, steps, headroom, and width for the adult reference.
+Run `npm run build`, `npm run validate`, `npm run verify:kits`, and `npm run catalog` in this directory. Pass a pack after `--` to check its routes only. The route check samples the exported meshes for floor support, steps, obstructions, headroom, and width for the adult reference.
 
 In the showcase, open **Context Stage**, select the pack, and choose a **Layout**. The **Roofs** control shows removable roof pieces where the recipe has them. Build the showcase with `npm run build:local`, then run `npm run verify:visual -- --only '^09-kit-'` in this directory to capture the desktop and 390 px views.
