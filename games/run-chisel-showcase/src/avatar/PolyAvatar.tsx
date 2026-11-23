@@ -462,6 +462,12 @@ type PolyPropLook =
   | { palette: PaletteColors; material?: undefined }
   | { material: MeshStandardMaterial; palette?: undefined }
 
+const ONE_SHOT_PROP_CLIPS = new Set([
+  'Activate', 'Disable', 'Dispense', 'Drop', 'Erupt', 'Fire', 'Hack', 'Hatch', 'Hit', 'Land',
+  'Opening', 'Pop', 'Raise', 'Reset', 'Shatter', 'SlideOpen', 'Snap', 'Stun',
+])
+const PROPS_WITH_OPEN_TRANSITION = new Set(['prop_mailbox', 'prop_parachute_crate'])
+
 export type PolyPropProps = Placement &
   PolyPropLook & {
     item: WorldPropEntry | HeldItemEntry
@@ -585,28 +591,8 @@ function LoadedAnimatedProp({
 
   const mixer = useMemo(() => new AnimationMixer(root), [root])
   const actionRef = useRef<AnimationAction | null>(null)
-  useLayoutEffect(() => {
-    const selected = (clipName ? gltf.animations.find((c) => c.name === clipName) : undefined) ?? gltf.animations[0]
-    if (!selected) return
-    const next = mixer.clipAction(selected)
-    const previous = actionRef.current
-    if (previous !== next) {
-      next.reset()
-      next.setLoop(LoopRepeat, Infinity)
-      next.clampWhenFinished = false
-      if (selected.duration > 0) {
-        next.time = holdPhase !== null && holdPhase !== undefined ? holdPhase * selected.duration : timeOffset % selected.duration
-      }
-      next.play()
-      if (previous) previous.stop()
-      actionRef.current = next
-    } else if (holdPhase !== null && holdPhase !== undefined && selected.duration > 0) {
-      next.time = holdPhase * selected.duration
-    }
-    mixer.update(0)
-  }, [mixer, gltf, clipName, timeOffset, holdPhase])
-
-  useEffect(
+  // Clear the old mixer before the layout effect starts the new action.
+  useLayoutEffect(
     () => () => {
       mixer.stopAllAction()
       mixer.uncacheRoot(root)
@@ -614,18 +600,31 @@ function LoadedAnimatedProp({
     },
     [mixer, root],
   )
+  useLayoutEffect(() => {
+    const selected = (clipName ? gltf.animations.find((c) => c.name === clipName) : undefined) ?? gltf.animations[0]
+    if (!selected) return
+    const next = mixer.clipAction(selected)
+    const previous = actionRef.current
+    if (previous !== next) {
+      const playOnce = ONE_SHOT_PROP_CLIPS.has(selected.name)
+        || (selected.name === 'Open' && PROPS_WITH_OPEN_TRANSITION.has(item.id))
+      next.reset()
+      next.setLoop(playOnce ? LoopOnce : LoopRepeat, playOnce ? 1 : Infinity)
+      next.clampWhenFinished = playOnce
+      if (selected.duration > 0) next.time = timeOffset % selected.duration
+      next.play()
+      if (previous) previous.stop()
+      actionRef.current = next
+    }
+    if (holdPhase !== null) {
+      next.paused = false
+      next.time = holdPhase * selected.duration
+    }
+    mixer.update(0)
+  }, [mixer, gltf, item.id, clipName, timeOffset, holdPhase])
 
   useFrame((_, delta) => {
-    const current = actionRef.current
-    if (!current) return
-    if (holdPhase !== null && holdPhase !== undefined) {
-      current.paused = true
-      current.time = holdPhase * current.getClip().duration
-      mixer.update(0)
-      return
-    }
-    if (current.paused) current.paused = false
-    mixer.update(delta)
+    if (holdPhase === null && actionRef.current) mixer.update(delta)
   })
 
   const blob = blobShadow ? getSharedBlobShadowResources() : null
