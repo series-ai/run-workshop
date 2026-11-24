@@ -1,0 +1,8 @@
+# Review renders, archived concept rounds and build outputs stay local (only code is published).
+**/renders/
+**/v1/
+**/v2/
+glowdrop/build/out/
+glowdrop/build/ship/
+**/node_modules/
+__pycache__/
