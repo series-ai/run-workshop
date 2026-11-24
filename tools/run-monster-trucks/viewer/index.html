@@ -1,0 +1,469 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Wasteland Wheels: mix and match</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #cfcac0; font: 13px system-ui, sans-serif; overflow: hidden; }
+  #ui { position: fixed; top: 12px; left: 12px; background: #fffe; padding: 12px 14px; border-radius: 10px; display: grid; gap: 7px; width: 230px; box-shadow: 0 2px 10px #0002; }
+  #ui h1 { font-size: 14px; margin: 0 0 2px; }
+  #ui label { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+  #ui select { font: inherit; width: 130px; }
+  #ui { max-height: calc(100vh - 110px); overflow-y: auto; }
+  .trailer { display: flex; gap: 4px; align-items: center; }
+  .trailer select { width: 88px !important; }
+  .trailer button { padding: 1px 6px !important; }
+  .tsw { font-size: 11px; color: #555; align-items: center; margin: 0 0 3px 6px; }
+  .tsw b { width: 13px !important; height: 13px !important; font: 10px/13px system-ui; text-align: center; color: #333; font-weight: bold; }
+  #ui .row { display: flex; gap: 5px; flex-wrap: wrap; }
+  #ui button { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid #bbb; background: #f4f4f4; cursor: pointer; }
+  #ui button.on { background: #ffd27a; border-color: #d9a640; }
+  #ui hr { border: 0; border-top: 1px solid #ddd; margin: 2px 0; width: 100%; }
+  canvas { display: block; }
+  [hidden] { display: none !important; }  /* panels with their own display rule still hide */
+  .sw { display: flex; gap: 4px; flex-wrap: wrap; }
+  .sw b { width: 18px; height: 18px; border-radius: 4px; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 0 1px #999; }
+  .sw b.on { box-shadow: 0 0 0 2px #222; }
+  .lbl { color: #555; font-size: 12px; margin-top: 2px; }
+  #garage { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 8px 12px; overflow-x: auto; background: #fff8; }
+  #garage .car { position: relative; flex: none; width: 120px; background: #fff; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 4px #0002; }
+  #garage .car img { width: 120px; height: 90px; object-fit: cover; border-radius: 8px 8px 0 0; display: block; }
+  #garage .car span { display: block; font-size: 11px; padding: 2px 6px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #garage .car i { position: absolute; top: 2px; right: 4px; font-style: normal; color: #a33; font-weight: bold; }
+  #chrbar { z-index: 10; position: fixed; top: 12px; left: 12px; background: #fffe; padding: 10px 14px; border-radius: 10px; box-shadow: 0 2px 10px #0002; font: 13px system-ui; display: grid; gap: 8px; width: 230px; }
+  #chrbar label { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  #chrbar .row { display: flex; gap: 5px; }
+  #chrbar button { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid #bbb; background: #f4f4f4; cursor: pointer; }
+  #chrbar button.on { background: #ffd27a; border-color: #d9a640; }
+  #racebar { position: fixed; top: 12px; left: 12px; background: #fffe; padding: 10px 14px; border-radius: 10px; box-shadow: 0 2px 10px #0002; font: 13px system-ui; }
+  #racebar .row { display: flex; gap: 5px; }
+  #racebar button { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid #bbb; background: #f4f4f4; cursor: pointer; }
+  #racebar button.on { background: #ffd27a; border-color: #d9a640; }
+  #racebar .speed { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  #racebar .speed input { flex: 1; }
+  #racebar ol { margin: 8px 0 0; padding-left: 20px; }
+  #garage:empty::before { content: 'Garage is empty: build something and hit "Save to garage".'; color: #666; font-size: 12px; padding: 6px; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../../run-voxel-packs/node_modules/three/build/three.module.js", "three/addons/": "../../run-voxel-packs/node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="ui">
+  <div class="row"><h1 style="flex:1">Wasteland Wheels</h1><button id="toChars">Characters</button></div>
+  <label>Body <select id="body"></select></label>
+  <label>Front wheels <select id="front"></select></label>
+  <label>Rear wheels <select id="rear"></select></label>
+  <label>Roof <select id="roof"></select></label>
+  <label>Bumper <select id="bumper"></select></label>
+  <label>Hood <select id="hood"></select></label>
+  <label>Stacks <select id="stacks"></select></label>
+  <div class="lbl">Paint</div><div class="sw" id="paint"></div>
+  <div class="lbl">Trim</div><div class="sw" id="trim"></div>
+  <div class="lbl">Accent</div><div class="sw" id="accent"></div>
+  <div class="lbl">Trailers</div>
+  <div id="trailers"></div>
+  <div class="row"><button id="addTrailer">+ Add trailer</button></div>
+  <div class="row"><button id="defaults">Default loadout</button><button id="random">Random</button></div>
+  <hr>
+  <div class="row" id="clips">
+    <button data-clip="idle" class="on">Idle</button><button data-clip="move">Drive</button>
+    <button data-clip="accelerate">Accelerate</button><button data-clip="brake">Brake</button>
+  </div>
+  <div class="row"><button id="drop">Drop it</button><button id="spin" class="on">Turntable</button></div>
+  <hr>
+  <div class="row"><button id="save">Save to garage</button><button id="export">Export GLB</button></div>
+  <hr>
+  <div class="row"><button id="race">🏁 Race the figure 8</button></div>
+</div>
+<div id="chrbar" hidden>
+  <div class="row"><button id="toVehicles">Vehicles</button><button id="chrSpin" class="on">Turntable</button></div>
+  <label>Raider <select id="raider"></select></label>
+  <label>Next to <select id="beside"><option value="">nothing</option></select></label>
+</div>
+<div id="racebar" hidden>
+  <div class="row"><button id="exitRace">Back to garage</button><button id="chase" class="on">Chase cam</button><button id="restart">Restart</button></div>
+  <label class="speed">Speed <input id="speed" type="range" min="0.2" max="3" step="0.05" value="1"> <span id="speedVal">×1.0</span></label>
+  <ol id="standings"></ol>
+</div>
+<div id="garage"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { WheelsKit } from './wheels-kit.js?v=15';
+import { Figure8, Race } from './race.js?v=10';
+
+const kit = await WheelsKit.load('../out/glb/');
+const M = kit.m;
+const $ = (id) => document.getElementById(id);
+const fill = (id, items, none) => { $(id).innerHTML = ''; if (none) $(id).add(new Option('none', '')); for (const i of items) $(id).add(new Option(i, i)); };
+fill('body', Object.keys(M.bodies));
+const wheelKinds = [...Object.keys(M.wheels), 'treads'];
+fill('front', wheelKinds); fill('rear', wheelKinds);
+for (const id of ['front', 'rear']) for (const o of $(id).options) if (o.value.startsWith('mono-')) o.text = o.value.slice(5) + ' (single)';
+fill('roof', M.parts.roof, true); fill('bumper', M.parts.bumper, true); fill('hood', M.parts.hood, true); fill('stacks', M.parts.stacks, true);
+
+let paint = { paint: null, trim: null, accent: null };
+let trailers = [];  // [{ type, wheels }]
+const trailerTypes = Object.keys(M.trailers), axleKinds = Object.keys(M.wheels);
+function drawTrailers() {
+  $('trailers').innerHTML = '';
+  trailers.forEach((t, k) => {
+    const row = document.createElement('div');
+    row.className = 'trailer';
+    const ty = document.createElement('select'), wh = document.createElement('select'), x = document.createElement('button');
+    for (const n of trailerTypes) ty.add(new Option(n, n));
+    for (const n of axleKinds) wh.add(new Option(n.startsWith('mono-') ? n.slice(5) + ' (single)' : n + ' wheels', n));
+    ty.value = t.type; wh.value = t.wheels;
+    ty.onchange = () => { t.type = ty.value; rebuild(); };
+    wh.onchange = () => { t.wheels = wh.value; rebuild(); };
+    x.textContent = '×'; x.title = 'Unhitch';
+    x.onclick = () => { trailers.splice(k, 1); drawTrailers(); rebuild(); };
+    const pb = document.createElement('button');
+    pb.textContent = '🎨'; pb.title = 'Colours for this trailer';
+    pb.classList.toggle('on', !!t.open);
+    pb.onclick = () => { t.open = !t.open; drawTrailers(); };
+    row.append(ty, wh, pb, x);
+    $('trailers').appendChild(row);
+    if (t.open) {
+      // this trailer's own paint, trim and accent ("=" follows the truck)
+      for (const role of ['paint', 'trim', 'accent']) {
+        const sw = document.createElement('div');
+        sw.className = 'sw tsw';
+        const same = document.createElement('b');
+        same.textContent = '='; same.title = 'Same as the truck';
+        same.classList.toggle('on', !t[role]);
+        same.onclick = () => { t[role] = null; drawTrailers(); rebuild(); };
+        sw.append(document.createTextNode(role[0].toUpperCase() + role.slice(1) + ' '), same);
+        for (const [name, shades] of Object.entries(M.paints)) {
+          const b = document.createElement('b');
+          b.style.background = shades[4]; b.title = name;
+          b.classList.toggle('on', t[role] === name);
+          b.onclick = () => { t[role] = name; drawTrailers(); rebuild(); };
+          sw.appendChild(b);
+        }
+        $('trailers').appendChild(sw);
+      }
+    }
+  });
+}
+function swatches(id) {
+  const el = $(id);
+  el.innerHTML = '';
+  for (const [name, shades] of Object.entries(M.paints)) {
+    const b = document.createElement('b');
+    b.style.background = shades[4];
+    b.title = name;
+    b.onclick = () => { paint[id] = name; rebuild(); };
+    el.appendChild(b);
+  }
+}
+swatches('paint'); swatches('trim'); swatches('accent');
+function markSwatches() {
+  const info = M.bodies[$('body').value];
+  for (const id of ['paint', 'trim', 'accent']) for (const b of $(id).children) b.classList.toggle('on', b.title === (paint[id] || info[id]));
+}
+function setLoadout(l) {
+  paint = { paint: l.paint || null, trim: l.trim || null, accent: l.accent || null };
+  trailers = (l.trailers || []).map((t) => ({ ...t }));
+  drawTrailers();
+  $('body').value = l.body;
+  for (const k of ['front', 'rear']) $(k).value = l[k];
+  for (const k of ['roof', 'bumper', 'hood', 'stacks']) $(k).value = l[k] || '';
+}
+function loadout() {
+  return { body: $('body').value, front: $('front').value, rear: $('rear').value, roof: $('roof').value || null, bumper: $('bumper').value || null, hood: $('hood').value || null, stacks: $('stacks').value || null, ...paint, trailers: trailers.map(({ open, ...t }) => ({ ...t })) };
+}
+const q = new URLSearchParams(location.search);
+const start = q.get('body') || 'icecream';
+setLoadout({ body: start, ...M.bodies[start].defaults });
+for (const k of ['front', 'rear', 'roof', 'bumper', 'hood', 'stacks']) if (q.has(k)) $(k).value = q.get(k);
+for (const k of ['paint', 'trim', 'accent']) if (q.has(k)) paint[k] = q.get(k);
+// trailers=<type>.<wheels>[.<paint>.<trim>.<accent>],...  ("-" = follow the truck)
+if (q.get('trailers')) {
+  trailers = q.get('trailers').split(',').map((s) => {
+    const [type, wheels, p, tr, ac] = s.split('.');
+    const c = (x) => (x && x !== '-' ? x : null);
+    return { type, wheels: wheels || 'steel', paint: c(p), trim: c(tr), accent: c(ac) };
+  }).filter((t) => M.trailers[t.type]);
+  drawTrailers();
+}
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcfcac0);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8170, 1.5));
+const sun = new THREE.DirectionalLight(0xffffff, 2.4);
+sun.position.set(-90, 200, -120);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -420, right: 420, top: 420, bottom: -420, far: 900 });
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(3000, 64), new THREE.MeshLambertMaterial({ color: 0xc4b79c }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+const camera = new THREE.PerspectiveCamera(30, 1, 1, 12000);
+camera.position.set(-260, 150, -250);
+const controls = new OrbitControls(camera, renderer.domElement);
+Object.assign(window, { camera, controls });  // for poking at from the console
+controls.target.set(0, 40, 0);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.2;
+controls.enableDamping = true;
+controls.update();
+
+let vehicle = null, token = 0;
+async function rebuild() {
+  const l = loadout();
+  const info = M.bodies[l.body];
+  $('hood').disabled = !info.sockets.includes('socket-hood');
+  $('stacks').disabled = !info.sockets.includes('socket-stack-l');
+  if (l.front === 'treads' || l.rear === 'treads') { $('front').value = $('rear').value = l.front = l.rear = 'treads'; }
+  const my = ++token;
+  const v = await kit.build(l);
+  if (my !== token) return;
+  if (vehicle) scene.remove(vehicle.group);
+  vehicle = v;
+  v.group.visible = tab === 'vehicles';  // a late rebuild never shows up on another tab
+  window.vehicle = v;  // for poking at from the console
+  v.group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(v.group);
+  v.play(currentClip);
+  const box = new THREE.Box3().setFromObject(v.group);
+  const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  controls.target.copy(c);
+  camera.position.copy(c).addScaledVector(dir, Math.max(300, size * 1.6));
+  markSwatches();
+  const params = Object.entries(l).filter(([k, x]) => x && k !== 'trailers');
+  if (l.trailers.length) params.push(['trailers', l.trailers.map((t) => [t.type, t.wheels, ...((t.paint || t.trim || t.accent) ? [t.paint || '-', t.trim || '-', t.accent || '-'] : [])].join('.')).join(',')]);
+  history.replaceState(null, '', '?' + new URLSearchParams(params).toString());
+  wake();
+}
+
+let currentClip = 'idle';
+for (const b of $('clips').querySelectorAll('button')) b.onclick = () => {
+  currentClip = b.dataset.clip;
+  for (const x of $('clips').querySelectorAll('button')) x.classList.toggle('on', x === b);
+  vehicle?.play(currentClip);
+  wake();
+};
+$('addTrailer').onclick = () => { trailers.push({ type: trailerTypes[trailers.length % trailerTypes.length], wheels: 'steel' }); drawTrailers(); rebuild(); };
+$('drop').onclick = () => { vehicle?.drop(); wake(); };
+$('spin').onclick = () => { controls.autoRotate = !controls.autoRotate; $('spin').classList.toggle('on', controls.autoRotate); wake(); };
+$('defaults').onclick = () => { setLoadout({ body: $('body').value, ...M.bodies[$('body').value].defaults, trailers }); rebuild(); };
+$('random').onclick = () => {
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const tread = Math.random() < 0.2;
+  setLoadout({ body: pick(Object.keys(M.bodies)), front: tread ? 'treads' : pick(Object.keys(M.wheels)), rear: tread ? 'treads' : pick(Object.keys(M.wheels)),
+    roof: pick(['', ...M.parts.roof]), bumper: pick(['', ...M.parts.bumper]), hood: pick(['', ...M.parts.hood]), stacks: pick(['', ...M.parts.stacks]),
+    paint: pick(Object.keys(M.paints)), trim: pick(Object.keys(M.paints)), accent: pick(Object.keys(M.paints)),
+    trailers: Array.from({ length: pick([0, 0, 1, 1, 2, 3]) }, () => ({ type: pick(trailerTypes), wheels: pick(axleKinds), paint: Math.random() < 0.5 ? pick(Object.keys(M.paints)) : null })) });
+  rebuild();
+};
+$('body').onchange = () => { setLoadout({ body: $('body').value, ...M.bodies[$('body').value].defaults, trailers }); rebuild(); };
+for (const id of ['front', 'rear', 'roof', 'bumper', 'hood', 'stacks']) $(id).onchange = () => {
+  if ((id === 'front' || id === 'rear') && $(id).value !== 'treads' && ($('front').value === 'treads' || $('rear').value === 'treads')) {
+    $('front').value = $('rear').value = $(id).value;  // leaving treads: both axles get the pick
+  }
+  rebuild();
+};
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  wake();
+}
+addEventListener('resize', resize);
+
+// Render loop runs only while the tab is visible; idle rumble keeps it alive,
+// so pause it by hiding the tab.
+const clock = new THREE.Clock();
+let running = false;
+function frame() {
+  if (document.hidden) { running = false; return; }
+  const dt = Math.min(clock.getDelta(), 1 / 20);
+  if (race) raceFrame(dt);
+  else vehicle?.update(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+function wake() { if (!running) { running = true; clock.getDelta(); requestAnimationFrame(frame); } }
+document.addEventListener('visibilitychange', wake);
+// ---- garage: saved builds with a thumbnail, kept in localStorage
+const GARAGE = 'wasteland-wheels-garage';
+const garage = () => JSON.parse(localStorage.getItem(GARAGE) || '[]');
+function drawGarage() {
+  $('garage').innerHTML = '';
+  garage().forEach((car, i) => {
+    const d = document.createElement('div');
+    d.className = 'car';
+    d.innerHTML = `<img src="${car.thumb}"><span>${car.loadout.body} · ${car.loadout.front}/${car.loadout.rear}</span><i title="Remove">×</i>`;
+    d.onclick = (e) => {
+      if (e.target.tagName === 'I') { const g = garage(); g.splice(i, 1); localStorage.setItem(GARAGE, JSON.stringify(g)); drawGarage(); return; }
+      setLoadout(car.loadout); rebuild();
+    };
+    $('garage').appendChild(d);
+  });
+}
+function thumbnail() {
+  renderer.render(scene, camera);  // read straight after drawing (no preserveDrawingBuffer needed)
+  const c = document.createElement('canvas');
+  c.width = 240; c.height = 180;
+  const src = renderer.domElement, s = Math.min(src.width / 4, src.height / 3);
+  c.getContext('2d').drawImage(src, (src.width - 4 * s) / 2, (src.height - 3 * s) / 2, 4 * s, 3 * s, 0, 0, 240, 180);
+  return c.toDataURL('image/jpeg', 0.8);
+}
+$('save').onclick = () => {
+  const g = garage();
+  g.unshift({ loadout: loadout(), thumb: thumbnail() });
+  localStorage.setItem(GARAGE, JSON.stringify(g.slice(0, 40)));
+  drawGarage();
+};
+$('export').onclick = async () => {
+  if (!vehicle) return;
+  $('export').disabled = true;
+  const glb = await vehicle.exportGLB();
+  $('export').disabled = false;
+  const l = loadout();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([glb], { type: 'model/gltf-binary' }));
+  a.download = [l.body, l.front, l.rear, l.paint].filter(Boolean).join('-') + '.glb';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+// ---- race: the current build plus garage builds (or random ones) round a figure 8
+let race = null, track = null, chase = true;
+async function startRace() {
+  const builds = [loadout(), ...garage().map((c) => c.loadout)].slice(0, 4);
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  while (builds.length < 4) {
+    const body = pick(Object.keys(M.bodies));
+    builds.push({ body, ...M.bodies[body].defaults, paint: pick(Object.keys(M.paints)), trailers: Math.random() < 0.4 ? [{ type: pick(trailerTypes), wheels: pick(axleKinds) }] : [] });
+  }
+  const vehicles = [];
+  for (const b of builds) vehicles.push(await kit.build(b));
+  for (const v of vehicles) v.group.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  track = track || new Figure8();
+  if (vehicle) vehicle.group.visible = false;
+  race = new Race(track, vehicles, builds.map((b, i) => (i === 0 ? 'You: ' : '') + b.body));
+  race.speed = +$('speed').value;
+  window.race = race;  // for poking at from the console
+  scene.add(track.group, race.group);
+  controls.autoRotate = false;
+  $('ui').style.display = 'none'; $('garage').style.display = 'none'; $('racebar').hidden = false;
+  wake();
+}
+function endRace() {
+  if (!race) return;
+  scene.remove(track.group, race.group);
+  race = null;
+  $('racebar').hidden = true;
+  setTab('vehicles');
+}
+let standT = 0;
+function raceFrame(dt) {
+  race.update(dt);
+  const me = race.racers[0];
+  if (chase) {
+    const fwd = new THREE.Vector3(-Math.sin(me.yaw), 0, -Math.cos(me.yaw));
+    const want = me.holder.position.clone().addScaledVector(fwd, -420).add(new THREE.Vector3(0, 210, 0));
+    camera.position.lerp(want, 1 - Math.exp(-dt * 3));
+    controls.target.lerp(me.holder.position.clone().addScaledVector(fwd, 120).add(new THREE.Vector3(0, 40, 0)), 1 - Math.exp(-dt * 5));
+  }
+  sun.position.copy(controls.target).add(new THREE.Vector3(-90, 200, -120));
+  sun.target.position.copy(controls.target);
+  sun.target.updateMatrixWorld();
+  if ((standT += dt) > 0.25) {
+    standT = 0;
+    $('standings').innerHTML = race.standings().map((r) => `<li>${r.name} · lap ${race.lap(r)}</li>`).join('');
+  }
+}
+$('race').onclick = () => startRace();
+
+// ---- characters tab: raiders on a turntable, optionally beside a vehicle for scale.
+// One tab at a time: `tab` decides which panel shows and what is on stage.
+let tab = 'vehicles', chars = null;  // chars: { group }
+function setTab(name) {
+  tab = name;
+  $('ui').style.display = name === 'vehicles' ? '' : 'none';
+  $('garage').style.display = name === 'vehicles' ? '' : 'none';
+  $('chrbar').hidden = name !== 'characters';
+  if (vehicle) vehicle.group.visible = name === 'vehicles';
+  if (chars) chars.group.visible = name === 'characters';
+  wake();
+}
+for (const n of M.raiders || []) $('raider').add(new Option(n, n));
+for (const n of Object.keys(M.bodies)) $('beside').add(new Option(n, n));
+let charToken = 0;  // separate from the vehicle editor's token: neither cancels the other
+async function showChars() {
+  const my = ++charToken;
+  const g = new THREE.Group();
+  const r = await kit._scene(`raiders/raider-${$('raider').value}.glb`);
+  g.add(r);
+  if ($('beside').value) {  // park the vehicle beside the raider with a gap, measured
+    const b = $('beside').value;
+    const v = await kit.build({ body: b, ...M.bodies[b].defaults });
+    v.group.updateMatrixWorld(true); r.updateMatrixWorld(true);
+    const rb = new THREE.Box3().setFromObject(r), vb = new THREE.Box3().setFromObject(v.group);
+    v.group.position.x = rb.max.x + 14 - vb.min.x;
+    g.add(v.group);
+  }
+  if (my !== charToken || tab !== 'characters') return;
+  if (chars) scene.remove(chars.group);
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  chars = { group: g };
+  scene.add(g);
+  const box = new THREE.Box3().setFromObject(g);
+  const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+  controls.target.copy(c);
+  camera.position.copy(c).add(new THREE.Vector3(-0.45, 0.25, -1).normalize().multiplyScalar(Math.max(120, size * 2.2)));
+  controls.update();
+  wake();
+}
+function enterChars() {
+  setTab('characters');
+  controls.autoRotate = $('chrSpin').classList.contains('on');
+  showChars();
+}
+function leaveChars() {
+  if (chars) scene.remove(chars.group);
+  chars = null;
+  setTab('vehicles');
+  if (vehicle) {  // frame the editor's vehicle again
+    const box = new THREE.Box3().setFromObject(vehicle.group);
+    const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()).length();
+    controls.target.copy(c);
+    camera.position.copy(c).add(new THREE.Vector3(-0.6, 0.35, -0.7).normalize().multiplyScalar(Math.max(300, size * 1.6)));
+  }
+}
+$('toChars').onclick = enterChars;
+$('toVehicles').onclick = leaveChars;
+$('raider').onchange = showChars;
+$('beside').onchange = showChars;
+// ?tab=characters[&raider=base&beside=bus-hood] opens straight on the characters tab
+if (q.get('raider') && M.raiders.includes(q.get('raider'))) $('raider').value = q.get('raider');
+if (q.get('beside') && M.bodies[q.get('beside')]) $('beside').value = q.get('beside');
+if (q.get('tab') === 'characters') setTimeout(enterChars, 0);
+$('chrSpin').onclick = () => { controls.autoRotate = !controls.autoRotate; $('chrSpin').classList.toggle('on', controls.autoRotate); wake(); };
+$('speed').oninput = () => { $('speedVal').textContent = '×' + (+$('speed').value).toFixed(1); if (race) race.speed = +$('speed').value; };
+$('exitRace').onclick = () => endRace();
+$('restart').onclick = () => { endRace(); startRace(); };
+$('chase').onclick = () => {
+  chase = !chase;
+  $('chase').classList.toggle('on', chase);
+  if (!chase) { controls.target.set(0, 0, 0); camera.position.set(-2000, 2100, -1900); }
+};
+scene.add(sun.target);
+drawGarage();
+resize();
+rebuild();
+</script>
+</body>
+</html>

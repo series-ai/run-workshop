@@ -1,0 +1,7 @@
+.env
+.asset-bot/
+out/
+concepts/
+kit/__pycache__/
+references/
+CLAUDE.md
