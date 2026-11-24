@@ -5,7 +5,8 @@ three glowing toxic eyes, pointed ears and a mouth full of teeth, a deep
 chest behind a spiked steel collar, a sloping back ridged with bone spikes
 (true slopes), stubby legs with big paws and a crooked tail. Mangy rust
 fur with teal mange patches and bare ribs is paint. Clips: idle (pant and
-wag), move (gallop), attack (lunging bite), hit, death (falls on its
+wag), move (gallop), attack (rears back, then springs
+forward into a bite and holds it), hit, death (falls on its
 side). Faces -Z.
 """
 import numpy as np
@@ -129,14 +130,23 @@ def build():
             "leg-bl": {"rot": wave(gal, (-35, 0, 0), phase=0.2)}, "leg-br": {"rot": wave(gal, (-35, 0, 0), phase=0.7)},
             "body": {"rot": wave(gal, (6, 0, 0)), "loc": wave(gal, (0, 0.8, 0), phase=1.6, double=True)},
             "head": {"rot": wave(gal, (-6, 0, 0), phase=0.4)}, "tail": {"rot": wave(gal, (20, 0, 0))}}
-    attack = {"body": {"loc": seq((0, 0, 0, 0), (0.15, 0, 0, 2), (0.35, 0, 1, -5), (0.7, 0, 0, 0)), "rot": seq((0, 0, 0, 0), (0.15, 8, 0, 0), (0.35, -10, 0, 0), (0.7, 0, 0, 0))},
-              "head": {"rot": seq((0, 0, 0, 0), (0.2, 20, 0, 0), (0.35, -15, 0, 0), (0.45, 10, 0, 0), (0.7, 0, 0, 0))}}
+    # attack: rear back and coil (f0-10), spring 3 frames into the bite
+    # (impact f13), overshoot and hold the bite, then back off to the spot.
+    f = 1 / 30
+    imp = 13 * f
+    R = rig.root.name
+    attack = {R: {"loc": seq((0, 0, 0, 0), (8 * f, 0, 0.8, 2.5), (10 * f, 0, 0.5, 3), (imp, 0, 1.5, -6), (15 * f, 0, 1.2, -7), (20 * f, 0, 0.9, -6), (30 * f, 0, 0, 0))},
+              "body": {"rot": seq((0, 0, 0, 0), (8 * f, 12, 0, 0), (10 * f, 14, 0, 0), (imp, -10, 0, 0), (15 * f, -14, 0, 0), (20 * f, -10, 0, 0), (30 * f, 0, 0, 0))},
+              "head": {"rot": seq((0, 0, 0, 0), (9 * f, 26, 0, 0), (11 * f, 30, 0, 0), (imp, -16, 0, 0), (15 * f, -22, 0, 0), (21 * f, -14, 0, 0), (30 * f, 0, 0, 0))},
+              "tail": {"rot": seq((0, 0, 0, 0), (9 * f, -30, 0, 0), (imp, 15, 0, 0), (15 * f, 28, 0, 0), (18 * f, 30, 0, 0), (23 * f, -8, 0, 0), (30 * f, 0, 0, 0))}}
+    for leg_name, wind, hit_ in (("leg-fl", -18, 45), ("leg-fr", -18, 40), ("leg-bl", 18, -35), ("leg-br", 18, -32)):
+        attack[leg_name] = {"rot": seq((0, 0, 0, 0), (8 * f, wind, 0, 0), (imp, hit_, 0, 0), (15 * f, hit_ * 1.1, 0, 0), (20 * f, hit_ * 0.8, 0, 0), (30 * f, 0, 0, 0))}
     hit = {"body": {"rot": seq((0, 0, 0, 0), (0.1, 12, 0, -8), (0.45, 0, 0, 0)), "loc": seq((0, 0, 0, 0), (0.1, 0, 0, 2), (0.45, 0, 0, 0))},
            "head": {"rot": seq((0, 0, 0, 0), (0.1, 20, 15, 0), (0.45, 0, 0, 0))}}
     death = {rig.root.name: {"rot": seq((0, 0, 0, 0), (0.3, 0, 0, -20), (0.7, 0, 0, 88), (0.85, 0, 0, 82), (1.1, 0, 0, 86)), "loc": seq((0, 0, 0, 0), (0.7, 0, 3, 0), (1.1, 0, 3, 0))},
              "head": {"rot": seq((0, 0, 0, 0), (0.7, 20, 0, 0))},
              "leg-fl": {"rot": seq((0, 0, 0, 0), (0.7, 40, 0, 0))}, "leg-bl": {"rot": seq((0, 0, 0, 0), (0.7, -40, 0, 0))}}
     return make("creatures", "mutant-dog", "Mutant Dog", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-mouth", (CX, 10.5, 2.0), parent="head"), rig.socket("socket-feet", (CX, 0.5, 15.5))],
                 pfx=[fx("rvx-apocalypse-dust-kick", "socket-feet", "clip:move", size=28, aim=(0.0, 0.0, 1.0))])

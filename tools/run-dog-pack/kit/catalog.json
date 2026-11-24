@@ -1,0 +1,183 @@
+{
+ "builds": [
+  "lean",
+  "shepherd",
+  "gundog",
+  "spitz",
+  "corgi",
+  "terrier",
+  "brachy",
+  "toy",
+  "scenthound",
+  "sighthound",
+  "mountain",
+  "mastiff",
+  "bully",
+  "spaniel",
+  "poodle",
+  "shaggy",
+  "toylong",
+  "lowterrier",
+  "longlow",
+  "bulldog",
+  "bullterrier"
+ ],
+ "heads": [
+  "fox",
+  "wedge",
+  "flat",
+  "classic-lean",
+  "classic-shepherd",
+  "classic-gundog",
+  "classic-spitz",
+  "classic-corgi",
+  "classic-terrier",
+  "classic-brachy",
+  "classic-toy",
+  "classic-scenthound",
+  "classic-sighthound",
+  "classic-mountain",
+  "classic-mastiff",
+  "classic-bully",
+  "classic-spaniel",
+  "classic-poodle",
+  "classic-shaggy",
+  "classic-toylong",
+  "classic-lowterrier",
+  "classic-longlow",
+  "classic-bulldog",
+  "classic-bullterrier"
+ ],
+ "headForBuild": {
+  "corgi": "fox"
+ },
+ "ears": [
+  "prick",
+  "bat",
+  "tipped",
+  "button",
+  "rose",
+  "drop",
+  "long",
+  "butterfly",
+  "bell",
+  "feathered"
+ ],
+ "tails": [
+  "sabre",
+  "otter",
+  "whip",
+  "carrot",
+  "sickle",
+  "curl",
+  "screw",
+  "plume",
+  "bob",
+  "pompom"
+ ],
+ "furs": [
+  "none",
+  "ruff",
+  "puff",
+  "feathered",
+  "curly",
+  "shaggy",
+  "poodleclip"
+ ],
+ "coatShell": {
+  "ruff": "ruff",
+  "puff": "puff",
+  "feathered": "feathered",
+  "curly": "curly",
+  "shaggy": "shaggy",
+  "corded": "shaggy",
+  "long": "shaggy",
+  "poodleclip": "poodleclip"
+ },
+ "patterns": {
+  "saddle": {
+   "region": "saddle"
+  },
+  "tuxedo": {
+   "region": "tuxedo"
+  },
+  "mask": {
+   "region": "mask"
+  },
+  "points": {
+   "region": "points"
+  },
+  "piebald": {
+   "region": "piebald"
+  },
+  "spots": {
+   "tile": "spots"
+  },
+  "ticking": {
+   "tile": "ticking"
+  },
+  "merle": {
+   "tile": "merle"
+  },
+  "brindle": {
+   "tile": "brindle"
+  }
+ },
+ "colours": {
+  "black": "#1e1b1a",
+  "charcoal": "#3a3838",
+  "white": "#f4f1ea",
+  "cream": "#efe3c8",
+  "fawn": "#d9b98a",
+  "wheaten": "#dcc28e",
+  "yellow": "#e2c48c",
+  "lemon": "#e8d090",
+  "gold": "#d6a35c",
+  "apricot": "#e8b07a",
+  "orange": "#e09040",
+  "tan": "#b8692e",
+  "rust": "#a5562a",
+  "red": "#b5562b",
+  "mahogany": "#6e2e1a",
+  "sable": "#8a5a30",
+  "brown": "#7a4a2a",
+  "brindle": "#6a4a30",
+  "chocolate": "#5a3a26",
+  "liver": "#5a3424",
+  "grey": "#8c8c8c",
+  "silver": "#b9bcc0",
+  "slate": "#4e535a",
+  "blue": "#6c7a8c",
+  "isabella": "#b8a090",
+  "pink": "#d68f8f"
+ },
+ "noseColours": {
+  "black": "#1e1b1a",
+  "liver": "#5a3424",
+  "pink": "#d68f8f",
+  "blue": "#6c7a8c",
+  "isabella": "#b8a090"
+ },
+ "sizes": {
+  "XS": 0.32,
+  "S": 0.5,
+  "M": 0.72,
+  "L": 0.95,
+  "XL": 1.2
+ },
+ "buildLength": {
+  "longlow": 1.2,
+  "corgi": 1.1,
+  "toylong": 0.9,
+  "brachy": 0.9,
+  "bulldog": 1
+ },
+ "fixedColours": {
+  "eye": "#151313",
+  "mouth": "#a26569"
+ },
+ "wear": [
+  "collar",
+  "bandana"
+ ]
+}

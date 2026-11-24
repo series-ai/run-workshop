@@ -1,0 +1,5 @@
+raw/
+library/
+
+# marketing stills (regenerate with promo/stills.html)
+promo/stills/*.png

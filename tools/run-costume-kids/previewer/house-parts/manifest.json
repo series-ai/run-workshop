@@ -1,0 +1,8239 @@
+{
+ "about": "Victorian house kit parts (neighborhood/props/house_parts.py). Blender z-up house space, exported y-up.",
+ "assembly": "Take every part whose width is the spec's (or null) and whose `when` matches the spec (any condition; each condition: every key's value is in its list); a mirrorable part whose `when_mirror` matches is used (again) mirrored: scale x by -1 and flip each triangle's winding. Merge per material (PALETTE, GLOW). To match the baked GLBs, move the merged mesh so its bounding box's base centre is the origin.",
+ "options": {
+  "width": [
+   "medium",
+   "narrow",
+   "wide"
+  ],
+  "roof": [
+   "gable",
+   "hip",
+   "hip-gable",
+   "cross"
+  ],
+  "gingerbread": [
+   "scallop",
+   "valance",
+   "spindle",
+   "sunburst",
+   "pendant"
+  ],
+  "porch": [
+   "left",
+   "right",
+   "centre",
+   "wrap"
+  ],
+  "rail": [
+   "plain",
+   "fancy"
+  ],
+  "frieze": [
+   "spindle",
+   "valance",
+   "scallop",
+   "sunburst",
+   "pendant"
+  ],
+  "siding": [
+   "clapboard",
+   "brick"
+  ],
+  "gable_window": [
+   "arched",
+   "round"
+  ],
+  "cross_style": [
+   "pointy",
+   "round"
+  ],
+  "palette": [
+   "lavender",
+   "sage",
+   "mustard",
+   "slate",
+   "rose",
+   "teal",
+   "charcoal"
+  ],
+  "extras": [
+   "turret",
+   "bay",
+   "wing",
+   "dormer",
+   "chimney",
+   "balcony",
+   "boxes"
+  ],
+  "sided": [
+   "turret",
+   "bay",
+   "wing",
+   "chimney"
+  ],
+  "sides": [
+   "none",
+   "left",
+   "right",
+   "both"
+  ]
+ },
+ "defaults": {
+  "width": "medium",
+  "roof": "gable",
+  "porch": "centre",
+  "palette": "lavender",
+  "rail": "plain",
+  "gingerbread": "scallop",
+  "frieze": "spindle",
+  "siding": "clapboard",
+  "gable_window": "arched",
+  "cross_style": "pointy",
+  "turret": "none",
+  "bay": "none",
+  "wing": "none",
+  "chimney": "none",
+  "dormer": false,
+  "balcony": false,
+  "boxes": false
+ },
+ "brick_body": "#9e4c3d",
+ "swatches": {
+  "body": [
+   "#a38fb8",
+   "#94ab85",
+   "#dbb052",
+   "#758fb0",
+   "#d19499",
+   "#549494",
+   "#5c5c69",
+   "#9e4c3d",
+   "#e8d199",
+   "#ede8db",
+   "#f0b28f",
+   "#9ec2a8",
+   "#8c6185"
+  ],
+  "trim": [
+   "#f5e6c7",
+   "#fcfaf2",
+   "#784057",
+   "#4c4a54",
+   "#456654",
+   "#dbb052",
+   "#9e4c3d"
+  ],
+  "roof": [
+   "#4f304c",
+   "#383842",
+   "#573347",
+   "#333645",
+   "#5e3d33",
+   "#4c2e45",
+   "#5c364c",
+   "#404f6b",
+   "#425740",
+   "#80332e"
+  ],
+  "porch": [
+   "#f5e6c7",
+   "#fcfaf2",
+   "#784057",
+   "#4c4a54",
+   "#456654",
+   "#9e734c",
+   "#dbb052"
+  ]
+ },
+ "rules": [
+  {
+   "forbid": {
+    "turret": [
+     "right",
+     "both"
+    ],
+    "porch": [
+     "centre",
+     "wrap",
+     "right"
+    ]
+   },
+   "reason": "a right turret takes the front-right corner: needs the left porch"
+  },
+  {
+   "forbid": {
+    "turret": [
+     "left",
+     "both"
+    ],
+    "porch": [
+     "centre",
+     "wrap",
+     "left"
+    ]
+   },
+   "reason": "a left turret takes the front-left corner: needs the right porch"
+  },
+  {
+   "forbid": {
+    "wing": [
+     "left",
+     "right",
+     "both"
+    ],
+    "roof": [
+     "cross"
+    ]
+   },
+   "reason": "a wing would hit the cross gable's end"
+  },
+  {
+   "forbid": {
+    "wing": [
+     "left",
+     "both"
+    ],
+    "porch": [
+     "wrap"
+    ]
+   },
+   "reason": "the wrap-around porch takes the left side"
+  },
+  {
+   "forbid": {
+    "bay": [
+     "right",
+     "both"
+    ],
+    "wing": [
+     "right",
+     "both"
+    ]
+   },
+   "reason": "the right wing takes the right wall the bay would sit on"
+  },
+  {
+   "forbid": {
+    "bay": [
+     "left",
+     "both"
+    ],
+    "wing": [
+     "left",
+     "both"
+    ]
+   },
+   "reason": "the left wing takes the left wall the bay would sit on"
+  },
+  {
+   "forbid": {
+    "dormer": [
+     true
+    ],
+    "roof": [
+     "cross"
+    ]
+   },
+   "reason": "the cross gable already fills the slopes"
+  },
+  {
+   "forbid": {
+    "dormer": [
+     true
+    ],
+    "roof": [
+     "hip-gable"
+    ]
+   },
+   "reason": "the hip's front gable takes the dormer's spot"
+  },
+  {
+   "forbid": {
+    "dormer": [
+     true
+    ],
+    "roof": [
+     "gable"
+    ],
+    "wing": [
+     "right",
+     "both"
+    ]
+   },
+   "reason": "the right wing's roof would hide the side dormer"
+  },
+  {
+   "forbid": {
+    "balcony": [
+     true
+    ],
+    "porch": [
+     "left",
+     "right"
+    ]
+   },
+   "reason": "the balcony needs a centred porch roof under the front gable"
+  },
+  {
+   "forbid": {
+    "balcony": [
+     true
+    ],
+    "roof": [
+     "hip",
+     "hip-gable"
+    ]
+   },
+   "reason": "the balcony needs a centred porch roof under the front gable"
+  }
+ ],
+ "budget": 5000,
+ "drop_order": [
+  "boxes",
+  "chimney",
+  "balcony",
+  "dormer",
+  "bay"
+ ],
+ "roles": {
+  "key": {
+   "body": "#cc0dcc",
+   "trim": "#0dcccc",
+   "roof": "#99990d",
+   "porch": "#1a1ad9"
+  },
+  "rule": "sRGB colour = min(1, palette[role] * k) per channel; linear vertex colour = srgb ** 2.2",
+  "table": [
+   {
+    "key": "#0dcccc",
+    "srgb": [
+     0.05,
+     0.8,
+     0.8
+    ],
+    "role": "trim",
+    "k": 1.0
+   },
+   {
+    "key": "#1a1ad9",
+    "srgb": [
+     0.1,
+     0.1,
+     0.85
+    ],
+    "role": "porch",
+    "k": 1.0
+   },
+   {
+    "key": "#7a7a0a",
+    "srgb": [
+     0.48,
+     0.48,
+     0.04
+    ],
+    "role": "roof",
+    "k": 0.8
+   },
+   {
+    "key": "#99990d",
+    "srgb": [
+     0.6,
+     0.6,
+     0.05
+    ],
+    "role": "roof",
+    "k": 1.0
+   },
+   {
+    "key": "#af0baf",
+    "srgb": [
+     0.688,
+     0.043,
+     0.688
+    ],
+    "role": "body",
+    "k": 0.86
+   },
+   {
+    "key": "#b0b00f",
+    "srgb": [
+     0.69,
+     0.69,
+     0.0575
+    ],
+    "role": "roof",
+    "k": 1.15
+   },
+   {
+    "key": "#bfbf10",
+    "srgb": [
+     0.75,
+     0.75,
+     0.0625
+    ],
+    "role": "roof",
+    "k": 1.25
+   },
+   {
+    "key": "#c7c711",
+    "srgb": [
+     0.78,
+     0.78,
+     0.065
+    ],
+    "role": "roof",
+    "k": 1.3
+   },
+   {
+    "key": "#cc0dcc",
+    "srgb": [
+     0.8,
+     0.05,
+     0.8
+    ],
+    "role": "body",
+    "k": 1.0
+   },
+   {
+    "key": "#f50ff5",
+    "srgb": [
+     0.96,
+     0.06,
+     0.96
+    ],
+    "role": "body",
+    "k": 1.2
+   }
+  ],
+  "fixed": [
+   "#1f1c1f",
+   "#2e2b40",
+   "#4c4a4f",
+   "#5c854c",
+   "#78452b",
+   "#874335",
+   "#8f5736",
+   "#9e6bb8",
+   "#a85442",
+   "#bc966e",
+   "#cca378",
+   "#db6b85",
+   "#dba84c",
+   "#f5a847"
+  ]
+ },
+ "palettes": {
+  "lavender": {
+   "body": "#a38fb8",
+   "trim": "#f5e6c7",
+   "roof": "#4f304c",
+   "porch": "#f5e6c7"
+  },
+  "sage": {
+   "body": "#94ab85",
+   "trim": "#f5e6c7",
+   "roof": "#383842",
+   "porch": "#f5e6c7"
+  },
+  "mustard": {
+   "body": "#dbb052",
+   "trim": "#f5e6c7",
+   "roof": "#573347",
+   "porch": "#f5e6c7"
+  },
+  "slate": {
+   "body": "#758fb0",
+   "trim": "#f5e6c7",
+   "roof": "#333645",
+   "porch": "#f5e6c7"
+  },
+  "rose": {
+   "body": "#d19499",
+   "trim": "#f5e6c7",
+   "roof": "#5e3d33",
+   "porch": "#f5e6c7"
+  },
+  "teal": {
+   "body": "#549494",
+   "trim": "#f5e6c7",
+   "roof": "#4c2e45",
+   "porch": "#f5e6c7"
+  },
+  "charcoal": {
+   "body": "#5c5c69",
+   "trim": "#f5e6c7",
+   "roof": "#5c364c",
+   "porch": "#f5e6c7"
+  }
+ },
+ "colours_note": "a spec's `colours` (role -> hex) override its palette preset; brick siding defaults the body to brick_body",
+ "glow": {
+  "material": "GLOW",
+  "rgb": [
+   1.0,
+   0.64,
+   0.26
+  ],
+  "strength": 1.3,
+  "note": "emissive, never a light or transparent; not recoloured by palettes"
+ },
+ "kid_spot": {
+  "note": "in front of the door on the porch deck, Blender z-up house space",
+  "by_width": {
+   "medium": {
+    "left": [
+     -2.15,
+     -4.5,
+     1.0
+    ],
+    "right": [
+     2.15,
+     -4.5,
+     1.0
+    ],
+    "centre": [
+     0.0,
+     -4.5,
+     1.0
+    ],
+    "wrap": [
+     0.0,
+     -4.5,
+     1.0
+    ]
+   },
+   "narrow": {
+    "left": [
+     -1.75,
+     -4.5,
+     1.0
+    ],
+    "right": [
+     1.75,
+     -4.5,
+     1.0
+    ],
+    "centre": [
+     0.0,
+     -4.5,
+     1.0
+    ],
+    "wrap": [
+     0.0,
+     -4.5,
+     1.0
+    ]
+   },
+   "wide": {
+    "left": [
+     -2.95,
+     -4.5,
+     1.0
+    ],
+    "right": [
+     2.95,
+     -4.5,
+     1.0
+    ],
+    "centre": [
+     0.0,
+     -4.5,
+     1.0
+    ],
+    "wrap": [
+     0.0,
+     -4.5,
+     1.0
+    ]
+   }
+  }
+ },
+ "parts": [
+  {
+   "file": "walls-medium.glb",
+   "part": "walls",
+   "slot": "walls",
+   "option": "",
+   "width": "medium",
+   "tris": 292,
+   "bytes": 25580,
+   "glow": true,
+   "when": [
+    {}
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "walls-narrow.glb",
+   "part": "walls",
+   "slot": "walls",
+   "option": "",
+   "width": "narrow",
+   "tris": 292,
+   "bytes": 25580,
+   "glow": true,
+   "when": [
+    {}
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "walls-wide.glb",
+   "part": "walls",
+   "slot": "walls",
+   "option": "",
+   "width": "wide",
+   "tris": 292,
+   "bytes": 25536,
+   "glow": true,
+   "when": [
+    {}
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "siding-clapboard-medium.glb",
+   "part": "siding-clapboard",
+   "slot": "siding",
+   "option": "clapboard",
+   "width": "medium",
+   "tris": 240,
+   "bytes": 19904,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "siding-clapboard-narrow.glb",
+   "part": "siding-clapboard",
+   "slot": "siding",
+   "option": "clapboard",
+   "width": "narrow",
+   "tris": 240,
+   "bytes": 19904,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "siding-clapboard-wide.glb",
+   "part": "siding-clapboard",
+   "slot": "siding",
+   "option": "clapboard",
+   "width": "wide",
+   "tris": 240,
+   "bytes": 19900,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-siding-clapboard-medium.glb",
+   "part": "gable-siding-clapboard",
+   "slot": "roof",
+   "option": "gable-siding-clapboard",
+   "width": "medium",
+   "tris": 48,
+   "bytes": 4932,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "clapboard"
+     ],
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-siding-clapboard-narrow.glb",
+   "part": "gable-siding-clapboard",
+   "slot": "roof",
+   "option": "gable-siding-clapboard",
+   "width": "narrow",
+   "tris": 36,
+   "bytes": 3992,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "clapboard"
+     ],
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-siding-clapboard-wide.glb",
+   "part": "gable-siding-clapboard",
+   "slot": "roof",
+   "option": "gable-siding-clapboard",
+   "width": "wide",
+   "tris": 48,
+   "bytes": 4928,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "clapboard"
+     ],
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "siding-brick-medium.glb",
+   "part": "siding-brick",
+   "slot": "siding",
+   "option": "brick",
+   "width": "medium",
+   "tris": 384,
+   "bytes": 31128,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "brick"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "siding-brick-narrow.glb",
+   "part": "siding-brick",
+   "slot": "siding",
+   "option": "brick",
+   "width": "narrow",
+   "tris": 384,
+   "bytes": 31128,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "brick"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "siding-brick-wide.glb",
+   "part": "siding-brick",
+   "slot": "siding",
+   "option": "brick",
+   "width": "wide",
+   "tris": 384,
+   "bytes": 31124,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "brick"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-siding-brick-medium.glb",
+   "part": "gable-siding-brick",
+   "slot": "roof",
+   "option": "gable-siding-brick",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 6796,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "brick"
+     ],
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-siding-brick-narrow.glb",
+   "part": "gable-siding-brick",
+   "slot": "roof",
+   "option": "gable-siding-brick",
+   "width": "narrow",
+   "tris": 60,
+   "bytes": 5860,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "brick"
+     ],
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-siding-brick-wide.glb",
+   "part": "gable-siding-brick",
+   "slot": "roof",
+   "option": "gable-siding-brick",
+   "width": "wide",
+   "tris": 84,
+   "bytes": 7728,
+   "glow": false,
+   "when": [
+    {
+     "siding": [
+      "brick"
+     ],
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "roof-gable-medium.glb",
+   "part": "roof-gable",
+   "slot": "roof",
+   "option": "gable",
+   "width": "medium",
+   "tris": 250,
+   "bytes": 21896,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "roof-gable-narrow.glb",
+   "part": "roof-gable",
+   "slot": "roof",
+   "option": "gable",
+   "width": "narrow",
+   "tris": 250,
+   "bytes": 21892,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "roof-gable-wide.glb",
+   "part": "roof-gable",
+   "slot": "roof",
+   "option": "gable",
+   "width": "wide",
+   "tris": 250,
+   "bytes": 21892,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "roof-hip-medium.glb",
+   "part": "roof-hip",
+   "slot": "roof",
+   "option": "hip",
+   "width": "medium",
+   "tris": 346,
+   "bytes": 29020,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "hip",
+      "hip-gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "roof-hip-narrow.glb",
+   "part": "roof-hip",
+   "slot": "roof",
+   "option": "hip",
+   "width": "narrow",
+   "tris": 362,
+   "bytes": 30268,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "hip",
+      "hip-gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "roof-hip-wide.glb",
+   "part": "roof-hip",
+   "slot": "roof",
+   "option": "hip",
+   "width": "wide",
+   "tris": 346,
+   "bytes": 29016,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "hip",
+      "hip-gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-pointy-medium.glb",
+   "part": "cross-pointy",
+   "slot": "cross",
+   "option": "pointy",
+   "width": "medium",
+   "tris": 348,
+   "bytes": 28968,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "cross_style": [
+      "pointy"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-pointy-narrow.glb",
+   "part": "cross-pointy",
+   "slot": "cross",
+   "option": "pointy",
+   "width": "narrow",
+   "tris": 348,
+   "bytes": 28968,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "cross_style": [
+      "pointy"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-pointy-wide.glb",
+   "part": "cross-pointy",
+   "slot": "cross",
+   "option": "pointy",
+   "width": "wide",
+   "tris": 348,
+   "bytes": 28964,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "cross_style": [
+      "pointy"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-round-medium.glb",
+   "part": "cross-round",
+   "slot": "cross",
+   "option": "round",
+   "width": "medium",
+   "tris": 456,
+   "bytes": 38260,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "cross_style": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-round-narrow.glb",
+   "part": "cross-round",
+   "slot": "cross",
+   "option": "round",
+   "width": "narrow",
+   "tris": 456,
+   "bytes": 38256,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "cross_style": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-round-wide.glb",
+   "part": "cross-round",
+   "slot": "cross",
+   "option": "round",
+   "width": "wide",
+   "tris": 456,
+   "bytes": 38256,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "cross_style": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "hip-gable.glb",
+   "part": "hip-gable",
+   "slot": "hip-gable",
+   "option": "",
+   "width": null,
+   "tris": 298,
+   "bytes": 25612,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "hip-gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "attic-window-arched-medium.glb",
+   "part": "attic-window-arched",
+   "slot": "gable-window",
+   "option": "arched",
+   "width": "medium",
+   "tris": 104,
+   "bytes": 9788,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "balcony": [
+      false
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "attic-window-arched-narrow.glb",
+   "part": "attic-window-arched",
+   "slot": "gable-window",
+   "option": "arched",
+   "width": "narrow",
+   "tris": 104,
+   "bytes": 9788,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "balcony": [
+      false
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "attic-window-arched-wide.glb",
+   "part": "attic-window-arched",
+   "slot": "gable-window",
+   "option": "arched",
+   "width": "wide",
+   "tris": 104,
+   "bytes": 9784,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "balcony": [
+      false
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-windows-arched-medium.glb",
+   "part": "cross-windows-arched",
+   "slot": "gable-window",
+   "option": "cross-arched",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9740,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-windows-arched-narrow.glb",
+   "part": "cross-windows-arched",
+   "slot": "gable-window",
+   "option": "cross-arched",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9740,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-windows-arched-wide.glb",
+   "part": "cross-windows-arched",
+   "slot": "gable-window",
+   "option": "cross-arched",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9736,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "hip-gable-window-arched.glb",
+   "part": "hip-gable-window-arched",
+   "slot": "gable-window",
+   "option": "hip-gable-arched",
+   "width": null,
+   "tris": 104,
+   "bytes": 9780,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "hip-gable"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "attic-window-round-medium.glb",
+   "part": "attic-window-round",
+   "slot": "gable-window",
+   "option": "round",
+   "width": "medium",
+   "tris": 108,
+   "bytes": 9824,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "balcony": [
+      false
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "attic-window-round-narrow.glb",
+   "part": "attic-window-round",
+   "slot": "gable-window",
+   "option": "round",
+   "width": "narrow",
+   "tris": 108,
+   "bytes": 9824,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "balcony": [
+      false
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "attic-window-round-wide.glb",
+   "part": "attic-window-round",
+   "slot": "gable-window",
+   "option": "round",
+   "width": "wide",
+   "tris": 108,
+   "bytes": 9820,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "balcony": [
+      false
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-windows-round-medium.glb",
+   "part": "cross-windows-round",
+   "slot": "gable-window",
+   "option": "cross-round",
+   "width": "medium",
+   "tris": 216,
+   "bytes": 17396,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-windows-round-narrow.glb",
+   "part": "cross-windows-round",
+   "slot": "gable-window",
+   "option": "cross-round",
+   "width": "narrow",
+   "tris": 216,
+   "bytes": 17396,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "cross-windows-round-wide.glb",
+   "part": "cross-windows-round",
+   "slot": "gable-window",
+   "option": "cross-round",
+   "width": "wide",
+   "tris": 216,
+   "bytes": 17392,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "cross"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "hip-gable-window-round.glb",
+   "part": "hip-gable-window-round",
+   "slot": "gable-window",
+   "option": "hip-gable-round",
+   "width": null,
+   "tris": 108,
+   "bytes": 9816,
+   "glow": true,
+   "when": [
+    {
+     "roof": [
+      "hip-gable"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-scallop-medium.glb",
+   "part": "gable-scallop",
+   "slot": "gable",
+   "option": "scallop",
+   "width": "medium",
+   "tris": 216,
+   "bytes": 18012,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-scallop-narrow.glb",
+   "part": "gable-scallop",
+   "slot": "gable",
+   "option": "scallop",
+   "width": "narrow",
+   "tris": 216,
+   "bytes": 18024,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-scallop-wide.glb",
+   "part": "gable-scallop",
+   "slot": "gable",
+   "option": "scallop",
+   "width": "wide",
+   "tris": 216,
+   "bytes": 18020,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-valance-medium.glb",
+   "part": "gable-valance",
+   "slot": "gable",
+   "option": "valance",
+   "width": "medium",
+   "tris": 248,
+   "bytes": 19512,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-valance-narrow.glb",
+   "part": "gable-valance",
+   "slot": "gable",
+   "option": "valance",
+   "width": "narrow",
+   "tris": 248,
+   "bytes": 19512,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-valance-wide.glb",
+   "part": "gable-valance",
+   "slot": "gable",
+   "option": "valance",
+   "width": "wide",
+   "tris": 248,
+   "bytes": 19504,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-spindle-medium.glb",
+   "part": "gable-spindle",
+   "slot": "gable",
+   "option": "spindle",
+   "width": "medium",
+   "tris": 168,
+   "bytes": 14280,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-spindle-narrow.glb",
+   "part": "gable-spindle",
+   "slot": "gable",
+   "option": "spindle",
+   "width": "narrow",
+   "tris": 168,
+   "bytes": 14280,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-spindle-wide.glb",
+   "part": "gable-spindle",
+   "slot": "gable",
+   "option": "spindle",
+   "width": "wide",
+   "tris": 168,
+   "bytes": 14276,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-sunburst-medium.glb",
+   "part": "gable-sunburst",
+   "slot": "gable",
+   "option": "sunburst",
+   "width": "medium",
+   "tris": 124,
+   "bytes": 10564,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-sunburst-narrow.glb",
+   "part": "gable-sunburst",
+   "slot": "gable",
+   "option": "sunburst",
+   "width": "narrow",
+   "tris": 124,
+   "bytes": 10560,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-sunburst-wide.glb",
+   "part": "gable-sunburst",
+   "slot": "gable",
+   "option": "sunburst",
+   "width": "wide",
+   "tris": 124,
+   "bytes": 10556,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-pendant-medium.glb",
+   "part": "gable-pendant",
+   "slot": "gable",
+   "option": "pendant",
+   "width": "medium",
+   "tris": 276,
+   "bytes": 22704,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-pendant-narrow.glb",
+   "part": "gable-pendant",
+   "slot": "gable",
+   "option": "pendant",
+   "width": "narrow",
+   "tris": 276,
+   "bytes": 22704,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "gable-pendant-wide.glb",
+   "part": "gable-pendant",
+   "slot": "gable",
+   "option": "pendant",
+   "width": "wide",
+   "tris": 276,
+   "bytes": 22700,
+   "glow": false,
+   "when": [
+    {
+     "roof": [
+      "gable",
+      "cross"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "windows-left-medium.glb",
+   "part": "windows-left",
+   "slot": "side-windows",
+   "option": "left",
+   "width": "medium",
+   "tris": 120,
+   "bytes": 11596,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "windows-left-narrow.glb",
+   "part": "windows-left",
+   "slot": "side-windows",
+   "option": "left",
+   "width": "narrow",
+   "tris": 120,
+   "bytes": 11600,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "windows-left-wide.glb",
+   "part": "windows-left",
+   "slot": "side-windows",
+   "option": "left",
+   "width": "wide",
+   "tris": 120,
+   "bytes": 11596,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-left-rear-medium.glb",
+   "part": "window-left-rear",
+   "slot": "side-windows",
+   "option": "left-rear",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 7864,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ],
+     "bay": [
+      "none",
+      "right"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-left-rear-narrow.glb",
+   "part": "window-left-rear",
+   "slot": "side-windows",
+   "option": "left-rear",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 7864,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ],
+     "bay": [
+      "none",
+      "right"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-left-rear-wide.glb",
+   "part": "window-left-rear",
+   "slot": "side-windows",
+   "option": "left-rear",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 7860,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ],
+     "bay": [
+      "none",
+      "right"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-left-rear-chim-medium.glb",
+   "part": "window-left-rear-chim",
+   "slot": "side-windows",
+   "option": "left-rear-chimney",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 7872,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ],
+     "bay": [
+      "none",
+      "right"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-left-rear-chim-narrow.glb",
+   "part": "window-left-rear-chim",
+   "slot": "side-windows",
+   "option": "left-rear-chimney",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 7876,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ],
+     "bay": [
+      "none",
+      "right"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-left-rear-chim-wide.glb",
+   "part": "window-left-rear-chim",
+   "slot": "side-windows",
+   "option": "left-rear-chimney",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 7872,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "right"
+     ],
+     "bay": [
+      "none",
+      "right"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "windows-right-medium.glb",
+   "part": "windows-right",
+   "slot": "side-windows",
+   "option": "right",
+   "width": "medium",
+   "tris": 120,
+   "bytes": 11580,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "windows-right-narrow.glb",
+   "part": "windows-right",
+   "slot": "side-windows",
+   "option": "right",
+   "width": "narrow",
+   "tris": 120,
+   "bytes": 11584,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "windows-right-wide.glb",
+   "part": "windows-right",
+   "slot": "side-windows",
+   "option": "right",
+   "width": "wide",
+   "tris": 120,
+   "bytes": 11576,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-right-rear-medium.glb",
+   "part": "window-right-rear",
+   "slot": "side-windows",
+   "option": "right-rear",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 6796,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-right-rear-narrow.glb",
+   "part": "window-right-rear",
+   "slot": "side-windows",
+   "option": "right-rear",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 6796,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-right-rear-wide.glb",
+   "part": "window-right-rear",
+   "slot": "side-windows",
+   "option": "right-rear",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 6792,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-right-rear-chim-medium.glb",
+   "part": "window-right-rear-chim",
+   "slot": "side-windows",
+   "option": "right-rear-chimney",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 6804,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-right-rear-chim-narrow.glb",
+   "part": "window-right-rear-chim",
+   "slot": "side-windows",
+   "option": "right-rear-chimney",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 6808,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "window-right-rear-chim-wide.glb",
+   "part": "window-right-rear-chim",
+   "slot": "side-windows",
+   "option": "right-rear-chimney",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 6804,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-medium.glb",
+   "part": "boxes-right",
+   "slot": "boxes",
+   "option": "right",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9948,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-narrow.glb",
+   "part": "boxes-right",
+   "slot": "boxes",
+   "option": "right",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9952,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-wide.glb",
+   "part": "boxes-right",
+   "slot": "boxes",
+   "option": "right",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9948,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-rear-medium.glb",
+   "part": "boxes-right-rear",
+   "slot": "boxes",
+   "option": "right-rear",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9948,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-rear-narrow.glb",
+   "part": "boxes-right-rear",
+   "slot": "boxes",
+   "option": "right-rear",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9948,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-rear-wide.glb",
+   "part": "boxes-right-rear",
+   "slot": "boxes",
+   "option": "right-rear",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9944,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-rear-chim-medium.glb",
+   "part": "boxes-right-rear-chim",
+   "slot": "boxes",
+   "option": "right-rear-chimney",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9972,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-rear-chim-narrow.glb",
+   "part": "boxes-right-rear-chim",
+   "slot": "boxes",
+   "option": "right-rear-chimney",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9972,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-right-rear-chim-wide.glb",
+   "part": "boxes-right-rear-chim",
+   "slot": "boxes",
+   "option": "right-rear-chimney",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9968,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "wing": [
+      "none",
+      "left"
+     ],
+     "bay": [
+      "none",
+      "left"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-left-medium.glb",
+   "part": "porch-left",
+   "slot": "porch",
+   "option": "left",
+   "width": "medium",
+   "tris": 976,
+   "bytes": 77508,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "porch-left-narrow.glb",
+   "part": "porch-left",
+   "slot": "porch",
+   "option": "left",
+   "width": "narrow",
+   "tris": 892,
+   "bytes": 71388,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "porch-left-wide.glb",
+   "part": "porch-left",
+   "slot": "porch",
+   "option": "left",
+   "width": "wide",
+   "tris": 976,
+   "bytes": 77468,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-porch-left-medium.glb",
+   "part": "boxes-porch-left",
+   "slot": "boxes",
+   "option": "porch-left",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9968,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-porch-left-narrow.glb",
+   "part": "boxes-porch-left",
+   "slot": "boxes",
+   "option": "porch-left",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9964,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-porch-left-wide.glb",
+   "part": "boxes-porch-left",
+   "slot": "boxes",
+   "option": "porch-left",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9960,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "rail-plain-left-medium.glb",
+   "part": "rail-plain-left",
+   "slot": "rail",
+   "option": "plain/left",
+   "width": "medium",
+   "tris": 216,
+   "bytes": 18032,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "rail-plain-left-narrow.glb",
+   "part": "rail-plain-left",
+   "slot": "rail",
+   "option": "plain/left",
+   "width": "narrow",
+   "tris": 168,
+   "bytes": 14268,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "rail-plain-left-wide.glb",
+   "part": "rail-plain-left",
+   "slot": "rail",
+   "option": "plain/left",
+   "width": "wide",
+   "tris": 216,
+   "bytes": 18028,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "rail-fancy-left-medium.glb",
+   "part": "rail-fancy-left",
+   "slot": "rail",
+   "option": "fancy/left",
+   "width": "medium",
+   "tris": 312,
+   "bytes": 25516,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "rail-fancy-left-narrow.glb",
+   "part": "rail-fancy-left",
+   "slot": "rail",
+   "option": "fancy/left",
+   "width": "narrow",
+   "tris": 252,
+   "bytes": 20836,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "rail-fancy-left-wide.glb",
+   "part": "rail-fancy-left",
+   "slot": "rail",
+   "option": "fancy/left",
+   "width": "wide",
+   "tris": 336,
+   "bytes": 27388,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-spindle-left-medium.glb",
+   "part": "frieze-spindle-left",
+   "slot": "frieze",
+   "option": "spindle/left",
+   "width": "medium",
+   "tris": 204,
+   "bytes": 17100,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-spindle-left-narrow.glb",
+   "part": "frieze-spindle-left",
+   "slot": "frieze",
+   "option": "spindle/left",
+   "width": "narrow",
+   "tris": 168,
+   "bytes": 14288,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-spindle-left-wide.glb",
+   "part": "frieze-spindle-left",
+   "slot": "frieze",
+   "option": "spindle/left",
+   "width": "wide",
+   "tris": 204,
+   "bytes": 17096,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-valance-left-medium.glb",
+   "part": "frieze-valance-left",
+   "slot": "frieze",
+   "option": "valance/left",
+   "width": "medium",
+   "tris": 124,
+   "bytes": 10352,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-valance-left-narrow.glb",
+   "part": "frieze-valance-left",
+   "slot": "frieze",
+   "option": "valance/left",
+   "width": "narrow",
+   "tris": 92,
+   "bytes": 8000,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-valance-left-wide.glb",
+   "part": "frieze-valance-left",
+   "slot": "frieze",
+   "option": "valance/left",
+   "width": "wide",
+   "tris": 108,
+   "bytes": 9156,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-scallop-left-medium.glb",
+   "part": "frieze-scallop-left",
+   "slot": "frieze",
+   "option": "scallop/left",
+   "width": "medium",
+   "tris": 132,
+   "bytes": 11480,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-scallop-left-narrow.glb",
+   "part": "frieze-scallop-left",
+   "slot": "frieze",
+   "option": "scallop/left",
+   "width": "narrow",
+   "tris": 120,
+   "bytes": 10544,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-scallop-left-wide.glb",
+   "part": "frieze-scallop-left",
+   "slot": "frieze",
+   "option": "scallop/left",
+   "width": "wide",
+   "tris": 132,
+   "bytes": 11476,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-sunburst-left-medium.glb",
+   "part": "frieze-sunburst-left",
+   "slot": "frieze",
+   "option": "sunburst/left",
+   "width": "medium",
+   "tris": 256,
+   "bytes": 20004,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-sunburst-left-narrow.glb",
+   "part": "frieze-sunburst-left",
+   "slot": "frieze",
+   "option": "sunburst/left",
+   "width": "narrow",
+   "tris": 256,
+   "bytes": 20004,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-sunburst-left-wide.glb",
+   "part": "frieze-sunburst-left",
+   "slot": "frieze",
+   "option": "sunburst/left",
+   "width": "wide",
+   "tris": 256,
+   "bytes": 20000,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-pendant-left-medium.glb",
+   "part": "frieze-pendant-left",
+   "slot": "frieze",
+   "option": "pendant/left",
+   "width": "medium",
+   "tris": 252,
+   "bytes": 20844,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-pendant-left-narrow.glb",
+   "part": "frieze-pendant-left",
+   "slot": "frieze",
+   "option": "pendant/left",
+   "width": "narrow",
+   "tris": 228,
+   "bytes": 18972,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "frieze-pendant-left-wide.glb",
+   "part": "frieze-pendant-left",
+   "slot": "frieze",
+   "option": "pendant/left",
+   "width": "wide",
+   "tris": 252,
+   "bytes": 20824,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "porch-centre-medium.glb",
+   "part": "porch-centre",
+   "slot": "porch",
+   "option": "centre",
+   "width": "medium",
+   "tris": 1048,
+   "bytes": 83132,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-centre-narrow.glb",
+   "part": "porch-centre",
+   "slot": "porch",
+   "option": "centre",
+   "width": "narrow",
+   "tris": 1048,
+   "bytes": 83132,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-centre-wide.glb",
+   "part": "porch-centre",
+   "slot": "porch",
+   "option": "centre",
+   "width": "wide",
+   "tris": 1048,
+   "bytes": 83100,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-porch-centre-medium.glb",
+   "part": "boxes-porch-centre",
+   "slot": "boxes",
+   "option": "porch-centre",
+   "width": "medium",
+   "tris": 192,
+   "bytes": 18756,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-porch-centre-narrow.glb",
+   "part": "boxes-porch-centre",
+   "slot": "boxes",
+   "option": "porch-centre",
+   "width": "narrow",
+   "tris": 192,
+   "bytes": 18756,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-porch-centre-wide.glb",
+   "part": "boxes-porch-centre",
+   "slot": "boxes",
+   "option": "porch-centre",
+   "width": "wide",
+   "tris": 192,
+   "bytes": 18724,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-plain-centre-medium.glb",
+   "part": "rail-plain-centre",
+   "slot": "rail",
+   "option": "plain/centre",
+   "width": "medium",
+   "tris": 288,
+   "bytes": 23648,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-plain-centre-narrow.glb",
+   "part": "rail-plain-centre",
+   "slot": "rail",
+   "option": "plain/centre",
+   "width": "narrow",
+   "tris": 240,
+   "bytes": 19872,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-plain-centre-wide.glb",
+   "part": "rail-plain-centre",
+   "slot": "rail",
+   "option": "plain/centre",
+   "width": "wide",
+   "tris": 312,
+   "bytes": 25516,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-fancy-centre-medium.glb",
+   "part": "rail-fancy-centre",
+   "slot": "rail",
+   "option": "fancy/centre",
+   "width": "medium",
+   "tris": 432,
+   "bytes": 34884,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-fancy-centre-narrow.glb",
+   "part": "rail-fancy-centre",
+   "slot": "rail",
+   "option": "fancy/centre",
+   "width": "narrow",
+   "tris": 336,
+   "bytes": 27392,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-fancy-centre-wide.glb",
+   "part": "rail-fancy-centre",
+   "slot": "rail",
+   "option": "fancy/centre",
+   "width": "wide",
+   "tris": 480,
+   "bytes": 38624,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-spindle-centre-medium.glb",
+   "part": "frieze-spindle-centre",
+   "slot": "frieze",
+   "option": "spindle/centre",
+   "width": "medium",
+   "tris": 288,
+   "bytes": 23656,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-spindle-centre-narrow.glb",
+   "part": "frieze-spindle-centre",
+   "slot": "frieze",
+   "option": "spindle/centre",
+   "width": "narrow",
+   "tris": 240,
+   "bytes": 19912,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-spindle-centre-wide.glb",
+   "part": "frieze-spindle-centre",
+   "slot": "frieze",
+   "option": "spindle/centre",
+   "width": "wide",
+   "tris": 336,
+   "bytes": 27396,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-valance-centre-medium.glb",
+   "part": "frieze-valance-centre",
+   "slot": "frieze",
+   "option": "valance/centre",
+   "width": "medium",
+   "tris": 172,
+   "bytes": 13884,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-valance-centre-narrow.glb",
+   "part": "frieze-valance-centre",
+   "slot": "frieze",
+   "option": "valance/centre",
+   "width": "narrow",
+   "tris": 140,
+   "bytes": 11532,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-valance-centre-wide.glb",
+   "part": "frieze-valance-centre",
+   "slot": "frieze",
+   "option": "valance/centre",
+   "width": "wide",
+   "tris": 204,
+   "bytes": 16204,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-scallop-centre-medium.glb",
+   "part": "frieze-scallop-centre",
+   "slot": "frieze",
+   "option": "scallop/centre",
+   "width": "medium",
+   "tris": 204,
+   "bytes": 17100,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-scallop-centre-narrow.glb",
+   "part": "frieze-scallop-centre",
+   "slot": "frieze",
+   "option": "scallop/centre",
+   "width": "narrow",
+   "tris": 180,
+   "bytes": 15228,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-scallop-centre-wide.glb",
+   "part": "frieze-scallop-centre",
+   "slot": "frieze",
+   "option": "scallop/centre",
+   "width": "wide",
+   "tris": 252,
+   "bytes": 20844,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-sunburst-centre-medium.glb",
+   "part": "frieze-sunburst-centre",
+   "slot": "frieze",
+   "option": "sunburst/centre",
+   "width": "medium",
+   "tris": 384,
+   "bytes": 29416,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-sunburst-centre-narrow.glb",
+   "part": "frieze-sunburst-centre",
+   "slot": "frieze",
+   "option": "sunburst/centre",
+   "width": "narrow",
+   "tris": 384,
+   "bytes": 29416,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-sunburst-centre-wide.glb",
+   "part": "frieze-sunburst-centre",
+   "slot": "frieze",
+   "option": "sunburst/centre",
+   "width": "wide",
+   "tris": 384,
+   "bytes": 29412,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-pendant-centre-medium.glb",
+   "part": "frieze-pendant-centre",
+   "slot": "frieze",
+   "option": "pendant/centre",
+   "width": "medium",
+   "tris": 396,
+   "bytes": 32080,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-pendant-centre-narrow.glb",
+   "part": "frieze-pendant-centre",
+   "slot": "frieze",
+   "option": "pendant/centre",
+   "width": "narrow",
+   "tris": 300,
+   "bytes": 24592,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-pendant-centre-wide.glb",
+   "part": "frieze-pendant-centre",
+   "slot": "frieze",
+   "option": "pendant/centre",
+   "width": "wide",
+   "tris": 444,
+   "bytes": 35796,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "centre"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-wrap-medium.glb",
+   "part": "porch-wrap",
+   "slot": "porch",
+   "option": "wrap",
+   "width": "medium",
+   "tris": 1452,
+   "bytes": 113924,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-wrap-narrow.glb",
+   "part": "porch-wrap",
+   "slot": "porch",
+   "option": "wrap",
+   "width": "narrow",
+   "tris": 1452,
+   "bytes": 113928,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-wrap-wide.glb",
+   "part": "porch-wrap",
+   "slot": "porch",
+   "option": "wrap",
+   "width": "wide",
+   "tris": 1452,
+   "bytes": 113908,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-porch-wrap-medium.glb",
+   "part": "boxes-porch-wrap",
+   "slot": "boxes",
+   "option": "porch-wrap",
+   "width": "medium",
+   "tris": 192,
+   "bytes": 18752,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-porch-wrap-narrow.glb",
+   "part": "boxes-porch-wrap",
+   "slot": "boxes",
+   "option": "porch-wrap",
+   "width": "narrow",
+   "tris": 192,
+   "bytes": 18752,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "boxes-porch-wrap-wide.glb",
+   "part": "boxes-porch-wrap",
+   "slot": "boxes",
+   "option": "porch-wrap",
+   "width": "wide",
+   "tris": 192,
+   "bytes": 18720,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-plain-wrap-medium.glb",
+   "part": "rail-plain-wrap",
+   "slot": "rail",
+   "option": "plain/wrap",
+   "width": "medium",
+   "tris": 396,
+   "bytes": 32056,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-plain-wrap-narrow.glb",
+   "part": "rail-plain-wrap",
+   "slot": "rail",
+   "option": "plain/wrap",
+   "width": "narrow",
+   "tris": 372,
+   "bytes": 30184,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-plain-wrap-wide.glb",
+   "part": "rail-plain-wrap",
+   "slot": "rail",
+   "option": "plain/wrap",
+   "width": "wide",
+   "tris": 444,
+   "bytes": 35816,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "plain"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-fancy-wrap-medium.glb",
+   "part": "rail-fancy-wrap",
+   "slot": "rail",
+   "option": "fancy/wrap",
+   "width": "medium",
+   "tris": 588,
+   "bytes": 47052,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-fancy-wrap-narrow.glb",
+   "part": "rail-fancy-wrap",
+   "slot": "rail",
+   "option": "fancy/wrap",
+   "width": "narrow",
+   "tris": 540,
+   "bytes": 43308,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "rail-fancy-wrap-wide.glb",
+   "part": "rail-fancy-wrap",
+   "slot": "rail",
+   "option": "fancy/wrap",
+   "width": "wide",
+   "tris": 636,
+   "bytes": 50792,
+   "glow": false,
+   "when": [
+    {
+     "rail": [
+      "fancy"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-spindle-wrap-medium.glb",
+   "part": "frieze-spindle-wrap",
+   "slot": "frieze",
+   "option": "spindle/wrap",
+   "width": "medium",
+   "tris": 420,
+   "bytes": 33952,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-spindle-wrap-narrow.glb",
+   "part": "frieze-spindle-wrap",
+   "slot": "frieze",
+   "option": "spindle/wrap",
+   "width": "narrow",
+   "tris": 384,
+   "bytes": 31140,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-spindle-wrap-wide.glb",
+   "part": "frieze-spindle-wrap",
+   "slot": "frieze",
+   "option": "spindle/wrap",
+   "width": "wide",
+   "tris": 444,
+   "bytes": 35820,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "spindle"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-valance-wrap-medium.glb",
+   "part": "frieze-valance-wrap",
+   "slot": "frieze",
+   "option": "valance/wrap",
+   "width": "medium",
+   "tris": 328,
+   "bytes": 25404,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-valance-wrap-narrow.glb",
+   "part": "frieze-valance-wrap",
+   "slot": "frieze",
+   "option": "valance/wrap",
+   "width": "narrow",
+   "tris": 296,
+   "bytes": 23052,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-valance-wrap-wide.glb",
+   "part": "frieze-valance-wrap",
+   "slot": "frieze",
+   "option": "valance/wrap",
+   "width": "wide",
+   "tris": 360,
+   "bytes": 27740,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "valance"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-scallop-wrap-medium.glb",
+   "part": "frieze-scallop-wrap",
+   "slot": "frieze",
+   "option": "scallop/wrap",
+   "width": "medium",
+   "tris": 420,
+   "bytes": 33956,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-scallop-wrap-narrow.glb",
+   "part": "frieze-scallop-wrap",
+   "slot": "frieze",
+   "option": "scallop/wrap",
+   "width": "narrow",
+   "tris": 396,
+   "bytes": 32080,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-scallop-wrap-wide.glb",
+   "part": "frieze-scallop-wrap",
+   "slot": "frieze",
+   "option": "scallop/wrap",
+   "width": "wide",
+   "tris": 468,
+   "bytes": 37684,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "scallop"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-sunburst-wrap-medium.glb",
+   "part": "frieze-sunburst-wrap",
+   "slot": "frieze",
+   "option": "sunburst/wrap",
+   "width": "medium",
+   "tris": 768,
+   "bytes": 57648,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-sunburst-wrap-narrow.glb",
+   "part": "frieze-sunburst-wrap",
+   "slot": "frieze",
+   "option": "sunburst/wrap",
+   "width": "narrow",
+   "tris": 768,
+   "bytes": 57648,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-sunburst-wrap-wide.glb",
+   "part": "frieze-sunburst-wrap",
+   "slot": "frieze",
+   "option": "sunburst/wrap",
+   "width": "wide",
+   "tris": 768,
+   "bytes": 57632,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "sunburst"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-pendant-wrap-medium.glb",
+   "part": "frieze-pendant-wrap",
+   "slot": "frieze",
+   "option": "pendant/wrap",
+   "width": "medium",
+   "tris": 552,
+   "bytes": 44252,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-pendant-wrap-narrow.glb",
+   "part": "frieze-pendant-wrap",
+   "slot": "frieze",
+   "option": "pendant/wrap",
+   "width": "narrow",
+   "tris": 504,
+   "bytes": 40508,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "frieze-pendant-wrap-wide.glb",
+   "part": "frieze-pendant-wrap",
+   "slot": "frieze",
+   "option": "pendant/wrap",
+   "width": "wide",
+   "tris": 600,
+   "bytes": 47980,
+   "glow": false,
+   "when": [
+    {
+     "frieze": [
+      "pendant"
+     ],
+     "porch": [
+      "wrap"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "porch-windows-right-medium.glb",
+   "part": "porch-windows-right",
+   "slot": "porch",
+   "option": "left-windows-right",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 7864,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "left"
+     ],
+     "turret": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "porch": [
+      "right"
+     ],
+     "turret": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "porch-windows-right-narrow.glb",
+   "part": "porch-windows-right",
+   "slot": "porch",
+   "option": "left-windows-right",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 7880,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "left"
+     ],
+     "turret": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "porch": [
+      "right"
+     ],
+     "turret": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "porch-windows-right-wide.glb",
+   "part": "porch-windows-right",
+   "slot": "porch",
+   "option": "left-windows-right",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 7860,
+   "glow": true,
+   "when": [
+    {
+     "porch": [
+      "left"
+     ],
+     "turret": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "porch": [
+      "right"
+     ],
+     "turret": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-porch-right-medium.glb",
+   "part": "boxes-porch-right",
+   "slot": "boxes",
+   "option": "porch-left-right",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9964,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "left"
+     ],
+     "turret": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "right"
+     ],
+     "turret": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-porch-right-narrow.glb",
+   "part": "boxes-porch-right",
+   "slot": "boxes",
+   "option": "porch-left-right",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9964,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "left"
+     ],
+     "turret": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "right"
+     ],
+     "turret": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-porch-right-wide.glb",
+   "part": "boxes-porch-right",
+   "slot": "boxes",
+   "option": "porch-left-right",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9960,
+   "glow": false,
+   "when": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "left"
+     ],
+     "turret": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "boxes": [
+      true
+     ],
+     "porch": [
+      "right"
+     ],
+     "turret": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "turret-medium.glb",
+   "part": "turret",
+   "slot": "turret",
+   "option": "",
+   "width": "medium",
+   "tris": 490,
+   "bytes": 38420,
+   "glow": true,
+   "when": [
+    {
+     "turret": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "turret": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "turret-narrow.glb",
+   "part": "turret",
+   "slot": "turret",
+   "option": "",
+   "width": "narrow",
+   "tris": 490,
+   "bytes": 38420,
+   "glow": true,
+   "when": [
+    {
+     "turret": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "turret": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "turret-wide.glb",
+   "part": "turret",
+   "slot": "turret",
+   "option": "",
+   "width": "wide",
+   "tris": 490,
+   "bytes": 38416,
+   "glow": true,
+   "when": [
+    {
+     "turret": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "turret": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "bay-medium.glb",
+   "part": "bay",
+   "slot": "bay",
+   "option": "",
+   "width": "medium",
+   "tris": 196,
+   "bytes": 17504,
+   "glow": true,
+   "when": [
+    {
+     "bay": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "bay": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "bay-narrow.glb",
+   "part": "bay",
+   "slot": "bay",
+   "option": "",
+   "width": "narrow",
+   "tris": 196,
+   "bytes": 17516,
+   "glow": true,
+   "when": [
+    {
+     "bay": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "bay": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "bay-wide.glb",
+   "part": "bay",
+   "slot": "bay",
+   "option": "",
+   "width": "wide",
+   "tris": 196,
+   "bytes": 17496,
+   "glow": true,
+   "when": [
+    {
+     "bay": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "bay": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "bay-chim-medium.glb",
+   "part": "bay-chim",
+   "slot": "bay",
+   "option": "chimney",
+   "width": "medium",
+   "tris": 196,
+   "bytes": 17512,
+   "glow": true,
+   "when": [
+    {
+     "bay": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "bay": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "bay-chim-narrow.glb",
+   "part": "bay-chim",
+   "slot": "bay",
+   "option": "chimney",
+   "width": "narrow",
+   "tris": 196,
+   "bytes": 17524,
+   "glow": true,
+   "when": [
+    {
+     "bay": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "bay": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "bay-chim-wide.glb",
+   "part": "bay-chim",
+   "slot": "bay",
+   "option": "chimney",
+   "width": "wide",
+   "tris": 196,
+   "bytes": 17504,
+   "glow": true,
+   "when": [
+    {
+     "bay": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "bay": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-medium.glb",
+   "part": "wing",
+   "slot": "wing",
+   "option": "",
+   "width": "medium",
+   "tris": 390,
+   "bytes": 34156,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-narrow.glb",
+   "part": "wing",
+   "slot": "wing",
+   "option": "",
+   "width": "narrow",
+   "tris": 390,
+   "bytes": 34144,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-wide.glb",
+   "part": "wing",
+   "slot": "wing",
+   "option": "",
+   "width": "wide",
+   "tris": 390,
+   "bytes": 34140,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-siding-clapboard-medium.glb",
+   "part": "wing-siding-clapboard",
+   "slot": "wing-siding",
+   "option": "clapboard",
+   "width": "medium",
+   "tris": 264,
+   "bytes": 21784,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-siding-clapboard-narrow.glb",
+   "part": "wing-siding-clapboard",
+   "slot": "wing-siding",
+   "option": "clapboard",
+   "width": "narrow",
+   "tris": 264,
+   "bytes": 21784,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-siding-clapboard-wide.glb",
+   "part": "wing-siding-clapboard",
+   "slot": "wing-siding",
+   "option": "clapboard",
+   "width": "wide",
+   "tris": 264,
+   "bytes": 21780,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "siding": [
+      "clapboard"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-siding-brick-medium.glb",
+   "part": "wing-siding-brick",
+   "slot": "wing-siding",
+   "option": "brick",
+   "width": "medium",
+   "tris": 420,
+   "bytes": 33948,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "siding": [
+      "brick"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "siding": [
+      "brick"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-siding-brick-narrow.glb",
+   "part": "wing-siding-brick",
+   "slot": "wing-siding",
+   "option": "brick",
+   "width": "narrow",
+   "tris": 420,
+   "bytes": 33948,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "siding": [
+      "brick"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "siding": [
+      "brick"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-siding-brick-wide.glb",
+   "part": "wing-siding-brick",
+   "slot": "wing-siding",
+   "option": "brick",
+   "width": "wide",
+   "tris": 420,
+   "bytes": 33944,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "siding": [
+      "brick"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "siding": [
+      "brick"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-window-arched-medium.glb",
+   "part": "wing-window-arched",
+   "slot": "wing-gable-window",
+   "option": "arched",
+   "width": "medium",
+   "tris": 104,
+   "bytes": 9784,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-window-arched-narrow.glb",
+   "part": "wing-window-arched",
+   "slot": "wing-gable-window",
+   "option": "arched",
+   "width": "narrow",
+   "tris": 104,
+   "bytes": 9728,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-window-arched-wide.glb",
+   "part": "wing-window-arched",
+   "slot": "wing-gable-window",
+   "option": "arched",
+   "width": "wide",
+   "tris": 104,
+   "bytes": 9780,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gable_window": [
+      "arched"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-window-round-medium.glb",
+   "part": "wing-window-round",
+   "slot": "wing-gable-window",
+   "option": "round",
+   "width": "medium",
+   "tris": 108,
+   "bytes": 9808,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-window-round-narrow.glb",
+   "part": "wing-window-round",
+   "slot": "wing-gable-window",
+   "option": "round",
+   "width": "narrow",
+   "tris": 108,
+   "bytes": 9792,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-window-round-wide.glb",
+   "part": "wing-window-round",
+   "slot": "wing-gable-window",
+   "option": "round",
+   "width": "wide",
+   "tris": 108,
+   "bytes": 9816,
+   "glow": true,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gable_window": [
+      "round"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-scallop-medium.glb",
+   "part": "wing-gable-scallop",
+   "slot": "wing-gable",
+   "option": "scallop",
+   "width": "medium",
+   "tris": 216,
+   "bytes": 18020,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-scallop-narrow.glb",
+   "part": "wing-gable-scallop",
+   "slot": "wing-gable",
+   "option": "scallop",
+   "width": "narrow",
+   "tris": 216,
+   "bytes": 18020,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-scallop-wide.glb",
+   "part": "wing-gable-scallop",
+   "slot": "wing-gable",
+   "option": "scallop",
+   "width": "wide",
+   "tris": 216,
+   "bytes": 18016,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "scallop"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-valance-medium.glb",
+   "part": "wing-gable-valance",
+   "slot": "wing-gable",
+   "option": "valance",
+   "width": "medium",
+   "tris": 248,
+   "bytes": 19520,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-valance-narrow.glb",
+   "part": "wing-gable-valance",
+   "slot": "wing-gable",
+   "option": "valance",
+   "width": "narrow",
+   "tris": 248,
+   "bytes": 19520,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-valance-wide.glb",
+   "part": "wing-gable-valance",
+   "slot": "wing-gable",
+   "option": "valance",
+   "width": "wide",
+   "tris": 248,
+   "bytes": 19516,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "valance"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-spindle-medium.glb",
+   "part": "wing-gable-spindle",
+   "slot": "wing-gable",
+   "option": "spindle",
+   "width": "medium",
+   "tris": 168,
+   "bytes": 14288,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-spindle-narrow.glb",
+   "part": "wing-gable-spindle",
+   "slot": "wing-gable",
+   "option": "spindle",
+   "width": "narrow",
+   "tris": 168,
+   "bytes": 14288,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-spindle-wide.glb",
+   "part": "wing-gable-spindle",
+   "slot": "wing-gable",
+   "option": "spindle",
+   "width": "wide",
+   "tris": 168,
+   "bytes": 14284,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "spindle"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-sunburst-medium.glb",
+   "part": "wing-gable-sunburst",
+   "slot": "wing-gable",
+   "option": "sunburst",
+   "width": "medium",
+   "tris": 124,
+   "bytes": 10564,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-sunburst-narrow.glb",
+   "part": "wing-gable-sunburst",
+   "slot": "wing-gable",
+   "option": "sunburst",
+   "width": "narrow",
+   "tris": 124,
+   "bytes": 10568,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-sunburst-wide.glb",
+   "part": "wing-gable-sunburst",
+   "slot": "wing-gable",
+   "option": "sunburst",
+   "width": "wide",
+   "tris": 124,
+   "bytes": 10564,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "sunburst"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-pendant-medium.glb",
+   "part": "wing-gable-pendant",
+   "slot": "wing-gable",
+   "option": "pendant",
+   "width": "medium",
+   "tris": 276,
+   "bytes": 22708,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-pendant-narrow.glb",
+   "part": "wing-gable-pendant",
+   "slot": "wing-gable",
+   "option": "pendant",
+   "width": "narrow",
+   "tris": 276,
+   "bytes": 22712,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-gable-pendant-wide.glb",
+   "part": "wing-gable-pendant",
+   "slot": "wing-gable",
+   "option": "pendant",
+   "width": "wide",
+   "tris": 276,
+   "bytes": 22708,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "gingerbread": [
+      "pendant"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-side-window-medium.glb",
+   "part": "wing-side-window",
+   "slot": "wing-side-window",
+   "option": "",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 6796,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-side-window-narrow.glb",
+   "part": "wing-side-window",
+   "slot": "wing-side-window",
+   "option": "",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 6796,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-side-window-wide.glb",
+   "part": "wing-side-window",
+   "slot": "wing-side-window",
+   "option": "",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 6780,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-side-window-chim-medium.glb",
+   "part": "wing-side-window-chim",
+   "slot": "wing-side-window",
+   "option": "chimney",
+   "width": "medium",
+   "tris": 72,
+   "bytes": 6804,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-side-window-chim-narrow.glb",
+   "part": "wing-side-window-chim",
+   "slot": "wing-side-window",
+   "option": "chimney",
+   "width": "narrow",
+   "tris": 72,
+   "bytes": 6804,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "wing-side-window-chim-wide.glb",
+   "part": "wing-side-window-chim",
+   "slot": "wing-side-window",
+   "option": "chimney",
+   "width": "wide",
+   "tris": 72,
+   "bytes": 6788,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "chimney": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "chimney": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-wing-medium.glb",
+   "part": "boxes-wing",
+   "slot": "boxes",
+   "option": "wing",
+   "width": "medium",
+   "tris": 96,
+   "bytes": 9948,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "boxes": [
+      true
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "boxes": [
+      true
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-wing-narrow.glb",
+   "part": "boxes-wing",
+   "slot": "boxes",
+   "option": "wing",
+   "width": "narrow",
+   "tris": 96,
+   "bytes": 9948,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "boxes": [
+      true
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "boxes": [
+      true
+     ]
+    }
+   ]
+  },
+  {
+   "file": "boxes-wing-wide.glb",
+   "part": "boxes-wing",
+   "slot": "boxes",
+   "option": "wing",
+   "width": "wide",
+   "tris": 96,
+   "bytes": 9944,
+   "glow": false,
+   "when": [
+    {
+     "wing": [
+      "right",
+      "both"
+     ],
+     "boxes": [
+      true
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "wing": [
+      "left",
+      "both"
+     ],
+     "boxes": [
+      true
+     ]
+    }
+   ]
+  },
+  {
+   "file": "chimney-medium.glb",
+   "part": "chimney",
+   "slot": "chimney",
+   "option": "wall",
+   "width": "medium",
+   "tris": 116,
+   "bytes": 10480,
+   "glow": false,
+   "when": [
+    {
+     "chimney": [
+      "right",
+      "both"
+     ],
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "chimney": [
+      "left",
+      "both"
+     ],
+     "wing": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "chimney-narrow.glb",
+   "part": "chimney",
+   "slot": "chimney",
+   "option": "wall",
+   "width": "narrow",
+   "tris": 116,
+   "bytes": 10480,
+   "glow": false,
+   "when": [
+    {
+     "chimney": [
+      "right",
+      "both"
+     ],
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "chimney": [
+      "left",
+      "both"
+     ],
+     "wing": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "chimney-wide.glb",
+   "part": "chimney",
+   "slot": "chimney",
+   "option": "wall",
+   "width": "wide",
+   "tris": 116,
+   "bytes": 10476,
+   "glow": false,
+   "when": [
+    {
+     "chimney": [
+      "right",
+      "both"
+     ],
+     "wing": [
+      "none",
+      "left"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "chimney": [
+      "left",
+      "both"
+     ],
+     "wing": [
+      "none",
+      "right"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "chimney-wing-medium.glb",
+   "part": "chimney-wing",
+   "slot": "chimney",
+   "option": "wing",
+   "width": "medium",
+   "tris": 116,
+   "bytes": 10492,
+   "glow": false,
+   "when": [
+    {
+     "chimney": [
+      "right",
+      "both"
+     ],
+     "wing": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "chimney": [
+      "left",
+      "both"
+     ],
+     "wing": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "chimney-wing-narrow.glb",
+   "part": "chimney-wing",
+   "slot": "chimney",
+   "option": "wing",
+   "width": "narrow",
+   "tris": 116,
+   "bytes": 10488,
+   "glow": false,
+   "when": [
+    {
+     "chimney": [
+      "right",
+      "both"
+     ],
+     "wing": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "chimney": [
+      "left",
+      "both"
+     ],
+     "wing": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "chimney-wing-wide.glb",
+   "part": "chimney-wing",
+   "slot": "chimney",
+   "option": "wing",
+   "width": "wide",
+   "tris": 116,
+   "bytes": 10472,
+   "glow": false,
+   "when": [
+    {
+     "chimney": [
+      "right",
+      "both"
+     ],
+     "wing": [
+      "right",
+      "both"
+     ]
+    }
+   ],
+   "mirrorable": true,
+   "when_mirror": [
+    {
+     "chimney": [
+      "left",
+      "both"
+     ],
+     "wing": [
+      "left",
+      "both"
+     ]
+    }
+   ]
+  },
+  {
+   "file": "dormer-hip-medium.glb",
+   "part": "dormer-hip",
+   "slot": "dormer",
+   "option": "hip",
+   "width": "medium",
+   "tris": 318,
+   "bytes": 28532,
+   "glow": true,
+   "when": [
+    {
+     "dormer": [
+      true
+     ],
+     "roof": [
+      "hip"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "dormer-hip-narrow.glb",
+   "part": "dormer-hip",
+   "slot": "dormer",
+   "option": "hip",
+   "width": "narrow",
+   "tris": 318,
+   "bytes": 28532,
+   "glow": true,
+   "when": [
+    {
+     "dormer": [
+      true
+     ],
+     "roof": [
+      "hip"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "dormer-hip-wide.glb",
+   "part": "dormer-hip",
+   "slot": "dormer",
+   "option": "hip",
+   "width": "wide",
+   "tris": 318,
+   "bytes": 28528,
+   "glow": true,
+   "when": [
+    {
+     "dormer": [
+      true
+     ],
+     "roof": [
+      "hip"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "dormer-gable-medium.glb",
+   "part": "dormer-gable",
+   "slot": "dormer",
+   "option": "gable",
+   "width": "medium",
+   "tris": 318,
+   "bytes": 28568,
+   "glow": true,
+   "when": [
+    {
+     "dormer": [
+      true
+     ],
+     "roof": [
+      "gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "dormer-gable-narrow.glb",
+   "part": "dormer-gable",
+   "slot": "dormer",
+   "option": "gable",
+   "width": "narrow",
+   "tris": 318,
+   "bytes": 28568,
+   "glow": true,
+   "when": [
+    {
+     "dormer": [
+      true
+     ],
+     "roof": [
+      "gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "dormer-gable-wide.glb",
+   "part": "dormer-gable",
+   "slot": "dormer",
+   "option": "gable",
+   "width": "wide",
+   "tris": 318,
+   "bytes": 28572,
+   "glow": true,
+   "when": [
+    {
+     "dormer": [
+      true
+     ],
+     "roof": [
+      "gable"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "balcony.glb",
+   "part": "balcony",
+   "slot": "balcony",
+   "option": "",
+   "width": null,
+   "tris": 268,
+   "bytes": 23688,
+   "glow": true,
+   "when": [
+    {
+     "balcony": [
+      true
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "balcony-rail-plain.glb",
+   "part": "balcony-rail-plain",
+   "slot": "balcony-rail",
+   "option": "plain",
+   "width": null,
+   "tris": 144,
+   "bytes": 12404,
+   "glow": false,
+   "when": [
+    {
+     "balcony": [
+      true
+     ],
+     "rail": [
+      "plain"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  },
+  {
+   "file": "balcony-rail-fancy.glb",
+   "part": "balcony-rail-fancy",
+   "slot": "balcony-rail",
+   "option": "fancy",
+   "width": null,
+   "tris": 228,
+   "bytes": 18956,
+   "glow": false,
+   "when": [
+    {
+     "balcony": [
+      true
+     ],
+     "rail": [
+      "fancy"
+     ]
+    }
+   ],
+   "mirrorable": false,
+   "when_mirror": null
+  }
+ ],
+ "recipes": [
+  {
+   "slug": "house-a",
+   "spec": {
+    "width": "medium",
+    "roof": "gable",
+    "porch": "left",
+    "palette": "lavender",
+    "rail": "plain",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "none",
+    "dormer": false,
+    "balcony": false,
+    "boxes": false,
+    "colours": {
+     "body": "#a38fb8",
+     "trim": "#f5e6c7",
+     "roof": "#4f304c",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 3126
+  },
+  {
+   "slug": "house-b",
+   "spec": {
+    "width": "medium",
+    "roof": "gable",
+    "porch": "centre",
+    "palette": "sage",
+    "rail": "plain",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "none",
+    "wing": "none",
+    "chimney": "none",
+    "dormer": false,
+    "balcony": false,
+    "boxes": false,
+    "colours": {
+     "body": "#94ab85",
+     "trim": "#f5e6c7",
+     "roof": "#383842",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-right-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-centre-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 3158
+  },
+  {
+   "slug": "house-c",
+   "spec": {
+    "width": "medium",
+    "roof": "gable",
+    "porch": "left",
+    "palette": "mustard",
+    "rail": "plain",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "right",
+    "bay": "none",
+    "wing": "none",
+    "chimney": "none",
+    "dormer": false,
+    "balcony": false,
+    "boxes": false,
+    "colours": {
+     "body": "#dbb052",
+     "trim": "#f5e6c7",
+     "roof": "#573347",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-right-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "turret-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 3420
+  },
+  {
+   "slug": "house-d",
+   "spec": {
+    "width": "medium",
+    "roof": "gable",
+    "porch": "centre",
+    "palette": "slate",
+    "rail": "plain",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "none",
+    "wing": "right",
+    "chimney": "none",
+    "dormer": false,
+    "balcony": false,
+    "boxes": false,
+    "colours": {
+     "body": "#758fb0",
+     "trim": "#f5e6c7",
+     "roof": "#333645",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-side-window-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4012
+  },
+  {
+   "slug": "house-01",
+   "spec": {
+    "width": "wide",
+    "roof": "gable",
+    "porch": "left",
+    "palette": "slate",
+    "rail": "plain",
+    "gingerbread": "sunburst",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "right",
+    "dormer": true,
+    "balcony": false,
+    "boxes": true,
+    "colours": {
+     "body": "#758fb0",
+     "trim": "#f5e6c7",
+     "roof": "#333645",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-sunburst-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-windows-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-chim-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "dormer-gable-wide.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 3756
+  },
+  {
+   "slug": "house-02",
+   "spec": {
+    "width": "narrow",
+    "roof": "gable",
+    "porch": "centre",
+    "palette": "charcoal",
+    "rail": "plain",
+    "gingerbread": "spindle",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "none",
+    "wing": "right",
+    "chimney": "right",
+    "dormer": false,
+    "balcony": true,
+    "boxes": true,
+    "colours": {
+     "body": "#5c5c69",
+     "trim": "#f5e6c7",
+     "roof": "#5c364c",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-spindle-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-window-arched-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-gable-spindle-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-side-window-chim-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-wing-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-wing-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony-rail-plain.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4520
+  },
+  {
+   "slug": "house-03",
+   "spec": {
+    "width": "medium",
+    "roof": "hip",
+    "porch": "left",
+    "palette": "lavender",
+    "rail": "fancy",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "right",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "none",
+    "dormer": true,
+    "balcony": false,
+    "boxes": true,
+    "colours": {
+     "body": "#a38fb8",
+     "trim": "#f5e6c7",
+     "roof": "#4f304c",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-hip-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-fancy-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "turret-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "dormer-hip-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 3878
+  },
+  {
+   "slug": "house-04",
+   "spec": {
+    "width": "narrow",
+    "roof": "cross",
+    "porch": "wrap",
+    "palette": "teal",
+    "rail": "fancy",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "none",
+    "dormer": false,
+    "balcony": true,
+    "boxes": false,
+    "colours": {
+     "body": "#549494",
+     "trim": "#f5e6c7",
+     "roof": "#4c2e45",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "cross-pointy-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "cross-windows-arched-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-wrap-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-fancy-wrap-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-wrap-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony-rail-fancy.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4858
+  },
+  {
+   "slug": "house-05",
+   "spec": {
+    "width": "wide",
+    "roof": "hip",
+    "porch": "left",
+    "palette": "rose",
+    "rail": "plain",
+    "gingerbread": "spindle",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "right",
+    "bay": "left",
+    "wing": "none",
+    "chimney": "none",
+    "dormer": true,
+    "balcony": false,
+    "boxes": false,
+    "colours": {
+     "body": "#d19499",
+     "trim": "#f5e6c7",
+     "roof": "#5e3d33",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-hip-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-right-rear-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "turret-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-wide.glb",
+     "mirror": true
+    },
+    {
+     "file": "dormer-hip-wide.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 3590
+  },
+  {
+   "slug": "house-06",
+   "spec": {
+    "width": "medium",
+    "roof": "gable",
+    "porch": "wrap",
+    "palette": "mustard",
+    "rail": "plain",
+    "gingerbread": "pendant",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "right",
+    "dormer": false,
+    "balcony": true,
+    "boxes": true,
+    "colours": {
+     "body": "#dbb052",
+     "trim": "#f5e6c7",
+     "roof": "#573347",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-pendant-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-wrap-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-wrap-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-wrap-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-wrap-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-chim-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony-rail-plain.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4698
+  },
+  {
+   "slug": "house-07",
+   "spec": {
+    "width": "narrow",
+    "roof": "cross",
+    "porch": "centre",
+    "palette": "rose",
+    "rail": "fancy",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "right",
+    "dormer": false,
+    "balcony": false,
+    "boxes": true,
+    "colours": {
+     "body": "#d19499",
+     "trim": "#f5e6c7",
+     "roof": "#5e3d33",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "cross-pointy-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "cross-windows-arched-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-fancy-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-centre-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-chim-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-narrow.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4118
+  },
+  {
+   "slug": "house-08",
+   "spec": {
+    "width": "medium",
+    "roof": "hip",
+    "porch": "centre",
+    "palette": "sage",
+    "rail": "fancy",
+    "gingerbread": "pendant",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "left",
+    "wing": "right",
+    "chimney": "none",
+    "dormer": true,
+    "balcony": false,
+    "boxes": true,
+    "colours": {
+     "body": "#94ab85",
+     "trim": "#f5e6c7",
+     "roof": "#383842",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-hip-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-fancy-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-medium.glb",
+     "mirror": true
+    },
+    {
+     "file": "wing-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-gable-pendant-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-side-window-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-wing-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "dormer-hip-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4674
+  },
+  {
+   "slug": "house-09",
+   "spec": {
+    "width": "narrow",
+    "roof": "hip",
+    "porch": "left",
+    "palette": "mustard",
+    "rail": "fancy",
+    "gingerbread": "spindle",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "right",
+    "bay": "none",
+    "wing": "right",
+    "chimney": "right",
+    "dormer": true,
+    "balcony": false,
+    "boxes": false,
+    "colours": {
+     "body": "#dbb052",
+     "trim": "#f5e6c7",
+     "roof": "#573347",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-hip-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-fancy-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "turret-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-siding-clapboard-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-window-arched-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-gable-spindle-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-side-window-chim-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-wing-narrow.glb",
+     "mirror": false
+    },
+    {
+     "file": "dormer-hip-narrow.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4320
+  },
+  {
+   "slug": "house-10",
+   "spec": {
+    "width": "wide",
+    "roof": "gable",
+    "porch": "wrap",
+    "palette": "slate",
+    "rail": "plain",
+    "gingerbread": "pendant",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "right",
+    "wing": "none",
+    "chimney": "right",
+    "dormer": false,
+    "balcony": true,
+    "boxes": true,
+    "colours": {
+     "body": "#758fb0",
+     "trim": "#f5e6c7",
+     "roof": "#333645",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-pendant-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-wrap-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-wrap-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-wrap-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-wrap-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "bay-chim-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-wide.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony-rail-plain.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4770
+  },
+  {
+   "slug": "house-11",
+   "spec": {
+    "width": "medium",
+    "roof": "cross",
+    "porch": "centre",
+    "palette": "teal",
+    "rail": "fancy",
+    "gingerbread": "sunburst",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "none",
+    "bay": "none",
+    "wing": "none",
+    "chimney": "right",
+    "dormer": false,
+    "balcony": true,
+    "boxes": true,
+    "colours": {
+     "body": "#549494",
+     "trim": "#f5e6c7",
+     "roof": "#4c2e45",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "cross-pointy-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "cross-windows-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-sunburst-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-right-rear-chim-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-right-rear-chim-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-fancy-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-centre-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony.glb",
+     "mirror": false
+    },
+    {
+     "file": "balcony-rail-fancy.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4546
+  },
+  {
+   "slug": "house-12",
+   "spec": {
+    "width": "medium",
+    "roof": "gable",
+    "porch": "left",
+    "palette": "sage",
+    "rail": "plain",
+    "gingerbread": "scallop",
+    "frieze": "spindle",
+    "siding": "clapboard",
+    "gable_window": "arched",
+    "cross_style": "pointy",
+    "turret": "right",
+    "bay": "none",
+    "wing": "right",
+    "chimney": "right",
+    "dormer": false,
+    "balcony": false,
+    "boxes": true,
+    "colours": {
+     "body": "#94ab85",
+     "trim": "#f5e6c7",
+     "roof": "#383842",
+     "porch": "#f5e6c7"
+    }
+   },
+   "parts": [
+    {
+     "file": "walls-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "roof-gable-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "attic-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "windows-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "window-left-rear-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "porch-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-porch-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "rail-plain-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "frieze-spindle-left-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "turret-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-siding-clapboard-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-window-arched-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-gable-scallop-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "wing-side-window-chim-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "boxes-wing-medium.glb",
+     "mirror": false
+    },
+    {
+     "file": "chimney-wing-medium.glb",
+     "mirror": false
+    }
+   ],
+   "tris": 4582
+  }
+ ]
+}

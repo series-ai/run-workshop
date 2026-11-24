@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Dog clip sheet</title>
+<style>
+  html, body { margin: 0; background: #f2f2f4; font-family: system-ui, sans-serif; }
+  canvas { display: block; }
+  #label { position: fixed; top: 8px; left: 12px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="label"></div>
+<canvas id="c"></canvas>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Test sheet: rows are dogs with extreme proportions, columns are moments in one clip,
+// seen from the side. show('play_bow') re-poses everything; ?clip= picks the first.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { loadClipLibrary, setupDog } from './dogclips.js';
+
+const BUILD = Date.now();  // always fetch the latest rigged models (no stale browser cache)
+
+const DOGS = new URLSearchParams(location.search).get('dogs')?.split(',') ||
+  ['labrador-retriever', 'dachshund', 'chihuahua', 'great-dane', 'pug', 'shih-tzu'];
+const COLS = 6, CELL = 1.6;
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setSize(COLS * 170, DOGS.length * 127.5);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf2f2f4);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b8, 2.4));
+const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+sun.position.set(3, 4, 2);
+scene.add(sun);
+const w = COLS * CELL, h = DOGS.length * CELL * 0.75;
+const camera = new THREE.OrthographicCamera(-w / 2, w / 2, h / 2, -h / 2, 0.1, 50);
+camera.position.set(10, 0.6, 0);   // from the dog's right... dogs face +Z, so +X looks at their left side
+camera.lookAt(0, 0.6, 0);
+
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, `rigged/clips.glb?v=${BUILD}`);
+const cells = [];
+for (const [r, slug] of DOGS.entries()) {
+  const src = (await loader.loadAsync(`rigged/${slug}.glb?v=${BUILD}`)).scene;
+  for (let c = 0; c < COLS; c++) {
+    const g = SkeletonUtils.clone(src);
+    g.position.set(0, h / 2 - (r + 1) * CELL * 0.75 + 0.15 + 0.6, ((COLS - 1) / 2 - c) * CELL);  // time runs left to right
+    g.scale.setScalar(0.9);
+    scene.add(g);
+    const line = new THREE.Mesh(new THREE.PlaneGeometry(0.01, CELL * 0.9), new THREE.MeshBasicMaterial({ color: 0x999999 }));
+    line.rotation.z = Math.PI / 2;
+    line.rotation.y = Math.PI / 2;
+    line.position.copy(g.position);
+    scene.add(line);  // ground line under each dog
+    cells.push({ dog: setupDog(g, lib), c });
+  }
+}
+// showMany(['sit_loop', 'down_loop', ...], frac): a different clip per column, each at
+// the same fraction of its length.
+window.showMany = (names, frac = 0.5) => {  // frac: one number, or one per column
+  for (const { dog, c } of cells) {
+    const name = names[c];
+    dog.mixer.stopAllAction();
+    if (!name) { dog.root.visible = false; continue; }
+    dog.root.visible = true;
+    const a = dog.mixer.clipAction(dog.clips[name]);
+    a.play();
+    a.time = lib.meta[name].duration * (Array.isArray(frac) ? frac[c] : frac);
+    dog.name = name; dog.action = a;
+    dog.update(0);
+  }
+  renderer.render(scene, camera);
+  document.getElementById('label').textContent = names.join(' · ');
+};
+// view('back') looks along the dogs' direction of travel from behind; view('side') is the default.
+window.view = which => {
+  for (const { dog, c } of cells) dog.root.rotation.y = which === 'back' ? -Math.PI / 2 : 0;
+  renderer.render(scene, camera);
+};
+window.show = name => {
+  const m = lib.meta[name];
+  for (const { dog, c } of cells) {
+    dog.mixer.stopAllAction();
+    const a = dog.mixer.clipAction(dog.clips[name]);
+    a.play();
+    a.time = m.duration * c / COLS;
+    dog.name = name;
+    dog.action = a;
+    dog.update(0);
+  }
+  renderer.render(scene, camera);
+  document.getElementById('label').textContent = `${name} · ${m.duration.toFixed(2)} s · columns every ${(m.duration / COLS).toFixed(2)} s`;
+  return Object.keys(lib.meta);
+};
+// zoom(row, col, size): frame one dog's head for a close look; zoom() resets.
+window.zoom = (r, c, size = 0.35, bone = 'head', dy = -0.6) => {
+  if (r === undefined) Object.assign(camera, { left: -w / 2, right: w / 2, top: h / 2, bottom: -h / 2 });
+  else {
+    let head;
+    cells[r * COLS + c].dog.root.traverse(o => { if (o.isBone && o.name === bone) head = o; });
+    const p = head.getWorldPosition(new THREE.Vector3());
+    // The camera looks down -X from +X, so screen-right is world -Z.
+    Object.assign(camera, { left: -p.z - size, right: -p.z + size, top: p.y + dy + size * 0.7, bottom: p.y + dy - size * 0.7 });
+  }
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+};
+// at(seconds): put every cell at the same moment of the current clip.
+window.at = t => {
+  for (const { dog } of cells) { dog.mixer._actions.forEach(a => { a.time = t; }); dog.update(0); }
+  renderer.render(scene, camera);
+};
+window.cells = cells;
+window.ready = true;
+window.show(new URLSearchParams(location.search).get('clip') || 'walk');
+</script>
+</body>
+</html>

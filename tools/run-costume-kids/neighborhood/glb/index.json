@@ -1,0 +1,272 @@
+[
+ {
+  "slug": "candy-apple",
+  "tris": 286,
+  "kind": "candy"
+ },
+ {
+  "slug": "candy-chocolate",
+  "tris": 256,
+  "kind": "candy"
+ },
+ {
+  "slug": "candy-corn",
+  "tris": 98,
+  "kind": "candy"
+ },
+ {
+  "slug": "candy-gumdrop",
+  "tris": 218,
+  "kind": "candy"
+ },
+ {
+  "slug": "candy-lollipop",
+  "tris": 332,
+  "kind": "candy"
+ },
+ {
+  "slug": "candy-wrapped",
+  "tris": 252,
+  "kind": "candy"
+ },
+ {
+  "slug": "car-bug",
+  "tris": 2254,
+  "kind": "car"
+ },
+ {
+  "slug": "car-pickup",
+  "tris": 2450,
+  "kind": "car"
+ },
+ {
+  "slug": "car-sedan",
+  "tris": 2218,
+  "kind": "car"
+ },
+ {
+  "slug": "car-spooky",
+  "tris": 2054,
+  "kind": "car"
+ },
+ {
+  "slug": "car-van",
+  "tris": 1976,
+  "kind": "car"
+ },
+ {
+  "slug": "car-wagon",
+  "tris": 2266,
+  "kind": "car"
+ },
+ {
+  "slug": "fence-dark",
+  "tris": 204,
+  "kind": "fence"
+ },
+ {
+  "slug": "fence-dark-gate",
+  "tris": 352,
+  "kind": "fence"
+ },
+ {
+  "slug": "fence-dark-post",
+  "tris": 68,
+  "kind": "fence"
+ },
+ {
+  "slug": "fence-white",
+  "tris": 204,
+  "kind": "fence"
+ },
+ {
+  "slug": "fence-white-gate",
+  "tris": 352,
+  "kind": "fence"
+ },
+ {
+  "slug": "fence-white-post",
+  "tris": 68,
+  "kind": "fence"
+ },
+ {
+  "slug": "road",
+  "tris": 24,
+  "kind": "ground"
+ },
+ {
+  "slug": "sidewalk",
+  "tris": 40,
+  "kind": "ground"
+ },
+ {
+  "slug": "house-01",
+  "tris": 3756,
+  "kind": "house"
+ },
+ {
+  "slug": "house-02",
+  "tris": 4520,
+  "kind": "house"
+ },
+ {
+  "slug": "house-03",
+  "tris": 3878,
+  "kind": "house"
+ },
+ {
+  "slug": "house-04",
+  "tris": 4858,
+  "kind": "house"
+ },
+ {
+  "slug": "house-05",
+  "tris": 3590,
+  "kind": "house"
+ },
+ {
+  "slug": "house-06",
+  "tris": 4698,
+  "kind": "house"
+ },
+ {
+  "slug": "house-07",
+  "tris": 4118,
+  "kind": "house"
+ },
+ {
+  "slug": "house-08",
+  "tris": 4674,
+  "kind": "house"
+ },
+ {
+  "slug": "house-09",
+  "tris": 4320,
+  "kind": "house"
+ },
+ {
+  "slug": "house-10",
+  "tris": 4770,
+  "kind": "house"
+ },
+ {
+  "slug": "house-11",
+  "tris": 4546,
+  "kind": "house"
+ },
+ {
+  "slug": "house-12",
+  "tris": 4582,
+  "kind": "house"
+ },
+ {
+  "slug": "house-a",
+  "tris": 3126,
+  "kind": "house"
+ },
+ {
+  "slug": "house-b",
+  "tris": 3158,
+  "kind": "house"
+ },
+ {
+  "slug": "house-c",
+  "tris": 3420,
+  "kind": "house"
+ },
+ {
+  "slug": "house-d",
+  "tris": 4012,
+  "kind": "house"
+ },
+ {
+  "slug": "jack-large",
+  "tris": 212,
+  "kind": "jack"
+ },
+ {
+  "slug": "jack-medium",
+  "tris": 196,
+  "kind": "jack"
+ },
+ {
+  "slug": "jack-small",
+  "tris": 200,
+  "kind": "jack"
+ },
+ {
+  "slug": "lamp-double",
+  "tris": 790,
+  "kind": "lamp"
+ },
+ {
+  "slug": "lamp-single",
+  "tris": 494,
+  "kind": "lamp"
+ },
+ {
+  "slug": "tree-forked",
+  "tris": 1160,
+  "kind": "tree"
+ },
+ {
+  "slug": "tree-gnarled",
+  "tris": 1358,
+  "kind": "tree"
+ },
+ {
+  "slug": "tree-leaning",
+  "tris": 994,
+  "kind": "tree"
+ },
+ {
+  "slug": "bush",
+  "tris": 328,
+  "kind": "yard"
+ },
+ {
+  "slug": "crow-post",
+  "tris": 262,
+  "kind": "yard"
+ },
+ {
+  "slug": "hay-bale",
+  "tris": 486,
+  "kind": "yard"
+ },
+ {
+  "slug": "hedge",
+  "tris": 284,
+  "kind": "yard"
+ },
+ {
+  "slug": "hydrant",
+  "tris": 238,
+  "kind": "yard"
+ },
+ {
+  "slug": "leaf-pile",
+  "tris": 454,
+  "kind": "yard"
+ },
+ {
+  "slug": "mailbox",
+  "tris": 184,
+  "kind": "yard"
+ },
+ {
+  "slug": "street-sign",
+  "tris": 544,
+  "kind": "yard"
+ },
+ {
+  "slug": "tombstone-cross",
+  "tris": 224,
+  "kind": "yard"
+ },
+ {
+  "slug": "tombstone-round",
+  "tris": 226,
+  "kind": "yard"
+ }
+]

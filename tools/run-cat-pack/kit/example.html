@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Facet Fauna: Cats - kit example</title>
+<style>body { margin: 0; background: #eeeef1; overflow: hidden; }</style></head>
+<body>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// The smallest game-side use of catkit.js: a few breeds and two crosses,
+// lit by ordinary scene lights, each playing a clip.
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { loadCatKit } from './catkit.js';
+
+const P = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeeeef1);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a96, 2.0));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(2, 4, 3);
+scene.add(sun);
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.05, 100);
+camera.position.set(0, 1.4, 4.2);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.25, 0);
+controls.update();
+
+const kit = await loadCatKit('./', { layout: 'source' });
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const specs = [...(P.get('breeds') || 'Domestic Shorthair (ginger),Siamese,Bengal,Maine Coon').split(','),
+               kit.breed('Siamese', 'Maine Coon', rand), kit.breed('Bengal', 'Persian', rand)];
+const clip = P.get('clip') || 'idle';
+const cats = specs.map((s, i) => {
+  const cat = kit.makeCat(s);
+  cat.object.position.set((i - (specs.length - 1) / 2) * 0.9, 0, 0);
+  cat.object.rotation.y = -(+P.get('rot') || 0.7);
+  scene.add(cat.object);
+  cat.play(clip);
+  if (P.has('t')) cat.update(+P.get('t'));
+  return cat;
+});
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (!P.has('t')) for (const c of cats) c.update(dt);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

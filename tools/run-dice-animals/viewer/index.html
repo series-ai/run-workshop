@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dice animals: clip preview</title>
+<style>
+  :root { --bg: #e9f2d8; --panel: #fffdf8; --ink: #2b2622; --soft: #8a7f74; --accent: #e8836a; --line: #e4ddd2; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg);
+         display: grid; grid-template-columns: 300px 1fr; height: 100vh; overflow: hidden; }
+  aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding: 14px 14px 24px; }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .hint { color: var(--soft); font-size: 12px; margin: 0 0 12px; }
+  h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); margin: 16px 0 6px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .grid button { font-size: 12px; padding: 5px 6px; }
+  .list { display: flex; flex-direction: column; gap: 2px; }
+  button { font: inherit; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 6px 8px; text-align: left;
+           cursor: pointer; color: var(--ink); }
+  button:active { transform: translateY(1px); }
+  button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .clip { display: flex; justify-content: space-between; }
+  .clip small { color: var(--soft); }
+  .clip.on small { color: #fff; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+  .row label { flex: 1; }
+  input[type=range] { width: 100%; }
+  main { position: relative; }
+  canvas { display: block; }
+  #hud { position: absolute; left: 16px; top: 12px; font-weight: 600; font-size: 18px; text-shadow: 0 1px 0 #fff; pointer-events: none; }
+  #hud small { display: block; font-weight: 400; font-size: 12px; color: var(--soft); }
+  #bar { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 6px; background: rgba(0,0,0,.08); border-radius: 3px; }
+  #bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; }
+  #err { position: absolute; inset: 0; display: none; place-items: center; color: #a33; font-weight: 600; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<aside>
+  <h1>Dice animals, props and puzzle pieces</h1>
+  <p class="hint">↑ ↓ clips · ← → animals · space pause · L loop · R replay · drag to orbit</p>
+  <h2>Animal</h2>
+  <div class="grid" id="animals"></div>
+  <h2>Dice, cubes and terrain</h2>
+  <div class="grid" id="props"></div>
+  <h2>Puzzle pieces</h2>
+  <div class="grid" id="puzzle"></div>
+  <h2>Chains</h2>
+  <div class="list" id="chains"></div>
+  <h2>Clips</h2>
+  <div class="list" id="clips"></div>
+  <h2>Playback</h2>
+  <div class="row"><label for="loop">Loop</label><input type="checkbox" id="loop" checked></div>
+  <div class="row"><label for="speed">Speed <span id="speedv">1×</span></label></div>
+  <input type="range" id="speed" min="0.1" max="2" step="0.05" value="1">
+  <div class="row"><label for="follow">Camera follows rolls</label><input type="checkbox" id="follow" checked></div>
+  <div class="row"><label for="tint">Tint (plain cube)</label><input type="color" id="tint" value="#ffffff"></div>
+</aside>
+<main id="view">
+  <div id="hud"></div>
+  <div id="bar"><i></i></div>
+  <div id="err"></div>
+</main>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const ANIMALS = ["sheep", "cow", "pig", "horse", "donkey", "goat", "chicken", "hen", "rooster", "chick", "duck", "goose", "turkey",
+                 "bunny", "cat", "cat_grey", "cat_black", "cat_tuxedo", "cat_calico", "cat_siamese", "dog", "mouse", "frog", "fox",
+                 "owl", "owl_barn", "raccoon", "hedgehog", "turtle", "skunk", "lion", "tiger", "bear", "bear_black", "bear_polar",
+                 "bear_sun", "bear_teddy",
+                 "panda", "moose", "elephant", "giraffe", "zebra", "monkey", "koala", "penguin", "hippo", "crocodile"];
+const PROPS = ["die_white", "die_red", "die_wood", "cube", "grass", "dirt", "rock", "sand", "snow", "ice", "water", "crate", "hay",
+               "brick", "bush"];
+const PUZZLE = ["button", "fan", "conveyor", "spring", "gate", "goal_flag", "turntable", "portal", "ramp"];
+const ALL = [...ANIMALS, ...PROPS, ...PUZZLE];
+const ORDER = ["idle", "walk", "run", "hop", "jump", "excited", "waggle", "happy", "tap", "land", "place", "drop", "squish",
+               "roll", "roll_side", "roll_in", "spin", "spin_start", "spin_loop", "spin_end", "teeter_in", "teeter_loop",
+               "teeter_out", "sleep", "sad"];
+const LOOPS = new Set(["idle", "walk", "run", "hop", "excited", "waggle", "spin_loop", "teeter_loop", "sleep", "sad",
+                       "held", "on", "off", "run", "stop", "closed", "opened", "wave", "swirl"]);
+const CHAINS = { "spin: start → loop ×3 → end": ["spin_start", "spin_loop", "spin_loop", "spin_loop", "spin_end"],
+                 "button: press → held → release": ["press", "held", "release"],
+                 "fan: spin up → on ×4 → spin down": ["spin_up", "on", "on", "on", "on", "spin_down"],
+                 "gate: open → opened → close": ["open", "opened", "close"],
+                 "teeter: in → loop ×2 → out": ["teeter_in", "teeter_loop", "teeter_loop", "teeter_out"] };
+
+const view = document.getElementById("view");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+view.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#e9f2d8");
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
+camera.position.set(9.5, 6.5, 14);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.1, 0);
+controls.enableDamping = true;
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb8c79a, 1.6));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(5, 9, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 40 });
+sun.shadow.bias = -0.0005;
+scene.add(sun, sun.target);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: "#a8cf7a", roughness: 1 }));
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+const grid = new THREE.GridHelper(40, 20, 0x8fb866, 0x96bd6e);   // 2-unit cells: one die each
+grid.position.y = 0.002;
+scene.add(grid);
+
+const loader = new GLTFLoader();
+const cache = {};
+let model = null, mixer = null, clips = {}, current = null, queue = [], animal = "sheep", paused = false;
+let holdUntil = 0, bodyNode = null, chainSeq = null;
+
+// Face parts that are off (brows, spare eyes and mouths, sweat) sit at
+// 0.001 scale but would still cost a draw call (and a shadow pass) each.
+function cullHidden() {
+  model.traverse(o => { o.visible = o.scale.x > 0.01; });
+}
+
+function load(name) {
+  if (!cache[name]) cache[name] = loader.loadAsync(`../models/${name}.glb`);
+  return cache[name];
+}
+
+async function setAnimal(name) {
+  animal = name;
+  let gltf;
+  try { gltf = await load(name); } catch (e) { showErr(`Couldn't load models/${name}.glb`); return; }
+  if (model) scene.remove(model);
+  model = gltf.scene;
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  bodyNode = model.getObjectByName("body");
+  cullHidden();
+  applyTint();
+  scene.add(model);
+  mixer = new THREE.AnimationMixer(model);
+  clips = Object.fromEntries(gltf.animations.map(c => [c.name, c]));
+  buildClipList();
+  markAnimals();
+  const first = ORDER.find(n => clips[n]) || Object.keys(clips)[0];
+  if (!first) { current = null; mixer.stopAllAction(); markClips(); return; }  // a static model (the ramp)
+  play(current && clips[current] ? current : clips.idle ? "idle" : first);
+}
+
+function play(name, chain = null) {
+  if (!clips[name]) return;
+  chainSeq = chain;
+  queue = chain ? chain.slice(1) : [];
+  start(name);
+}
+
+function start(name) {
+  current = name;
+  mixer.stopAllAction();
+  const a = mixer.clipAction(clips[name]);
+  a.reset();
+  a.setLoop(LOOPS.has(name) && !queue.length ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+  a.clampWhenFinished = true;
+  a.play();
+  holdUntil = 0;
+  markClips();
+}
+
+function step(dt) {
+  if (!mixer || paused || !clips[current]) return;
+  const a = mixer.existingAction(clips[current]);
+  if (!a) return;
+  const speed = +document.getElementById("speed").value;
+  mixer.update(dt * speed);
+  cullHidden();
+  const dur = clips[current].duration;
+  const done = a.loop === THREE.LoopOnce && a.time >= dur - 1e-4;
+  if (done) {
+    if (queue.length) { start(queue.shift()); return; }
+    if (document.getElementById("loop").checked) {
+      if (!holdUntil) holdUntil = performance.now() + 700;
+      else if (performance.now() > holdUntil) chainSeq ? play(chainSeq[0], chainSeq) : start(current);
+    }
+  }
+}
+
+function hud() {
+  if (!clips[current]) {
+    document.querySelector("#hud").innerHTML = `${animal}<small>no clips</small>`;
+    document.querySelector("#bar i").style.width = "0";
+    return;
+  }
+  const a = mixer && mixer.existingAction(clips[current]);
+  const dur = clips[current].duration;
+  const t = a ? a.time % dur : 0;
+  document.querySelector("#hud").innerHTML = `${animal} · ${current || ""}<small>${(t * 30).toFixed(0)} / ${Math.round(dur * 30)} frames${paused ? " · paused" : ""}${LOOPS.has(current) ? " · loop" : ""}</small>`;
+  document.querySelector("#bar i").style.width = `${(t / dur) * 100}%`;
+}
+
+function buildClipList() {
+  const el = document.getElementById("clips");
+  el.innerHTML = "";
+  const names = Object.keys(clips).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  for (const n of names) {
+    const b = document.createElement("button");
+    b.className = "clip";
+    b.dataset.clip = n;
+    b.innerHTML = `<span>${n}</span><small>${Math.round(clips[n].duration * 30)}f${LOOPS.has(n) ? " ↻" : ""}</small>`;
+    b.onclick = () => play(n);
+    el.appendChild(b);
+  }
+  const ch = document.getElementById("chains");
+  ch.innerHTML = "";
+  for (const [label, seq] of Object.entries(CHAINS)) {
+    const b = document.createElement("button");
+    b.textContent = label;
+    b.onclick = () => play(seq[0], seq);
+    ch.appendChild(b);
+  }
+}
+function markClips() { document.querySelectorAll("#clips button").forEach(b => b.classList.toggle("on", b.dataset.clip === current)); }
+function markAnimals() { document.querySelectorAll("#animals button, #props button, #puzzle button").forEach(b => b.classList.toggle("on", b.dataset.a === animal)); }
+function applyTint() {  // the plain cube is white: a game tints it by setting its material colour
+  if (!model || animal !== "cube") return;
+  const c = new THREE.Color(document.getElementById("tint").value);
+  model.traverse(o => { if (o.isMesh) o.material.color.copy(c); });
+}
+function showErr(m) { const e = document.getElementById("err"); e.textContent = m; e.style.display = "grid"; }
+
+for (const [id, list] of [["animals", ANIMALS], ["props", PROPS], ["puzzle", PUZZLE]]) {
+  const el = document.getElementById(id);
+  for (const a of list) {
+    const b = document.createElement("button");
+    b.textContent = a;
+    b.dataset.a = a;
+    b.onclick = () => setAnimal(a);
+    el.appendChild(b);
+  }
+}
+document.getElementById("tint").oninput = applyTint;
+document.getElementById("speed").oninput = e => (document.getElementById("speedv").textContent = `${(+e.target.value).toFixed(2)}×`);
+
+addEventListener("keydown", e => {
+  const names = [...document.querySelectorAll("#clips button")].map(b => b.dataset.clip);
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    const i = names.indexOf(current) + (e.key === "ArrowDown" ? 1 : -1);
+    play(names[(i + names.length) % names.length]);
+  } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    e.preventDefault();
+    const i = ALL.indexOf(animal) + (e.key === "ArrowRight" ? 1 : -1);
+    setAnimal(ALL[(i + ALL.length) % ALL.length]);
+  } else if (e.key === " ") { e.preventDefault(); paused = !paused; }
+  else if (e.key.toLowerCase() === "l") { const c = document.getElementById("loop"); c.checked = !c.checked; }
+  else if (e.key.toLowerCase() === "r") { play(current); }
+});
+
+function resize() {
+  const r = view.getBoundingClientRect();
+  renderer.setSize(r.width, r.height);
+  camera.aspect = r.width / r.height;
+  camera.updateProjectionMatrix();
+}
+addEventListener("resize", resize);
+resize();
+
+const clock = new THREE.Clock();
+const tmp = new THREE.Vector3();
+renderer.setAnimationLoop(() => {
+  step(Math.min(clock.getDelta(), 1 / 20));
+  if (bodyNode && document.getElementById("follow").checked) {  // keep travelling clips (rolls) in view
+    bodyNode.getWorldPosition(tmp);
+    const want = new THREE.Vector3(tmp.x, 1.1, tmp.z);
+    const d = want.clone().sub(controls.target).multiplyScalar(0.08);
+    controls.target.add(d);
+    camera.position.add(d);
+  }
+  controls.update();
+  hud();
+  renderer.render(scene, camera);
+});
+
+setAnimal("sheep");
+</script>
+</body>
+</html>

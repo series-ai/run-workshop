@@ -1,0 +1,201 @@
+"""Haunted tree: the kid inside a fat tree-trunk suit, head and all, with
+bark ridges and the kid's standard face looking out of a big knot-hole
+opening. Above it two carved spooky-cute eye-holes with bark brows make the
+tree's own face; out of the top a huge crown of crooked bare branches
+spreads way past the head, with twigs, a few autumn leaves and a little owl
+perched on top. Branch arms with the kid's mitts at the ends (the left
+dangles the full bucket), chunky roots round the shoes."""
+_PKG = __import__("os").path.normpath(__import__("os").path.join(__import__("os").path.dirname(__import__("os").path.abspath(__file__)), "../.."))  # tools/run-costume-kids
+import math
+import sys
+sys.path.insert(0, _PKG + "/concepts")
+sys.path.insert(0, _PKG + "/concepts/costumes")
+from bobble import *  # noqa: F401,F403
+from props import bucket
+
+BARK, BARK_D, BARK_L, HOLE = (0.56, 0.37, 0.22), (0.40, 0.25, 0.14), (0.70, 0.50, 0.32), (0.16, 0.09, 0.06)
+LEAF = [(1.0, 0.52, 0.10), (0.92, 0.25, 0.15), (1.0, 0.78, 0.18)]
+OWL, OWL_BELLY, OWL_EYE, BEAK = (0.62, 0.48, 0.38), (0.94, 0.86, 0.70), (1.0, 0.82, 0.2), (1.0, 0.6, 0.12)
+HAIR = (0.3, 0.17, 0.09)
+
+
+def cut(obj, cutter):
+    """Boolean `cutter` out of `obj` (the cutter is hidden)."""
+    m = obj.modifiers.new("cut", "BOOLEAN")
+    m.object, m.operation = cutter, "DIFFERENCE"
+    cutter.hide_render = True
+    return obj
+
+
+def opening(w=HEAD * 0.88, h=HEAD * 0.8, back=-0.6, front=-3.0, bevel=0.55):
+    """A cutter for the face opening round the standard face."""
+    return box(0, (back + front) / 2, HEAD_Z - HEAD * 0.06, w, back - front, h, WHITE, bevel=bevel, segs=3)
+
+
+def bar(p0, p1, r0, r1, rgb, n=6):
+    p0, p1 = Vector(p0), Vector(p1)
+    d = p1 - p0
+    o = can(0, 0, 0, r0, d.length, rgb, n=n, r2=r1)
+    o.rotation_mode = "QUATERNION"
+    o.rotation_quaternion = d.to_track_quat("Z", "Y")
+    o.location = (p0 + p1) / 2
+    return o
+
+
+def sweep(pts, radii, rgb, m=6):
+    """One round tube through `pts` (a ring of m corners at each point, mitred so
+    the bends keep their thickness), capped at both ends: a whole branch in one
+    cheap piece instead of a bar and a ball per segment."""
+    verts, faces = [], []
+    for i, p in enumerate(pts):
+        a, b = pts[max(i - 1, 0)], pts[min(i + 1, len(pts) - 1)]
+        t, k = (b - a).normalized(), 1.0
+        if 0 < i < len(pts) - 1:
+            t0, t1 = (p - a).normalized(), (b - p).normalized()
+            t = (t0 + t1).normalized()
+            k = 1.0 / max(0.5, t0.dot(t))  # mitre: keep the tube's thickness through the bend
+        u = t.cross(Vector((0, -1, 0)))
+        if u.length < 1e-4:
+            u = t.cross(Vector((0, 0, 1)))
+        u.normalize()
+        v = u.cross(t).normalized()
+        for j in range(m):
+            ang = 2 * math.pi * (j + 0.5) / m
+            verts.append(p + (u * math.cos(ang) * k + v * math.sin(ang)) * radii[i])
+    for i in range(len(pts) - 1):
+        for j in range(m):
+            faces.append((i * m + j, i * m + (j + 1) % m, (i + 1) * m + (j + 1) % m, (i + 1) * m + j))
+    faces.append(tuple(range(m - 1, -1, -1)))
+    faces.append(tuple((len(pts) - 1) * m + j for j in range(m)))
+    me = bpy.data.meshes.new("tube")
+    me.from_pydata([tuple(v) for v in verts], [], faces)
+    me.update()
+    ob = bpy.data.objects.new("tube", me)
+    bpy.context.scene.collection.objects.link(ob)
+    return finish(ob, rgb)
+
+
+def disc(x, y, z, w, h, d, rgb, n=16):
+    """A flat oval disc facing -y: w wide, h tall, d deep."""
+    o = can(x, y, z, 0.5, d, rgb, n=n, rot=(math.radians(90), 0, 0))
+    bpy.ops.object.select_all(action="DESELECT")
+    o.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+    o.scale = (w, 1, h)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    return o
+
+
+def leaf(x, y, z, k, a=0.0):
+    box(x, y, z, 0.46, 0.08, 0.3, LEAF[k % 3], rot=(math.radians(20), a, math.radians(30 * k)))
+
+
+def branch(pts, r0, r1):
+    """A crooked branch through pts, tapering from r0 to r1, knuckles at the bends."""
+    n = len(pts) - 1
+    sweep([Vector(p) for p in pts], [r0 + (r1 - r0) * i / n for i in range(n + 1)], BARK, m=6)  # one crooked tube
+
+
+def owl(x, y, z):
+    """A little owl perched at (x, y, z) (its feet)."""
+    ball(x, y, z + 0.32, 0.6, 0.52, 0.66, OWL, seg=8, ring=6)
+    ball(x, y - 0.2, z + 0.26, 0.38, 0.16, 0.44, OWL_BELLY, seg=8, ring=5)
+    box(x, y - 0.02, z + 0.78, 0.6, 0.5, 0.44, OWL, bevel=0.14, segs=2)
+    for s in (-1, 1):
+        can(x + s * 0.14, y - 0.27, z + 0.8, 0.13, 0.05, OWL_EYE, n=10, rot=(math.radians(90), 0, 0))
+        can(x + s * 0.14, y - 0.3, z + 0.8, 0.07, 0.04, DARK, n=8, rot=(math.radians(90), 0, 0))
+        can(x + s * 0.22, y, z + 1.05, 0.09, 0.22, OWL, n=4, r2=0.0, rot=(0, s * math.radians(-20), math.radians(45)))
+        box(x + s * 0.3, y + 0.02, z + 0.3, 0.12, 0.36, 0.42, (0.5, 0.38, 0.3), bevel=0.05)  # wings
+        box(x + s * 0.09, y - 0.12, z + 0.02, 0.1, 0.16, 0.05, BEAK)                          # feet
+    can(x, y - 0.3, z + 0.68, 0.06, 0.14, BEAK, n=4, r2=0.0, rot=(math.radians(180), 0, 0))
+
+
+def build():
+    # the trunk comes right down to the ground and hides the kid's legs and feet, so they are left out
+    # (body() always draws the shoes: drop them)
+    before = set(bpy.data.objects)
+    body(pants=BARK_D, leg_colour=BARK_D, shoe=(0.30, 0.55, 0.25), torso=False, arms=False, legs=False)
+    for o in set(bpy.data.objects) - before:
+        bpy.data.objects.remove(o, do_unlink=True)
+    kid_head(hair=HAIR)
+    with part("body"):  # the trunk round the kid and the bark rim of the face opening
+        # the trunk, head and all: a big rounded bark box with the knot-hole face opening
+        W, D, yc, z0, z1, BV = 3.7, 3.4, 0.1, 0.06, 4.95, 0.55  # down to the ground over the feet: no floating feet
+        cut(box(0, yc, (z0 + z1) / 2, W, D, z1 - z0, BARK, bevel=BV, segs=3), opening())
+        fy = yc - D / 2
+        fz = HEAD_Z - HEAD * 0.06
+        rim = box(0, fy + 0.2, fz, HEAD * 0.88 + 0.45, 0.5, HEAD * 0.8 + 0.45, BARK_L, bevel=0.22, segs=2)
+        cut(rim, opening(back=0.5))
+    with part("head"):
+        box(0, -HEAD * 0.46 - 0.02, HEAD_Z + HEAD * 0.26, HEAD * 0.72, 0.1, 0.3, HAIR, bevel=0.08)   # the fringe
+    with part("body"):
+        # bark ridges down the four faces (the front ones flank the face opening)
+        hx, hy = W / 2, D / 2
+        ridges = [((-1.52, fy), 0), ((1.52, fy), 1),
+                  ((-hx, yc - 0.7), 2), ((-hx, yc + 0.6), 0), ((hx, yc - 0.6), 1), ((hx, yc + 0.7), 2),
+                  ((-0.7, yc + hy), 1), ((0.1, yc + hy), 2), ((0.8, yc + hy), 0)]
+        for (x, y), k in ridges:
+            hz = 1.6 + 0.6 * k
+            side = abs(abs(x) - hx) < 1e-6
+            box(x, y, z0 + 0.3 + hz / 2, 0.14 if not side else 0.16, 0.16 if not side else 0.14, hz, BARK_D)
+    with part("body"):  # the roots are part of the tree: they move with the trunk (the rig's floor guard keeps them out of the floor)
+        # roots growing out of the trunk's foot and spreading over the ground
+        for sx, sy, ex, ey in ((1.4, 1.3, 2.35, 2.2), (-1.4, 1.3, -2.35, 2.2), (1.4, -1.3, 2.3, -2.1), (-1.4, -1.3, -2.3, -2.1),
+                               (1.5, 0.0, 2.6, 0.0), (-1.5, 0.0, -2.6, 0.0), (0.0, 1.4, 0.0, 2.5)):
+            bar((sx, yc + sy, z0 + 0.3), (ex, yc + ey, 0.1), 0.36, 0.14, BARK, n=6)
+            ball(ex, yc + ey, 0.1, 0.3, 0.3, 0.2, BARK, seg=6, ring=3)
+    with part("body"):  # the tree face, the broken top, the crown and the owl sit on the trunk
+        # the tree's own spooky-cute face above the kid's: carved eye-holes and bark brows
+        ez = 4.47
+        for s in (-1, 1):
+            disc(s * 0.62, fy - 0.03, ez, 0.46, 0.48, 0.1, BARK_D, n=10)
+            disc(s * 0.62, fy - 0.06, ez - 0.02, 0.34, 0.36, 0.1, HOLE, n=10)
+            disc(s * 0.56, fy - 0.1, ez + 0.05, 0.1, 0.1, 0.04, WHITE, n=6)
+            box(s * 0.64, fy - 0.04, ez + 0.3, 0.5, 0.1, 0.12, BARK_D, rot=(0, s * math.radians(-16), 0))
+        # the broken top: a dark hollow ringed by bark spikes
+        box(0, yc, z1 - 0.02, W - 1.2, D - 1.2, 0.06, HOLE, bevel=0.2)
+        spikes = ((-1.4, -1.25), (0.0, -1.3), (1.4, -1.25), (1.45, 0.0), (1.4, 1.25), (0.0, 1.3), (-1.4, 1.25), (-1.45, 0.0))
+        for k, ((x, y), h) in enumerate(zip(spikes, (0.55, 0.3, 0.7, 0.35, 0.5, 0.28, 0.62, 0.4))):
+            can(x, yc + y, z1 - 0.2 + (h + 0.2) / 2, 0.3, h + 0.2, BARK, n=4, r2=0.0, rot=(0, 0, math.radians(45 * k)))
+        # the huge crown of crooked bare branches
+        crown = [
+            [(-1.1, 0.2, z1 - 0.3), (-2.0, 0.1, z1 + 0.29), (-2.35, 0.0, z1 + 0.98), (-3.05, -0.1, z1 + 1.27)],
+            [(1.1, 0.2, z1 - 0.3), (2.0, 0.15, z1 + 0.20), (2.55, 0.05, z1 + 0.78), (3.2, 0.0, z1 + 0.86)],
+            [(-0.5, 0.3, z1), (-0.85, 0.3, z1 + 0.74), (-0.6, 0.25, z1 + 1.35), (-1.0, 0.2, z1 + 1.60)],
+            [(0.6, 0.4, z1), (1.05, 0.4, z1 + 0.70), (1.6, 0.35, z1 + 1.27), (1.45, 0.3, z1 + 1.60)],
+        ]
+        for pts in crown:
+            branch(pts, 0.36, 0.1)
+        twigs = [((-2.35, 0.0, z1 + 0.98), (-2.2, 0.0, z1 + 1.52)), ((-2.0, 0.1, z1 + 0.29), (-2.8, 0.0, z1 + 0.37)),
+                 ((2.55, 0.05, z1 + 0.78), (2.65, 0.0, z1 + 1.31)), ((2.0, 0.15, z1 + 0.20), (2.75, 0.1, z1 + 0.00)),
+                 ((-0.6, 0.25, z1 + 1.35), (-0.2, 0.25, z1 + 1.60)), ((1.6, 0.35, z1 + 1.27), (2.05, 0.3, z1 + 1.52))]
+        for a, b in twigs:
+            bar(a, b, 0.09, 0.03, BARK)
+        for k, (x, y, z) in enumerate(((-3.05, -0.15, z1 + 1.31), (-2.2, -0.05, z1 + 1.56), (2.7, -0.05, z1 + 1.35), (3.2, -0.05, z1 + 0.90),
+                                       (-1.0, 0.15, z1 + 1.64), (2.05, 0.25, z1 + 1.56), (2.8, 0.05, z1 + 0.00))):
+            leaf(x, y, z, k)
+        owl(0.0, -0.3, z1)
+    # branch arms with twigs and leaves (part of the tree), the kid's mitts at the tips
+    rpts = [(1.6, -0.2, 1.8), (2.2, -0.3, 1.95), (2.45, -0.35, 2.55)]
+    lpts = [(-1.6, -0.2, 1.8), (-2.15, -0.3, 1.75), (-2.35, -0.42, 1.45)]
+    with part("body"):
+        branch(rpts, 0.24, 0.14)
+        bar((2.2, -0.3, 1.95), (2.7, -0.3, 2.15), 0.07, 0.03, BARK)
+        leaf(2.7, -0.3, 2.18, 1)
+        branch(lpts, 0.24, 0.14)
+        bar((-2.15, -0.3, 1.75), (-2.45, -0.25, 2.25), 0.07, 0.03, BARK)
+        leaf(-2.46, -0.25, 2.3, 2)
+    with part("hand.l"):
+        hand_mitt(2.48, -0.37, 2.75, 1, MITT, SKIN)
+    with part("hand.r"):
+        hand_mitt(-2.38, -0.45, 1.3, -1, MITT, SKIN)
+    bucket((-2.38, -0.45, 1.3), full=True, size=0.6)
+    with part("body"):
+        # a couple of leaves stuck on the trunk
+        leaf(1.35, fy - 0.08, 4.3, 0)
+        leaf(-0.95, fy - 0.08, 1.05, 1)
+
+
+if __name__ == "__main__" or True:
+    render_costume("haunted-tree", build, sys.argv[sys.argv.index("--") + 1], ortho=8.5, target_z=3.0)

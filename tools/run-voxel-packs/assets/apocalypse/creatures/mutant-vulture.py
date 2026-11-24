@@ -6,7 +6,8 @@ a pale ruff, a long bald red neck and head, a hooked ivory beak with a
 dark tip, feathered thighs and grey legs with dark talons. Feather rows,
 wrinkles and scars are paint. The mutation is the accent: eyes that glow
 teal and teal boils on the bare neck. Clips: idle (peer and shift), move
-(flap and hop), attack (neck lunge and peck), hit, death (falls on its
+(flap and hop), attack (rocks back with the wings
+mantled, pitches forward into a hard double peck), hit, death (falls on its
 side). Faces -Z.
 """
 import math
@@ -151,9 +152,17 @@ def _build():
     move = {"wing-l": {"rot": wave(flap, (0, 0, -28))}, "wing-r": {"rot": wave(flap, (0, 0, 28))},
             "mutant-vulture": {"loc": seq((0, 0, 0, 0), (0.4, 0, 2.0, 0), (0.8, 0, 0, 0))},
             "head": {"rot": wave(flap, (5, 0, 0), phase=1.0)}}
-    attack = {"head": {"rot": seq((0, 0, 0, 0), (0.2, 14, 0, 0), (0.42, -26, 0, 0), (0.8, 0, 0, 0))},
-              "wing-l": {"rot": seq((0, 0, 0, 0), (0.2, 0, 0, 18), (0.5, 0, 0, -6), (0.8, 0, 0, 0))},
-              "wing-r": {"rot": seq((0, 0, 0, 0), (0.2, 0, 0, -18), (0.5, 0, 0, 6), (0.8, 0, 0, 0))}}
+    # attack: rock back on the feet, cock the neck and mantle the wings up
+    # (f0-11), pitch forward 2 frames into the beak strike (impact f13)
+    # with a hop, drive the beak on with a second jab, then settle; the
+    # wings beat down a frame behind the strike.
+    f = 1 / 30
+    imp = 13 * f
+    attack = {"mutant-vulture": {"rot": seq((0, 0, 0, 0), (9 * f, 12, 0, 0), (11 * f, 14, 0, 0), (imp, -22, 0, 0), (15 * f, -28, 0, 0), (20 * f, -22, 0, 0), (30 * f, 0, 0, 0)),
+                                 "loc": seq((0, 0, 0, 0), (9 * f, 0, 0.8, 3), (11 * f, 0, 0.9, 3.5), (imp, 0, 1.8, -8), (15 * f, 0, 2.2, -9), (20 * f, 0, 2.0, -8), (30 * f, 0, 0, 0))},
+              "head": {"rot": seq((0, 0, 0, 0), (9 * f, 30, 0, 0), (11 * f, 34, 0, 0), (imp, -36, 0, 0), (15 * f, -46, 0, 0), (17 * f, -32, 0, 0), (19 * f, -44, 0, 0), (22 * f, -34, 0, 0), (30 * f, 0, 0, 0))},
+              "wing-l": {"rot": seq((0, 0, 0, 0), (9 * f, 0, 0, -40), (12 * f, 0, 0, -46), (14 * f, 0, 0, 24), (17 * f, 0, 0, 30), (23 * f, 0, 0, 12), (30 * f, 0, 0, 0))},
+              "wing-r": {"rot": seq((0, 0, 0, 0), (9 * f, 0, 0, 40), (12 * f, 0, 0, 46), (14 * f, 0, 0, -24), (17 * f, 0, 0, -30), (23 * f, 0, 0, -12), (30 * f, 0, 0, 0))}}
     hit = {"head": {"rot": seq((0, 0, 0, 0), (0.12, 16, 12, 0), (0.5, 0, 0, 0))},
            "wing-l": {"rot": seq((0, 0, 0, 0), (0.12, 0, 0, 22), (0.5, 0, 0, 0))},
            "wing-r": {"rot": seq((0, 0, 0, 0), (0.12, 0, 0, -22), (0.5, 0, 0, 0))}}
@@ -162,9 +171,9 @@ def _build():
              "wing-r": {"rot": seq((0, 0, 0, 0), (0.6, 0, 0, -30))},
              "head": {"rot": seq((0, 0, 0, 0), (1.2, -30, 0, 20))}}
     return make("creatures", "mutant-vulture", "Mutant Vulture", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
                 sockets=[rig.socket("socket-beak", (CX, 42.5, 1), parent="head")],
-                pfx=[fx("rvx-apocalypse-gore-burst", "socket-beak", "clip:attack", size=10)])
+                pfx=[fx("rvx-apocalypse-gore-burst", "socket-beak", "clip:attack", size=10, at=imp)])
 
 
 def build():

@@ -11,8 +11,8 @@ scales, a row of dark diamond saddles on the spine, pale lime spots along
 the flanks, sand belly plates in a dark frame, bone claws.
 
 Clips: idle (breathe, sway the head, flick the tail), attack (rear the
-head back, then lunge with the jaw wide and the eyes on the target: the
-gaze PFX at the eye socket), hit (the head snaps back), death (the legs
+head back and draw the body back, then lunge with the jaw wide and snap it
+shut on the target: the gaze PFX at the eye socket), hit (the head snaps back), death (the legs
 splay, the body drops and the head falls to the ground). Faces -Z.
 """
 import numpy as np
@@ -267,14 +267,16 @@ def build():
             "head": {"rot": keys(z, (0.5, 4, 10, 0), (1.0, 0, 0, 0), (1.5, 4, -10, 0), (2.0, 0, 0, 0))},
             "jaw": {"rot": keys(z, (0.8, 0, 0, 0), (1.0, -8, 0, 0), (1.2, 0, 0, 0), (2.0, 0, 0, 0))},
             "tail": {"rot": keys(z, (0.5, 0, 10, 0), (1.5, 0, -10, 0), (2.0, 0, 0, 0))}}
-    # the gaze: rear the head back, then lunge with the jaw wide open
-    attack = {"head": {"rot": keys(z, (0.18, 22, 0, 0), (0.35, -4, 0, 0), (0.6, -3, 0, 0), (1.0, 0, 0, 0)),
-                       "loc": keys(z, (0.18, 0, 1.0, 3.0), (0.35, 0, 0, -4.0), (0.6, 0, 0, -3.5), (1.0, 0, 0, 0))},
-              "jaw": {"rot": keys(z, (0.18, -10, 0, 0), (0.35, -28, 0, 0), (0.6, -26, 0, 0), (1.0, 0, 0, 0))},
-              "basilisk": {"loc": keys(z, (0.18, 0, 0, 1.5), (0.35, 0, 0, -2.0), (1.0, 0, 0, 0))},
-              "tail": {"rot": keys(z, (0.18, 0, -18, 0), (0.35, 0, 22, 0), (0.7, 0, 8, 0), (1.0, 0, 0, 0))},
-              "leg-fl": {"rot": keys(z, (0.18, 0, 0, -6), (0.35, 0, 0, -2), (1.0, 0, 0, 0))},
-              "leg-fr": {"rot": keys(z, (0.18, 0, 0, 6), (0.35, 0, 0, 2), (1.0, 0, 0, 0))}}
+    # the gaze: the head rears up and back and the body draws back (0-0.43 s), then the whole
+    # serpent lunges in 3 frames with the jaw flung wide; it snaps shut on contact at 0.533 s,
+    # holds, and slides back. The tail cocks against the lunge and whips through after it.
+    attack = {"head": {"rot": keys(z, (0.3667, 30, 0, 0), (0.4333, 34, 0, 0), (0.5333, -5, 0, 0), (0.6, -7, 0, 0), (0.7333, -5, 0, 0), (1.0333, 0, 0, 0)),
+                       "loc": keys(z, (0.3667, 0, 1.5, 1.5), (0.4333, 0, 1.8, 1.8), (0.5333, 0, 0.4, -2.5), (0.6, 0, 0.4, -3.0), (0.7333, 0, 0.4, -2.5), (1.0333, 0, 0, 0))},
+              "jaw": {"rot": keys(z, (0.3667, -14, 0, 0), (0.4333, -18, 0, 0), (0.4667, -36, 0, 0), (0.5333, 0, 0, 0), (0.5667, -4, 0, 0), (0.7333, -3, 0, 0), (1.0333, 0, 0, 0))},
+              "basilisk": {"loc": keys(z, (0.3667, 0, 0, 4.0), (0.4333, 0, 0, 4.5), (0.5333, 0, 0, -10.0), (0.6, 0, 0, -11.0), (0.7333, 0, 0, -10.0), (1.0333, 0, 0, 0))},
+              "tail": {"rot": keys(z, (0.4333, 0, -26, 0), (0.6, 0, 26, 0), (0.7667, 0, 10, 0), (0.9, 0, -4, 0), (1.0333, 0, 0, 0))},
+              "leg-fl": {"rot": keys(z, (0.4333, 0, 0, -4), (0.5333, 0, 0, -10), (0.7333, 0, 0, -8), (1.0333, 0, 0, 0))},
+              "leg-fr": {"rot": keys(z, (0.4333, 0, 0, 4), (0.5333, 0, 0, 10), (0.7333, 0, 0, 8), (1.0333, 0, 0, 0))}}
     hit = {"head": {"rot": keys(z, (0.1, 24, -14, 8), (0.35, 18, -10, 5), (0.7, 0, 0, 0))},
            "jaw": {"rot": keys(z, (0.1, -18, 0, 0), (0.7, 0, 0, 0))},
            "basilisk": {"loc": keys(z, (0.1, 0, 0, 2.0), (0.7, 0, 0, 0))},
@@ -289,6 +291,6 @@ def build():
              "leg-br": {"rot": keys(z, (0.9, 0, 0, 30), (1.4, 0, 0, 28))}}
     gaze = to_root((CX, 28.0, 4.0))
     return asset("creatures", "basilisk", "Basilisk", root,
-                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", keyed(root, attack), loop=False), Clip("hit", keyed(root, hit), loop=False), Clip("death", keyed(root, death), loop=False)],
+                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", keyed(root, attack), loop=False, impact=0.5333), Clip("hit", keyed(root, hit), loop=False), Clip("death", keyed(root, death), loop=False)],
                  sockets=[Socket("socket-function", at=gaze, parent="head")],
-                 fx=[pfx("rvx-fantasy-holy-smite", "socket-function", "clip:attack", size=20, at=0.35)])
+                 fx=[pfx("rvx-fantasy-holy-smite", "socket-function", "clip:attack", size=20, at=0.5333)])
