@@ -128,13 +128,34 @@ def bellows() -> Grid:
 
 def build():
     rig = Rig("scrap-forge", (31, G0, 26), forge())
-    # Clip keys turn a part from its rest pose, so the door rests closed:
-    # a key of -72 opens it and a key of 0 closes it.
+    # Clip keys turn a part from its rest pose, so the door rests closed.
+    # Its hinge is the left edge of the panel on the FRONT face (x 21, z 7;
+    # the forge faces -Z and the panel runs x 21-39). A turn of +b about +Y
+    # (right-handed, glTF) takes the free edge at x 39 to z = 7 - 18 sin b:
+    # toward -Z, out of the forge toward the viewer. -b would swing it in
+    # through the coal bed.
     rig.add("fire-door", door(), (21, 14, 7))
     rig.add("bellows", bellows(), (51.5, 14, 21))
-    open_close = {"fire-door": {"rot": [(0, (0, -72, 0)), (0.5, (0, 0, 0)), (1, (0, -72, 0)), (1.5, (0, 0, 0)), (2, (0, -72, 0))]},
+    OPEN = 115.0  # swung well past square, so it folds back toward the pillar face and reads as outward
+
+    def door_angle(f: int) -> float:
+        """One open-close cycle a second, keyed every frame (ease 0): it
+        swings shut accelerating all the way and slams (f10), knocks back
+        off the frame and settles, holds, then is kicked open, accelerating
+        into its stop (f23) with a small rebound off it, and holds."""
+        f %= 30
+        if f <= 3:
+            return OPEN
+        if f <= 10:
+            return OPEN * (1 - ((f - 3) / 7) ** 2)
+        if f <= 17:
+            return {11: 5.0, 12: 2.0}.get(f, 0.0)
+        if f <= 23:
+            return OPEN * ((f - 17) / 6) ** 2
+        return {24: OPEN - 6, 25: OPEN - 2}.get(f, OPEN)
+    open_close = {"fire-door": {"rot": [(f / 30, (0, door_angle(f), 0)) for f in range(61)]},
                   "bellows": {"scale": [(0, (1, 1, 1)), (0.5, (1, 1.2, 1)), (1, (1, 1, 1)), (1.5, (1, 1.2, 1)), (2, (1, 1, 1))]}}
     return make("animated-props", "scrap-forge", "Scrap Forge", rig.root,
-                clips=[Clip("idle", {"fire-door": {"rot": [(0, (0, -72, 0)), (1, (0, -70, 0)), (2, (0, -72, 0))]}}), Clip("active", open_close)],
+                clips=[Clip("idle", {"fire-door": {"rot": [(0, (0, OPEN, 0)), (1, (0, OPEN - 2, 0)), (2, (0, OPEN, 0))]}}), Clip("active", open_close, impact=10 / 30, ease=0)],
                 sockets=[rig.socket("socket-fire", (30, 15, 13)), rig.socket("socket-smoke", (39, 58.5, 31))],
                 pfx=[fx("rvx-apocalypse-barrel-fire", "socket-fire", "idle", size=18), fx("rvx-apocalypse-exhaust-smoke", "socket-smoke", "clip:active", size=14)])

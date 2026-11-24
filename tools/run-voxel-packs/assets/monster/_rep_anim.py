@@ -37,6 +37,7 @@ import pnglyph
 import pnshapes as S
 from _double import _metal, _stone, _wood
 from _kit import C, Clip, Grid, Socket, keys, pfx, world
+from _slam import slam
 from _life import eyes, octo
 from _pn import assemble, coords, last
 from _props import grave, mound, tufts, union
@@ -240,15 +241,16 @@ def _jack_in_the_box():
     clips = [
         Clip("open", {
             "crank": {"rot": [(0.0, (0, 0, 0)), (0.04, (-90, 0, 0)), (0.08, (-180, 0, 0)), (0.12, (-270, 0, 0)), (0.16, (-360, 0, 0))]},
-            "lid": {"rot": keys((0.0, (-lid_open, 0, 0)), (0.16, (-lid_open, 0, 0)), (0.32, (-30, 0, 0)), (0.42, (6, 0, 0)), (0.5, (0, 0, 0)))},
+            # the crank turns, then the lid bursts open, accelerating into its stop (see _slam)
+            "lid": {"rot": slam((-lid_open, 0, 0), (0, 0, 0), frames=6, power=2.0, rebound=0.06, start=5, end=17)[0]},
             "action": {"loc": keys((0.0, (0, -pop, 0)), (0.2, (0, -pop, 0)), (0.36, (0, 1.5, 0)), (0.46, (0, -0.8, 0)), (0.56, (0, 0, 0)))},
             "spring": {"scale": keys((0.0, down), (0.2, down), (0.36, (1, (span + 1.5) / span, 1)), (0.46, (1, (span - 0.8) / span, 1)), (0.56, (1, 1, 1)))},
-        }, loop=False),
+        }, loop=False, ease=0),
         Clip("close", {
             "action": {"loc": keys((0.0, (0, 0, 0)), (0.35, (0, -pop, 0)))},
             "spring": {"scale": keys((0.0, (1, 1, 1)), (0.35, down))},
-            "lid": {"rot": keys((0.0, (0, 0, 0)), (0.35, (0, 0, 0)), (0.7, (-lid_open, 0, 0)))},
-        }, loop=False),
+            "lid": {"rot": slam((0, 0, 0), (-lid_open, 0, 0), frames=8, power=3.5, rebound=0.04, start=8, end=24)[0]},  # slams shut on the clown
+        }, loop=False, ease=0),
         Clip("idle", {
             "action": {"loc": keys((0.0, (0, 0, 0)), (0.6, (0, 0.6, 0)), (1.2, (0, 0, 0)), (1.8, (0, 0.6, 0)), (2.4, (0, 0, 0))),
                        "rot": keys((0.0, (0, 0, 0)), (0.6, (0, 0, 5)), (1.2, (0, 0, 0)), (1.8, (0, 0, -5)), (2.4, (0, 0, 0)))},
@@ -359,13 +361,13 @@ def _music_box():
     folded = (1.0, 0.05, 1.0)
     clips = [
         Clip("open", {
-            "action": {"rot": keys((0.0, (-lid_open, 0, 0)), (0.45, (4, 0, 0)), (0.55, (0, 0, 0)))},
+            "action": {"rot": slam((-lid_open, 0, 0), (0, 0, 0), frames=9, power=2.5, rebound=0.05, end=20)[0]},  # flips open into its stop (see _slam)
             "dancer": {"scale": keys((0.0, folded), (0.25, folded), (0.55, (1, 1.06, 1)), (0.65, (1, 1, 1)))},
-        }, loop=False),
+        }, loop=False, ease=0),
         Clip("close", {
             "dancer": {"scale": keys((0.0, (1, 1, 1)), (0.3, folded))},
-            "action": {"rot": keys((0.0, (0, 0, 0)), (0.3, (0, 0, 0)), (0.8, (-lid_open, 0, 0)))},
-        }, loop=False),
+            "action": {"rot": slam((0, 0, 0), (-lid_open, 0, 0), frames=9, power=3.5, rebound=0.04, start=8, end=24)[0]},  # drops shut
+        }, loop=False, ease=0),
         Clip("active", {
             "dancer": {"rot": _spin(2.0, 1, -1.0)},
             "key": {"rot": _spin(2.0, 0, 1.0)},
@@ -576,6 +578,46 @@ def _ouija_table():
 
 
 # ---------------------------------------------------------------- rising-grave (A4)
+def _grave_bounce(fps: int = 30):
+    """The headstone's `active` loop, keyed on every frame (1.4 s): a 2-frame
+    squat, a 4-frame pop up with a stretch that overshoots the 13-voxel top,
+    a springy settle there (a damped bounce with squash at each low), then a
+    fall under gravity onto the grave with a squash and two decaying
+    rebounds. The stone squashes and stretches about its foot."""
+    top, n = 13.0, 42
+    loc, scl = [], []
+    for f in range(n + 1):
+        if f <= 3:  # the squat before the pop
+            u = (f / 3) ** 2  # out of the rest pose without a kick at the loop point
+            y, sy = -0.6 * u, 1 - 0.1 * u
+        elif f <= 7:  # the pop: fast out, decelerating into the overshoot
+            u = (f - 3) / 4
+            y = (top + 2.5) * (1 - (1 - u) ** 2)
+            sy = 1 + 0.15 * math.sin(math.pi * u)
+        elif f <= 26:  # a springy settle at the top
+            d = math.cos(math.pi * (f - 7) / 3) * math.exp(-(f - 7) / 6)
+            y, sy = top + 2.5 * d, 1 + 0.06 * d
+        elif f < 32:  # the drop: gravity from rest, onto the grave at full speed
+            u = (f - 26) / 6
+            y0 = top + 2.5 * math.cos(math.pi * 19 / 3) * math.exp(-19 / 6)
+            y, sy = y0 * (1 - u * u), 1 + 0.08 * u
+        elif f < 37:  # the landing squash and a first rebound
+            u = (f - 32) / 5
+            y = 8 * 1.8 * u * (1 - u) / 2
+            sy = 0.8 if f == 32 else 0.9 if f == 33 else 1 + 0.04 * math.sin(math.pi * u)
+        elif f < 40:  # a small second rebound
+            u = (f - 37) / 3
+            y, sy = 2 * u * (1 - u), (0.92 if f == 37 else 1.0)
+        else:  # the last small landing, then rest
+            y, sy = 0.0, {40: 0.95, 41: 0.99}.get(f, 1.0)
+        if f == n:
+            y, sy = 0.0, 1.0
+        sxz = 1 / math.sqrt(sy)  # keep the volume
+        loc.append((f / fps, (0.0, y, 0.0)))
+        scl.append((f / fps, (sxz, sy, sxz)))
+    return {"loc": loc, "scale": scl}
+
+
 def _rising_grave():
     """The old rising grave without the stone curb. The stone kerbs stand
     on the floor round a dirt grave mound. The headstone stands on the floor
@@ -598,7 +640,7 @@ def _rising_grave():
     box(action, 14, 13, 7, 18, 15, 8, "purple", 5)
     joints = [("base", None, (cx, 0, cz)), ("action", "base", (cx, 0, 9))]
     root = assemble({"base": base, "action": action}, joints)
-    clips = [Clip("active", {"action": {"loc": keys((0, (0, 0, 0)), (0.35, (0, 10, 0)), (0.6, (0, 13, 0)), (0.9, (0, 10, 0)), (1.2, (0, 0, 0)))}}),
+    clips = [Clip("active", {"action": _grave_bounce()}, ease=0),
              Clip("idle", {"action": {"loc": keys((0, (0, 0, 0)), (1.2, (0, 0.7, 0)), (2.4, (0, 0, 0)))}})]
     return world("rising-grave", "animated-props", "Rising Grave", root, clips=clips,
                  sockets=[Socket("socket-grave", at=(0, 3, 2), parent="base")],

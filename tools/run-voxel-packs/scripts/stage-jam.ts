@@ -14,9 +14,9 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { LEAF_KINDS, leafFor, RVX_PACK_KEYS, RVX_PACKS, type RvxPackKey } from '../contracts/packs'
-import { STAGE_DIR } from '../src/paths'
+import { STAGE_DIR, TOOL_ROOT } from '../src/paths'
 import { runText, SOURCE } from '../src/stage/licenses'
 
 function images(dir: string, ext: RegExp): string[] {
@@ -80,10 +80,17 @@ function main(): void {
       if (!existsSync(leafDir)) throw new Error(`${pack}: leaf ${kind} is missing at ${leafDir}`)
       const leaf = leafFor(pack, kind)
       writeFileSync(join(leafDir, 'License.txt'), runText(RVX_PACKS[pack].label, kind))
-      const previews = kind === 'world' || kind === 'characters' ? images(leafDir, /\.jpg$/) : images(leafDir, /\.png$/)
-      const sourcePath = `.preview-sources/${leaf.id.replace(/\//g, '--')}.png`
-      mkdirSync(join(target, '.preview-sources'), { recursive: true })
-      montage(previews, join(target, sourcePath), kind === 'ui' || kind === 'icons' ? '#2a3140' : '#10141c')
+      // A designed cover (covers/make.py) wins over the contact sheet of the leaf's previews.
+      const cover = join(TOOL_ROOT, 'covers', 'out', `${leaf.id.replace(/\//g, '--')}.png`)
+      const sourcePath = existsSync(cover)
+        ? `scripts/preview-inputs/${leaf.id.replace(/\//g, '--')}.png`
+        : `.preview-sources/${leaf.id.replace(/\//g, '--')}.png`
+      mkdirSync(dirname(join(target, sourcePath)), { recursive: true })
+      if (existsSync(cover)) cpSync(cover, join(target, sourcePath))
+      else {
+        const previews = kind === 'world' || kind === 'characters' ? images(leafDir, /\.jpg$/) : images(leafDir, /\.png$/)
+        montage(previews, join(target, sourcePath), kind === 'ui' || kind === 'icons' ? '#2a3140' : '#10141c')
+      }
       const sha = createHash('sha256').update(readFileSync(join(target, sourcePath))).digest('hex')
       const previous = selections.packs[leaf.id] ?? {}
       selections.packs[leaf.id] = {
@@ -93,7 +100,9 @@ function main(): void {
         sourceUrl: SOURCE,
         sourcePath,
         sourceSha256: sha,
-        description: 'Contact sheet of assets included in this pack, rendered by the pack build tool.',
+        description: existsSync(cover)
+          ? `The pack's cover: the ${RVX_PACKS[pack].label} logo over a scene built from the pack's own models, rendered by the pack build tool.`
+          : 'Contact sheet of assets included in this pack, rendered by the pack build tool.',
       }
     }
     console.log(`${pack}: staged ${dir} with licences and preview sources`)

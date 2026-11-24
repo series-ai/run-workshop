@@ -94,14 +94,38 @@ def arm() -> Grid:
     return g
 
 
+def slam(n: int, keys) -> list:
+    """Per-frame values 0..n through (frame, value[, "acc"]) keys: a key
+    tagged "acc" is reached accelerating from the previous key (quadratic,
+    fastest on arrival, then a dead stop); other spans are linear."""
+    out = []
+    for f in range(n + 1):
+        for a, b in zip(keys, keys[1:]):
+            if a[0] <= f <= b[0]:
+                u = (f - a[0]) / (b[0] - a[0]) if b[0] > a[0] else 1.0
+                if len(b) > 2 and b[2] == "acc":
+                    u = u * u
+                out.append(a[1] + (b[1] - a[1]) * u)
+                break
+        else:
+            out.append(keys[-1][1])
+    return out
+
+
 def build():
     rig = Rig("porta-potty", ((BX0 + BX1) / 2, 0, (BZ0 + BZ1) / 2), booth())
     rig.add("door", door(), HINGE)
     rig.add("arm", arm(), (DX0 + 3.0, 24.0, BZ0 + 3.0))
     idle = {"door": {"rot": keys((0, (0, 0, 0)), (1.2, (0, 0, 0)), (1.28, (0, -4, 0)), (1.36, (0, 0, 0)), (1.44, (0, -2, 0)), (1.52, (0, 0, 0)), (2.4, (0, 0, 0)))}}
-    openk = {"door": {"rot": keys((0, (0, 0, 0)), (0.18, (0, -112, 0)), (0.3, (0, -96, 0)), (0.42, (0, -104, 0)), (0.6, (0, -100, 0)))},
+    # The door hinges on its right edge at the front (-Z) and swings OUT
+    # (negative turns about +Y). One key a frame (ease 0): it is kicked open,
+    # accelerating into its stop (f7), knocks back off it and settles; it
+    # slams shut accelerating all the way (f8) and jolts back a little.
+    swing_open = slam(18, [(0, 0.0), (1, 0.0), (7, -110.0, "acc"), (8, -103.0), (9, -100.0), (10, -101.0), (18, -100.0)])
+    swing_shut = slam(14, [(0, -100.0), (1, -100.0), (8, 0.0, "acc"), (9, -6.0), (10, -2.0), (11, 0.0), (14, 0.0)])
+    openk = {"door": {"rot": [(f / 30, (0, a, 0)) for f, a in enumerate(swing_open)]},
              "arm": {"rot": keys((0, (0, 0, 0)), (0.2, (0, 0, 0)), (0.45, (0, 180, 0)), (0.6, (25, 180, 0)), (0.75, (18, 180, 0)))}}
-    closek = {"door": {"rot": keys((0, (0, -100, 0)), (0.25, (0, 4, 0)), (0.32, (0, -3, 0)), (0.4, (0, 0, 0)))},
+    closek = {"door": {"rot": [(f / 30, (0, a, 0)) for f, a in enumerate(swing_shut)]},
               "arm": {"rot": keys((0, (18, 180, 0)), (0.15, (0, 0, 0)))}}
     return make("animated-props", "porta-potty", "Porta-Potty", rig.root,
-                clips=[Clip("idle", idle), Clip("open", openk, loop=False), Clip("close", closek, loop=False)])
+                clips=[Clip("idle", idle), Clip("open", openk, loop=False, impact=7 / 30, ease=0), Clip("close", closek, loop=False, impact=8 / 30, ease=0)])

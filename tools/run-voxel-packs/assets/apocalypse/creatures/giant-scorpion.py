@@ -9,12 +9,17 @@ and three small ones glow on the head plate. Plate seams, the warm shell
 ramp, scuffs and the sickly belly are paint (rules S1, S3). Clips: idle
 (the tail sways and the pincers flex), move (the legs walk and the body
 rolls), attack (the tail whips over the head while both pincers snap),
-hit, death. Faces -Z.
+hit, death (rears, the legs give and it slams flat, the tail crashes
+down). Faces -Z.
 """
+import math
+
 import numpy as np
 
 import paint as P
 import pnpaint as PP
+import _big_falls as B
+from _big_falls import track as T
 from _life import Rig, ctr, fx, limb, make, plan, seq, skin, wave
 from voxgrid import Clip, Grid
 
@@ -166,6 +171,192 @@ def sting() -> Grid:
     return g
 
 
+# the tail at rest: keeled over to the left, sloping off the body onto the
+# floor and curving back behind it (fitted so each segment rests on it)
+TAIL_LIE = ((0, 0, 96), (35, 0, 0), (29, 0, 6), (9, 0, 17), (-21, 0, -4))
+STING_LIE = (-68, 0, 38)
+
+
+def _foot(name):
+    """A leg's tip (the end of its bone claws, its lowest point), from its hip."""
+    sg = -1 if name[4] == "l" else 1
+    k = int(name[5])
+    return (sg * (10.0 + k * 1.5 + 8.5), 0.4 - HIPS[name][1], (k - 1.5) * 5.0)
+
+
+# the height the idle stands on in the built file (its loop seam settles
+# it a little lower than the rest pose): attack, hit and death start there
+# so they blend from idle without a jump
+IDLE_DROP = 0.09
+
+
+def _plant_legs(root, keys, frames, lift=None, steps=None):
+    """Pin every leg tip to the spot it stands on, in x, y and z, while the
+    body lunges, pitches or is shoved: each leg swings and stretches a
+    touch (no knee) so its tip never slides. `lift(frame)` raises the tips
+    off the floor (the legs dangling through a pop). `steps(name)` gives a
+    leg's step windows [(f0, f1, dz)]: inside one the tip lifts on an arc
+    and moves dz along the body, planting on f1 (re-planting by stepping,
+    never sliding)."""
+    poser = B.Poser(root)
+    for name in HIPS:
+        home = poser.point({}, 0, name, _foot(name)) - np.array([0.0, IDLE_DROP, 0.0])
+        wins = steps(name) if steps else []
+
+        def tgt(f, home=home, wins=wins):
+            off = np.zeros(3)
+            for f0, f1, dz in wins:
+                u = min(1.0, max(0.0, (f - f0) / (f1 - f0)))
+                off[2] += dz * u * u * (3 - 2 * u)
+                if 0 < u < 1:
+                    off[1] += 3.0 * 4 * u * (1 - u)
+            if lift:
+                off[1] += lift(f)
+            return home + off
+        B.pin_tip(root, keys, name, _foot(name), frames, tgt)
+        # a leg that dips into the floor anywhere (a claw corner as it
+        # stretches) is lifted on its tip target until it clears it
+        for f in frames:
+            lo = poser.chain_low(keys, f, name) - B.floor_y(poser)
+            if lo < -0.05:
+                B.pin_tip(root, keys, name, _foot(name), [f], (lambda d, f=f: (lambda g: tgt(g) + np.array([0.0, d, 0.0])))(-lo))
+    return keys
+
+
+def _attack_hit(root):
+    """Baked attack and hit (see _big_falls): (attack, impact frame, hit)."""
+    # attack: it rears up 2.5 and cocks the tail hard back (the base back
+    # 25 degrees, the tip curled tight), the claws spread wide and open
+    # (f0-9, a coiled moving hold f9-11); then it lunges, nose down, and the
+    # tail whips the sting out over its head in 3 frames, fastest at the
+    # hit (impact f14): the sting lands about 15 up, past the claw tips,
+    # which flank the target and snap shut. The sting drives on past the
+    # hit, grinds in (moving), rebounds; the claws snap again; every leg
+    # tip stays where it stands; then it settles back past rest to guard.
+    I = 14
+    cock = (25, -8, -16, -18, -14)
+    throw = (-80, 26, 26, 26, 26)
+    over = (-86, 28, 28, 27, 26)
+    k = {"body": {"rot": T((0, (0, 0, 0)), (8, (6, 0, 0)), (11, (7, 0, 1)), (I, (-14, 0, 0), ">"), (I + 2, (-17, 0, 0)), (I + 6, (-12, 0, 0)), (I + 9, (-14, 0, 0)),
+                           (I + 16, (2, 0, 0)), (I + 21, (-0.5, 0, 0)), (I + 25, (0, 0, 0))),
+                  "loc": T((0, (0, 0, 0)), (8, (0, 2.4, 2.5)), (11, (0, 2.8, 3.2)), (I, (0, 6.0, -10), ">"), (I + 2, (0, 5.6, -11.5)), (I + 6, (0, 5.9, -10)), (I + 9, (0, 5.8, -10.6)),
+                           (I + 16, (0, 0.4, 0.6)), (I + 21, (0, 0, -0.1)), (I + 25, (0, 0, 0)))},
+         "jaw-l": {"rot": T((0, (0, 0, 0)), (8, (0, -34, 0)), (11, (0, -40, 0)), (I, (0, 2, 0), ">"), (I + 4, (0, 2, 0)), (I + 7, (0, -28, 0)), (I + 10, (0, 2, 0), ">"), (I + 22, (0, 0, 0)))},
+         "jaw-r": {"rot": T((0, (0, 0, 0)), (9, (0, 30, 0)), (12, (0, 37, 0)), (I, (0, -3, 0), ">"), (I + 5, (0, -3, 0)), (I + 8, (0, 24, 0)), (I + 11, (0, -2, 0), ">"), (I + 23, (0, 0, 0)))},
+         "arm-l": {"rot": T((0, (0, 0, 0)), (8, (16, 22, 0)), (11, (18, 26, 0)), (I, (12, 44, 0), ">"), (I + 2, (11, 48, 0)), (I + 8, (12, 40, 0)), (I + 16, (2, -2, 0)), (I + 22, (0, 0, 0)))},
+         "arm-r": {"rot": T((0, (0, 0, 0)), (9, (13, -20, 0)), (12, (15, -24, 0)), (I, (14, -40, 0), ">"), (I + 2, (12, -45, 0)), (I + 9, (14, -36, 0)), (I + 17, (2, 3, 0)), (I + 23, (0, 0, 0)))},
+         "sting": {"rot": T((0, (0, 0, 0)), (11, (24, 0, 0)), (I, (0, 0, 0), ">"), (I + 2, (-10, 0, 0)), (I + 6, (-2, 0, 0)), (I + 10, (-6, 0, 0)), (I + 18, (3, 0, 0)), (I + 24, (0, 0, 0)))}}
+    for j in range(5):
+        c, t, o = cock[j], throw[j], over[j]
+        lag = j // 2  # the outer tail trails the base by up to two frames on the way back
+        k[f"tail-{j + 1}"] = {"rot": T((0, (0, 0, 0)), (8, (c, 0, 0)), (11, (c * 1.12, 0, 0)), (I, (t, 0, 0), ">"), (I + 2, (o, 0, 0)), (I + 6, (t * 0.92, 0, 0)), (I + 10, (t * 0.98, 0, 0)),
+                                        (I + 17 + lag, (-c * 0.1, 0, 0)), (I + 23 + lag, (0, 0, 0)))}
+    for name in HIPS:
+        k[name] = {"rot": T((0, (0, 0, 0)), (I + 28, (0, 0, 0)))}
+    attack = B.bake(k, I + 28)
+    attack["body"]["loc"] = [(t, (v[0], v[1] - IDLE_DROP, v[2])) for t, v in attack["body"]["loc"]]
+
+    def steps(name):  # the legs step forward into the lunge and back home after it, in two alternating sets
+        b = (int(name[5]) + (name[4] == "r")) % 2  # set A: l0 r1 l2 r3, set B: r0 l1 r2 l3
+        return [(5 + 3 * b, 8 + 3 * b, -7.0), (I + 9 + 3 * b, I + 12 + 3 * b, 7.0)]
+    _plant_legs(root, attack, range(0, I + 29), steps=steps)
+    # hit: shoved back and up off its feet on frame 0-1 (lands f8), the
+    # claws fling open, the tail ripples back a segment at a time; it
+    # drifts back through the beat, then rocks forward past rest and
+    # settles. The leg tips come down exactly where they stood and stay
+    # pinned there (the legs swing under the body).
+    hk = {"body": B.react_body(push=3.2, pop=0.0, lean=-5, side=0.6),
+          "arm-l": {"rot": B.react_lag((-10, 16, 0), delay=0)}, "arm-r": {"rot": B.react_lag((-8, -13, 0), delay=1)},
+          "jaw-l": {"rot": B.react_lag((0, -28, 0), delay=1)}, "jaw-r": {"rot": B.react_lag((0, 24, 0), delay=2)},
+          "sting": {"rot": B.react_lag((-16, 0, 0), delay=5)}}
+    for j in range(5):
+        hk[f"tail-{j + 1}"] = {"rot": B.react_lag((8, 0, 4), delay=1 + j)}
+    for name in HIPS:
+        hk[name] = {"rot": T((0, (0, 0, 0)), (36, (0, 0, 0)))}
+    hit = B.bake(hk, 36)
+    pop = B.arc(0, 8, 1.6)
+    bl = hit["body"]["loc"]
+    hit["body"]["loc"] = [(t, (v[0], v[1] + pop(i) - IDLE_DROP, v[2])) for i, (t, v) in enumerate(bl)]
+    # the tips hang under the body through the pop and come down exactly
+    # where they stood, then stay pinned there while it drifts and recovers
+    _plant_legs(root, hit, range(0, 37), lift=pop)
+    return B.fill(root, attack), I, B.fill(root, hit)
+
+
+def _death(root):
+    """Baked death (see _big_falls): (keys, impact frame).
+
+    It rears up with the pincers raised and the tail drawn up tight
+    (f0-10); then the legs give: the body drops with gravity, faster and
+    faster, the legs splaying out flat as it goes (their tips stay on the
+    floor), and the belly slams flat (impact f18, squashed). One small
+    bounce and a hard stop; the pincers crash down a beat later and the
+    claws fall open, then the heavy tail comes down last, a segment at a
+    time, slapping out flat along the floor behind it, and one leg
+    twitches."""
+    I = 18
+    drop = -9.8
+    rear = T((0, (0, 0, 0)), (10, (0, 5.5, 1)), (12, (0, 5.0, 0.9)))
+    d = {"body": {"loc": B.Fall(rear, 10, I, (0, drop, 0), T((I, (0, drop, 0)), (I + 2, (0, drop + 1.0, 0)), (I + 4, (0, drop, 0), "0"), (60, (0, drop, 0))), power=2.2),
+                  "rot": T((0, (0, 0, 0)), (10, (4, 0, -2)), (13, (3.5, 0, -1)), (I, (-2, 0, 2), ">"), (I + 3, (1, 0, 1)), (I + 7, (-0.5, 0, 1.5)), (I + 11, (0, 0, 1.5)), (60, (0, 0, 1.5))),
+                  "scale": T((0, (1, 1, 1)), (10, (0.99, 1.03, 0.99)), (I - 1, (0.99, 1.02, 1)), (I, (1.06, 0.88, 1.04), ">"), (I + 3, (0.98, 1.04, 0.99)), (I + 7, (1.01, 0.99, 1)), (I + 11, (1, 1, 1)),
+                            (I + 20, (1.01, 1.03, 1.01)), (I + 30, (1, 0.98, 1)), (60, (1, 0.985, 1)))},  # a last shuddering breath
+         "sting": {"rot": T((0, (0, 0, 0)), (10, (-20, 0, 0)), (I, (-6, 0, 0)), (I + 9, STING_LIE, ">"), (I + 12, (STING_LIE[0] + 8, 0, STING_LIE[2])), (I + 15, STING_LIE), (I + 30, STING_LIE),
+                            (I + 34, (STING_LIE[0] - 16, 0, STING_LIE[2] + 4)), (I + 39, STING_LIE), (60, STING_LIE))}}  # the sting twitches once
+    # the tail: drawn up tight as it rears; as the body drops it keels over
+    # sideways (rolling about the body's long axis, so it only ever comes
+    # down, never up into a pole), and slaps flat onto the floor to the
+    # left, the base first and each segment a frame after the one before,
+    # each arriving fast, curving back along the floor behind the body.
+    curl = (-10, -6, -8, -6, -4)
+    for k in range(5):
+        c, v = curl[k], TAIL_LIE[k]
+        if k == 0:
+            keys_ = [(0, (0, 0, 0)), (10, (c, 0, 0)), (12, (c, 0, 4)), (I, (-4, 0, 56)), (I + 3, v, ">"), (I + 5, (v[0], 0, v[2] - 5)), (I + 8, v), (60, v)]
+        else:
+            at = I + 3 + k
+            keys_ = [(0, (0, 0, 0)), (10, (c, 0, 0)), (12, (c - 4, 0, 0)), (I, (c * 0.5, 0, 0)), (I + 2, (c * 0.5, 0, 0)), (at, v, ">"), (at + 2, (v[0] - 4, 0, v[2])), (at + 5, v), (60, v)]
+        d[f"tail-{k + 1}"] = {"rot": T(*keys_)}
+    for name, s in (("arm-l", -1), ("arm-r", 1)):
+        d[name] = {"rot": T((0, (0, 0, 0)), (10, (30, s * 8, 0)), (I, (24, s * 4, 0)), (I + 3, (12, -s * 6, 0), ">"), (I + 6, (17, -s * 5, 0)), (I + 9, (12, -s * 6, 0)), (60, (12, -s * 6, 0)))}
+        d[f"jaw-{name[-1]}"] = {"rot": T((0, (0, 0, 0)), (10, (0, -s * 20, 0)), (I + 3, (0, -s * 6, 0)), (I + 6, (0, s * 26, 0)), (I + 10, (0, s * 16, 0)), (I + 14, (0, s * 19, 0)), (60, (0, s * 19, 0)))}
+    for name in HIPS:
+        d[name] = {"rot": T((0, (0, 0, 0)), (60, (0, 0, 0)))}
+    death = B.bake(d, 60)
+    # the belly lands on the floor (the squash and the hop keyed off it);
+    # the loose parts are keyed to rest on it, not under it
+    B.ground(root, death, "body", height=B.arc(I, I + 4, 1.0), frames=range(I, 61), skip=tuple(HIPS) + ("arm-l", "arm-r", "jaw-l", "jaw-r", "sting") + tuple(f"tail-{k}" for k in range(1, 6)))
+    # the legs splay: each leg's tip stays on the floor as the body drops
+    # onto them, so they spread out flat; afterwards they relax onto the
+    # floor, and one twitches
+    for name in HIPS:
+        for f in range(0, 61):  # from the idle's stance height down onto the floor by the rear
+            B.reach(root, death, name, "z", [f], height=(0.2 - IDLE_DROP) * max(0.0, 1 - f / 10), fade_in=0, fade_out=0, span=80)
+        # ...and each leg folds over about its hip-to-tip line (the tip
+        # does not move), so the high knee drops out flat to the floor: the
+        # front legs fold forward, the back legs back
+        sg = -1 if name[4] == "l" else 1
+        k = int(name[5])
+        hx, hy, hz = HIPS[name]
+        axis = np.array([sg * (10.0 + k * 1.5 + 6.0), 1.6 - hy, (k - 1.5) * 5.0])
+        fold = (-1 if k < 2 else 1) * sg * (78 + 4 * abs(k - 1.5))
+        fk = B.Fall(T((0, (0, 0, 0)), (12, (0, 0, 0)), (13, (0.02, 0, 0))), 12, I, (1.0, 0, 0),
+                    T((I, (1.0, 0, 0)), (I + 3, (1.08, 0, 0)), (I + 7, (0.98, 0, 0)), (I + 10, (1.0, 0, 0)), (60, (1.0, 0, 0))), power=2.0)
+        rot = death[name]["rot"]
+        for f in range(len(rot)):
+            M = B.euler(rot[f][1]) @ B.axis_angle(axis, fold * float(fk(f)[0]))
+            rot[f] = (rot[f][0], B.to_euler(M))
+        # the folded knee must not dip under the floor: lift it on the splay
+        for f in range(0, 61):  # from the idle's stance height down onto the floor by the rear
+            B.reach(root, death, name, "z", [f], height=(0.2 - IDLE_DROP) * max(0.0, 1 - f / 10), fade_in=0, fade_out=0, span=30)
+    tw = death["leg-l1"]["rot"]
+    for f in range(40, 50):
+        u = (f - 40) / 9
+        a, b_, c = tw[f][1]
+        tw[f] = (tw[f][0], (a, b_, c - 14 * math.sin(math.pi * u) ** 2))  # lifts off the floor and drops back
+    return B.fill(root, death), I
+
+
 def _build():
     rig = Rig("giant-scorpion", (CX, 0, 52))
     rig.add("body", body(), (CX, 10.0, 48.0))
@@ -201,37 +392,18 @@ def _build():
         move[f"tail-{k + 1}"] = {"rot": wave(mv, (3.0, 0, 0), phase=k * 0.1)}
     move.update(legs(mv, 16.0, lift=7.0))
 
-    curl = ((0.0, 0), (0.25, -26), (0.45, 58), (0.6, 44), (1.1, 0))
-    attack = {"body": {"rot": seq((0, 0, 0, 0), (0.25, -8, 0, 0), (0.45, 10, 0, 0), (1.1, 0, 0, 0)),
-                       "loc": seq((0, 0, 0, 0), (0.45, 0, 0, -3), (1.1, 0, 0, 0))},
-              "jaw-l": {"rot": seq((0, 0, 0, 0), (0.2, 0, -34, 0), (0.4, 0, 2, 0), (0.7, 0, -28, 0), (1.1, 0, 0, 0))},
-              "jaw-r": {"rot": seq((0, 0, 0, 0), (0.2, 0, 34, 0), (0.4, 0, -2, 0), (0.7, 0, 28, 0), (1.1, 0, 0, 0))}}
-    for k in range(5):
-        attack[f"tail-{k + 1}"] = {"rot": [(t, (v * (0.8 + k * 0.12), 0.0, 0.0)) for t, v in curl]}
-    attack["sting"] = {"rot": seq((0, 0, 0, 0), (0.45, 22, 0, 0), (1.1, 0, 0, 0))}
-
-    hit = {"body": {"rot": seq((0, 0, 0, 0), (0.1, -12, 0, 7), (0.45, 0, 0, 0)),
-                    "loc": seq((0, 0, 0, 0), (0.1, 0, 0, 3), (0.45, 0, 0, 0))},
-           "tail-1": {"rot": seq((0, 0, 0, 0), (0.12, -16, 0, 0), (0.45, 0, 0, 0))}}
-    death = {rig.root.name: {"rot": seq((0, 0, 0, 0), (0.3, 0, 0, -9), (0.8, 0, 0, 62), (1.0, 0, 0, 56), (1.3, 0, 0, 60)),
-                             "loc": seq((0, 0, 0, 0), (0.8, 0, 2, 0), (1.3, 0, 2, 0))},
-             "sting": {"rot": seq((0, 0, 0, 0), (0.8, -30, 0, 0), (1.3, -34, 0, 0))}}
-    for k in range(5):
-        death[f"tail-{k + 1}"] = {"rot": seq((0, 0, 0, 0), (0.8, -14, 0, 0), (1.3, -16, 0, 0))}
-    for name in HIPS:
-        death[name] = {"rot": seq((0, 0, 0, 0), (0.6, 0, 34 if name[4] == "l" else -34, 0), (1.3, 0, 30 if name[4] == "l" else -30, 0))}
-
+    attack, imp, hit = _attack_hit(rig.root)
+    death, dimp = _death(rig.root)
     return make("creatures", "giant-scorpion", "Irradiated Giant Scorpion", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False),
-                       Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp * B.F, ease=0),
+                       Clip("hit", hit, loop=False, ease=0), Clip("death", death, loop=False, impact=dimp * B.F, ease=0)],
                 sockets=[rig.socket("socket-sting", TIP, parent="sting"),
                          rig.socket("socket-feet", (CX, 1.0, 52.0)),
                          rig.socket("socket-jaw", (HAND["arm-r"][0] + 6, 15.0, 2.0), parent="jaw-r")],
                 pfx=[fx("rvx-apocalypse-toxic-bubbles", "socket-sting", "idle", size=14),
                      fx("rvx-apocalypse-dust-kick", "socket-feet", "clip:move", size=44, aim=(0.0, 0.0, 1.0)),
-                     fx("rvx-apocalypse-gore-burst", "socket-sting", "clip:attack", size=36, at=0.45)])
+                     fx("rvx-apocalypse-gore-burst", "socket-sting", "clip:attack", size=36, at=imp * B.F)])
 
 
 def build():
-    from _death_ground import ground_death
-    return ground_death(_build())
+    return _build()

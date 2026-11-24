@@ -10,19 +10,23 @@ soft hide strokes and a pearl shade underneath. About the
 size of a PN horse-sized creature (creature-large).
 
 Clips: idle (breathe, nod, swish the tail, paw the ground), attack (rear
-up with the front hooves kicking, then stab down with the horn: holy
-smite at the horn socket), hit (head tosses back, body flinches), death
-(the legs buckle and it rolls onto its left side). Faces -Z.
+up with the front hooves kicking, then stamp down and lunge, stabbing with
+the horn and goring up: holy smite at the horn socket), hit (shoved back
+off its hooves, the head thrown back, it lands and recovers), death (the
+legs splay out flat and it crumbles down onto its belly). Faces -Z.
 """
 import math
 
 import numpy as np
+
+from _quad_falls import Planter, bake, per_frame, sample
 
 import paint as P
 import pnglyph
 import pnpaint
 from _life import C, Clip, Grid, Socket, asset, chamfer_rect, facet_paint, front, keys, last, pfx, plan, rig, side
 from pnshapes import quad
+from _move_gaits import Gait, cyc, thump, turn_loop
 
 F = 0.8  # the whole unicorn is designed in units of 1/F voxels (withers about a person's height)
 D = (52, 86, 90)  # design size
@@ -246,6 +250,41 @@ def tail() -> Grid:
 
 
 # ------------------------------------------------------------------ clips
+def keyed(root, clip: dict) -> dict:
+    """Give every part with a grid a rest key in the clip, so a viewer that
+    plays one clip per part never keeps a pose from another clip."""
+    for part in root.walk():
+        if part.grid is not None and part.name not in clip:
+            clip[part.name] = {"rot": keys((0, 0, 0, 0))}
+    return clip
+
+
+def trot_move(root) -> dict:
+    """move: an elegant, collected trot, 24 frames: diagonal pairs (left
+    fore + right hind down on f3, right fore + left hind on f15), each
+    planted hoof sliding back at one ground speed, each swing hoof lifted
+    high and set down crisply (accelerating into the floor). The body
+    settles a little into each diagonal plant and springs up off it; the
+    head nods a beat after each plant, held proud, and the tail is carried
+    high and streams, flicking a beat behind the body. (Frames as
+    authored; turn_loop then starts the loop mid-stroke.)"""
+    T = 24
+    ph = {"leg-fl": 3, "leg-br": 3, "leg-fr": 15, "leg-bl": 15}
+    gait = Gait(root, "body", list(ph))
+    th = thump(T, [3, 15], depth=0.9, fall=3, past=2, rise=5)
+
+    def z(*v):
+        return np.array(v, float)
+    s = gait.walk(T, {n: fr / T for n, fr in ph.items()}, duty=0.52, stride=10.0, lift=4.5,
+                  height=lambda f: 0.3 - th(f), carry=0.7, land=0.3)
+    nod = thump(T, [3, 15], depth=1.0, fall=1, past=2, rise=6)
+    s["head"] = {"rot": [z(2 - 5 * nod((f - 1) % T), 0, 0) for f in range(T + 1)]}
+    s["tail"] = {"rot": [r + z(6 * nod((f - 3) % T), 0, 0) for f, r in enumerate(
+        cyc([(0, z(-22, 6, 0)), (8, z(-24, -8, 0)), (12, z(-22, -6, 0)), (20, z(-24, 8, 0))], T))]}
+    s, _ = turn_loop(s, T)
+    return per_frame(s)
+
+
 def build():
     parts = [("unicorn", None, None, None),
              ("body", body(), g3(BODY_HINGE), None),
@@ -258,29 +297,107 @@ def build():
             "head": {"rot": keys(z, (0.5, -8, 0, 0), (1.0, 2, 0, 0), (1.6, -2, 10, -4), (2.4, 0, 0, 0))},
             "tail": {"rot": keys(z, (0.6, 0, 16, 0), (1.8, 0, -16, 0), (2.4, 0, 0, 0))},
             "leg-fr": {"rot": keys(z, (1.0, 0, 0, 0), (1.25, 28, 0, 0), (1.5, 0, 0, 0), (2.4, 0, 0, 0))}}
-    rear = [(0.0, 0.0), (0.35, 30.0), (0.7, 34.0), (0.9, -6.0), (1.05, -6.0), (1.4, 0.0)]
-    attack = {"body": {"rot": keys(*[(t, a, 0, 0) for t, a in rear])},
-              "head": {"rot": keys(z, (0.35, -10, 0, 0), (0.7, -14, 0, 0), (0.9, -28, 0, 0), (1.05, -26, 0, 0), (1.4, 0, 0, 0))},
-              "leg-fl": {"rot": keys(z, (0.35, 60, 0, 0), (0.55, 25, 0, 0), (0.7, 70, 0, 0), (0.9, 0, 0, 0))},
-              "leg-fr": {"rot": keys(z, (0.35, 30, 0, 0), (0.55, 75, 0, 0), (0.7, 35, 0, 0), (0.9, 0, 0, 0))},
-              "leg-bl": {"rot": keys(z, (0.35, -30, 0, 0), (0.7, -34, 0, 0), (0.9, 0, 0, 0))},
-              "leg-br": {"rot": keys(z, (0.35, -30, 0, 0), (0.7, -34, 0, 0), (0.9, 0, 0, 0))},
-              "tail": {"rot": keys(z, (0.35, -25, 0, 0), (0.9, 15, 0, 0), (1.4, 0, 0, 0))}}
-    hit = {"body": {"rot": keys(z, (0.1, 4, 0, -9), (0.35, 3, 0, -7), (0.7, 0, 0, 0))},
-           "head": {"rot": keys(z, (0.1, 28, 16, 8), (0.35, 24, 14, 6), (0.7, 0, 0, 0))},
-           "tail": {"rot": keys(z, (0.1, 20, 0, 0), (0.7, 0, 0, 0))}}
-    q = g3((CX - 11.0, 0.0, BODY_HINGE[2]))
-    roll = [(0.0, 0.0), (0.3, 0.0), (0.8, 55.0), (1.05, 86.0), (1.25, 82.0), (1.6, 84.0)]
-    death = {"body": {"rot": keys(*[(t, 0, 0, a) for t, a in roll]),
-                      "loc": keys(*[(t, *about(q, g3(BODY_HINGE), a)) for t, a in roll])},
-             "leg-fl": {"rot": keys(z, (0.3, 50, 0, 0), (1.05, 20, 0, 8), (1.6, 18, 0, 8))},
-             "leg-fr": {"rot": keys(z, (0.3, 50, 0, 0), (1.05, 30, 0, -10), (1.6, 28, 0, -10))},
-             "leg-bl": {"rot": keys(z, (0.3, -40, 0, 0), (1.05, -15, 0, 8), (1.6, -14, 0, 8))},
-             "leg-br": {"rot": keys(z, (0.3, -40, 0, 0), (1.05, -20, 0, -10), (1.6, -18, 0, -10))},
-             "head": {"rot": keys(z, (0.3, -10, 0, 0), (1.05, -25, 0, -20), (1.6, -28, 0, -22))},
-             "tail": {"rot": keys(z, (1.05, 0, -20, 0), (1.6, 0, -18, 0))}}
+    f = 1 / 30
+
+    def fk(*rows):
+        """Keys from (frame, x, y, z) rows."""
+        return [(fr * f, (x, y, w)) for fr, x, y, w in rows]
+
+    LEG = LEG_HINGE["leg-fl"][1] * F  # hip to hoof
+
+    def plant(dz):  # a planted leg turns by this as the body slides by dz
+        return math.degrees(math.asin(dz / LEG))
+
+    # The horn charge. Gather (f0-5): the weight rocks back, the head dips.
+    # Rear (f5-16, the anticipation): it rears up on the hind hooves (the
+    # body pivots on them), the forelegs fold and paw, the horn raised high.
+    # Strike (impact f21): it drops forward, accelerating, the forehooves
+    # stamp down ahead and the body lunges, the head driving the horn
+    # forward and down; then it gores, tossing the horn up and through
+    # (follow-through), and settles back, the tail and mane trailing.
+    GORE = 21
+    bz = [(0, 0.0), (5, 1.5), (12, 1.0), (16, 0.6), (GORE, -4.5), (24, -5.0), (28, -4.4), (34, -1.5), (40, 0.3), (46, 0.0)]
+    attack = {"body": {"rot": fk((0, 0, 0, 0), (5, 2, 0, 0), (12, 30, 0, 0), (16, 34, 0, 0), (GORE, -2, 0, 0), (24, -3, 0, 0), (28, 1, 0, 0),
+                                 (34, 0, 0, 0), (46, 0, 0, 0)),
+                       "loc": fk(*[(fr, 0, 0, dz) for fr, dz in bz])},  # its height is solved from the planted hooves
+              "head": {"rot": fk((0, 0, 0, 0), (5, -10, 0, 0), (12, 8, 0, 0), (16, 12, 0, 0), (GORE, -34, 0, 0), (24, -30, 0, 0), (27, 14, 0, 0),
+                                 (31, 18, 6, 0), (36, -6, 0, 0), (40, 2, 0, 0), (46, 0, 0, 0))},
+              "tail": {"rot": fk((0, 0, 0, 0), (5, 6, 0, 0), (12, -50, 0, 0), (16, -56, 6, 0), (GORE, 6, -4, 0), (26, 22, 6, 0), (32, -8, 0, 0),
+                                 (38, 4, 0, 0), (46, 0, 0, 0))}}
+    for leg_name in ("leg-bl", "leg-br"):  # planted: solved a frame at a time
+        attack[leg_name] = {"rot": fk((0, 0, 0, 0), (46, 0, 0, 0))}
+    # the forehooves paw the air, stamp down far ahead on the gore (set on
+    # the floor there), bear the weight, then step back one at a time
+    attack["leg-fl"] = {"rot": fk((0, 0, 0, 0), (5, 4, 0, 0), (12, 70, 0, 0), (16, 40, 0, 0), (GORE, 22, 0, 0), (29, 22, 0, 0), (32, 12, 0, 0), (35, 0, 0, 0), (46, 0, 0, 0)),
+                        "loc": fk((0, 0, 0, 0), (29, 0, 0, 0), (32, 0, 2.0, 0), (35, 0, 0, 0), (46, 0, 0, 0))}
+    attack["leg-fr"] = {"rot": fk((0, 0, 0, 0), (5, 4, 0, 0), (12, 40, 0, 0), (16, 75, 0, 0), (GORE, 20, 0, 0), (32, 20, 0, 0), (35, 10, 0, 0), (38, 0, 0, 0), (46, 0, 0, 0)),
+                        "loc": fk((0, 0, 0, 0), (32, 0, 0, 0), (35, 0, 2.0, 0), (38, 0, 0, 0), (46, 0, 0, 0))}
+    LEG_NAMES = ["leg-fl", "leg-fr", "leg-bl", "leg-br"]
+    feet = Planter(root, "body", LEG_NAMES, top="unicorn")
+    planted = {"leg-bl": [(0, 1.0)], "leg-br": [(0, 1.0)],
+               "leg-fl": [(0, 1.0), (2, 0.0), (GORE - 1, 0.0), (GORE, 1.0), (29, 1.0), (30, 0.0), (34, 0.0), (35, 1.0)],
+               "leg-fr": [(0, 1.0), (2, 0.0), (GORE - 1, 0.0), (GORE, 1.0), (32, 1.0), (33, 0.0), (37, 0.0), (38, 1.0)]}
+    anchors = {"leg-fl": [(0, 0.0), (GORE, "touch"), (34, 0.0)], "leg-fr": [(0, 0.0), (GORE, "touch"), (37, 0.0)]}
+    attack = keyed(root, bake(attack, GORE, feet, planted, anchors))
+    # hit: the blow shoves it back in a short arc (up by f4, down by f8);
+    # the hooves keep their spot (the legs trail) and land there, so the
+    # body leans back over them; a squash, a drifting beat, then it comes
+    # forward over its hooves past rest.
+    hit = {"unicorn": {"scale": fk((0, 1, 1, 1), (4, 0.98, 1.04, 1.0), (8, 1.04, 0.92, 1.02), (12, 1.01, 0.98, 1.0), (16, 1, 1, 1), (22, 1.02, 0.95, 1.01),
+                                   (27, 1, 1, 1), (32, 1, 1, 1))},
+           "body": {"loc": fk((0, 0, 0, 0), (2, 0, 2.2, 1.8), (4, 0, 2.8, 3.0), (6, 0, 1.8, 3.6), (8, 0, 0, 4.0), (13, 0, 0, 4.4), (17, 0, 0, 4.0),
+                               (23, 0, 0, 0.6), (28, 0, 0, -0.4), (32, 0, 0, 0)),
+                    "rot": fk((0, 0, 0, 0), (4, 6, 0, -6), (8, 0, 0, -2), (13, 0, 0, -1.5), (17, 0, 0, -1), (23, -1, 0, 0.6), (28, 0, 0, 0), (32, 0, 0, 0))},
+           "head": {"rot": fk((0, 0, 0, 0), (3, 30, 18, 8), (7, 24, 14, 6), (13, 20, 12, 5), (17, 18, 10, 4), (23, -10, -2, -2), (28, 3, 0, 0), (32, 0, 0, 0))},
+           "tail": {"rot": fk((0, 0, 0, 0), (4, -26, 10, 0), (9, -10, 6, 0), (15, -14, 8, 0), (23, 10, -4, 0), (28, -2, 0, 0), (32, 0, 0, 0))}}
+    for leg_name in LEG_NAMES:
+        hit[leg_name] = {"rot": fk((0, 0, 0, 0), (32, 0, 0, 0))}
+    hit = keyed(root, bake(hit, None, feet, {n: [(0, 1.0)] for n in LEG_NAMES}, lift=[(0, 1.0), (1, 0.0), (7, 0.0), (8, 1.0)]))
+    # death: the blow rocks it (a moving flinch and teeter, the legs starting
+    # to bow), then in one accelerating stroke the legs splay out flat (the
+    # forelegs reaching forward, the hind legs back, the hooves sliding out
+    # along the floor) and the barrel crumbles straight down onto its belly
+    # (impact f27); one small bounce, a slump to the side, the head slamming
+    # down late and the tail flopping last.
+    LAND = 23
+    END = 40
+    DROP = -18.3  # the belly onto the floor (its lowest point sits a little under the 19.2 of the barrel bottom)
+    BELLY = 19.2
+    spec = {"body": {"rot": [(0, (0, 0, 0)), (3, (4, 0, -4)), (6, (1, 0, 3)), (10, (-1, 0, 1)), (14, (-1.5, 0, 0)), (LAND, (-2, 0, 0.5)), (25, (-1.5, 0, 1)),
+                             (27, (-2, 0, 1.5)), (END, (-2, 0, 1.5))],
+                     "loc": [(0, (0, 0, 0)), (3, (0, -0.4, 0.8)), (6, (0, -1.4, 1.0)), (10, (0, -2.4, 0.8)), (14, (0, -3.6, 0.6)), (LAND, (0, DROP + BELLY * 0.1, 0.4)),  # the squash is about the body pivot: keep the belly on the floor
+                             (25, (0, DROP + 1.3 - BELLY * 0.02, 0.4)), (27, (0, DROP, 0.4)), (END, (0, DROP, 0.4))],
+                     "scale": [(0, (1, 1, 1)), (14, (1, 1, 1)), (LAND, (1.07, 0.9, 1.03)), (25, (0.99, 1.02, 1.0)), (27, (1, 1, 1)), (END, (1, 1, 1))]},
+            # the head lands two frames after the body has settled, bounces once and flops
+            "head": {"rot": [(0, (0, 0, 0)), (3, (24, 6, 0)), (6, (16, -8, 0)), (10, (14, -6, 0)), (14, (12, -4, 0)), (LAND, (8, 0, 0)), (26, (2, -4, -6)),
+                             (29, (-47, -8, -16)), (31, (-44.5, -8, -15)), (33, (-46, -9, -16)), (END, (-45.5, -9, -16))]},
+            "tail": {"rot": [(0, (0, 0, 0)), (4, (-14, 6, 0)), (10, (-10, -6, 0)), (14, (-16, -4, 0)), (LAND, (-62, 4, 0)), (29, (-58, 10, 0)), (32, (-56, 12, 0)),
+                             (36, (-55, 13, 0)), (END, (-55, 13, 0))]}}
+    smp = sample(spec, END, LAND)
+    for name in LEG_NAMES:
+        sx = -1 if name.endswith("l") else 1
+        fore = name.startswith("leg-f")
+        seq = []
+        for fr in range(END + 1):
+            loc, rot, sc = (smp["body"][ch][fr] for ch in ("loc", "rot", "scale"))
+            lo, hi = 0.0, 89.0
+            for _ in range(30):  # the least splay that keeps the hoof out of the floor: the soles slide out as it drops
+                m = (lo + hi) / 2
+                reach = (m / 80.0) * 20.0 * (1 if fore else -1) * -sx  # forelegs forward, hind legs back
+                if feet._world(name, loc, rot, sc, (0.0, reach, sx * m), None)[0] < 0:
+                    lo = m
+                else:
+                    hi = m
+            m = hi if fr > 0 else 0.0
+            if LAND < fr < 27:  # the bounce: the splayed legs go up with the barrel, off the floor
+                m = seq[LAND][2] * sx
+            seq.append(np.array((0.0, (m / 80.0) * 20.0 * (1 if fore else -1) * -sx, sx * m)))
+        smp[name] = {"rot": seq}
+    death = keyed(root, per_frame(smp))
     horn = to_root(g3((CX, 84.0, 7.0)))
     return asset("creatures", "unicorn", "Unicorn", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", attack, loop=False, impact=GORE * f, ease=0.0), Clip("hit", hit, loop=False, ease=0.0),
+                        Clip("death", death, loop=False, impact=LAND * f, ease=0.0),
+                        Clip("move", keyed(root, trot_move(root)), ease=0.0, floor=False)],
                  sockets=[Socket("socket-horn", at=horn, parent="head")],
-                 fx=[pfx("rvx-fantasy-holy-smite", "socket-horn", "clip:attack", size=44, at=0.56)])
+                 fx=[pfx("rvx-fantasy-holy-smite", "socket-horn", "clip:attack", size=44, at=GORE * f)])

@@ -4,15 +4,16 @@ A heavy bulkhead: two riveted steel posts that lean in (true slopes), a
 tapered lintel with an oversized orange AIRLOCK sign, triangular gussets in
 the top corners of the opening, hazard-striped jambs and sill, copper
 pistons and a teal keypad. Two white hull leaves meet on a diagonal seam;
-each has a teal porthole and a hazard foot. On `open` they slide sideways
-into the posts, on `close` they slide back; the amber lamp on the lintel
-turns on `idle`. The opening is 26 x 42, so a person walks through.
+each has a teal porthole and a hazard foot. On `open` they creep, then
+accelerate hard and slam sideways into the posts; on `close` they slam
+shut the same way; the amber lamp on the lintel turns on `idle`. The opening is 26 x 42, so a person walks through.
 Faces -Z.
 """
 import numpy as np
 
-from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, front, hazard, keys, ngon_y, plated, spin
+from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, front, hazard, ngon_y, plated, spin
 import pnglyph
+from _slam import slam
 
 W, H, D = 52, 62, 18
 ZF, ZB = 2, 14  # frame front and back planes
@@ -109,13 +110,20 @@ def build():
     rig.add("door-l", leaf(-1), (XO0, YO0, ZD0), "airlock")
     rig.add("door-r", leaf(1), (XO1, YO0, ZD0), "airlock")
     rig.add("lamp", lamp(), (W / 2, YL + 2, (ZF + ZB) / 2), "airlock")
-    z = (0.0, 0.0, 0.0)
-    open_ = {"door-l": {"loc": keys((0, z), (0.25, (-1, 0, 0)), (1.0, (-SLIDE, 0, 0)))},
-             "door-r": {"loc": keys((0, z), (0.25, (1, 0, 0)), (1.0, (SLIDE, 0, 0)))},
-             "lamp": {"rot": spin(1.0, "y", 360)}}
-    close = {"door-l": {"loc": keys((0, (-SLIDE, 0, 0)), (0.8, (-1, 0, 0)), (1.0, z))},
-             "door-r": {"loc": keys((0, (SLIDE, 0, 0)), (0.8, (1, 0, 0)), (1.0, z))},
-             "lamp": {"rot": spin(1.0, "y", 360)}}
+    # Heavy leaves driven hard: near-still for the first frames, then a
+    # power-3.5 curve keyed once a frame (see _slam) so they arrive at 3.5x
+    # their mean speed and slam into their stops (the posts on `open`, each
+    # other on `close`): dead stop, a tiny 4-frame rebound, still.
+    def leaves(a, b):
+        l, hit = slam((a * -1, 0, 0), (b * -1, 0, 0), frames=13, power=3.5, rebound=0.05)
+        r, _ = slam((a, 0, 0), (b, 0, 0), frames=13, power=3.5, rebound=0.05)
+        return l, r, hit
+
+    l, r, HIT = leaves(0.0, SLIDE)
+    T = l[-1][0]
+    open_ = {"door-l": {"loc": l}, "door-r": {"loc": r}, "lamp": {"rot": spin(T, "y", 360)}}
+    l, r, _ = leaves(SLIDE, 0.0)
+    close = {"door-l": {"loc": l}, "door-r": {"loc": r}, "lamp": {"rot": spin(T, "y", 360)}}
     idle = {"lamp": {"rot": spin(2.0, "y", 360)}}
     return asset("animated-props", "airlock-door", "Airlock Door", rig.root,
-                 clips=[Clip("idle", idle), Clip("open", open_, loop=False), Clip("close", close, loop=False)])
+                 clips=[Clip("idle", idle), Clip("open", open_, loop=False, ease=0), Clip("close", close, loop=False, ease=0)])

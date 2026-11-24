@@ -14,9 +14,12 @@ trunk, as long as the troll is tall, capped by a lumpy boulder with three
 iron spikes, its head resting on the ground in front of the right foot so
 it reads in the silhouette (F6). Clips: idle (it breathes and sways),
 attack (it swings the club up, over and down, throwing dust, PFX), hit,
-death (it topples back). Faces -Z.
+death (it teeters and
+crashes over backwards). Faces -Z.
 """
 import numpy as np
+
+from _falls_brutes import frames, knock_hit_base, step_in, topple_back
 
 import paint as P
 import pnglyph
@@ -24,12 +27,23 @@ import pnshapes as S
 from _life import asset, chamfer_rect, coords, facet_paint, front, keys, ngon, pfx, plan, rig, side
 from pnkit import box, edges
 from voxgrid import C, Clip, Grid, Socket
+from _move_gaits import Gait, World, cyc, per_frame, solve_low, thump, turn_loop
+from _quad_falls import _soles
 
 SH = (96, 76, 84)
 CX, CZ = 48.0, 44.0
 HIDE, HIDE_B = "moss", 4  # an olive hide, not a saturated grass green (C1)
 BELLY = "sand"
 HIP_Y = 24.0
+LEG_H, TOE, HEEL = 24.0, -16.0, 6.0  # hip height; the foot's toe and heel z from the hip
+# death rest pose: extra root height, arm x angles overhead, head pitch, club keys, legs
+TROLL_REST, ARM_UP, HEAD_BACK, LEG_REST = 0.34, (183.0, 160.0), 20.0, -23.0
+W_FALL_DEF = (0.0, 30.0, 0.0)
+W_LAND, W_FALL, W_HOP = (-30.0, 45.0, 0.0), W_FALL_DEF, (-28.0, 45.0, 0.0)
+ARM_PRE = 15.0
+ARM_SPREAD = (16.0, 16.0)
+FLAT, BODY_LAND, LEG_LAG = 90.0, 2.0, 22.0
+ATK_ARM, HIT_ARM = (31.5, 41.0, 34.5), (40.0, 46.0, 20.0)  # club arm keys that keep the club head ON the floor
 SHOULDER_Y = 44.0
 BODY_TOP = 50.0
 HEAD_Y0, HEAD_Y1 = 46.0, 64.0
@@ -273,6 +287,43 @@ def club() -> Grid:
     return g
 
 
+def lumber_move(root) -> dict:
+    """move: a slow, heavy lumber, 44 frames (two steps). The short legs
+    take wide stomps (the big wedge feet strike heel first and roll off the
+    toe); the bulk heaves up over the passing leg and falls with gravity
+    into each footfall, keeps sinking 2 frames past it and stops dead. The
+    hunched torso rolls its whole weight over the planted foot and twists
+    with the free arm, whose fist swings low past the knee. The club is
+    dragged: its head stays on the floor in front of the right foot (the
+    club arm is solved a frame at a time so it never digs in or lifts) and
+    it jolts on each footfall. Authored with contacts on f11 and f33;
+    turn_loop then starts the loop mid-stroke."""
+    T, CL, CR = 44, 11, 33
+    gait = Gait(root, "troll", ["leg-l", "leg-r"])
+    th = thump(T, [CL, CR], depth=2.4, fall=6, past=2)
+    s = gait.walk(T, {"leg-l": CL / T, "leg-r": CR / T}, duty=0.62, stride=12.0, lift=4.0, height=lambda f: 0.5 - th(f), carry=0.75, land=0.3)
+    sq = thump(T, [CL, CR], depth=1.0, fall=1, past=2, rise=5)
+    k = [sq(f) for f in range(T + 1)]
+
+    def z(*v):
+        return np.array(v, float)
+    s["body"] = {"rot": [r + z(-3 * kk, 0, 0) for r, kk in zip(
+                     cyc([(0, z(0, 4, -2)), (CL + 2, z(0, 7, 7), "snap"), (22, z(1, 0, 2)), (CR + 2, z(0, -7, -7), "snap")], T), k)],
+                 "scale": [z(1 + 0.025 * kk, 1 - 0.05 * kk, 1 + 0.025 * kk) for kk in k]}
+    s["head"] = {"rot": [r + z(-6 * sq((f - 1) % T), 0, 0) for f, r in enumerate(
+                     cyc([(0, z(0, -3, 1)), (CL + 3, z(2, -6, -4), "snap"), (22, z(0, 2, -1)), (CR + 3, z(2, 6, 4), "snap")], T))]}
+    # the free arm hangs and swings like a pendulum, a beat behind the shoulders
+    s["arm-l"] = {"rot": cyc([(0, z(10, 0, -2)), (CL + 3, z(-20, 0, -4), "snap"), (22, z(-6, 0, -3)), (CR + 3, z(24, 0, -2), "snap")], T)}
+    s["club"] = {"rot": [z(-3 * sq((f - 1) % T), 0, 0) for f in range(T + 1)]}
+    s["arm-r"] = {"rot": [z(0, 0, 0) for _ in range(T + 1)]}
+    world = World(root)
+    pts = _soles(world.parts["club"])
+    for f in range(T + 1):
+        solve_low(world, s, f, "club", pts, "arm-r", 0, 0.0, lo=-30.0, hi=40.0)
+    s, _ = turn_loop(s, T)
+    return per_frame(s)
+
+
 def build():
     grids = {"troll": pelvis(), "body": body(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1),
              "club": club(), "leg-l": leg(-1), "leg-r": leg(1)}
@@ -297,32 +348,60 @@ def build():
             "arm-l": {"rot": keys((0, 0, 0, 0), (1.0, 7, 0, -5), (2.0, 0, 0, 0))},
             "arm-r": {"rot": keys((0, 0, 0, 0), (1.0, -5, 0, 4), (2.0, 0, 0, 0))},
             "club": {"rot": keys((0, 0, 0, 0), (1.0, 4, 0, 0), (2.0, 0, 0, 0))}}
-    # Wind-up (0-0.43 s): the troll rears back, the club cocked high over the shoulder. Strike
-    # (4 frames) down into the ground at 0.567 s with the whole body lunging in, a short
-    # follow-through and hold on contact, then the recovery.
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 70, 0, -16), (0.3667, 136, 0, -28), (0.4333, 140, 0, -28),
-                                    (0.5667, 24, 0, -6), (0.6333, 31, 0, -4), (0.7667, 28, 0, -4), (1.1333, 0, 0, 0))},
-              "club": {"rot": keys((0, 0, 0, 0), (0.3667, 14, 0, 0), (0.4333, 20, 0, 0), (0.5667, 0, 0, 0), (0.6333, -3, 0, 0), (0.7667, 0, 0, 0), (1.1333, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, 30, 0, -16), (0.6, -16, 0, 10), (0.7, -20, 0, 12), (1.1333, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.3667, 14, -6, 0), (0.4333, 16, -8, 0), (0.5667, -20, 6, 0), (0.6333, -23, 7, 0), (0.7667, -19, 5, 0), (1.1333, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.4667, 12, 0, 0), (0.6, -14, 0, 0), (0.6667, -18, 0, 0), (0.8, -12, 0, 0), (1.1333, 0, 0, 0))},
-              "troll": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 2.5), (0.4333, 0, 0, 3), (0.5667, 0, 0, -6), (0.6333, 0, 0, -7), (0.7667, 0, 0, -6), (1.1333, 0, 0, 0))}}
-    hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 16, 0, 7), (0.50, 0, 0, 0))},
-           "head": {"rot": keys((0, 0, 0, 0), (0.10, 14, -10, 5), (0.50, 0, 0, 0))},
-           "arm-l": {"rot": keys((0, 0, 0, 0), (0.10, -18, 0, -22), (0.50, 0, 0, 0))},
-           "arm-r": {"rot": keys((0, 0, 0, 0), (0.10, -18, 0, 22), (0.50, 0, 0, 0))},
-           "troll": {"loc": keys((0, 0, 0, 0), (0.10, 0, 0, 3.0), (0.50, 0, 0, 0))}}
-    death = {"troll": {"rot": keys((0, 0, 0, 0), (0.30, 10, 0, 0), (0.90, 80, 0, 5), (1.05, 74, 0, 5), (1.25, 78, 0, 5)),
-                       "loc": keys((0, 0, 0, 0), (0.20, 0, 5, 0), (0.30, 0, 5, 0), (0.45, 0, 14, 2.5),
-                                   (0.60, 0, 22, 5), (0.75, 0, 30, 7.5), (0.90, 0, 34, 10), (1.25, 0, 34, 10))},
-             "head": {"rot": keys((0, 0, 0, 0), (0.90, -24, 0, 0), (1.25, -12, 22, 0))},
-             "arm-l": {"rot": keys((0, 0, 0, 0), (0.90, -34, 0, -60))},
-             "arm-r": {"rot": keys((0, 0, 0, 0), (0.90, -44, 0, 70))},
-             "club": {"rot": keys((0, 0, 0, 0), (0.90, -30, 0, 20))},
-             "leg-l": {"rot": keys((0, 0, 0, 0), (0.90, -28, 0, -10))},
-             "leg-r": {"rot": keys((0, 0, 0, 0), (0.90, -48, 0, 10))}}
+    # The smash. Wind-up (0-0.43 s): it rears right back and twists away, the
+    # club hauled up high over the shoulder, the head tipped up after it, the
+    # free arm thrown forward for balance. Strike (4 frames, 0.43-0.567 s):
+    # everything drives down at once, the body slamming forward and down
+    # onto the stepping foot, the club smashing into the ground in front
+    # (impact). Follow-through: the body keeps folding 15-20% past the
+    # contact while the club bounces a little off the ground; a moving hold
+    # with the head shaking and the free arm still swinging; then it hauls
+    # itself up, leaning back past rest before it settles.
+    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 74, 0, -18), (0.3667, 146, 0, -30), (0.4333, 152, 0, -30),
+                                    (0.5667, ATK_ARM[0], 0, -6), (0.6333, ATK_ARM[1], 0, -4), (0.7667, ATK_ARM[2], 0, -4), (0.95, 6, 0, -1), (1.1333, 0, 0, 0))},
+              "club": {"rot": keys((0, 0, 0, 0), (0.3667, 16, 0, 0), (0.4333, 24, 0, 0), (0.5667, 0, 0, 0), (0.6333, -3, 0, 0), (0.7667, 1, 0, 0), (1.1333, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (0.3667, 34, 0, -14), (0.4333, 40, 0, -18), (0.5667, -26, 0, 14), (0.6667, -34, 0, 18), (0.8, -12, 0, 8), (0.95, 8, 0, -2), (1.1333, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (0.2, 10, -6, 0), (0.3667, 20, -12, 0), (0.4333, 22, -14, 0), (0.5667, -24, 8, 0), (0.6333, -29, 9, 0), (0.7667, -24, 6, 0), (0.9667, 5, 0, 0), (1.1333, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (0.3667, 14, -6, 0), (0.4667, 18, -8, 0), (0.6, -18, 4, 0), (0.6667, -24, 10, 0), (0.7333, -20, -8, 0), (0.8, -22, 6, 0), (0.9, -6, 0, 0), (1.0, 4, 0, 0), (1.1333, 0, 0, 0))},
+              # the weight: rocks back on the wind-up, drives forward and DOWN
+              # onto the planted lead foot on the blow (the legs take it), the
+              # whole bulk squashing into the ground
+              "troll": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 1.6), (0.4333, 0, 0, 1.8), (0.5667, 0, -1.6, -3.4), (0.6333, 0, -2.0, -3.9), (0.7667, 0, -1.4, -3.4),
+                                    (0.9667, 0, 0, 0.4), (1.1333, 0, 0, 0)),
+                        "scale": keys((0, 1, 1, 1), (0.4333, 0.98, 1.03, 0.98), (0.5667, 1.05, 0.94, 1.05), (0.6667, 0.99, 1.01, 0.99), (0.8, 1, 1, 1), (1.1333, 1, 1, 1))}}
+    # the smash is a deliberate step: the left foot lifts at the top of the
+    # wind-up, swings forward and plants WITH the blow, the right stays
+    # planted (soles solved flat on the floor every frame), both step home
+    legs, attack["troll"]["loc"] = step_in(attack["troll"]["loc"], H=LEG_H, toe=TOE, heel=HEEL, stride=-7.0, lift_t=0.4, plant_t=0.5667, back_t=0.7667, home_t=1.0, lift=3.0)
+    attack.update(legs)
+    # hit: a blow to the gut. The heaviest: shoved back only a little off its
+    # feet, the belly squashed, the head snapped back and the long arms flung
+    # forward; then it folds over its winded belly as it steps back in, head
+    # hanging, and hauls itself upright, the weight rocking back past rest
+    hit = knock_hit_base("troll", LEG_H, TOE, HEEL, k=1.25, push=9.0, pop=1.8, home="steps", squash=0.08, end=34)
+    hit.update({
+        "body": {"rot": frames(1.25, [(0, (0, 0, 0)), (1, (14, 0, 3)), (5, (24, 0, 5)), (9, (12, 0, 2)), (13, (-10, 0, -2)), (17, (-23, 0, -3)), (22, (-14, 0, -1)), (27, (5, 0, 0)), (33, (0, 0, 0))]),
+                 "scale": frames(1.25, [(0, (1, 1, 1)), (1, (1.08, 0.92, 0.94)), (5, (0.97, 1.03, 1.02)), (9, (1.02, 0.98, 1.0)), (14, (1, 1, 1)), (33, (1, 1, 1))])},
+        "head": {"rot": frames(1.25, [(0, (0, 0, 0)), (1, (18, 6, 4)), (6, (32, 10, 6)), (10, (6, 4, 2)), (14, (-20, 0, 0)), (19, (-30, -8, 0)), (24, (-10, 5, 0)), (29, (4, 0, 0)), (34, (0, 0, 0))])},
+        "arm-l": {"rot": frames(1.25, [(0, (0, 0, 0)), (1, (16, 0, -10)), (6, (34, 0, -18)), (10, (12, 0, -8)), (15, (-12, 0, 2)), (20, (-6, 0, 0)), (26, (6, 0, 0)), (33, (0, 0, 0))])},
+        "arm-r": {"rot": frames(1.25, [(0, (0, 0, 0)), (1, (14, 0, 8)), (6, (30, 0, 14)), (10, (16, 0, 6)), (15, (HIT_ARM[0], 0, 2)), (20, (HIT_ARM[1], 0, 0)), (26, (HIT_ARM[2], 0, 0)), (33, (0, 0, 0))])},
+        "club": {"rot": frames(1.25, [(0, (0, 0, 0)), (2, (8, 0, 0)), (6, (16, 0, 3)), (11, (4, 0, 0)), (17, (6, 0, 0)), (24, (2, 0, 0)), (33, (0, 0, 0))])},
+    })
+    # death, heaviest: a short teeter, then it crashes over backwards about
+    # its heels, gathering speed hard (power 3) into a heavy slam flat on its
+    # back: a deep squash and barely a bounce; the arms are flung up and
+    # slammed down overhead, the club and the head land last
+    death, LAND = topple_back("troll", hip=to_root((CX, HIP_Y, CZ + 1))[1:], H=LEG_H, heel=HEEL, beats=(5, 13, 18, 31), power=3.0, bounce=0.3, rock=0.2,
+                              body_flex=1.0, rest_lift=TROLL_REST, squash=0.15,
+                              weapon="club", weapon_land=W_LAND, weapon_fall=W_FALL, weapon_hop=W_HOP, arm_up=ARM_UP, arm_spread=ARM_SPREAD,
+                              head_back=HEAD_BACK, head_yaw=10.0, leg_rest=LEG_REST, leg_lag=LEG_LAG, flat=FLAT, body_land=BODY_LAND, arm_pre=ARM_PRE, arm_flop=3.0, leg_bump=2.0)
+    # the club head rests on the floor in front: the club arm never swings
+    # back before the landing (that would drive the club into the floor and
+    # lever the troll off its feet)
+    death["arm-r"]["rot"] = [(tt, (max(x, 4.0) if tt < LAND else x, y, z)) for tt, (x, y, z) in death["arm-r"]["rot"]]
     head_pt = (WRIST_R[0], 10.0, WRIST_R[2] - 24.0)
     return asset("creatures", "troll", "Cave Troll", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False, impact=LAND),
+                        Clip("move", lumber_move(root), ease=0.0, floor=False)],
                  sockets=[Socket("socket-club", at=to_root(head_pt), parent="club")],
                  fx=[pfx("rvx-fantasy-dust-slam", "socket-club", "clip:attack", size=32, at=0.5667)])

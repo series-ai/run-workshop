@@ -206,14 +206,46 @@ def chain(zc: float) -> Grid:
 
 
 def eased(phi_keys):
-    """phi(t) from (t, degrees) keys, eased between keys."""
+    """phi(t) from (t, degrees[, curve]) keys, eased between keys; a key's
+    curve "in" accelerates into it (a blow lands at full speed), "out"
+    leaves its start fast and settles into it."""
     def phi(t: float) -> float:
-        for (t0, a0), (t1, a1) in zip(phi_keys, phi_keys[1:]):
+        for k0, k1 in zip(phi_keys, phi_keys[1:]):
+            (t0, a0), (t1, a1) = k0[:2], k1[:2]
             if t0 <= t <= t1:
                 f = (t - t0) / (t1 - t0)
-                return a0 + (a1 - a0) * f * f * (3 - 2 * f)
+                kind = k1[2] if len(k1) > 2 else None
+                w = f * f if kind == "in" else 1 - (1 - f) ** 2 if kind == "out" else f * f * (3 - 2 * f)
+                return a0 + (a1 - a0) * w
         raise ValueError(f"swing: no key span covers t={t}")
     return phi
+
+
+def recoil(pivot, seconds: float, strike: int = 12, kick: float = 3.0) -> dict:
+    """Per-frame keys for the cart: the blow on frame `strike` tips it back
+    onto its rear wheels by `kick` degrees (front wheels up about two
+    voxels) in 2 frames, it falls back accelerating, lands hard, bounces a
+    little once and settles. It pitches about the back edge of the rear
+    wheels' footprint, so the rear wheels stay on the ground."""
+    edge = (0.0, -pivot[1], WHEEL_Z[1] + WR * math.tan(math.pi / NSIDE) - pivot[2])
+
+    def pitch(fr):
+        rows = ((strike, 0.0, None), (strike + 2, kick, "out"), (strike + 7, 0.0, "in"), (strike + 9, kick * 0.18, "out"),
+                (strike + 11, 0.0, "in"))
+        for (f0, a0, _), (f1, a1, kind) in zip(rows, rows[1:]):
+            if f0 <= fr <= f1:
+                u = (fr - f0) / (f1 - f0)
+                return a0 + (a1 - a0) * (u * u if kind == "in" else 1 - (1 - u) ** 2)
+        return 0.0
+    rot, loc = [], []
+    frames = round(seconds * 30)
+    for fr in range(frames + 1):
+        a = math.radians(pitch(fr))
+        y = edge[1] * math.cos(a) - edge[2] * math.sin(a)
+        z = edge[1] * math.sin(a) + edge[2] * math.cos(a)
+        rot.append((fr / 30, (pitch(fr), 0.0, 0.0)))
+        loc.append((fr / 30, (0.0, edge[1] - y, edge[2] - z)))
+    return {"rot": rot, "loc": loc}
 
 
 def swing(phi, seconds: float):
@@ -257,10 +289,15 @@ def build() -> Asset:
         root.add(Part(name, cg, pivot=hinge, at=rel(hinge)))
     # a pendulum: fastest through the bottom, so a sine, not eased keys (which stop it there)
     idle_log, idle_ch = swing(lambda t: 2.0 * math.sin(2 * math.pi * t / 4.0), 4.0)
-    att_log, att_ch = swing(eased([(0.0, 0.0), (0.22, -25.0), (0.42, 16.0), (0.6, 6.0), (0.9, 0.0)]), 0.9)
+    # attack: drawn back (eased up to the crest), then the swing ACCELERATES
+    # into the blow (f12) and the log knocks back off the gate. The blow
+    # kicks the whole cart back on its rear wheels: the front wheels pop
+    # off the ground, drop back under gravity, bounce once and settle.
+    STRIKE = 0.4
+    att_log, att_ch = swing(eased([(0.0, 0.0), (0.17, -25.0, "out"), (0.25, -26.0), (STRIKE, 16.0, "in"), (0.55, 5.0, "out"), (0.9, 0.0)]), 0.9)
     idle = {"ram-head": {"loc": idle_log}, "chain-f": {"rot": idle_ch}, "chain-b": {"rot": idle_ch}}
-    attack = {"ram-head": {"loc": att_log}, "chain-f": {"rot": att_ch}, "chain-b": {"rot": att_ch}}
+    attack = {"ram-head": {"loc": att_log}, "chain-f": {"rot": att_ch}, "chain-b": {"rot": att_ch}, "ram-bed": recoil(pivot, 0.9)}
     return Asset(id="fantasy-vehicles-battering-ram", pack="fantasy", category="vehicles", name="Battering Ram", root=root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False)],
+                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, ease=0)],
                  sockets=[Socket("socket-function", at=rel(tip), parent="ram-head")],
-                 pfx=[{"effectId": "rvx-fantasy-dust-slam", "socket": "socket-function", "trigger": "clip:attack", "size": 30, "at": 0.42}])
+                 pfx=[{"effectId": "rvx-fantasy-dust-slam", "socket": "socket-function", "trigger": "clip:attack", "size": 30, "at": STRIKE}])

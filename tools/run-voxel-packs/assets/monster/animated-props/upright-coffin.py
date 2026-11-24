@@ -14,6 +14,7 @@ import numpy as np
 
 import paint as P
 from _kit import keys, pfx, world
+from _slam import slam
 from _pn import assemble, coords, last
 from pnkit import box, edges
 from pnshapes import facets
@@ -161,12 +162,16 @@ def build():
     root = assemble(parts, [("stand", None, root_j), ("coffin", "stand", coffin_j), ("door", "coffin", hinge)])
     root.children[0].rot = (LEAN, 0.0, 0.0)
     z3 = (0, 0, 0)
-    open_k = {"door": {"rot": keys((0, z3), (0.12, (0, 12, 0)), (0.4, (0, 118, 0)), (0.55, (0, 100, 0)), (0.7, (0, 108, 0)), (0.8, (0, 106, 0)))}}
-    close_k = {"door": {"rot": keys((0, (0, 106, 0)), (0.3, z3), (0.36, (0, 5, 0)), (0.44, z3))}}
+    # Sterf's door rule: a near-still start, then an accelerating swing keyed
+    # once a frame into a hard stop at full speed, a tiny rebound, still
+    # (see _slam; the clips use ease=0 so the spacing survives the export).
+    # The door swings outward (toward -Z).
+    open_k = {"door": {"rot": [(0.0, z3)] + slam((0, 8, 0), (0, 106, 0), frames=10, power=2.5, rebound=0.05, start=3, hold_from=3)[0]}}
+    close_k = {"door": {"rot": slam((0, 106, 0), z3, frames=10, power=3.5, rebound=0.04)[0]}}
     idle_k = {"door": {"rot": keys((0, z3), (0.6, z3), (0.66, (0, 4, 0)), (0.74, z3), (0.9, z3), (0.96, (0, 5, 0)), (1.04, z3), (1.2, z3), (1.26, (0, 3, 0)), (1.34, z3), (2.4, z3))}}
     inside = (0.0, 13.0, ZR - root_j[2])
     return world("upright-coffin", "animated-props", "Upright Coffin", root,
-                 clips=[Clip("open", open_k, loop=False), Clip("close", close_k, loop=False), Clip("idle", idle_k)],
+                 clips=[Clip("open", open_k, loop=False, ease=0), Clip("close", close_k, loop=False, ease=0), Clip("idle", idle_k)],
                  sockets=[Socket("socket-inside", at=inside, parent="coffin")],
                  # the mist pours out of the open front at the foot, not around the chest
                  pfx=[pfx("rvx-monster-grave-mist", "socket-inside", "clip:open", size=14, offset=(0.0, -8.0, -5.0))])

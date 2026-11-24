@@ -146,7 +146,9 @@ def build():
             "cover": {"rot": keys((0, 0, 0, 0), (4.0, 0, 0, 0))},
             "sigil": {"rot": turn(4.0, "y", 90), "scale": [(0.0, small), (4.0, small)],
                       "loc": keys((0, 0, -1, 0), (1.0, 0, 0, 0), (2.0, 0, -1, 0), (3.0, 0, 0, 0), (4.0, 0, -1, 0))}}
-    open_k = {"cover": {"rot": keys((0, 0, 0, 0), (0.2, 0, 0, 70), (0.4, 0, 0, 150), (0.5, 0, 0, 176), (0.6, 0, 0, 170))},
+    # open: the cover flips over fast, swings past its rest, springs back
+    # short of it and settles (the same spring the close has)
+    open_k = {"cover": {"rot": keys((0, 0, 0, 0), (0.1, 0, 0, 55), (0.24, 0, 0, 190), (0.32, 0, 0, 163), (0.39, 0, 0, 174), (0.45, 0, 0, 170), (0.6, 0, 0, 170))},
               "book": {"loc": keys((0, 0, 0, 0), (0.6, 0, 1.5, 0), (1.2, 0, 1.5, 0))},
               "sigil": {"loc": keys((0, 0, -1, 0), (0.3, 0, -1, 0), (0.9, 0, 3, 0), (1.2, 0, 2.5, 0)),
                         "rot": turn(1.2, "y", 300),

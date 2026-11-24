@@ -15,6 +15,7 @@ import numpy as np
 
 import paint as P
 from _kit import keys, pfx, world
+from _slam import slam
 from _pn import assemble, coords, last
 from pnkit import box, edges
 from pnshapes import facets, tombstone
@@ -239,11 +240,13 @@ def build():
         "chains": {"scale": keys((0, s1), (0.1, (1.3, 1.3, 1.3)), (0.35, gone), (1.0, gone)),
                    "loc": keys((0, z3), (0.1, (0, 2, 0)), (0.35, (0, 10, -4)), (1.0, (0, 10, -4))),
                    "rot": keys((0, z3), (0.35, (0, 200, 25)), (1.0, (0, 200, 25)))},
-        "lid": {"rot": keys((0, z3), (0.1, (10, 0, 0)), (0.4, (140, 0, 0)), (0.55, (118, 0, 0)), (0.7, (126, 0, 0)), (1.0, (124, 0, 0))),
-                "loc": keys((0, z3), (0.1, (0, 3, 0)), (0.4, (0, 4, 1)), (0.55, z3), (1.0, z3))},
+        # the chains burst (frame 3) and the lid is flung open, accelerating
+        # into its stop on frame 12: dead stop, a tiny rebound, still (see _slam)
+        "lid": {"rot": [(0.0, z3)] + slam((10, 0, 0), (124, 0, 0), frames=9, power=2.2, rebound=0.05, start=3, hold_from=3, end=30)[0],
+                "loc": keys((0, z3), (0.1, (0, 3, 0)), (0.4, z3), (1.0, z3))},
     }
     sock = ((X0 + X1) / 2 - CX, YL + 1.0, CZ - CZ)
     return world("chained-coffin", "animated-props", "Chained Coffin", root,
-                 clips=[Clip("idle", idle), Clip("open", open_k, loop=False)],
+                 clips=[Clip("idle", idle), Clip("open", open_k, loop=False, ease=0)],
                  sockets=[Socket("socket-lid", at=sock, parent="lid")],
                  pfx=[pfx("rvx-monster-curse-cloud", "socket-lid", "clip:open", size=30, at=0.25)])

@@ -7,8 +7,8 @@ dark tip, feathered thighs and grey legs with dark talons. Feather rows,
 wrinkles and scars are paint. The mutation is the accent: eyes that glow
 teal and teal boils on the bare neck. Clips: idle (peer and shift), move
 (flap and hop), attack (rocks back with the wings
-mantled, pitches forward into a hard double peck), hit, death (falls on its
-side). Faces -Z.
+mantled, pitches forward into a hard double peck), hit, death (struggles up, drops out of
+the air and sprawls on its belly, wings spread). Faces -Z.
 """
 import math
 
@@ -16,8 +16,10 @@ import numpy as np
 
 import paint as P
 import pnpaint as PP
+import _big_falls as B
+from _big_falls import F, track as T
 from _life import Rig, ctr, front, fx, limb, make, seq, side, wave
-from _rep_creatures import face_spot, ground, pustules, tube
+from _rep_creatures import face_spot, pustules, tube
 from voxgrid import Clip, Grid
 
 SIZE = (98, 56, 62)
@@ -139,6 +141,92 @@ def leg(name: str) -> Grid:
     return g
 
 
+FOOT = (0.0, -21.0, -1.5)  # the foot pad, from the hip
+
+
+def _one_shots(root):
+    """Baked attack, hit and death (see _big_falls)."""
+    R = root.name
+    # attack: it rocks back on its feet, cocks the long neck back and
+    # mantles the wings up (f0-11, still creeping at the top); then it
+    # pitches forward and the neck shoots out, 2 frames into the peck
+    # (impact f13, fastest at the hit). The beak drives on past it, jabs a
+    # second time, the wings beat down a frame behind the strike and lift
+    # again; then it rocks back upright, past rest, and settles. The feet
+    # stay planted: the legs swing under the lunge.
+    I = 13
+    # (a 3-frame strike, f10-13, and a second jab that drives in 5 deeper)
+    k = {R: {"rot": T((0, (0, 0, 0)), (8, (12, 0, 0)), (10, (14, 0, 0)), (11, (6, 0, 0)), (12, (-11, 0, 0)), (I, (-22, 0, 0), ">"), (I + 2, (-26, 0, 0)), (I + 3, (-19, 0, 0)), (I + 6, (-28, 0, 0), ">"), (I + 9, (-20, 0, 0)),
+                      (I + 15, (3, 0, 0)), (I + 19, (-1, 0, 0)), (I + 23, (0, 0, 0))),
+             "loc": T((0, (0, 0, 0)), (8, (0, 0, 2.5)), (10, (0, 0, 3)), (11, (0, 0, 2)), (12, (0, 0, -1.5)), (I, (0, 0, -6), ">"), (I + 2, (0, 0, -7)), (I + 3, (0, 0, -5.6)), (I + 6, (0, 0, -7.5), ">"), (I + 9, (0, 0, -6)),
+                      (I + 15, (0, 0, 0.4)), (I + 19, (0, 0, 0)))},
+         "head": {"rot": T((0, (0, 0, 0)), (8, (30, 0, 0)), (10, (35, 0, 0)), (11, (14, 0, 0)), (12, (-20, 0, 0)), (I, (-36, 0, 0), ">"), (I + 2, (-46, 0, 0)), (I + 3, (-34, 0, 0)), (I + 6, (-49, 0, 0), ">"), (I + 9, (-34, 0, 0)),
+                           (I + 15, (6, 0, 0)), (I + 20, (-2, 0, 0)), (I + 24, (0, 0, 0)))}}
+    for name, s in (("wing-l", -1), ("wing-r", 1)):
+        k[name] = {"rot": T((0, (0, 0, 0)), (9, (0, 0, s * 40)), (12, (0, 0, s * 47)), (I + 1, (0, 0, -s * 24), ">"), (I + 4, (0, 0, -s * 30)), (I + 8, (0, 0, s * 14)), (I + 13, (0, 0, -s * 6)),
+                            (I + 18, (0, 0, s * 2)), (I + 22, (0, 0, 0)))}
+    for name in ("leg-l", "leg-r"):
+        k[name] = {"rot": T((0, (0, 0, 0)), (I + 24, (0, 0, 0)))}
+    attack = B.bake(k, I + 24)
+    for name in ("leg-l", "leg-r"):
+        B.plant(root, attack, name, FOOT, range(0, I + 25))
+    B.ground(root, attack, R, height=lambda f: 0.0)
+    AI = I
+    # hit: shoved back and up off its feet on frame 0-1 (lands f8), the
+    # neck whips back and the wings fling up, then beat back down; it
+    # drifts through the beat, rocks forward past rest and settles.
+    hk = {R: B.react_body(push=3.0, pop=0.0, lean=12, side=0.6), "head": {"rot": B.react_lag((30, 16, 0))}}
+    for name, s in (("wing-l", -1), ("wing-r", 1)):
+        hk[name] = {"rot": B.react_lag((0, 0, s * 34), delay=0)}
+    for name in ("leg-l", "leg-r"):
+        hk[name] = {"rot": T((0, (0, 0, 0)), (34, (0, 0, 0)))}
+    hit = B.bake(hk, 34)
+    for name in ("leg-l", "leg-r"):
+        B.plant(root, hit, name, FOOT, range(8, 35))
+    B.ground(root, hit, R, height=B.arc(0, 8, 1.4))
+    # death: a last struggle: it crouches and hurls itself up with three
+    # desperate wing beats, lurching side to side and sagging between
+    # them, the neck thrashing (f0-23, about 12 voxels up); the wings give
+    # out and it drops with gravity, faster and faster, crashing onto its
+    # belly with the legs folding under (impact f32, squashed). One small
+    # bounce and a hard stop; the wings slap down flat to the floor a beat
+    # late and flop, the long neck lands last.
+    I = 32
+    top = 23
+    # each down-stroke heaves it up, each up-stroke it sags back 3 (6-9 up, 9-12 down, ...)
+    climb = T((0, (0, 0, 0)), (6, (0, 0, 0)), (9, (0, 5.5, 0)), (12, (0, 2.5, 0)), (15, (0, 9.5, 0)), (18, (0, 6.5, 0)), (21, (0, 14.0, 0)), (top, (0, 16, 0)), (top + 1, (0, 16, 0)))
+    g = 2 * 16.0 / (I - top) ** 2
+
+    def height(f):
+        if f < top:
+            return float(climb(f)[1])
+        if f < I:
+            return 16.0 - 0.5 * g * (f - top) ** 2
+        return B.arc(I, I + 4, 1.0)(f)
+
+    d = {R: {"rot": T((0, (0, 0, 0)), (6, (10, 0, 0)), (10, (2, 0, -7)), (13, (5, 0, 6)), (16, (-4, 0, -8)), (19, (2, 0, 7)), (22, (-6, 0, -4)), (top + 2, (-8, 0, 0)),
+                      (I, (-21, 0, 0), ">"), (I + 2, (-19, 0, 0)), (I + 4, (-20, 0, 0), "0"), (60, (-20, 0, 0))),
+             "scale": T((0, (1, 1, 1)), (6, (1.04, 0.94, 1.04)), (9, (0.97, 1.05, 0.97)), (12, (1, 1, 1)), (I - 1, (0.98, 1.03, 0.98)), (I, (1.08, 0.86, 1.06), ">"), (I + 3, (0.98, 1.04, 0.99)),
+                        (I + 7, (1.01, 0.99, 1)), (I + 11, (1, 1, 1)),
+                        (I + 18, (1.01, 1.03, 1.01)), (I + 26, (1, 0.98, 1)), (60, (1, 0.985, 1)))},  # a last heaving breath
+         "head": {"rot": T((0, (0, 0, 0)), (6, (20, 0, 0)), (10, (-10, 8, 0)), (13, (-15, -6, 0)), (16, (24, 4, 0)), (19, (-20, 12, 0)), (22, (20, -8, 0)), (top + 3, (30, 0, 0)),
+                           (I, (12, 0, 0)), (I + 3, (-36, 14, 0), ">"), (I + 6, (-28, 16, 0)), (I + 9, (-36, 18, 0)), (60, (-36, 18, 0)))}}
+    for name, s in (("wing-l", -1), ("wing-r", 1)):  # three desperate beats (the down-strokes lift it), then they give out
+        o = s > 0
+        lie = (60, 0, -s * 21)  # spread out and down, trailing back onto the floor
+        d[name] = {"rot": T((0, (0, 0, 0)), (6, (0, 0, s * 50)), (9, (0, 0, -s * 34)), (12, (0, 0, s * 52)), (15, (0, 0, -s * 36)), (18, (0, 0, s * 54)), (21, (0, 0, -s * 30)),
+                            (top + 2, (14, 0, s * 26)), (I - 2, (30, 0, s * 40)), (I + 2 + o, lie, ">"), (I + 5 + o, (52, 0, -s * 10)), (I + 8 + o, lie), (I + 16 + 3 * o, lie),
+                            (I + 19 + 3 * o, (lie[0] - 4, 0, lie[2] + s * (8 - 5 * o))), (I + 24 + 3 * o, lie), (60, lie))}  # a last feeble twitch
+    for name, lag in (("leg-l", 0), ("leg-r", 1)):  # the legs dangle as it struggles, then fold under it
+        d[name] = {"rot": T((0, (0, 0, 0)), (7, (6, 0, 0)), (10, (22, 0, 0)), (16, (8, 0, 0)), (21, (26, 0, 0)), (top + 3, (-20, 0, 0)), (I, (-70, 0, 0), ">"),
+                            (I + 3 + lag, (-76, 0, 0)), (I + 6 + lag, (-70, 0, 0)), (60, (-70, 0, 0)))}
+    death = B.bake(d, 60)
+    B.ground(root, death, R, height=height)
+    for name in ("leg-l", "leg-r", "head"):  # tucked down onto the floor at rest
+        B.reach(root, death, name, "x", range(I + 9, 61), height=0.3, fade_in=3, fade_out=0, span=30)
+    return B.fill(root, attack), AI, B.fill(root, hit), B.fill(root, death), I
+
+
 def _build():
     rig = Rig("mutant-vulture", ORIGIN, body())
     rig.add("head", head(), NECK)
@@ -152,29 +240,12 @@ def _build():
     move = {"wing-l": {"rot": wave(flap, (0, 0, -28))}, "wing-r": {"rot": wave(flap, (0, 0, 28))},
             "mutant-vulture": {"loc": seq((0, 0, 0, 0), (0.4, 0, 2.0, 0), (0.8, 0, 0, 0))},
             "head": {"rot": wave(flap, (5, 0, 0), phase=1.0)}}
-    # attack: rock back on the feet, cock the neck and mantle the wings up
-    # (f0-11), pitch forward 2 frames into the beak strike (impact f13)
-    # with a hop, drive the beak on with a second jab, then settle; the
-    # wings beat down a frame behind the strike.
-    f = 1 / 30
-    imp = 13 * f
-    attack = {"mutant-vulture": {"rot": seq((0, 0, 0, 0), (9 * f, 12, 0, 0), (11 * f, 14, 0, 0), (imp, -22, 0, 0), (15 * f, -28, 0, 0), (20 * f, -22, 0, 0), (30 * f, 0, 0, 0)),
-                                 "loc": seq((0, 0, 0, 0), (9 * f, 0, 0.8, 3), (11 * f, 0, 0.9, 3.5), (imp, 0, 1.8, -8), (15 * f, 0, 2.2, -9), (20 * f, 0, 2.0, -8), (30 * f, 0, 0, 0))},
-              "head": {"rot": seq((0, 0, 0, 0), (9 * f, 30, 0, 0), (11 * f, 34, 0, 0), (imp, -36, 0, 0), (15 * f, -46, 0, 0), (17 * f, -32, 0, 0), (19 * f, -44, 0, 0), (22 * f, -34, 0, 0), (30 * f, 0, 0, 0))},
-              "wing-l": {"rot": seq((0, 0, 0, 0), (9 * f, 0, 0, -40), (12 * f, 0, 0, -46), (14 * f, 0, 0, 24), (17 * f, 0, 0, 30), (23 * f, 0, 0, 12), (30 * f, 0, 0, 0))},
-              "wing-r": {"rot": seq((0, 0, 0, 0), (9 * f, 0, 0, 40), (12 * f, 0, 0, 46), (14 * f, 0, 0, -24), (17 * f, 0, 0, -30), (23 * f, 0, 0, -12), (30 * f, 0, 0, 0))}}
-    hit = {"head": {"rot": seq((0, 0, 0, 0), (0.12, 16, 12, 0), (0.5, 0, 0, 0))},
-           "wing-l": {"rot": seq((0, 0, 0, 0), (0.12, 0, 0, 22), (0.5, 0, 0, 0))},
-           "wing-r": {"rot": seq((0, 0, 0, 0), (0.12, 0, 0, -22), (0.5, 0, 0, 0))}}
-    death = {"mutant-vulture": {"rot": seq((0, 0, 0, 0), (0.5, 0, 0, -22), (1.2, 0, 0, -75))},
-             "wing-l": {"rot": seq((0, 0, 0, 0), (0.6, 0, 0, 30))},
-             "wing-r": {"rot": seq((0, 0, 0, 0), (0.6, 0, 0, -30))},
-             "head": {"rot": seq((0, 0, 0, 0), (1.2, -30, 0, 20))}}
+    attack, imp, hit, death, dimp = _one_shots(rig.root)
     return make("creatures", "mutant-vulture", "Mutant Vulture", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp * F, ease=0), Clip("hit", hit, loop=False, ease=0), Clip("death", death, loop=False, impact=dimp * F, ease=0)],
                 sockets=[rig.socket("socket-beak", (CX, 42.5, 1), parent="head")],
-                pfx=[fx("rvx-apocalypse-gore-burst", "socket-beak", "clip:attack", size=10, at=imp)])
+                pfx=[fx("rvx-apocalypse-gore-burst", "socket-beak", "clip:attack", size=10, at=imp * F)])
 
 
 def build():
-    return ground(_build())
+    return _build()

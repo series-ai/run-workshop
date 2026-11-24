@@ -121,12 +121,21 @@ how motion moves between keys. The exporter adjusts two things:
 - A one-shot with `Clip(impact=seconds)` lands its blow at full speed: every
   key span that ends on the impact frame accelerates into it (cubic ease-in)
   instead of easing in, and the next span leaves the contact pose from
-  rest. Put the contact key on a whole frame (seconds × 30) for every
+  rest. Use it for a death's landing too. Put the contact key on a whole frame (seconds × 30) for every
   channel that strikes.
+
+- Every stroke between two turning points (where a channel reverses or
+  holds) is re-timed so it lingers at its ends and runs faster through its
+  middle: a pendulum hangs at the crest and swings through the bottom.
+  Bezier keys alone move at nearly even speed and read linear.
+  `Clip(ease=0.6)` is the default; `ease=0` keeps even timing for machines.
+  Steady spins have no turning point and are left as keyed.
 
 An attack that reads: a wind-up opposite the strike (about a third of the
 clip, the whole body taking part), a strike of 2–5 frames into the impact
-key, follow-through and a short hold on contact, then recovery. Check it
+key, follow-through and a short hold on contact, then recovery. A death
+anticipates, lands at full speed, bounces once and settles, with loose parts
+(head, wings, tail) landing late. Check it
 with `blender/clip_strip.py`, which keeps the camera fixed so a lunge
 shows.
 

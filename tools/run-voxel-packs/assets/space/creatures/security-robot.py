@@ -9,6 +9,7 @@ attack, hit, death. Sparks bind at the prod tip. Faces -Z.
 """
 import numpy as np
 
+from _motion import DEATH_FLOOR, curve, topple
 from _life import P, Clip, Grid, Rig, asset, box, coords, edges, front, hazard, keys, light_top, ngon_y, plated, quad, side, wave
 from pnshapes import facets
 from voxgrid import C
@@ -18,6 +19,7 @@ CX, CZ = 23, 22
 YH = 17  # hip
 YS = 31  # shoulder
 HIP = 5  # hip offset in x
+LIE, SQ = 80.0, 1.0  # death: the lying angle and the impact squash
 
 
 def pelvis() -> Grid:
@@ -209,39 +211,89 @@ def build():
                    "rot": keys((0, (0, 5, 0)), (t / 2, (0, -5, 0)), (t, (0, 5, 0)))},
         "torso": {"rot": keys((0, (0, -6, 0)), (t / 2, (0, 6, 0)), (t, (0, -6, 0)))},
     }
-    # Overhead stun jab: the robot leans back, twists its prod shoulder away
-    # and cocks the prod high behind its head with the shield up on guard
-    # (0-0.37 s), then drives the prod down and forward in 3 frames as the
-    # whole robot lunges and twists into it (impact 0.433 s), holds the
-    # jab while the arc crackles, then steps back.
+    # Overhead stun jab, robotic and heavy: move, stop, move, stop. The prod
+    # arm ratchets up to shoulder height and locks (0.1 s, hold), ratchets
+    # high behind the head as the robot leans back and twists away (hold,
+    # the wind-up), then drives the prod down and forward in 2 frames as
+    # the whole robot pitches into it and its weight drops (impact 0.5 s).
+    # It stops dead and holds the jab while the arc crackles, then retracts
+    # in two locked steps.
     F = 1 / 30
-    hit_t = 13 * F
+    hit_f = 15
+    hit_t = hit_f * F
+
+    def hold(*poses):
+        """robotic keys: each (frame_in, frame_out, value) arrives at
+        frame_in and stays locked until frame_out."""
+        out = []
+        for f0, f1, v in poses:
+            out.append((f0, v))
+            if f1 > f0:
+                out.append((f1, v))
+        return curve(*out)
+
     attack = {
-        "arm-r": {"rot": keys((0, z), (5 * F, (70, 0, 6)), (10 * F, (128, 0, 10)), (11 * F, (130, 0, 10)), (hit_t, (12, 0, -4)),
-                              (15 * F, (2, 0, -6)), (20 * F, (10, 0, -4)), (30 * F, z)),
-                  "loc": keys((0, z), (11 * F, (0, 0, 1.0)), (hit_t, (0, 0, -2.5)), (15 * F, (0, 0, -3.0)), (20 * F, (0, 0, -2.0)), (30 * F, z))},
-        "torso": {"rot": keys((0, z), (11 * F, (10, -22, 0)), (hit_t, (-12, 18, 0)), (15 * F, (-15, 22, 0)), (20 * F, (-11, 16, 0)), (30 * F, z))},
-        "security-robot": {"loc": keys((0, z), (11 * F, (0, 0, 2.5)), (hit_t, (0, 0, -5.5)), (15 * F, (0, 0, -6.0)), (20 * F, (0, 0, -5.5)), (30 * F, z))},
-        "arm-l": {"rot": keys((0, z), (10 * F, (30, 0, 0)), (hit_t + F, (-14, 0, 0)), (17 * F, (-18, 0, 0)), (22 * F, (-8, 0, 0)), (30 * F, z))},
-        "head": {"rot": keys((0, z), (10 * F, (-6, 14, 0)), (hit_t + F, (6, -12, 0)), (17 * F, (8, -14, 0)), (22 * F, (4, -8, 0)), (30 * F, z))},
+        "arm-r": {"rot": hold((0, 0, z), (3, 7, (70, 0, 6)), (10, 13, (132, 0, 10)), (hit_f, 21, (10, 0, -4)), (24, 26, (44, 0, 0)), (29, 30, z)),
+                  "loc": hold((0, 0, z), (3, 7, z), (10, 13, (0, 0, 1.0)), (hit_f, 21, (0, 0, -2.5)), (24, 26, (0, 0, -1.0)), (29, 30, z))},
+        "torso": {"rot": hold((0, 0, z), (3, 7, (4, -10, 0)), (10, 13, (10, -24, 0)), (hit_f, 21, (-16, 20, 0)), (24, 26, (-5, 8, 0)), (29, 30, z))},
+        "security-robot": {"loc": hold((0, 0, z), (3, 7, z), (10, 13, (0, 0, 1.5)), (hit_f, 16, (0, -1.2, -3.5)), (18, 21, (0, -0.8, -3.5)), (24, 26, (0, 0, -1.5)),
+                                       (29, 30, z))},
+        "arm-l": {"rot": hold((0, 0, z), (3, 7, (14, 0, 0)), (10, 13, (30, 0, 0)), (hit_f + 1, 21, (-16, 0, 0)), (24, 26, (-6, 0, 0)), (29, 30, z))},
+        "head": {"rot": hold((0, 0, z), (3, 7, (0, 8, 0)), (10, 13, (-6, 16, 0)), (hit_f + 1, 21, (6, -12, 0)), (24, 26, (2, -4, 0)), (29, 30, z))},
     }
+    # Shot in the chest, robotic: frames 0-2 the robot jolts back about its
+    # heels (chest and head thrown back, arms flung forward), locks there,
+    # snaps forward to correct and locks again, then resets (0.5 s).
+    def heel_tip(a: float, f: int, z0: float = 0.0):
+        r = np.radians(a)
+        return (f, (0.0, 5.0 * np.sin(r), 5.0 * (1 - np.cos(r)) + z0))
+
     hit = {
-        "torso": {"rot": keys((0, z), (0.1, (-14, 0, 8)), (0.45, z))},
-        "head": {"rot": keys((0, z), (0.1, (-16, 0, -10)), (0.45, z))},
-        "arm-l": {"rot": keys((0, z), (0.1, (14, 0, 0)), (0.45, z))},
+        "security-robot": {"rot": hold((0, 0, z), (2, 5, (8, 0, 0)), (8, 11, (-1.5, 0, 0)), (14, 15, z)),
+                           "loc": curve((0, z), heel_tip(8, 2, 2.4), heel_tip(8, 5, 2.4), heel_tip(-1.5, 8, 1.2), heel_tip(-1.5, 11, 1.2), (14, z), (15, z))},
+        "torso": {"rot": hold((0, 0, z), (2, 5, (16, 0, 5)), (8, 11, (-3, 0, 0)), (14, 15, z))},
+        "head": {"rot": hold((0, 0, z), (2, 5, (24, 8, 0)), (8, 11, (8, 2, 0)), (14, 15, z))},
+        "arm-l": {"rot": hold((0, 0, z), (3, 5, (32, 0, -10)), (8, 11, (8, 0, -2)), (14, 15, z))},
+        "arm-r": {"rot": hold((0, 0, z), (3, 5, (40, 0, 12)), (8, 11, (10, 0, 2)), (14, 15, z))},
     }
+    # Shutdown, onto its back, robotic: the blow jolts the robot back and it
+    # locks, glitching (head and prod twitch); it shuffles one step back on
+    # its right foot and locks again; one more jolt back, and then it goes
+    # over backwards stiff as a plank, hinging on its heels and speeding up
+    # into a big thud flat on its back (impact 0.833 s) with a squash, one
+    # tiny bounce and a hard settle. The shield and the prod slam down two
+    # frames after the body and the legs flop.
+    f_hit = 25
+    end = f_hit + 10
+    rot, loc, die_t = topple((0.0, 4.0), beats=[(0, 0.0), (2, 7.0), (5, 7.0), (8, 4.0), (10, 4.0), (12, 11.0)], f_hit=f_hit, lie=LIE, lead=0.15,
+                             power=2.6, bounce_up=0.6, bounce_deg=1.0, end=end)
+
+    def slide(f):
+        pts = [(0, 0.0), (2, 2.0), (5, 2.0), (8, 5.0), (10, 5.0), (12, 6.5)]
+        for (f0, a0), (f1, a1) in zip(pts, pts[1:]):
+            if f <= f1:
+                return a0 + (a1 - a0) * (f - f0) / (f1 - f0)
+        return pts[-1][1]
+    loc = [(t, (x, y, zz + slide(t / F))) for t, (x, y, zz) in loc]
+    one = (1.0, 1.0, 1.0)
     death = {
-        "security-robot": {"rot": keys((0, z), (0.5, (0, 0, 24)), (1.0, (0, 0, 84))), "loc": keys((0, z), (1.0, (0, -3, 0)))},
-        "torso": {"rot": keys((0, z), (0.5, (14, 0, 0)), (1.0, (22, 0, 0)))},
-        "head": {"rot": keys((0, z), (1.0, (26, 0, 0)))},
-        "arm-r": {"rot": keys((0, z), (0.5, (-30, 0, 0)), (1.0, (-52, 0, 0)))},
-        "arm-l": {"rot": keys((0, z), (1.0, (34, 0, 0)))},
+        "security-robot": {"rot": rot, "loc": loc},
+        "pelvis": {"scale": curve((0, one), (f_hit - 1, one), (f_hit, (1.14, 0.92, SQ)), (f_hit + 2, (0.97, 1.03, 1.02)), (f_hit + 4, one), (end, one))},
+        "torso": {"rot": hold((0, 0, z), (2, 5, (8, 6, 0)), (7, 10, (-4, -6, 0)), (12, 14, (6, 0, 0)), (f_hit, end, z))},
+        "head": {"rot": hold((0, 0, z), (2, 4, (16, 24, 0)), (5, 6, (10, -20, 0)), (8, 10, (-6, 18, 0)), (12, 14, (-20, 0, 0)), (f_hit - 2, f_hit, (-28, 0, 0)),
+                             (f_hit + 2, end, (17, 16, 0)))},
+        "arm-r": {"rot": curve((0, z), (2, (40, 0, 10)), (5, (40, 0, 10)), (7, (20, 0, 6)), (10, (20, 0, 6)), (12, (50, 0, 14)), (19, (96, 0, 26)),
+                               (f_hit - 1, (110, 0, 34)), (f_hit + 2, (-90, 80, 0)), (f_hit + 3, (-90, 80, -6)), (f_hit + 5, (-90, 80, 0)), (end, (-90, 80, 0)))},
+        "arm-l": {"rot": curve((0, z), (2, (30, 0, -10)), (5, (30, 0, -10)), (7, (14, 0, -6)), (10, (14, 0, -6)), (12, (40, 0, -14)), (19, (76, 0, -26)),
+                               (f_hit - 1, (96, 0, -36)), (f_hit + 2, (-26, 0, -85)), (f_hit + 3, (-21, 0, -79)), (f_hit + 5, (-26, 0, -85)), (end, (-26, 0, -85)))},
+        "leg-r": {"rot": curve((0, z), (5, z), (7, (-16, 0, 0)), (10, z), (f_hit, z), (f_hit + 3, (13, 0, -6)), (f_hit + 6, (5, 0, -8)), (end, (5, 0, -8)))},
+        "leg-l": {"rot": curve((0, z), (f_hit, z), (f_hit + 2, (16, 0, 6)), (f_hit + 5, (5, 0, 8)), (end, (5, 0, 8)))},
     }
     prod = rig.sock("socket-prod", (CX + 11, YS - 17, CZ - 22), parent="arm-r")
     return asset(
         "creatures", "security-robot", "Security Robot", rig.root,
-        clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t),
-               Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+        clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=hit_t, ease=0),
+               Clip("hit", hit, loop=False, floor=True, ease=0), Clip("death", death, loop=False, impact=die_t, floor=DEATH_FLOOR, ease=0)],
         sockets=[prod],
         pfx=[{"effectId": "rvx-space-stun-arc", "socket": "socket-prod", "trigger": "clip:attack", "size": 11, "at": round(hit_t, 3)}],
     )

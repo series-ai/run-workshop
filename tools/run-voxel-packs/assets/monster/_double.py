@@ -185,7 +185,11 @@ def _new_animated(slug):
         g.prism("z", [(9, 24), (14, 21), (19, 20), (24, 21), (29, 24), (26, 15), (22, 10), (19, 8), (16, 10), (12, 15)], 9, 17, C("gray", 6))
         P.flat(g, last(g), "bone", 6)
         joints.append(("action", "base", (19, 67, 13)))
-        swing = Clip("active", {"action": {"rot": keys((0, (0, 0, 0)), (0.5, (42, 0, 0)), (1.0, (-42, 0, 0)), (1.5, (0, 0, 0)))}})
+        # A clean pendulum: a sine keyed on every frame, fastest through the
+        # bottom and slowing smoothly into each end, with no stroke hang
+        # (ease=0) and no hitch at the turn.
+        swing = Clip("active", {"action": {"rot": [(f / 30, (42 * math.sin(2 * math.pi * f / 45), 0.0, 0.0)) for f in range(46)]}},
+                     ease=0)
         # Attack: the blade is hauled back 55° (frames 0-12, with a small
         # settle at the top), swings 80° forward in 3 frames and bites at 25°
         # in front on frame 15, drives on, holds in the cut, sways back to rest.

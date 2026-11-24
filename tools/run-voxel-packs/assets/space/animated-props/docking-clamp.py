@@ -6,12 +6,14 @@ with a sloped teal console on the front, and a thick orange yoke on top.
 The oversized function prop is the pair of claws: chunky curved jaws that
 lean in over the yoke and meet at the tip, each with a copper ram, a dark
 grip pad and a hazard heel (F3, F4). A warning lamp caps the column. On
-`open` the jaws swing apart, on `close` they bite shut; on `idle` the lamp
+`open` the jaws slam apart, on `close` they slam shut; on `idle` the lamp
 turns and the jaws breathe. Steam vents from the ram on `open`. Faces -Z.
 """
 import numpy as np
 
-from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, front, hazard, keys, light_top, ngon_y, octo, plan, plate_facets, plated, side, spin, wave
+from _slam import slam
+
+from _life import P, Clip, Grid, Rig, asset, band, box, coords, edges, front, hazard, light_top, ngon_y, octo, plan, plate_facets, plated, side, spin, wave
 
 S = (46, 52, 36)
 CX, CZ = 23, 18
@@ -133,19 +135,26 @@ def build():
     rig.add("lamp", lamp(), (CX, YY, CZ), "clamp")
     rig.add("jaw-l", jaw(-1), (CX - HX, HY, CZ), "clamp")
     rig.add("jaw-r", jaw(1), (CX + HX, HY, CZ), "clamp")
-    z = (0.0, 0.0, 0.0)
     OPEN = 36.0
-    open_ = {"jaw-l": {"rot": keys((0, z), (0.3, (0, 0, -4)), (1.0, (0, 0, OPEN)))},
-             "jaw-r": {"rot": keys((0, z), (0.3, (0, 0, 4)), (1.0, (0, 0, -OPEN)))},
-             "lamp": {"rot": spin(1.0, "y", 360)}}
-    close = {"jaw-l": {"rot": keys((0, (0, 0, OPEN)), (0.7, (0, 0, -3)), (1.0, z))},
-             "jaw-r": {"rot": keys((0, (0, 0, -OPEN)), (0.7, (0, 0, 3)), (1.0, z))},
-             "lamp": {"rot": spin(1.0, "y", 360)}}
+    # Hydraulic slams, same rule as the airlock door (see _slam): the jaws
+    # barely move for the first frames, then a power-3.5 curve keyed once a
+    # frame drives them into the stop at 3.5x their mean speed (shut on
+    # `close`, wide on `open`): dead stop, a tiny 4-frame rebound, still.
+    def jaws(a, b):
+        l, hit = slam((0, 0, a), (0, 0, b), frames=12, power=3.5, rebound=0.06)
+        r, _ = slam((0, 0, -a), (0, 0, -b), frames=12, power=3.5, rebound=0.06)
+        return l, r, hit
+
+    l, r, HIT = jaws(0.0, OPEN)
+    T = l[-1][0]
+    open_ = {"jaw-l": {"rot": l}, "jaw-r": {"rot": r}, "lamp": {"rot": spin(T, "y", 360)}}
+    l, r, _ = jaws(OPEN, 0.0)
+    close = {"jaw-l": {"rot": l}, "jaw-r": {"rot": r}, "lamp": {"rot": spin(T, "y", 360)}}
     idle = {"lamp": {"rot": spin(3.0, "y", 360)},
             "jaw-l": {"rot": wave(4.0, "z", 2.0)},
             "jaw-r": {"rot": wave(4.0, "z", -2.0)}}
     vent = rig.sock("socket-vent", (CX + 14, 13, CZ), parent="clamp")
     return asset("animated-props", "docking-clamp", "Docking Clamp", rig.root,
-                 clips=[Clip("idle", idle), Clip("open", open_, loop=False), Clip("close", close, loop=False)],
+                 clips=[Clip("idle", idle), Clip("open", open_, loop=False, ease=0), Clip("close", close, loop=False, ease=0)],
                  sockets=[vent],
                  pfx=[{"effectId": "rvx-space-launch-steam", "socket": "socket-vent", "trigger": "clip:open", "size": 10, "aim": [1.0, 0.3, 0.0]}])

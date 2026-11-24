@@ -22,11 +22,14 @@ puts a part below the floor.
 """
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 import paint as P
 import pnglyph
 import pnshapes as S
+from _fall import fall_back, hit_back
 from _kit import keys, pfx, world
 from _life import assemble, bark, chunk, claw, coords, eyes, front, limb, octo, plan, rotate, side
 from pnkit import box
@@ -124,8 +127,11 @@ def loose(slug: str, parts: dict[str, Grid]) -> None:
             raise ValueError(f"{slug}: part {name!r} has no voxels")
 
 
-def clips(idle, attack, hit, death, impact: float | None = None) -> list[Clip]:
-    return [Clip("idle", idle), Clip("attack", attack, loop=False, impact=impact), Clip("hit", hit, loop=False), Clip("death", death, loop=False)]
+def clips(idle, attack, hit, death, impact: float | None = None, death_impact: float | None = None,
+          hit_impact: float | None = None) -> list[Clip]:
+    """`death_impact`: the frame the falling body hits the floor (it lands at full speed); `hit_impact`: the blow of the hit."""
+    return [Clip("idle", idle), Clip("attack", attack, loop=False, impact=impact), Clip("hit", hit, loop=False, impact=hit_impact),
+            Clip("death", death, loop=False, impact=death_impact)]
 
 
 def rel(p, root) -> tuple[float, float, float]:
@@ -253,35 +259,58 @@ def _imp():
             "wing-l": {"rot": keys((0, Z3), (0.3, (0, 0, -14)), (0.6, Z3), (0.9, (0, 0, -14)), (1.2, Z3))},
             "wing-r": {"rot": keys((0, Z3), (0.3, (0, 0, 14)), (0.6, Z3), (0.9, (0, 0, 14)), (1.2, Z3))},
             "tail": {"rot": keys((0, (0, -12, 0)), (0.6, (0, 12, 0)), (1.2, (0, -12, 0)))}}
-    # Hex throw: it rears back with both arms swept behind and the wings
-    # flared (frames 0-10), hops 7 voxels forward and flings both hands out
-    # on frame 13 (the curse cloud), holds the cast, settles by frame 30.
-    attack = {"body": {"rot": keys((0, Z3), (fr(10), (14, 16, 0)), (fr(13), (-16, -6, 0)), (fr(15), (-19, -8, 0)),
-                                   (fr(20), (-13, -4, 0)), (fr(30), Z3)),
-                       "loc": keys((0, Z3), (fr(10), (0, 1.0, 3)), (fr(13), (0, 2.5, -7)), (fr(15), (0, 2.0, -8)),
-                                   (fr(20), (0, 1.5, -7)), (fr(30), Z3))},
-              "arm-l": {"rot": keys((0, Z3), (fr(10), (-45, 0, -28)), (fr(13), (95, 0, 8)), (fr(15), (108, 0, 10)),
-                                    (fr(20), (85, 0, 6)), (fr(30), Z3))},
-              "arm-r": {"rot": keys((0, Z3), (fr(10), (-45, 0, 28)), (fr(13), (95, 0, -8)), (fr(15), (108, 0, -10)),
-                                    (fr(20), (85, 0, -6)), (fr(30), Z3))},
-              "wing-l": {"rot": keys((0, Z3), (fr(11), (0, 0, -42)), (fr(14), (0, 0, 24)), (fr(17), (0, 0, 30)),
-                                     (fr(23), (0, 0, -8)), (fr(30), Z3))},
-              "wing-r": {"rot": keys((0, Z3), (fr(11), (0, 0, 42)), (fr(14), (0, 0, -24)), (fr(17), (0, 0, -30)),
-                                     (fr(23), (0, 0, 8)), (fr(30), Z3))},
-              "head": {"rot": keys((0, Z3), (fr(10), (14, -10, 0)), (fr(13), (-8, 6, 0)), (fr(16), (-16, 8, 0)),
-                                   (fr(22), (-6, 2, 0)), (fr(30), Z3))},
-              "tail": {"rot": keys((0, Z3), (fr(11), (-30, 0, 0)), (fr(14), (-8, 0, 0)), (fr(17), (20, 0, 10)),
-                                   (fr(23), (4, 0, -6)), (fr(30), Z3))}}
-    hit = {"body": {"rot": keys((0, Z3), (0.1, (12, 0, 8)), (0.45, Z3)), "loc": keys((0, Z3), (0.1, (0, 1.2, 1.5)), (0.45, Z3))},
-           "head": {"rot": keys((0, Z3), (0.1, (-14, 8, 0)), (0.45, Z3))}}
-    death = {"body": {"rot": keys((0, Z3), (0.35, (10, 0, 0)), (0.8, (-84, 0, 0)), (1.0, (-82, 0, 0))),
-                      "loc": keys((0, Z3), (0.35, (0, 1.5, 0)), (0.8, (0, 1.0, -5)), (1.0, (0, 1.0, -5)))},
-             "wing-l": {"rot": keys((0, Z3), (1.0, (0, 0, 22)))}, "wing-r": {"rot": keys((0, Z3), (1.0, (0, 0, -22)))},
-             "head": {"rot": keys((0, Z3), (1.0, (10, 0, 20)))}, "tail": {"rot": keys((0, Z3), (1.0, (-30, 0, 0)))}}
+    # Pouncing claw rake: it rears back with both clawed hands thrown up
+    # behind its head, the wings flared and the tail cocked (frames 0-10),
+    # leaps 9 voxels on a wing beat and rakes both claws down through the
+    # target on frame 13 as the curse flares from its palms, lands in a
+    # squash, keeps raking through, and hops back by frame 32; the wings,
+    # head and tail settle last.
+    attack = {"body": {"rot": keys((0, Z3), (fr(10), (14, 16, 0)), (fr(13), (-18, -6, 0)), (fr(16), (-22, -8, 0)),
+                                   (fr(19), (-16, -4, 0)), (fr(27), Z3)),
+                       "loc": keys((0, Z3), (fr(7), (0, -0.9, 1.5)), (fr(10), (0, 1.0, 3)), (fr(12), (0, 4.0, -4)), (fr(15), (0, 0.9, -9)),
+                                   (fr(17), (0, 1.4, -10)), (fr(20), (0, 1.3, -10.5)), (fr(23), (0, 2.5, -5)), (fr(26), (0, -0.6, -1)), (fr(30), Z3)),
+                       "scale": keys((0, (1, 1, 1)), (fr(7), (1.08, 0.9, 1.08)), (fr(10), (0.94, 1.08, 0.94)), (fr(15), (1.12, 0.86, 1.12)),
+                                     (fr(18), (0.97, 1.03, 0.97)), (fr(21), (1, 1, 1)), (fr(23), (0.96, 1.05, 0.96)), (fr(26), (1.1, 0.88, 1.1)), (fr(30), (1, 1, 1)))},
+              "arm-l": {"rot": keys((0, Z3), (fr(10), (160, 0, -22)), (fr(13), (60, 0, 10)), (fr(16), (18, 0, 14)),
+                                    (fr(19), (6, 0, 12)), (fr(24), (40, 0, -6)), (fr(27), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(10), (160, 0, 22)), (fr(13), (60, 0, -10)), (fr(16), (18, 0, -14)),
+                                    (fr(19), (6, 0, -12)), (fr(24), (40, 0, 6)), (fr(27), Z3))},
+              "wing-l": {"rot": keys((0, Z3), (fr(10), (0, 0, -42)), (fr(12), (0, 0, 30)), (fr(15), (0, 0, -24)), (fr(18), (0, 0, 20)),
+                                     (fr(22), (0, 0, -14)), (fr(27), Z3))},
+              "wing-r": {"rot": keys((0, Z3), (fr(10), (0, 0, 42)), (fr(12), (0, 0, -30)), (fr(15), (0, 0, 24)), (fr(18), (0, 0, -20)),
+                                     (fr(22), (0, 0, 14)), (fr(27), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(10), (14, -10, 0)), (fr(13), (-12, 6, 0)), (fr(16), (-20, 8, 0)),
+                                   (fr(20), (-12, -6, 0)), (fr(24), (4, 0, 0)), (fr(27), Z3))},
+              "tail": {"rot": keys((0, Z3), (fr(10), (-30, 0, 0)), (fr(13), (-6, 0, 0)), (fr(16), (22, 0, 10)),
+                                   (fr(19), (4, 0, -10)), (fr(24), (-10, 0, 6)), (fr(27), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("body", foot=(-8, 0.5, -5.5), push=3.0, pop=2.0, tilt=14, twist=8, k=0.85, squash=0.1, head=("head", 22), arms={"arm-l": (40, -1), "arm-r": (40, 1)},
+                            extra={"wing-l": lambda t: keys((0, Z3), (fr(4), (0, 0, -40)), (fr(9), (0, 0, 14)), (fr(t["E"]), Z3)),
+                                   "wing-r": lambda t: keys((0, Z3), (fr(4), (0, 0, 40)), (fr(9), (0, 0, -14)), (fr(t["E"]), Z3)),
+                                   "tail": lambda t: keys((0, Z3), (fr(4), (-26, 0, 0)), (fr(10), (14, 0, 8)), (fr(t["E"]), Z3))})
+    # Death: it rocks forward, teeters back with the arms thrown up and the
+    # wings flapping for balance, catches itself, then falls over backwards
+    # (away from the attacker), fastest at the floor on the impact frame,
+    # lands in a squash, bounces once in a stretch and settles on its back;
+    # the wings, arms, head and tail land late. See _fall.py.
+    wing = lambda s: (lambda t: keys((0, Z3), (fr(t["A"]), (0, 0, s * 30)), (fr(t["B"]), (0, 0, -s * 40)), (fr(t["C"]), (0, 0, s * 10)),  # noqa: E731
+                                     (fr(t["I"]), (0, s * 15, s * 45)), (fr(t["L"]), (0, s * WY, s * WZ)), (fr(t["L"] + 4), (0, s * (WY - 3), s * WZ)),
+                                     (fr(t["E"]), (0, s * WY, s * WZ))))
+    tail = lambda t: keys((0, Z3), (fr(t["A"]), (20, 0, 8)), (fr(t["B"]), (-14, 0, -4)), (fr(t["I"]), (-40, 90, 0)),  # noqa: E731
+                          (fr(t["L"] + 1), (TX, TY, 0)), (fr(t["L"] + 5), (TX + 3, TY, 0)), (fr(t["E"]), (TX, TY, 0)))
+    WY, WZ, TX, TY = 55.0, 0.0, -55.0, 90.0
+    death, death_hit = fall_back("body", D=1.4, F=6.0, bounce=0.4, pre_y=-0.4, R=86.0, roll=6.0, k=0.85, tee=0.4, settle=0.7,
+                                 squash=((1.14, 0.84, 1.14), (0.95, 1.07, 0.95)),
+                                 arms={"arm-l": ((-35, 0, -40), -1), "arm-r": ((-42, 0, 40), 1)},
+                                 head=("head", (0, 0, 20)), extra={"wing-l": wing(-1), "wing-r": wing(1), "tail": tail})
     sockets = [Socket("socket-chest", at=rel((CX, 12.5, CZ - 5.0), HIP), parent="body"),
                Socket("socket-mouth", at=rel((CX, 17.0, CZ - 7.0), HIP), parent="head"),
                Socket("socket-hands", at=rel((CX, 8.5, CZ - 10.0), HIP), parent="body")]
-    return world("imp", "creatures", "Imp", root, clips=clips(idle, attack, hit, death, impact=fr(13)), sockets=sockets,
+    from _move_rigid import imp_move
+    imp_clips = clips(idle, attack, hit, death, impact=fr(13), death_impact=death_hit, hit_impact=hit_hit) + [Clip("move", imp_move(), ease=0)]
+    return world("imp", "creatures", "Imp", root, clips=imp_clips, sockets=sockets,
                  pfx=[pfx("rvx-monster-curse-cloud", "socket-hands", "clip:attack", size=24, at=fr(13))])
 
 
@@ -397,30 +426,101 @@ def _lich():
     idle = {"body": {"loc": keys((0, Z3), (1.2, (0, 1.0, 0)), (2.4, Z3))},
             "head": {"rot": keys((0, Z3), (0.6, (0, 8, 0)), (1.8, (0, -8, 0)), (2.4, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.2, (10, 0, -6)), (2.4, Z3))}}
-    # Curse strike: it rears back and twists with the bony hand raised high
-    # and the staff cocked back (frames 0-11), then lunges 6 voxels and drives
-    # the hand down and forward on frame 14, holds, and floats back by 32.
-    attack = {"arm-l": {"rot": keys((0, Z3), (fr(5), (70, 0, -12)), (fr(11), (145, 0, -14)), (fr(14), (80, 0, 8)),
-                                    (fr(16), (68, 0, 10)), (fr(21), (78, 0, 6)), (fr(32), Z3))},
-              "arm-r": {"rot": keys((0, Z3), (fr(11), (12, 0, 6)), (fr(14), (-18, 0, -4)), (fr(16), (-22, 0, -5)),
-                                    (fr(21), (-14, 0, -3)), (fr(32), Z3))},
-              "body": {"rot": keys((0, Z3), (fr(11), (12, 18, 0)), (fr(14), (-14, -12, 0)), (fr(16), (-17, -14, 0)),
-                                   (fr(21), (-11, -9, 0)), (fr(32), Z3)),
-                       "loc": keys((0, Z3), (fr(11), (0, 1.5, 3)), (fr(14), (0, 2.5, -6)), (fr(16), (0, 2.8, -7)),
-                                   (fr(21), (0, 2.2, -6)), (fr(32), Z3))},
-              "head": {"rot": keys((0, Z3), (fr(12), (14, 12, 0)), (fr(15), (-10, -10, 0)), (fr(18), (-18, -12, 0)),
-                                   (fr(24), (-8, -4, 0)), (fr(32), Z3))}}
-    hit = {"body": {"rot": keys((0, Z3), (0.1, (10, 0, -6)), (0.45, Z3)), "loc": keys((0, Z3), (0.1, (0, 0.6, 1)), (0.45, Z3))},
-           "head": {"rot": keys((0, Z3), (0.1, (-16, 10, 0)), (0.45, Z3))}}
-    death = {"body": {"rot": keys((0, Z3), (0.4, (-12, 0, 0)), (0.9, (-82, 0, 0))),
-                      "loc": keys((0, Z3), (0.4, (0, 0.8, 0)), (0.9, (0, 2.0, -6)))},
-             "head": {"rot": keys((0, Z3), (0.9, (30, 0, 15)))},
-             "arm-r": {"rot": keys((0, Z3), (0.9, (0, 0, 35)))}, "arm-l": {"rot": keys((0, Z3), (0.9, (40, 0, -20)))}}
+    # Sterf (2026-11-15b): the casting arm swung backwards, the hit didn't
+    # read, the death fell forward. Clips keep the published staging where
+    # it worked (the wind-up, the body whip) and fix the direction.
+    def piv(th: float, e=(-1.5, 5.5)) -> tuple[float, float]:
+        """(dy, dz) that keep the robe's back hem edge `e` (y, z from the
+        pivot) in place while the body tips back by `th` degrees."""
+        c, s = math.cos(math.radians(th)), math.sin(math.radians(th))
+        return e[0] - (e[0] * c - e[1] * s), e[1] - (e[0] * s + e[1] * c)
+
+    # Attack: the bony hand rears up and back over the shoulder and the body
+    # twists away (frames 0-10), then whips OVER THE TOP, forward and down at
+    # the target in 3 frames onto frame 13 (keyed a frame at a time so the
+    # hand arcs above the skull, not back under the arm), overshoots a touch
+    # and holds pointing at the target; the staff tips its orb forward with
+    # the cast, both arms recoil a hair and settle back.
+    attack = {"arm-l": {"rot": keys((0, Z3), (fr(3), (-85, -8, -16)), (fr(5), (-150, -14, -24)), (fr(10), (-160, -16, -26)),
+                                    (fr(11), (-192, -6, -28)), (fr(12), (-228, 6, -30)), (fr(13), (-262, 16, -30)),
+                                    (fr(15), (-272, 20, -31)), (fr(18), (-266, 17, -29)), (fr(21), (-268, 18, -30)),
+                                    (fr(23), (-300, 6, -14)), (fr(26), (-354, -1, 2)), (fr(28), (-360, 0, 0)))},
+              "arm-r": {"rot": keys((0, Z3), (fr(5), (7, 0, 10)), (fr(10), (8, 0, 11)), (fr(13), (-14, 0, -6)), (fr(15), (-17, 0, -8)),
+                                    (fr(18), (-14, 0, -7)), (fr(21), (-15, 0, -7)), (fr(25), (2, 0, 2)), (fr(28), Z3))},
+              "body": {"rot": keys((0, Z3), (fr(5), (4, -15, 0)), (fr(10), (5, -17, 0)), (fr(13), (-8, 19, 0)), (fr(15), (-10, 22, 0)),
+                                   (fr(18), (-9.5, 21, 0)), (fr(21), (-9, 20.5, 0)), (fr(25), (2, -3, 0)), (fr(28), Z3)),
+                       "loc": keys((0, Z3), (fr(5), (0, 0.2, 0.8)), (fr(10), (0, 0.3, 1.1)), (fr(13), (0, 3.0, -2.4)), (fr(15), (0, 3.2, -3.0)),
+                                   (fr(21), (0, 3.0, -2.5)), (fr(25), (0, 0.3, 0.4)), (fr(28), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(6), (6, -16, 0)), (fr(11), (8, -18, 0)), (fr(14), (-9, 20, 0)), (fr(16), (-12, 24, 0)),
+                                   (fr(19), (-11, 22.5, 0)), (fr(22), (-10.5, 22, 0)), (fr(26), (3, -3, 0)), (fr(28), Z3))}}
+    # Hit, from the front: the blow throws the robe straight back on frames
+    # 0-2 (tipping about the back of the hem, shoved back 3), the skull
+    # whips back a frame later and the bony hand and the staff fly forward
+    # with inertia; a short hold, then he rights himself, rocks a little past
+    # upright and settles. 0.57 s.
+    tilt = [(0, 0, 0), (1, 10, 1.6), (2, 16, 2.7), (4, 17, 3.1), (7, 14, 2.9), (11, 4, 1.1), (14, -3, -0.2), (17, 0, 0)]
+    hit = {"body": {"rot": keys(*[(fr(f), (a, 0, 0)) for f, a, _ in tilt]),
+                    "loc": keys(*[(fr(f), (0, piv(a)[0], piv(a)[1] + z)) for f, a, z in tilt]),
+                    "scale": keys((0, (1, 1, 1)), (fr(1), (1.05, 0.94, 1.05)), (fr(3), (0.98, 1.03, 0.98)), (fr(6), (1, 1, 1)))},
+           "head": {"rot": keys((0, Z3), (fr(1), (3, 0, 0)), (fr(3), (24, -6, 0)), (fr(5), (27, -7, 0)), (fr(9), (12, -3, 0)),
+                                (fr(13), (-6, 1, 0)), (fr(17), Z3))},
+           "arm-l": {"rot": keys((0, Z3), (fr(2), (18, 0, -6)), (fr(3), (34, 0, -12)), (fr(6), (30, 0, -10)), (fr(11), (2, 0, -1)),
+                                 (fr(14), (-6, 0, 2)), (fr(17), Z3))},
+           "arm-r": {"rot": keys((0, Z3), (fr(2), (-8, 0, 2)), (fr(3), (-12, 0, 3)), (fr(7), (-10, 0, 3)), (fr(12), (1, 0, 0)), (fr(17), Z3))}}
+    # Death: the killing blow snaps him back (frames 0-2) with the hand and
+    # the staff flung up, the phylactery bursts and he glides back a step on
+    # his hem, tipping (2-10), teeters at the edge (10-12), then goes over
+    # BACKWARDS like a felled post about the back of the hem, faster and
+    # faster (keyed a frame at a time) flat onto his back on frame 23; a
+    # squash, a one-frame bounce, dead still. The arms and the staff, flung
+    # up through the fall, slam down out to the sides a frame after the
+    # body, and the skull cracks back and lolls aside. 0.97 s.
+    I = 23
+    pose = [(0, 0.0, 0.0, 0.0), (1, 9.0, 0.0, 1.5), (2, 14.0, 0.3, 2.6), (4, 16.0, 0.6, 3.6), (7, 18.0, 0.8, 5.0), (10, 21.0, 0.6, 6.0),
+            (12, 23.5, 0.4, 6.3)]
+    for k in range(1, I - 12 + 1):  # the fall: accelerating, still gliding back a little
+        u = k / (I - 12)
+        pose.append((12 + k, 23.5 + (86.0 - 23.5) * (0.06 * u + 0.94 * u ** 2.3), 0.4 * (1 - u), 6.3 + 1.2 * u))
+    pose += [(I + 1, 83.5, 0.5, 7.6), (I + 2, 86.0, 0.0, 7.6), (I + 5, 86.0, 0.0, 7.6)]
+    death = {"body": {"rot": keys(*[(fr(f), (a, 0, 1.5 * min(1.0, a / 86.0))) for f, a, _, _ in pose]),
+                      "loc": keys(*[(fr(f), (0, piv(a)[0] + y, piv(a)[1] + z)) for f, a, y, z in pose]),
+                      "scale": keys((0, (1, 1, 1)), (fr(I - 1), (1, 1, 1)), (fr(I), (1.08, 1.04, 0.84)), (fr(I + 2), (0.98, 0.99, 1.03)), (fr(I + 4), (1, 1, 1)))},
+             # the skull whips back with the blow, lags forward through the fall,
+             # then cracks back on the floor and lolls to the side
+             "head": {"rot": keys((0, Z3), (fr(2), (22, 0, 0)), (fr(5), (26, 4, 0)), (fr(12), (8, 6, 0)), (fr(I - 2), (-16, 4, 0)),
+                                  (fr(I), (-6, 10, 0)), (fr(I + 1), (8, 34, 4)), (fr(I + 3), (4, 42, 6)), (fr(I + 5), (4, 42, 6)))},
+             # flung up (forward, relative to the body) by the blow and the fall,
+             # slammed down flat out to the sides on the next frame
+             "arm-l": {"rot": keys((0, Z3), (fr(2), (60, 0, -18)), (fr(4), (96, 0, -26)), (fr(10), (104, 0, -30)), (fr(I - 2), (118, 0, -34)),
+                                   (fr(I), (90, 0, -50)), (fr(I + 1), (14, 0, -72)), (fr(I + 2), (6, 0, -70)), (fr(I + 5), (6, 0, -70)))},
+             "arm-r": {"rot": keys((0, Z3), (fr(2), (-10, 0, 10)), (fr(5), (-16, 0, 16)), (fr(12), (-8, 0, 18)), (fr(I - 1), (14, 0, 22)),
+                                   (fr(I + 1), (8, 0, 40)), (fr(I + 2), (4, 0, 46)), (fr(I + 3), (5, 0, 44)), (fr(I + 5), (5, 0, 44)))}}
     sockets = [Socket("socket-chest", at=rel((CX, 23.0, CZ - 4.5), BODY), parent="body"),
                Socket("socket-mouth", at=rel((CX, 32.5, CZ - 4.2), BODY), parent="head"),
                Socket("socket-hands", at=rel((CX - 9.5, 14.0, CZ - 2.0), BODY), parent="body")]
-    return world("lich", "creatures", "Lich", root, clips=clips(idle, attack, hit, death, impact=fr(14)), sockets=sockets,
-                 pfx=[pfx("rvx-monster-soul-burst", "socket-chest", "clip:death", size=54, at=0.85)])
+
+    # Move: a floating glide, 1.2 s (36 frames), keyed once a frame. He
+    # leans into the glide about his hem (so the hem trails behind the
+    # chest), hovering off the floor with two slow bobs per loop, each
+    # bob deepening the lean as he surges; the staff swings forward and
+    # back once a loop like a walking stick with the body yawing and
+    # rolling after it; the bony hand trails behind; the skull holds its
+    # gaze level against the lean and nods a few frames after each bob.
+    def lich_move() -> dict:
+        T, B = 36, 18  # loop, frames per bob
+        two = lambda f, lag=0.0: math.cos(2 * math.pi * (f - lag) / B)  # noqa: E731
+        one = lambda f, lag=0.0: math.sin(2 * math.pi * (f - lag) / T)  # noqa: E731
+        pf = lambda fn: [(fr(f), tuple(float(c) for c in fn(f % T))) for f in range(T + 1)]  # noqa: E731
+        return {"body": {"loc": pf(lambda f: (0, 2.3 + 0.9 * two(f), -0.4 * two(f, 4))),
+                         "rot": pf(lambda f: (-10.0 - 2.5 * two(f, 3), 4.0 * one(f, 3), -2.5 * one(f, 5)))},
+                "head": {"rot": pf(lambda f: (9.0 + 2.5 * two(f, 6), -4.0 * one(f, 5), 2.0 * one(f, 8)))},
+                "arm-l": {"rot": pf(lambda f: (-16.0 + 5.0 * two(f, 7), 0, -7.0 + 2.0 * one(f, 6)))},
+                "arm-r": {"rot": pf(lambda f: (14.0 * one(f), 0, 3.0 + 1.5 * one(f, 4)))}}
+
+    lich_clips = [Clip("idle", idle), Clip("move", lich_move(), ease=0), Clip("attack", attack, loop=False, impact=fr(13)), Clip("hit", hit, loop=False),
+                  Clip("death", death, loop=False, impact=fr(I), ease=0)]
+    return world("lich", "creatures", "Lich", root, clips=lich_clips, sockets=sockets,
+                 pfx=[pfx("rvx-monster-soul-burst", "socket-chest", "clip:death", size=54, at=fr(3))])
 
 
 # ------------------------------------------------------------------ phantom knight
@@ -565,34 +665,48 @@ def _phantom_knight():
             "cape": {"rot": keys((0, Z3), (1.2, (-6, 0, 0)), (2.4, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.2, (4, 0, 0)), (2.4, Z3))}}
     # Overhead chop: it rears back and twists with the blade cocked over the
-    # shoulder (frames 0-11), steps in 6 voxels and brings the blade down in
-    # 3 frames to the blow on frame 14, follows through, holds, recovers by 32.
-    attack = {"arm-r": {"rot": keys((0, Z3), (fr(11), (45, 0, 15)), (fr(14), (-95, 0, -10)), (fr(16), (-108, 0, -12)),
-                                    (fr(21), (-98, 0, -8)), (fr(32), Z3))},
-              "arm-l": {"rot": keys((0, Z3), (fr(11), (30, 0, -18)), (fr(14), (-30, 0, -10)), (fr(17), (-38, 0, -12)),
-                                    (fr(23), (-20, 0, -6)), (fr(32), Z3))},
-              "torso": {"rot": keys((0, Z3), (fr(11), (12, -22, 0)), (fr(14), (-18, 16, 0)), (fr(16), (-22, 19, 0)),
-                                    (fr(21), (-16, 13, 0)), (fr(32), Z3))},
-              "hips": {"loc": keys((0, Z3), (fr(11), (0, 1.0, 3)), (fr(14), (0, 0.8, -6)), (fr(16), (0, 0.8, -7)),
-                                   (fr(21), (0, 0.7, -6)), (fr(32), Z3))},
-              "leg-l": {"rot": keys((0, Z3), (fr(11), (-8, 0, 0)), (fr(14), (24, 0, 0)), (fr(21), (22, 0, 0)), (fr(32), Z3))},
-              "leg-r": {"rot": keys((0, Z3), (fr(11), (6, 0, 0)), (fr(14), (-16, 0, 0)), (fr(21), (-14, 0, 0)), (fr(32), Z3))},
-              "cape": {"rot": keys((0, Z3), (fr(12), (10, 0, 0)), (fr(15), (-8, 0, 0)), (fr(18), (-20, -6, 0)),
-                                   (fr(25), (-10, 0, 0)), (fr(32), Z3))},
-              "head": {"rot": keys((0, Z3), (fr(12), (10, -10, 0)), (fr(15), (-12, 8, 0)), (fr(18), (-18, 10, 0)),
-                                   (fr(24), (-6, 4, 0)), (fr(32), Z3))}}
-    hit = {"torso": {"rot": keys((0, Z3), (0.1, (12, 6, 0)), (0.45, Z3))},
-           "head": {"rot": keys((0, Z3), (0.1, (-14, -10, 0)), (0.45, Z3))},
-           "cape": {"rot": keys((0, Z3), (0.1, (-12, 0, 0)), (0.45, Z3))}}
-    death = {"hips": {"rot": keys((0, Z3), (0.4, (-10, 0, 0)), (1.0, (-85, 0, 0))),
-                      "loc": keys((0, Z3), (0.4, (0, 0.5, 0)), (1.0, (0, -12.0, -8)))},
-             "head": {"rot": keys((0, Z3), (1.0, (20, 0, 18)))},
-             "arm-r": {"rot": keys((0, Z3), (1.0, (-40, 0, 25)))},
-             "cape": {"rot": keys((0, Z3), (1.0, (-30, 0, 0)))}}
+    # shoulder (frames 0-11), lunges in 10 voxels on a long step and brings
+    # the blade down in 3 frames, driving the point forward and down into
+    # the target on frame 14, keeps pressing through it, and recovers by 34.
+    attack = {"arm-r": {"rot": keys((0, Z3), (fr(11), (45, 0, 15)), (fr(14), (-78, 0, -2)), (fr(17), (-88, 0, -2)),
+                                    (fr(21), (-98, 0, -1)), (fr(26), (-40, 0, 4)), (fr(31), (6, 0, 0)), (fr(34), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(11), (30, 0, -18)), (fr(14), (-30, 0, -10)), (fr(17), (-38, 0, -12)), (fr(19), (-24, 0, -22)),
+                                    (fr(21), (-44, 0, -8)), (fr(29), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(11), (12, -22, 0)), (fr(14), (-18, 16, 0)), (fr(17), (-22, 19, 0)),
+                                    (fr(21), (-27, 22, 0)), (fr(27), (-8, 6, 0)), (fr(31), (3, -2, 0)), (fr(34), Z3))},
+              "hips": {"loc": keys((0, Z3), (fr(11), (0, 0.6, 3)), (fr(15), (0, 0.8, -10)), (fr(17), (0, 0.8, -11)),
+                                   (fr(21), (0, 0.7, -12)), (fr(29), (0, 0.2, -3)), (fr(34), Z3))},
+              "leg-l": {"rot": keys((0, Z3), (fr(11), (-8, 0, 0)), (fr(13), (30, 0, 0)), (fr(15), (30, 0, 0)), (fr(21), (31, 0, 0)), (fr(29), (6, 0, 0)), (fr(34), Z3)),
+                        "loc": keys((0, Z3), (fr(11), Z3), (fr(13), (0, 2.0, 0)), (fr(15), Z3), (fr(29), Z3))},
+              "leg-r": {"rot": keys((0, Z3), (fr(11), (6, 0, 0)), (fr(15), (-22, 0, 0)), (fr(21), (-24, 0, 0)), (fr(29), (-6, 0, 0)), (fr(34), Z3))},
+              "cape": {"rot": keys((0, Z3), (fr(12), (10, 0, 0)), (fr(15), (-8, 0, 0)), (fr(17), (-20, -6, 0)), (fr(19), (-12, 8, 0)),
+                                   (fr(22), (-22, -4, 0)), (fr(29), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(12), (10, -10, 0)), (fr(15), (-12, 8, 0)), (fr(17), (-18, 10, 0)), (fr(19), (-14, -8, 0)),
+                                   (fr(21), (-16, 8, 0)), (fr(24), (-8, -2, 0)), (fr(29), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("hips", foot=(-21, 2.5, -6.5), push=3.0, pop=1.3, tilt=11, twist=6, head=("head", 22), arms={"arm-l": (26, -1), "arm-r": (-18, 1)},
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (10, 6, 0)), (fr(9), (6, 3, 0)), (fr(t["O"]), (-5, 0, 0)), (fr(t["E"]), Z3)),
+                                   "cape": lambda t: keys((0, Z3), (fr(4), (-20, 0, 0)), (fr(10), (10, 0, 0)), (fr(t["O"]), (-6, 0, 0)), (fr(t["E"]), Z3))})
+    # Death: it rocks forward, teeters back onto its heels with the arms
+    # thrown up, catches itself, then the armour topples over backwards
+    # (away from the attacker), fastest at the floor on the impact frame,
+    # thuds, bounces once and settles on its back; the sword arm, the helm
+    # and the cape land late. See _fall.py.
+    cape = lambda t: keys((0, Z3), (fr(t["A"]), (-14, 0, 0)), (fr(t["B"]), (18, 0, 0)), (fr(t["I"]), (CP + 20, 0, 0)),  # noqa: E731
+                          (fr(t["L"]), (CP, 0, 0)), (fr(t["L"] + 5), (CP + 3, 0, 0)), (fr(t["E"]), (CP, 0, 0)))
+    CP = 8.0
+    death, death_hit = fall_back("hips", D=15.3, F=14.0, bounce=1.3, bspan=3, R=86.0, roll=5.0, torso="torso", leg_len=20.0,
+                                 legs={"leg-l": (2, 0, -6), "leg-r": (-3, 0, 8)},
+                                 arms={"arm-l": ((0, 0, -40), -1), "arm-r": ((-30, 0, 30), 1)},
+                                 head=("head", (0, 0, 15)), extra={"cape": cape}, settle=-0.9)
     sockets = [Socket("socket-chest", at=rel((CX, 27.0, CZ - 5.0), HIP), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 36.0, CZ - 5.2), HIP), parent="head"),
                Socket("socket-hands", at=rel((SX, 33.0, SZ), HIP), parent="arm-r")]
-    return world("phantom-knight", "creatures", "Phantom Knight", root, clips=clips(idle, attack, hit, death, impact=fr(14)), sockets=sockets,
+    from _move_rigid import phantom_knight_move
+    knight_clips = clips(idle, attack, hit, death, impact=fr(14), death_impact=death_hit, hit_impact=hit_hit) + [Clip("move", phantom_knight_move(), ease=0)]
+    return world("phantom-knight", "creatures", "Phantom Knight", root, clips=knight_clips, sockets=sockets,
                  pfx=[pfx("rvx-monster-silver-slash", "socket-hands", "clip:attack", size=40, at=fr(12))])
 
 
@@ -707,32 +821,69 @@ def _scarecrow_fiend():
             "arm-l": {"rot": keys((0, Z3), (1.2, (6, 0, 0)), (2.4, Z3))},
             "arm-r": {"rot": keys((0, Z3), (1.2, (-6, 0, 0)), (2.4, Z3))}}
     # Claw clap: it leans back and swings both crossbar arms back and up
-    # (frames 0-11), hops 7 voxels in and claps the twig claws shut in front
-    # on frame 14, follows through, holds, and settles by frame 32.
-    attack = {"body": {"rot": keys((0, Z3), (fr(11), (6, 0, 0)), (fr(14), (-8, 0, 0)), (fr(16), (-10, 0, 0)),
-                                   (fr(21), (-7, 0, 0)), (fr(32), Z3)),
-                       "loc": keys((0, Z3), (fr(11), (0, 1.0, 3)), (fr(14), (0, 2.0, -7)), (fr(16), (0, 1.8, -8)),
-                                   (fr(21), (0, 1.3, -7)), (fr(32), Z3))},
-              "torso": {"rot": keys((0, Z3), (fr(11), (14, 0, 0)), (fr(14), (-22, 0, 0)), (fr(16), (-26, 0, 0)),
-                                    (fr(21), (-19, 0, 0)), (fr(32), Z3))},
-              "arm-l": {"rot": keys((0, Z3), (fr(11), (0, 40, -22)), (fr(14), (0, -75, 14)), (fr(16), (0, -85, 18)),
-                                    (fr(21), (0, -76, 12)), (fr(32), Z3))},
-              "arm-r": {"rot": keys((0, Z3), (fr(11), (0, -40, 22)), (fr(14), (0, 75, -14)), (fr(16), (0, 85, -18)),
-                                    (fr(21), (0, 76, -12)), (fr(32), Z3))},
-              "head": {"rot": keys((0, Z3), (fr(12), (16, 0, 8)), (fr(15), (-10, 0, -6)), (fr(18), (-22, 0, -12)),
-                                   (fr(24), (-8, 0, 4)), (fr(32), Z3))}}
-    hit = {"torso": {"rot": keys((0, Z3), (0.1, (6, 0, 10)), (0.45, Z3))},
-           "head": {"rot": keys((0, Z3), (0.1, (-10, 0, -20)), (0.45, Z3))}}
-    death = {"torso": {"rot": keys((0, Z3), (0.5, (-25, 0, 8)), (1.0, (-40, 0, 12)))},
-             "head": {"rot": keys((0, Z3), (1.0, (25, 0, 30)))},
-             "body": {"rot": keys((0, Z3), (0.5, (-8, 0, 0)), (1.0, (-70, 0, 0))),
-                      "loc": keys((0, Z3), (1.0, (0, 3.0, -6)))},
-             "arm-l": {"rot": keys((0, Z3), (1.0, (0, 0, 25)))}, "arm-r": {"rot": keys((0, Z3), (1.0, (0, 0, -25)))}}
+    # (frames 0-11), hops 7 voxels in, landing on frame 15, and claps the
+    # twig claws shut out in front of its hat on frame 14 with the torso
+    # folding only a little, presses in, and settles by frame 32.
+    attack = {"body": {"rot": keys((0, Z3), (fr(11), (6, 0, 0)), (fr(14), (-6, 0, 0)), (fr(17), (-7, 0, 0)),
+                                   (fr(20), (-8, 0, 0)), (fr(28), Z3)),
+                       "loc": keys((0, Z3), (fr(8), (0, 0.0, 1.5)), (fr(11), (0, 0.6, 3)), (fr(13), (0, 2.6, -3)), (fr(15), (0, 0.0, -7.5)),
+                                   (fr(17), (0, 0.0, -8)), (fr(21), (0, 0.0, -8.4)), (fr(28), Z3)),
+                       "scale": keys((0, (1, 1, 1)), (fr(8), (1.05, 0.93, 1.05)), (fr(12), (0.96, 1.06, 0.96)), (fr(15), (1.05, 0.94, 1.05)),
+                                     (fr(18), (1, 1, 1)), (fr(28), (1, 1, 1)))},
+              "torso": {"rot": keys((0, Z3), (fr(11), (14, 0, 0)), (fr(14), (-10, 0, 0)), (fr(16), (-12, 0, 0)),
+                                    (fr(20), (-16, 0, 0)), (fr(28), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(11), (0, 40, -22)), (fr(14), (-28, -75, 14)), (fr(16), (-30, -85, 18)),
+                                    (fr(20), (-30, -88, 20)), (fr(28), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(11), (0, -40, 22)), (fr(14), (-28, 75, -14)), (fr(16), (-30, 85, -18)),
+                                    (fr(20), (-30, 88, -20)), (fr(28), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(12), (16, 0, 8)), (fr(15), (12, 0, -6)), (fr(17), (8, 0, -12)),
+                                   (fr(22), (-8, 0, 4)), (fr(28), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("body", foot=(0, 1.5, -1.5), push=2.5, pop=1.8, tilt=8, twist=10, squash=0.08, head=("head", 26),
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (10, 0, 10)), (fr(9), (4, 0, -6)), (fr(t["O"]), (-4, 0, 4)), (fr(t["E"]), Z3)),
+                                   "arm-l": lambda t: keys((0, Z3), (fr(4), (0, 0, 22)), (fr(9), (0, 0, -12)), (fr(t["O"]), (0, 0, 6)), (fr(t["E"]), Z3)),
+                                   "arm-r": lambda t: keys((0, Z3), (fr(4), (0, 0, -22)), (fr(9), (0, 0, 12)), (fr(t["O"]), (0, 0, -6)), (fr(t["E"]), Z3))})
+    # Death: it rocks forward on its pole legs, teeters back with the
+    # crossbar arms flapping, catches itself, then topples over backwards
+    # (away from the attacker) from the feet, folding at the waist, fastest
+    # at the floor on the impact frame, slaps down in a squash, bounces once
+    # and settles on its back; the arms and the sack head flop late.
+    death, death_hit = fall_back("body", D=-5.3, F=1.0, bounce=0.0, lead=-1, bspan=3, R=86.0, roll=5.0, torso="torso", torso_fin=(-8, 0, 6), settle=0.5,
+                                 squash=((1.08, 0.9, 1.08), (0.99, 1.01, 0.99)),
+                                 arms={"arm-l": ((0, 0, -10), -1, 30.0), "arm-r": ((0, 0, 10), 1, 30.0)},
+                                 head=("head", (-5, 0, 25)))
+    # Move: pole-legged hops, 26 frames (0.87 s), two hops. The legs are
+    # part of the body (pivot on the floor), so it travels in rigid hops: it
+    # lands squashed with the crossbar arms flopping down, sinks, stretches
+    # up through a 2-frame push with the feet planted, and leaves the floor
+    # on a ballistic arc (8 frames) that lands at full speed. On the floor
+    # the feet slide back at ground speed; in the air it tips forward and the
+    # torso leans to alternate sides (a zigzag hop); the head bobbles late.
+    from _gait_loops import cyc as _cyc, hop_height as _hop, per_frame as _pf, shift as _shift
+    MT, MB, MG, MA, MV = 26, 13, 5, 8, 0.5
+    m_slide = MV * MG
+    m_z = lambda f: -m_slide / 2 + MV * (f % MB) if f % MB <= MG else m_slide / 2 - m_slide * (f % MB - MG) / MA  # noqa: E731
+    m_sq = {0: (1.06, 0.89, 1.06), 1: (1.05, 0.91, 1.05), 2: (1.01, 0.98, 1.01), 3: (0.98, 1.04, 0.98), 4: (0.97, 1.06, 0.97), 5: (0.97, 1.06, 0.97),
+            6: (0.98, 1.04, 0.98), 7: (0.99, 1.02, 0.99), 11: (0.99, 1.01, 0.99), 12: (0.98, 1.03, 0.98)}
+    m_pitch = lambda f: _cyc(f % MB, MB, [(0, 0.0), (MG, 0.0), (8, -6.0), (11, -3.0), (12.99, 0.0)]) if f % MB > MG else 0.0  # noqa: E731
+    m_arm = {0: 8.0, 1: 16.0, 2: 12.0, 3: -2.0, 4: -12.0, 5: -16.0, 6: -12.0, 7: -6.0, 8: -1.0, 9: 2.0, 10: 3.0, 11: 4.0, 12: 5.0}
+    m_lean = {0: 2.0, 1: 5.0, 2: 3.0, 3: -2.0, 4: -5.0, 5: -6.0, 6: -6.0, 7: -5.0, 8: -4.0, 9: -3.0, 10: -2.0, 11: -1.0, 12: 0.0}
+    m_nod = {1: -4.0, 2: -12.0, 3: -8.0, 4: 0.0, 5: 6.0, 6: 5.0, 7: 2.0}
+    m_roll = lambda f: _cyc(f, MT, [(0, 0.0), (9, 7.0), (MB, 0.0), (MB + 9, -7.0)])  # noqa: E731
+    move = {"body": {"loc": _pf(MT, lambda f: (0.0, _hop(f % MB, MG, MA), m_z(f))),
+                     "rot": _pf(MT, lambda f: (m_pitch(f), 0.0, 0.0)),
+                     "scale": _pf(MT, lambda f: m_sq.get(f % MB, (1.0, 1.0, 1.0)))},
+            "torso": {"rot": _pf(MT, lambda f: (m_lean[f % MB], 0.0, m_roll(f)))},
+            "head": {"rot": _pf(MT, lambda f: (m_nod.get(f % MB, 0.0), 0.0, 1.4 * m_roll(f - 3)))},
+            "arm-l": {"rot": _pf(MT, lambda f: (0.0, 0.0, m_arm[f % MB]))},
+            "arm-r": {"rot": _pf(MT, lambda f: (0.0, 0.0, -m_arm[(f - 1) % MB]))}}
     sockets = [Socket("socket-chest", at=rel((CX, 24.0, CZ - 4.2), BASE), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 32.0, CZ - 5.6), BASE), parent="head"),
                Socket("socket-hands", at=rel((CX, 24.0, CZ - 10.0), BASE), parent="torso")]
-    return world("scarecrow-fiend", "creatures", "Scarecrow Fiend", root, clips=clips(idle, attack, hit, death, impact=fr(14)), sockets=sockets,
-                 pfx=[pfx("rvx-monster-rot-poof", "socket-chest", "clip:death", size=40, at=0.85)])
+    return world("scarecrow-fiend", "creatures", "Scarecrow Fiend", root, clips=clips(idle, attack, hit, death, impact=fr(14), death_impact=death_hit, hit_impact=hit_hit) + [Clip("move", _shift(move, MT, 11), ease=0)], sockets=sockets,
+                 pfx=[pfx("rvx-monster-rot-poof", "socket-chest", "clip:death", size=40, at=death_hit)])
 
 
 # ------------------------------------------------------------------ swamp creature
@@ -854,32 +1005,81 @@ def _swamp_creature():
             "head": {"rot": keys((0, Z3), (0.65, (0, -8, 0)), (1.95, (0, 8, 0)), (2.6, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.3, (6, 0, 0)), (2.6, Z3))},
             "arm-r": {"rot": keys((0, (6, 0, 0)), (1.3, Z3), (2.6, (6, 0, 0)))}}
-    # Venom spit: it rears up with the head thrown back and the arms swung
-    # behind (frames 0-10), then snaps the body and head forward and spits on
-    # frame 13 with the arms slammed down in front, the head kicks back once
-    # (recoil), holds, and settles by frame 30.
-    attack = {"hips": {"loc": keys((0, Z3), (fr(10), (0, 0, 2)), (fr(13), (0, 0.5, -5)), (fr(15), (0, 0.5, -5.5)),
-                                   (fr(20), (0, 0.4, -5)), (fr(30), Z3))},
-              "torso": {"rot": keys((0, Z3), (fr(10), (18, 8, 0)), (fr(13), (-16, -4, 0)), (fr(15), (-19, -5, 0)),
-                                    (fr(20), (-13, -3, 0)), (fr(30), Z3)),
-                        "loc": keys((0, Z3), (fr(10), (0, 1.5, 3)), (fr(13), (0, 1.0, -5)), (fr(15), (0, 1.0, -6)),
-                                    (fr(20), (0, 1.0, -5)), (fr(30), Z3))},
-              "head": {"rot": keys((0, Z3), (fr(10), (28, -8, 0)), (fr(13), (-30, 4, 0)), (fr(14), (-18, 2, 0)),
-                                   (fr(16), (-26, 0, 0)), (fr(21), (-16, 0, 0)), (fr(30), Z3))},
-              "arm-l": {"rot": keys((0, Z3), (fr(10), (-28, 0, -16)), (fr(13), (32, 0, -6)), (fr(16), (38, 0, -4)),
-                                    (fr(21), (26, 0, -4)), (fr(30), Z3))},
-              "arm-r": {"rot": keys((0, Z3), (fr(10), (-28, 0, 16)), (fr(13), (32, 0, 6)), (fr(16), (38, 0, 4)),
-                                    (fr(21), (26, 0, 4)), (fr(30), Z3))}}
-    hit = {"torso": {"rot": keys((0, Z3), (0.1, (12, 8, 0)), (0.5, Z3))},
-           "head": {"rot": keys((0, Z3), (0.1, (14, -12, 0)), (0.5, Z3))}}
-    death = {"hips": {"rot": keys((0, Z3), (0.4, (6, 0, 0)), (1.2, (-80, 0, 0))),
-                      "loc": keys((0, Z3), (0.4, (0, 0.5, 0)), (1.2, (0, -3.0, -8)))},
-             "arm-l": {"rot": keys((0, Z3), (1.2, (-60, 0, -20)))}, "arm-r": {"rot": keys((0, Z3), (1.2, (-60, 0, 20)))},
-             "head": {"rot": keys((0, Z3), (1.2, (20, 0, 25)))}}
+    # Lunging claw slam and spit: it rears up with the head thrown back and
+    # the long arms swung high behind (frames 0-10), lunges 8 voxels and
+    # slams both clawed arms down into the target on frame 13 as it spits,
+    # keeps bearing down through it with the head snapping, and settles back
+    # by frame 32.
+    attack = {"hips": {"loc": keys((0, Z3), (fr(10), (0, 0, 3)), (fr(14), (0, 0.0, -8)), (fr(16), (0, 0.0, -9.2)),
+                                   (fr(20), (0, 0.0, -10.6)), (fr(27), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(10), (22, 8, 0)), (fr(13), (-20, -4, 0)), (fr(16), (-24, -6, 0)), (fr(18), (-27, 4, 0)),
+                                    (fr(20), (-29, -4, 0)), (fr(27), Z3)),
+                        "loc": keys((0, Z3), (fr(10), (0, 1.5, 3)), (fr(13), (0, 1.0, -5)), (fr(16), (0, 1.0, -6)),
+                                    (fr(20), (0, 1.0, -6.5)), (fr(27), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(10), (30, -8, 0)), (fr(13), (-30, 4, 0)), (fr(14), (-18, 2, 0)),
+                                   (fr(16), (-28, 10, 0)), (fr(18), (-22, -10, 0)), (fr(20), (-30, 8, 0)), (fr(23), (-12, -4, 0)), (fr(27), Z3))},
+              "arm-l": {"rot": keys((0, Z3), (fr(10), (-45, 0, -18)), (fr(13), (48, 0, -6)), (fr(16), (56, 0, -4)), (fr(18), (44, 0, -10)),
+                                    (fr(20), (62, 0, -2)), (fr(27), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(10), (-45, 0, 18)), (fr(13), (48, 0, 6)), (fr(16), (56, 0, 4)), (fr(19), (46, 0, 10)),
+                                    (fr(21), (62, 0, 2)), (fr(27), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("hips", foot=(-15, 1.5, -12.5), push=3.5, pop=1.4, tilt=8, twist=8, head=("head", 22), arms={"arm-l": (30, -1), "arm-r": (30, 1)},
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (14, 8, 0)), (fr(9), (8, 4, 0)), (fr(t["O"]), (-6, 0, 0)), (fr(t["E"]), Z3))})
+    # Death: the torso rocks forward and teeters back with the long arms
+    # thrown up (the feet stay planted), catches itself, then the heavy body
+    # falls over backwards (away from the attacker), fastest at the floor on
+    # the impact frame, thuds, bounces once and settles on its back; the
+    # arms slam down after the body and the head flops last. See _fall.py.
+    death, death_hit = fall_back("hips", D=2.0, F=6.0, bounce=1.9, lead=2, bspan=3, R=45.0, roll=5.0, torso="torso", tee=0.25, torso_fin=(80, 0, 0),
+                                 arms={"arm-l": ((-38, 0, -40), -1), "arm-r": ((-48, 0, 40), 1)},
+                                 head=("head", (150, 0, 15)), settle=-1.1)
+    # Move: a heavy waddle, 32 frames (1.07 s), two steps. The legs are part
+    # of the hips, so it walks like a rigid toy: it rolls onto the outer edge
+    # of the stance foot (lifting the other foot clear) and yaws about it to
+    # swing the free foot forward, and the stance foot slides back at a
+    # steady ground speed. The roll is ballistic (it tips up, then drops back
+    # accelerating), so every footfall lands at full speed and thunders: the
+    # torso and head slam down a frame or two late, the long arms swing
+    # opposite the feet and fling forward on the thud. The second step is the
+    # mirror of the first, so the loop closes exactly.
+    from _gait_loops import cyc as _cyc, euler as _eul, per_frame as _pf, rmat as _rm, shift as _shift
+    MT, MH = 32, 16
+    PSI, ROLL = 12.0, 7.0
+    sole = [(x, -15.0, z) for x in (-12.1, -2.9) for z in (-10.5, 2.5)] + [(x, -14.7, -13.2) for x in (-10.5, -7.5, -4.5)]
+    ref = np.array([-12.1, -15.0, -4.0])  # the middle of the outer sole edge: it rolls and turns about it
+    stride = 24.2 * math.sin(math.radians(PSI))
+    m_loc, m_rot = [], []
+    for f in range(MH + 1):
+        u = f / MH
+        Rm = _rm((0.0, -PSI + 2 * PSI * u, 0.0)) @ _rm((0.0, 0.0, ROLL * 4 * u * (1 - u)))
+        tgt = np.array([-12.1 * math.cos(math.radians(PSI)), 0.0, -stride / 2 + stride * u])
+        lo = min((Rm @ np.array(c))[1] for c in sole)
+        loc = tgt - Rm @ ref
+        m_loc.append((loc[0], -15.0 - lo, loc[2]))
+        m_rot.append(_eul(Rm))
+    for f in range(1, MH + 1):  # the right step mirrors the left
+        x, y, z = m_loc[f]
+        m_loc.append((-x, y, z))
+        a, b, c = m_rot[f]
+        m_rot.append((a, -b, -c))
+    mz = sum(v[2] for v in m_loc[:-1]) / MT
+    m_loc = [(x, y, z - mz) for x, y, z in m_loc]
+    thud = {0: -0.6, 1: -1.5, 2: -1.1, 3: -0.5, 4: -0.15}
+    nod = {1: -2.0, 2: -4.0, 3: -3.0, 4: -1.0}
+    fling = {1: 4.0, 2: 7.0, 3: 5.0, 4: 2.0}
+    swing = lambda f: _cyc(f - 2, MT, [(0, -1.0), (MH, 1.0)])  # noqa: E731
+    move = {"hips": {"loc": [(f / 30.0, m_loc[f]) for f in range(MT + 1)], "rot": [(f / 30.0, m_rot[f]) for f in range(MT + 1)]},
+            "torso": {"loc": _pf(MT, lambda f: (0.0, thud.get(f % MH, 0.0), 0.0)),
+                      "rot": _pf(MT, lambda f: (nod.get(f % MH, 0.0), -0.5 * m_rot[f][1], -0.3 * m_rot[f][2]))},
+            "head": {"rot": _pf(MT, lambda f: ({2: -4.0, 3: -8.0, 4: -6.0, 5: -2.0}.get(f % MH, 0.0), -0.4 * m_rot[f][1], -0.4 * m_rot[(f - 2) % MT][2]))},
+            "arm-l": {"rot": _pf(MT, lambda f: (16.0 + 8.0 * swing(f) + fling.get(f % MH, 0.0), 0.0, 0.0))},
+            "arm-r": {"rot": _pf(MT, lambda f: (16.0 - 8.0 * swing(f) + fling.get(f % MH, 0.0), 0.0, 0.0))}}
     sockets = [Socket("socket-chest", at=rel((CX, 30.0, CZ - 11.0), HIP), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 28.0, CZ - 18.4), HIP), parent="head"),
                Socket("socket-hands", at=rel((CX, 10.0, CZ - 12.0), HIP), parent="hips")]
-    return world("swamp-creature", "creatures", "Swamp Creature", root, clips=clips(idle, attack, hit, death, impact=fr(13)), sockets=sockets,
+    return world("swamp-creature", "creatures", "Swamp Creature", root, clips=clips(idle, attack, hit, death, impact=fr(13), death_impact=death_hit, hit_impact=hit_hit) + [Clip("move", _shift(move, MT, 8), ease=0)], sockets=sockets,
                  pfx=[pfx("rvx-monster-venom-spit", "socket-mouth", "clip:attack", size=44, at=fr(13))])
 
 
@@ -1020,31 +1220,44 @@ def _patchwork_giant():
             "head": {"rot": keys((0, Z3), (0.7, (0, 10, -4)), (2.1, (0, -10, 4)), (2.8, Z3))},
             "arm-l": {"rot": keys((0, Z3), (1.4, (-5, 0, 0)), (2.8, Z3))},
             "arm-r": {"rot": keys((0, Z3), (1.4, (5, 0, 0)), (2.8, Z3))}}
-    # Hammer-fist slam: it leans back and heaves the heavy left arm overhead
-    # (frames 0-12), steps in 9 voxels and brings the fist down in 4 frames
-    # to the blow on frame 16, sags into it, holds, recovers by frame 35.
-    attack = {"arm-l": {"rot": keys((0, Z3), (fr(6), (75, 0, -10)), (fr(12), (165, 0, -12)), (fr(16), (48, 0, 6)),
-                                    (fr(18), (40, 0, 8)), (fr(24), (46, 0, 4)), (fr(35), Z3))},
-              "arm-r": {"rot": keys((0, Z3), (fr(12), (30, 0, 22)), (fr(16), (-22, 0, 8)), (fr(19), (-28, 0, 10)),
-                                    (fr(25), (-14, 0, 5)), (fr(35), Z3))},
-              "torso": {"rot": keys((0, Z3), (fr(12), (14, -14, 0)), (fr(16), (-20, 12, 0)), (fr(18), (-23, 14, 0)),
-                                    (fr(24), (-18, 10, 0)), (fr(35), Z3))},
-              "hips": {"loc": keys((0, Z3), (fr(12), (0, 0.3, 4)), (fr(16), (0, 1.6, -9)), (fr(18), (0, 1.6, -10)),
-                                   (fr(24), (0, 1.5, -9)), (fr(35), Z3))},
-              "leg-l": {"rot": keys((0, Z3), (fr(12), (-6, 0, 0)), (fr(16), (20, 0, 0)), (fr(24), (18, 0, 0)), (fr(35), Z3))},
-              "leg-r": {"rot": keys((0, Z3), (fr(12), (4, 0, 0)), (fr(16), (-16, 0, 0)), (fr(24), (-14, 0, 0)), (fr(35), Z3))},
-              "head": {"rot": keys((0, Z3), (fr(13), (14, 6, 0)), (fr(17), (-12, -6, 0)), (fr(20), (-20, -8, 0)),
-                                   (fr(27), (-8, -2, 0)), (fr(35), Z3))}}
-    hit = {"torso": {"rot": keys((0, Z3), (0.12, (10, -8, 0)), (0.5, Z3))},
-           "head": {"rot": keys((0, Z3), (0.12, (-16, 12, 0)), (0.5, Z3))}}
-    death = {"hips": {"rot": keys((0, Z3), (0.5, (-8, 0, 0)), (1.4, (-84, 0, 0))),
-                      "loc": keys((0, Z3), (0.5, (0, 0.5, 0)), (1.4, (0, -14.0, -12)))},
-             "arm-l": {"rot": keys((0, Z3), (1.4, (-70, 0, -15)))}, "arm-r": {"rot": keys((0, Z3), (1.4, (-70, 0, 15)))},
-             "head": {"rot": keys((0, Z3), (1.4, (25, 0, 20)))}}
+    # Hammer-fist blow: it leans back and heaves the heavy left arm overhead
+    # (frames 0-12), steps in 9 voxels and swings the fist down and forward
+    # in 4 frames to the blow on frame 16 with the fist out in front at chest
+    # height, follows through down past the target as it sags into it, and
+    # recovers by frame 38; the small right arm only counter-swings.
+    attack = {"arm-l": {"rot": keys((0, Z3), (fr(6), (75, 0, -10)), (fr(12), (165, 0, -12)), (fr(16), (104, 0, 6)),
+                                    (fr(19), (62, 0, 8)), (fr(22), (38, 0, 6)), (fr(27), (20, 0, 3)), (fr(32), Z3))},
+              "arm-r": {"rot": keys((0, Z3), (fr(12), (18, 0, 14)), (fr(16), (-14, 0, 6)), (fr(19), (-18, 0, 8)),
+                                    (fr(24), (-8, 0, 4)), (fr(32), Z3))},
+              "torso": {"rot": keys((0, Z3), (fr(12), (14, -14, 0)), (fr(16), (-20, 12, 0)), (fr(19), (-25, 15, 0)),
+                                    (fr(22), (-27, 15, 0)), (fr(27), (-16, 8, 0)), (fr(32), Z3))},
+              "hips": {"loc": keys((0, Z3), (fr(12), (0, 0.3, 4)), (fr(16), (0, 1.6, -9)), (fr(19), (0, 1.6, -10)),
+                                   (fr(22), (0, 1.6, -10.5)), (fr(27), (0, 1.0, -7)), (fr(32), Z3))},
+              "leg-l": {"rot": keys((0, Z3), (fr(12), (-6, 0, 0)), (fr(16), (20, 0, 0)), (fr(22), (19, 0, 0)), (fr(32), Z3))},
+              "leg-r": {"rot": keys((0, Z3), (fr(12), (4, 0, 0)), (fr(16), (-16, 0, 0)), (fr(22), (-17, 0, 0)), (fr(32), Z3))},
+              "head": {"rot": keys((0, Z3), (fr(13), (14, 6, 0)), (fr(17), (-12, -6, 0)), (fr(19), (-20, -8, 0)),
+                                   (fr(24), (-14, -4, 0)), (fr(28), (-4, 0, 0)), (fr(32), Z3))}}
+    # The giant is shoved 8 voxels back with a 1.5 pop and catches its weight
+    # with a heavy step back on the right leg (lift, swing back, plant).
+    hit, hit_hit = hit_back("hips", foot=(-26, 5.5, -9.5), push=8.0, pop=1.5, tilt=8, twist=-6, k=1.2, head=("head", 20), arms={"arm-l": (22, -1), "arm-r": (30, 1)},
+                            extra={"torso": lambda t: keys((0, Z3), (fr(4), (10, -8, 0)), (fr(10), (6, -4, 0)), (fr(t["O"]), (-5, 0, 0)), (fr(t["E"]), Z3)),
+                                   "leg-r": lambda t: keys((0, Z3), (fr(4), (-14, 0, 0)), (fr(7), (-30, 0, 2)), (fr(10), (-14, 0, 0)), (fr(t["O"]), (-2, 0, 0)), (fr(t["E"]), Z3)),
+                                   "leg-l": lambda t: keys((0, Z3), (fr(4), (6, 0, 0)), (fr(10), (10, 0, 0)), (fr(t["O"]), (4, 0, 0)), (fr(t["E"]), Z3))})
+    # Death: the giant rocks forward, teeters back onto its heels with the
+    # arms thrown up, catches itself, then topples over backwards (away from
+    # the attacker), slow to start and fastest at the floor on the impact
+    # frame, a heavy thud, one small bounce, and it settles slowly on its
+    # back; the heavy arms slam down after the body. See _fall.py.
+    death, death_hit = fall_back("hips", D=16.3, F=18.0, R=86.0, roll=4.0, k=1.2, torso="torso", leg_len=25.0,
+                                 legs={"leg-l": (0, 0, -6), "leg-r": (0, 0, 8)},
+                                 arms={"arm-l": ((0, 0, -40), -1), "arm-r": ((-14, 0, 40), 1)},
+                                 head=("head", (25, 0, 15)), settle=-0.6)
     sockets = [Socket("socket-chest", at=rel((CX, 46.0, CZ - 10.0), HIP), parent="torso"),
                Socket("socket-mouth", at=rel((CX, 61.0, CZ - 8.8), HIP), parent="head"),
                Socket("socket-hands", at=rel((CX, 30.0, CZ - 16.0), HIP), parent="hips")]
-    return world("patchwork-giant", "creatures", "Patchwork Giant", root, clips=clips(idle, attack, hit, death, impact=fr(16)), sockets=sockets,
+    from _move_rigid import patchwork_giant_move
+    giant_clips = clips(idle, attack, hit, death, impact=fr(16), death_impact=death_hit, hit_impact=hit_hit) + [Clip("move", patchwork_giant_move(), ease=0)]
+    return world("patchwork-giant", "creatures", "Patchwork Giant", root, clips=giant_clips, sockets=sockets,
                  pfx=[pfx("rvx-monster-blood-splat", "socket-chest", "clip:hit", size=48)])
 
 
@@ -1191,36 +1404,81 @@ def _bone_hound():
             "tail": {"rot": keys((0, (0, -12, 0)), (0.35, (0, 12, 0)), (0.7, (0, -12, 0)), (1.05, (0, 12, 0)), (1.4, (0, -12, 0)))},
             "jaw": {"rot": keys((0, Z3), (0.35, (8, 0, 0)), (0.7, Z3), (1.05, (8, 0, 0)), (1.4, Z3))},
             "head": {"rot": keys((0, Z3), (0.7, (-6, 6, 0)), (1.4, Z3))}}
-    # Lunging bite: it rears back with the jaw wide (frames 0-10), springs
-    # 11 voxels forward in 3 frames and snaps the jaw shut on frame 13,
-    # overshoots, holds the bite, then backs off to rest by frame 30.
-    attack = {"body": {"loc": keys((0, Z3), (fr(10), (0, 2.2, 4.5)), (fr(13), (0, 2.4, -11)), (fr(15), (0, 2.6, -12.5)),
-                                   (fr(19), (0, 2.0, -11.5)), (fr(30), Z3)),
-                       "rot": keys((0, Z3), (fr(10), (9, 0, 0)), (fr(13), (-10, 0, 0)), (fr(15), (-12, 0, 0)),
-                                   (fr(19), (-8, 0, 0)), (fr(30), Z3))},
-              "head": {"loc": keys((0, Z3), (fr(10), (0, 0.5, 2)), (fr(13), (0, -0.5, -3)), (fr(16), (0, -0.5, -3.5)),
-                                   (fr(20), (0, 0, -2.5)), (fr(30), Z3)),
-                       "rot": keys((0, Z3), (fr(10), (24, 0, 0)), (fr(13), (-18, 0, 0)), (fr(16), (-26, 0, 0)),
-                                   (fr(21), (-14, 0, 0)), (fr(30), Z3))},
-              "jaw": {"rot": keys((0, Z3), (fr(10), (-32, 0, 0)), (fr(13), (22, 0, 0)), (fr(15), (20, 0, 0)),
-                                  (fr(20), (18, 0, 0)), (fr(30), Z3))},
-              "leg-fl": {"rot": keys((0, Z3), (fr(10), (-12, 0, 0)), (fr(13), (34, 0, 0)), (fr(16), (30, 0, 0)), (fr(30), Z3))},
-              "leg-fr": {"rot": keys((0, Z3), (fr(10), (-12, 0, 0)), (fr(13), (38, 0, 0)), (fr(16), (32, 0, 0)), (fr(30), Z3))},
-              "leg-bl": {"rot": keys((0, Z3), (fr(10), (-6, 0, 0)), (fr(13), (-26, 0, 0)), (fr(17), (-18, 0, 0)), (fr(30), Z3))},
-              "leg-br": {"rot": keys((0, Z3), (fr(10), (-6, 0, 0)), (fr(13), (-24, 0, 0)), (fr(17), (-16, 0, 0)), (fr(30), Z3))},
-              "tail": {"rot": keys((0, Z3), (fr(11), (-28, 0, 0)), (fr(14), (-6, 0, 0)), (fr(17), (22, 0, 8)),
-                                   (fr(22), (6, 0, -4)), (fr(30), Z3))}}
-    hit = {"body": {"loc": keys((0, Z3), (0.1, (0, 1.0, 2)), (0.5, Z3))},
-           "head": {"rot": keys((0, Z3), (0.1, (-14, 10, 0)), (0.5, Z3))}}
-    death = {"body": {"loc": keys((0, Z3), (0.4, (0, 1.0, 0)), (1.2, (0, -7.0, 0))),
-                      "rot": keys((0, Z3), (1.2, (0, 0, 18)))},
-             "leg-fl": {"rot": keys((0, Z3), (1.2, (0, 0, -70)))}, "leg-bl": {"rot": keys((0, Z3), (1.2, (0, 0, -70)))},
-             "leg-fr": {"rot": keys((0, Z3), (1.2, (0, 0, 70)))}, "leg-br": {"rot": keys((0, Z3), (1.2, (0, 0, 70)))},
-             "head": {"rot": keys((0, Z3), (1.2, (10, 0, 20)))}, "jaw": {"rot": keys((0, Z3), (1.2, (-10, 0, 0)))},
-             "tail": {"rot": keys((0, Z3), (1.2, (-20, 0, 0)))}}
+    # Lunging bite: it sinks back on its haunches with the jaw wide, paws
+    # planted (frames 0-9), springs 14 voxels forward over 5 frames, front
+    # paws reaching out and landing as the jaw snaps shut on frame 14, rides
+    # past it, tugs with a savage head shake, and backs off to rest by 36.
+    attack = {"body": {"loc": keys((0, Z3), (fr(9), (0, -0.9, 3.5)), (fr(12), (0, 1.4, -5)), (fr(15), (0, 0.2, -11)),
+                                   (fr(18), (0, 0.3, -12.5)), (fr(22), (0, 0.2, -13)), (fr(31), Z3)),
+                       "rot": keys((0, Z3), (fr(9), (6, 0, 0)), (fr(12), (-4, 0, 0)), (fr(14), (-10, 0, 0)), (fr(18), (-12, 0, 2)),
+                                   (fr(22), (-10, 0, -2)), (fr(31), Z3))},
+              "head": {"loc": keys((0, Z3), (fr(9), (0, 0.5, 2)), (fr(14), (0, -0.5, -3)), (fr(18), (0, -0.5, -3.5)),
+                                   (fr(24), (0, 0, -2.5)), (fr(31), Z3)),
+                       "rot": keys((0, Z3), (fr(9), (24, 0, 0)), (fr(14), (-18, 0, 0)), (fr(17), (-24, 14, 0)), (fr(19), (-22, -14, 0)),
+                                   (fr(22), (-20, 12, 0)), (fr(24), (-12, -4, 0)), (fr(31), Z3))},
+              "jaw": {"rot": keys((0, Z3), (fr(9), (-32, 0, 0)), (fr(14), (22, 0, 0)), (fr(18), (20, 0, 0)),
+                                  (fr(24), (18, 0, 0)), (fr(31), Z3))},
+              "leg-fl": {"rot": keys((0, Z3), (fr(9), (1, 0, 0)), (fr(12), (40, 0, 0)), (fr(14), (22, 0, 0)), (fr(18), (26, 0, 0)), (fr(22), (24, 0, 0)), (fr(31), Z3))},
+              "leg-fr": {"rot": keys((0, Z3), (fr(9), (1, 0, 0)), (fr(12), (44, 0, 0)), (fr(14), (24, 0, 0)), (fr(18), (28, 0, 0)), (fr(22), (26, 0, 0)), (fr(31), Z3))},
+              "leg-bl": {"rot": keys((0, Z3), (fr(9), (14, 0, 0)), (fr(12), (-34, 0, 0)), (fr(15), (-22, 0, 0)), (fr(18), (-26, 0, 0)), (fr(22), (-24, 0, 0)), (fr(31), Z3))},
+              "leg-br": {"rot": keys((0, Z3), (fr(9), (14, 0, 0)), (fr(12), (-32, 0, 0)), (fr(15), (-20, 0, 0)), (fr(18), (-24, 0, 0)), (fr(22), (-22, 0, 0)), (fr(31), Z3))},
+              "tail": {"rot": keys((0, Z3), (fr(10), (-28, 0, 0)), (fr(14), (-6, 0, 0)), (fr(18), (22, 0, 8)),
+                                   (fr(22), (6, 0, -6)), (fr(27), (-6, 0, 4)), (fr(31), Z3))}}
+    # Hit: the blow on frame 3 shoves it back with a little pop up; it hangs
+    # a beat, lands, sways forward past rest with its weight and settles; the
+    # head snaps back and the loose parts trail. See _fall.hit_back.
+    hit, hit_hit = hit_back("body", foot=(-18, 9.5, -12.5), push=3.5, pop=1.8, tilt=12, twist=8, head=("head", 22),
+                            extra={"jaw": lambda t: keys((0, Z3), (fr(4), (-24, 0, 0)), (fr(10), (-6, 0, 0)), (fr(t["E"]), Z3)),
+                                   "tail": lambda t: keys((0, Z3), (fr(4), (-30, 0, 0)), (fr(10), (14, 0, 8)), (fr(t["O"]), (-6, 0, -4)), (fr(t["E"]), Z3))})
+    # Death (Sterf's quadruped rule, like rad-rat / mutant-dog): the blow to
+    # the face kicks it back off its front paws, nose and head thrown up
+    # (frames 0-3), it hangs reared up on its hind legs a beat (3-6), then
+    # topples over onto its left side, the roll accelerating under gravity
+    # and fastest at the floor on frame 13 (keyed a frame at a time, ease 0,
+    # so the stop is exact): a 1-frame squash, a 1-voxel bounce, still by
+    # 16. The down-side legs tuck so they don't prop it up; the top legs, the
+    # head and the tail slap down a frame later and flop toward the floor.
+    I, END, D, BACK = 13, 24, 10.6, 7.0
+    body_rot, body_loc, body_scale = [(0, Z3)], [(0, Z3)], [(0, (1, 1, 1))]
+    # the blow throws it back 5 voxels in 3 frames, fastest first; it hangs reared up a beat
+    for f, rx, rz, y, z in ((1, 9, -3, 0.8, 2.4), (2, 14, -4, 1.3, 4.0), (3, 16, -4, 1.4, 4.8), (5, 15, -1, 1.0, 5.5), (6, 13, 3, 0.4, 5.8)):
+        body_rot.append((fr(f), (rx, 0, rz)))
+        body_loc.append((fr(f), (0, y, z)))
+    for f in range(7, I + 1):  # the topple: the angle grows with the square of time, the drop a touch sooner
+        u = ((f - 6) / (I - 6)) ** 2
+        v = ((f - 6) / (I - 6)) ** 1.5
+        body_rot.append((fr(f), (13 - 11 * u, 0, 3 + 87 * u)))
+        body_loc.append((fr(f), (0, 0.4 - (D + 0.4) * v, 5.8 + (BACK - 5.8) * u)))
+    body_rot += [(fr(I + 1), (2, 0, 88)), (fr(I + 2), (2, 0, 90)), (fr(END), (2, 0, 90))]
+    body_loc += [(fr(I + 1), (0, -D + 0.9, BACK + 0.2)), (fr(I + 2), (0, -D, BACK + 0.3)), (fr(END), (0, -D, BACK + 0.3))]
+    body_scale += [(fr(I - 1), (1, 1, 1)), (fr(I), (0.88, 1.05, 1.05)), (fr(I + 2), (1, 1, 1)), (fr(END), (1, 1, 1))]
+    death = {"body": {"rot": keys(*body_rot), "loc": keys(*body_loc), "scale": keys(*body_scale)},
+             # nose up on the blow, lags up as the body lands, then the snout slaps to the floor
+             "head": {"rot": keys((0, Z3), (fr(2), (30, 0, 0)), (fr(5), (34, -4, 0)), (fr(I), (18, -10, 0)), (fr(I + 1), (-6, 22, 0)),
+                                  (fr(I + 3), (-10, 18, 0)), (fr(END), (-10, 18, 0)))},
+             "jaw": {"rot": keys((0, Z3), (fr(2), (-28, 0, 0)), (fr(6), (-20, 0, 0)), (fr(I), (-24, 0, 0)), (fr(I + 2), (-8, 0, 0)), (fr(END), (-8, 0, 0)))},
+             "tail": {"rot": keys((0, Z3), (fr(2), (-30, 0, 0)), (fr(6), (-20, 8, 0)), (fr(I), (-26, 14, 0)), (fr(I + 2), (18, -20, 0)),
+                                  (fr(I + 4), (14, -16, 0)), (fr(END), (14, -16, 0)))}}
+    for leg, (s, fore) in {"leg-fl": (-1, True), "leg-fr": (1, True), "leg-bl": (-1, False), "leg-br": (1, False)}.items():
+        fx = 24 if fore else -22  # lying stiff: front paws forward, hind paws back
+        late = 1 if s > 0 else 0  # the top legs land a frame after the body
+        if s < 0:  # the down side: tucks in under the roll, then lies out flat
+            fin = (fx, 0, 10)
+            mid = (fx * 0.6, 0, 28)
+        else:  # the top side: flung up by the roll, then drops toward the floor
+            fin = (fx, 0, -12)
+            mid = (fx * 0.6, 0, 18)
+        kick = (26 if fore else -14, 0, 0)  # the blow: front paws thrown up, hind legs push back
+        death[leg] = {"rot": keys((0, Z3), (fr(2), kick), (fr(5), (14 if fore else -18, 0, s * 4)), (fr(9), mid),
+                                  (fr(I + late), (fin[0], 0, fin[2] + (6 if s > 0 else 0))), (fr(I + 1 + late), (fin[0], 0, fin[2] - (3 if s > 0 else 0))),
+                                  (fr(I + 3 + late), fin), (fr(END), fin))}
     sockets = [Socket("socket-fangs", at=rel((CX, 21.5, 2.5), BODY), parent="head")]
-    return world("bone-hound", "creatures", "Bone Hound", root, clips=clips(idle, attack, hit, death, impact=fr(13)), sockets=sockets,
-                 pfx=[pfx("rvx-monster-claw-slash", "socket-fangs", "clip:attack", size=30, at=fr(11))])
+    hound_clips = clips(idle, attack, hit, death, impact=fr(14), hit_impact=hit_hit)
+    hound_clips[3] = Clip("death", death, loop=False, impact=fr(I), ease=0)
+    from _move_rigid import bone_hound_move, sole_points
+    hound_clips.append(Clip("move", bone_hound_move({n: sole_points(legs[n], LEGJ[n][1]) for n in legs}), ease=0))
+    return world("bone-hound", "creatures", "Bone Hound", root, clips=hound_clips, sockets=sockets,
+                 pfx=[pfx("rvx-monster-claw-slash", "socket-fangs", "clip:attack", size=30, at=fr(13))])
 
 
 BUILDERS = {

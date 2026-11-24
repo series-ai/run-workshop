@@ -13,6 +13,7 @@ import numpy as np
 
 import paint as P
 from _kit import keys, sway, world
+from _slam import slam
 from _life import chain
 from _pn import assemble, coords, last, quad
 from pnkit import box
@@ -182,7 +183,8 @@ def build():
     ])
     z3 = (0, 0, 0)
     return world("hanging-cage", "animated-props", "Gibbet Cage", root, clips=[
-        Clip("open", {"door": {"rot": keys((0, z3), (0.12, (0, 8, 0)), (0.45, (0, 108, 0)), (0.6, (0, 92, 0)), (0.72, (0, 100, 0)), (0.8, (0, 98, 0)))}}, loop=False),
-        Clip("close", {"door": {"rot": keys((0, (0, 98, 0)), (0.3, z3), (0.37, (0, 8, 0)), (0.45, z3))}}, loop=False),
+        # the little door: a jolt, then it swings accelerating and clangs into its stop (see _slam)
+        Clip("open", {"door": {"rot": [(0.0, z3)] + slam((0, 6, 0), (0, 98, 0), frames=9, power=2.5, rebound=0.05, start=3, hold_from=3)[0]}}, loop=False, ease=0),
+        Clip("close", {"door": {"rot": slam((0, 98, 0), z3, frames=9, power=3.5, rebound=0.05)[0]}}, loop=False, ease=0),
         Clip("idle", {"hanger": {"rot": sway(3.2, "z", 5)}, "cage": {"rot": sway(3.2, "x", 4, 1.3)}}),
     ])

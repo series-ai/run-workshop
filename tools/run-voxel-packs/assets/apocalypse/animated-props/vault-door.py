@@ -57,12 +57,38 @@ def leaf() -> Grid:
     return g
 
 
+def slam(n: int, keys) -> list:
+    """Per-frame values 0..n through (frame, value[, "acc"]) keys: a key
+    tagged "acc" is reached accelerating from the previous key (quadratic,
+    fastest on arrival, then a dead stop); other spans are linear."""
+    out = []
+    for f in range(n + 1):
+        for a, b in zip(keys, keys[1:]):
+            if a[0] <= f <= b[0]:
+                u = (f - a[0]) / (b[0] - a[0]) if b[0] > a[0] else 1.0
+                if len(b) > 2 and b[2] == "acc":
+                    u = u * u
+                out.append(a[1] + (b[1] - a[1]) * u)
+                break
+        else:
+            out.append(keys[-1][1])
+    return out
+
+
 def build():
     rig = Rig("vault-door", (CX, G0, CZ), frame())
-    rig.add("leaf", leaf(), (18, CY, 11))
+    # The leaf hangs on its left edge at its FRONT face (x 18, z 3; the vault
+    # faces -Z), so a positive turn about +Y swings the free edge out toward
+    # the viewer, clear of the posts.
+    rig.add("leaf", leaf(), (18, CY, 3))
     idle = {"leaf": {"rot": [(0, (0, 0, 0)), (1, (0, 2, 0)), (2, (0, 0, 0))]}}
-    cycle = {"leaf": {"rot": [(0, (0, 0, 0)), (0.8, (0, -112, 0)), (1.6, (0, 0, 0)), (2.4, (0, -112, 0)), (3.2, (0, 0, 0))]}}
+    # One key a frame (ease 0). The heavy leaf starts slowly, gathers speed
+    # and slams into its open stop (f20), knocks back off it and settles;
+    # it hangs open, then swings shut, accelerating all the way into the
+    # frame (f64), jolts back a little and sits.
+    swing = slam(96, [(0, 0.0), (4, 0.0), (20, 112.0, "acc"), (21, 105.0), (23, 108.0), (25, 107.0), (48, 107.0), (64, 0.0, "acc"), (65, 4.0), (66, 1.5), (68, 0.0), (96, 0.0)])
+    cycle = {"leaf": {"rot": [(f / 30, (0, a, 0)) for f, a in enumerate(swing)]}}
     socket = rig.socket("socket-handwheel", (CX, CY, 1), parent="leaf")
     return make("animated-props", "vault-door", "Vault Door", rig.root,
-                clips=[Clip("idle", idle), Clip("active", cycle)], sockets=[socket],
-                pfx=[fx("rvx-apocalypse-metal-clang", "socket-handwheel", "clip:active", at=0.8, size=14)])
+                clips=[Clip("idle", idle), Clip("active", cycle, impact=64 / 30, ease=0)], sockets=[socket],
+                pfx=[fx("rvx-apocalypse-metal-clang", "socket-handwheel", "clip:active", at=64 / 30, size=14)])

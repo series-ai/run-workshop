@@ -16,12 +16,17 @@ true-slope prisms (F2); skin, wool, leather, bark and the face are paint
 (S1).
 
 Clips: idle (it breathes, the club rocks), attack (an overhead smash: the
-club goes back over the head and down into the ground in front, with a
-dust burst), hit, death (it topples back). Faces -Z.
+weight rocks back, the club goes far back over the head, then it steps in
+and drives it down into the ground in front, with a dust burst), hit (knocked
+back off its feet, a heavy stamp back, two steps in), death (it teeters,
+then slams down flat on its back). Faces -Z.
 """
 import math
 
 import numpy as np
+
+from _falls_heavy import cal_floor, heavy_back_fall, heavy_hit
+from _fmove import heavy_biped, lerp, wave_keys
 
 import paint as P
 import pnglyph
@@ -394,6 +399,19 @@ def club() -> Grid:
     return g
 
 
+def move(root, to_root):
+    """A thundering walk in 1.6 s (a stride each foot, keyed a frame at a
+    time): each huge foot lifts slowly, hangs and drops into the floor; the
+    body drops hard 2 frames after each footfall and stops dead (squash, a
+    small shake), the head nods, the free arm swings and flares, the club arm
+    swings less and the heavy club lags it a few frames."""
+    N = 48
+    keys, since = heavy_biped(root, "cyclops", to_root((CX, HIP_Y, CZ)), N=N, stride=14.0, lift=5.0, thud=2.6, arm_swing=(22.0, 9.0), flare=5.0, nod=7.0)
+    arm = keys["arm-r"]["rot"]
+    keys["club"] = {"rot": wave_keys(N, lambda f: (-0.6 * arm[(f - 4) % N][1][0] + 4.0 * lerp([(0, 0.0), (3, 0.0), (5, 1.0), (8, -0.4), (11, 0.0), (24, 0.0)], since(f)), 0.0, 0.0))}
+    return keys
+
+
 # ------------------------------------------------------------------ build
 def build():
     grids = {"cyclops": pelvis(), "body": body(), "head": head(), "arm-l": arm(-1), "arm-r": arm(1),
@@ -417,31 +435,64 @@ def build():
             "arm-l": {"rot": keys((0, 0, 0, 0), (1.2, 5, 0, -3), (2.4, 0, 0, 0))},
             "arm-r": {"rot": keys((0, 0, 0, 0), (1.2, 4, 0, 2), (2.4, 0, 0, 0))},
             "club": {"rot": keys((0, 0, 0, 0), (1.2, -5, 0, -3), (2.4, 0, 0, 0))}}
-    # the overhead smash: the arm lifts the club up and back behind the head,
-    # then swings forward and down, and the wrist turns the club head over
-    # into the ground in front of the feet. Each key step stays under 150
-    # degrees, as the export takes the short way between keys.
-    attack = {"arm-r": {"rot": keys((0, 0, 0, 0), (0.2, 70, 0, 6), (0.3667, 145, 0, 10), (0.4333, 150, 0, 10), (0.5667, 44, 0, 2), (0.6333, 43, 0, 1), (0.7667, 44, 0, 2), (0.9667, 26, 0, 1), (1.1667, 0, 0, 0))},
-              "club": {"rot": keys((0, 0, 0, 0), (0.2, -20, 0, 0), (0.3667, -50, 0, 0), (0.4333, -58, 0, 0), (0.5667, -172, 0, 0), (0.6333, -176, 0, 0), (0.7667, -172, 0, 0), (0.9667, -90, 0, 0), (1.1667, 0, 0, 0))},
-              "body": {"rot": keys((0, 0, 0, 0), (0.3667, 11, -8, 0), (0.4333, 13, -10, 0), (0.5667, -18, 6, 0), (0.6333, -21, 7, 0), (0.7667, -17, 5, 0), (1.1667, 0, 0, 0))},
-              "head": {"rot": keys((0, 0, 0, 0), (0.4667, 10, 0, 0), (0.6, -12, 0, 0), (0.6667, -15, 0, 0), (0.8, -10, 0, 0), (1.1667, 0, 0, 0))},
-              "arm-l": {"rot": keys((0, 0, 0, 0), (0.4333, -22, 0, -16), (0.6, 34, 0, -8), (0.7, 38, 0, -8), (1.1667, 0, 0, 0))},
-              "cyclops": {"loc": keys((0, 0, 0, 0), (0.3667, 0, 0, 2.5), (0.4333, 0, 0, 3), (0.5667, 0, 0, -7), (0.6333, 0, 0, -8), (0.7667, 0, 0, -7), (1.1667, 0, 0, 0))}}
-    hit = {"body": {"rot": keys((0, 0, 0, 0), (0.10, 12, 0, 6), (0.50, 0, 0, 0))},
-           "head": {"rot": keys((0, 0, 0, 0), (0.10, 16, -12, 4), (0.50, 0, 0, 0))},
-           "arm-l": {"rot": keys((0, 0, 0, 0), (0.10, -14, 0, -18), (0.50, 0, 0, 0))},
-           "arm-r": {"rot": keys((0, 0, 0, 0), (0.10, -10, 0, 14), (0.50, 0, 0, 0))},
-           "cyclops": {"loc": keys((0, 0, 0, 0), (0.10, 0, 0, 3.0), (0.50, 0, 0, 0))}}
-    death = {"cyclops": {"rot": keys((0, 0, 0, 0), (0.35, -8, 0, 0), (1.00, 80, 0, 4), (1.15, 75, 0, 4), (1.35, 78, 0, 4)),
-                         "loc": keys((0, 0, 0, 0), (1.00, 0, 14, 12), (1.35, 0, 14, 12))},
-             "head": {"rot": keys((0, 0, 0, 0), (1.00, -20, 0, 0), (1.35, -10, 24, 0))},
-             "arm-l": {"rot": keys((0, 0, 0, 0), (1.00, 20, 0, -50))},
-             "arm-r": {"rot": keys((0, 0, 0, 0), (1.00, 20, 0, 50))},
-             "club": {"rot": keys((0, 0, 0, 0), (1.00, 30, 0, -30))},
-             "leg-l": {"rot": keys((0, 0, 0, 0), (1.00, 14, 0, -8))},
-             "leg-r": {"rot": keys((0, 0, 0, 0), (1.00, 4, 0, 8))}}
+    f = 1 / 30
+    # A leg is a rigid 32-voxel stick from hip to ankle: when the root
+    # (hips) slides by dz, a planted leg turns by asin(dz / 32) so its foot
+    # stays put (+x swings the foot forward).
+    def plant(dz):
+        return math.degrees(math.asin(max(-1.0, min(1.0, dz / 32.0))))
+
+    # the overhead smash, heavy: the weight rocks back onto the right leg
+    # while the club goes up and far back over the head (a third of the
+    # clip), a hang at the top, then a 4-frame swing at the viewer as the
+    # lead (left) foot steps forward and plants on the blow (impact f22).
+    # The body overshoots down past contact, holds, then steps back and
+    # rises, with the club, the free arm and the head settling last.
+    # Feet stay planted: the legs counter-turn whenever the hips move.
+    IMP = 22 * f
+    attack = {"cyclops": {"loc": keys((0, 0, 0, 0), (8 * f, 0, 0, 1.0), (16 * f, 0, -0.1, 2.5), (18 * f, 0, -0.1, 2.5), (IMP, 0, -0.3, -4.0),
+                                      (25 * f, 0, -0.3, -4.0), (32 * f, 0, -0.3, -4.0), (40 * f, 0, -0.2, -2.0), (44 * f, 0, 0, -1.0), (50 * f, 0, 0, 0), (60 * f, 0, 0, 0))},
+              "leg-r": {"rot": keys((0, 0, 0, 0), (8 * f, -plant(1.0), 0, 0), (16 * f, -plant(2.5), 0, 0), (18 * f, -plant(2.5), 0, 0), (IMP, -plant(4.0), 0, 0),
+                                    (25 * f, -plant(4.0), 0, 0), (32 * f, -plant(4.0), 0, 0), (40 * f, -plant(2.0), 0, 0), (44 * f, -plant(1.0), 0, 0), (50 * f, 0, 0, 0), (60 * f, 0, 0, 0)),
+                        # the turned foot block tips a corner under the floor: the leg rides up
+                        # into the kilt by that much, so the sole stays ON the floor and the
+                        # body is not lifted onto one toe
+                        "loc": keys((0, 0, 0, 0), (8 * f, 0, 0.4, 0), (16 * f, 0, 1.2, 0), (18 * f, 0, 1.25, 0), (20 * f, 0, 1.5, 0), (IMP, 0, 2.0, 0), (25 * f, 0, 2.0, 0),
+                                    (32 * f, 0, 2.0, 0), (37 * f, 0, 1.5, 0), (40 * f, 0, 1.2, 0), (44 * f, 0, 0.4, 0), (50 * f, 0, 0, 0), (60 * f, 0, 0, 0))},
+              # the lead foot: planted through the wind-up, lifts at the top,
+              # plants 7 voxels forward on the blow, and steps back after
+              "leg-l": {"rot": keys((0, 0, 0, 0), (8 * f, -plant(1.0), 0, 0), (14 * f, -plant(2.5), 0, 0), (18 * f, -12, 0, 2), (IMP, plant(3.0), 0, 0),
+                                    (25 * f, plant(3.0), 0, 0), (32 * f, plant(3.0), 0, 0), (40 * f, plant(5.0), 0, 0), (44 * f, 4, 0, 1), (50 * f, 0, 0, 0), (60 * f, 0, 0, 0)),
+                        "loc": keys((0, 0, 0, 0), (8 * f, 0, 0.5, 0), (14 * f, 0, 1.2, 0), (18 * f, 0, 3.5, 0), (IMP, 0, 0.8, 0), (25 * f, 0, 0.8, 0), (32 * f, 0, 0.8, 0),
+                                    (40 * f, 0, 0.8, 0), (44 * f, 0, 3.0, 0), (50 * f, 0, 0, 0), (60 * f, 0, 0, 0))},
+              "arm-r": {"rot": keys((0, 0, 0, 0), (8 * f, 75, 0, 6), (16 * f, 160, 0, 12), (18 * f, 165, 0, 12), (IMP, 61, 0, 1), (25 * f, 58, 0, 1),
+                                    (32 * f, 64, 0, 2), (42 * f, 34, 0, 1), (50 * f, -5, 0, 0), (60 * f, 0, 0, 0))},
+              "club": {"rot": keys((0, 0, 0, 0), (8 * f, -25, 0, 0), (16 * f, -64, 0, 0), (18 * f, -72, 0, 0), (IMP, -178, 0, 0), (25 * f, -168, 0, 0),
+                                   (32 * f, -172, 0, 0), (42 * f, -90, 0, 0), (52 * f, 8, 0, 0), (60 * f, 0, 0, 0))},
+              "body": {"rot": keys((0, 0, 0, 0), (8 * f, 7, -6, 0), (16 * f, 17, -16, 2), (18 * f, 19, -18, 2), (IMP, -35, 9, 0), (25 * f, -37, 10, 0),
+                                   (32 * f, -29, 8, 0), (44 * f, -4, 2, 0), (50 * f, 3, 0, 0), (58 * f, 0, 0, 0))},
+              "head": {"rot": keys((0, 0, 0, 0), (10 * f, 8, -4, 0), (18 * f, 16, -6, 0), (IMP, -6, 2, 0), (26 * f, -18, 3, 0),
+                                   (34 * f, -12, 2, 0), (48 * f, 6, 0, 0), (56 * f, -2, 0, 0), (60 * f, 0, 0, 0))},
+              "arm-l": {"rot": keys((0, 0, 0, 0), (10 * f, -18, 0, -10), (18 * f, -34, 0, -22), (IMP, 30, 0, -10), (26 * f, 42, 0, -8),
+                                    (34 * f, 36, 0, -8), (48 * f, -8, 0, -2), (56 * f, 2, 0, 0), (60 * f, 0, 0, 0))}}
+    # hit: the blow knocks it back and up off its feet, it lands heavily and
+    # the right foot stamps a step back to catch the weight, a drifting beat,
+    # then it steps back in, right then left, and the weight settles.
+    hit, _ = heavy_hit("cyclops", L=32.0, push=6.0, pop=2.0, weapon="club")
+    # death, heavy: rocked back, a teeter onto the toes, then it tips over
+    # backwards (away from the attacker) in one accelerating stroke and
+    # snaps down flat on its back with a thud (impact f30), one small bounce
+    # and a hard settle; the arms slam the floor spread, pop up and settle,
+    # the club lands late, the head and legs drop last.
+    death, LAND = heavy_back_fall("cyclops", weapon="club", bounce=0.45, bounce_rot=0.3,
+                                  # how far the lying pose sinks about the root pivot (measured, FH_CAL=1)
+                                  lift={17: 0.13, 18: 0.68, 19: 1.35, 20: 2.19, 21: 3.2, 22: 4.4, 23: 5.77, 24: 7.31, 25: 8.97, 26: 10.68, 27: 12.34, 28: 13.83, 29:
+                                        15.03, 30: 16.21, 31: 16.65, 32: 17.15, 33: 17.14, 34: 17.09, 35: 17.02, 36: 17.02, 37: 17.02, 38: 17.02, 39: 17.02, 40: 17.01,
+                                        41: 17.01, 42: 17.01, 43: 17.01, 44: 17.0, 45: 17.0, 46: 17.02, 47: 17.05, 48: 17.06, 49: 17.06, 50: 17.06, 51: 17.06, 52: 17.06},
+                                  arm_land=(-11.0, 0.0, 70.0), arm_r_drop=-6.0, leg_land=(-8.0, 0.0, 6.0), leg_pop=3.0,
+                                  head_land=(2.0, 0.0, 0.0), head_flop=0.3, arm_pop=1.5, body_pop=0.0, squash=0.95, weapon_land=(26.0, 0.0, 0.0))
     head_pt = (CLUB_TOP[0], CLUB_TOP[1] - 8.0, CLUB_TOP[2])
     return asset("creatures", "cyclops", "Cyclops", root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False, impact=0.5667), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                 clips=[Clip("idle", idle), Clip("move", move(root, to_root), ease=0, floor=False), Clip("attack", attack, loop=False, impact=IMP, floor=cal_floor()), Clip("hit", hit, loop=False), Clip("death", death, loop=False, impact=LAND, floor=cal_floor())],
                  sockets=[Socket("socket-function", at=to_root(head_pt), parent="club")],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-function", "clip:attack", size=34, at=0.5667)])
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-function", "clip:attack", size=34, at=IMP)])

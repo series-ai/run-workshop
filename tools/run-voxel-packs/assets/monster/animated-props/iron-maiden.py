@@ -13,6 +13,7 @@ import numpy as np
 
 import paint as P
 from _kit import keys, world
+from _slam import slam
 from _pn import assemble, coords, last, stamp
 from pnkit import box, edges
 from pnshapes import facets
@@ -190,17 +191,19 @@ def build():
     root = assemble(parts, [("base", None, root_j), ("maiden", "base", (CX, YB, 10.0)), ("door-l", "maiden", hinge_l), ("door-r", "maiden", hinge_r)])
     z3 = (0, 0, 0)
 
+    # The doors swing outward: a jolt, then an accelerating swing into the
+    # stop; shutting, they slam on the spikes' frame (see _slam).
     def op(s):
-        return keys((0, z3), (0.15, (0, s * 10, 0)), (0.5, (0, s * 112, 0)), (0.65, (0, s * 98, 0)), (0.8, (0, s * 105, 0)), (0.9, (0, s * 103, 0)))
+        return [(0.0, z3)] + slam((0, s * 8, 0), (0, s * 103, 0), frames=10, power=2.5, rebound=0.05, start=3, hold_from=3)[0]
 
     def cl(s):
-        return keys((0, (0, s * 103, 0)), (0.35, z3), (0.42, (0, s * 6, 0)), (0.5, z3))
+        return slam((0, s * 103, 0), z3, frames=10, power=3.5, rebound=0.04)[0]
 
     def idle(s, t):
         return keys((0, z3), (t, (0, s * 4, 0)), (t + 0.5, (0, s * 1, 0)), (t + 0.8, (0, s * 3, 0)), (t + 1.3, z3), (3.2, z3))
 
     return world("iron-maiden", "animated-props", "Iron Maiden", root, clips=[
-        Clip("open", {"door-l": {"rot": op(1)}, "door-r": {"rot": op(-1)}}, loop=False),
-        Clip("close", {"door-l": {"rot": cl(1)}, "door-r": {"rot": cl(-1)}}, loop=False),
+        Clip("open", {"door-l": {"rot": op(1)}, "door-r": {"rot": op(-1)}}, loop=False, ease=0),
+        Clip("close", {"door-l": {"rot": cl(1)}, "door-r": {"rot": cl(-1)}}, loop=False, ease=0),
         Clip("idle", {"door-l": {"rot": idle(1, 0.6)}, "door-r": {"rot": idle(-1, 1.4)}}),
     ])

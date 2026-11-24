@@ -8,13 +8,16 @@ true slopes both ways) in a magenta hide with a ribbed pink belly and
 glowing lime spots. The head has a huge open mouth with thick pink lips
 and a ring of bone teeth, and two long eye stalks (one taller, leaning
 apart) with big goggle eyes that look at the viewer. A flat glossy lime
-slime trail lies under it. Clips: idle (the segments ripple), attack
+slime trail lies under it. Clips: idle (the segments ripple), move (a muscle wave runs
+tail to head), attack
 (rear up and lunge), hit (flinch), death (deflate). Faces -Z.
 """
 import math
 
 import numpy as np
 
+from _motion import curve
+from _trim import squeeze
 from _life import P, Clip, Grid, Rig, asset, coords, gem, keys, light_top, mask_of, plan, quad, side, wave
 
 S = (46, 72, 112)
@@ -137,6 +140,46 @@ def slime() -> Grid:
     return g
 
 
+def ooze(T: int = 36, reach: float = 1.2, hump: float = 2.8, swing: int = 12, lag: int = 3) -> dict:
+    """The move clip: a slug's muscle wave, keyed every frame.
+
+    A hump runs from the tail to the head once a loop (3 frames a
+    segment). Each segment is planted on its belly and slides back at a
+    constant ground speed until the wave reaches it; then it lifts into the
+    hump and surges forward (12 frames) and sets down again. The head
+    stretches forward and nods as the wave arrives, the eye stalks riding
+    with it, and the tail tip flicks as the wave leaves it. Loops seamlessly."""
+    parent = {0: 1, 1: 2, 2: None, 3: 2, 4: 3, 5: 4}
+
+    def world(k, f):
+        p = (f - (5 - k) * lag) % T
+        if p < swing:
+            u = p / swing
+            e = (1 - math.cos(math.pi * u)) / 2
+            return (0.0, hump * math.sin(math.pi * u), reach - 2 * reach * e)
+        return (0.0, 0.0, -reach + 2 * reach * (p - swing) / (T - swing))
+
+    out = {f"seg-{k}": {"loc": []} for k in range(6)}
+    out["seg-0"]["rot"], out["seg-0"]["scale"], out["seg-5"]["rot"] = [], [], []
+    for f in range(T + 1):
+        t = f / 30
+        g = f + 30  # the loop point falls where every segment is planted
+        for k in range(6):
+            w = world(k, g)
+            if parent[k] is not None:
+                pw = world(parent[k], g)
+                w = (w[0] - pw[0], w[1] - pw[1], w[2] - pw[2])
+            out[f"seg-{k}"]["loc"].append((t, w))
+        p0 = (g - 5 * lag) % T  # the head's wave phase
+        surge = math.sin(math.pi * p0 / swing) if p0 < swing else 0.0
+        out["seg-0"]["rot"].append((t, (5.0 + 6.0 * surge, 0.0, 0.0)))  # held a touch raised (as in idle), nods up with the surge
+        out["seg-0"]["scale"].append((t, (1.0 - 0.03 * surge, 1.0 - 0.03 * surge, 1.0 + 0.1 * surge)))
+        p5 = (g - 2) % T  # the tail flicks just after its own lift
+        flick = math.sin(math.pi * p5 / swing) if p5 < swing else 0.0
+        out["seg-5"]["rot"].append((t, (-14.0 * flick, 0.0, 0.0)))
+    return out
+
+
 def build():
     rig = Rig()
     rig.group("space-slug", (CX, 0, PROF[3][0]))
@@ -149,16 +192,65 @@ def build():
     rig.add("seg-5", segment(5), (CX, Y0, PROF[5][0]), "seg-4")
     z = (0.0, 0.0, 0.0)
     idle = {f"seg-{k}": {"rot": wave(2.0, "x", 2.5, phase=k * 1.0)} for k in range(6)}
-    idle["seg-0"]["rot"] = wave(2.0, "y", 7)
+    idle["seg-0"]["rot"] = wave(2.0, "y", 5, base=(5.0, 0, 0))  # the head sways a touch raised, so it never digs in
     idle["seg-5"]["rot"] = wave(2.0, "x", 6, phase=5.0)
-    attack = {"seg-1": {"rot": keys((0, z), (0.4, (18, 0, 0)), (0.6, (-6, 0, 0)), (1.1, z))},
-              "seg-0": {"rot": keys((0, z), (0.4, (14, 0, 0)), (0.6, (-12, 0, 0)), (1.1, z))},
-              "seg-2": {"loc": keys((0, z), (0.4, (0, 0, 3)), (0.6, (0, 0, -5)), (1.1, z))},
-              "seg-5": {"rot": keys((0, z), (0.4, (-12, 0, 0)), (0.6, (6, 0, 0)), (1.1, z))}}
-    hit = {"seg-0": {"rot": keys((0, z), (0.1, (8, 15, 0)), (0.45, z))}, "seg-1": {"rot": keys((0, z), (0.1, (4, 8, 0)), (0.45, z))}}
+    # Lunge bite: the slug rears its head up high and draws its body back
+    # (stretch, 0-0.47 s), hangs, then in 2 frames slams the head forward and
+    # down onto the target with a chomp (impact 0.533 s, squash), the body
+    # surging after it in a ripple and the tail whipping; it worries the bite
+    # on the floor (chomping squashes, the head shaking) and slides back.
+    F = 1 / 30
+    bite_t = 16 * F
+    attack = {"seg-1": {"rot": keys((0, z), (6 * F, (14, 0, 0)), (12 * F, (30, 0, 0)), (14 * F, (32, 0, 0)), (bite_t, (0.5, 0, 0)), (18 * F, (1.0, 0, 0)),
+                                    (21 * F, (2, 0, 0)), (24 * F, (0, 0, 0)), (28 * F, (4, 0, 0)), (32 * F, z))},
+              "seg-0": {"rot": keys((0, z), (6 * F, (10, 0, 0)), (12 * F, (24, 0, 0)), (14 * F, (26, 0, 0)), (bite_t, (-1.0, 0, 0)), (18 * F, (-0.5, 0, 3)),
+                                    (21 * F, (1, 0, -3)), (24 * F, (-1.5, 0, 2)), (28 * F, (3, 0, 0)), (32 * F, z)),
+                        "scale": keys((0, (1, 1, 1)), (12 * F, (0.92, 1.12, 1.04)), (bite_t, (1.14, 0.86, 1.0)), (19 * F, (1.06, 0.94, 1.0)), (22 * F, (1.11, 0.89, 1.0)), (26 * F, (0.97, 1.03, 1.0)), (29 * F, (1, 1, 1)),
+                                      (32 * F, (1, 1, 1)))},
+              "seg-2": {"loc": keys((0, z), (12 * F, (0, 0, 4)), (bite_t, (0, 0, -8)), (18 * F, (0, 0, -9)), (23 * F, (0, 0, -7)), (32 * F, z))},
+              "seg-3": {"rot": keys((0, z), (12 * F, (-6, 0, 0)), (17 * F, (1.5, 0, 0)), (21 * F, (-3, 0, 0)), (28 * F, z), (32 * F, z)),
+                        "scale": keys((0, (1, 1, 1)), (12 * F, (0.96, 1.06, 1.0)), (18 * F, (1.08, 0.94, 1.0)), (24 * F, (1, 1, 1)), (32 * F, (1, 1, 1)))},
+              "seg-4": {"rot": keys((0, z), (14 * F, (-4, 0, 0)), (19 * F, (1, 0, 0)), (23 * F, (-3, 0, 0)), (30 * F, z), (32 * F, z))},
+              "seg-5": {"rot": keys((0, z), (12 * F, (-14, 0, 0)), (17 * F, (2, 0, 6)), (20 * F, (-10, 0, -6)), (25 * F, (2, 0, 2)), (32 * F, z))}}
+    # Knockback: the blow shoves the slug back with a little hop, the head
+    # snaps up and back and the body ripples, the tail whips; it lands,
+    # holds a beat and settles.
+    hit = {"space-slug": {"loc": keys((0, z), (2 * F, (0, 1.0, 2.0)), (5 * F, (0, 1.6, 3.2)), (9 * F, (0, 0, 3.0)), (16 * F, (0, 0, 2.6)), (23 * F, (0, 0, 0.3)),
+                                      (28 * F, z))},
+           "seg-0": {"rot": keys((0, z), (2 * F, (14, 10, 0)), (5 * F, (20, 14, 0)), (10 * F, (-6, 4, 0)), (16 * F, (4, 0, 0)), (28 * F, z)),
+                     "scale": keys((0, (1, 1, 1)), (3 * F, (1.12, 0.86, 1.0)), (7 * F, (0.94, 1.08, 1.0)), (12 * F, (1.04, 0.96, 1.0)), (20 * F, (1, 1, 1)),
+                                   (28 * F, (1, 1, 1)))},
+           "seg-1": {"rot": keys((0, z), (2 * F, (8, 4, 0)), (6 * F, (12, 6, 0)), (11 * F, (-4, 0, 0)), (17 * F, (2, 0, 0)), (28 * F, z))},
+           **{f"seg-{k}": {"scale": keys((0, (1, 1, 1)), ((2 + k) * F, (1.06, 0.92, 1.0)), ((7 + k) * F, (0.97, 1.04, 1.0)), ((13 + k) * F, (1, 1, 1)),
+                                         (28 * F, (1, 1, 1)))} for k in (2, 3, 4)},
+           "seg-5": {"rot": keys((0, z), (4 * F, (-14, 0, 0)), (9 * F, (10, 0, 0)), (15 * F, (-4, 0, 0)), (22 * F, z), (28 * F, z))}}
     flat = (1.15, 0.45, 1.0)
     one = (1.0, 1.0, 1.0)
-    death = {f"seg-{k}": {"scale": keys((0, one), (0.3 + 0.1 * k, (1.05, 0.9, 1.0)), (1.2, flat))} for k in range(6)}
-    death["seg-0"]["rot"] = keys((0, z), (1.2, (-8, 20, 0)))
+    # Death throe: the slug shudders, rears its head up tall (stretch,
+    # anticipation), then slams it down (impact 0.667 s, squash) and
+    # deflates in a fast wave from head to tail (2 frames a segment), each
+    # segment slapping flat past its rest, one rebound and still; the tail
+    # flops down last. Still by 1.27 s (Sterf: no wobble, no lingering).
+    die_t = 20 * F
+    end = 40
+    death = {}
+    for k in range(6):
+        t0 = 20 + 2 * k
+        death[f"seg-{k}"] = {"scale": keys((0, one), (2 * F, (1.06, 0.94, 1.0)), (4 * F, (0.96, 1.05, 1.0)), (6 * F, (1.04, 0.96, 1.0)),
+                                           (max(14, t0 - 4) * F, (0.97, 1.04, 1.0)), (t0 * F, (1.24, 0.42, 1.0)), ((t0 + 3) * F, (1.12, 0.52, 1.0)),
+                                           ((t0 + 6) * F, (1.15, 0.48, 1.0)), (end * F, (1.15, 0.48, 1.0)))}
+    death["seg-0"]["scale"] = keys((0, one), (2 * F, (1.06, 0.94, 1.0)), (6 * F, (0.96, 1.05, 1.0)), (14 * F, (0.92, 1.12, 1.04)),
+                                   (die_t, (1.26, 0.5, 1.0)), (23 * F, (1.10, 0.62, 1.0)), (27 * F, (1.16, 0.54, 1.0)), (end * F, (1.16, 0.54, 1.0)))
+    death["seg-0"]["rot"] = keys((0, z), (4 * F, (-4, 8, 0)), (14 * F, (18, 10, 0)), (die_t, (6, 14, 0)), (23 * F, (12, 17, 0)),
+                                 (27 * F, (6, 20, 0)), (31 * F, (7, 20, 0)), (end * F, (7, 20, 0)))
+    death["seg-1"]["rot"] = keys((0, z), (14 * F, (24, 0, 0)), (die_t, (0, 0, 0)), (24 * F, (6, 0, 0)), (28 * F, (2, 0, 0)), (end * F, (2, 0, 0)))
+    death["seg-5"]["rot"] = keys((0, z), (14 * F, (-14, 0, 0)), (die_t, (-8, 0, 0)), (30 * F, (-10, 0, 4)), (34 * F, (6, 0, -2)),
+                                 (37 * F, (4, 0, 0)), (end * F, (4, 0, 0)))
+    # Key the root at rest so these one-shots never inherit a lift from another clip.
+    attack["space-slug"] = {"loc": keys((0, z), (32 * F, z))}
+    death["space-slug"] = {"loc": keys((0, z), (end * F, z))}
+    # Sterf's rules: a hit is over in 0.6 s; the blow keeps its timing, the
+    # recovery is shortened.
+    hit = squeeze(hit, keep=9, old_end=28, new_end=18)
     return asset("creatures", "space-slug", "Space Slug", rig.root,
-                 clips=[Clip("idle", idle), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)])
+                 clips=[Clip("idle", idle), Clip("move", ooze(), ease=0, floor=False), Clip("attack", attack, loop=False, impact=bite_t, floor=True), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False, impact=die_t)])

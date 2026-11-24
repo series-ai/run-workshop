@@ -12,19 +12,23 @@ detail is paint (S1): pointed feather rows on the head, the nape and the
 chest bib, fur tufts in big rows on the body, dark arrises (S4).
 
 Clips: idle (breathe, turn the head like an owl, shift the weight),
-attack (rear up on the hind legs with the claws spread, then slam both
-front paws down: the dust slam PFX at the paw socket), hit (the head snaps
-back), death (the legs buckle and it rolls onto its left side). Faces -Z.
+attack (rear up on the planted hind legs with the claws spread, then lunge
+forward slamming down one front paw and then the other: the dust slam PFX
+at the paw socket), hit (shoved back off
+its feet, the head snaps back, it lands heavily and recovers), death (knocked back, it goes over onto its left side and slams down). Faces -Z.
 """
 import math
 
 import numpy as np
+
+from _quad_falls import Planter, bake, per_frame, rmat, sample
 
 import paint as P
 import pnglyph
 from _fcreature_beasts import frame_seams, paint_solids, scallops
 from _life import C, Clip, Grid, Socket, asset, chamfer_rect, coords, front, keys, last, pfx, plan, rig, side
 from pnshapes import quad, seams
+from _move_gaits import Gait, cyc, thump, turn_loop
 
 S = (76, 80, 84)
 CX = 38.0
@@ -77,12 +81,105 @@ def claw(g: Grid, x: float, zf: float, y0: float = 0.0, h: float = 5.5, big: boo
     return m
 
 
-def about(q, pivot, deg_z: float):
-    """A `loc` offset that makes a z rotation about `pivot` act about q."""
-    a = math.radians(deg_z)
-    dx, dy = pivot[0] - q[0], pivot[1] - q[1]
-    rx, ry = dx * math.cos(a) - dy * math.sin(a), dx * math.sin(a) + dy * math.cos(a)
-    return (rx + q[0] - pivot[0], ry + q[1] - pivot[1], 0.0)
+def owlbear_fall(grids: dict, hinges: dict) -> tuple[dict, int]:
+    """Per-frame keys for the death: the blow knocks it back (the front end
+    reared up, the forepaws flung, the hind paws stumbling back a step),
+    then it goes over sideways onto its left side in one accelerating roll
+    and slams down with a hard stop (a 1-frame squash, a tiny 2-frame
+    rebound), head and limbs slapping down a frame later, then still.
+
+    The body and legs move as one rigid block about whichever edge of it is
+    on the floor, so it rolls over without sliding or sinking; the knock
+    back rides on top. Returns (clip_keys, impact_frame)."""
+    LAND, END = 17, 26
+    F = 1 / 30
+    corners = np.array([(i, j, k) for i in (0, 1) for j in (0, 1) for k in (0, 1)])
+    H = np.array(hinges["body"], float)
+
+    def pts(g, piv):
+        v = np.argwhere(g.a > 0)
+        return np.unique((v[:, None, :] + corners[None]).reshape(-1, 3), axis=0).astype(float) - np.array(piv, float)
+    body_q = pts(grids["body"], H)
+    legs = [n for n in LEGS]
+    leg_q = {n: pts(grids[n], hinges[n]) for n in legs}
+    leg_o = {n: np.array(hinges[n], float) - H for n in legs}
+
+    def curve(rows, fr):
+        """rows (frame, value, kind): "snap" = fast out, "fall" = gravity (slow off the balance point, fastest at contact)."""
+        for (f0, v0, _), (f1, v1, kind) in zip(rows, rows[1:]):
+            if f0 <= fr <= f1:
+                u = (fr - f0) / max(1, f1 - f0)
+                w = u ** 2.2 if kind == "fall" else 1 - (1 - u) ** 2 if kind == "snap" else u
+                return np.array(v0, float) + (np.array(v1, float) - np.array(v0, float)) * w
+        return np.array(rows[-1][1], float)
+
+    # body pose: (pitch, yaw, roll); the roll is about z (+ = over onto the left side)
+    pose = [(0, (0, 0, 0), None), (2, (8, 0, -2), "snap"), (5, (15, 3, 2), "snap"), (8, (11, 4, 12), "snap"), (10, (10, 4, 14), None),
+            (LAND, (3, 2, 101), "fall"), (LAND + 1, (3, 2, 97), "snap"), (LAND + 3, (3, 2, 100), "snap"), (END, (3, 2, 100), None)]
+    knock = [(0, 0, None), (2, 2.5, "snap"), (5, 6.0, "snap"), (8, 8.0, "snap"), (LAND, 9.5, None), (END, 9.5, None)]  # pushed back (+z)
+    # legs (x: + swings the foot forward, z: + swings it toward +x)
+    lk = {}
+    for n in legs:
+        sx = -1 if n.endswith("l") else 1
+        fore = n[-2] == "f"
+        if fore:  # flung forward by the blow, pawing, stiff as it goes, then slapped down
+            land = (34, 0, 18) if sx < 0 else (26, 0, -14)
+            lk[n] = [(0, (0, 0, 0), None), (2, (34, 0, sx * -6), "snap"), (5, (44, 0, sx * -10), "snap"), (8, (30, 0, sx * -4), "snap"),
+                     (LAND, (land[0] * 0.8, 0, land[2] * 0.4), "fall"), (LAND + 2, (land[0] * 1.15, 0, land[2] * 1.3), "snap"), (LAND + 4, land, "snap"),
+                     (END, land, None)]
+        else:  # the hind paws stumble back a step, then the legs go stiff and splay
+            land = (-22, 0, 18) if sx < 0 else (-18, 0, -14)
+            st = 1 if sx > 0 else 0  # out of step
+            lk[n] = [(0, (0, 0, 0), None), (2 + st, (-6, 0, 0), "snap"), (5 + st, (-16, 0, sx * 3), "snap"), (8, (-6, 0, 0), "snap"),
+                     (LAND, (land[0] * 0.8, 0, land[2] * 0.4), "fall"), (LAND + 2, (land[0] * 1.15, 0, land[2] * 1.3), "snap"), (LAND + 4, land, "snap"),
+                     (END, land, None)]
+    out = {n: {"rot": []} for n in ["body", "head"] + legs}
+    out["body"]["loc"] = []
+
+    def tuck(n, fr):  # the legs it lands on tuck their hips in a little, so the body lies on the floor, not propped on them
+        return np.array((2.8 * min(1.0, max(0.0, (fr - LAND + 4) / 4.0)) if n.endswith("l") else 0.0, 0.0, 0.0))
+
+    def world(rot, t, leg_rots, fr):
+        R = rmat(rot)
+        ps = [body_q @ R.T]
+        for n in legs:
+            ps.append((leg_o[n] + tuck(n, fr) + leg_q[n] @ rmat(leg_rots[n]).T) @ R.T)
+        return np.concatenate(ps) + H + t
+    rest_rots = {n: (0.0, 0.0, 0.0) for n in legs}
+    floor0 = world((0, 0, 0), np.zeros(3), rest_rots, 0)[:, 1].min()
+    t = np.zeros(3)
+    prev_rot, prev_legs, prev_k = np.zeros(3), rest_rots, 0.0
+    for fr in range(END + 1):
+        rot = curve(pose, fr)
+        leg_rots = {n: tuple(curve(lk[n], fr)) for n in legs}
+        k = float(curve(knock, fr))
+        # pivot about the floor contact on the side it's going over to
+        w = world(prev_rot, t, prev_legs, max(0, fr - 1))
+        low = w[w[:, 1] < w[:, 1].min() + 0.3]
+        d = rot - prev_rot
+        score = -low[:, 0] * max(d[2], 0.0) + low[:, 0] * max(-d[2], 0.0) + low[:, 2] * max(d[0], 0.0) - low[:, 2] * max(-d[0], 0.0)
+        c = low[int(np.argmax(score))]
+        # the contact point in the body frame (prev pose), held fixed in the world
+        q = np.linalg.solve(rmat(prev_rot), c - H - t)
+        t = c - H - rmat(rot) @ q
+        t[2] += k - prev_k
+        t[1] -= world(rot, t, leg_rots, fr)[:, 1].min() - floor0
+        prev_rot, prev_legs, prev_k = rot, leg_rots, k
+        T = fr * F
+        out["body"]["rot"].append((T, tuple(float(v) for v in rot)))
+        out["body"]["loc"].append((T, tuple(float(v) for v in t)))
+        for n in legs:
+            out[n]["rot"].append((T, tuple(float(v) for v in leg_rots[n])))
+            if n.endswith("l"):
+                out[n].setdefault("loc", []).append((T, tuple(float(v) for v in tuck(n, fr))))
+    # the head: snapped back by the blow, it trails the roll, then slaps
+    # down limp onto the floor a frame after the body and lolls
+    head = [(0, (0, 0, 0), None), (2, (30, -8, 4), "snap"), (5, (24, 6, -4), "snap"), (8, (14, 6, -10), "snap"), (LAND, (4, 0, -26), "fall"),
+            (LAND + 1, (-4, 0, -7), "fall"), (LAND + 3, (-8, -4, -9), "snap"), (LAND + 5, (-7, -4, -7), "snap"), (END, (-7, -4, -7), None)]
+    out["head"]["rot"] = [(fr * F, tuple(float(v) for v in curve(head, fr))) for fr in range(END + 1)]
+    # the thud: a 1-frame squash of the whole body on the impact
+    out["owlbear"] = {"scale": [(0, (1, 1, 1)), ((LAND - 1) * F, (1, 1, 1)), (LAND * F, (1.05, 0.92, 1.04)), ((LAND + 2) * F, (1, 1, 1)), (END * F, (1, 1, 1))]}
+    return out, LAND
 
 
 # ------------------------------------------------------------------ parts
@@ -231,6 +328,33 @@ def keyed(root, clip: dict) -> dict:
     return clip
 
 
+def lumber_move(root) -> dict:
+    """move: a heavy bear walk, 40 frames: a four-beat lateral walk (left
+    hind f4, left fore f14, right hind f24, right fore f34), three paws
+    down at a time, each planted paw sliding back at one ground speed.
+    The bulk heaves up between footfalls and falls into each forepaw
+    plant with gravity, sinking 2 frames past it and stopping dead, the
+    front pitching down onto the paw (the hind plants land softer); the
+    owl head rides it a beat late, swinging against the shoulders. (Frames as
+    authored; turn_loop then starts the loop mid-stroke.)"""
+    T = 40
+    ph = {"leg-bl": 4, "leg-fl": 14, "leg-br": 24, "leg-fr": 34}
+    gait = Gait(root, "body", list(ph))
+    fore = thump(T, [14, 34], depth=1.8, fall=5, past=2)
+    hind = thump(T, [4, 24], depth=0.9, fall=4, past=2)
+    pitch = thump(T, [14, 34], depth=1.0, fall=3, past=2, rise=6)
+
+    def z(*v):
+        return np.array(v, float)
+    s = gait.walk(T, {n: fr / T for n, fr in ph.items()}, duty=0.72, stride=12.0, lift=4.0,
+                  body_rot=lambda f: z(-1.6 * pitch(f), 0, 0), height=lambda f: 0.4 - max(fore(f), hind(f)), carry=0.75, land=0.3)
+    sq = thump(T, [14, 34], depth=1.0, fall=1, past=2, rise=5)
+    s["head"] = {"rot": [r + z(-5 * sq((f - 2) % T), 0, 0) for f, r in enumerate(
+        cyc([(0, z(1, 3, -2)), (16, z(0, -5, 3), "snap"), (24, z(1, -3, 2)), (36, z(0, 5, -3), "snap")], T))]}
+    s, _ = turn_loop(s, T)
+    return per_frame(s)
+
+
 def build():
     parts = [("owlbear", None, None, None),
              ("body", body(), BODY_HINGE, None),
@@ -245,32 +369,110 @@ def build():
             "head": {"rot": keys(z, (0.5, 0, 0, 0), (0.7, 0, 38, 4), (1.3, 0, 38, 4), (1.5, 0, 0, 0), (1.9, -6, -16, 0), (2.4, 0, 0, 0))},
             "leg-fl": {"rot": keys(z, (1.6, 0, 0, 0), (1.8, 14, 0, 0), (2.0, 0, 0, 0), (2.4, 0, 0, 0)),
                        "loc": keys(z, (1.55, *lift[1:]), (2.05, *lift[1:]), (2.1, 0, 0, 0))}}
-    # rear up about the hind paws with the claws spread, then slam down
-    rear = [(0.0, 0.0), (0.3, 28.0), (0.42, 3.0), (0.45, 0.0), (1.1, 0.0)]
-    attack = {"body": {"rot": keys(*[(t, a, 0, 0) for t, a in rear]),
-                       "loc": keys(z, (0.3, 0, 1.6, 0), (0.42, 0, 0.2, 0), (0.45, 0, 0, 0), (1.1, 0, 0, 0))},
-              "head": {"rot": keys(z, (0.3, 14, 0, 0), (0.45, -16, 0, 0), (0.7, -12, 0, 0), (1.1, 0, 0, 0))},
-              "leg-fl": {"rot": keys(z, (0.3, 40, 0, -14), (0.42, 8, 0, 0), (0.45, 0, 0, 0), (1.1, 0, 0, 0)),
-                         "loc": keys(z, (0.05, *lift[1:]), (1.05, *lift[1:]), (1.1, 0, 0, 0))},
-              "leg-fr": {"rot": keys(z, (0.3, 40, 0, 14), (0.42, 8, 0, 0), (0.45, 0, 0, 0), (1.1, 0, 0, 0)),
-                         "loc": keys(z, (0.05, *lift[1:]), (1.05, *lift[1:]), (1.1, 0, 0, 0))},
-              "leg-bl": {"rot": keys(z, (0.3, -26, 0, 0), (0.42, -3, 0, 0), (0.45, 0, 0, 0), (1.1, 0, 0, 0)),
-                         "loc": keys(z, (0.05, *lift[1:]), (1.05, *lift[1:]), (1.1, 0, 0, 0))},
-              "leg-br": {"rot": keys(z, (0.3, -26, 0, 0), (0.42, -3, 0, 0), (0.45, 0, 0, 0), (1.1, 0, 0, 0)),
-                         "loc": keys(z, (0.05, *lift[1:]), (1.05, *lift[1:]), (1.1, 0, 0, 0))}}
-    hit = {"head": {"rot": keys(z, (0.1, 26, 18, 8), (0.35, 20, 14, 6), (0.7, 0, 0, 0))},
-           "body": {"loc": keys(z, (0.1, 0, 0, 2.5), (0.35, 0, 0, 1.6), (0.7, 0, 0, 0))}}
-    q = (CX - 16.0, 0.0, BODY_HINGE[2])
-    roll = [(0.0, 0.0), (0.3, 0.0), (0.8, 55.0), (1.05, 86.0), (1.25, 82.0), (1.6, 84.0)]
-    death = {"body": {"rot": keys(*[(t, 0, 0, a) for t, a in roll]),
-                      "loc": keys(*[(t, *about(q, BODY_HINGE, a)) for t, a in roll])},
-             "head": {"rot": keys(z, (0.3, 16, 0, 0), (1.05, -14, 0, -16), (1.6, -12, 0, -18))},
-             "leg-fl": {"rot": keys(z, (0.3, 30, 0, 0), (1.05, 14, 0, 8), (1.6, 12, 0, 8)), "loc": keys(z, (0.05, *lift[1:]), (1.6, *lift[1:]))},
-             "leg-fr": {"rot": keys(z, (0.3, 30, 0, 0), (1.05, 24, 0, -10), (1.6, 22, 0, -10)), "loc": keys(z, (0.05, *lift[1:]), (1.6, *lift[1:]))},
-             "leg-bl": {"rot": keys(z, (0.3, -24, 0, 0), (1.05, -10, 0, 8), (1.6, -9, 0, 8)), "loc": keys(z, (0.05, *lift[1:]), (1.6, *lift[1:]))},
-             "leg-br": {"rot": keys(z, (0.3, -24, 0, 0), (1.05, -16, 0, -10), (1.6, -14, 0, -10)), "loc": keys(z, (0.05, *lift[1:]), (1.6, *lift[1:]))}}
+    f = 1 / 30
+
+    def fk(*rows):
+        """Keys from (frame, x, y, z) rows."""
+        return [(fr * f, (x, y, w)) for fr, x, y, w in rows]
+
+    def plant(dz, hip=30.0):  # a planted leg turns by this as the body slides by dz
+        return math.degrees(math.asin(max(-1.0, min(1.0, dz / hip))))
+
+    # The mauling lunge. Rear (f0-10, the anticipation): it draws back and
+    # rears up on the hind paws, the front claws raised and spread, the head
+    # back. Then it lunges forward in two heavy strides: the left paw slams
+    # down ahead (f14), the chest still driving down, then the right paw
+    # slams down further ahead (impact f20, the dust slam) with the beak
+    # snapping down. A beat with its weight on its forepaws, then it steps
+    # the front paws back one at a time (lift, move, plant) as the body
+    # settles back. The hind paws stay planted and still throughout: the
+    # body rears and drives down about the hind hips (no slide over them),
+    # so the hind legs never move in the world.
+    SLAM1, SLAM2 = 14, 20
+    pitch = [(0, 0), (6, 18), (10, 24), (SLAM1, 2), (17, 4), (SLAM2, -1.5), (23, -2), (28, -1.5), (32, 0), (45, 0)]
+    attack = {"body": {"rot": fk(*[(fr, a, 0, 0) for fr, a in pitch])},  # its loc keeps the hind hips still (set per frame below)
+              "head": {"rot": fk((0, 0, 0, 0), (6, 12, 0, 0), (10, 16, 4, 0), (SLAM1, -12, 6, 0), (17, 4, -6, 0), (SLAM2, -20, -4, 0), (23, -24, 0, 0),
+                                 (27, -16, 8, 3), (31, -18, -6, -2), (37, -6, 0, 0), (45, 0, 0, 0))}}
+    attack["leg-fl"] = {"rot": fk((0, 0, 0, 0), (6, 40, 0, -14), (10, 46, 0, -16), (SLAM1, -2, 0, 0), (17, plant(-2.0, 31) - 4, 0, 0),
+                                  (SLAM2, plant(-4.0, 31) + 1.5, 0, 0), (23, plant(-4.6, 31) + 2, 0, 0), (28, 24, 0, -4), (32, 0, 0, 0), (45, 0, 0, 0)),
+                        "loc": fk((0, 0, 0, 0), (24, 0, 0, 0), (28, 0, 3.0, 0), (32, 0, 0, 0), (45, 0, 0, 0))}
+    attack["leg-fr"] = {"rot": fk((0, 0, 0, 0), (6, 40, 0, 14), (10, 46, 0, 16), (SLAM1, 36, 0, 10), (17, 44, 0, 6), (SLAM2, 4, 0, 0), (23, 5, 0, 0),
+                                  (28, 4, 0, 0), (32, 26, 0, 4), (36, 0, 0, 0), (45, 0, 0, 0)),
+                        "loc": fk((0, 0, 0, 0), (28, 0, 0, 0), (32, 0, 3.0, 0), (36, 0, 0, 0), (45, 0, 0, 0))}
+    # each forepaw is set down on the floor where it lands (touch), held
+    # planted while the weight comes onto it, lifted to step back, and
+    # planted on its own spot again; the hind paws never move
+    feet = Planter(root, "body", list(LEGS), top="owlbear")
+    front_feet = Planter(root, "body", ["leg-fl", "leg-fr"], top="owlbear")
+    planted = {"leg-fl": [(0, 1.0), (2, 0.0), (SLAM1 - 1, 0.0), (SLAM1, 1.0), (24, 1.0), (25, 0.0), (31, 0.0), (32, 1.0)],
+               "leg-fr": [(0, 1.0), (2, 0.0), (SLAM2 - 1, 0.0), (SLAM2, 1.0), (28, 1.0), (29, 0.0), (35, 0.0), (36, 1.0)]}
+    anchors = {"leg-fl": [(0, 0.0), (SLAM1, "touch"), (31, 0.0)], "leg-fr": [(0, 0.0), (SLAM2, "touch"), (35, 0.0)]}
+    spec = {part: {ch: [(round(t / f), v) for t, v in ks] for ch, ks in chans.items()} for part, chans in attack.items()}
+    end = max(fr for chans in spec.values() for ks in chans.values() for fr, _ in ks)
+    smp = sample(spec, end, SLAM2, 0.3)
+    hip = np.array((0.0, 30.0, LEGS["leg-bl"][1] - BODY_HINGE[2]))  # the hind hips, from the body pivot
+    keyed_front = {n: [r.copy() for r in smp[n]["rot"]] for n in ("leg-fl", "leg-fr")}
+
+    def pose():
+        """Body loc about the still hind hips, hind legs countering the
+        pitch, forepaws solved on their spots."""
+        rot = smp["body"]["rot"]
+        smp["body"]["loc"] = [hip - rmat(r) @ hip for r in rot]
+        for leg_name in ("leg-bl", "leg-br"):  # the hind legs hold still in the world
+            smp[leg_name] = {"rot": [-r for r in rot]}
+        for n in keyed_front:
+            smp[n]["rot"] = [r.copy() for r in keyed_front[n]]
+        front_feet.solve(smp, end, planted, anchors, lift=[(0, 0.0)])
+
+    def low(n, fr):
+        return front_feet._world(n, smp["body"]["loc"][fr], smp["body"]["rot"][fr], np.ones(3), smp[n]["rot"][fr], front_feet._top(smp, fr))[0]
+
+    def down(n, fr):  # fully planted on this frame
+        return fr > 2 and all(not (f0 <= fr < f1 and w0 < 1) for (f0, w0), (f1, _) in zip(planted[n], planted[n][1:]))
+    for _ in range(4):
+        # the body can't sink onto the still hind hips, so the pitch takes up
+        # the floor: lifted where a forepaw would dig in, lowered where a
+        # planted one would hang
+        pose()
+        for fr in range(end + 1):
+            lo = min(low(n, fr) for n in keyed_front)
+            if lo >= -0.05:
+                lows = [low(n, fr) for n in keyed_front if down(n, fr)]
+                lo = min(lows) if lows else 0.0
+            if abs(lo) > 0.05:
+                smp["body"]["rot"][fr] = smp["body"]["rot"][fr] + np.array((math.degrees(math.asin(max(-1.0, min(1.0, -lo / 32.0)))), 0.0, 0.0))
+    pose()
+    # between two plants (both forepaws up), carry the pitch across smoothly
+    # instead of snapping back to the keyed one
+    rot = smp["body"]["rot"]
+    free = [fr for fr in range(SLAM1 + 1, end) if not any(down(n, fr) for n in keyed_front)]
+    for fr in free:
+        a = max(x for x in range(fr) if x not in free)
+        b = min(x for x in range(fr + 1, end + 1) if x not in free)
+        rot[fr] = rot[a] + (rot[b] - rot[a]) * (fr - a) / (b - a)
+    pose()
+    attack = keyed(root, per_frame(smp))
+    # hit: the blow shoves it back off its feet in a short arc (up by f4,
+    # down by f8, the feet trailing), the head thrown back and away; it lands
+    # with a squash, drifts a beat, then recovers with weight (a dip and a
+    # small overshoot).
+    hit = {"owlbear": {"scale": fk((0, 1, 1, 1), (4, 0.98, 1.04, 1.0), (8, 1.05, 0.9, 1.02), (12, 1.01, 0.98, 1.0), (16, 1, 1, 1), (22, 1.02, 0.95, 1.01),
+                                  (27, 1, 1, 1), (32, 1, 1, 1))},
+           "body": {"loc": fk((0, 0, 0, 0), (2, 0, 2.6, 1.8), (4, 0, 3.6, 3.0), (6, 0, 2.2, 3.6), (8, 0, 0, 3.6), (12, 0, 0, 5.2), (16, 0, 0, 6.6),
+                               (23, 0, 0, 0.6), (28, 0, 0, -0.4), (32, 0, 0, 0)),
+                    "rot": fk((0, 0, 0, 0), (4, 5, 0, -6), (8, 0, 0, -2), (13, 0, 0, -1.5), (17, 0, 0, -1), (23, -0.5, 0, 0.6), (28, 0, 0, 0), (32, 0, 0, 0))},
+           "head": {"rot": fk((0, 0, 0, 0), (3, 32, -20, 12), (7, 26, -16, 9), (12, 22, -14, 8), (17, 12, -4, 3), (23, -10, 4, -3), (28, 3, 0, 0), (32, 0, 0, 0))},
+           }
+    for leg_name in LEGS:  # the paws keep their spot (the legs trail), land there, and the body comes back over them
+        hit[leg_name] = {"rot": fk((0, 0, 0, 0), (32, 0, 0, 0))}
+    hit = keyed(root, bake(hit, None, feet, {n: [(0, 1.0)] for n in LEGS}, lift=[(0, 1.0), (1, 0.0), (7, 0.0), (8, 1.0)]))
+    # death: knocked back and over onto its side with a heavy slam (see owlbear_fall)
+    grids = {name: g for name, g, _, _ in parts if g is not None}
+    hinges = {name: h for name, _, h, _ in parts if h is not None}
+    death, LAND = owlbear_fall(grids, hinges)
     paw = to_root((CX + 9.5, 1.0, LEGS["leg-fr"][1] - 6.0))
     return asset("creatures", "owlbear", "Owlbear", root,
-                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", keyed(root, attack), loop=False), Clip("hit", keyed(root, hit), loop=False), Clip("death", keyed(root, death), loop=False)],
+                 clips=[Clip("idle", keyed(root, idle)), Clip("attack", attack, loop=False, impact=SLAM2 * f, ease=0.0), Clip("hit", hit, loop=False, ease=0.0), Clip("death", keyed(root, death), loop=False, impact=LAND / 30, ease=0.0),
+                        Clip("move", keyed(root, lumber_move(root)), ease=0.0, floor=False)],
                  sockets=[Socket("socket-function", at=paw, parent="leg-fr")],
-                 fx=[pfx("rvx-fantasy-dust-slam", "socket-function", "clip:attack", size=24, at=0.45)])
+                 fx=[pfx("rvx-fantasy-dust-slam", "socket-function", "clip:attack", size=24, at=SLAM2 * f)])

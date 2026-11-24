@@ -7,8 +7,8 @@ crooked teeth, and long arms held out in front ending in oversized
 clawed hands. A hunched office worker: a torn sky-blue shirt with a red
 tie and bare ribs, brown trousers, one shoe lost. Head, chest, jaw and
 limbs are true-slope prisms; cloth, ribs, stitches and face are paint.
-Clips: idle (sway, head loll), move (shamble), attack (double-arm
-swipe), hit, death (falls back). Faces -Z.
+Clips: idle (sway, head loll), move (shamble), attack (one-two
+claw rake, left then right), hit, death (teeters, topples backwards onto its back). Faces -Z.
 """
 import numpy as np
 
@@ -16,6 +16,7 @@ import paint as P
 import pnglyph as G
 import pnpaint as PP
 import pnshapes as S
+import _zombie_falls as zf
 from _life import Rig, ctr, fx, limb, make, plan, seq, side, skin, wave
 from pnkit import box
 from voxgrid import C, Clip, Grid
@@ -126,7 +127,7 @@ def arm(s: int) -> Grid:
     return g
 
 
-def build():
+def _build():
     rig = Rig("zombie-walker", (CX, 0, CZ))
     rig.add("leg-l", leg(-1), HIPS["leg-l"])
     rig.add("leg-r", leg(1), HIPS["leg-r"])
@@ -144,16 +145,69 @@ def build():
             "head": {"rot": wave(1.2, (6, -5, -8), phase=0.9)},
             "arm-l": {"rot": wave(1.2, (-8, 0, 0), phase=0.4)},
             "arm-r": {"rot": wave(1.2, (8, 0, 0), phase=0.4)}}
-    attack = {"body": {"rot": seq((0, 0, 0, 0), (0.25, 8, 0, 0), (0.45, -16, 0, 0), (0.9, 0, 0, 0))},
-              "arm-l": {"rot": seq((0, 0, 0, 0), (0.25, 50, 0, -8), (0.45, -40, 0, 6), (0.9, 0, 0, 0))},
-              "arm-r": {"rot": seq((0, 0, 0, 0), (0.25, 50, 0, 8), (0.45, -40, 0, -6), (0.9, 0, 0, 0))},
-              "head": {"rot": seq((0, 0, 0, 0), (0.25, 12, 0, 0), (0.45, -10, 0, 0), (0.9, 0, 0, 0))}}
-    hit = {"body": {"rot": seq((0, 0, 0, 0), (0.1, 16, -6, 0), (0.5, 0, 0, 0))},
-           "head": {"rot": seq((0, 0, 0, 0), (0.1, 22, 8, 10), (0.5, 0, 0, 0))}}
-    death = {rig.root.name: {"rot": seq((0, 0, 0, 0), (0.3, -8, 0, 0), (0.9, 84, 0, 0), (1.05, 78, 0, 0), (1.4, 82, 0, 0))},
-             "head": {"rot": seq((0, 0, 0, 0), (0.9, 25, 0, 20), (1.4, 20, 0, 25))},
-             "arm-l": {"rot": seq((0, 0, 0, 0), (0.9, 50, 0, -30))}, "arm-r": {"rot": seq((0, 0, 0, 0), (0.9, 40, 0, 35))}}
+    f = 1 / 30
+    R = rig.root.name
+    # attack: a lurching one-two claw rake. It sags back onto the right heel
+    # and hauls both claws up behind its head (f0-9, still creeping up
+    # through f11), then throws its whole weight forward: the left foot
+    # stamps down a long step ahead and the claws rake down 3 frames into
+    # the victim's chest (impact f14). The chest drives on past the contact
+    # (f17), the claws dig and grind in a moving hold while the heavy head
+    # bobs and the trailing claw catches up, then it hauls itself back a
+    # step, sways back past upright and settles. The right foot stays
+    # planted (its leg stretches back, the root rides up on its toe).
+    imp = 14 * f
+    T = zf.fr
+    attack = {R: {"loc": T((0, 0, 0, 0), (4, 0, 0, 0.8), (9, 0, 0, 1.4), (11, 0, 0, 1.5), (13, 0, 0.15, -0.6), (14, 0, 1.6, -2.6), (17, 0, 1.8, -3.0), (21, 0, 1.6, -2.8),
+                           (25, 0, 1.7, -2.9), (29, 0, 0.6, -1.0), (31, 0, 0.05, -0.25), (33, 0, -0.2, 0.5), (35, 0, -0.05, 0.1), (37, 0, 0, -0.1), (42, 0, 0, 0))},
+              "body": {"rot": T((0, 0, 0, 0), (4, 6, 0, 1), (9, 14, 0, 2), (11, 16, 0, 2), (14, -18, -9, -3), (16, -22, -10, -4), (19, -25, 9, -4), (21, -20, 8, -2),
+                                (25, -22, 2, -3), (30, -6, 0, 0), (34, 5, 0, 0), (38, -1.5, 0, 0), (42, 0, 0, 0))},
+              "head": {"rot": T((0, 0, 0, 0), (5, 8, 0, 0), (10, 18, 0, -3), (12, 21, 0, -4), (15, -4, 0, 2), (18, -16, 0, 6), (21, -4, 4, 3),
+                                (24, -11, -3, 0), (28, -7, 0, 0), (32, 4, 0, -2), (36, 8, 0, 0), (39, -2, 0, 0), (42, 0, 0, 0))},
+              "leg-l": {"rot": T((0, 0, 0, 0), (5, 3.5, 0, 0), (9, 6, 0, 0), (12, 14, 0, 0), (14, 17, 0, 0), (17, 18, 0, 0), (25, 17, 0, 0),
+                                 (29, 8, 0, 0), (32, -2, 0, 0), (35, 0, 0, 0)),
+                        "loc": T((0, 0, 0, 0), (8, 0, 0, 0), (11, 0, 1.6, 0), (14, 0, -1.9, 0), (17, 0, -2.1, 0), (21, 0, -1.9, 0), (25, 0, -2.0, 0),
+                                 (28, 0, 1.0, 0), (31, 0, 0.4, 0), (33, 0, 0.2, 0), (35, 0, 0.05, 0), (37, 0, 0, 0))},
+              "leg-r": {"rot": T((0, 0, 0, 0), (4, 3.8, 0, 0), (9, 6.5, 0, 0), (11, 7, 0, 0), (14, -12.5, 0, 0), (17, -14.5, 0, 0), (21, -13.5, 0, 0),
+                                 (25, -14, 0, 0), (29, -5, 0, 0), (33, 2.4, 0, 0), (37, -0.5, 0, 0), (42, 0, 0, 0))}}
+    # one-two: the left claw rakes first (impact f14) while the right stays
+    # cocked up high, then the right rakes down across (f19, accelerating
+    # all the way, keyed a frame at a time) as the shoulders twist round.
+    attack["arm-l"] = {"rot": T((0, 0, 0, 0), (4, 34, 0, -6), (9, 84, 0, -12), (11, 92, 0, -14), (14, 12, 0, 8),
+                                (17, -3, 0, 16), (20, 8, 0, 10), (24, 1, 0, 13), (29, 2, 0, 4),
+                                (33, 9, 0, -2), (37, -2, 0, 0), (42, 0, 0, 0))}
+    attack["arm-r"] = {"rot": T((0, 0, 0, 0), (5, 34, 0, 6), (10, 84, 0, 12), (12, 92, 0, 14), (15, 102, 0, 16), (16, 97, 0, 14), (17, 83, 0, 10),
+                                (18, 56, 0, 3), (19, 14, 0, -8), (21, -4, 0, -16), (24, 8, 0, -10), (27, 1, 0, -13), (31, 2, 0, -4),
+                                (35, 9, 0, 2), (39, -2, 0, 0), (42, 0, 0, 0))}
+    hit = {R: zf.hit_body(push=3.0, pop=1.4, lean=11, side=0.6, heel=2.5, toe=-9.5, front=True),
+           "body": {"rot": zf.fr((0, 0, 0, 0), (1, 7, 0, 0), (2, 9.5, 0, 0), (6, 8, 0, 0), (12, 1, 0, 0), (17, -3.5, 0, 0), (22, 1, 0, 0), (26, 0, 0, 0))},
+           "head": {"rot": zf.fr((0, 0, 0, 0), (1, 7.7, 2.4, 1.8), (2, 17.6, 5.6, 4.2), (4, 22, 8, 6), (7, 15.4, 6.4, 4.8), (11, 3.3, 2.4, 1.8), (15, -6.6, -1.6, -1.2), (20, 1.8, 0.4, 0.3), (25, 0, 0, 0))},
+           "arm-l": {"rot": zf.fr((0, 0, 0, 0), (1, 3, 0, -5), (3, 8, 0, -14), (6, 7, 0, -19), (10, 1, 0, -8), (15, -3, 0, 4), (20, 1, 0, -1), (25, 0, 0, 0))},
+           "arm-r": {"rot": zf.fr((0, 0, 0, 0), (2, 3, 0, 5), (4, 8, 0, 14), (7, 7, 0, 19), (11, 1, 0, 8), (16, -3, 0, -4), (21, 1, 0, 1), (25, 0, 0, 0))}}
+    # death: hit in the chest, it rocks forward over its toes (f5), sways back
+    # as the knees give (f9-12), then topples backwards, away from the
+    # attacker, gathering speed into a heavy thud on its back (impact f25).
+    # One small bounce off the floor and a settle; the arms fling up as it
+    # goes and slap down over its head, the head whips back last and rolls
+    # to one side, the legs kick up and drop flat.
+    dimp = 25 * f
+    death = {R: {"rot": seq((0, 0, 0, 0), (5 * f, -6, 0, 1), (9 * f, 2, 0, 0), (13 * f, 12, 0, -1), (dimp, 90, 0, -3), (27 * f, 88, 0, -3), (29 * f, 90, 0, -3), (52 * f, 90, 0, -3)),
+                 "loc": seq((0, 0, 0, 0), (5 * f, 0, 0, -0.5), (9 * f, 0, -0.8, 0), (13 * f, 0, -1.3, 0.8), (dimp, 0, 0, 2), (27 * f, 0, 0.8, 2.2), (29 * f, 0, 0, 2.3), (52 * f, 0, 0, 2.3))},
+             # the chest squashes flat onto the floor on the thud (the body lies on
+             # its back, so its forward axis is world up) and springs back
+             "body": {"rot": seq((0, 0, 0, 0), (5 * f, -8, 0, 0), (13 * f, -10, 0, 0), (dimp, 0, 0, 0), (27 * f, 2, 0, 0), (30 * f, 0, 0, 0), (52 * f, 0, 0, 0)),
+                      "scale": seq((0, 1, 1, 1), (dimp - 2 * f, 1, 1, 1), (dimp, 1.06, 1.04, 0.84), (27 * f, 0.98, 0.99, 1.05), (30 * f, 1, 1, 1))},
+             "head": {"rot": seq((0, 0, 0, 0), (5 * f, -12, 0, 0), (13 * f, -20, 0, 0), (20 * f, -10, 0, 0), (dimp, 9, 8, 0), (27 * f, 13, 14, 0), (30 * f, 11, 21, 0), (34 * f, 11, 24, 0), (52 * f, 11, 25, 0))}}
+    for name, s in (("arm-l", -1), ("arm-r", 1)):  # flung up, then slapped down over the head
+        death[name] = {"rot": seq((0, 0, 0, 0), (5 * f, 12, 0, 0), (13 * f, 45, 0, 0), (20 * f, 72, 0, -s * 14), (dimp, 100, 0, -s * 36), ((26 + (s > 0)) * f, 104, 0, -s * 41), ((29 + (s > 0)) * f, 103, 0, -s * 40), (52 * f, 103, 0, -s * 40))}
+    for name, s in (("leg-l", -1), ("leg-r", 1)):  # the knees give, kick up at the thud, drop flat
+        death[name] = {"rot": seq((0, 0, 0, 0), (5 * f, -4, 0, 0), (9 * f, 6, 0, 0), (13 * f, 14, 0, 0), (dimp, 10, 0, s * 6), ((27 + (s > 0)) * f, 17, 0, s * 8), ((30 + (s > 0)) * f, 6, 0, s * 8), ((33 + (s > 0)) * f, 6, 0, s * 8), (52 * f, 6, 0, s * 8))}
     return make("creatures", "zombie-walker", "Zombie Walker", rig.root,
-                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False), Clip("hit", hit, loop=False), Clip("death", death, loop=False)],
+                clips=[Clip("idle", idle), Clip("move", move), Clip("attack", attack, loop=False, impact=imp, floor=True, ease=0), Clip("hit", hit, loop=False, floor=True), Clip("death", death, loop=False, impact=dimp)],
                 sockets=[rig.socket("socket-chest", (CX, HIP_Y + 8, CZ - 7), parent="body"), rig.socket("socket-head", (CX, NECK[1] + 16, NECK[2] - 6), parent="head")],
                 pfx=[fx("rvx-apocalypse-gore-burst", "socket-chest", "clip:hit", size=28)])
+
+
+def build():
+    # Key the death's resting pose on the floor so its bounce leaves it.
+    return zf.pin_rest(_build())
