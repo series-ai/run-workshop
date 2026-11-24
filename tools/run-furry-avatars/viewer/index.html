@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Anthro kit</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 14px/1.4 system-ui, sans-serif; background: #ecebf0; color: #222; }
+  #app { display: flex; height: 100%; }
+  #view { flex: 1; position: relative; }
+  canvas { display: block; }
+  aside { width: 320px; overflow-y: auto; padding: 16px; background: #fff; border-left: 1px solid #ddd; box-sizing: border-box; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #777; margin: 18px 0 8px; }
+  .row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0; gap: 8px; }
+  .row label { flex: 1; }
+  select { font: inherit; padding: 4px 6px; border: 1px solid #ccc; border-radius: 6px; background: #f6f6f8; min-width: 150px; }
+  input[type=range] { width: 150px; }
+  .row output { width: 38px; text-align: right; color: #777; font-size: 12px; }
+  input[type=color] { width: 44px; height: 26px; border: 1px solid #ccc; border-radius: 4px; padding: 0; background: none; cursor: pointer; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; padding: 5px 9px; border: 1px solid #ccc; border-radius: 6px; background: #f6f6f8; cursor: pointer; }
+  button.on { background: #222; color: #fff; border-color: #222; }
+  #status { position: absolute; left: 12px; bottom: 10px; color: #666; font-size: 12px; }
+  #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  #labels div { position: absolute; transform: translate(-50%, -100%); font-size: 11px; color: #555; background: rgba(255,255,255,.75); padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three-build/three.module.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="view"><div id="labels"></div><div id="status">Loading…</div></div>
+  <aside>
+    <h1>Anthro kit</h1>
+    <div class="btns"><button id="lineup-btn">Lineup: every species</button></div>
+    <h2>Species</h2>
+    <div class="btns" id="species"></div>
+    <h2>Parts</h2>
+    <div id="parts"></div>
+    <h2>Wearing</h2>
+    <div class="btns" id="wear"></div>
+    <h2>Look</h2>
+    <div class="row"><label>Shader</label><select id="shader"></select></div>
+    <div id="look"></div>
+    <div class="btns" style="margin-top:6px"><button id="look-copy">Copy look link</button><button id="look-reset">Reset look</button></div>
+    <h2>Animation</h2>
+    <div class="btns" id="anims"></div>
+    <div id="colours"></div>
+  </aside>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+
+const params = new URLSearchParams(location.search);
+const MODEL = params.get('model') || '../kit/anthro-kit-B.glb';
+const CATALOGUE = params.get('catalogue') || '../kit/species.json';
+
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xecebf0);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 50);
+const CAMS = { '34': [-2.2, 1.5, 3.6], side: [-4.2, 1.1, 0], front: [0, 1.2, 4.2], head: [-0.9, 1.75, 1.5], headside: [-1.6, 1.68, 0], headfront: [0, 1.7, 1.6], wide: [-6.5, 2.4, 1.5], sideup: [-5.0, 1.75, 0], '34up': [-2.6, 2.0, 4.2] };   // (*up: framed higher, for airborne poses)
+camera.position.set(...(CAMS[params.get('cam')] || CAMS['34']));
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, (params.get('cam') || '').startsWith('head') ? 1.65 : 1.0, 0);
+controls.update();
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8890a0, 1.6);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(-2, 4, 3);
+const rim = new THREE.DirectionalLight(0xffffff, 0);   // a back light: a bright edge on the far side of the shapes
+rim.position.set(2, 3, -4);
+scene.add(rim);
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(1.2, 48), new THREE.MeshLambertMaterial({ color: 0xdedce4 }));
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+let coverMode = false;   // (declared before resize(): it runs at startup)
+function resize() {
+  if (coverMode) return;
+  const w = view.clientWidth, h = view.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+const GROUPS = {
+  'Fur': ['fur', 'fur_light', 'fur_dark', 'inner_ear', 'pads'],
+  'Hair': ['hair'],
+  'Face': ['iris', 'eye_white', 'pupil', 'nose', 'mouth'],
+  'Horn, beak, hoof': ['horn', 'claws'],
+  'Clothes': ['cloth_top', 'cloth_top_trim', 'cloth_bottom', 'cloth_bottom_trim'],
+};
+const LABELS = { fur: 'Main fur', fur_light: 'Markings', fur_dark: 'Socks, gloves, brows', inner_ear: 'Inner ears', pads: 'Pads', hair: 'Hair',
+  iris: 'Eyes', eye_white: 'Eye whites, teeth', pupil: 'Pupils', nose: 'Nose', mouth: 'Mouth and lids', claws: 'Claws', horn: 'Horn, beak, hooves',
+  cloth_top: 'Hoodie', cloth_top_trim: 'Hoodie trim', cloth_bottom: 'Shorts', cloth_bottom_trim: 'Shorts pockets' };
+const KINDS = ['head', 'ears', 'cheeks', 'hair', 'eyes', 'teeth', 'tail', 'feet'];
+const teethObjs = {};   // style -> snout -> object: each teeth style is fitted to every snout, shown for the chosen head's snout
+
+const status = document.getElementById('status');
+addEventListener('error', (ev) => { status.textContent = 'ERR ' + ev.message; });
+let root, cat, mats = {}, defaults = {}, bones = {}, rest = {}, mixer = null, clips = {};
+const kit = {};       // kind -> name -> object
+const chosen = {};    // kind -> name
+const wear = {};      // toggleable extras: top, bottom, tuft, claws
+
+// ---- shaders: one material per (shader, colour region), normals swapped per mesh, optional inverted-hull outline
+const SHADERS = {
+  flat:      { label: 'Flat',                normals: 'flat' },
+  smooth:    { label: 'Smooth',              normals: 'smooth' },
+  auto:      { label: 'Auto smooth (40°)',   normals: 'auto' },
+  soft:      { label: 'Soft (PBR)',          normals: 'auto' },
+  plush:     { label: 'Plush (fabric sheen)', normals: 'smooth' },
+  toon:      { label: 'Toon',                normals: 'smooth' },
+  toonline:  { label: 'Toon + outline (default)', normals: 'smooth', outline: true },
+  toonflat:  { label: 'Toon flat',           normals: 'flat' },
+  flatline:  { label: 'Flat + outline',      normals: 'flat', outline: true },
+  unlit:     { label: 'Unlit (flat colour)', normals: 'flat' },
+  unlitline: { label: 'Unlit + outline',     normals: 'flat', outline: true },
+  celline:   { label: 'Cel 2-tone + outline',  normals: 'smooth', outline: true },
+  celflat:   { label: 'Cel 2-tone flat + outline', normals: 'flat', outline: true },
+  toonflatline: { label: 'Toon flat + outline', normals: 'flat', outline: true },
+  softline:  { label: 'Soft (PBR) + outline', normals: 'auto', outline: true },
+  rimline:   { label: 'Unlit + rim glow + outline', normals: 'smooth', outline: true },
+};
+// the look: everything adjustable from the panel (and ?look=<json>), shared by the editor, the lineup and the cover
+const LOOK_DEFAULT = { outline: 0.0085, ink: 0.3, steps: 3, floor: 0.24, cel: 0.72, key: 2.2, keyAz: -35, keyEl: 50, fill: 1.6, rim: 0, rimGlow: 0.35, bg: '#ecebf0' };
+const LOOK = Object.assign({}, LOOK_DEFAULT, JSON.parse(new URLSearchParams(location.search).get('look') || '{}'));
+const U = { outline: { value: LOOK.outline }, rimGlow: { value: LOOK.rimGlow } };   // shared shader uniforms
+const NO_OUTLINE = new Set(['iris', 'pupil', 'eye_white', 'mouth']);   // decals: a hull round them reads as noise
+const outlineAll = [];                   // every outline material with its base colour (ink darkness updates them)
+let shader = 'toonline';
+const colours = {};                      // region -> THREE.Color, shared by every shader's material
+const shaderMats = {};                   // shader -> region -> material
+const outlineMats = {};                  // region -> material
+const meshes = [];                       // { mesh, regions, geo: { flat, smooth, auto }, outline }
+function ramp(values) {
+  const t = new THREE.DataTexture(new Uint8Array(values.flatMap((v) => [v, v, v, 255])), values.length, 1);
+  t.minFilter = t.magFilter = THREE.NearestFilter;
+  t.needsUpdate = true;
+  return t;
+}
+function toonValues() {   // `steps` bands from `floor` up to full brightness
+  const n = Math.max(2, Math.round(LOOK.steps));
+  return Array.from({ length: n }, (_, i) => Math.round(255 * (LOOK.floor + (1 - LOOK.floor) * i / (n - 1))));
+}
+const toonRamp = ramp(toonValues());
+const celRamp = ramp([Math.round(255 * LOOK.cel), 255]);   // one hard shadow band, light everywhere else
+
+function makeMat(kind, region, color = colours[region]) {
+  let m;
+  if (kind === 'flat' || kind === 'flatline') m = new THREE.MeshLambertMaterial({ color, flatShading: true });
+  else if (kind === 'smooth' || kind === 'auto') m = new THREE.MeshLambertMaterial({ color });
+  else if (kind === 'soft') m = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0 });
+  else if (kind === 'plush') m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.95, metalness: 0, sheen: 1, sheenRoughness: 0.45, sheenColor: 0xffffff });
+  else if (kind === 'toon' || kind === 'toonline') m = new THREE.MeshToonMaterial({ color, gradientMap: toonRamp });
+  else if (kind === 'toonflat' || kind === 'toonflatline') m = new THREE.MeshToonMaterial({ color, gradientMap: toonRamp, flatShading: true });
+  else if (kind === 'celline') m = new THREE.MeshToonMaterial({ color, gradientMap: celRamp });
+  else if (kind === 'celflat') m = new THREE.MeshToonMaterial({ color, gradientMap: celRamp, flatShading: true });
+  else if (kind === 'softline') m = new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0 });
+  else if (kind === 'rimline') {   // flat colour plus a soft glow on the silhouette edge (fresnel), no lighting
+    m = new THREE.MeshLambertMaterial({ color });
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uRimGlow = U.rimGlow;
+      sh.fragmentShader = 'uniform float uRimGlow;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
+        float fres = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 3.0);
+        outgoingLight = diffuseColor.rgb + uRimGlow * fres;
+        #include <opaque_fragment>`);
+    };
+  }
+  else m = new THREE.MeshBasicMaterial({ color });
+  m.color = color;                       // share the Color object so the pickers drive every shader at once
+  m.name = region;
+  return m;
+}
+function getMat(kind, region) {
+  shaderMats[kind] = shaderMats[kind] || {};
+  return shaderMats[kind][region] || (shaderMats[kind][region] = makeMat(kind, region));
+}
+function getOutlineMat(region) {
+  if (outlineMats[region]) return outlineMats[region];
+  return (outlineMats[region] = makeOutlineMat(region, colours[region]));
+}
+function makeOutlineMat(region, color) {
+  const m = new THREE.MeshBasicMaterial({ color: color.clone().multiplyScalar(LOOK.ink), side: THREE.BackSide });
+  m.name = region;
+  m.onBeforeCompile = (sh) => {   // push the back faces out along the smoothed normal (bind space, before skinning)
+    sh.uniforms.uOutline = U.outline;
+    sh.vertexShader = 'uniform float uOutline;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\n  transformed += normalize(normal) * uOutline;`);
+  };
+  outlineAll.push({ m, base: color });
+  return m;
+}
+
+// welded normals: average the face normals of every corner at the same position, within the crease angle
+function smoothGeometry(src, creaseDeg) {
+  const g = (src.index ? src.toNonIndexed() : src.clone());
+  const pos = g.attributes.position, n = pos.count;
+  const face = new Float32Array(n * 3), a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  const buckets = new Map();
+  const key = (i) => `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
+  for (let i = 0; i < n; i += 3) {
+    a.fromBufferAttribute(pos, i); b.fromBufferAttribute(pos, i + 1); c.fromBufferAttribute(pos, i + 2);
+    const fn = c.sub(b).cross(a.sub(b));   // area-weighted
+    for (let k = 0; k < 3; k++) {
+      face.set([fn.x, fn.y, fn.z], (i + k) * 3);
+      const h = key(i + k);
+      if (!buckets.has(h)) buckets.set(h, []);
+      buckets.get(h).push(i + k);
+    }
+  }
+  const cos = Math.cos(creaseDeg * Math.PI / 180), out = new Float32Array(n * 3);
+  const fi = new THREE.Vector3(), fj = new THREE.Vector3(), sum = new THREE.Vector3();
+  for (const list of buckets.values()) {
+    for (const i of list) {
+      fi.fromArray(face, i * 3); const li = fi.length() || 1;
+      sum.set(0, 0, 0);
+      for (const j of list) {
+        fj.fromArray(face, j * 3);
+        if (fi.dot(fj) / (li * (fj.length() || 1)) >= cos) sum.add(fj);
+      }
+      sum.normalize().toArray(out, i * 3);
+    }
+  }
+  g.setAttribute('normal', new THREE.BufferAttribute(out, 3));
+  return g;
+}
+function geometryFor(rec, kind) {
+  if (!rec.geo[kind]) rec.geo[kind] = smoothGeometry(rec.geo.flat, kind === 'smooth' ? 180 : 40);
+  return rec.geo[kind];
+}
+function setShader(kind) {
+  if (!SHADERS[kind]) kind = 'flat';
+  shader = kind;
+  const S = SHADERS[kind];
+  for (const rec of meshes) {
+    const o = rec.mesh;
+    o.geometry = S.normals === 'flat' ? rec.geo.flat : geometryFor(rec, S.normals);
+    const list = rec.regions.map((r) => getMat(kind, r));
+    o.material = Array.isArray(o.material) ? list : list[0];
+    const wantLine = S.outline && (o.name.startsWith('teeth_') || !rec.regions.every((r) => NO_OUTLINE.has(r)));   // teeth share the eye-white colour but need the line to read on a pale muzzle
+    if (wantLine && !rec.outline) {
+      const g = geometryFor(rec, 'smooth');   // smooth normals keep the hull from splitting at hard edges
+      const m = rec.regions.length > 1 ? rec.regions.map(getOutlineMat) : getOutlineMat(rec.regions[0]);
+      const line = o.isSkinnedMesh ? new THREE.SkinnedMesh(g, m) : new THREE.Mesh(g, m);
+      if (o.isSkinnedMesh) line.bind(o.skeleton, o.bindMatrix);
+      line.frustumCulled = false;
+      line.name = o.name + '__outline';
+      o.add(line);
+      rec.outline = line;
+    }
+    if (rec.outline) rec.outline.visible = !!wantLine;
+  }
+  const sel = document.getElementById('shader');
+  if (sel) sel.value = kind;
+  if (lineup) buildLineup();   // the lineup's per-species materials follow the shader
+}
+
+// ---- lineup: every species preset side by side, each a skeleton clone of the kit with its own parts and colours
+let lineup = null;                       // { group, members: [{ sp, obj, mixer, actions, bones, label }] }
+const labelsEl = document.getElementById('labels');
+const savedCam = { pos: new THREE.Vector3(), target: new THREE.Vector3() };
+// lineup outfits: species recipes don't set clothes, so give each character its own hoodie/shorts pair rather than a wall of one colour
+const OUTFITS = [['#2f6fd6', '#f2c14e'], ['#e0533d', '#2b2d42'], ['#3aa17e', '#f4f1de'], ['#8e5cd9', '#ffd166'], ['#f28c28', '#264653'],
+  ['#d94f8a', '#3d405b'], ['#2a9d8f', '#e9c46a'], ['#5a6b7d', '#ef476f'], ['#f6bd60', '#2d3047'], ['#4361ee', '#ff9f1c'], ['#9c6644', '#e5e5e5']];
+function speciesColour(sp, region) {
+  const i = Object.keys(cat.species).indexOf(sp), o = OUTFITS[i % OUTFITS.length];
+  if (region === 'cloth_top' || region === 'cloth_bottom_trim') return new THREE.Color(o[0]);
+  if (region === 'cloth_bottom' || region === 'cloth_top_trim') return new THREE.Color(o[1]);
+  const r = (cat.species[sp].colours || {})[region];
+  return new THREE.Color(r || defaults[region]);
+}
+function buildLineup(cast = null) {
+  // cast (the cover): [{ sp, x, z, ry, clip, t }] places species with a fixed pose each; default: every species in rows
+  clearLineup();
+  const names = cast ? cast.map((c) => c.sp) : Object.keys(cat.species);
+  const group = new THREE.Group();
+  const members = [];
+  const rows = 3, perRow = Math.ceil(names.length / rows), dx = 1.0, dz = 1.5;
+  names.forEach((sp, i) => {
+    const r = cat.species[sp];
+    const obj = SkeletonUtils.clone(root);
+    const row = Math.floor(i / perRow), col = i % perRow;
+    const n = Math.min(perRow, names.length - row * perRow);
+    obj.position.set((col - (n - 1) / 2) * dx + (row % 2 ? dx * 0.5 : 0), 0, -row * dz);   // odd rows staggered so they show between
+    const cc = cast && cast[i];
+    if (cc) { obj.position.set(cc.x, cc.y || 0, cc.z); obj.rotation.y = cc.ry || 0; }
+    obj.userData.species = sp;
+    const mats = {}, lines = {};
+    obj.traverse((o) => {
+      const m = /^(head|ears|cheeks|hair|eyes|tail|feet)_([a-z_]+)$/.exec(o.name);
+      if (m && !/_\d+$/.test(o.name)) o.visible = m[2] === (r[m[1]] || 'none');
+      if (o.name === 'claws_paws') o.visible = clawsOn && (r.feet || 'paws') === 'paws';
+      if (o.name === 'tuft') o.visible = r.tuft !== false;
+      const tm = /^teeth_([a-z]+)__([a-z]+)$/.exec(o.name);
+      if (tm) o.visible = tm[1] === r.teeth && tm[2] === r.snout;
+      if (!o.isMesh) return;
+      const outline = o.name.endsWith('__outline');
+      const list = (Array.isArray(o.material) ? o.material : [o.material]).map((mt) => {
+        const region = mt.name;
+        if (outline) return lines[region] || (lines[region] = makeOutlineMat(region, speciesColour(sp, region)));
+        return mats[region] || (mats[region] = makeMat(shader, region, speciesColour(sp, region)));
+      });
+      o.material = Array.isArray(o.material) ? list : list[0];
+      o.frustumCulled = false;
+    });
+    const mixer = new THREE.AnimationMixer(obj);
+    const actions = {};
+    for (const [name, a] of Object.entries(clips)) { actions[name] = mixer.clipAction(a.getClip()); actions[name].play(); actions[name].enabled = false; }
+    const bonesC = {};
+    obj.traverse((o) => { if (o.isBone) bonesC[o.name] = o; });
+    const label = document.createElement('div');
+    label.textContent = sp;
+    labelsEl.appendChild(label);
+    group.add(obj);
+    members.push({ sp, obj, mixer, actions, bones: bonesC, label, offset: i * 0.137, clip: cc ? cc.clip : null, at: cc ? cc.t : null });
+  });
+  scene.add(group);
+  lineup = { group, members, halfW: (perRow * dx) / 2 + 0.3, depth: (rows - 1) * dz };
+  root.visible = false;
+  ground.visible = false;
+}
+function clearLineup() {
+  if (!lineup) return;
+  scene.remove(lineup.group);
+  lineup.group.traverse((o) => { if (o.isMesh) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => m.dispose()); });
+  labelsEl.innerHTML = '';
+  lineup = null;
+}
+function setLineup(on) {
+  document.getElementById('lineup-btn').classList.toggle('on', on);
+  if (on && !lineup) {
+    savedCam.pos.copy(camera.position); savedCam.target.copy(controls.target);
+    buildLineup();
+    // fit the front row's width in view from a low 3/4
+    const hfov = 2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
+    const dist = lineup.halfW / Math.tan(hfov / 2) + lineup.depth / 2 + 1.2;   // the front row is nearer than the target
+    const tgt = new THREE.Vector3(0, 0.9, -lineup.depth / 2);
+    controls.target.copy(tgt);
+    camera.position.copy(tgt).add(new THREE.Vector3(-0.18, 0.3, 1).normalize().multiplyScalar(dist));
+  } else if (!on && lineup) {
+    clearLineup();
+    root.visible = true; ground.visible = true;
+    camera.position.copy(savedCam.pos); controls.target.copy(savedCam.target);
+  }
+  controls.update();
+}
+// click a character in the lineup to open it in the editor
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+let hovered = null;   // names show on hover (a label over every head crowds the rows behind)
+renderer.domElement.addEventListener('pointermove', (e) => {
+  hovered = lineup ? pick(e) : null;
+  renderer.domElement.style.cursor = hovered ? 'pointer' : '';
+});
+renderer.domElement.addEventListener('pointerup', (e) => {
+  if (!lineup || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) return;
+  const best = pick(e);
+  if (best) { setLineup(false); hovered = null; renderer.domElement.style.cursor = ''; applySpecies(best.sp); }
+});
+function pick(e) {
+  const rc = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  // pick by nearest character to the ray (skinned raycasts are costly and the parts overlap): the ray's closest approach to each body axis
+  let best = null, bestD = 0.45;
+  const p = new THREE.Vector3();
+  for (const m of lineup.members) {
+    for (const h of [0.5, 1.0, 1.5]) {
+      p.copy(m.obj.position).setY(h);
+      const d = ray.ray.distanceToPoint(p);
+      if (d < bestD) { bestD = d; best = m; }
+    }
+  }
+  return best;
+}
+
+let clawsOn = true;
+function syncClaws() {   // finger claws follow the toggle; toe claws also need paws (hooves, talons and reptile feet bring their own)
+  if (wear.claws) wear.claws.visible = clawsOn;
+  if (wear.claws_paws) wear.claws_paws.visible = clawsOn && chosen.feet === 'paws';
+}
+function choose(kind, name) {
+  chosen[kind] = name;
+  for (const [n, o] of Object.entries(kit[kind] || {})) o.visible = n === name;
+  syncClaws();
+  syncTeeth();
+  const sel = document.querySelector(`select[data-kind="${kind}"]`);
+  if (sel) sel.value = name;
+}
+function syncTeeth() {
+  const sn = cat && cat.species[chosen.head] ? cat.species[chosen.head].snout : null;
+  for (const [st, bySnout] of Object.entries(teethObjs)) for (const [s2, o] of Object.entries(bySnout)) o.visible = st === chosen.teeth && s2 === sn;
+}
+function setColour(name, hex) {
+  if (colours[name]) colours[name].set(hex);
+  if (outlineMats[name]) outlineMats[name].color.copy(colours[name]).multiplyScalar(LOOK.ink);
+  const input = document.querySelector(`input[data-region="${name}"]`);
+  if (input) input.value = hex;
+}
+function applySpecies(sp) {
+  const r = cat.species[sp];
+  for (const k of KINDS) choose(k, r[k] || 'none');
+  if (wear.tuft) {   // chest tuft per recipe (none on sharks and reptiles)
+    wear.tuft.visible = r.tuft !== false;
+    document.querySelector('#wear button[data-w="tuft"]')?.classList.toggle('on', wear.tuft.visible);
+  }
+  for (const [k, v] of Object.entries(defaults)) setColour(k, (r.colours || {})[k] || v);
+  document.querySelectorAll('#species button').forEach((b) => b.classList.toggle('on', b.dataset.sp === sp));
+}
+
+// no-store and a cache-busting query: never pair a fresh page with a stale cached kit
+Promise.all([fetch(CATALOGUE, { cache: 'no-store' }).then((r) => r.json()), new GLTFLoader().loadAsync(MODEL + (MODEL.includes('?') ? '&' : '?') + 'v=' + Date.now())]).then(([catalogue, g]) => {
+  cat = catalogue;
+  root = g.scene;
+  scene.add(root);
+  mixer = new THREE.AnimationMixer(root);
+  for (const c of g.animations) { clips[c.name] = mixer.clipAction(c); clips[c.name].play(); clips[c.name].enabled = false; }
+  root.traverse((o) => {
+    if (o.isMesh) {
+      const list = Array.isArray(o.material) ? o.material : [o.material];
+      for (const m of list) if (!colours[m.name]) { colours[m.name] = m.color.clone(); mats[m.name] = getMat('flat', m.name); }
+      o.material = Array.isArray(o.material) ? o.material.map((m) => mats[m.name]) : mats[o.material.name];
+      o.frustumCulled = false;
+      meshes.push({ mesh: o, regions: list.map((m) => m.name), geo: { flat: o.geometry }, outline: null });
+    }
+    if (o.isBone) { bones[o.name] = o; rest[o.name] = o.quaternion.clone(); }
+    // parts: <kind>_<name>; a multi-material part loads as a group with children <kind>_<name>_1 ...: keep the outermost
+    const m = /^(head|ears|cheeks|hair|eyes|tail|feet)_([a-z_]+)$/.exec(o.name);
+    if (m && !/_\d+$/.test(o.name)) { kit[m[1]] = kit[m[1]] || {}; if (!kit[m[1]][m[2]]) kit[m[1]][m[2]] = o; }
+    if (['top', 'bottom', 'tuft', 'claws', 'claws_paws'].includes(o.name) && !wear[o.name]) wear[o.name] = o;
+    const tm = /^teeth_([a-z]+)__([a-z]+)$/.exec(o.name);
+    if (tm) { teethObjs[tm[1]] = teethObjs[tm[1]] || {}; if (!teethObjs[tm[1]][tm[2]]) teethObjs[tm[1]][tm[2]] = o; }
+  });
+  for (const [k, m] of Object.entries(mats)) defaults[k] = '#' + m.color.getHexString();
+  buildPanel();
+  buildLookPanel();
+  applyLook();
+  setShader(params.get('shader') || 'toonline');
+  applySpecies(params.get('species') || 'wolf');
+  for (const k of KINDS) if (params.get(k)) choose(k, params.get(k));
+  for (const name of (params.has('hide') ? params.get('hide') : 'top,bottom').split(',')) {   // no clothes by default
+    if (name === 'claws') { clawsOn = false; syncClaws(); document.querySelector('#wear button[data-w="claws"]')?.classList.remove('on'); }
+    else if (wear[name]) { wear[name].visible = false; document.querySelector(`#wear button[data-w="${name}"]`)?.classList.remove('on'); }
+  }
+  if (params.has('lineup')) setLineup(true);
+  status.textContent = `${Object.keys(cat.species).length} species · ${KINDS.map((k) => (k === 'teeth' ? Object.keys(teethObjs).length : Object.keys(kit[k] || {}).length) + ' ' + k).join(' · ')} · drag to orbit`;
+}).catch((e) => { status.textContent = 'Could not load the kit (serve this folder over http): ' + e.message; console.error(e); });
+
+function buildPanel() {
+  const sp = document.getElementById('species');
+  for (const name of Object.keys(cat.species)) {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.dataset.sp = name;
+    b.onclick = () => { if (lineup) setLineup(false); applySpecies(name); };   // editing always shows the character being edited
+    sp.appendChild(b);
+  }
+  const pt = document.getElementById('parts');
+  for (const kind of KINDS) {
+    const names = kind === 'teeth' ? [...cat.parts.teeth] : Object.keys(kit[kind] || {}).sort();
+    if (kind === 'hair' || kind === 'ears' || kind === 'tail' || kind === 'cheeks') names.push('none');
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<label>${kind[0].toUpperCase() + kind.slice(1)}</label><select data-kind="${kind}">${names.map((n) => `<option>${n}</option>`).join('')}</select>`;
+    row.querySelector('select').onchange = (e) => { if (lineup) setLineup(false); choose(kind, e.target.value); };
+    pt.appendChild(row);
+  }
+  const wr = document.getElementById('wear');
+  for (const [name, label] of [['top', 'Hoodie'], ['bottom', 'Shorts'], ['tuft', 'Chest tuft'], ['claws', 'Claws']]) {
+    if (!wear[name]) continue;
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.dataset.w = name;
+    b.className = 'on';
+    b.onclick = () => {
+      if (name === 'claws') { clawsOn = !clawsOn; syncClaws(); b.classList.toggle('on', clawsOn); }
+      else { wear[name].visible = !wear[name].visible; b.classList.toggle('on', wear[name].visible); }
+      if (lineup) buildLineup();   // the lineup copies what's being worn
+    };
+    wr.appendChild(b);
+  }
+  const col = document.getElementById('colours');
+  for (const [group, names] of Object.entries(GROUPS)) {
+    const present = names.filter((n) => mats[n]);
+    if (!present.length) continue;
+    col.insertAdjacentHTML('beforeend', `<h2>${group}</h2>`);
+    for (const n of present) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `<label>${LABELS[n] || n}</label><input type="color" data-region="${n}" value="${defaults[n]}">`;
+      row.querySelector('input').addEventListener('input', (e) => { if (lineup) setLineup(false); setColour(n, e.target.value); });
+      col.appendChild(row);
+    }
+  }
+  document.getElementById('lineup-btn').onclick = () => setLineup(!lineup);
+  const sh = document.getElementById('shader');
+  sh.innerHTML = Object.entries(SHADERS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  sh.onchange = (e) => setShader(e.target.value);
+  const an = document.getElementById('anims');
+  for (const name of Object.keys(BAKED)) {
+    const b = document.createElement('button');
+    b.textContent = name;
+    b.className = name === anim ? 'on' : '';
+    b.onclick = () => { anim = name; t0 = clock.getElapsedTime(); an.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+    an.appendChild(b);
+  }
+}
+
+// ---- swing trails: a ribbon swept by the claw tips during a strike (the kit's catalogue lists each clip's
+// trail windows, so games can attach their own FX the same way). Styled like the pfx library's slash-trail:
+// a blue body with a racing hot edge, fading with age.
+const TRAIL_N = 14, TRAIL_DT = 0.011;
+const trailMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  vertexShader: `attribute float aAge; attribute float aEdge; varying float vAge; varying float vEdge;
+    void main() { vAge = aAge; vEdge = aEdge; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `varying float vAge; varying float vEdge;
+    void main() {
+      float life = 1.0 - vAge;
+      vec3 body = vec3(0.30, 0.65, 1.0), hot = vec3(1.0, 0.98, 0.9);
+      vec3 c = mix(body, hot, smoothstep(0.55, 1.0, vEdge) * life);
+      float a = pow(life, 1.4) * (0.15 + 0.85 * smoothstep(0.0, 1.0, vEdge));
+      gl_FragColor = vec4(c, a * 0.95);
+    }`,
+});
+// the cover's trail: the same look, bolder (a still image has no motion to carry it)
+const coverTrailMat = trailMat.clone();
+coverTrailMat.fragmentShader = trailMat.fragmentShader.replace('pow(life, 1.4) * (0.15 + 0.85 * smoothstep(0.0, 1.0, vEdge))', 'pow(life, 0.6) * (0.35 + 0.65 * smoothstep(0.0, 1.0, vEdge))').replace('a * 0.95', 'a');
+const trails = [0, 1].map(() => {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2 * 3), 3));
+  g.setAttribute('aAge', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2), 1));
+  g.setAttribute('aEdge', new THREE.BufferAttribute(new Float32Array(TRAIL_N * 2), 1));
+  const idx = [];
+  for (let i = 0; i < TRAIL_N - 1; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  g.setIndex(idx);
+  const m = new THREE.Mesh(g, trailMat);
+  m.frustumCulled = false; m.visible = false; m.renderOrder = 10;
+  scene.add(m);
+  return m;
+});
+const boneOf = (n) => bones[n] || bones[n.replace('.', '')];
+// a plain stool for reviewing the sit clips (not part of the kit): seat top 0.46 m, under the hips
+const stool = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.46, 0.38), new THREE.MeshBasicMaterial({ color: 0xc9c4d6 }));
+stool.position.set(0, 0.23, 0.1);
+stool.visible = false;
+scene.add(stool);
+const _a = new THREE.Vector3(), _b = new THREE.Vector3();
+function updateTrails(clipName, t, action) {
+  const wins = (cat && cat.trails && cat.trails[clipName]) || [];
+  trails.forEach((m) => { m.visible = false; });
+  if (!wins.length || (lineup)) return;
+  const samples = wins.map(() => []);
+  for (let k = 0; k < TRAIL_N; k++) {           // sample the clip backwards in time (deterministic: works when scrubbing)
+    const tk = t - k * TRAIL_DT;
+    let any = false;
+    wins.forEach((w, i) => { if (tk >= w.start && tk <= w.end) any = true; });
+    if (!any) continue;
+    mixer.setTime(tk); root.updateMatrixWorld(true);
+    wins.forEach((w, i) => {
+      if (tk < w.start || tk > w.end) return;
+      const shoulder = boneOf('upper_arm.' + w.bone), hand = boneOf('hand.' + w.bone), fing = boneOf('fingers.' + w.bone);
+      shoulder.getWorldPosition(_a); fing.getWorldPosition(_b);
+      const along = _b.clone().sub(_a).normalize();                          // the arm's line: square to the sweep
+      hand.getWorldPosition(_a);
+      const tip = _b.clone().add(_b.clone().sub(_a).multiplyScalar(1.2));    // past the claws
+      const inner = tip.clone().addScaledVector(along, -0.42);               // a broad blade down the forearm
+      samples[i].push({ inner, tip, age: k / (TRAIL_N - 1) });
+    });
+  }
+  mixer.setTime(t); root.updateMatrixWorld(true);
+  wins.forEach((w, i) => {
+    const s = samples[i], m = trails[i];
+    if (!m || s.length < 2) return;
+    const pos = m.geometry.attributes.position, age = m.geometry.attributes.aAge, edge = m.geometry.attributes.aEdge;
+    for (let k = 0; k < TRAIL_N; k++) {
+      const p = s[Math.min(k, s.length - 1)];
+      pos.setXYZ(k * 2, p.inner.x, p.inner.y, p.inner.z); pos.setXYZ(k * 2 + 1, p.tip.x, p.tip.y, p.tip.z);
+      const a = k < s.length ? p.age : 1;
+      age.setX(k * 2, a); age.setX(k * 2 + 1, a); edge.setX(k * 2, 0); edge.setX(k * 2 + 1, 1);
+    }
+    pos.needsUpdate = age.needsUpdate = edge.needsUpdate = true;
+    m.visible = true;
+  });
+}
+
+// ---- look controls
+function applyLook() {
+  U.outline.value = LOOK.outline;
+  U.rimGlow.value = LOOK.rimGlow;
+  for (const o of outlineAll) o.m.color.copy(o.base).multiplyScalar(LOOK.ink);
+  const tv = toonValues();
+  toonRamp.image = { data: new Uint8Array(tv.flatMap((v) => [v, v, v, 255])), width: tv.length, height: 1 };
+  toonRamp.needsUpdate = true;
+  celRamp.image.data.set([Math.round(255 * LOOK.cel), Math.round(255 * LOOK.cel), Math.round(255 * LOOK.cel), 255], 0);
+  celRamp.needsUpdate = true;
+  sun.intensity = LOOK.key;
+  const az = THREE.MathUtils.degToRad(LOOK.keyAz), el = THREE.MathUtils.degToRad(LOOK.keyEl);
+  sun.position.set(Math.sin(az) * Math.cos(el) * 5, Math.sin(el) * 5, Math.cos(az) * Math.cos(el) * 5);
+  hemi.intensity = LOOK.fill;
+  rim.intensity = LOOK.rim;
+  if (!coverMode) scene.background = new THREE.Color(LOOK.bg);
+}
+const LOOK_UI = [
+  ['outline', 'Outline width', 0, 0.02, 0.0005], ['ink', 'Outline darkness (0 black)', 0, 1, 0.02],
+  ['steps', 'Toon steps', 2, 6, 1], ['floor', 'Toon shadow level', 0, 1, 0.02], ['cel', 'Cel shadow level', 0, 1, 0.02],
+  ['key', 'Key light', 0, 5, 0.1], ['keyAz', 'Key direction', -180, 180, 5], ['keyEl', 'Key height', 5, 90, 5],
+  ['fill', 'Fill (sky) light', 0, 4, 0.1], ['rim', 'Rim (back) light', 0, 5, 0.1], ['rimGlow', 'Rim glow (rim shader)', 0, 1.5, 0.05],
+];
+function buildLookPanel() {
+  const el = document.getElementById('look');
+  el.innerHTML = '';
+  for (const [k, label, lo, hi, step] of LOOK_UI) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<label>${label}</label><input type="range" min="${lo}" max="${hi}" step="${step}" value="${LOOK[k]}"><output>${LOOK[k]}</output>`;
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    inp.addEventListener('input', () => { LOOK[k] = +inp.value; out.textContent = inp.value; applyLook(); });
+    el.appendChild(row);
+  }
+  const bg = document.createElement('div');
+  bg.className = 'row';
+  bg.innerHTML = `<label>Background</label><input type="color" value="${LOOK.bg}">`;
+  bg.querySelector('input').addEventListener('input', (e) => { LOOK.bg = e.target.value; applyLook(); });
+  el.appendChild(bg);
+  document.getElementById('look-copy').onclick = () => {
+    const q = new URLSearchParams(location.search);
+    q.set('look', JSON.stringify(LOOK)); q.set('shader', shader);
+    history.replaceState(null, '', '?' + q.toString());
+    navigator.clipboard?.writeText(location.href);
+    document.getElementById('look-copy').textContent = 'Copied: link updated';
+    setTimeout(() => { document.getElementById('look-copy').textContent = 'Copy look link'; }, 1500);
+  };
+  document.getElementById('look-reset').onclick = () => { Object.assign(LOOK, LOOK_DEFAULT); buildLookPanel(); applyLook(); };
+}
+
+// state for automated checks (scripts/check-editor.mjs)
+window.KIT = { kit, chosen, wear, teethObjs, clips, get lineup() { return lineup; }, get shader() { return shader; }, get anim() { return anim; }, get clawsOn() { return clawsOn; }, get BAKED() { return BAKED; },
+  // for review scripts: pose any clip at any time from any camera
+  pose(animName, time, cam) { anim = animName; tOverride = time; if (cam && CAMS[cam]) { camera.position.set(...CAMS[cam]); controls.target.set(0, cam.startsWith('head') ? 1.65 : cam.endsWith('up') ? 1.4 : 1.0, 0); controls.update(); } },
+  species: (sp) => applySpecies(sp),
+  choose: (kind, name) => choose(kind, name),
+  colour: (region, hex) => setColour(region, hex),
+  // the pack cover: a posed cast, rendered square at n px from a given camera; returns a PNG data URL
+  cover(cast, cam, n = 2048) {
+    buildLineup(cast);
+    labelsEl.innerHTML = '';
+    document.querySelector('aside').style.display = 'none';
+    document.getElementById('status').style.display = 'none';
+    renderer.setPixelRatio(1);
+    renderer.setSize(n, n);
+    camera.aspect = 1; camera.fov = cam.fov || 30;
+    camera.position.set(...cam.pos); controls.target.set(...cam.target); controls.update();
+    if (cam.lift) camera.setViewOffset(n, n, 0, n * cam.lift, n, n);   // the crowd sits high, the logo goes over the floor below
+    camera.updateProjectionMatrix();
+    scene.background = new THREE.Color(cam.bg || LOOK.bg);
+    coverMode = true;
+    const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    // per character, the screen box of its bones (plus a margin for the mesh around them)
+    const boxes = () => lineup.members.map((m) => {
+      const b = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9, sp: m.sp };
+      m.obj.updateMatrixWorld(true);
+      const v = new THREE.Vector3();
+      m.obj.traverse((o) => { if (o.isBone) { o.getWorldPosition(v); v.project(camera); b.x0 = Math.min(b.x0, v.x); b.x1 = Math.max(b.x1, v.x); b.y0 = Math.min(b.y0, v.y); b.y1 = Math.max(b.y1, v.y); } });
+      const pad = 0.035;   // ndc: the body around the bones
+      b.x0 -= pad; b.x1 += pad; b.y0 -= pad; b.y1 += pad * 2;
+      return b;
+    });
+    return (async () => {
+      await frame();
+      if (cam.fit) {   // move the camera along its line of sight and pan so the crowd fills the target rect (ndc)
+        const [fx0, fy0, fx1, fy1] = cam.fit;
+        for (let it = 0; it < 6; it++) {
+          const bs = boxes();
+          const X0 = Math.min(...bs.map((b) => b.x0)), X1 = Math.max(...bs.map((b) => b.x1));
+          const Y0 = Math.min(...bs.map((b) => b.y0)), Y1 = Math.max(...bs.map((b) => b.y1));
+          // zoom: cam.zoom > 1 frames tighter than the fit (the bottom is allowed to run off); top held at fy1
+          let k = Math.max((X1 - X0) / (fx1 - fx0), (Y1 - Y0) / (fy1 - fy0)) / (cam.zoom || 1);
+          const tgt = controls.target.clone(), dir = camera.position.clone().sub(tgt);
+          // pan: shift the target so the crowd's centre lands on the rect's centre
+          const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0), up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+          const half = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dir.length();
+          tgt.addScaledVector(right, ((X0 + X1) / 2 - (fx0 + fx1) / 2 + (cam.panX || 0)) / 2 * half * 2);   // panX (ndc): nudge the framing; + moves the scene left
+          if (cam.zoom) tgt.addScaledVector(up, (Y1 - fy1) * half);   // keep the top of the crowd at fy1
+          else tgt.addScaledVector(up, ((Y0 + Y1) / 2 - (fy0 + fy1) / 2) / 2 * half * 2);
+          camera.position.copy(tgt).add(dir.multiplyScalar(k));
+          controls.target.copy(tgt); controls.update();
+          camera.updateMatrixWorld(true);
+          await frame();
+        }
+      }
+      // swing trails for anyone caught mid-strike: sample their clip backwards and sweep a ribbon behind the claws
+      for (const m of lineup.members) {
+        const wins = (cat.trails && cat.trails[m.clip]) || [];
+        for (const w of wins) {
+          if (m.at < w.start || m.at > w.end + 0.08) continue;
+          const act = m.actions[m.clip], pts = [];
+          for (let k = 0; k < 18; k++) {
+            const tk = m.at - k * 0.017;
+            if (tk < w.start - 0.02) break;
+            m.mixer.setTime(tk); m.obj.updateMatrixWorld(true);
+            const sh = m.bones['upper_arm' + w.bone] || m.bones['upper_arm.' + w.bone], hd = m.bones['hand' + w.bone] || m.bones['hand.' + w.bone],
+                  fg = m.bones['fingers' + w.bone] || m.bones['fingers.' + w.bone];
+            const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+            sh.getWorldPosition(a); hd.getWorldPosition(c); fg.getWorldPosition(b);
+            const along = b.clone().sub(a).normalize();
+            const tip = b.clone().add(b.clone().sub(c).multiplyScalar(1.2));
+            pts.push({ tip, inner: tip.clone().addScaledVector(along, -0.6), age: k / 17 });
+          }
+          m.mixer.setTime(m.at); m.obj.updateMatrixWorld(true);
+          if (pts.length < 3) continue;
+          const g = new THREE.BufferGeometry(), N = pts.length;
+          const pos = new Float32Array(N * 6), age = new Float32Array(N * 2), edge = new Float32Array(N * 2), idx = [];
+          pts.forEach((p, k) => { pos.set([p.inner.x, p.inner.y, p.inner.z, p.tip.x, p.tip.y, p.tip.z], k * 6); age.set([p.age, p.age], k * 2); edge.set([0, 1], k * 2); });
+          for (let k = 0; k < N - 1; k++) { const q = k * 2; idx.push(q, q + 1, q + 2, q + 1, q + 3, q + 2); }
+          g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aAge', new THREE.BufferAttribute(age, 1)); g.setAttribute('aEdge', new THREE.BufferAttribute(edge, 1));
+          g.setIndex(idx);
+          const ribbon = new THREE.Mesh(g, coverTrailMat);
+          ribbon.renderOrder = 10; ribbon.frustumCulled = false;
+          lineup.group.add(ribbon);
+        }
+      }
+      // how much of each character's box is covered by the boxes in front of it (nearer the camera)
+      const bs = boxes();
+      const dist = lineup.members.map((m) => m.obj.position.distanceTo(camera.position));
+      window.COVER_OVERLAP = bs.map((b, i) => {
+        const area = (b.x1 - b.x0) * (b.y1 - b.y0);
+        let hid = 0;
+        bs.forEach((o, j) => {
+          if (j === i || dist[j] >= dist[i]) return;
+          const w = Math.min(b.x1, o.x1) - Math.max(b.x0, o.x0), h = Math.min(b.y1, o.y1) - Math.max(b.y0, o.y0);
+          if (w > 0 && h > 0) hid += w * h;
+        });
+        return [b.sp, Math.round(100 * Math.min(1, hid / area))];
+      });
+      await frame();
+      return renderer.domElement.toDataURL('image/png');
+    })();
+  } };
+let tOverride = null;
+const BAKED = { 'Idle': 'idle', 'Walk': 'walk', 'Trot': 'trot', 'Sprint': 'sprint', 'Gallop': 'gallop', 'Jump': 'jump', 'Wave': 'wave', 'Princess wave': 'wave_princess',
+  'Pick up': 'pickup', 'Collect': 'collect', 'Interact': 'interact', 'Gather': 'gather', 'Type': 'type',
+  'Sit down': 'sit_down', 'Sit': 'sit_idle', 'Sit: type': 'sit_type', 'Sit: eat': 'sit_eat', 'Sit: talk': 'sit_talk', 'Stand from sit': 'sit_up',
+  'Bark': 'bark', 'Roar': 'roar',
+  'Slash R': 'slash_r', 'Slash L': 'slash_l', 'Slash combo': 'slash_combo', 'Maul': 'maul', 'Bite': 'bite', 'Hurt': 'hurt', 'Death': 'death',
+  'To all fours': 'fours_down', 'All fours': 'fours_idle', 'Stand up': 'fours_up', 'T-pose': 'tpose' };
+let anim = params.get('anim') || 'Idle';
+const clock = new THREE.Clock();
+let t0 = 0;
+renderer.setAnimationLoop(() => {
+  if (root) {
+    const t = tOverride !== null ? tOverride : params.has('t') ? parseFloat(params.get('t')) : clock.getElapsedTime() - t0;
+    const baked = clips[BAKED[anim]];
+    for (const a of Object.values(clips)) a.enabled = a === baked;
+    stool.visible = !lineup && /^sit_(idle|type|eat|talk)$/.test(BAKED[anim] || '');
+    if (baked) { const tt = t % baked.getClip().duration; mixer.setTime(tt); updateTrails(BAKED[anim], tt, baked); }   // (the mixer only writes values that changed since its last frame)
+    else {
+      trails.forEach((m) => { m.visible = false; });
+      for (const [name, b] of Object.entries(bones)) { b.quaternion.copy(rest[name]); if (name === 'root') b.position.set(0, 0, 0); }
+    }
+    if (lineup) {
+      const rc = renderer.domElement.getBoundingClientRect(), v = new THREE.Vector3();
+      for (const m of lineup.members) {
+        const cn = m.clip || BAKED[anim];
+        for (const [name, a] of Object.entries(m.actions)) a.enabled = name === cn;
+        const act = m.actions[cn];
+        if (act) m.mixer.setTime(m.at !== null ? m.at : (t + m.offset) % act.getClip().duration);
+        else for (const [name, b] of Object.entries(m.bones)) { if (rest[name]) b.quaternion.copy(rest[name]); if (name === 'root') b.position.set(0, 0, 0); }
+        v.copy(m.obj.position).setY(2.02).project(camera);   // above the head, so back-row names don't land on the front row
+        m.label.style.left = ((v.x + 1) / 2 * rc.width) + 'px';
+        m.label.style.top = ((1 - v.y) / 2 * rc.height) + 'px';
+        m.label.style.display = m === hovered ? '' : 'none';
+      }
+    }
+  }
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
