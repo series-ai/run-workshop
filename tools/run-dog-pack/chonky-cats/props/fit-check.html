@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Chonky Cats: does the cat fit?</title>
+<style>body { margin: 0; background: #eceae4; } canvas { display: block; }</style></head>
+<body>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Every bed, cave, house and litter box (fit.py's list) with a large cat (0.65, the biggest
+// body: cobby) inside in the pose used there. Houses and caves are drawn see-through so the cat
+// shows. ?body=moggy for another cat; ?save=<name> posts a screenshot (capture.py fit).
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone } from 'three/addons/utils/SkeletonUtils.js';
+import { loadClipLibrary, setupDog } from '../../chunky-toy/dogclips.js';
+
+const q = new URLSearchParams(location.search);
+// slug: [clip, floor height as a fraction of the prop's height, see-through]
+const FIT = {
+  'avocado-bed': ['loaf_loop', 0.35], 'watermelon-bed': ['loaf_loop', 0.35], 'fruit-tart-bed': ['loaf_loop', 0.5],
+  'toast-bed': ['loaf_loop', 0.45], 'heated-pad': ['loaf_loop', 0.9], 'scratch-pad': ['loaf_loop', 0.9],
+  'scratch-lounge': ['loaf_loop', 0.2], 'radiator-hammock': ['loaf_loop', 0.55], 'window-perch': ['loaf_loop', 0.6],
+  'laundry-basket': ['loaf_loop', 0.12], 'cardboard-box': ['loaf_loop', 0.05], 'litter-tray': ['sit_loop', 0.2],
+  'paper-bag': ['loaf_loop', 0.05, true], 'cat-cave': ['loaf_loop', 0.08, true], 'cat-condo': ['loaf_loop', 0.08, true],
+  'cat-teepee': ['loaf_loop', 0.1, true], 'pineapple-house': ['loaf_loop', 0.1, true],
+  'strawberry-cave': ['loaf_loop', 0.08, true], 'mushroom-house': ['loaf_loop', 0.06, true],
+  'shark-bed': ['loaf_loop', 0.08, true], 'covered-litter': ['sit_loop', 0.12, true], 'carrier': ['loaf_loop', 0.08, true],
+  'crinkle-tunnel': ['down_loop', 0.05, true], 'mushroom-tree': ['loaf_loop', 0.93],
+};
+const slugs = Object.keys(FIT), COLS = 6, CELL = 1.9, nRows = Math.ceil(slugs.length / COLS);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xeceae4);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a917f, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-3, 6, 4);
+scene.add(sun);
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, '../rigged/clips.glb');
+const catGltf = await loader.loadAsync(`../rigged/${q.get('body') || 'cobby'}.glb`);
+const box = new THREE.Box3();
+for (const [i, slug] of slugs.entries()) {
+  const [clip, floor, ghost] = FIT[slug];
+  const x = (i % COLS - (COLS - 1) / 2) * CELL, z = (Math.floor(i / COLS) - (nRows - 1) / 2) * CELL;
+  const tile = new THREE.Mesh(new THREE.PlaneGeometry(CELL - 0.1, CELL - 0.1), new THREE.MeshLambertMaterial({ color: 0xd9d4c6 }));
+  tile.rotation.x = -Math.PI / 2; tile.position.set(x, 0, z); scene.add(tile);
+  const prop = (await loader.loadAsync(`models/${slug}.glb`)).scene;
+  if (ghost) prop.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.35; o.material.depthWrite = false; } });
+  prop.position.set(x, 0, z);
+  scene.add(prop);
+  box.setFromObject(prop);
+  const centre = box.getCenter(new THREE.Vector3());
+  const cat = clone(catGltf.scene);
+  cat.scale.setScalar(0.65);
+  // along the prop's long side
+  const size = box.getSize(new THREE.Vector3());
+  if (size.x > size.z) cat.rotation.y = Math.PI / 2;
+  cat.position.set(centre.x, box.min.y + floor * size.y, centre.z);
+  cat.renderOrder = -1;
+  scene.add(cat);
+  const d = setupDog(cat, lib); d.play(clip, { fade: 0 }); d.update(0.5);
+}
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 0.1, 200);
+const span = Math.max(COLS, nRows * innerWidth / innerHeight) * CELL;
+camera.position.set(0, span * 0.9, span * 1.25);
+camera.lookAt(0, 0, 0);
+renderer.render(scene, camera);
+if (q.get('save')) await fetch('/save?name=' + q.get('save'), { method: 'POST', body: renderer.domElement.toDataURL('image/png') });
+</script>
+</body>
+</html>

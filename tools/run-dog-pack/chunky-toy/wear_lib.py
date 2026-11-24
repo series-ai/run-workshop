@@ -27,6 +27,9 @@ PLAIN_UV = (0.0527, 1 - 0.0527)   # where every cloth pattern is 0 (glTF flips v
 
 
 def _material(name, rgb, rough=0.6, metal=0.0, image=None):
+    old = bpy.data.materials.get(name)   # an earlier wearable's: free the name (games look materials up
+    if old is not None:                  # by it: 'collar', 'tag', 'bandana'), not 'collar.001'
+        old.name = name + '-done'
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     mat.use_backface_culling = False
@@ -205,6 +208,114 @@ class Fitter:
                   max(0.3 * tag_r, 0.008), 10, mat=1)
         return self.finish(bm, 'collar', [_material('collar', (0.55, 0.06, 0.05), 0.45),
                                            _material('tag', (0.9, 0.62, 0.18), 0.3, 1.0)])
+
+    # ------------------------------------------------------------ bell collar (cats)
+    def bell_collar(self):
+        """A slimmer strap than the dog collar with a round jingle bell under the throat. The
+        strap is white so a game tints it any colour (material.color); the bell is brass."""
+        w = min(max(0.48 * self.radius, 0.03), 0.055)
+        t = min(max(0.22 * self.radius, 0.016), 0.026)
+        bm = bmesh.new()
+        prof = [(0.003, -0.42 * w)] + [(0.004 + t * (0.55 + 0.45 * math.cos(a)), 0.5 * w * math.sin(a))
+                                        for a in np.linspace(-math.pi / 2, math.pi / 2, 4)] + [(0.003, 0.42 * w)]
+        self.tube(bm, prof, segs=18)
+        front = self.c + self.dir(0) * (self.r[0] + 0.004 + t)
+        down = (Vector((0, 0, -1)) - self.dir(0) * 0.25).normalized()
+        fwd = Vector((0, -1, 0))
+        bell_r = min(max(0.62 * self.radius, 0.032), 0.055)   # big and chunky: a toy bell, not a real one
+        ring_r = 0.3 * bell_r
+        ring_c = front + down * ring_r * 0.8
+        self.puck(bm, ring_c, fwd, Vector((0, 0, 1)), ring_r, 0.005, 6, mat=1)
+        # the bell: a ball with a slot across its lower half and a little bead on top
+        bc = ring_c + down * (ring_r + bell_r * 0.95) + fwd * 0.004
+        made = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=6, radius=bell_r)['verts']
+        for v in made:
+            v.co = bc + v.co
+        for f in {f for v in made for f in v.link_faces}:
+            f.material_index = 1
+        self.puck(bm, bc + down * bell_r * 0.35 + fwd * bell_r * 0.82, fwd, Vector((0, 0, 1)), bell_r * 0.42, 0.004, 8, mat=2)
+        return self.finish(bm, 'bell_collar', [_material('collar', (0.9, 0.9, 0.9), 0.5),
+                                               _material('tag', (0.92, 0.66, 0.2), 0.28, 1.0),
+                                               _material('slot', (0.08, 0.06, 0.04), 0.6)])
+
+    # ------------------------------------------------------------ neckerchief (cats)
+    def neckerchief(self):
+        """A scout-style neckerchief: a rolled band round the neck, gathered under the throat by a
+        round slide (woggle), with two short ends hanging down the chest, a little apart. Cloth uses
+        the shared pattern texture (tintCloth: any two colours, dots / gingham / stripes / plain);
+        the slide is its own material."""
+        bm = bmesh.new()
+        uv = bm.loops.layers.uv.new('UVMap')
+        band = min(max(0.4 * self.radius, 0.025), 0.045)
+        thick = min(max(0.16 * self.radius, 0.012), 0.022)
+        prof = [(0.003, -0.45 * band)] + [(0.004 + thick * (0.5 + 0.5 * math.cos(a)), 0.5 * band * math.sin(a))
+                                           for a in np.linspace(-math.pi / 2, math.pi / 2, 4)] + [(0.003, 0.45 * band)]
+        self.tube(bm, prof, segs=18)
+        fwd, side = self.dir(0), self.s
+        down = (Vector((0, 0, -1)) - fwd * fwd.dot(Vector((0, 0, -1)))).normalized()
+        throat = self.c + fwd * (self.r[0] + 0.004 + thick)
+        # the slide: a chunky ring a little below the band, facing forward
+        sr = min(max(0.5 * self.radius, 0.026), 0.042)
+        slide_c = throat + down * (0.5 * band + 0.6 * sr) + fwd * 0.006
+        self.puck(bm, slide_c, fwd, -down, sr, max(0.45 * sr, 0.01), 12, mat=1)
+        # the two ends: strips draped down the chest from the slide, splayed apart. Sized from the
+        # chest, like the bandana (sized from the neck they vanished under the big cat heads).
+        probe = throat - fwd * (self.r[0] + 0.02) + down * 0.04
+        widths = [(hit - probe).length for d in (side, -side)
+                  for hit in [self.bvh.ray_cast(probe, d, 1.0)[0]] if hit is not None]
+        hw = min(max(0.9 * (sum(widths) / len(widths) if widths else 0.12), 0.11), 0.2)
+        L = 1.15 * hw
+        W = 0.42 * hw
+        N = 6
+        for sgn in (-1, 1):
+            rows = []
+            for i in range(N + 1):
+                a_ = i / N
+                c = slide_c + down * (0.6 * sr + L * a_) + side * sgn * (0.45 * sr + 0.9 * W * a_)   # a clear V
+                w = W * (1 - 0.15 * a_)
+                row = []
+                for j, b_ in enumerate((-0.5, 0.0, 0.5)):
+                    p = c + side * (b_ * w)
+                    hit, *_ = self.bvh.ray_cast(p + fwd * 0.4, -fwd, 0.8)
+                    if hit is not None and (hit - p).dot(fwd) > -0.12:
+                        p = hit + fwd * (0.014 + 0.008 * a_)
+                    else:
+                        p = p + fwd * 0.016
+                    # the tips are cut on a slant, like the points of a folded scarf
+                    if i == N:
+                        p = p + down * (0.25 * W * sgn * b_)
+                    row.append(p)
+                rows.append(row)
+            # smooth along and across the strip: rays onto a lumpy chest made the ends zig-zag
+            for _ in range(3):
+                rows = [[(rows[i][j] * 2 + rows[max(i - 1, 0)][j] + rows[min(i + 1, N)][j]) / 4 if 0 < i < N else rows[i][j]
+                         for j in range(3)] for i in range(N + 1)]
+                rows = [[row[0], (row[0] + row[1] * 2 + row[2]) / 4, row[2]] for row in rows]
+            front_ = [[bm.verts.new(p + fwd * thick * 0.5) for p in row] for row in rows]
+            back_ = [[bm.verts.new(p - fwd * thick * 0.5) for p in row] for row in rows]
+            uvs = [[(0.5 + 0.3 * (j - 1), 0.2 + 0.6 * i / N) for j in range(3)] for i in range(N + 1)]
+            for sheet, flip in ((front_, False), (back_, True)):
+                for i in range(N):
+                    for j in range(2):
+                        q = (sheet[i][j], sheet[i][j + 1], sheet[i + 1][j + 1], sheet[i + 1][j])
+                        t = (uvs[i][j], uvs[i][j + 1], uvs[i + 1][j + 1], uvs[i + 1][j])
+                        f = bm.faces.new(q[::-1] if flip else q)
+                        for lp, tt in zip(f.loops, t[::-1] if flip else t):
+                            lp[uv].uv = tt
+            for path in ([(i, 0) for i in range(N + 1)], [(i, 2) for i in range(N + 1)], [(N, j) for j in range(3)]):
+                for (i0, j0), (i1, j1) in zip(path, path[1:]):
+                    try:
+                        bm.faces.new((front_[i0][j0], front_[i1][j1], back_[i1][j1], back_[i0][j0]))
+                    except ValueError:
+                        pass
+        for f in bm.faces:   # band, slide and hems: plain colour A
+            for lp in f.loops:
+                if not lp[uv].uv.length:
+                    lp[uv].uv = PLAIN_UV
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        img = _cloth_image()
+        return self.finish(bm, 'neckerchief', [_material('bandana', (1, 1, 1), 0.85, image=img),
+                                               _material('tag', (0.86, 0.6, 0.2), 0.35, 0.8)])
 
     # ------------------------------------------------------------ bandana
     def bandana(self):

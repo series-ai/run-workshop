@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Chonky Cats: clip viewer</title>
+<style>
+  body { margin: 0; font: 13px system-ui, sans-serif; background: #eceae4; color: #333; }
+  #bar { position: fixed; top: 0; left: 0; right: 0; padding: 6px 8px; background: #fffc; z-index: 1; }
+  #bar button { margin: 2px; padding: 3px 7px; border: 1px solid #bbb; border-radius: 5px; background: #fff; cursor: pointer; }
+  #bar button.on { background: #ffcf8a; border-color: #d8902c; }
+  #bar .group { display: inline-block; margin-right: 10px; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Plays the shared cat clips (rigged/clips.glb) on every cat body through the Hounds' dogclips.js.
+// Serve tools/run-dog-pack and open chonky-cats/viewer.html.
+//   default            all 8 bodies, a button per clip; drag to swivel them all, scroll to zoom; pose clips play their way in and out
+//                      (stand -> sit -> groom -> sit -> stand), so chains and seams show too
+//   ?wear=collar|bandana|bell_collar|neckerchief  shows the fitted wearable (tinted per cat);  ?low  floor-level side view (floor as a red line)
+//   ?side              side view instead of 3/4; ?mirror from the cat's right;  ?zoom=1.6 pulls the camera back
+//   ?strip=<clip>&cats=moggy,cobby&n=8   frame strips: a row per cat, n moments of the clip;
+//                      sets window.done when drawn (for headless captures)
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { attachWear, loadClipLibrary, setupDog } from '../chunky-toy/dogclips.js';
+import { loadClothPatterns, tintCloth } from '../chunky-toy/dogcoat.js';
+
+const BODIES = ['moggy', 'cobby', 'flatface', 'floof', 'sleek', 'pixie', 'munchkin', 'bobtail'];
+const q = new URLSearchParams(location.search);
+const side = q.has('side');
+const strip = q.get('strip');
+const cats = strip ? (q.get('cats') || 'moggy').split(',') : BODIES;
+const n = +(q.get('n') || 8);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setScissorTest(true);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9a917f, 2.2));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-2, 4, 3);
+scene.add(sun);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 40), new THREE.MeshLambertMaterial({ color: 0xd9d4c6 }));
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+// The camera frames a sphere round the cat in every cell, whatever the cell's shape: strips
+// tightly round one cat, the gallery with room for leaps, pounces and big tails.
+// The 3/4 view is mostly from the side, so clips that travel forward (pounce) cross the cell
+// instead of coming at the camera.
+const VIEW_DIR = (side ? new THREE.Vector3(1, 0.22, 0.06) : new THREE.Vector3(1, 0.5, 0.55)).normalize();
+const TARGET = new THREE.Vector3(0, 0.4, strip ? 0 : 0.35);
+if (q.has('mirror')) VIEW_DIR.x *= -1;   // ?mirror: from the cat's right side
+if (q.has('front')) VIEW_DIR.set(0.35, 0.15, 1).normalize();   // ?front: nearly head-on (chest wear)
+if (q.has('face')) { VIEW_DIR.set(q.has('mirror') ? -0.55 : 0.55, 0.12, 1).normalize(); TARGET.set(0, 0.62, 0.3); }   // ?face: head close-up (with ?zoom=0.4)
+if (q.has('low')) {   // ?low: side view from floor height, the floor drawn as a line: anything below it is through the floor
+  VIEW_DIR.set(1, 0.0, 0.0);
+  TARGET.y = 0.0;   // the camera at floor height: nearer feet can't hide the line by perspective
+  floor.visible = false;
+  const line = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.004, 3), new THREE.MeshBasicMaterial({ color: 0xc0392b }));
+  scene.add(line);
+}
+let RADIUS = (strip ? 0.62 : 1.1) * +(q.get('zoom') || 1);   // ?zoom=1.6: wider, for clips that travel
+// Gallery: drag to swivel every cat at once (left / right turns round them, up / down tilts),
+// scroll to zoom. It turns the shared view direction, so each cell still fits its cat.
+if (!strip) {
+  let drag = null;
+  addEventListener('pointerdown', e => { if (e.target.tagName === 'CANVAS') drag = [e.clientX, e.clientY]; });
+  addEventListener('pointerup', () => { drag = null; });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag[0], dy = e.clientY - drag[1];
+    drag = [e.clientX, e.clientY];
+    VIEW_DIR.applyAxisAngle(new THREE.Vector3(0, 1, 0), -dx * 0.01);
+    const el = Math.asin(THREE.MathUtils.clamp(VIEW_DIR.y, -1, 1));
+    const el2 = THREE.MathUtils.clamp(el + dy * 0.01, -0.2, 1.3);
+    const flat = Math.hypot(VIEW_DIR.x, VIEW_DIR.z) || 1;
+    VIEW_DIR.set(VIEW_DIR.x / flat * Math.cos(el2), Math.sin(el2), VIEW_DIR.z / flat * Math.cos(el2));
+  });
+  addEventListener('wheel', e => { RADIUS = THREE.MathUtils.clamp(RADIUS * (1 + e.deltaY * 0.001), 0.25, 3); }, { passive: true });
+}
+function frame(aspect) {
+  camera.aspect = aspect;
+  const v = THREE.MathUtils.degToRad(camera.fov) / 2;
+  const h = Math.atan(Math.tan(v) * aspect);
+  camera.position.copy(TARGET).addScaledVector(VIEW_DIR, RADIUS / Math.sin(Math.min(v, h)));
+  camera.lookAt(TARGET);
+  camera.updateProjectionMatrix();
+}
+
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, 'rigged/clips.glb');
+const dogs = {};
+const WEAR_COLORS = ['#c0392b', '#2e86de', '#27ae60', '#f1a10a', '#8e44ad', '#e86ba8', '#16a7a0', '#34495e'];
+let clothTex = null;
+for (const c of cats) {
+  const root = (await loader.loadAsync(`rigged/${c}.glb`)).scene;
+  root.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
+  dogs[c] = setupDog(root, lib);
+  if (q.get('pupils')) dogs[c].pupils = +q.get('pupils');   // ?pupils=0..1 holds the pupils (slit .. round)
+  if (q.get('wear')) {   // ?wear=collar|bandana|bell_collar|neckerchief: the fitted wearable, a different colour per cat
+    const kind = q.get('wear'), k = cats.indexOf(c);
+    const w = (await loader.loadAsync(`rigged/wear/${c}--${kind}.glb`)).scene;
+    const cloth = await (clothTex ||= loadClothPatterns('../chunky-toy/rigged/wear/cloth.png'));
+    for (const m of attachWear(root, w)) {
+      if (m.material.name === 'bandana') {
+        tintCloth(m.material, cloth, WEAR_COLORS[k % 8], '#f6f0e4', ['plain', 'dots', 'gingham', 'stripes'][k % 4]);
+      } else if (m.material.name === 'collar') m.material.color.set(WEAR_COLORS[k % 8]);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- routes between states
+const meta = lib.meta;
+const links = Object.entries(meta).filter(([, m]) => m.from && m.from !== m.to && !m.loop);
+function route(a, b) {
+  const seen = { [a]: [] }, queue = [a];
+  while (queue.length) {
+    const s = queue.shift();
+    if (s === b) return seen[s];
+    for (const [name, m] of links) if (m.from === s && !(m.to in seen)) { seen[m.to] = [...seen[s], name]; queue.push(m.to); }
+  }
+  return [];
+}
+// The sequence that shows a clip: get into its state, play it (loops twice), get back out.
+function sequence(name) {
+  const m = meta[name];
+  if (!m.from || (m.from === 'stand' && m.to === 'stand')) return [[name, m.loop ? 2 : 1]];
+  if (!m.loop && m.from !== m.to) {   // an enter or exit clip: show it inside its round trip
+    return [...route('stand', m.from).map(s => [s, 1]), [name, 1], ...route(m.to, 'stand').map(s => [s, 1])];
+  }
+  return [...route('stand', m.from).map(s => [s, 1]), [name, m.loop ? 2 : 1], ...route(m.to, 'stand').map(s => [s, 1])];
+}
+
+// ---------------------------------------------------------------- drawing
+function layout() {
+  const cols = strip ? n : innerWidth > 1.3 * innerHeight ? 4 : 2;   // narrow windows: 2 columns
+  const rows = strip ? cats.length : Math.ceil(cats.length / cols);
+  const top = strip ? 0 : document.getElementById('bar').offsetHeight;   // cells start below the buttons
+  const w = innerWidth, h = innerHeight - top;
+  renderer.setSize(w, innerHeight);
+  return { cols, rows, cw: w / cols, ch: h / rows, top };
+}
+function draw(cells) {
+  const { cols, cw, ch, top } = layout();
+  renderer.setClearColor(0xeceae4);
+  renderer.setScissor(0, 0, innerWidth, innerHeight);
+  renderer.clear();
+  frame(cw / ch);
+  cells.forEach((pose, i) => {
+    const x = (i % cols) * cw, y = innerHeight - top - (Math.floor(i / cols) + 1) * ch;
+    renderer.setViewport(x, y, cw, ch);
+    renderer.setScissor(x, y, cw, ch);
+    pose();
+    renderer.render(scene, camera);
+  });
+}
+function show(dog) {
+  for (const d of Object.values(dogs)) if (d.root.parent) scene.remove(d.root);
+  scene.add(dog.root);
+}
+
+if (strip) {
+  // A row per cat, n moments from the start to the end of the clip.
+  const dur = meta[strip].duration;
+  const cells = [];
+  for (const c of cats) {
+    for (let k = 0; k < n; k++) {
+      cells.push(() => {
+        const dog = dogs[c];
+        show(dog);
+        dog.mixer.stopAllAction();
+        dog.action = null;
+        dog.play(strip, { fade: 0, time: Math.min(dur - 1e-3, n > 1 ? dur * k / (n - 1) : 0) });
+        dog.update(0);
+      });
+    }
+  }
+  draw(cells);
+  if (q.get('save')) {   // capture.py: post the strip back to be saved
+    await fetch('/save?name=' + q.get('save'), { method: 'POST', body: renderer.domElement.toDataURL('image/png') });
+  }
+  window.done = true;
+} else {
+  // ---------------------------------------------------------------- gallery
+  const bar = document.getElementById('bar');
+  const groups = { Gaits: [], Standing: [], Sitting: [], Lying: [] };
+  for (const [name, m] of Object.entries(meta)) {
+    const lying = ['down', 'loaf', 'flop'];
+    const g = m.gait ? 'Gaits' : m.from === 'sit' || m.to === 'sit' ? 'Sitting'
+      : lying.includes(m.from) || lying.includes(m.to) ? 'Lying' : 'Standing';
+    groups[g].push(name);
+  }
+  let current = null, playing = true;
+  const buttons = {};
+  for (const [g, names] of Object.entries(groups)) {
+    const span = document.createElement('span');
+    span.className = 'group';
+    span.append(g + ': ');
+    for (const name of names) {
+      const b = document.createElement('button');
+      b.textContent = name;
+      b.onclick = () => start(name);
+      buttons[name] = b;
+      span.append(b);
+    }
+    bar.append(span);
+  }
+  const pause = document.createElement('button');
+  pause.textContent = 'pause';
+  pause.onclick = () => { playing = !playing; pause.textContent = playing ? 'pause' : 'play'; if (playing) tick(); };
+  bar.append(pause);
+
+  // Every cat runs the same sequence; each step crossfades into the next like a game would.
+  let steps = [], step = 0, left = 0;
+  function start(name) {
+    current = name;
+    Object.entries(buttons).forEach(([k, b]) => b.classList.toggle('on', k === name));
+    steps = sequence(name);
+    step = -1;
+    next();
+  }
+  function next() {
+    step = (step + 1) % steps.length;
+    const [clip, times] = steps[step];
+    for (const d of Object.values(dogs)) d.play(clip, { fade: step === 0 ? 0.25 : 0.12 });
+    left = meta[clip].duration * times;
+  }
+  for (const d of Object.values(dogs)) scene.add(d.root);
+  const clock = new THREE.Clock();
+  function tick() {
+    if (!playing) return;
+    const dt = Math.min(0.05, clock.getDelta());
+    left -= dt;
+    if (left <= 0) next();
+    for (const d of Object.values(dogs)) d.update(dt);
+    redraw();
+    requestAnimationFrame(tick);
+  }
+  const redraw = () => draw(cats.map(c => () => { show(dogs[c]); }));
+  addEventListener('resize', () => playing || redraw());   // paused: refit to the new window once
+  start(q.get('clip') || 'idle');
+  clock.getDelta();
+  tick();
+  if (q.get('save')) {   // capture.py-style check of the gallery framing, 1.5 s in
+    setTimeout(() => {
+      fetch('/save?name=' + q.get('save'), { method: 'POST', body: renderer.domElement.toDataURL('image/png') });
+      const info = { ...layout(), w: innerWidth, h: innerHeight, dpr: devicePixelRatio, bar: document.getElementById('bar').offsetHeight,
+        canvas: [renderer.domElement.width, renderer.domElement.height], css: [renderer.domElement.clientWidth, renderer.domElement.clientHeight] };
+      fetch('/save?name=' + q.get('save') + '.json', { method: 'POST', body: 'data:,' + btoa(JSON.stringify(info)) });
+    }, 1500);
+  }
+}
+</script>
+</body>
+</html>

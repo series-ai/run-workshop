@@ -1,0 +1,10 @@
+{
+ "moggy": {"eye": [0.1293, 0.6793, 0.5652], "eye_r": 0.0336, "nose": [0.0, 0.6243, 0.6269], "nose_r": [0.03, 0.021], "nose_color": "#e8939b", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "cobby": {"eye": [0.0963, 0.6683, 0.6613], "eye_r": 0.0336, "nose": [0.0, 0.638, 0.7085], "nose_r": [0.022, 0.015], "nose_color": "#5d6470", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "flatface": {"eye": [0.099, 0.627, 0.5772], "eye_r": 0.0336, "nose": [0.0, 0.6133, 0.6006], "nose_r": [0.02, 0.014], "nose_color": "#e9a0a8", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "floof": {"eye": [0.0901, 0.5775, 0.618], "eye_r": 0.0285, "nose": [0.0, 0.5308, 0.6844], "nose_r": [0.028, 0.02], "nose_color": "#3a2a24", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "sleek": {"eye": [0.099, 0.6463, 0.5858], "eye_r": 0.0324, "nose": [0.0, 0.5913, 0.6518], "nose_r": [0.028, 0.017], "nose_color": "#2b201c", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "pixie": {"eye": [0.0997, 0.6105, 0.5133], "eye_r": 0.0288, "nose": [0.0, 0.5528, 0.5768], "nose_r": [0.022, 0.015], "nose_color": "#e58f98", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "munchkin": {"eye": [0.1279, 0.572, 0.54], "eye_r": 0.0336, "nose": [0.0, 0.5143, 0.608], "nose_r": [0.024, 0.017], "nose_color": "#e8939b", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0},
+ "bobtail": {"eye": [0.132, 0.7081, 0.5605], "eye_r": 0.0336, "nose": [0.0, 0.6586, 0.616], "nose_r": [0.03, 0.02], "nose_color": "#e8939b", "pupil": [0.24, 0.92], "eye_color": "#d4a32e", "mouth_w": 0}
+}

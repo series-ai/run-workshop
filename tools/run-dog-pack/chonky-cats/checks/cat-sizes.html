@@ -1,0 +1,36 @@
+<!doctype html><meta charset="utf-8"><title>cat sizes</title>
+<script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }</script>
+<script type="module">
+// Bounding box of each cat body (scale 1, tail left out) in each pose, from the skinned vertices as the game
+// plays them: what props have to fit. ?save=<name> posts the JSON (capture.py). Used by props/fit.py.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadClipLibrary, setupDog } from '../../chunky-toy/dogclips.js';
+const loader = new GLTFLoader(), lib = await loadClipLibrary(loader, '../rigged/clips.glb');
+const bodies = (await (await fetch('../bodies.csv')).text()).trim().split('\n').slice(1).map(l => l.split(',')[0]);
+const out = {}, v = new THREE.Vector3();
+for (const b of bodies) {
+  const root = (await loader.loadAsync(`../rigged/${b}.glb`)).scene, dog = setupDog(root, lib);
+  const meshes = []; root.traverse(o => { if (o.isSkinnedMesh) meshes.push(o); });
+  out[b] = {};
+  for (const clip of ['idle', 'sit_loop', 'loaf_loop', 'down_loop', 'flop_loop']) {
+    const mn = [9, 9, 9], mx = [-9, -9, -9], dur = lib.meta[clip].duration;
+    for (let k = 0; k < 6; k++) {
+      dog.mixer.stopAllAction(); dog.action = null; dog.play(clip, { fade: 0, time: dur * k / 6 }); dog.update(0);
+      root.updateMatrixWorld(true);
+      for (const m of meshes) for (let i = 0; i < m.geometry.attributes.position.count; i++) {
+        // the tail wraps round a curled cat (or hangs out of a doorway): measure the body without it
+        const sw = m.geometry.attributes.skinWeight, si = m.geometry.attributes.skinIndex;
+        let tw = 0;
+        for (let j = 0; j < 4; j++) if (/^tail/.test(m.skeleton.bones[si.getComponent(i, j)].name)) tw += sw.getComponent(i, j);
+        if (tw > 0.5) continue;
+        m.getVertexPosition(i, v); m.localToWorld(v);
+        for (let a = 0; a < 3; a++) { mn[a] = Math.min(mn[a], v.getComponent(a)); mx[a] = Math.max(mx[a], v.getComponent(a)); }
+      }
+    }
+    out[b][clip] = { w: +(mx[0] - mn[0]).toFixed(3), h: +(mx[1] - mn[1]).toFixed(3), l: +(mx[2] - mn[2]).toFixed(3) };
+  }
+}
+const q = new URLSearchParams(location.search);
+if (q.get('save')) await fetch('/save?name=' + q.get('save'), { method: 'POST', body: 'data:,' + btoa(JSON.stringify(out)) });
+</script>
