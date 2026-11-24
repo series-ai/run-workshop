@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bean Squad · pack cover</title>
+<style>
+  @font-face { font-family: "Lilita"; src: url("./fonts/LilitaOne-Regular.ttf") format("truetype"); font-display: block; }
+  html, body { margin: 0; background: #222; }
+  #card { position: relative; width: 1080px; height: 1080px; overflow: hidden; font-family: "Lilita", system-ui, sans-serif;
+          background: linear-gradient(180deg, var(--bg0), var(--bg1)); }
+  #c { position: absolute; inset: 0; width: 1080px; height: 1080px; display: block; }
+  #title { position: absolute; left: 0; right: 0; top: 50px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .name { font-size: 150px; line-height: 0.9; text-align: center; color: #fff; letter-spacing: 3px;
+          -webkit-text-stroke: 16px var(--ink); paint-order: stroke fill; text-shadow: 0 11px 0 var(--ink); }
+  .sub { font-size: 58px; line-height: 1; color: #fff; -webkit-text-stroke: 10px var(--ink); paint-order: stroke fill; letter-spacing: 2px; }
+  .pills { position: absolute; left: 0; right: 0; bottom: 44px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .pill { font-size: 42px; padding: 8px 30px 4px; border-radius: 999px; border: 6px solid var(--ink); background: var(--pill); color: var(--ink); }
+  .pill.alt { background: var(--ink); color: var(--pill); font-size: 34px; }
+  .label { position: absolute; transform: translate(-50%, 0); font-size: 34px; color: #fff; white-space: nowrap;
+           -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; letter-spacing: 1px; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../anim-viewer/vendor/three-build/three.module.js", "three/addons/": "../anim-viewer/vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="card">
+  <canvas id="c" width="1080" height="1080"></canvas>
+  <div id="labels"></div>
+  <div id="title"></div>
+  <div class="pills" id="pills"></div>
+</div>
+<script type="module" src="./cover.js"></script>
+</body>
+</html>

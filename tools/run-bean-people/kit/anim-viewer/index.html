@@ -1,0 +1,442 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Bean kit · animations</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 13px system-ui, sans-serif; background: #8f8f8c; color: #222; overflow: hidden; }
+  .panel { position: fixed; top: 12px; background: #f6f5f2f0; padding: 12px 14px; border-radius: 10px; box-shadow: 0 2px 12px #0003;
+           max-height: calc(100% - 48px); overflow: auto; }
+  #ui { left: 12px; width: 240px; }
+  #clips { right: 12px; width: 210px; }
+  h1 { font-size: 14px; margin: 0 0 6px; }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #888; margin: 10px 0 4px; }
+  label { display: flex; justify-content: space-between; align-items: center; margin: 3px 0; gap: 8px; }
+  select { font: inherit; max-width: 140px; }
+  input[type=color] { width: 46px; height: 22px; border: 0; padding: 0; background: none; }
+  .row { display: flex; gap: 6px; margin: 6px 0; }
+  .row button { flex: 1; font: inherit; padding: 4px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  #list div { padding: 3px 6px; border-radius: 5px; cursor: pointer; display: flex; justify-content: space-between; }
+  #list div:hover { background: #0001; }
+  #list div.on { background: #222; color: #fff; }
+  #list .tag { color: #999; font-size: 11px; }
+  #list .grp { font-size: 11px; text-transform: uppercase; color: #888; margin: 8px 0 2px; cursor: default; }
+  #now { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #222d; color: #fff; padding: 6px 14px;
+         border-radius: 20px; font-size: 14px; }
+  canvas { display: block; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three-build/three.module.js", "three/addons/": "./vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="ui" class="panel">
+  <h1>Bean kit · animations <span id="build" style="font-size:11px;color:#888"></span></h1>
+  <div class="row"><button id="single">Single</button><button id="squad">Squad</button><button id="mixed">Mixed</button></div>
+  <div class="row"><button id="gallery">Gallery: all clips</button></div>
+  <div class="row"><button id="rand">Randomise look</button></div>
+  <h2>Playback</h2>
+  <label>Speed <input id="speed" type="range" min="0.1" max="2" step="0.05" value="1"></label>
+  <label>Loop one-shots <input id="loopall" type="checkbox" checked></label>
+  <label>Root motion <input id="rootmotion" type="checkbox" checked></label>
+  <label>Shader <select id="shader">
+    <option value="standard">standard (soft plastic)</option><option value="flat">flat (unlit)</option>
+    <option value="flatline">flat + outline</option><option value="toon">toon (cel + outline)</option>
+    <option value="even">flat lighting</option><option value="facet">faceted low-poly</option></select></label>
+  <label>Weapon shown <select id="blaster"><option value="auto">auto (shooter clips)</option><option value="on">always</option><option value="off">never</option></select></label>
+  <h2>Look</h2>
+  <label>Face <select id="face"></select></label>
+  <label>Top <select id="top"></select></label>
+  <label>Head <select id="head"></select></label>
+  <label>Topper <select id="topper"></select></label>
+  <label>Weapon <select id="weapon"></select></label>
+  <label>Extra <select id="extra"></select></label>
+  <label>Edition <select id="edition"></select></label>
+  <label>Number <select id="number"></select></label>
+  <div class="grid" id="colours"></div>
+</div>
+<div id="clips" class="panel"><h1>Clips <span id="count" class="tag"></span></h1><div id="list"></div></div>
+<div id="now"></div>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { OutlineEffect } from "three/addons/effects/OutlineEffect.js";
+
+// ?hi loads the uncompressed rigged/ build; the default is the compressed mobile/ build
+const KIT = new URLSearchParams(location.search).has("hi") ? "../rigged/" : "../mobile/";
+document.getElementById('build').textContent = KIT.includes('mobile') ? 'mobile build' : 'hi-res build';
+const [kit, meta] = await Promise.all([fetch(KIT + "kit.json", { cache: "no-cache" }).then(r => r.json()), fetch(KIT + "clips.json", { cache: "no-cache" }).then(r => r.json())]);
+
+// ---------- scene ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8f8f8c);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const env = new THREE.Scene(); env.background = new THREE.Color(0x777774);
+for (const [c, p, s] of [[0xffffff, [0, 6, 0], [6, 6]], [0xfff0e0, [-6, 2, 3], [3, 5]], [0xe0ecff, [6, 2, -3], [3, 5]]]) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(...s), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
+  m.position.set(...p); m.lookAt(0, 0, 0); env.add(m);
+}
+scene.environment = pmrem.fromScene(env, 0.04).texture; scene.environmentIntensity = 0.7;
+const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 200);
+const controls = new OrbitControls(camera, renderer.domElement);
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8a8a86, 1.1);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4ea, 2.2);
+sun.position.set(4, 8, 6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12 }); sun.shadow.radius = 5;
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ opacity: 0.22 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+ground.material.userData.outlineParameters = { visible: false };
+
+// ---------- shader looks ----------
+const outline = new OutlineEffect(renderer, { defaultThickness: 0.006, defaultColor: [0.06, 0.05, 0.07], defaultAlpha: 1 });
+const toonRamp = (() => { const d = new Uint8Array([70, 70, 70, 255, 160, 160, 160, 255, 255, 255, 255, 255]);
+  const t = new THREE.DataTexture(d, 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+const LOOKS = {
+  standard: { make: null, hemi: 1.1, sun: 2.2, env: 0.7, outline: false },
+  flat:     { make: () => new THREE.MeshBasicMaterial(), hemi: 1.1, sun: 2.2, env: 0, outline: false },
+  flatline: { make: () => new THREE.MeshBasicMaterial(), hemi: 1.1, sun: 2.2, env: 0, outline: true },
+  toon:     { make: () => new THREE.MeshToonMaterial({ gradientMap: toonRamp }), hemi: 0.9, sun: 2.6, env: 0, outline: true },
+  even:     { make: () => new THREE.MeshLambertMaterial(), hemi: 2.3, sun: 0.7, env: 0, outline: false },
+  facet:    { make: () => new THREE.MeshLambertMaterial({ flatShading: true }), hemi: 1.3, sun: 1.9, env: 0, outline: false },
+};
+let look = "standard";
+function styled(std) {          // a look's material, kept in sync with the standard one (colour, maps, glow, alpha)
+  const L = LOOKS[look];
+  if (!L.make) return std;
+  std.userData.looks ??= {};
+  const m = std.userData.looks[look] ??= L.make();
+  m.name = std.name; m.color.copy(std.color);
+  m.map = std.map || null; m.alphaTest = std.alphaTest; m.transparent = std.transparent; m.opacity = std.opacity;
+  m.depthWrite = std.depthWrite;
+  if (std.emissiveMap || std.emissive?.getHex()) {       // screens and glow: keep them glowing in every look
+    if (m.isMeshBasicMaterial) { if (std.emissiveMap) { m.map = std.emissiveMap; m.color.copy(std.emissive).multiplyScalar(1.6); } }
+    else { m.emissive?.copy(std.emissive); m.emissiveMap = std.emissiveMap || null; m.emissiveIntensity = std.emissiveIntensity; }
+  }
+  m.needsUpdate = true;
+  return m;
+}
+function setLook(name) {
+  look = name; const L = LOOKS[name];
+  hemi.intensity = L.hemi; sun.intensity = L.sun; scene.environmentIntensity = L.env;
+  for (const f of figures) f.apply();
+}
+const grid = new THREE.GridHelper(40, 40, 0x7a7a77, 0x84847f); grid.position.y = 0.002; scene.add(grid);
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+// ---------- assets ----------
+const loader = new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+const buffers = {};
+const NUMS = kit.numbers ? Object.values(kit.numbers.surface).flatMap(s => [`num-1-${s}`, `num-2-${s}`]) : [];
+const partNames = [...new Set(NUMS)].concat(["base", "screen", ...(kit.weapons || ["blaster"]).map(w => "prop-" + w), ...kit.art_faces.map(f => "face-" + f), ...kit.tops.map(t => "top-" + t),
+  ...kit.hooded.map(t => `top-${t}-screen`), ...kit.heads.map(h => "head-" + h), ...kit.heads.map(h => `head-${h}-screen`), ...kit.extras.map(e => "extra-" + e), ...(kit.toppers || []).map(k => "topper-" + k)]);
+await Promise.all(partNames.map(n => fetch(`${KIT}glb/${n}.glb`, { cache: "no-cache" }).then(r => r.arrayBuffer()).then(b => buffers[n] = b)));
+const parse = n => loader.parseAsync(buffers[n].slice(0), "");
+const baseGltf = await parse("base");
+const CLIPS = Object.fromEntries(baseGltf.animations.map(a => [a.name, a]));
+const tex = {};
+const numTex = d => { const k = "num" + d; if (!tex[k]) { tex[k] = new THREE.TextureLoader().load(`${KIT}numbers/num-${d}.png`); tex[k].colorSpace = THREE.SRGBColorSpace; tex[k].flipY = false; } return tex[k]; };
+const ledTex = n => { if (!tex[n]) { tex[n] = new THREE.TextureLoader().load(`${KIT}faces/${n}.png`); tex[n].colorSpace = THREE.SRGBColorSpace; tex[n].flipY = false; } return tex[n]; };
+
+const EDITIONS = {
+  custom: null,
+  black: { color: "#1f1f21", roughness: 0.75, metalness: 0, mark: "#e6ded0" },
+  bone: { color: "#e6ded0", roughness: 0.75, metalness: 0, mark: "#1a181c" },
+  gold: { color: "#ffc35a", roughness: 0.18, metalness: 1, mark: "#1e1912" },
+  chrome: { color: "#d9dce2", roughness: 0.08, metalness: 1, mark: "#141418" },
+  clear: { color: "#c4dcf2", roughness: 0.05, metalness: 0, opacity: 0.5, mark: "#1a1a1e" },
+  glow: { color: "#c9f5b9", roughness: 0.6, metalness: 0, emissive: "#7dff6e", emissiveIntensity: 0.45, mark: "#203020" },
+  orange: { color: "#ff7426", roughness: 0.7, metalness: 0, mark: "#1a181c" },
+  olive: { color: "#666e4d", roughness: 0.75, metalness: 0, mark: "#e6ded0" },
+};
+const SLOTS = kit.slots, COLOUR_KEYS = [...Object.keys(SLOTS), "led"];
+const PAL = ["#1f1f21", "#e6ded0", "#ff7426", "#666e4d", "#2a3352", "#8c8f94", "#d92e2e", "#ffcc26", "#4d6b9e", "#b89a6b", "#f2f0ea",
+  "#ff8fb1", "#8fd8ff", "#b5f0a0", "#c9a7ff", "#ffe08a", "#ff5a36", "#2f9e8f", "#6b3fa0", "#f4a259", "#3d5a80", "#ef476f", "#06d6a0", "#118ab2"];
+const BODY_PAL = ["#e6ded0", "#1f1f21", "#ff7426", "#ff8fb1", "#8fd8ff", "#b5f0a0", "#c9a7ff", "#ffe08a", "#2f9e8f", "#ef476f", "#3d5a80",
+  "#f4a259", "#666e4d", "#d92e2e", "#118ab2"];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+
+// ---------- figure ----------
+class Figure {
+  constructor(cfg) {
+    this.cfg = { face: "x", top: "none", head: "none", extra: "none", edition: "bone", number: "none", topper: "none", weapon: "blaster", ...cfg, colours: { ...kit.defaults, ...(cfg?.colours || {}) } };
+    this.holder = new THREE.Group();
+    this.ready = this.load();
+  }
+  async load() {
+    const g = await parse("base");
+    this.root = g.scene;
+    this.rig = this.root.getObjectByName("rig") || this.root;
+    this.bones = {};
+    this.root.traverse(o => { if (o.isBone) this.bones[o.name] = o; if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); o.userData.std = o.material; } });
+    this.rootBone = this.bones["root"];
+    this.holder.add(this.root);
+    this.mixer = new THREE.AnimationMixer(this.root);
+    this.parts = [];
+    await this.rebuild();
+  }
+  async addPart(name) {
+    const g = await parse(name);
+    const meshes = [];
+    g.scene.traverse(o => { if (o.isSkinnedMesh) meshes.push(o); });
+    for (const m of meshes) {
+      const bones = m.skeleton.bones.map(b => this.bones[b.name]);
+      m.bind(new THREE.Skeleton(bones, m.skeleton.boneInverses), m.bindMatrix);
+      m.castShadow = true;
+      m.material = m.material.clone();
+      m.userData.std = m.material;
+      this.rig.add(m);
+      this.parts.push(m);
+    }
+  }
+  async rebuild() {
+    for (const m of this.parts) m.removeFromParent();
+    this.parts = [];
+    const c = this.cfg, screen = !kit.art_faces.includes(c.face);
+    const want = [screen ? "screen" : "face-" + c.face];
+    if (c.top !== "none") want.push(kit.hooded.includes(c.top) && screen ? `top-${c.top}-screen` : "top-" + c.top);
+    if (c.head !== "none" && !kit.hooded.includes(c.top)) want.push(screen ? `head-${c.head}-screen` : "head-" + c.head);
+    if (c.extra !== "none") want.push("extra-" + c.extra);
+    if (this.blaster) want.push("prop-" + c.weapon);
+    if (c.topper !== "none" && c.head === "none" && !kit.hooded.includes(c.top)) want.push("topper-" + c.topper);  // no hat, no hood
+    if (c.number !== "none" && kit.numbers && c.top === "none") want.push(`num-${String(c.number).length}-body`);   // bare body only
+    for (const n of want) await this.addPart(n);
+    this.apply();
+  }
+  mats() { const out = []; this.root.traverse(m => m.isMesh && out.push(m.userData.std || m.material)); return out; }
+  apply() {
+    const c = this.cfg, ed = EDITIONS[c.edition];
+    for (const m of this.mats()) {
+      const slot = Object.keys(SLOTS).find(k => SLOTS[k].includes(m.name));
+      if (slot) m.color.set(c.colours[slot]);
+      if (["body", "arms", "hands"].includes(m.name)) {
+        m.roughness = ed ? ed.roughness : 0.7; m.metalness = ed ? ed.metalness : 0;
+        m.transparent = !!(ed && ed.opacity); m.opacity = ed?.opacity ?? 1; m.depthWrite = !m.transparent;
+        m.emissive.set(ed?.emissive || "#000000"); m.emissiveIntensity = ed?.emissiveIntensity ?? 1;
+      }
+      if (m.name === "seam") { m.transparent = true; m.opacity = 0.3; m.depthWrite = false; }
+      if (["num", "numL", "numR"].includes(m.name)) {
+        const n = String(c.number), d = m.name === "numR" ? n[1] : n[0];
+        m.map = numTex(d); m.transparent = false; m.alphaTest = 0.5; m.color.set(c.colours.number || "#f2f0ea"); m.needsUpdate = true;
+      }
+      if (m.name === "screen") { m.emissiveMap = ledTex(c.face); m.emissive.set(c.colours.led); m.emissiveIntensity = 2.4; m.needsUpdate = true; }
+    }
+    this.root.traverse(o => { if (o.isMesh && o.userData.std) o.material = styled(o.userData.std); });
+  }
+  setBlaster(on) { if (on !== !!this.blaster) { this.blaster = on; this.rebuild(); } }
+  play(name, offset = 0) {
+    const clip = CLIPS[name]; if (!clip) return;
+    const a = this.mixer.clipAction(clip);
+    if (this.current && this.current !== a) this.current.fadeOut(0.15);
+    a.reset();
+    const once = !meta[name].loop && !$("loopall").checked;
+    a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
+    a.clampWhenFinished = true;
+    a.fadeIn(this.current ? 0.15 : 0).play();
+    a.time = offset * clip.duration;
+    this.current = a; this.clipName = name;
+  }
+}
+
+function randomCfg() {
+  const ed = pick(["black", "bone", "bone", "black", "gold", "clear", "glow", "orange", "olive", "chrome"]);
+  const cfg = { face: pick([...kit.art_faces, ...kit.led_faces.slice(0, 8)]), top: Math.random() < 0.8 ? pick(kit.tops) : "none",
+    head: Math.random() < 0.35 ? pick(kit.heads) : "none", topper: kit.toppers && Math.random() < 0.55 ? pick(kit.toppers) : "none", number: Math.random() < 0.7 ? String(Math.floor(Math.random() * (Math.random() < 0.5 ? 10 : 100))) : "none", extra: kit.extras.length && Math.random() < 0.3 ? pick(kit.extras) : "none", edition: ed,
+    colours: { ...kit.defaults, legs: pick(PAL), feet: pick(["#e6ded0", "#1f1f21", "#f2f0ea", pick(PAL)]), top: pick(PAL),
+      hat: pick(PAL), extra: pick(PAL), number: pick(["#f2f0ea", "#ffcc26", "#ff7426", "#59f2ff", "#1f1f21"]), bezel: pick(["#1a1a1c", "#e6ded0"]), led: pick(["#59f2ff", "#ffb347", "#ff4d4d", "#9dff6b", "#ff6fd8"]) } };
+  if (Math.random() < 0.55) {                           // half the crowd in a free body colour, not an edition
+    const c = pick(BODY_PAL), dark = ["#1f1f21", "#3d5a80", "#666e4d", "#2f9e8f", "#118ab2", "#d92e2e", "#ef476f"].includes(c);
+    cfg.edition = "custom";
+    for (const k of ["body", "arms", "hands"]) cfg.colours[k] = c;
+    if (Math.random() < 0.3) cfg.colours.hands = pick(["#f2f0ea", "#1f1f21", pick(BODY_PAL)]);
+    cfg.colours.mark = dark ? "#f2f0ea" : "#1a181c";
+  } else {
+    const e = EDITIONS[ed];
+    for (const k of ["body", "arms", "hands"]) cfg.colours[k] = e.color;
+    cfg.colours.mark = e.mark;
+  }
+  cfg.colours.topper = { sprout: pick(["#5cbf4a", "#8fd16a", "#2f9e8f"]), crown: pick(["#ffc35a", "#e6ded0", "#ff8fb1"]),
+    antenna: pick(PAL), horns: pick(["#f2f0ea", "#1f1f21", "#d92e2e", "#ffc35a"]), flower: pick(["#ff8fb1", "#ffe08a", "#c9a7ff", "#f2f0ea", "#ff5a36"]),
+    halo: "#ffd35a" }[cfg.topper] || "#ffc35a";
+  cfg.weapon = kit.weapons ? pick(kit.weapons) : "blaster";
+  cfg.colours.weapon = pick(["#ff7426", "#ffcc26", "#8fd8ff", "#b5f0a0", "#ff8fb1", "#c9a7ff", "#06d6a0", "#ef476f", "#f2f0ea", "#666e4d"]);
+  cfg.colours.weapon_trim = pick(["#f2f0ea", "#ffcc26", "#1f1f21", "#118ab2", "#ff5a36"]);
+  if (["black", "olive"].includes(ed) && ["holes", "bones"].includes(cfg.face)) cfg.face = "x";
+  return cfg;
+}
+
+// ---------- layout ----------
+let figures = [], current = null, clipName = "idle";
+const order = Object.keys(meta);
+// gallery: every clip at once, a labelled grid, grouped like the list
+const labels = [];
+function label(text, x, z) {
+  const c = document.createElement("canvas"); c.width = 256; c.height = 48;
+  const g = c.getContext("2d"); g.fillStyle = "#222c"; g.roundRect(0, 4, 256, 40, 12); g.fill();
+  g.fillStyle = "#fff"; g.font = "bold 26px system-ui"; g.textAlign = "center"; g.fillText(text, 128, 34);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  sp.material.userData.outlineParameters = { visible: false };
+  sp.scale.set(1.5, 0.28, 1); sp.position.set(x, 2.35, z); sp.renderOrder = 10; scene.add(sp); labels.push(sp);
+}
+async function gallery() {
+  for (const f of figures) scene.remove(f.holder);
+  for (const l of labels) scene.remove(l); labels.length = 0;
+  figures = [];
+  const cols = 9, sx = 2.7, sz = 3.9;
+  ordered.forEach((name, i) => {
+    const c = i % cols, r = Math.floor(i / cols);
+    const cfg = i === 0 ? { top: "hoodie", colours: { top: "#1f1f21", legs: "#8c8f94" } } : randomCfg();
+    const f = new Figure(cfg);
+    const x = (c - (cols - 1) / 2) * sx, z = (r - 3.5) * sz;
+    f.holder.position.set(x, 0, z); f.galleryClip = name;
+    scene.add(f.holder); figures.push(f); label(name, x, z);
+  });
+  await Promise.all(figures.map(f => f.ready));
+  $("rootmotion").checked = false;
+  figures.forEach(f => { syncBlaster(f, f.galleryClip); f.play(f.galleryClip); });
+  select(figures[0]);
+  camera.position.set(0, 19, 27); controls.target.set(0, 0.5, 1.5); controls.update();
+  panels(false);
+  $("now").textContent = `gallery · all ${ordered.length} clips · H shows the panels · drag / scroll to explore`;
+}
+async function layout(n, mixed) {
+  for (const l of labels) scene.remove(l); labels.length = 0;
+  for (const f of figures) scene.remove(f.holder);
+  figures = [];
+  const cfgs = Array.from({ length: n }, (_, i) => i === 0 && current ? current.cfg : (i === 0 ? { top: "hoodie", colours: { top: "#1f1f21", legs: "#8c8f94" } } : randomCfg()));
+  const spacing = 1.6;
+  for (let i = 0; i < n; i++) {
+    const f = new Figure(cfgs[i]);
+    f.holder.position.x = (i - (n - 1) / 2) * spacing;
+    scene.add(f.holder); figures.push(f);
+  }
+  await Promise.all(figures.map(f => f.ready));
+  select(figures[0]);
+  figures.forEach((f, i) => { const name = mixed ? pick(order) : clipName; syncBlaster(f, name); f.play(name, mixed ? Math.random() : i * 0.13); });
+  const wide = n > 1;
+  camera.position.set(wide ? -2.2 : -0.6, wide ? 3.8 : 2.0, wide ? 20.5 : 8.5);
+  controls.target.set(wide ? -1.4 : -0.5, 1.1, 0); controls.update();
+  showNow();
+}
+function syncBlaster(f, name) {
+  const m = $("blaster").value;
+  f.setBlaster(m === "on" || (m === "auto" && meta[name].tags.includes("shooter")));
+}
+function playAll(name) {
+  clipName = name;
+  figures.forEach((f, i) => { syncBlaster(f, name); f.play(name, figures.length > 1 ? i * 0.13 : 0); });
+  for (const d of document.querySelectorAll("#list div[data-c]")) d.classList.toggle("on", d.dataset.c === name);
+  document.querySelector(`#list div[data-c="${name}"]`)?.scrollIntoView({ block: "nearest" });
+  showNow();
+}
+function showNow() {
+  const m = meta[clipName];
+  const CHAIN = { "jump-start": "chain piece: jump-start → jump-air (game lifts) → jump-land",
+                  "jump-air": "chain piece: the game owns the height", "jump-land": "chain piece: plays on touch-down",
+                  "belly-slide": "chain piece: dive / splat → belly-slide → get-up" };
+  $("now").textContent = `${clipName} · ${m.duration.toFixed(2)}s · ${m.loop ? "loop" : "one-shot"}` +
+    (CHAIN[clipName] ? ` · ${CHAIN[clipName]}` : "") + `   (← → to step)`;
+}
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+const GROUPS = [["base", "Idle"], ["move", "Move"], ["jump", "Jump"], ["obstacle", "Obstacle course"], ["hit", "Hits & falls"],
+  ["shooter", "Shooter"], ["celebrate", "Celebrate"], ["dance", "Dance"], ["social", "Social"], ["emote", "Emotions"]];
+const seen = new Set();
+const ordered = [];
+for (const [tag, label] of GROUPS) {
+  const names = order.filter(n => meta[n].tags[0] === tag && !seen.has(n));
+  if (!names.length) continue;
+  const g = document.createElement("div"); g.className = "grp"; g.textContent = label; $("list").appendChild(g);
+  for (const n of names) {
+    seen.add(n); ordered.push(n);
+    const d = document.createElement("div"); d.dataset.c = n;
+    d.innerHTML = `<span>${n}</span><span class="tag">${meta[n].loop ? "" : "once"}</span>`;
+    d.onclick = () => playAll(n);
+    $("list").appendChild(d);
+  }
+}
+$("count").textContent = `(${ordered.length})`;
+function panels(on) { for (const id of ["ui", "clips"]) $(id).style.display = on ? "" : "none"; }
+addEventListener("keydown", e => {
+  if (e.key === "h" || e.key === "H") { panels($("ui").style.display === "none"); return; }
+  if (!["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(e.key)) return;
+  e.preventDefault();
+  const i = ordered.indexOf(clipName), d = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1;
+  playAll(ordered[(i + d + ordered.length) % ordered.length]);
+});
+const opt = (sel, list, labels) => { sel.innerHTML = ""; list.forEach((v, i) => sel.add(new Option(labels ? labels[i] : v, v))); };
+opt($("face"), [...kit.art_faces, ...kit.led_faces], [...kit.art_faces, ...kit.led_faces.map(f => "screen · " + f.replace("led-", ""))]);
+opt($("top"), ["none", ...kit.tops]); opt($("head"), ["none", ...kit.heads]); opt($("topper"), ["none", ...(kit.toppers || [])]); opt($("extra"), ["none", ...kit.extras]); opt($("weapon"), kit.weapons || ["blaster"]);
+opt($("edition"), Object.keys(EDITIONS));
+opt($("number"), ["none", ...Array.from({ length: 100 }, (_, i) => String(i))]);
+if (!kit.extras.length) $("extra").closest("label").style.display = "none";
+const inputs = {};
+for (const k of COLOUR_KEYS) {
+  const l = document.createElement("label"); l.textContent = k;
+  const i = document.createElement("input"); i.type = "color";
+  i.addEventListener("input", () => { current.cfg.colours[k] = i.value; if (["body", "arms", "hands"].includes(k)) { current.cfg.edition = "custom"; $("edition").value = "custom"; } current.apply(); });
+  l.appendChild(i); $("colours").appendChild(l); inputs[k] = i;
+}
+function select(f) {
+  current = f;
+  for (const k of ["face", "top", "head", "extra", "edition", "number", "topper", "weapon"]) $(k).value = f.cfg[k];
+  for (const k of COLOUR_KEYS) inputs[k].value = f.cfg.colours[k];
+}
+for (const k of ["face", "top", "head", "extra", "number", "topper", "weapon"]) $(k).addEventListener("change", () => { current.cfg[k] = $(k).value; current.rebuild(); });
+$("edition").addEventListener("change", () => {
+  const ed = EDITIONS[$("edition").value]; current.cfg.edition = $("edition").value;
+  if (ed) { for (const k of ["body", "arms", "hands"]) current.cfg.colours[k] = ed.color; current.cfg.colours.mark = ed.mark; }
+  current.apply(); select(current);
+});
+$("single").onclick = () => layout(1);
+$("squad").onclick = () => layout(8);
+$("mixed").onclick = () => layout(8, true);
+$("gallery").onclick = () => gallery();
+$("rand").onclick = () => { current.cfg = randomCfg(); current.rebuild(); select(current); };
+$("shader").onchange = () => setLook($("shader").value);
+$("blaster").onchange = () => figures.forEach(f => syncBlaster(f, f.clipName || clipName));
+$("loopall").onchange = () => figures.forEach(f => f.play(f.clipName || clipName));
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener("pointerdown", e => downAt = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 4) return;
+  ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(figures.map(f => f.holder), true)[0];
+  if (hit) { const f = figures.find(f => f.holder.getObjectById(hit.object.id)); if (f) select(f); }
+});
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta() * parseFloat($("speed").value);
+  for (const f of figures) {
+    f.mixer?.update(dt);
+    if (f.rootBone && !$("rootmotion").checked) { f.rootBone.position.x = 0; f.rootBone.position.z = 0; }  // bone-local y is up: keep jump height
+  }
+  controls.update();
+  if (LOOKS[look].outline) outline.render(scene, camera); else renderer.render(scene, camera);
+});
+window.__bean = { playAll, layout, figures: () => figures, renderer, scene, camera, controls, setLook };  // for automated review
+const startLook = new URLSearchParams(location.search).get("look");
+if (startLook && LOOKS[startLook]) { $("shader").value = startLook; }
+const startGallery = new URLSearchParams(location.search).has("gallery");
+if (startGallery) await gallery(); else { await layout(1); playAll("idle"); }
+if (startLook && LOOKS[startLook]) setLook(startLook);
+</script>
+</body>
+</html>
