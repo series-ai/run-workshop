@@ -1,0 +1,15 @@
+{
+  "name": "run-bean-people-kit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compress": "node scripts/compress.mjs mobile",
+    "verify": "node scripts/compress.mjs --verify mobile"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "meshoptimizer": "1.3.0"
+  }
+}

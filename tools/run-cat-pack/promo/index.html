@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Facet Fauna: Cats — trailer</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #16171b; display: grid; place-items: center; overflow: hidden; }
+  canvas#out { height: 100vh; aspect-ratio: 9 / 16; display: block; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=block" rel="stylesheet">
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script type="module">
+// Facet Fauna: Cats — the trailer, choreographed shot by shot with the real
+// cat kit (kit/catkit.js: the same GLBs, parts, recolours and clips). Built on
+// the dog pack's trailer engine (promo/ in tools/run-dog-pack).
+//   live:        plays in real time and loops
+//   ?at=12.5     a still at that time (simulated from 0, for checking shots)
+//   ?record=1    steps exactly 1/30 s per frame, posts every frame and the
+//                sound cues to promo/server.py
+import * as THREE from 'three';
+import { loadCatKit } from '../kit/catkit.js';
+
+const Q = new URLSearchParams(location.search);
+const W = 1080, H = 1920, FPS = 30;
+const RECORD = Q.has('record');
+const AT = Q.has('at') ? +Q.get('at') : null;
+const BPM = 120, BEAT = 60 / BPM, BAR = 4 * BEAT;
+const FONT = '"Inter", "Helvetica Neue", Arial, sans-serif';
+
+// ------------------------------------------------------------------ renderer / scene
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const out = document.getElementById('out');
+const ctx = out.getContext('2d');
+
+const scene = new THREE.Scene();
+const SKY = new THREE.Color('#e6eeea');
+scene.background = SKY;
+scene.fog = new THREE.Fog(SKY, 60, 160);
+const camera = new THREE.PerspectiveCamera(24, W / H, 0.5, 600);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb2c4bc, 1.7));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(4, 10, 6);
+scene.add(sun);
+
+// Ground: a huge soft pastel floor.
+const groundMat = new THREE.MeshLambertMaterial({ color: '#dde8e2' });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(800, 800), groundMat);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+// seeded random: a recording is identical every time
+let seed = 23;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const lerp = (a, b, u) => a + (b - a) * u;
+const clamp01 = u => Math.max(0, Math.min(1, u));
+const smooth = u => { u = clamp01(u); return u * u * (3 - 2 * u); };
+const easeOut = u => 1 - (1 - clamp01(u)) ** 3;
+const easeIn = u => clamp01(u) ** 3;
+
+// ------------------------------------------------------------------ the kit
+const kit = await loadCatKit('../kit/', { layout: 'source' });
+const SCALE = 1.5;   // cartoon-big cats, so the crowd spacing reads like the dog trailer's
+const shadowTex = (() => {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, 'rgba(30,60,50,0.36)');
+  gr.addColorStop(1, 'rgba(30,60,50,0)');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+const shadowGeo = new THREE.PlaneGeometry(1, 1);
+const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false });
+
+// A pool of cats: every breed shows up somewhere. Each pooled cat is a kit cat
+// plus our own clip state and a soft blob shadow. d.group is what we move.
+const ROWS = Object.values(kit.breeds);
+const BY_NAME = kit.breeds;
+function spawn(row) {
+  const cat = kit.makeCat(row);
+  cat.object.scale.multiplyScalar(SCALE);
+  const d = { cat, row, group: cat.object, length: cat.length * SCALE, cur: null, action: null };
+  const sh = new THREE.Mesh(shadowGeo, shadowMat);
+  sh.rotation.x = -Math.PI / 2;
+  sh.scale.set(1.15, 0.6, 1);   // cat space: about one body length long
+  sh.position.y = 0.004;
+  d.group.add(sh);
+  scene.add(d.group);
+  d.group.visible = false;
+  return d;
+}
+function act(d, name, { ts = 1, at = 0, loop = null } = {}) {
+  const c = d.cat.clip(name);
+  if (!c) return;
+  if (d.cur === name && d.action) { d.action.timeScale = ts; return; }
+  d.cat.mixer.stopAllAction();
+  const a = d.cat.mixer.clipAction(c);
+  a.reset();
+  const looping = loop ?? d.cat.looping.includes(name);
+  a.setLoop(looping ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+  a.clampWhenFinished = true;
+  a.timeScale = ts;
+  a.time = looping ? at % c.duration : Math.min(at, c.duration);
+  a.play();
+  d.action = a;
+  d.cur = name;
+}
+
+// ------------------------------------------------------------------ shots
+// Each shot: dur (s), setup(), update(lt, dt) and cam(lt) -> {pos, look}.
+// Active dogs are the ones a shot shows; everything else is hidden.
+let active = [];
+function use(list) {
+  for (const d of active) d.group.visible = false;
+  active = list;
+  for (const d of active) { d.group.visible = true; d.cur = null; }
+}
+const cards = [];   // glass UI cards on screen: {t0, t1, draw(alpha, lt)}
+let events = [], T = 0;
+const sfx = (type, gain = 1) => events.push({ t: +T.toFixed(4), type, gain });
+
+const shots = [];
+const STARTS = [];
+
+// ------------------------------------------------------------------ glass UI
+const gl = renderer.domElement;
+function glass(x, y, w, h, r = 28, a = 1) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.save();
+  ctx.clip();
+  ctx.filter = 'blur(22px) saturate(1.4)';
+  ctx.drawImage(gl, 0, 0);
+  ctx.filter = 'none';
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.fillRect(x, y, w, h);
+  const g = ctx.createLinearGradient(x, y, x, y + h);
+  g.addColorStop(0, 'rgba(255,255,255,0.35)');
+  g.addColorStop(1, 'rgba(255,255,255,0.05)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.stroke();
+  ctx.restore();
+}
+function text(s, x, y, { size = 40, weight = 600, color = '#1b1a22', align = 'left', track = 0, a = 1 } = {}) {
+  ctx.save();
+  ctx.globalAlpha *= a;
+  ctx.font = `${weight} ${size}px ${FONT}`;
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'alphabetic';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${track}px`;
+  ctx.fillText(s, x, y);
+  ctx.restore();
+}
+const inOut = (lt, t0, t1, fade = 0.25) => Math.min(clamp01((lt - t0) / fade), clamp01((t1 - lt) / fade));
+
+// ------------------------------------------------------------------ main loop
+function frameAt(t, dt) {
+  T = t;
+  let ix = 0;
+  while (ix + 1 < shots.length && t >= STARTS[ix + 1]) ix++;
+  if (ix !== curShot) {
+    curShot = ix;
+    cards.length = 0;
+    shots[ix].setup();
+  }
+  const s = shots[ix], lt = t - STARTS[ix];
+  s.update(lt, dt);
+  for (const d of active) d.cat.update(dt);
+  const c = s.cam(lt);
+  camera.position.copy(c.pos);
+  camera.lookAt(c.look);
+  if (c.fov) { camera.fov = c.fov; camera.updateProjectionMatrix(); }
+  renderer.render(scene, camera);
+  ctx.drawImage(gl, 0, 0);
+  for (const card of cards) if (lt >= card.t0 && lt <= card.t1) card.draw(lt);
+  if (s.overlay) s.overlay(lt);
+}
+let curShot = -1;
+
+function total() { return STARTS[STARTS.length - 1] + shots[shots.length - 1].dur; }
+
+async function run() {
+  let acc = 0;
+  for (const s of shots) { STARTS.push(acc); acc += s.dur; }
+  await document.fonts.ready;
+  if (AT != null) {   // simulate up to AT, then hold
+    const dt = 1 / FPS;
+    for (let t = 0; t < AT; t += dt) frameAt(t, dt);
+    frameAt(AT, 0);
+    document.title = 'ready';
+    return;
+  }
+  if (RECORD) {
+    const n = Math.round(total() * FPS);
+    for (let f = 0; f < n; f++) {
+      frameAt(f / FPS, 1 / FPS);
+      const blob = await new Promise(r => out.toBlob(r, 'image/jpeg', 0.92));
+      await fetch(`/frame/${f}`, { method: 'POST', body: blob });
+    }
+    await fetch('/events', { method: 'POST', body: JSON.stringify({ total: total(), bpm: BPM, events }) });
+    document.title = 'done';
+    return;
+  }
+  let t0 = performance.now(), last = 0;
+  const loop = () => {
+    const t = ((performance.now() - t0) / 1000) % total();
+    if (t < last) { curShot = -1; }
+    frameAt(t, Math.min(0.05, Math.max(0, t - last)));
+    last = t;
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+// ================================================================== the trailer
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const ACCENT = { open: '#e0893a', breeds: '#e0893a', body: '#4f9e86', mix: '#4f9e86', colour: '#c9792f',
+                 laser: '#e5484d', fits: '#b98a4e', play: '#6d8fd6', night: '#8a7ad6', show: '#e0893a' };
+
+// ---- the pool ----
+function sample(n, filter = () => true) {
+  const rows = ROWS.filter(filter);
+  const picked = [], seen = new Set();
+  while (picked.length < n) {
+    const r = rows[Math.floor(rnd() * rows.length)];
+    if (seen.has(r.breed) && seen.size < rows.length) continue;
+    seen.add(r.breed);
+    picked.push(r);
+  }
+  return picked;
+}
+const POOL = sample(220).map(r => spawn(r));
+for (const d of POOL) { d.jit = rnd(); d.phase = rnd(); d.jit2 = rnd(); }
+
+// In-place gait speeds, body lengths per second (see the pack Readme).
+function gaitFor(d, v) {
+  const rel = v / d.length;
+  if (rel < 0.05) return ['idle', 1];
+  if (rel < 0.55) return ['walk', Math.min(1.9, Math.max(0.6, rel / 0.29))];
+  if (rel < 2.3) return ['trot', Math.min(2.2, Math.max(0.6, rel / 1.0))];
+  return ['run', Math.min(1.7, Math.max(0.6, rel / 3.8))];
+}
+const faceDir = (d, x, z) => { d.group.rotation.y = Math.atan2(-z, x); };
+function moveTo(d, x, z, vx, vz) {
+  d.group.position.set(x, 0, z);
+  const v = Math.hypot(vx, vz);
+  if (v > 0.05) faceDir(d, vx, vz);
+  const [clip, ts] = gaitFor(d, v);
+  act(d, clip, { ts, at: d.phase * 2 });
+}
+function hold(d, clip, x, z, dirx, dirz, opts) {
+  d.group.position.set(x, 0, z);
+  faceDir(d, dirx, dirz);
+  act(d, clip, opts);
+}
+
+// ---- screen helpers (for callouts) ----
+function screenOf(v) {
+  const p = v.clone().project(camera);
+  return [(p.x + 1) / 2 * W, (1 - p.y) / 2 * H];
+}
+function headPos(d) {
+  const v = new THREE.Vector3();
+  d.cat.headGroup.getWorldPosition(v);
+  return v;
+}
+
+// ---- glass UI pieces ----
+function statCard(t0, t1, { big, label, sub = '', x = 70, y = 1520, w = 560, accent = '#7a6cf0', count = true }) {
+  cards.push({ t0, t1, draw(lt) {
+    const a = inOut(lt, t0, t1, 0.3), slide = (1 - easeOut((lt - t0) / 0.35)) * 40;
+    const h = sub ? 250 : 210;
+    glass(x, y + slide, w, h, 30, a);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = accent; ctx.fillRect(x + 40, y + slide + 36, 36, 5); ctx.restore();
+    const n = typeof big === 'number' && count ? Math.round(big * easeOut((lt - t0) / 0.9)) : big;
+    text(`${n}${typeof big === 'number' && big >= 100 && count ? '' : ''}`, x + 36, y + slide + 150, { size: 112, weight: 300, a, track: -2 });
+    text(label, x + 40, y + slide + 190, { size: 26, weight: 600, track: 5, color: '#4a5a54', a });
+    if (sub) text(sub, x + 40, y + slide + 226, { size: 24, weight: 400, color: '#6c6880', a });
+  } });
+}
+function chip(t0, t1, label, anchor, { dx = 140, dy = -120, accent = '#7a6cf0' } = {}) {
+  cards.push({ t0, t1, draw(lt) {
+    const a = inOut(lt, t0, t1, 0.15);
+    const [ax, ay] = anchor();
+    ctx.save();
+    ctx.font = `600 30px ${FONT}`;
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '2px';
+    const tw = ctx.measureText(label).width;
+    ctx.restore();
+    const w = tw + 64, h = 64, x = ax + dx - (dx < 0 ? w : 0), y = ay + dy - h / 2;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(dx < 0 ? x + w : x, y + h / 2); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(ax, ay, 7, 0, 7); ctx.fill();
+    ctx.restore();
+    glass(x, y, w, h, 32, a);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = accent; ctx.beginPath(); ctx.arc(x + 26, y + h / 2, 7, 0, 7); ctx.fill(); ctx.restore();
+    text(label, x + 42, y + h / 2 + 11, { size: 30, weight: 600, track: 2, a });
+  } });
+}
+function wordmark(lt, t0, t1, cy = 860, accent = '#ef7a5a') {
+  const a = inOut(lt, t0, t1, 0.25), s = 1 + 0.03 * (1 - easeOut((lt - t0) / 0.5));
+  ctx.save();
+  ctx.translate(W / 2, cy); ctx.scale(s, s); ctx.translate(-W / 2, -cy);
+  glass(110, cy - 170, W - 220, 300, 44, a);
+  text('FACET FAUNA', W / 2, cy - 10, { size: 104, weight: 300, align: 'center', track: 10, a });
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = accent; ctx.fillRect(W / 2 - 30, cy + 28, 60, 5); ctx.restore();
+  text('CATS', W / 2, cy + 98, { size: 44, weight: 700, align: 'center', track: 18, color: accent, a });
+  ctx.restore();
+}
+function caption(lt, t0, t1, label, y = 230, accent = '#7a6cf0') {   // a small glass pill at the top
+  const a = inOut(lt, t0, t1, 0.2);
+  ctx.save(); ctx.font = `600 30px ${FONT}`; if ('letterSpacing' in ctx) ctx.letterSpacing = '4px';
+  const w = ctx.measureText(label).width + 90; ctx.restore();
+  glass((W - w) / 2, y - 44, w, 76, 38, a);
+  ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = accent; ctx.beginPath(); ctx.arc((W - w) / 2 + 34, y - 6, 7, 0, 7); ctx.fill(); ctx.restore();
+  text(label, W / 2 + 14, y + 5, { size: 30, weight: 600, track: 4, align: 'center', a });
+}
+
+groundMat.color.set('#e2ebe6');
+scene.background = SKY.set('#eaf1ed');
+scene.fog.color.copy(SKY);
+const MID = POOL.filter(d => d.length < 1.0);           // crowd-safe sizes
+const pick = (list, n, off = 0) => Array.from({ length: n }, (_, i) => list[(i + off) % list.length]);
+const wrap = (v, span) => ((v % span) + span) % span - span / 2;
+const shotSfx = function (t, type, g = 1) { if (this.lt >= t && !this.fired.has(type + t)) { this.fired.add(type + t); sfx(type, g); } };
+function shot(def) {   // adds per-shot one-off cues: this.at(t, type)
+  const setup = def.setup;
+  def.setup = function () { this.fired = new Set(); setup.call(this); };
+  const update = def.update;
+  def.update = function (lt, dt) { this.lt = lt; this.at = shotSfx; update.call(this, lt, dt); };
+  shots.push(def);
+}
+function card(t0, t1, title, sub, accent, { big = null } = {}) {
+  cards.push({ t0, t1, draw(lt) {
+    const a = inOut(lt, t0, t1, 0.3), y = 1520 + (1 - easeOut((lt - t0) / 0.35)) * 40;
+    glass(70, y, W - 140, 230, 30, a);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = accent; ctx.fillRect(110, y + 36, 36, 5); ctx.restore();
+    if (big != null) {
+      const n = Math.round(big * easeOut((lt - t0) / 0.9));
+      text(String(n), 106, y + 150, { size: 112, weight: 300, a, track: -2 });
+      text(title, 110, y + 194, { size: 26, weight: 600, track: 5, color: '#4a5a54', a });
+    } else {
+      text(title, 106, y + 136, { size: 72, weight: 300, a });
+      text(sub, 110, y + 188, { size: 24, weight: 600, track: 4, color: '#4a5a54', a });
+    }
+  } });
+}
+
+const FONT57 = {
+  F: ['11111', '10000', '10000', '11110', '10000', '10000', '10000'],
+  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+  C: ['01111', '10000', '10000', '10000', '10000', '10000', '01111'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+  U: ['10001', '10001', '10001', '10001', '10001', '10001', '01110'],
+  N: ['10001', '11001', '10101', '10101', '10011', '10001', '10001'],
+  D: ['11110', '10001', '10001', '10001', '10001', '10001', '11110'],
+  O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+  G: ['01111', '10000', '10000', '10111', '10001', '10001', '01111'],
+  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
+  ':': ['0', '0', '1', '0', '0', '1', '0'],
+};
+function dotPoints(lines, pitch, rowGap = 2.4) {
+  const pts = [];
+  lines.forEach((line, li) => {
+    const widths = [...line].map(ch => FONT57[ch][0].length);
+    const total = widths.reduce((a, b) => a + b, 0) + (line.length - 1);
+    let cx = -total / 2;
+    [...line].forEach((ch, k) => {
+      FONT57[ch].forEach((row, ry) => [...row].forEach((b, rx) => {
+        if (b === '1') pts.push({ x: (cx + rx + 0.5) * pitch, z: (li * (7 + rowGap) + ry - (lines.length * (7 + rowGap) - rowGap) / 2 + 0.5) * pitch, ch, li });
+      }));
+      cx += widths[k] + 1;
+    });
+  });
+  return pts;
+}
+
+// 1. Stripes (0-5 s): rows of cats stream in from both sides, alternating
+//    direction, filling the frame; the title settles over them.
+shot({
+  dur: 5,
+  setup() {
+    this.rows = [];
+    const list = pick(MID, 14 * 9);
+    for (let r = 0; r < 14; r++) this.rows.push({ cats: list.slice(r * 9, r * 9 + 9), z: 9 - r * 1.45, dir: r % 2 ? -1 : 1 });
+    use(list);
+    sfx('rumble', 0.7);
+  },
+  update(lt) {
+    for (const { cats, z, dir } of this.rows) cats.forEach((d, i) => {
+      const v = 1.9, enter = Math.max(0, 1 - lt / 1.4) * 14;
+      const x = dir * (wrap(i * 1.9 + lt * v + z * 0.6, 17.1) - enter);
+      moveTo(d, x, z, dir * v, 0);
+    });
+    this.at(1.5, 'title');
+  },
+  cam: lt => ({ pos: V3(0, 26 - lt * 0.4, 15), look: V3(0, 0, -1.5) }),
+  overlay(lt) { wordmark(lt, 1.6, 5.2, 880, ACCENT.open); },
+});
+
+// 2. Roll call (5-9 s): breeds from tiny to big, row by row.
+shot({
+  dur: 4,
+  setup() {
+    const list = [...POOL].sort((a, b) => a.length - b.length).slice(0, 144);
+    use(list);
+    this.rows = [];
+    for (let r = 0; r < 12; r++) this.rows.push({ row: list.slice(r * 12, r * 12 + 12), z: 7 - r * 1.75, dir: r % 2 ? -1 : 1 });
+    card(0.3, 3.8, 'BREEDS', '', ACCENT.breeds, { big: 83 });
+    sfx('pop', 0.6);
+  },
+  update(lt) {
+    for (const { row, z, dir } of this.rows) row.forEach((d, i) => {
+      const gap = 1.9, span = row.length * gap;
+      moveTo(d, dir * wrap(i * gap + lt * 1.2 + z * 0.37, span), z, dir * 1.2, 0);
+    });
+  },
+  cam: lt => ({ pos: V3(0, 24, 13 - lt * 1.2), look: V3(0, 0, -6 - lt * 1.2) }),
+});
+
+// 3. Waves (9-13 s): columns snake down the screen in sine waves.
+shot({
+  dur: 4,
+  setup() {
+    this.cols = [];
+    const list = pick(MID.filter(d => d.length < 0.9), 7 * 14, 40);
+    for (let c = 0; c < 7; c++) this.cols.push({ cats: list.slice(c * 14, c * 14 + 14), x: (c - 3) * 1.55 });
+    use(list);
+    card(0.3, 3.8, '6 body types', 'ONE SHARED RIG · ~1.3K TRIS', ACCENT.body);
+    sfx('rumble', 0.6);
+  },
+  update(lt) {
+    const A = 1.15, k = 2 * Math.PI / 6.5, v = 2.6;
+    this.cols.forEach(({ cats, x }) => cats.forEach((d, i) => {
+      const z = wrap(i * 1.6 + lt * v, 22.4);
+      const ph = k * z - lt * 1.5;
+      moveTo(d, x + A * Math.sin(ph), z, A * k * Math.cos(ph) * v, v);
+    }));
+  },
+  cam: lt => ({ pos: V3(0, 30, 22), look: V3(0, 0, -1.5) }),
+});
+
+// 4. Mix & match (13-17 s): one cat trots in the middle and swaps parts on the
+//    beat; lanes of cats stream past behind it.
+const BASE = BY_NAME['Domestic Shorthair (ginger)'];
+const MIX = [
+  [{}, null], [{ ears: 'large' }, 'large ears'], [{ ears: 'fold' }, 'fold ears'], [{ ears: 'tufted' }, 'lynx tufts'],
+  [{ tail: 'plume' }, 'plume tail'], [{ tail: 'bob' }, 'bobtail'], [{ coat: 'semilong' }, 'semi-long coat'],
+  [{ coat: 'long', head: 'flat' }, 'flat face'],
+];
+let mixSpec = { ...BASE };
+const HEROES = MIX.map(([change]) => { mixSpec = { ...mixSpec, ...change }; return spawn({ ...mixSpec }); });
+shot({
+  dur: 4,
+  setup() {
+    this.lanes = [];
+    const list = pick(MID.filter(d => d.length < 0.85), 6 * 7, 90);
+    for (let l = 0; l < 6; l++) this.lanes.push({ cats: list.slice(l * 7, l * 7 + 7), z: -3.4 - l * 1.25, dir: l % 2 ? -1 : 1 });
+    use([...HEROES, ...list]);
+    this.k = -1;
+    cards.push({ t0: 0.2, t1: 3.9, draw(lt) {
+      const a = inOut(lt, 0.2, 3.9);
+      glass(70, 1530, W - 140, 200, 30, a);
+      [['6', 'BODIES'], ['6', 'HEADS'], ['7', 'EARS'], ['7', 'TAILS']].forEach(([n, l], i) => {
+        text(n, 120 + i * 225, 1640, { size: 76, weight: 300, a });
+        text(l, 122 + i * 225, 1690, { size: 22, weight: 600, track: 4, color: '#4a5a54', a });
+      });
+    } });
+  },
+  update(lt) {
+    const k = Math.min(MIX.length - 1, Math.floor(lt / BEAT));
+    HEROES.forEach((h, i) => { h.group.visible = i === k; hold(h, 'trot', 0.4, 0.6, 1, 0.35, { at: lt }); });
+    if (k !== this.k) {
+      this.k = k;
+      HEROES[k].cur = null;
+      hold(HEROES[k], 'trot', 0.4, 0.6, 1, 0.35, { at: lt });
+      if (MIX[k][1]) { sfx('swap', 0.8); chip(lt, lt + BEAT * 0.95, MIX[k][1], () => screenOf(headPos(HEROES[k])), { dx: -120, dy: -200, accent: ACCENT.mix }); }
+    }
+    for (const { cats, z, dir } of this.lanes) cats.forEach((d, i) => moveTo(d, dir * wrap(i * 2.6 + lt * 2.2 + z, 18.2), z, dir * 2.2, 0));
+  },
+  cam: lt => ({ pos: V3(0.4, 10.5, 12.5), look: V3(0, 0.2, -1.4) }),
+});
+
+// 5. Coat genetics (17-21 s): a grid of identical cats, sitting, repainted on
+//    every beat - tabbies, tortie, calico, points, tuxedo, smoke, spots.
+const PALETTES = [
+  { base: 'red', layers: 'cream:cream|mackerel:darkred' }, { base: 'black', layers: 'tortie:red' },
+  { base: 'black', layers: 'tortie:red|bicolor:white' }, { base: 'cream', layers: 'points:seal' },
+  { base: 'black', layers: 'bicolor:white' }, { base: 'silver', layers: 'classic:black' },
+  { base: 'brown', layers: 'mackerel:black|locket:white' }, { base: 'golden', layers: 'rosettes:black' },
+  { base: 'white', layers: 'van:red' }, { base: 'blue', layers: '' }, { base: 'cream', layers: 'points:blue|mitted:white' },
+  { base: 'charcoal', layers: 'shaded:silver' },
+];
+const SITTERS = Array.from({ length: 24 }, () => spawn(BY_NAME['Domestic Shorthair']));
+shot({
+  dur: 4,
+  setup() {
+    use(SITTERS);
+    this.k = -1;
+    card(0.3, 3.8, 'Coat genetics', 'BASE · 3 PATTERN LAYERS · NOSE', ACCENT.colour);
+  },
+  update(lt) {
+    const k = Math.floor(lt / BEAT);
+    if (k !== this.k) {
+      this.k = k;
+      SITTERS.forEach((d, i) => d.cat.recolour({ ...PALETTES[(i + k * 5 + Math.floor(i / 4)) % PALETTES.length], nose: 'pink' }));
+      if (k > 0) sfx('tick', 0.7);
+    }
+    SITTERS.forEach((d, i) => {
+      const c = i % 4, r = Math.floor(i / 4);
+      hold(d, 'sit_idle', (c - 1.5) * 1.6 + (r % 2) * 0.5, 2.6 - r * 1.35, 0.5, 1, { at: d.phase * 3 });
+    });
+  },
+  cam: lt => ({ pos: V3(0, 15.5, 12 - lt * 0.3), look: V3(0, 0, -1.8) }),
+});
+for (const d of SITTERS) { d.phase = rnd(); }
+
+// 6. Laser (21-25 s): a red dot darts over the floor; the whole grid turns to
+//    follow it, stops, wiggles, and every cat pounces at once. It's gone.
+const dot = new THREE.Group();
+{
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(0.32, 24), new THREE.MeshBasicMaterial({ color: '#ff4a4a', transparent: true, opacity: 0.28, depthWrite: false }));
+  const core = new THREE.Mesh(new THREE.CircleGeometry(0.11, 20), new THREE.MeshBasicMaterial({ color: '#ff2a2a' }));
+  for (const m of [glow, core]) { m.rotation.x = -Math.PI / 2; m.position.y = 0.01; dot.add(m); }
+  dot.visible = false;
+  scene.add(dot);
+}
+const DOT_PATH = [[0, 0], [-1.6, 0.6], [1.5, -0.7], [-0.9, -1.4], [1.2, 1.3], [0, 0]];
+function dotAt(u) {   // u: 0..1 along the darting path (fast hops, short holds)
+  const n = DOT_PATH.length - 1, s = u * n, i = Math.min(n - 1, Math.floor(s)), f = s - i;
+  const e = easeOut(Math.min(1, f / 0.55));
+  return [lerp(DOT_PATH[i][0], DOT_PATH[i + 1][0], e), lerp(DOT_PATH[i][1], DOT_PATH[i + 1][1], e)];
+}
+shot({
+  dur: 4,
+  setup() {
+    // Rings of cats round an empty middle, where the dot plays.
+    this.slots = [];
+    const small = MID.filter(d => d.length < 0.9);
+    let n = 0;
+    for (const [r, k] of [[3.0, 0], [4.4, 1], [5.8, 2], [7.2, 3]]) {
+      const count = Math.floor(2 * Math.PI * r / 1.35);
+      for (let i = 0; i < count; i++) {
+        const a = (i + k * 0.5) / count * 2 * Math.PI;
+        this.slots.push({ d: small[(n++ + 13) % small.length], x: Math.cos(a) * r, z: Math.sin(a) * r });
+      }
+    }
+    use(this.slots.map(s => s.d));
+    dot.visible = true;
+    this.hop = -1;
+  },
+  update(lt) {
+    const darting = lt < 1.7;
+    const [dx, dz] = darting ? dotAt(lt / 1.7) : DOT_PATH[DOT_PATH.length - 1];
+    dot.position.set(dx, 0, dz);
+    dot.visible = lt < 2.45;
+    const hop = Math.floor(lt / 1.7 * (DOT_PATH.length - 1));
+    if (darting && hop !== this.hop) { this.hop = hop; sfx('zap', 0.8); }
+    this.at(2.4, 'whoosh', 0.6);
+    this.at(2.78, 'thump', 1);
+    this.at(3.2, 'mrrp', 0.7);
+    for (const s of this.slots) {
+      const lag = s.d.jit * 0.12;
+      const [tx, tz] = lt - lag < 1.7 ? dotAt(Math.max(0, lt - lag) / 1.7) : DOT_PATH[DOT_PATH.length - 1];
+      s.d.group.position.set(s.x, 0, s.z);
+      if (lt < 2.2) faceDir(s.d, tx - s.x, tz - s.z);
+      if (lt < 1.75) act(s.d, 'idle', { at: s.d.phase * 3 });
+      else if (lt < 2.0) act(s.d, 'wiggle', { at: 0.2 });
+      else act(s.d, 'pounce', { at: 1.0 + (lt - 2.0) * 0 });   // straight into the freeze, push and leap
+    }
+  },
+  cam: lt => ({ pos: V3(0, 27, 11), look: V3(0, 0, 0.3) }),
+  overlay(lt) { caption(lt, 0.25, 2.3, 'LASER?', 300, ACCENT.laser); caption(lt, 3.0, 3.95, '…IT’S GONE', 300, ACCENT.laser); },
+});
+
+// 7. If I fits, I sits (25-30 s): tape squares on the floor; the crowd runs in
+//    and every cat drops into a loaf inside one. One Maine Coon takes the
+//    smallest square anyway.
+const TAPE = new THREE.MeshLambertMaterial({ color: '#cfa863' });
+const tapes = new THREE.Group();
+scene.add(tapes);
+function square(x, z, s) {
+  const w = 0.07, g = new THREE.Group();
+  for (const [dx, dz, sx, sz] of [[0, -s / 2, s + w, w], [0, s / 2, s + w, w], [-s / 2, 0, w, s], [s / 2, 0, w, s]]) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, 0.012, sz), TAPE);
+    m.position.set(x + dx, 0.006, z + dz);
+    g.add(m);
+  }
+  tapes.add(g);
+}
+const COON = spawn(BY_NAME['Maine Coon']);
+shot({
+  dur: 5,
+  setup() {
+    tapes.clear();
+    const cols = 4, rows = 6, sx = 1.75, sz = 1.55;
+    const list = pick(MID.filter(d => d.length < 0.85), cols * rows - 1, 57);
+    this.paths = [];
+    let n = 0;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = (c - (cols - 1) / 2) * sx, z = 4.2 - r * sz;
+      const coon = r === 2 && c === 1;
+      square(x, z, coon ? 0.62 : 1.15);
+      const d = coon ? COON : list[n++];
+      const from = [x + (d.jit - 0.5) * 3, z - 13 - d.jit2 * 4];
+      this.paths.push({ d, from, to: [x, z], delay: coon ? 1.6 : d.jit * 0.6 + r * 0.05, coon });
+    }
+    use(this.paths.map(p => p.d));
+    tapes.visible = true;
+    card(0.5, 4.8, '37 animations', 'SIT · LOAF · SLEEP · GROOM · POUNCE · AND 32 MORE', ACCENT.fits);
+    sfx('rumble', 0.6);
+  },
+  update(lt) {
+    for (const p of this.paths) {
+      const dx = p.to[0] - p.from[0], dz = p.to[1] - p.from[1], T = Math.hypot(dx, dz) / (p.coon ? 4.5 : 7);
+      const t = lt - p.delay;
+      if (t < T) moveTo(p.d, p.from[0] + dx * clamp01(t / T), p.from[1] + dz * clamp01(t / T), dx / T, dz / T);
+      else {
+        p.d.group.position.set(p.to[0], 0, p.to[1]);
+        faceDir(p.d, 0.25, 1);
+        if (!p.arrived) { p.arrived = true; if (p.coon) { sfx('mrrp', 0.9); chip(lt + 0.4, lt + 2.0, 'it fits', () => screenOf(headPos(p.d)), { dx: 120, dy: -150, accent: ACCENT.fits }); } }
+        act(p.d, t - T < 0.36 ? 'loaf' : 'loaf_idle', { at: t - T < 0.36 ? t - T : p.d.phase * 4 });
+      }
+    }
+  },
+  cam: lt => ({ pos: V3(0, 21, 17 - lt * 0.3), look: V3(0, 0, 0.9) }),
+  overlay(lt) { caption(lt, 0.3, 4.8, 'IF I FITS, I SITS', 300, ACCENT.fits); },
+});
+
+// 8. Tricks (30-36 s): a grid where every cat does a different clip; the whole
+//    grid switches every bar.
+const TRICKS = ['sit_idle', 'loaf_idle', 'groom', 'knead', 'scratch_ear', 'stretch', 'arch', 'tail_question', 'tail_quiver',
+  'slow_blink', 'head_tilt', 'paw_swipe', 'lie_idle', 'knead_lie', 'flop_idle', 'sleep_idle', 'wiggle', 'tail_swish',
+  'tail_bat', 'idle', 'tail_flick', 'tail_wave'];
+shot({
+  dur: 6,
+  setup() {
+    tapes.visible = false;
+    dot.visible = false;
+    this.list = pick(MID.filter(d => d.length < 0.9), 36, 21);
+    use(this.list);
+    this.bar = -1;
+  },
+  update(lt) {
+    const bar = Math.floor(lt / BAR);
+    if (bar !== this.bar) { this.bar = bar; for (const d of this.list) d.cur = null; if (bar > 0) sfx('pop', 0.5); }
+    this.list.forEach((d, i) => {
+      const c = i % 4, r = Math.floor(i / 4);
+      hold(d, TRICKS[(i * 7 + bar * 11) % TRICKS.length], (c - 1.5) * 1.95, 6.6 - r * 1.65, (r % 2 ? -1 : 1), 0.4, { at: 0, loop: true });
+    });
+  },
+  cam: lt => ({ pos: V3(0, 25, 20 - lt * 0.4), look: V3(0, 0, -0.2) }),
+  overlay(lt) { caption(lt, 0.3, 5.7, 'ONE CLIP · EVERY BREED', 250, ACCENT.play); },
+});
+
+// 9. 3 AM (36-40 s): the lights go down and rings of cats sprint round in
+//    opposite directions: zoomies.
+const DAY = { sky: new THREE.Color('#eaf1ed'), ground: new THREE.Color('#e2ebe6') };
+const NIGHT = { sky: new THREE.Color('#2b2f4a'), ground: new THREE.Color('#353a5a') };
+const hemi = scene.children.find(o => o.isHemisphereLight);
+shot({
+  dur: 4,
+  setup() {
+    this.rings = [];
+    let used = 0;
+    for (let k = 1; k <= 4; k++) {
+      const r = 1.25 * k, n = Math.floor(2 * Math.PI * r / 1.45);
+      const cats = pick(MID.filter(d => d.length < 0.9), n, used + 5);
+      used += n;
+      this.rings.push({ r, cats, dir: k % 2 ? 1 : -1 });
+    }
+    use(this.rings.flatMap(x => x.cats));
+    sfx('rumble', 1);
+  },
+  update(lt, dt) {
+    const night = smooth(lt / 0.4) * (1 - smooth((lt - 3.6) / 0.4));
+    scene.background.copy(DAY.sky).lerp(NIGHT.sky, night);
+    scene.fog.color.copy(scene.background);
+    groundMat.color.copy(DAY.ground).lerp(NIGHT.ground, night);
+    hemi.intensity = 1.7 - 0.7 * night;
+    for (const { r, cats, dir } of this.rings) cats.forEach((d, i) => {
+      const w = dir * 5.2 / r, a = i / cats.length * 2 * Math.PI + lt * w;
+      moveTo(d, Math.cos(a) * r, Math.sin(a) * r, -Math.sin(a) * r * w, Math.cos(a) * r * w);
+    });
+  },
+  cam: lt => ({ pos: V3(0, 40, 14), look: V3(0, 0, 0.8) }),
+  overlay(lt) {
+    const a = inOut(lt, 0.4, 3.7, 0.25);
+    if (a <= 0) return;
+    glass(70, 1500, W - 140, 250, 30, a * 0.9);
+    ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = ACCENT.night; ctx.fillRect(110, 1536, 36, 5); ctx.restore();
+    text('3:00 AM', 106, 1650, { size: 112, weight: 300, a, track: -2 });
+    text('ZOOMIES · RUN · TROT · SNEAK', 110, 1700, { size: 24, weight: 600, track: 4, color: '#4a5a54', a });
+  },
+});
+
+// 10. The finale (40-48 s): from high above, dark cats run into formation and
+//     spell CATS under the glass wordmark. One ginger strolls in last, on cat time.
+const DARK = ['black', 'charcoal', 'chocolate', 'seal', 'sable', 'blue'];
+const bodies = ROWS.filter(r => ['S', 'M'].includes(r.size));
+const DRONES = Array.from({ length: 330 }, (_, i) => {
+  const d = spawn(bodies[i % bodies.length]);
+  d.cat.recolour({ base: DARK[i % DARK.length], layers: '', nose: 'black' });
+  d.jit = rnd(); d.phase = rnd(); d.jit2 = rnd();
+  return d;
+});
+const LATE = spawn(BY_NAME['Domestic Shorthair (ginger)']);
+shot({
+  dur: 8,
+  setup() {
+    scene.background.copy(DAY.sky); scene.fog.color.copy(DAY.sky); groundMat.color.copy(DAY.ground); hemi.intensity = 1.7;
+    const px = dotPoints(['CATS'], 0.86, 0), tg = [];
+    for (const p of px) for (const [ox, oz] of [[-0.215, -0.215], [0.215, -0.215], [-0.215, 0.215], [0.215, 0.215]])
+      tg.push({ x: p.x + ox, z: p.z + oz + 1.5 });
+    const lateIx = tg.reduce((b, p, i) => (p.x + p.z * 0.3 > tg[b].x + tg[b].z * 0.3 ? i : b), 0);
+    const late = tg.splice(lateIx, 1)[0];
+    const cats = DRONES.slice(0, tg.length);
+    const start = cats.map((d, i) => [((i % 22) - 10.5) * 0.9 + (d.jit - 0.5) * 0.4, 22 + Math.floor(i / 22) * 0.95 + d.jit2 * 0.4]);
+    const usedS = new Set();
+    this.paths = [];
+    const order = tg.map((p, i) => i).sort((a, b) => tg[b].z - tg[a].z);
+    for (const ti of order) {
+      let best = -1, bd = 1e9;
+      start.forEach((s0, j) => { if (usedS.has(j)) return; const dd = (s0[0] - tg[ti].x) ** 2 + (s0[1] - tg[ti].z) ** 2; if (dd < bd) { bd = dd; best = j; } });
+      usedS.add(best);
+      this.paths.push({ d: cats[best], from: start[best], to: [tg[ti].x, tg[ti].z], delay: cats[best].jit * 0.5 });
+    }
+    // The late cat strolls in at a walk long after everyone else has sat down.
+    this.paths.push({ d: LATE, from: [late.x + 1.5, late.z + 9], to: [late.x, late.z], delay: 3.2, late: true });
+    use(this.paths.map(p => p.d));
+    sfx('rumble', 0.8);
+  },
+  update(lt) {
+    this.at(4.6, 'sparkle');
+    for (const p of this.paths) {
+      const dx = p.to[0] - p.from[0], dz = p.to[1] - p.from[1], T = Math.hypot(dx, dz) / (p.late ? 3.0 : 6.5);
+      const t = lt - p.delay;
+      if (t < 0 && p.late) { p.d.group.visible = false; continue; }
+      p.d.group.visible = true;
+      if (t < T) moveTo(p.d, p.from[0] + dx * clamp01(t / T), p.from[1] + dz * clamp01(t / T), dx / T, dz / T);
+      else {
+        p.d.group.position.set(p.to[0], 0, p.to[1]);
+        faceDir(p.d, 0, -1);
+        if (!p.arrived) {
+          p.arrived = true;
+          if (p.late) { sfx('meow', 1); chip(lt, lt + 2.4, 'on cat time', () => screenOf(p.d.group.position), { dx: -90, dy: 150, accent: ACCENT.show }); }
+        }
+        act(p.d, t - T < 0.3 ? 'sit' : (p.late ? 'groom' : 'sit_idle'), { at: t - T < 0.3 ? t - T : p.d.phase * 3 });
+      }
+    }
+  },
+  cam: lt => ({ pos: V3(0, 100 - easeOut(lt / 3) * 10, 3), look: V3(0, 0, 0.6) }),
+  overlay(lt) {
+    const a = clamp01((lt - 4.4) / 0.5);
+    if (a > 0) {
+      glass(110, 330, W - 220, 190, 40, a);
+      text('FACET FAUNA', W / 2, 440, { size: 88, weight: 300, align: 'center', track: 10, a });
+      ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = ACCENT.show; ctx.fillRect(W / 2 - 30, 470, 60, 5); ctx.restore();
+    }
+    if (lt > 5.6) {
+      const b = clamp01((lt - 5.6) / 0.4);
+      glass(160, 1640, W - 320, 130, 32, b);
+      text('83 BREEDS · 37 CLIPS · ~1.3K TRIS', W / 2, 1696, { size: 24, weight: 600, track: 4, align: 'center', a: b });
+      text('animated glTF / GLB · mobile-ready', W / 2, 1734, { size: 24, weight: 400, color: '#5d6b66', align: 'center', a: b });
+    }
+  },
+});
+
+run();
+</script>
+</body>
+</html>

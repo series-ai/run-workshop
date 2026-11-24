@@ -1,0 +1,14 @@
+{
+  "name": "run-glowdrop-build",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compress": "node compress.mjs out ship"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "meshoptimizer": "1.3.0"
+  }
+}

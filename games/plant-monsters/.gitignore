@@ -1,0 +1,10 @@
+.env
+.asset-bot/
+# review and exploration output (regenerable or one-off; kept local)
+concepts/
+lowpoly-test/
+refs-incoming/
+promo/*.png
+promo/old/
+promo/title_concepts.py
+promo/title_treatments.py

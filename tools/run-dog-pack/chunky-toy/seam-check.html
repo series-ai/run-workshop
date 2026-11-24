@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Seam check</title></head>
+<body>
+<pre id="out">Loading…</pre>
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/" } }
+</script>
+<script type="module">
+// Seam check: wherever one pose clip hands over to another (a clip's `to` state is the
+// next clip's `from`), compare the skeleton at the end of the first with the start of
+// the second, and the end of each loop with its own start. Reports the biggest bone
+// rotation jump (degrees) and root jump (leg lengths). window.check(slug) runs it.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadClipLibrary, setupDog } from './dogclips.js';
+
+const BUILD = Date.now();
+const loader = new GLTFLoader();
+const lib = await loadClipLibrary(loader, `rigged/clips.glb?v=${BUILD}`);
+
+function sample(dog, name, time) {
+  dog.mixer.stopAllAction();
+  const a = dog.mixer.clipAction(dog.clips[name]);
+  a.play();
+  a.time = Math.min(time, lib.meta[name].duration - 1e-4);
+  dog.name = name; dog.action = a;
+  dog.update(0);
+  const out = {};
+  dog.root.traverse(o => { if (o.isBone) out[o.name] = { q: o.quaternion.clone(), p: o.position.clone() }; });
+  return out;
+}
+
+function diff(a, b, leg) {
+  let worst = 0, bone = '', root = 0;
+  for (const n in a) {
+    const ang = THREE.MathUtils.radToDeg(a[n].q.angleTo(b[n].q));
+    if (ang > worst) { worst = ang; bone = n; }
+  }
+  root = a.root.p.distanceTo(b.root.p) / leg;
+  return { worst: +worst.toFixed(1), bone, root: +root.toFixed(3) };
+}
+
+window.check = async (slug = 'labrador-retriever') => {
+  const g = (await loader.loadAsync(`rigged/${slug}.glb?v=${BUILD}`)).scene;
+  const dog = setupDog(g, lib);
+  const m = lib.meta, rows = [];
+  const loopOf = { stand: 'idle' };
+  for (const [n, x] of Object.entries(m)) if (x.from && x.loop && x.from === x.to && n !== 'idle') loopOf[x.from] = n;
+  for (const [a, ma] of Object.entries(m)) {
+    if (!ma.from) continue;
+    // Into every clip that starts where this one ends (plus the loop of that state).
+    const nexts = Object.entries(m).filter(([b, mb]) => mb.from === ma.to && b !== a).map(([b]) => b);
+    for (const b of nexts) {
+      if (ma.loop && m[b].loop) continue;
+      rows.push({ seam: `${a} -> ${b}`, ...diff(sample(dog, a, m[a].duration), sample(dog, b, 0), dog.leg) });
+    }
+    if (ma.loop) rows.push({ seam: `${a} loop`, ...diff(sample(dog, a, m[a].duration), sample(dog, a, 0), dog.leg) });
+  }
+  rows.sort((x, y) => y.worst - x.worst);
+  window.report = rows;
+  document.getElementById('out').textContent = rows.map(r => `${r.worst.toString().padStart(6)}°  ${r.root}  ${r.bone.padEnd(10)} ${r.seam}`).join('\n');
+  return rows.length;
+};
+window.ready = true;
+document.getElementById('out').textContent = 'Ready.';
+</script>
+</body>
+</html>

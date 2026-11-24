@@ -1,0 +1,150 @@
+{
+  "body": "boxy-tall",
+  "art_faces": [
+    "x",
+    "dots",
+    "slits",
+    "holes",
+    "stitch",
+    "cyclops-dot",
+    "bones",
+    "tired",
+    "drip",
+    "glyph"
+  ],
+  "led_faces": [
+    "led-x",
+    "led-dots",
+    "led-slits",
+    "led-glyph",
+    "led-tired",
+    "led-bones",
+    "led-drip",
+    "led-smirk",
+    "happy",
+    "angry",
+    "love",
+    "dizzy",
+    "cool",
+    "sleepy"
+  ],
+  "tops": [
+    "hoodie",
+    "vest",
+    "coveralls"
+  ],
+  "hooded": [
+    "hoodie"
+  ],
+  "heads": [
+    "bucket",
+    "beanie"
+  ],
+  "extras": [],
+  "toppers": [
+    "sprout",
+    "crown",
+    "antenna",
+    "horns",
+    "flower",
+    "halo"
+  ],
+  "weapons": [
+    "blaster",
+    "raygun",
+    "revolver",
+    "smg",
+    "rifle",
+    "sniper",
+    "shotgun",
+    "launcher",
+    "bazooka",
+    "minigun",
+    "soaker",
+    "plasma"
+  ],
+  "defaults": {
+    "body": "#e6decc",
+    "arms": "#e6decc",
+    "hands": "#e6decc",
+    "legs": "#1f1f21",
+    "feet": "#e6decc",
+    "mark": "#1a171c",
+    "top": "#1f1f21",
+    "hat": "#666e4c",
+    "extra": "#ff7326",
+    "bezel": "#1a1a1c",
+    "led": "#59ffff",
+    "number": "#f2f0eb",
+    "topper": "#73cc59",
+    "weapon": "#f26b26",
+    "weapon_trim": "#f2ede0",
+    "weapon_dark": "#1f1f21"
+  },
+  "slots": {
+    "body": [
+      "body"
+    ],
+    "arms": [
+      "arms"
+    ],
+    "hands": [
+      "hands"
+    ],
+    "legs": [
+      "legs"
+    ],
+    "feet": [
+      "feet"
+    ],
+    "mark": [
+      "mark"
+    ],
+    "top": [
+      "top",
+      "belt"
+    ],
+    "hat": [
+      "hat"
+    ],
+    "extra": [
+      "scarf",
+      "pack",
+      "print"
+    ],
+    "bezel": [
+      "bezel"
+    ],
+    "number": [
+      "num",
+      "numL",
+      "numR"
+    ],
+    "topper": [
+      "topper"
+    ],
+    "weapon": [
+      "weapon"
+    ],
+    "weapon_trim": [
+      "weapon-trim"
+    ],
+    "weapon_dark": [
+      "weapon-dark"
+    ]
+  },
+  "numbers": {
+    "surface": {
+      "none": "body"
+    },
+    "slots": {
+      "1": [
+        "num"
+      ],
+      "2": [
+        "numL",
+        "numR"
+      ]
+    }
+  }
+}

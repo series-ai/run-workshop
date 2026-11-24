@@ -1,0 +1,7493 @@
+{
+  "version": 1,
+  "pack": "industrial",
+  "label": "Workshop & Industrial",
+  "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+  "clips": [],
+  "parts": [
+    {
+      "id": "torso_ind_work_apron",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "torso_ind_work_apron",
+      "slot": "torso",
+      "label": "Work Shirt, Apron & Waist Pack",
+      "triangles": 422,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.07431,
+            0.16627,
+            0.08075
+          ],
+          "b": [
+            0.07431,
+            0.16627,
+            0.08075
+          ],
+          "radius": 0.14807
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.10193,
+            0.06153,
+            0.0245
+          ],
+          "b": [
+            0.10193,
+            0.06153,
+            0.0245
+          ],
+          "radius": 0.09614
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.07172,
+            0.04048,
+            0.00151
+          ],
+          "b": [
+            0.07172,
+            0.04048,
+            0.00151
+          ],
+          "radius": 0.13218
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.00509,
+            -0.00793,
+            0.00125
+          ],
+          "b": [
+            -0.00532,
+            0.28073,
+            0.00618
+          ],
+          "radius": 0.06647
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.00509,
+            -0.00793,
+            0.00125
+          ],
+          "b": [
+            0.00532,
+            0.28073,
+            0.00618
+          ],
+          "radius": 0.06647
+        },
+        "hand_l": {
+          "type": "capsule",
+          "a": [
+            0.0191,
+            0.07168,
+            0.02796
+          ],
+          "b": [
+            0.0191,
+            0.11015,
+            0.02796
+          ],
+          "radius": 0.09615
+        },
+        "hand_r": {
+          "type": "capsule",
+          "a": [
+            -0.0191,
+            0.07168,
+            0.02796
+          ],
+          "b": [
+            -0.0191,
+            0.11015,
+            0.02796
+          ],
+          "radius": 0.09615
+        }
+      }
+    },
+    {
+      "id": "legs_ind_weathered_cargo",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "legs_ind_weathered_cargo",
+      "slot": "legs",
+      "label": "Weathered Cargo Pants",
+      "triangles": 306,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": true
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.09677,
+            0.13059,
+            0.03832
+          ],
+          "b": [
+            0.09677,
+            0.13059,
+            0.03832
+          ],
+          "radius": 0.11504
+        },
+        "thigh_l": {
+          "type": "capsule",
+          "a": [
+            0.00585,
+            0.39071,
+            -0.0735
+          ],
+          "b": [
+            0.00584,
+            0.08642,
+            -0.07137
+          ],
+          "radius": 0.1175
+        },
+        "thigh_r": {
+          "type": "capsule",
+          "a": [
+            -0.00581,
+            0.40299,
+            -0.04859
+          ],
+          "b": [
+            -0.0058,
+            0.07449,
+            -0.04629
+          ],
+          "radius": 0.0997
+        },
+        "calf_l": {
+          "type": "capsule",
+          "a": [
+            0.0061,
+            0.47543,
+            -0.06222
+          ],
+          "b": [
+            0.00587,
+            0.01206,
+            -0.02498
+          ],
+          "radius": 0.08473
+        },
+        "calf_r": {
+          "type": "capsule",
+          "a": [
+            -0.0061,
+            0.47543,
+            -0.06222
+          ],
+          "b": [
+            -0.00587,
+            0.01206,
+            -0.02498
+          ],
+          "radius": 0.08473
+        },
+        "foot_l": {
+          "type": "capsule",
+          "a": [
+            0.00278,
+            0.08789,
+            0.07612
+          ],
+          "b": [
+            0.00573,
+            0.21634,
+            -0.00011
+          ],
+          "radius": 0.046
+        },
+        "foot_r": {
+          "type": "capsule",
+          "a": [
+            -0.00278,
+            0.08789,
+            0.07612
+          ],
+          "b": [
+            -0.00573,
+            0.21634,
+            -0.00011
+          ],
+          "radius": 0.046
+        }
+      }
+    },
+    {
+      "id": "headwear_knit_beanie",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "headwear_knit_beanie",
+      "slot": "headwear",
+      "label": "Knit Beanie",
+      "triangles": 184,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": true,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.17635,
+            0.00684
+          ],
+          "b": [
+            0,
+            0.20645,
+            0.00586
+          ],
+          "radius": 0.1249
+        }
+      }
+    },
+    {
+      "id": "torso_ind_coveralls",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "torso_ind_coveralls",
+      "slot": "torso",
+      "label": "Zip Coveralls",
+      "triangles": 320,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.10411,
+            0.14754,
+            0.00813
+          ],
+          "b": [
+            0.10411,
+            0.14754,
+            0.00813
+          ],
+          "radius": 0.10425
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.11744,
+            0.05846,
+            -0.00031
+          ],
+          "b": [
+            0.11744,
+            0.05846,
+            -0.00031
+          ],
+          "radius": 0.07333
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.07787,
+            0.04048,
+            0.00151
+          ],
+          "b": [
+            0.07787,
+            0.04048,
+            0.00151
+          ],
+          "radius": 0.12314
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.00509,
+            -0.00793,
+            0.00125
+          ],
+          "b": [
+            -0.00532,
+            0.28073,
+            0.00618
+          ],
+          "radius": 0.06647
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.00509,
+            -0.00793,
+            0.00125
+          ],
+          "b": [
+            0.00532,
+            0.28073,
+            0.00618
+          ],
+          "radius": 0.06647
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.00515,
+            0.00517,
+            0.00678
+          ],
+          "b": [
+            -0.00508,
+            0.23963,
+            0.00274
+          ],
+          "radius": 0.06647
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.00515,
+            0.00517,
+            0.00678
+          ],
+          "b": [
+            0.00508,
+            0.23963,
+            0.00274
+          ],
+          "radius": 0.06647
+        }
+      }
+    },
+    {
+      "id": "legs_ind_heavy_boots",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "legs_ind_heavy_boots",
+      "slot": "legs",
+      "label": "Coverall Legs & Heavy Boots",
+      "triangles": 256,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": true
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.09677,
+            0.13059,
+            0.03832
+          ],
+          "b": [
+            0.09677,
+            0.13059,
+            0.03832
+          ],
+          "radius": 0.11504
+        },
+        "thigh_l": {
+          "type": "capsule",
+          "a": [
+            0.00581,
+            0.40299,
+            -0.04859
+          ],
+          "b": [
+            0.0058,
+            0.07449,
+            -0.04629
+          ],
+          "radius": 0.0997
+        },
+        "thigh_r": {
+          "type": "capsule",
+          "a": [
+            -0.00581,
+            0.40299,
+            -0.04859
+          ],
+          "b": [
+            -0.0058,
+            0.07449,
+            -0.04629
+          ],
+          "radius": 0.0997
+        },
+        "calf_l": {
+          "type": "capsule",
+          "a": [
+            0.00624,
+            0.46328,
+            -0.08632
+          ],
+          "b": [
+            0.00603,
+            0.02021,
+            -0.05072
+          ],
+          "radius": 0.0997
+        },
+        "calf_r": {
+          "type": "capsule",
+          "a": [
+            -0.00624,
+            0.46328,
+            -0.08632
+          ],
+          "b": [
+            -0.00603,
+            0.02021,
+            -0.05072
+          ],
+          "radius": 0.0997
+        },
+        "foot_l": {
+          "type": "capsule",
+          "a": [
+            0.00278,
+            0.08789,
+            0.07612
+          ],
+          "b": [
+            0.00573,
+            0.21634,
+            -0.00011
+          ],
+          "radius": 0.046
+        },
+        "foot_r": {
+          "type": "capsule",
+          "a": [
+            -0.00278,
+            0.08789,
+            0.07612
+          ],
+          "b": [
+            -0.00573,
+            0.21634,
+            -0.00011
+          ],
+          "radius": 0.046
+        }
+      }
+    },
+    {
+      "id": "headwear_hard_hat",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "headwear_hard_hat",
+      "slot": "headwear",
+      "label": "Hard Hat",
+      "triangles": 138,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": true,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.19222,
+            0.03134
+          ],
+          "b": [
+            0,
+            0.19222,
+            0.03134
+          ],
+          "radius": 0.13753
+        }
+      }
+    },
+    {
+      "id": "headwear_welding_cap",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "headwear_welding_cap",
+      "slot": "headwear",
+      "label": "Welding Cap & Goggles",
+      "triangles": 128,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": true,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.15473,
+            0.03256
+          ],
+          "b": [
+            0,
+            0.15473,
+            0.03256
+          ],
+          "radius": 0.13753
+        }
+      }
+    },
+    {
+      "id": "back_tool_roll",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "industrial-pack.glb",
+      "nodeName": "back_tool_roll",
+      "slot": "back",
+      "label": "Tool Roll",
+      "triangles": 104,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.06757,
+            0.20467,
+            -0.04356
+          ],
+          "b": [
+            0.11537,
+            0.20467,
+            -0.04356
+          ],
+          "radius": 0.14667
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            0.09235,
+            0.05873,
+            0.10215
+          ],
+          "b": [
+            0.09235,
+            0.05873,
+            0.10215
+          ],
+          "radius": 0.04675
+        }
+      }
+    }
+  ],
+  "heldItems": [
+    {
+      "id": "held_pipe_wrench",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "held_pipe_wrench.glb",
+      "nodeName": "held_pipe_wrench",
+      "label": "Pipe Wrench",
+      "hand": "hand_r",
+      "gripStyle": "handle",
+      "triangles": 78
+    },
+    {
+      "id": "held_blowtorch",
+      "pack": "industrial",
+      "leaf": "characters",
+      "relativePath": "held_blowtorch.glb",
+      "nodeName": "held_blowtorch",
+      "label": "Blowtorch",
+      "hand": "hand_r",
+      "gripStyle": "handle",
+      "triangles": 172
+    }
+  ],
+  "props": [
+    {
+      "id": "prop_oil_drum",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "prop_oil_drum.glb",
+      "nodeName": "prop_oil_drum",
+      "label": "Oil Drum",
+      "triangles": 592,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.3,
+          0.9,
+          0.3
+        ],
+        "size": [
+          0.6,
+          0.9,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_wooden_crate",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "prop_wooden_crate.glb",
+      "nodeName": "prop_wooden_crate",
+      "label": "Wooden Crate",
+      "triangles": 364,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.35,
+          0.7,
+          0.35
+        ],
+        "size": [
+          0.7,
+          0.7,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_workbench",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "prop_workbench.glb",
+      "nodeName": "prop_workbench",
+      "label": "Workbench",
+      "triangles": 538,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.8,
+          1.3,
+          0.4
+        ],
+        "size": [
+          1.6,
+          1.3,
+          0.75
+        ]
+      }
+    }
+  ],
+  "levelKitProps": [
+    {
+      "id": "prop_industrial_workshop_deck",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_workshop_deck.glb",
+      "nodeName": "prop_industrial_workshop_deck",
+      "label": "Workshop deck",
+      "triangles": 326,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "primary": "#8f7452",
+        "secondary": "#4e5558",
+        "trim": "#b8a070"
+      }
+    },
+    {
+      "id": "prop_industrial_ribbed_wall",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ribbed_wall.glb",
+      "nodeName": "prop_industrial_ribbed_wall",
+      "label": "Ribbed wall",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          2.5,
+          0.25
+        ],
+        "size": [
+          4,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_service_frame",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_service_frame.glb",
+      "nodeName": "prop_industrial_service_frame",
+      "label": "Service frame",
+      "triangles": 370,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          2.6,
+          0.3
+        ],
+        "size": [
+          4,
+          2.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_machine_guard",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_machine_guard.glb",
+      "nodeName": "prop_industrial_machine_guard",
+      "label": "Machine guard",
+      "triangles": 218,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.35
+        ],
+        "size": [
+          2.4,
+          0.8,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_steel_steps",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_steel_steps.glb",
+      "nodeName": "prop_industrial_steel_steps",
+      "label": "Steel steps",
+      "triangles": 176,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.8,
+          0.6,
+          0.9
+        ],
+        "size": [
+          1.6,
+          0.6,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_safety_rail",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_safety_rail.glb",
+      "nodeName": "prop_industrial_safety_rail",
+      "label": "Safety rail",
+      "triangles": 236,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.5,
+          1.2,
+          0.15
+        ],
+        "size": [
+          3,
+          1.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_work_catwalk",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_work_catwalk.glb",
+      "nodeName": "prop_industrial_work_catwalk",
+      "label": "Work catwalk",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.2,
+          0.8,
+          0.75
+        ],
+        "size": [
+          2.4,
+          0.8,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_power_cabinet",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_power_cabinet.glb",
+      "nodeName": "prop_industrial_power_cabinet",
+      "label": "Power cabinet",
+      "triangles": 214,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.7,
+          1.9,
+          0.55
+        ],
+        "size": [
+          1.4,
+          1.9,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_conveyor_bed",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_conveyor_bed.glb",
+      "nodeName": "prop_industrial_conveyor_bed",
+      "label": "Conveyor bed",
+      "triangles": 232,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.65
+        ],
+        "max": [
+          1.45,
+          0.9,
+          0.65
+        ],
+        "size": [
+          2.9,
+          0.9,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_tool_trolley",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tool_trolley.glb",
+      "nodeName": "prop_industrial_tool_trolley",
+      "label": "Tool trolley",
+      "triangles": 456,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.6,
+          1.6,
+          0.4
+        ],
+        "size": [
+          1.2,
+          1.6,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_material_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_material_rack.glb",
+      "nodeName": "prop_industrial_material_rack",
+      "label": "Material rack",
+      "triangles": 534,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.1,
+          1.6,
+          0.55
+        ],
+        "size": [
+          2.2,
+          1.6,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loading_pallet",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loading_pallet.glb",
+      "nodeName": "prop_industrial_loading_pallet",
+      "label": "Loading pallet",
+      "triangles": 398,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.7,
+          0.3,
+          0.6
+        ],
+        "size": [
+          1.4,
+          0.3,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_pressure_vessel",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_pressure_vessel.glb",
+      "nodeName": "prop_industrial_pressure_vessel",
+      "label": "Pressure vessel",
+      "triangles": 532,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.85
+        ],
+        "max": [
+          0.85,
+          2.8,
+          0.85
+        ],
+        "size": [
+          1.7,
+          2.8,
+          1.7
+        ]
+      },
+      "palette": {
+        "primary": "#506c62",
+        "metal": "#8d9c91",
+        "trim": "#b9b59b"
+      }
+    },
+    {
+      "id": "prop_industrial_pipe_riser",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_pipe_riser.glb",
+      "nodeName": "prop_industrial_pipe_riser",
+      "label": "Pipe riser",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2.5,
+          0.25
+        ],
+        "size": [
+          1,
+          2.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_pipe_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_pipe_rack.glb",
+      "nodeName": "prop_industrial_pipe_rack",
+      "label": "Pipe rack",
+      "triangles": 574,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.2,
+          2,
+          0.15
+        ],
+        "size": [
+          2.4,
+          2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_floor_grate",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_floor_grate.glb",
+      "nodeName": "prop_industrial_floor_grate",
+      "label": "Floor grate",
+      "triangles": 102,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.8
+        ],
+        "max": [
+          0.85,
+          0.2,
+          0.8
+        ],
+        "size": [
+          1.7,
+          0.2,
+          1.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_safety_drum",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_safety_drum.glb",
+      "nodeName": "prop_industrial_safety_drum",
+      "label": "Safety drum",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.5,
+          1.1,
+          0.5
+        ],
+        "size": [
+          1,
+          1.1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_striped_bollard",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_striped_bollard.glb",
+      "nodeName": "prop_industrial_striped_bollard",
+      "label": "Striped bollard",
+      "triangles": 192,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.3,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.3,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_shipping_case",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_shipping_case.glb",
+      "nodeName": "prop_industrial_shipping_case",
+      "label": "Shipping case",
+      "triangles": 370,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.7
+        ],
+        "max": [
+          0.85,
+          1.2,
+          0.7
+        ],
+        "size": [
+          1.7,
+          1.2,
+          1.4
+        ]
+      },
+      "palette": {
+        "primary": "#687471",
+        "metal": "#89938c"
+      }
+    },
+    {
+      "id": "prop_industrial_hoist_frame",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hoist_frame.glb",
+      "nodeName": "prop_industrial_hoist_frame",
+      "label": "Hoist frame",
+      "triangles": 210,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.7,
+          3.1,
+          0.35
+        ],
+        "size": [
+          3.4,
+          3.1,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_foundry_press",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_foundry_press.glb",
+      "nodeName": "prop_industrial_foundry_press",
+      "label": "Foundry press",
+      "triangles": 424,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.05,
+          2.6,
+          0.75
+        ],
+        "size": [
+          2.1,
+          2.6,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_vent_duct",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_vent_duct.glb",
+      "nodeName": "prop_industrial_vent_duct",
+      "label": "Vent duct",
+      "triangles": 236,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.6,
+          1.8,
+          0.6
+        ],
+        "size": [
+          1.2,
+          1.8,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_warning_stanchion",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_warning_stanchion.glb",
+      "nodeName": "prop_industrial_warning_stanchion",
+      "label": "Warning stanchion",
+      "triangles": 158,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.25,
+          1.7,
+          0.25
+        ],
+        "size": [
+          0.5,
+          1.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_maintenance_bench",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_maintenance_bench.glb",
+      "nodeName": "prop_industrial_maintenance_bench",
+      "label": "Maintenance bench",
+      "triangles": 250,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.85,
+          1,
+          0.45
+        ],
+        "size": [
+          1.7,
+          1,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_process_bay_opening",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_process_bay_opening.glb",
+      "nodeName": "prop_industrial_process_bay_opening",
+      "label": "Process bay opening",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -2.1,
+          0,
+          -0.7
+        ],
+        "max": [
+          2.1,
+          3.7,
+          0.7
+        ],
+        "size": [
+          4.2,
+          3.7,
+          1.4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_roof_truss_section",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_roof_truss_section.glb",
+      "nodeName": "prop_industrial_roof_truss_section",
+      "label": "Roof truss section",
+      "triangles": 536,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          1.1,
+          0.25
+        ],
+        "size": [
+          4,
+          1.1,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_process_shed_roof",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_process_shed_roof.glb",
+      "nodeName": "prop_industrial_process_shed_roof",
+      "label": "Process shed roof",
+      "triangles": 460,
+      "bounds": {
+        "min": [
+          -2.1,
+          0,
+          -1.65
+        ],
+        "max": [
+          2.1,
+          0.3,
+          1.65
+        ],
+        "size": [
+          4.2,
+          0.3,
+          3.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_overhead_service_pipes",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_overhead_service_pipes.glb",
+      "nodeName": "prop_industrial_overhead_service_pipes",
+      "label": "Overhead service pipes",
+      "triangles": 640,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.9,
+          1,
+          0.55
+        ],
+        "size": [
+          3.8,
+          1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loading_apron_strip",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loading_apron_strip.glb",
+      "nodeName": "prop_industrial_loading_apron_strip",
+      "label": "Loading apron strip",
+      "triangles": 164,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loading_sill",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loading_sill.glb",
+      "nodeName": "prop_industrial_loading_sill",
+      "label": "Loading sill",
+      "triangles": 230,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.9,
+          0.3,
+          0.45
+        ],
+        "size": [
+          3.8,
+          0.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_ore_hopper",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ore_hopper.glb",
+      "nodeName": "prop_industrial_ore_hopper",
+      "label": "Ore hopper",
+      "triangles": 598,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -1.3
+        ],
+        "max": [
+          1.55,
+          3.9,
+          1.3
+        ],
+        "size": [
+          3.1,
+          3.9,
+          2.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_hopper_conveyor",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hopper_conveyor.glb",
+      "nodeName": "prop_industrial_hopper_conveyor",
+      "label": "Hopper conveyor",
+      "triangles": 648,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -1.55
+        ],
+        "max": [
+          0.6,
+          1.6,
+          1.55
+        ],
+        "size": [
+          1.2,
+          1.6,
+          3.1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_ore_receiving_skip",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ore_receiving_skip.glb",
+      "nodeName": "prop_industrial_ore_receiving_skip",
+      "label": "Ore receiving skip",
+      "triangles": 376,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.8,
+          1,
+          0.6
+        ],
+        "size": [
+          1.6,
+          1,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_metal_scrap_skip",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_metal_scrap_skip.glb",
+      "nodeName": "prop_industrial_metal_scrap_skip",
+      "label": "Metal scrap skip",
+      "triangles": 386,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.8,
+          1,
+          0.6
+        ],
+        "size": [
+          1.6,
+          1,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_empty_ore_skip",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_empty_ore_skip.glb",
+      "nodeName": "prop_industrial_empty_ore_skip",
+      "label": "Empty ore skip",
+      "triangles": 212,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.8,
+          1,
+          0.6
+        ],
+        "size": [
+          1.6,
+          1,
+          1.2
+        ]
+      },
+      "palette": {
+        "primary": "#677a77",
+        "secondary": "#4b5454"
+      }
+    },
+    {
+      "id": "prop_industrial_high_sheet_metal_wall",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_high_sheet_metal_wall.glb",
+      "nodeName": "prop_industrial_high_sheet_metal_wall",
+      "label": "High sheet metal wall",
+      "triangles": 356,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          4.4,
+          0.4
+        ],
+        "size": [
+          4,
+          4.4,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loading_truss_canopy",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loading_truss_canopy.glb",
+      "nodeName": "prop_industrial_loading_truss_canopy",
+      "label": "Loading truss canopy",
+      "triangles": 590,
+      "bounds": {
+        "min": [
+          -2.2,
+          0,
+          -1.65
+        ],
+        "max": [
+          2.2,
+          0.9,
+          1.65
+        ],
+        "size": [
+          4.4,
+          0.9,
+          3.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loaded_steel_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loaded_steel_rack.glb",
+      "nodeName": "prop_industrial_loaded_steel_rack",
+      "label": "Loaded steel rack",
+      "triangles": 610,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_line_drain_cover",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_line_drain_cover.glb",
+      "nodeName": "prop_industrial_line_drain_cover",
+      "label": "Line drain cover",
+      "triangles": 224,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.85,
+          0.2,
+          0.6
+        ],
+        "size": [
+          1.7,
+          0.2,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_tank_feed_pipes",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tank_feed_pipes.glb",
+      "nodeName": "prop_industrial_tank_feed_pipes",
+      "label": "Tank feed pipes",
+      "triangles": 648,
+      "bounds": {
+        "min": [
+          -1.9,
+          0,
+          -0.55
+        ],
+        "max": [
+          1.9,
+          1,
+          0.55
+        ],
+        "size": [
+          3.8,
+          1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_foundry_loading_ramp",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_foundry_loading_ramp.glb",
+      "nodeName": "prop_industrial_foundry_loading_ramp",
+      "label": "Foundry loading ramp",
+      "triangles": 196,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.6
+        ],
+        "max": [
+          1,
+          0.4,
+          0.6
+        ],
+        "size": [
+          2,
+          0.4,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_yard_crane",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_yard_crane.glb",
+      "nodeName": "prop_industrial_yard_crane",
+      "label": "Yard crane",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -2.25
+        ],
+        "max": [
+          1.05,
+          3.9,
+          2.25
+        ],
+        "size": [
+          2.1,
+          3.9,
+          4.5
+        ]
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_industrial_yard_crane.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Slew Crane",
+          "Trolley and Hoist"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_warehouse_forklift",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_warehouse_forklift.glb",
+      "nodeName": "prop_industrial_warehouse_forklift",
+      "label": "Warehouse forklift",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.85,
+          2.8,
+          1.8
+        ],
+        "size": [
+          1.7,
+          2.8,
+          3.6
+        ]
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_industrial_warehouse_forklift.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lift Forks"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_yard_embankment",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_yard_embankment.glb",
+      "nodeName": "prop_industrial_yard_embankment",
+      "label": "Yard embankment",
+      "triangles": 468,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_roof_monitor",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_roof_monitor.glb",
+      "nodeName": "prop_industrial_smelting_works_roof_monitor",
+      "label": "Smelting works roof monitor",
+      "triangles": 572,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          1.7,
+          2
+        ],
+        "size": [
+          4,
+          1.7,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_solid",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_solid.glb",
+      "nodeName": "prop_industrial_smelting_works_solid",
+      "label": "Smelting works solid",
+      "triangles": 590,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          4.7,
+          0.3
+        ],
+        "size": [
+          4,
+          4.7,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_window",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_window.glb",
+      "nodeName": "prop_industrial_smelting_works_window",
+      "label": "Smelting works window",
+      "triangles": 622,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          4.7,
+          0.25
+        ],
+        "size": [
+          4,
+          4.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_window_glass",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_window_glass.glb",
+      "nodeName": "prop_industrial_smelting_works_window_glass",
+      "label": "Smelting works window glass",
+      "triangles": 48,
+      "bounds": {
+        "min": [
+          -1.35,
+          0,
+          -0.05
+        ],
+        "max": [
+          1.35,
+          2.8,
+          0.05
+        ],
+        "size": [
+          2.7,
+          2.8,
+          0.1
+        ]
+      },
+      "palette": {
+        "visor": "#859c9b"
+      },
+      "surface": "glass"
+    },
+    {
+      "id": "prop_industrial_smelting_works_door",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_door.glb",
+      "nodeName": "prop_industrial_smelting_works_door",
+      "label": "Smelting works door",
+      "triangles": 590,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.25
+        ],
+        "max": [
+          2,
+          4.7,
+          0.25
+        ],
+        "size": [
+          4,
+          4.7,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_ceiling",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_ceiling.glb",
+      "nodeName": "prop_industrial_smelting_works_ceiling",
+      "label": "Smelting works ceiling",
+      "triangles": 424,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "primary": "#867862",
+        "secondary": "#3e4546"
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_pendant",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_pendant.glb",
+      "nodeName": "prop_industrial_smelting_works_pendant",
+      "label": "Smelting works pendant",
+      "triangles": 184,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.3
+        ],
+        "max": [
+          1,
+          0.9,
+          0.3
+        ],
+        "size": [
+          2,
+          0.9,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_charge_furnace",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_charge_furnace.glb",
+      "nodeName": "prop_industrial_charge_furnace",
+      "label": "Charge furnace",
+      "triangles": 622,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.5,
+          4.2,
+          1.05
+        ],
+        "size": [
+          3,
+          4.2,
+          2.1
+        ]
+      },
+      "palette": {
+        "skin": "#a0967f",
+        "secondary": "#3b4041",
+        "accent": "#e3a34f"
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_chimney",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_chimney.glb",
+      "nodeName": "prop_industrial_smelting_works_chimney",
+      "label": "Smelting works chimney",
+      "triangles": 492,
+      "bounds": {
+        "min": [
+          -0.55,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.55,
+          4.1,
+          0.55
+        ],
+        "size": [
+          1.1,
+          4.1,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_trade_sign",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_trade_sign.glb",
+      "nodeName": "prop_industrial_smelting_works_trade_sign",
+      "label": "Smelting works trade sign",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.2,
+          1.6,
+          0.25
+        ],
+        "size": [
+          2.4,
+          1.6,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_letter_board",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_letter_board.glb",
+      "nodeName": "prop_industrial_smelting_works_letter_board",
+      "label": "Smelting works letter board",
+      "triangles": 554,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.8,
+          1.6,
+          0.15
+        ],
+        "size": [
+          3.6,
+          1.6,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_smelting_works_floor",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_smelting_works_floor.glb",
+      "nodeName": "prop_industrial_smelting_works_floor",
+      "label": "Smelting works floor",
+      "triangles": 234,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_service_road_asphalt",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_service_road_asphalt.glb",
+      "nodeName": "prop_industrial_service_road_asphalt",
+      "label": "Service road asphalt",
+      "triangles": 246,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_service_road_curb",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_service_road_curb.glb",
+      "nodeName": "prop_industrial_service_road_curb",
+      "label": "Service road curb",
+      "triangles": 232,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.45
+        ],
+        "max": [
+          2,
+          0.3,
+          0.45
+        ],
+        "size": [
+          4,
+          0.3,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_service_yard_boundary",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_service_yard_boundary.glb",
+      "nodeName": "prop_industrial_service_yard_boundary",
+      "label": "Service yard boundary",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          3.2,
+          0.3
+        ],
+        "size": [
+          4,
+          3.2,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_yard_poplar",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_yard_poplar.glb",
+      "nodeName": "prop_industrial_yard_poplar",
+      "label": "Yard poplar",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.4,
+          6.3,
+          0.9
+        ],
+        "size": [
+          2.8,
+          6.3,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#64734b",
+        "secondary": "#454f37",
+        "leather": "#665a49"
+      }
+    },
+    {
+      "id": "prop_industrial_service_line_pole",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_service_line_pole.glb",
+      "nodeName": "prop_industrial_service_line_pole",
+      "label": "Service line pole",
+      "triangles": 276,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.05,
+          5.6,
+          0.3
+        ],
+        "size": [
+          2.1,
+          5.6,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_covered_loading_stand",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_covered_loading_stand.glb",
+      "nodeName": "prop_industrial_covered_loading_stand",
+      "label": "Covered loading stand",
+      "triangles": 398,
+      "bounds": {
+        "min": [
+          -1.85,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.85,
+          3.3,
+          1.25
+        ],
+        "size": [
+          3.7,
+          3.3,
+          2.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loading_yard_wheel_track",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loading_yard_wheel_track.glb",
+      "nodeName": "prop_industrial_loading_yard_wheel_track",
+      "label": "Loading yard wheel track",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.35,
+          0.2,
+          1.8
+        ],
+        "size": [
+          0.7,
+          0.2,
+          3.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_roadside_earth_bed",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_roadside_earth_bed.glb",
+      "nodeName": "prop_industrial_roadside_earth_bed",
+      "label": "Roadside earth bed",
+      "triangles": 524,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.9,
+          2
+        ],
+        "size": [
+          4,
+          0.9,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_roadside_shade_tree",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_roadside_shade_tree.glb",
+      "nodeName": "prop_industrial_roadside_shade_tree",
+      "label": "Roadside shade tree",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.9
+        ],
+        "max": [
+          1.5,
+          4.9,
+          0.9
+        ],
+        "size": [
+          3,
+          4.9,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#748051",
+        "secondary": "#4c593c",
+        "leather": "#695846"
+      }
+    },
+    {
+      "id": "prop_industrial_ore_samples_and_tongs",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ore_samples_and_tongs.glb",
+      "nodeName": "prop_industrial_ore_samples_and_tongs",
+      "label": "Ore samples and tongs",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.65,
+          0.4,
+          0.25
+        ],
+        "size": [
+          1.3,
+          0.4,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_sorted_casting_stock",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_sorted_casting_stock.glb",
+      "nodeName": "prop_industrial_sorted_casting_stock",
+      "label": "Sorted casting stock",
+      "triangles": 596,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.45
+        ],
+        "max": [
+          1.1,
+          0.8,
+          0.45
+        ],
+        "size": [
+          2.2,
+          0.8,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_foundry_safety_crossing",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_foundry_safety_crossing.glb",
+      "nodeName": "prop_industrial_foundry_safety_crossing",
+      "label": "Foundry safety crossing",
+      "triangles": 160,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.2,
+          0.2,
+          0.95
+        ],
+        "size": [
+          2.4,
+          0.2,
+          1.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_charging_gallery",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_charging_gallery.glb",
+      "nodeName": "prop_industrial_charging_gallery",
+      "label": "Charging gallery",
+      "triangles": 636,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.05
+        ],
+        "max": [
+          2,
+          4.1,
+          1.05
+        ],
+        "size": [
+          4,
+          4.1,
+          2.1
+        ]
+      },
+      "palette": {
+        "secondary": "#59666a",
+        "accent": "#dfa452"
+      }
+    },
+    {
+      "id": "prop_industrial_charging_gallery_stairs",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_charging_gallery_stairs.glb",
+      "nodeName": "prop_industrial_charging_gallery_stairs",
+      "label": "Charging gallery stairs",
+      "triangles": 532,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -1.5
+        ],
+        "max": [
+          0.75,
+          2.5,
+          1.5
+        ],
+        "size": [
+          1.5,
+          2.5,
+          3
+        ]
+      },
+      "palette": {
+        "accent": "#dfa452",
+        "metal": "#737b79"
+      }
+    },
+    {
+      "id": "prop_industrial_charging_stair_bearers",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_charging_stair_bearers.glb",
+      "nodeName": "prop_industrial_charging_stair_bearers",
+      "label": "Charging stair bearers",
+      "triangles": 426,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -1.45
+        ],
+        "max": [
+          0.7,
+          1.5,
+          1.45
+        ],
+        "size": [
+          1.4,
+          1.5,
+          2.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_gravity_charge_bin",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_gravity_charge_bin.glb",
+      "nodeName": "prop_industrial_gravity_charge_bin",
+      "label": "Gravity charge bin",
+      "triangles": 528,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -1.6
+        ],
+        "max": [
+          1.6,
+          4.6,
+          1.6
+        ],
+        "size": [
+          3.2,
+          4.6,
+          3.2
+        ]
+      },
+      "palette": {
+        "primary": "#a06642",
+        "secondary": "#434e4f",
+        "metal": "#7c7164"
+      }
+    },
+    {
+      "id": "prop_industrial_casting_railway",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_casting_railway.glb",
+      "nodeName": "prop_industrial_casting_railway",
+      "label": "Casting railway",
+      "triangles": 614,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -2
+        ],
+        "max": [
+          0.85,
+          0.4,
+          2
+        ],
+        "size": [
+          1.7,
+          0.4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_timber_rail_crossing",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_timber_rail_crossing.glb",
+      "nodeName": "prop_industrial_timber_rail_crossing",
+      "label": "Timber rail crossing",
+      "triangles": 266,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.8,
+          0.4,
+          0.85
+        ],
+        "size": [
+          3.6,
+          0.4,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_ladle_transfer_car",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ladle_transfer_car.glb",
+      "nodeName": "prop_industrial_ladle_transfer_car",
+      "label": "Ladle transfer car",
+      "triangles": 542,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -1.15
+        ],
+        "max": [
+          0.9,
+          2.1,
+          1.15
+        ],
+        "size": [
+          1.8,
+          2.1,
+          2.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_extraction_main",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_extraction_main.glb",
+      "nodeName": "prop_industrial_extraction_main",
+      "label": "Extraction main",
+      "triangles": 306,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.5
+        ],
+        "max": [
+          2,
+          1,
+          0.5
+        ],
+        "size": [
+          4,
+          1,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_extraction_pipe_bent",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_extraction_pipe_bent.glb",
+      "nodeName": "prop_industrial_extraction_pipe_bent",
+      "label": "Extraction pipe bent",
+      "triangles": 426,
+      "bounds": {
+        "min": [
+          -1.05,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.05,
+          5.1,
+          0.3
+        ],
+        "size": [
+          2.1,
+          5.1,
+          0.6
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_refractory_exhaust_stack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_refractory_exhaust_stack.glb",
+      "nodeName": "prop_industrial_refractory_exhaust_stack",
+      "label": "Refractory exhaust stack",
+      "triangles": 402,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.9
+        ],
+        "max": [
+          0.9,
+          9,
+          0.9
+        ],
+        "size": [
+          1.8,
+          9,
+          1.8
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_gallery_tapping_desk",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_gallery_tapping_desk.glb",
+      "nodeName": "prop_industrial_gallery_tapping_desk",
+      "label": "Gallery tapping desk",
+      "triangles": 476,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.7,
+          1.6,
+          0.5
+        ],
+        "size": [
+          1.4,
+          1.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_charging_signal",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_charging_signal.glb",
+      "nodeName": "prop_industrial_charging_signal",
+      "label": "Charging signal",
+      "triangles": 148,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.5,
+          2,
+          0.25
+        ],
+        "size": [
+          1,
+          2,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_charge_bay_service_portal",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_charge_bay_service_portal.glb",
+      "nodeName": "prop_industrial_charge_bay_service_portal",
+      "label": "Charge bay service portal",
+      "triangles": 604,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          4.7,
+          0.4
+        ],
+        "size": [
+          4,
+          4.7,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#796451",
+        "secondary": "#484f49",
+        "metal": "#8d9386"
+      }
+    },
+    {
+      "id": "prop_industrial_ore_retaining_wall",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ore_retaining_wall.glb",
+      "nodeName": "prop_industrial_ore_retaining_wall",
+      "label": "Ore retaining wall",
+      "triangles": 274,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          3.4,
+          0.4
+        ],
+        "size": [
+          4,
+          3.4,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_ore_stockpile",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ore_stockpile.glb",
+      "nodeName": "prop_industrial_ore_stockpile",
+      "label": "Ore stockpile",
+      "triangles": 482,
+      "bounds": {
+        "min": [
+          -2.1,
+          0,
+          -1.9
+        ],
+        "max": [
+          2.1,
+          2.1,
+          1.9
+        ],
+        "size": [
+          4.2,
+          2.1,
+          3.8
+        ]
+      },
+      "palette": {
+        "primary": "#49453f",
+        "leather": "#705345"
+      }
+    },
+    {
+      "id": "prop_industrial_runway_stanchion",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_runway_stanchion.glb",
+      "nodeName": "prop_industrial_runway_stanchion",
+      "label": "Runway stanchion",
+      "triangles": 616,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.6,
+          6.6,
+          0.5
+        ],
+        "size": [
+          1.2,
+          6.6,
+          1
+        ]
+      },
+      "palette": {
+        "primary": "#637674",
+        "secondary": "#464f4b",
+        "accent": "#b79156",
+        "metal": "#a3a897"
+      }
+    },
+    {
+      "id": "prop_industrial_crane_runway",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_crane_runway.glb",
+      "nodeName": "prop_industrial_crane_runway",
+      "label": "Crane runway",
+      "triangles": 440,
+      "bounds": {
+        "min": [
+          -2.4,
+          0,
+          -0.25
+        ],
+        "max": [
+          2.4,
+          0.9,
+          0.25
+        ],
+        "size": [
+          4.8,
+          0.9,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_travelling_bridge_beam",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_travelling_bridge_beam.glb",
+      "nodeName": "prop_industrial_travelling_bridge_beam",
+      "label": "Travelling bridge beam",
+      "triangles": 590,
+      "bounds": {
+        "min": [
+          -2.9,
+          0,
+          -0.4
+        ],
+        "max": [
+          2.9,
+          1.2,
+          0.4
+        ],
+        "size": [
+          5.8,
+          1.2,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#795338",
+        "accent": "#dfa248"
+      }
+    },
+    {
+      "id": "prop_industrial_travelling_hook_block",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_travelling_hook_block.glb",
+      "nodeName": "prop_industrial_travelling_hook_block",
+      "label": "Travelling hook block",
+      "triangles": 404,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.6,
+          4.5,
+          0.45
+        ],
+        "size": [
+          1.2,
+          4.5,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_rolled_sheet_coil",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_rolled_sheet_coil.glb",
+      "nodeName": "prop_industrial_rolled_sheet_coil",
+      "label": "Rolled sheet coil",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.75
+        ],
+        "max": [
+          1.1,
+          2.2,
+          0.75
+        ],
+        "size": [
+          2.2,
+          2.2,
+          1.5
+        ]
+      },
+      "palette": {
+        "primary": "#736747",
+        "secondary": "#505752",
+        "metal": "#96a296"
+      }
+    },
+    {
+      "id": "prop_industrial_cooling_tower_trestle",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_cooling_tower_trestle.glb",
+      "nodeName": "prop_industrial_cooling_tower_trestle",
+      "label": "Cooling tower trestle",
+      "triangles": 586,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.5,
+          5.1,
+          0.4
+        ],
+        "size": [
+          3,
+          5.1,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#635b4e",
+        "secondary": "#454d48",
+        "metal": "#8b8b78"
+      }
+    },
+    {
+      "id": "prop_industrial_process_water_tank",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_process_water_tank.glb",
+      "nodeName": "prop_industrial_process_water_tank",
+      "label": "Process water tank",
+      "triangles": 612,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -1.8
+        ],
+        "max": [
+          1.75,
+          3,
+          1.8
+        ],
+        "size": [
+          3.5,
+          3,
+          3.6
+        ]
+      },
+      "palette": {
+        "primary": "#688b7c",
+        "metal": "#829e8c",
+        "trim": "#c5c5a5"
+      }
+    },
+    {
+      "id": "prop_industrial_tank_inspection_ladder",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tank_inspection_ladder.glb",
+      "nodeName": "prop_industrial_tank_inspection_ladder",
+      "label": "Tank inspection ladder",
+      "triangles": 636,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.35
+        ],
+        "max": [
+          0.4,
+          4,
+          0.35
+        ],
+        "size": [
+          0.8,
+          4,
+          0.7
+        ]
+      },
+      "palette": {
+        "skin": "#8c8b78",
+        "secondary": "#4c5e56",
+        "metal": "#989f91"
+      }
+    },
+    {
+      "id": "prop_industrial_inspection_ladder_landing",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_inspection_ladder_landing.glb",
+      "nodeName": "prop_industrial_inspection_ladder_landing",
+      "label": "Inspection ladder landing",
+      "triangles": 224,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.6,
+          1.6,
+          0.5
+        ],
+        "size": [
+          1.2,
+          1.6,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_tank_access_cap",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tank_access_cap.glb",
+      "nodeName": "prop_industrial_tank_access_cap",
+      "label": "Tank access cap",
+      "triangles": 538,
+      "bounds": {
+        "min": [
+          -1.85,
+          0,
+          -1.85
+        ],
+        "max": [
+          1.85,
+          0.9,
+          1.85
+        ],
+        "size": [
+          3.7,
+          0.9,
+          3.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_cooling_water_riser",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_cooling_water_riser.glb",
+      "nodeName": "prop_industrial_cooling_water_riser",
+      "label": "Cooling water riser",
+      "triangles": 502,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.75,
+          5.5,
+          0.4
+        ],
+        "size": [
+          1.5,
+          5.5,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#618a78",
+        "detail": "#a4533c"
+      }
+    },
+    {
+      "id": "prop_industrial_pump_sampling_panel",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_pump_sampling_panel.glb",
+      "nodeName": "prop_industrial_pump_sampling_panel",
+      "label": "Pump sampling panel",
+      "triangles": 556,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.7,
+          2.3,
+          0.45
+        ],
+        "size": [
+          1.4,
+          2.3,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#567769",
+        "metal": "#888e85",
+        "trim": "#cad0b8",
+        "detail": "#b47042"
+      }
+    },
+    {
+      "id": "prop_industrial_pump_service_grate",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_pump_service_grate.glb",
+      "nodeName": "prop_industrial_pump_service_grate",
+      "label": "Pump service grate",
+      "triangles": 312,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.85,
+          0.3,
+          0.55
+        ],
+        "size": [
+          1.7,
+          0.3,
+          1.1
+        ]
+      },
+      "palette": {
+        "secondary": "#444c48",
+        "metal": "#839187"
+      }
+    },
+    {
+      "id": "prop_industrial_cooling_circulation_pump",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_cooling_circulation_pump.glb",
+      "nodeName": "prop_industrial_cooling_circulation_pump",
+      "label": "Cooling circulation pump",
+      "triangles": 572,
+      "bounds": {
+        "min": [
+          -1.15,
+          0,
+          -0.6
+        ],
+        "max": [
+          1.15,
+          1.3,
+          0.6
+        ],
+        "size": [
+          2.3,
+          1.3,
+          1.2
+        ]
+      },
+      "palette": {
+        "primary": "#6e8875",
+        "accent": "#c49351",
+        "metal": "#a1a598"
+      }
+    },
+    {
+      "id": "prop_industrial_return_water_main",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_return_water_main.glb",
+      "nodeName": "prop_industrial_return_water_main",
+      "label": "Return water main",
+      "triangles": 338,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          0.7,
+          0.3
+        ],
+        "size": [
+          4,
+          0.7,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#637e68",
+        "metal": "#9fa493"
+      }
+    },
+    {
+      "id": "prop_industrial_quench_bath",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_quench_bath.glb",
+      "nodeName": "prop_industrial_quench_bath",
+      "label": "Quench bath",
+      "triangles": 618,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -1.5
+        ],
+        "max": [
+          0.9,
+          1.4,
+          1.5
+        ],
+        "size": [
+          1.8,
+          1.4,
+          3
+        ]
+      },
+      "palette": {
+        "skin": "#887e70",
+        "secondary": "#6da5a0",
+        "visor": "#50858b"
+      }
+    },
+    {
+      "id": "prop_industrial_bridge_hoist_trolley",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_bridge_hoist_trolley.glb",
+      "nodeName": "prop_industrial_bridge_hoist_trolley",
+      "label": "Bridge hoist trolley",
+      "triangles": 500,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.9
+        ],
+        "max": [
+          1,
+          1.3,
+          0.9
+        ],
+        "size": [
+          2,
+          1.3,
+          1.8
+        ]
+      },
+      "palette": {
+        "primary": "#666e60",
+        "accent": "#be8c46"
+      }
+    },
+    {
+      "id": "prop_industrial_billet_spreader",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_billet_spreader.glb",
+      "nodeName": "prop_industrial_billet_spreader",
+      "label": "Billet spreader",
+      "triangles": 468,
+      "bounds": {
+        "min": [
+          -1.5,
+          0,
+          -0.4
+        ],
+        "max": [
+          1.5,
+          2,
+          0.4
+        ],
+        "size": [
+          3,
+          2,
+          0.8
+        ]
+      },
+      "palette": {
+        "secondary": "#454b48",
+        "accent": "#cf9648"
+      }
+    },
+    {
+      "id": "prop_industrial_suspended_steel_billets",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_suspended_steel_billets.glb",
+      "nodeName": "prop_industrial_suspended_steel_billets",
+      "label": "Suspended steel billets",
+      "triangles": 560,
+      "bounds": {
+        "min": [
+          -1.75,
+          0,
+          -0.7
+        ],
+        "max": [
+          1.75,
+          1.3,
+          0.7
+        ],
+        "size": [
+          3.5,
+          1.3,
+          1.4
+        ]
+      },
+      "palette": {
+        "skin": "#835743",
+        "secondary": "#473f39",
+        "metal": "#976b54"
+      }
+    },
+    {
+      "id": "prop_industrial_billet_landing_cradle",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_billet_landing_cradle.glb",
+      "nodeName": "prop_industrial_billet_landing_cradle",
+      "label": "Billet landing cradle",
+      "triangles": 328,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -0.85
+        ],
+        "max": [
+          1.45,
+          0.7,
+          0.85
+        ],
+        "size": [
+          2.9,
+          0.7,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_crane_station_console",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_crane_station_console.glb",
+      "nodeName": "prop_industrial_crane_station_console",
+      "label": "Crane station console",
+      "triangles": 270,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.75,
+          1.6,
+          0.4
+        ],
+        "size": [
+          1.5,
+          1.6,
+          0.8
+        ]
+      },
+      "palette": {
+        "primary": "#71806b",
+        "visor": "#72a599"
+      }
+    },
+    {
+      "id": "prop_industrial_crane_station_seat",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_crane_station_seat.glb",
+      "nodeName": "prop_industrial_crane_station_seat",
+      "label": "Crane station seat",
+      "triangles": 174,
+      "bounds": {
+        "min": [
+          -0.4,
+          0,
+          -0.4
+        ],
+        "max": [
+          0.4,
+          1.4,
+          0.4
+        ],
+        "size": [
+          0.8,
+          1.4,
+          0.8
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_hose_winding_stand",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hose_winding_stand.glb",
+      "nodeName": "prop_industrial_hose_winding_stand",
+      "label": "Hose winding stand",
+      "triangles": 446,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.75,
+          1.8,
+          0.65
+        ],
+        "size": [
+          1.5,
+          1.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_service_water_branch",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_service_water_branch.glb",
+      "nodeName": "prop_industrial_service_water_branch",
+      "label": "Service water branch",
+      "triangles": 540,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -1
+        ],
+        "max": [
+          0.35,
+          1.9,
+          1
+        ],
+        "size": [
+          0.7,
+          1.9,
+          2
+        ]
+      },
+      "palette": {
+        "primary": "#597a68",
+        "metal": "#969f8f",
+        "detail": "#ad5239"
+      }
+    },
+    {
+      "id": "prop_industrial_cooling_yard_paving",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_cooling_yard_paving.glb",
+      "nodeName": "prop_industrial_cooling_yard_paving",
+      "label": "Cooling yard paving",
+      "triangles": 262,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -2
+        ],
+        "max": [
+          1,
+          0.2,
+          2
+        ],
+        "size": [
+          2,
+          0.2,
+          4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_receiver_branch_valve",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_receiver_branch_valve.glb",
+      "nodeName": "prop_industrial_receiver_branch_valve",
+      "label": "Receiver branch valve",
+      "triangles": 390,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.7,
+          1.9,
+          0.3
+        ],
+        "size": [
+          1.4,
+          1.9,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#617e72",
+        "metal": "#9ca38c",
+        "detail": "#a05440"
+      }
+    },
+    {
+      "id": "prop_industrial_receiver_header",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_receiver_header.glb",
+      "nodeName": "prop_industrial_receiver_header",
+      "label": "Receiver header",
+      "triangles": 416,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.3
+        ],
+        "max": [
+          1.7,
+          1.3,
+          0.3
+        ],
+        "size": [
+          3.4,
+          1.3,
+          0.6
+        ]
+      },
+      "palette": {
+        "primary": "#617e72",
+        "metal": "#9ca38c"
+      }
+    },
+    {
+      "id": "prop_industrial_bath_discharge_spout",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_bath_discharge_spout.glb",
+      "nodeName": "prop_industrial_bath_discharge_spout",
+      "label": "Bath discharge spout",
+      "triangles": 378,
+      "bounds": {
+        "min": [
+          -0.35,
+          0,
+          -0.65
+        ],
+        "max": [
+          0.35,
+          2.3,
+          0.65
+        ],
+        "size": [
+          0.7,
+          2.3,
+          1.3
+        ]
+      },
+      "palette": {
+        "primary": "#5f7b6b",
+        "metal": "#a1a693",
+        "trim": "#e4d9ac",
+        "visor": "#689a96",
+        "detail": "#ad5a41"
+      }
+    },
+    {
+      "id": "prop_industrial_rolling_mill_sash",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_rolling_mill_sash.glb",
+      "nodeName": "prop_industrial_rolling_mill_sash",
+      "label": "Rolling mill sash",
+      "triangles": 596,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          5,
+          0.3
+        ],
+        "size": [
+          4,
+          5,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#978b76",
+        "primary": "#86725e",
+        "secondary": "#4c5e57"
+      }
+    },
+    {
+      "id": "prop_industrial_pump_room_service_opening",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_pump_room_service_opening.glb",
+      "nodeName": "prop_industrial_pump_room_service_opening",
+      "label": "Pump room service opening",
+      "triangles": 452,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.4
+        ],
+        "max": [
+          2,
+          5,
+          0.4
+        ],
+        "size": [
+          4,
+          5,
+          0.8
+        ]
+      },
+      "palette": {
+        "skin": "#847b68",
+        "primary": "#67776c",
+        "secondary": "#495653",
+        "metal": "#8f9689"
+      }
+    },
+    {
+      "id": "prop_industrial_rolling_mill_loading_door",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_rolling_mill_loading_door.glb",
+      "nodeName": "prop_industrial_rolling_mill_loading_door",
+      "label": "Rolling mill loading door",
+      "triangles": 340,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          5,
+          0.3
+        ],
+        "size": [
+          4,
+          5,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#978b76",
+        "primary": "#86725e",
+        "secondary": "#4c5e57"
+      }
+    },
+    {
+      "id": "prop_industrial_rolling_mill_rear_wall",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_rolling_mill_rear_wall.glb",
+      "nodeName": "prop_industrial_rolling_mill_rear_wall",
+      "label": "Rolling mill rear wall",
+      "triangles": 388,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          5,
+          0.3
+        ],
+        "size": [
+          4,
+          5,
+          0.6
+        ]
+      },
+      "palette": {
+        "skin": "#978b76",
+        "primary": "#86725e",
+        "secondary": "#4c5e57"
+      }
+    },
+    {
+      "id": "prop_industrial_rolling_mill_shed_roof",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_rolling_mill_shed_roof.glb",
+      "nodeName": "prop_industrial_rolling_mill_shed_roof",
+      "label": "Rolling mill shed roof",
+      "triangles": 354,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -1.6
+        ],
+        "max": [
+          2,
+          0.3,
+          1.6
+        ],
+        "size": [
+          4,
+          0.3,
+          3.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_loading_sill_access_plate",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_loading_sill_access_plate.glb",
+      "nodeName": "prop_industrial_loading_sill_access_plate",
+      "label": "Loading sill access plate",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -0.25,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.25,
+          0.2,
+          0.45
+        ],
+        "size": [
+          0.5,
+          0.2,
+          0.9
+        ]
+      },
+      "palette": {
+        "secondary": "#505750",
+        "accent": "#c29a59",
+        "metal": "#8b9182"
+      }
+    },
+    {
+      "id": "prop_industrial_mill_intake_louvres",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_mill_intake_louvres.glb",
+      "nodeName": "prop_industrial_mill_intake_louvres",
+      "label": "Mill intake louvres",
+      "triangles": 220,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.15
+        ],
+        "max": [
+          1,
+          1.4,
+          0.15
+        ],
+        "size": [
+          2,
+          1.4,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_ladle_extraction_hood",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ladle_extraction_hood.glb",
+      "nodeName": "prop_industrial_ladle_extraction_hood",
+      "label": "Ladle extraction hood",
+      "triangles": 434,
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -1.2
+        ],
+        "max": [
+          1.45,
+          2.3,
+          1.2
+        ],
+        "size": [
+          2.9,
+          2.3,
+          2.4
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_foundry_dispatch_cabin",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_foundry_dispatch_cabin.glb",
+      "nodeName": "prop_industrial_foundry_dispatch_cabin",
+      "label": "Foundry dispatch cabin",
+      "triangles": 594,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.25
+        ],
+        "max": [
+          1.7,
+          2.8,
+          1.25
+        ],
+        "size": [
+          3.4,
+          2.8,
+          2.5
+        ]
+      },
+      "palette": {
+        "skin": "#948a75",
+        "primary": "#637760",
+        "trim": "#c7c6a9"
+      }
+    },
+    {
+      "id": "prop_industrial_melting_furnace",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_melting_furnace.glb",
+      "nodeName": "prop_industrial_melting_furnace",
+      "label": "Melting furnace",
+      "triangles": 624,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.95
+        ],
+        "max": [
+          1.7,
+          4.7,
+          0.95
+        ],
+        "size": [
+          3.4,
+          4.7,
+          1.9
+        ]
+      },
+      "palette": {
+        "skin": "#827366",
+        "primary": "#7a4837",
+        "accent": "#e08b4c",
+        "trim": "#f2c77b",
+        "detail": "#803425"
+      }
+    },
+    {
+      "id": "prop_industrial_ingot_casting_bench",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ingot_casting_bench.glb",
+      "nodeName": "prop_industrial_ingot_casting_bench",
+      "label": "Ingot casting bench",
+      "triangles": 484,
+      "bounds": {
+        "min": [
+          -1.2,
+          0,
+          -0.6
+        ],
+        "max": [
+          1.2,
+          1.2,
+          0.6
+        ],
+        "size": [
+          2.4,
+          1.2,
+          1.2
+        ]
+      },
+      "palette": {
+        "skin": "#6a6b62",
+        "accent": "#cb8753",
+        "metal": "#768a84"
+      }
+    },
+    {
+      "id": "prop_industrial_furnace_tapping_ladle",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_furnace_tapping_ladle.glb",
+      "nodeName": "prop_industrial_furnace_tapping_ladle",
+      "label": "Furnace tapping ladle",
+      "triangles": 622,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -1.25
+        ],
+        "max": [
+          0.8,
+          1.5,
+          1.25
+        ],
+        "size": [
+          1.6,
+          1.5,
+          2.5
+        ]
+      },
+      "palette": {
+        "skin": "#9e7961",
+        "primary": "#657867",
+        "metal": "#667b72"
+      }
+    },
+    {
+      "id": "prop_industrial_repaired_firebrick_throat",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_repaired_firebrick_throat.glb",
+      "nodeName": "prop_industrial_repaired_firebrick_throat",
+      "label": "Repaired firebrick throat",
+      "triangles": 450,
+      "bounds": {
+        "min": [
+          -1.4,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.4,
+          1.9,
+          0.15
+        ],
+        "size": [
+          2.8,
+          1.9,
+          0.3
+        ]
+      },
+      "palette": {
+        "skin": "#876e5b",
+        "trim": "#b39273",
+        "leather": "#5e4e44"
+      }
+    },
+    {
+      "id": "prop_industrial_tapping_instrument_panel",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tapping_instrument_panel.glb",
+      "nodeName": "prop_industrial_tapping_instrument_panel",
+      "label": "Tapping instrument panel",
+      "triangles": 196,
+      "bounds": {
+        "min": [
+          -0.45,
+          0,
+          -0.3
+        ],
+        "max": [
+          0.45,
+          1.3,
+          0.3
+        ],
+        "size": [
+          0.9,
+          1.3,
+          0.6
+        ]
+      },
+      "palette": {
+        "trim": "#d7d2b5",
+        "visor": "#80a696",
+        "detail": "#ae513b"
+      }
+    },
+    {
+      "id": "prop_industrial_furnace_cooling_manifold",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_furnace_cooling_manifold.glb",
+      "nodeName": "prop_industrial_furnace_cooling_manifold",
+      "label": "Furnace cooling manifold",
+      "triangles": 648,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -0.35
+        ],
+        "max": [
+          1.7,
+          1.4,
+          0.35
+        ],
+        "size": [
+          3.4,
+          1.4,
+          0.7
+        ]
+      },
+      "palette": {
+        "primary": "#4c6861",
+        "metal": "#8b9689",
+        "detail": "#9c4c3b"
+      }
+    },
+    {
+      "id": "prop_industrial_ladle_landing_brake",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ladle_landing_brake.glb",
+      "nodeName": "prop_industrial_ladle_landing_brake",
+      "label": "Ladle landing brake",
+      "triangles": 316,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.5,
+          2,
+          0.45
+        ],
+        "size": [
+          1,
+          2,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_casting_bench_tongs",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_casting_bench_tongs.glb",
+      "nodeName": "prop_industrial_casting_bench_tongs",
+      "label": "Casting bench tongs",
+      "triangles": 118,
+      "bounds": {
+        "min": [
+          -0.6,
+          0,
+          -0.25
+        ],
+        "max": [
+          0.6,
+          0.3,
+          0.25
+        ],
+        "size": [
+          1.2,
+          0.3,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_heat_screen",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_heat_screen.glb",
+      "nodeName": "prop_industrial_heat_screen",
+      "label": "Heat screen",
+      "triangles": 378,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.15
+        ],
+        "max": [
+          2,
+          4.2,
+          0.15
+        ],
+        "size": [
+          4,
+          4.2,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_ingot_cooling_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_ingot_cooling_rack.glb",
+      "nodeName": "prop_industrial_ingot_cooling_rack",
+      "label": "Ingot cooling rack",
+      "triangles": 504,
+      "bounds": {
+        "min": [
+          -0.7,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.7,
+          0.9,
+          0.45
+        ],
+        "size": [
+          1.4,
+          0.9,
+          0.9
+        ]
+      },
+      "palette": {
+        "primary": "#826e59",
+        "metal": "#6f786e",
+        "trim": "#c1aa82",
+        "detail": "#ac624a"
+      }
+    },
+    {
+      "id": "prop_industrial_slag_stained_casting_slab",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_slag_stained_casting_slab.glb",
+      "nodeName": "prop_industrial_slag_stained_casting_slab",
+      "label": "Slag stained casting slab",
+      "triangles": 402,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "hair": "#514d47",
+        "primary": "#8f7452",
+        "secondary": "#4e5558",
+        "trim": "#b8a070",
+        "detail": "#80705b"
+      }
+    },
+    {
+      "id": "prop_industrial_tracked_loading_slab",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tracked_loading_slab.glb",
+      "nodeName": "prop_industrial_tracked_loading_slab",
+      "label": "Tracked loading slab",
+      "triangles": 412,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.2,
+          2
+        ],
+        "size": [
+          4,
+          0.2,
+          4
+        ]
+      },
+      "palette": {
+        "primary": "#8f7452",
+        "secondary": "#4e5558",
+        "trim": "#b8a070",
+        "leather": "#7a6a50",
+        "detail": "#968974"
+      }
+    },
+    {
+      "id": "prop_industrial_oxidized_smelting_works_wall",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_oxidized_smelting_works_wall.glb",
+      "nodeName": "prop_industrial_oxidized_smelting_works_wall",
+      "label": "Oxidized smelting works wall",
+      "triangles": 636,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.3
+        ],
+        "max": [
+          2,
+          4.7,
+          0.3
+        ],
+        "size": [
+          4,
+          4.7,
+          0.6
+        ]
+      },
+      "palette": {
+        "detail": "#877661"
+      }
+    },
+    {
+      "id": "prop_industrial_foundry_transfer_paving",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_foundry_transfer_paving.glb",
+      "nodeName": "prop_industrial_foundry_transfer_paving",
+      "label": "Foundry transfer paving",
+      "triangles": 290,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -2
+        ],
+        "max": [
+          2,
+          0.3,
+          2
+        ],
+        "size": [
+          4,
+          0.3,
+          4
+        ]
+      },
+      "palette": {
+        "skin": "#848374",
+        "secondary": "#687078"
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_frame",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_frame.glb",
+      "nodeName": "prop_industrial_dispatch_frame",
+      "label": "Dispatch frame",
+      "triangles": 704,
+      "bounds": {
+        "min": [
+          -3,
+          0,
+          -0.65
+        ],
+        "max": [
+          3,
+          4.8,
+          0.65
+        ],
+        "size": [
+          6,
+          4.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_yard_badge",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_yard_badge.glb",
+      "nodeName": "prop_industrial_dispatch_yard_badge",
+      "label": "Dispatch yard badge",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -1.8,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.8,
+          1.2,
+          0.25
+        ],
+        "size": [
+          3.6,
+          1.2,
+          0.5
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_stock_shed_canopy",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_stock_shed_canopy.glb",
+      "nodeName": "prop_industrial_stock_shed_canopy",
+      "label": "Stock shed canopy",
+      "triangles": 392,
+      "bounds": {
+        "min": [
+          -2.8,
+          0,
+          -2.5
+        ],
+        "max": [
+          2.8,
+          4.4,
+          2.5
+        ],
+        "size": [
+          5.6,
+          4.4,
+          5
+        ]
+      },
+      "palette": {
+        "trim": "#949483",
+        "detail": "#4c7068"
+      }
+    },
+    {
+      "id": "prop_industrial_stock_shed_cladding",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_stock_shed_cladding.glb",
+      "nodeName": "prop_industrial_stock_shed_cladding",
+      "label": "Stock shed cladding",
+      "triangles": 420,
+      "bounds": {
+        "min": [
+          -2,
+          0,
+          -0.35
+        ],
+        "max": [
+          2,
+          4,
+          0.35
+        ],
+        "size": [
+          4,
+          4,
+          0.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_weigh_deck",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_weigh_deck.glb",
+      "nodeName": "prop_industrial_dispatch_weigh_deck",
+      "label": "Dispatch weigh deck",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -1.7,
+          0,
+          -1.35
+        ],
+        "max": [
+          1.7,
+          0.3,
+          1.35
+        ],
+        "size": [
+          3.4,
+          0.3,
+          2.7
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_weigh_deck_hoist_arch",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_weigh_deck_hoist_arch.glb",
+      "nodeName": "prop_industrial_weigh_deck_hoist_arch",
+      "label": "Weigh deck hoist arch",
+      "triangles": 314,
+      "bounds": {
+        "min": [
+          -2.9,
+          0,
+          -0.4
+        ],
+        "max": [
+          2.9,
+          4.2,
+          0.4
+        ],
+        "size": [
+          5.8,
+          4.2,
+          0.8
+        ]
+      },
+      "palette": {
+        "metal": "#728a8d",
+        "trim": "#ce9c50"
+      }
+    },
+    {
+      "id": "prop_industrial_tally_booth_frame",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tally_booth_frame.glb",
+      "nodeName": "prop_industrial_tally_booth_frame",
+      "label": "Tally booth frame",
+      "triangles": 830,
+      "bounds": {
+        "min": [
+          -1.3,
+          0,
+          -1.05
+        ],
+        "max": [
+          1.3,
+          2.5,
+          1.05
+        ],
+        "size": [
+          2.6,
+          2.5,
+          2.1
+        ]
+      },
+      "palette": {
+        "primary": "#668078",
+        "secondary": "#515c58",
+        "visor": "#9cb3aa"
+      }
+    },
+    {
+      "id": "prop_industrial_tally_document_shelf",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_tally_document_shelf.glb",
+      "nodeName": "prop_industrial_tally_document_shelf",
+      "label": "Tally document shelf",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -0.45
+        ],
+        "max": [
+          0.85,
+          1,
+          0.45
+        ],
+        "size": [
+          1.7,
+          1,
+          0.9
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_shipping_rack",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_shipping_rack.glb",
+      "nodeName": "prop_industrial_shipping_rack",
+      "label": "Shipping rack",
+      "triangles": 748,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.9,
+          1.8,
+          0.5
+        ],
+        "size": [
+          1.8,
+          1.8,
+          1
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_billet_bundle",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_billet_bundle.glb",
+      "nodeName": "prop_industrial_billet_bundle",
+      "label": "Billet bundle",
+      "triangles": 352,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.65
+        ],
+        "max": [
+          1,
+          0.8,
+          0.65
+        ],
+        "size": [
+          2,
+          0.8,
+          1.3
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_forklift",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_forklift.glb",
+      "nodeName": "prop_industrial_dispatch_forklift",
+      "label": "Dispatch forklift",
+      "triangles": 642,
+      "bounds": {
+        "min": [
+          -0.85,
+          0,
+          -1.8
+        ],
+        "max": [
+          0.85,
+          2.8,
+          1.8
+        ],
+        "size": [
+          1.7,
+          2.8,
+          3.6
+        ]
+      },
+      "palette": {
+        "primary": "#b59b53",
+        "trim": "#e3c571"
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_industrial_dispatch_forklift.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lift Forks"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_dispatch_pickup",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_dispatch_pickup.glb",
+      "nodeName": "prop_industrial_dispatch_pickup",
+      "label": "Dispatch pickup",
+      "triangles": 632,
+      "bounds": {
+        "min": [
+          -0.95,
+          0,
+          -1.85
+        ],
+        "max": [
+          0.95,
+          1.7,
+          1.85
+        ],
+        "size": [
+          1.9,
+          1.7,
+          3.7
+        ]
+      },
+      "palette": {
+        "primary": "#627a72",
+        "trim": "#cba867"
+      },
+      "motion": {
+        "relativePath": "vehicles/prop_industrial_dispatch_pickup.glb",
+        "clips": [
+          "Drive",
+          "Steer",
+          "Lower Tailgate",
+          "Roll and brake"
+        ],
+        "lights": [
+          "vehicle_root_headlamp_01_light",
+          "vehicle_root_headlamp_02_light",
+          "vehicle_root_taillamp_03_light",
+          "vehicle_root_taillamp_04_light"
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_hoist_control_lever",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hoist_control_lever.glb",
+      "nodeName": "prop_industrial_hoist_control_lever",
+      "label": "Hoist control lever",
+      "triangles": 38,
+      "bounds": {
+        "min": [
+          -0.1,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.1,
+          0.3,
+          0.1
+        ],
+        "size": [
+          0.2,
+          0.3,
+          0.2
+        ]
+      }
+    },
+    {
+      "id": "prop_industrial_hot_test_billet",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_hot_test_billet.glb",
+      "nodeName": "prop_industrial_hot_test_billet",
+      "label": "Hot test billet",
+      "triangles": 106,
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -0.15
+        ],
+        "max": [
+          1.6,
+          0.3,
+          0.15
+        ],
+        "size": [
+          3.2,
+          0.3,
+          0.3
+        ]
+      },
+      "palette": {
+        "primary": "#99472d",
+        "accent": "#ffd15c",
+        "trim": "#ff8e34"
+      }
+    },
+    {
+      "id": "prop_industrial_billet_tally_ledger",
+      "pack": "industrial",
+      "leaf": "world",
+      "relativePath": "level-kit/prop_industrial_billet_tally_ledger.glb",
+      "nodeName": "prop_industrial_billet_tally_ledger",
+      "label": "Billet tally ledger",
+      "triangles": 122,
+      "bounds": {
+        "min": [
+          -0.3,
+          0,
+          -0.2
+        ],
+        "max": [
+          0.3,
+          0.3,
+          0.2
+        ],
+        "size": [
+          0.6,
+          0.3,
+          0.4
+        ]
+      }
+    }
+  ],
+  "presets": [
+    {
+      "id": "ind_craftsman",
+      "pack": "industrial",
+      "label": "Workshop Craftsman",
+      "rigId": "ual1",
+      "clip": "Idle_Loop",
+      "body": "body_athletic",
+      "head": "head_bearded_craftsman",
+      "hair": "hair_short_quiff",
+      "torso": "torso_ind_work_apron",
+      "legs": "legs_ind_weathered_cargo",
+      "headwear": "headwear_knit_beanie",
+      "back": null,
+      "heldRight": "held_pipe_wrench",
+      "heldLeft": null,
+      "palette": {
+        "skin": "#f4b998",
+        "hair": "#3a2a20",
+        "primary": "#4b647a",
+        "secondary": "#595146",
+        "accent": "#b87e3e",
+        "metal": "#8e98a3",
+        "trim": "#dfd6c1",
+        "leather": "#9e7b56",
+        "visor": "#42606b",
+        "detail": "#4d5d6e"
+      },
+      "proportions": {
+        "height": 0.96,
+        "legRatio": 0.9,
+        "build": 0,
+        "shoulderWidth": 1.46,
+        "torsoBulk": 1.05,
+        "waistScale": 1.02,
+        "headScale": 1,
+        "limbThickness": 1.04,
+        "armLength": 0.95,
+        "bodyLength": 1
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 80.8887,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.5474,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0977,
+                0.1352,
+                0.0381
+              ],
+              "b": [
+                0.0977,
+                0.1352,
+                0.0381
+              ],
+              "radius": 0.152
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2611,
+              -0.0015
+            ],
+            "massKg": 11.71,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.1044,
+                0.0424,
+                0.0018
+              ],
+              "b": [
+                0.1044,
+                0.0424,
+                0.0018
+              ],
+              "radius": 0.1162
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.2159,
+              -0.0198
+            ],
+            "massKg": 17.7658,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0785,
+                0.0763,
+                0.0027
+              ],
+              "b": [
+                0.0785,
+                0.0763,
+                0.0027
+              ],
+              "radius": 0.184
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.265,
+              0.0085
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0274,
+                0.026
+              ],
+              "b": [
+                0,
+                0.2069,
+                0.0184
+              ],
+              "radius": 0.137
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.2243,
+              0.0651,
+              0.0275
+            ],
+            "massKg": 2.5207,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0053,
+                -0.0072,
+                0.0013
+              ],
+              "b": [
+                -0.0055,
+                0.2556,
+                0.0058
+              ],
+              "radius": 0.0693
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2841,
+              -0.0007
+            ],
+            "massKg": 1.5999,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0053,
+                0.0047,
+                0.007
+              ],
+              "b": [
+                -0.0053,
+                0.2182,
+                0.0033
+              ],
+              "radius": 0.0686
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2436,
+              0.0006
+            ],
+            "massKg": 0.6256,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0194,
+                0.0727,
+                0.0284
+              ],
+              "b": [
+                0.0194,
+                0.1117,
+                0.0284
+              ],
+              "radius": 0.0975
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.2243,
+              0.0651,
+              0.0275
+            ],
+            "massKg": 2.5207,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0053,
+                -0.0072,
+                0.0013
+              ],
+              "b": [
+                0.0055,
+                0.2556,
+                0.0058
+              ],
+              "radius": 0.0693
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2841,
+              -0.0007
+            ],
+            "massKg": 1.5999,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0053,
+                0.0047,
+                0.007
+              ],
+              "b": [
+                0.0053,
+                0.2182,
+                0.0033
+              ],
+              "radius": 0.0686
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2436,
+              0.0006
+            ],
+            "massKg": 0.6256,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0194,
+                0.0727,
+                0.0284
+              ],
+              "b": [
+                -0.0194,
+                0.1117,
+                0.0284
+              ],
+              "radius": 0.0975
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0951,
+              0.0572,
+              0.0103
+            ],
+            "massKg": 7.1581,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.006,
+                0.3422,
+                -0.0501
+              ],
+              "b": [
+                0.006,
+                0.0632,
+                -0.0481
+              ],
+              "radius": 0.1216
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3878,
+              0.0006
+            ],
+            "massKg": 3.256,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0063,
+                0.4139,
+                -0.058
+              ],
+              "b": [
+                0.0061,
+                -0.0006,
+                -0.0247
+              ],
+              "radius": 0.0874
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              0,
+              0.3982,
+              0.0068
+            ],
+            "massKg": 1.1476,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0029,
+                0.0882,
+                0.0759
+              ],
+              "b": [
+                0.0058,
+                0.2179,
+                -0.001
+              ],
+              "radius": 0.0462
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0951,
+              0.0572,
+              0.0103
+            ],
+            "massKg": 7.1581,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.006,
+                0.3422,
+                -0.0501
+              ],
+              "b": [
+                -0.006,
+                0.0632,
+                -0.0481
+              ],
+              "radius": 0.1031
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3878,
+              0.0006
+            ],
+            "massKg": 3.256,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0063,
+                0.4139,
+                -0.058
+              ],
+              "b": [
+                -0.0061,
+                -0.0006,
+                -0.0247
+              ],
+              "radius": 0.0874
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0,
+              0.3982,
+              0.0068
+            ],
+            "massKg": 1.1476,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0029,
+                0.0882,
+                0.0759
+              ],
+              "b": [
+                -0.0058,
+                0.2179,
+                -0.001
+              ],
+              "radius": 0.0462
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    },
+    {
+      "id": "ind_welder",
+      "pack": "industrial",
+      "label": "Pipe Welder",
+      "rigId": "ual1",
+      "clip": "Idle_Loop",
+      "body": "body_athletic",
+      "head": "head_scarred_veteran",
+      "hair": "hair_buzz_crew",
+      "torso": "torso_ind_coveralls",
+      "legs": "legs_ind_heavy_boots",
+      "headwear": "headwear_welding_cap",
+      "back": "back_tool_roll",
+      "heldRight": "held_blowtorch",
+      "heldLeft": null,
+      "palette": {
+        "skin": "#d49062",
+        "hair": "#382419",
+        "primary": "#4b5f76",
+        "secondary": "#3b424c",
+        "accent": "#3996e8",
+        "metal": "#9ca5b0",
+        "trim": "#dfd6c1",
+        "leather": "#593b27",
+        "visor": "#447e8e",
+        "detail": "#8a462e"
+      },
+      "proportions": {
+        "height": 0.97,
+        "legRatio": 0.9,
+        "build": 0,
+        "shoulderWidth": 1.46,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1,
+        "armLength": 0.95,
+        "bodyLength": 1
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 77.9021,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.3076,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.1041,
+                0.1356,
+                0.037
+              ],
+              "b": [
+                0.1041,
+                0.1356,
+                0.037
+              ],
+              "radius": 0.1358
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2621,
+              -0.0027
+            ],
+            "massKg": 11.3466,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.1174,
+                0.043,
+                0.0016
+              ],
+              "b": [
+                0.1174,
+                0.043,
+                0.0016
+              ],
+              "radius": 0.1587
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.2196,
+              -0.0204
+            ],
+            "massKg": 17.0115,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0844,
+                0.0776,
+                0.0028
+              ],
+              "b": [
+                0.1001,
+                0.0776,
+                0.0028
+              ],
+              "radius": 0.1814
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2684,
+              0.0088
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0274,
+                0.026
+              ],
+              "b": [
+                0,
+                0.1543,
+                0.0201
+              ],
+              "radius": 0.1375
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.2241,
+              0.0663,
+              0.0258
+            ],
+            "massKg": 2.3543,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0051,
+                -0.0073,
+                0.0012
+              ],
+              "b": [
+                -0.0053,
+                0.2592,
+                0.0058
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2881,
+              -0.0004
+            ],
+            "massKg": 1.5234,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0051,
+                0.0048,
+                0.0068
+              ],
+              "b": [
+                -0.0051,
+                0.2212,
+                0.003
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.247,
+              0.0004
+            ],
+            "massKg": 0.6,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0191,
+                0.0717,
+                0.028
+              ],
+              "b": [
+                0.0191,
+                0.1101,
+                0.028
+              ],
+              "radius": 0.0962
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.2241,
+              0.0663,
+              0.0258
+            ],
+            "massKg": 2.3543,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0051,
+                -0.0073,
+                0.0012
+              ],
+              "b": [
+                0.0053,
+                0.2592,
+                0.0058
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2881,
+              -0.0004
+            ],
+            "massKg": 1.5234,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0052,
+                0.0048,
+                0.0068
+              ],
+              "b": [
+                0.0051,
+                0.2212,
+                0.003
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.247,
+              0.0004
+            ],
+            "massKg": 0.6,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0191,
+                0.0717,
+                0.028
+              ],
+              "b": [
+                -0.0191,
+                0.1101,
+                0.028
+              ],
+              "radius": 0.0962
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0573,
+              0.0099
+            ],
+            "massKg": 6.7876,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0058,
+                0.3473,
+                -0.0482
+              ],
+              "b": [
+                0.0058,
+                0.0642,
+                -0.0462
+              ],
+              "radius": 0.0997
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3936,
+              0.0004
+            ],
+            "massKg": 3.1029,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0061,
+                0.4202,
+                -0.0578
+              ],
+              "b": [
+                0.0059,
+                -0.0005,
+                -0.024
+              ],
+              "radius": 0.0997
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              0,
+              0.404,
+              0.0052
+            ],
+            "massKg": 1.125,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0028,
+                0.0879,
+                0.0761
+              ],
+              "b": [
+                0.0057,
+                0.2163,
+                -0.0001
+              ],
+              "radius": 0.046
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0573,
+              0.0099
+            ],
+            "massKg": 6.7876,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0058,
+                0.3473,
+                -0.0482
+              ],
+              "b": [
+                -0.0058,
+                0.0642,
+                -0.0462
+              ],
+              "radius": 0.0997
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3936,
+              0.0004
+            ],
+            "massKg": 3.1029,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0061,
+                0.4202,
+                -0.0578
+              ],
+              "b": [
+                -0.0059,
+                -0.0005,
+                -0.024
+              ],
+              "radius": 0.0997
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0,
+              0.404,
+              0.0052
+            ],
+            "massKg": 1.125,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0028,
+                0.0879,
+                0.0761
+              ],
+              "b": [
+                -0.0057,
+                0.2163,
+                -0.0001
+              ],
+              "radius": 0.046
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    },
+    {
+      "id": "ind_foreman",
+      "pack": "industrial",
+      "label": "Site Foreman",
+      "rigId": "ual1",
+      "clip": "Idle_Talking_Loop",
+      "body": "body_athletic",
+      "head": "head_rugged_hero",
+      "hair": "hair_cropped_fade",
+      "torso": "torso_ind_coveralls",
+      "legs": "legs_ind_weathered_cargo",
+      "headwear": "headwear_hard_hat",
+      "back": "back_tool_roll",
+      "heldRight": null,
+      "heldLeft": null,
+      "palette": {
+        "skin": "#a8643e",
+        "hair": "#2a221d",
+        "primary": "#c9712b",
+        "secondary": "#597084",
+        "accent": "#3a66b2",
+        "metal": "#9ba4ae",
+        "trim": "#ebe1c4",
+        "leather": "#6b472d",
+        "visor": "#40bce6",
+        "detail": "#c23a2c"
+      },
+      "proportions": {
+        "height": 0.97,
+        "legRatio": 0.9,
+        "build": 0,
+        "shoulderWidth": 1.46,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1,
+        "armLength": 0.95,
+        "bodyLength": 1
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 77.9021,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.3076,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.1041,
+                0.1356,
+                0.037
+              ],
+              "b": [
+                0.1041,
+                0.1356,
+                0.037
+              ],
+              "radius": 0.1358
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2621,
+              -0.0027
+            ],
+            "massKg": 11.3466,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.1174,
+                0.043,
+                0.0016
+              ],
+              "b": [
+                0.1174,
+                0.043,
+                0.0016
+              ],
+              "radius": 0.1587
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.2196,
+              -0.0204
+            ],
+            "massKg": 17.0115,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0844,
+                0.0776,
+                0.0028
+              ],
+              "b": [
+                0.1001,
+                0.0776,
+                0.0028
+              ],
+              "radius": 0.1814
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2684,
+              0.0088
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0274,
+                0.026
+              ],
+              "b": [
+                0,
+                0.1918,
+                0.0189
+              ],
+              "radius": 0.1375
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.2241,
+              0.0663,
+              0.0258
+            ],
+            "massKg": 2.3543,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0051,
+                -0.0073,
+                0.0012
+              ],
+              "b": [
+                -0.0053,
+                0.2592,
+                0.0058
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.2881,
+              -0.0004
+            ],
+            "massKg": 1.5234,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0051,
+                0.0048,
+                0.0068
+              ],
+              "b": [
+                -0.0051,
+                0.2212,
+                0.003
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.247,
+              0.0004
+            ],
+            "massKg": 0.6,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0191,
+                0.0717,
+                0.028
+              ],
+              "b": [
+                0.0191,
+                0.1101,
+                0.028
+              ],
+              "radius": 0.0962
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.2241,
+              0.0663,
+              0.0258
+            ],
+            "massKg": 2.3543,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0051,
+                -0.0073,
+                0.0012
+              ],
+              "b": [
+                0.0053,
+                0.2592,
+                0.0058
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.2881,
+              -0.0004
+            ],
+            "massKg": 1.5234,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0052,
+                0.0048,
+                0.0068
+              ],
+              "b": [
+                0.0051,
+                0.2212,
+                0.003
+              ],
+              "radius": 0.0665
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.247,
+              0.0004
+            ],
+            "massKg": 0.6,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0191,
+                0.0717,
+                0.028
+              ],
+              "b": [
+                -0.0191,
+                0.1101,
+                0.028
+              ],
+              "radius": 0.0962
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0573,
+              0.0099
+            ],
+            "massKg": 6.7876,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0058,
+                0.3473,
+                -0.0482
+              ],
+              "b": [
+                0.0058,
+                0.0642,
+                -0.0462
+              ],
+              "radius": 0.1175
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.3936,
+              0.0004
+            ],
+            "massKg": 3.1029,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0061,
+                0.4202,
+                -0.0578
+              ],
+              "b": [
+                0.0059,
+                -0.0005,
+                -0.024
+              ],
+              "radius": 0.0847
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              0,
+              0.404,
+              0.0052
+            ],
+            "massKg": 1.125,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0028,
+                0.0879,
+                0.0761
+              ],
+              "b": [
+                0.0057,
+                0.2163,
+                -0.0001
+              ],
+              "radius": 0.046
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0573,
+              0.0099
+            ],
+            "massKg": 6.7876,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0058,
+                0.3473,
+                -0.0482
+              ],
+              "b": [
+                -0.0058,
+                0.0642,
+                -0.0462
+              ],
+              "radius": 0.0997
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.3936,
+              0.0004
+            ],
+            "massKg": 3.1029,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0061,
+                0.4202,
+                -0.0578
+              ],
+              "b": [
+                -0.0059,
+                -0.0005,
+                -0.024
+              ],
+              "radius": 0.0847
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0,
+              0.404,
+              0.0052
+            ],
+            "massKg": 1.125,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0028,
+                0.0879,
+                0.0761
+              ],
+              "b": [
+                -0.0057,
+                0.2163,
+                -0.0001
+              ],
+              "radius": 0.046
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    }
+  ]
+}

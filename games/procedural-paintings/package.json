@@ -1,0 +1,30 @@
+{
+  "name": "procedural-paintings",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "21 pure-procedural WebGL Three.js painting scenes (TypeScript/GLSL, zero external texture or mesh assets) accompanied by a CC0 solo piano recording of Erik Satie's Gymnopédie No. 1.",
+  "keywords": [
+    "RUN.game"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "deploy": "npm run build && rundot deploy"
+  },
+  "dependencies": {
+    "@series-inc/rundot-game-sdk": "^5.39.0",
+    "three": "0.183.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^22.0.0",
+    "@types/three": "0.183.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.2"
+  }
+}

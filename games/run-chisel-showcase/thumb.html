@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=512, initial-scale=1.0" />
+    <title>RUN Chisel Thumbnail Renderer</title>
+    <style>
+      html,
+      body,
+      #thumb-root {
+        margin: 0;
+        width: 512px;
+        height: 512px;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 42%, #2b3a52 0%, #172132 52%, #0c111a 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="thumb-root"></div>
+    <script type="module" src="/src/thumb.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,407 @@
+{
+  "version": 1,
+  "rigId": "run-cat-35",
+  "source": "RUN Ginger Cat Rig (CC0-1.0 / RUN Supplemental)",
+  "jointCount": 35,
+  "joints": [
+    "root",
+    "spine",
+    "pelvis",
+    "tail.0",
+    "tail.1",
+    "tail.2",
+    "tail.3",
+    "tail.4",
+    "tail.5",
+    "tail.6",
+    "tail.7",
+    "thigh.L",
+    "shin.L",
+    "hock.L",
+    "hind_paw.L",
+    "thigh.R",
+    "shin.R",
+    "hock.R",
+    "hind_paw.R",
+    "chest",
+    "neck",
+    "head",
+    "lids",
+    "ear.L",
+    "ear.R",
+    "chest_breath",
+    "upperarm.L",
+    "forearm.L",
+    "wrist.L",
+    "paw.L",
+    "upperarm.R",
+    "forearm.R",
+    "wrist.R",
+    "paw.R",
+    "spine_breath"
+  ],
+  "parents": {
+    "root": null,
+    "spine": "root",
+    "pelvis": "spine",
+    "tail.0": "pelvis",
+    "tail.1": "tail.0",
+    "tail.2": "tail.1",
+    "tail.3": "tail.2",
+    "tail.4": "tail.3",
+    "tail.5": "tail.4",
+    "tail.6": "tail.5",
+    "tail.7": "tail.6",
+    "thigh.L": "pelvis",
+    "shin.L": "thigh.L",
+    "hock.L": "shin.L",
+    "hind_paw.L": "hock.L",
+    "thigh.R": "pelvis",
+    "shin.R": "thigh.R",
+    "hock.R": "shin.R",
+    "hind_paw.R": "hock.R",
+    "chest": "spine",
+    "neck": "chest",
+    "head": "neck",
+    "lids": "head",
+    "ear.L": "head",
+    "ear.R": "head",
+    "chest_breath": "chest",
+    "upperarm.L": "chest",
+    "forearm.L": "upperarm.L",
+    "wrist.L": "forearm.L",
+    "paw.L": "wrist.L",
+    "upperarm.R": "chest",
+    "forearm.R": "upperarm.R",
+    "wrist.R": "forearm.R",
+    "paw.R": "wrist.R",
+    "spine_breath": "spine"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.0,
+      -0.0894
+    ],
+    "spine": [
+      0.0,
+      0.21743,
+      -0.0894
+    ],
+    "pelvis": [
+      0.0,
+      0.21743,
+      -0.0894
+    ],
+    "tail.0": [
+      -0.0,
+      0.27191,
+      -0.20487
+    ],
+    "tail.1": [
+      -0.0,
+      0.29166,
+      -0.24191
+    ],
+    "tail.2": [
+      -0.0,
+      0.32465,
+      -0.26775
+    ],
+    "tail.3": [
+      -0.0,
+      0.36478,
+      -0.28021
+    ],
+    "tail.4": [
+      -0.0,
+      0.40682,
+      -0.2834
+    ],
+    "tail.5": [
+      -0.0,
+      0.4489,
+      -0.2805
+    ],
+    "tail.6": [
+      -0.0,
+      0.48974,
+      -0.27038
+    ],
+    "tail.7": [
+      -0.0,
+      0.52443,
+      -0.2469
+    ],
+    "thigh.L": [
+      0.04283,
+      0.22621,
+      -0.15981
+    ],
+    "shin.L": [
+      0.04283,
+      0.07773,
+      -0.14855
+    ],
+    "hock.L": [
+      0.04283,
+      0.02073,
+      -0.16432
+    ],
+    "hind_paw.L": [
+      0.04283,
+      0.01549,
+      -0.15699
+    ],
+    "thigh.R": [
+      -0.04283,
+      0.22621,
+      -0.15981
+    ],
+    "shin.R": [
+      -0.04283,
+      0.07773,
+      -0.14855
+    ],
+    "hock.R": [
+      -0.04283,
+      0.02073,
+      -0.16432
+    ],
+    "hind_paw.R": [
+      -0.04283,
+      0.01549,
+      -0.15699
+    ],
+    "chest": [
+      0.0,
+      0.21743,
+      0.02044
+    ],
+    "neck": [
+      0.0,
+      0.25697,
+      0.12746
+    ],
+    "head": [
+      0.0,
+      0.29931,
+      0.14288
+    ],
+    "lids": [
+      0.0,
+      0.39435,
+      0.25622
+    ],
+    "ear.L": [
+      0.05351,
+      0.45862,
+      0.16985
+    ],
+    "ear.R": [
+      -0.05351,
+      0.45862,
+      0.16985
+    ],
+    "chest_breath": [
+      0.0,
+      0.21743,
+      0.02044
+    ],
+    "upperarm.L": [
+      0.03666,
+      0.21743,
+      0.1162
+    ],
+    "forearm.L": [
+      0.03666,
+      0.13395,
+      0.11169
+    ],
+    "wrist.L": [
+      0.03666,
+      0.01814,
+      0.11845
+    ],
+    "paw.L": [
+      0.03666,
+      0.01549,
+      0.12042
+    ],
+    "upperarm.R": [
+      -0.03666,
+      0.21743,
+      0.1162
+    ],
+    "forearm.R": [
+      -0.03666,
+      0.13395,
+      0.11169
+    ],
+    "wrist.R": [
+      -0.03666,
+      0.01814,
+      0.11845
+    ],
+    "paw.R": [
+      -0.03666,
+      0.01549,
+      0.12042
+    ],
+    "spine_breath": [
+      0.0,
+      0.21743,
+      -0.0894
+    ]
+  },
+  "clips": [
+    {
+      "name": "arch",
+      "duration": 1.9333
+    },
+    {
+      "name": "flop",
+      "duration": 0.3667
+    },
+    {
+      "name": "flop_idle",
+      "duration": 4.0333
+    },
+    {
+      "name": "groom",
+      "duration": 1.4333
+    },
+    {
+      "name": "head_tilt",
+      "duration": 2.0333
+    },
+    {
+      "name": "idle",
+      "duration": 4.0333
+    },
+    {
+      "name": "jump",
+      "duration": 1.9333
+    },
+    {
+      "name": "knead",
+      "duration": 1.6333
+    },
+    {
+      "name": "knead_lie",
+      "duration": 1.6333
+    },
+    {
+      "name": "lie_down",
+      "duration": 0.4333
+    },
+    {
+      "name": "lie_idle",
+      "duration": 4.0333
+    },
+    {
+      "name": "lie_to_stand",
+      "duration": 0.3333
+    },
+    {
+      "name": "loaf",
+      "duration": 0.4
+    },
+    {
+      "name": "loaf_idle",
+      "duration": 6.0333
+    },
+    {
+      "name": "loaf_to_stand",
+      "duration": 0.3667
+    },
+    {
+      "name": "paw_swipe",
+      "duration": 1.3333
+    },
+    {
+      "name": "pounce",
+      "duration": 2.3333
+    },
+    {
+      "name": "run",
+      "duration": 0.4667
+    },
+    {
+      "name": "scratch_ear",
+      "duration": 0.6
+    },
+    {
+      "name": "sit",
+      "duration": 0.3333
+    },
+    {
+      "name": "sit_idle",
+      "duration": 4.0333
+    },
+    {
+      "name": "sit_to_stand",
+      "duration": 0.3
+    },
+    {
+      "name": "sleep",
+      "duration": 0.9333
+    },
+    {
+      "name": "sleep_idle",
+      "duration": 6.0333
+    },
+    {
+      "name": "slow_blink",
+      "duration": 2.0333
+    },
+    {
+      "name": "sneak",
+      "duration": 1.5333
+    },
+    {
+      "name": "stretch",
+      "duration": 2.5
+    },
+    {
+      "name": "tail_bat",
+      "duration": 1.0333
+    },
+    {
+      "name": "tail_flick",
+      "duration": 1.0333
+    },
+    {
+      "name": "tail_question",
+      "duration": 1.8333
+    },
+    {
+      "name": "tail_quiver",
+      "duration": 1.0333
+    },
+    {
+      "name": "tail_swish",
+      "duration": 0.7667
+    },
+    {
+      "name": "tail_wave",
+      "duration": 2.0333
+    },
+    {
+      "name": "trot",
+      "duration": 0.6
+    },
+    {
+      "name": "wake",
+      "duration": 2.6333
+    },
+    {
+      "name": "walk",
+      "duration": 1.0333
+    },
+    {
+      "name": "wiggle",
+      "duration": 1.4333
+    }
+  ]
+}

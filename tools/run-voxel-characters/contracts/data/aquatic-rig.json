@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "rigId": "chisel-aquatic-13",
+  "source": "RUN Chisel Aquatic Rig (LicenseRef-RUN-Repository-Supplemental-1.0 / CC0 Mesh2Motion clips)",
+  "jointCount": 13,
+  "joints": [
+    "root",
+    "pelvis",
+    "neck",
+    "head",
+    "jaw",
+    "spine_01",
+    "tail_01",
+    "tail_02",
+    "tail_fin",
+    "fin_l",
+    "fin_r",
+    "pelvic_fin_l",
+    "pelvic_fin_r"
+  ],
+  "parents": {
+    "root": null,
+    "pelvis": "root",
+    "neck": "pelvis",
+    "head": "neck",
+    "jaw": "head",
+    "spine_01": "pelvis",
+    "tail_01": "spine_01",
+    "tail_02": "tail_01",
+    "tail_fin": "tail_02",
+    "fin_l": "pelvis",
+    "fin_r": "pelvis",
+    "pelvic_fin_l": "tail_01",
+    "pelvic_fin_r": "tail_01"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "pelvis": [
+      0.0,
+      0.62,
+      0.16
+    ],
+    "neck": [
+      0.0,
+      0.65,
+      0.34
+    ],
+    "head": [
+      0.0,
+      0.66,
+      0.56
+    ],
+    "jaw": [
+      0.0,
+      0.52,
+      0.62
+    ],
+    "spine_01": [
+      0.0,
+      0.61,
+      -0.1
+    ],
+    "tail_01": [
+      0.0,
+      0.59,
+      -0.44
+    ],
+    "tail_02": [
+      0.0,
+      0.56,
+      -0.82
+    ],
+    "tail_fin": [
+      0.0,
+      0.54,
+      -1.18
+    ],
+    "fin_l": [
+      0.22,
+      0.44,
+      0.14
+    ],
+    "fin_r": [
+      -0.22,
+      0.44,
+      0.14
+    ],
+    "pelvic_fin_l": [
+      0.12,
+      0.48,
+      -0.52
+    ],
+    "pelvic_fin_r": [
+      -0.12,
+      0.48,
+      -0.52
+    ]
+  },
+  "clips": [
+    {
+      "name": "Idle",
+      "duration": 2.5
+    },
+    {
+      "name": "Swim_Horizontal",
+      "duration": 1.3333
+    },
+    {
+      "name": "Swim_Vertical",
+      "duration": 3.3333
+    },
+    {
+      "name": "Bite",
+      "duration": 2.9583
+    },
+    {
+      "name": "Hit",
+      "duration": 0.7917
+    },
+    {
+      "name": "Dead_Floating",
+      "duration": 3.2917
+    }
+  ]
+}
