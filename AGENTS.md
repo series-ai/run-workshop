@@ -30,5 +30,22 @@ are `- [x]`. So:
 - Each project under `games/` is self-contained (its own `package.json`,
   dependencies, and docs). Work inside the sub-project directory.
 
+## Expanding asset packs (`jam-ready-assets`)
+
+- **Always add new and expanded pack assets to the `jam-ready-assets` repository**
+  (not only locally in `run-workshop`) whenever expanding `run-chisel-*`
+  (`tools/run-chisel-packs/`) or `run-voxel-*` (`tools/run-voxel-packs/`), so
+  published RUN games and showcase pinned builds (`src/pins.ts`) can load them
+  via `@series-inc/rundot-game-sdk`.
+- After building, validating, and rendering thumbnails in the showcase, run
+  `npm run stage -- --target <jam-ready-assets-checkout>` (which writes GLBs,
+  `Previews/*.jpg`, `License.txt`, `.preview-sources/`, `preview.webp`, and
+  `preview-sources.json`), rebuild the v2 manifest and run `npm test` inside
+  `jam-ready-assets`, then sync the updated leaf hashes back into `src/pins.ts`
+  with `npm run sync-pins -- --target <jam-ready-assets-checkout>` (for Chisel
+  packs) and verify a pinned `npm run build`.
+- For `run-chisel-*` authoring, follow
+  [`.agents/skills/run-chisel-assets/SKILL.md`](.agents/skills/run-chisel-assets/SKILL.md).
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution requirements and
 [GETTING_STARTED.md](GETTING_STARTED.md) for onboarding.

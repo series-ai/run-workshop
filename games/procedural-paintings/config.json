@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "procedural-paintings",
+    "name": "Procedural Paintings",
+    "description": "21 pure-procedural WebGL Three.js painting scenes — 16 pre-1910 public-domain works and 5 original style studies, built with zero external assets.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

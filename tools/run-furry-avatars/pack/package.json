@@ -1,0 +1,15 @@
+{
+  "name": "run-furry-avatars-pack",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compress": "node compress.mjs",
+    "pack": "node pack.mjs"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "meshoptimizer": "1.3.0"
+  }
+}

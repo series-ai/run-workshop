@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "packs": [
+    {
+      "pack": "core",
+      "label": "Core Rig & Voxel Bodies",
+      "path": "core/catalog.json"
+    },
+    {
+      "pack": "heist",
+      "label": "Heist & Demolition",
+      "path": "heist/catalog.json"
+    },
+    {
+      "pack": "industrial",
+      "label": "Workshop & Industrial",
+      "path": "industrial/catalog.json"
+    },
+    {
+      "pack": "security",
+      "label": "Security & Cyber-Tech",
+      "path": "security/catalog.json"
+    },
+    {
+      "pack": "creatures",
+      "label": "Voxel Beasts & Bots",
+      "path": "creatures/catalog.json"
+    },
+    {
+      "pack": "fantasy",
+      "label": "Fantasy & Medieval",
+      "path": "fantasy/catalog.json"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 import { authoredRecipe } from '../constants/01'
 
-export default authoredRecipe('dash-burst', "Dash burst", "Movement burst for dodge starts and speed pickups.", [
-  { kind: 'core-sphere', role: 'impact', opacity: 0.65, scale: 0.7, phase: 'dash-burst-speed-pop', tuning: { meshMotion: 'flash' } },
-  { kind: 'particles', role: 'trail', opacity: 0.5, scale: 0.48, phase: 'dash-burst-speed-points', tuning: { delay: 0.14, window: 0.14, lifeScale: 0.6, ease: 'snap', turbulenceScale: 0, sprite: 'streak', stretch: 1.8, gravity: 0, spinScale: 0 } },
-  { kind: 'shockwave-ring', role: 'impact', opacity: 0.5, scale: 0.56, phase: 'dash-burst-origin-ring', tuning: { meshMotion: 'shockwave', ringPurpose: 'shockwave' } },
+export default authoredRecipe('dash-burst', 'Dash burst', 'A curved pressure front pulls a full soft wake forward. Fine speed particles follow behind the head.', [
+  { kind: 'shield-shell', role: 'body', opacity: 0.88, scale: 1.15, phase: 'dash-burst-shear-ribbons', tuning: { referenceSource: 'repo-original/dashBurstSlipstream', referenceAdaptation: 'Original moving pressure crescent with a full tapered soft wake.', referenceLicense: 'repo-original', meshShader: 'dash-burst-shear-ribbons', colorIndex: 1, turbulenceScale: 0 } },
+  { kind: 'mesh-fragments', role: 'trail', opacity: 0.86, scale: 1.15, phase: 'dash-burst-speed-traces', tuning: { referenceSource: 'repo-original/dashBurstSlipstream', referenceAdaptation: 'Original fine speed particles behind the leading front.', referenceLicense: 'repo-original', meshShader: 'dash-burst-speed-traces', colorIndex: 1, turbulenceScale: 0 } },
 ], 2, 1.45)

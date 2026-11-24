@@ -1,0 +1,259 @@
+<!doctype html>
+<!-- Cover and gallery sheets for the library pack, built with the packaged
+     wheelskit.js (so this doubles as a test of the shipped helper).
+     Serve ~/Documents/GitHub and open
+       run-workshop/tools/run-monster-trucks/pack/shots.html?shot=<cover|lineup|mix|wheels|parts|trailers>&kit=<leaf>/kit/
+     shots.mjs screenshots every shot with headless Chrome. -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: Lilita; src: url(../../run-costume-kids/packs/fonts/LilitaOne-Regular.ttf); }
+  @font-face { font-family: Dirt; src: url(fonts/RubikDirt-Regular.ttf); }
+  @font-face { font-family: Ops; src: url(fonts/BlackOpsOne-Regular.ttf); }
+  @font-face { font-family: Bungee; src: url(fonts/Bungee-Regular.ttf); }
+  #logo { position: fixed; left: 0; right: 0; text-align: center; transform: rotate(-4deg); }
+  #logo .w1, #logo .w2 { font-family: Dirt, sans-serif; line-height: 0.86; color: transparent;
+    background: linear-gradient(#ffe36a 8%, #ff9a1f 50%, #c8321a 92%); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-stroke: 3px #140c0a; filter: drop-shadow(3px 0 0 #140c0a) drop-shadow(-3px 0 0 #140c0a) drop-shadow(0 3px 0 #140c0a) drop-shadow(0 -3px 0 #140c0a) drop-shadow(0 8px 0 #140c0a) drop-shadow(0 0 26px #000a); }
+  /* Ops: clean gradient letters over an outline-only copy behind them, so the
+     outline sits outside the letters (a text stroke is centred and eats into a stencil face) */
+  #logo.ops .w1, #logo.ops .w2 { position: relative; font-family: Ops, sans-serif; background: none; color: inherit; -webkit-text-stroke: 0;
+    filter: drop-shadow(0 5px 0 #140c0a) drop-shadow(0 0 22px #0008); }
+  #logo.ops .o { position: absolute; left: 0; right: 0; top: 0; color: #140c0a; -webkit-text-stroke: 12px #140c0a; }
+  #logo.ops .f { position: relative; color: transparent; background: linear-gradient(#ffe36a 8%, #ff9a1f 50%, #c8321a 92%);
+    -webkit-background-clip: text; background-clip: text; }
+  #logo.ops .w1 { font-size: 112px; } #logo.ops .w2 { font-size: 168px; }
+  #logo .w1 { font-size: 122px; letter-spacing: 0.02em; }
+  #logo .w2 { font-size: 196px; letter-spacing: 0.03em; }
+  #logo .sub { display: inline-block; margin-top: 10px; font: 30px Bungee, sans-serif; letter-spacing: 0.22em; padding: 8px 18px 6px 26px;
+    color: #ffb13b; background: #140c0a; border: 3px solid #ff8a1f; clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%); }
+  html, body { margin: 0; background: #e9dcc3; overflow: hidden; }
+  canvas { display: block; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .lab { position: absolute; transform: translateX(-50%); font: 22px Bungee, sans-serif; color: #3b2a1e; letter-spacing: 0.06em; white-space: nowrap; }
+  #title { position: fixed; left: 0; right: 0; text-align: center; font-family: Lilita, sans-serif; }
+  #title .big { font-size: 150px; line-height: 0.95; letter-spacing: 0.01em;
+    background: linear-gradient(#ffd34d 10%, #ff8a1f 60%, #e2461c 95%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 14px #23253f; paint-order: stroke fill; filter: drop-shadow(0 8px 0 #23253f) drop-shadow(0 0 18px #fff8); }
+  #title .sub { display: inline-block; margin-top: 14px; font-size: 36px; letter-spacing: 0.32em; padding: 6px 22px 6px 30px; color: #fff; background: #23253f; border-radius: 12px; }
+  #sheet-title { position: fixed; top: 0; left: 0; right: 0; height: 90px; line-height: 96px; text-align: center; font: 50px Ops, sans-serif; color: #ffb13b; background: linear-gradient(90deg, #140c0a, #3a1418 50%, #140c0a); letter-spacing: 0.04em; border-bottom: 4px solid #ff8a1f; text-transform: uppercase; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../../run-voxel-packs/node_modules/three/build/three.module.js", "three/addons/": "../../run-voxel-packs/node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="labels"></div>
+<script>
+  const say = (m) => { const d = document.createElement('pre'); d.style.cssText = 'position:fixed;top:0;left:0;z-index:9;color:#b00;font:14px monospace;white-space:pre-wrap'; d.textContent = m; document.body.append(d); };
+  addEventListener('error', (e) => say(String(e.message)));
+  addEventListener('unhandledrejection', (e) => say(String(e.reason && (e.reason.stack || e.reason))));
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const q = new URLSearchParams(location.search);
+const shot = q.get('shot') || 'cover';
+const { WheelsKit, MOTIONS } = await import(q.get('kit') + 'wheelskit.js');
+const kit = await WheelsKit.load(q.get('kit'));
+const K = kit.m;
+const W = innerWidth, H = innerHeight;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setScissorTest(true);
+document.body.prepend(renderer.domElement);
+
+const BG = 0xe9dcc3;
+function stage(catcher = false) {
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xfff6e6, 0xb59a74, 1.9));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.6);
+  sun.position.set(-260, 420, 300);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(4096, 4096);
+  Object.assign(sun.shadow.camera, { left: -900, right: 900, top: 900, bottom: -900, near: 1, far: 2000 });
+  sun.shadow.bias = -0.0004;
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, 0.8);
+  fill.position.set(300, 200, -200);
+  scene.add(fill);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), catcher ? new THREE.ShadowMaterial({ color: 0x5a4430, opacity: 0.32 }) : new THREE.MeshLambertMaterial({ color: 0xe2cfa9 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+  return scene;
+}
+const shadows = (o) => o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+const box = (o) => new THREE.Box3().setFromObject(o, true);
+
+// A vehicle posed mid-clip (frozen): accelerate at ~0.25 s gives a reared-up launch.
+async function vehicle(loadout, clip = 'idle', t = 0) {
+  const v = await kit.build(loadout);
+  v.play(clip);
+  v.update(t || 1e-4);
+  shadows(v.group);
+  return v;
+}
+const defaults = (body, extra = {}) => ({ body, ...K.bodies[body].defaults, paint: K.bodies[body].paint, trim: K.bodies[body].trim, accent: K.bodies[body].accent, ...extra });
+
+// A grid of tiles, each its own scene and camera framed on its content.
+async function grid(items, cols, title, view = { yaw: 142, pitch: 16 }) {
+  const top = title ? 90 : 0;
+  const rows = Math.ceil(items.length / cols), tw = W / cols, th = (H - top) / rows;
+  const labels = document.getElementById('labels');
+  if (title) { const t = document.createElement('div'); t.id = 'sheet-title'; t.textContent = title; document.body.append(t); }
+  renderer.setClearColor(BG);
+  renderer.setScissor(0, 0, W, H); renderer.setViewport(0, 0, W, H); renderer.clear();
+  for (let i = 0; i < items.length; i++) {
+    const { object, label } = await items[i]();
+    const scene = stage(true);  // plain background, shadows only
+    scene.add(object);
+    const b = box(object), c = b.getCenter(new THREE.Vector3()), s = b.getSize(new THREE.Vector3());
+    const r = 0.5 * Math.hypot(s.x, s.y, s.z);
+    const cam = new THREE.PerspectiveCamera(22, tw / (th - 40), 1, 8000);
+    const yaw = THREE.MathUtils.degToRad(view.yaw), pitch = THREE.MathUtils.degToRad(view.pitch);
+    const dist = (r * 1.02) / Math.sin(THREE.MathUtils.degToRad(11) * Math.min(1, tw / (th - 40)));
+    cam.position.set(c.x + dist * Math.sin(yaw) * Math.cos(pitch), c.y + dist * Math.sin(pitch), c.z + dist * Math.cos(yaw) * Math.cos(pitch));
+    cam.lookAt(c);
+    const x = (i % cols) * tw, y = H - top - (Math.floor(i / cols) + 1) * th;
+    renderer.setViewport(x, y + 40, tw, th - 40);
+    renderer.setScissor(x, y, tw, th);
+    renderer.setClearColor(BG);
+    renderer.clear();
+    renderer.setScissor(x, y + 40, tw, th - 40);
+    renderer.render(scene, cam);
+    if (label) {
+      const l = document.createElement('div');
+      l.className = 'lab'; l.textContent = label;
+      l.style.left = `${x + tw / 2}px`; l.style.top = `${H - y - 38}px`;
+      labels.append(l);
+    }
+  }
+}
+
+const tile = (loadout, label, clip, t) => async () => ({ object: (await vehicle(loadout, clip, t)).group, label });
+
+// soft dust puff texture
+function puff() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), grad = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+  grad.addColorStop(0, 'rgba(255,255,255,0.9)'); grad.addColorStop(0.5, 'rgba(255,255,255,0.35)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+function sky() {
+  const c = document.createElement('canvas'); c.width = 16; c.height = 512;
+  const g = c.getContext('2d'), grad = g.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0, '#2a1230'); grad.addColorStop(0.35, '#7a1f2b'); grad.addColorStop(0.62, '#e0521f'); grad.addColorStop(0.8, '#ffb347'); grad.addColorStop(1, '#ffd98a');
+  g.fillStyle = grad; g.fillRect(0, 0, 16, 512);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+async function cover() {
+  const scene = new THREE.Scene();
+  scene.background = sky();
+  scene.fog = new THREE.Fog(0xf2a25a, 900, 5200);
+  scene.add(new THREE.HemisphereLight(0xffe2c0, 0x7a4630, 1.5));
+  const key = new THREE.DirectionalLight(0xffe9cf, 2.7);  // front key: the vehicles stay fully lit
+  key.position.set(-220, 260, 420);
+  key.castShadow = true;
+  key.shadow.mapSize.set(4096, 4096);
+  Object.assign(key.shadow.camera, { left: -1400, right: 1400, top: 2400, bottom: -900, near: 1, far: 6000 });
+  key.shadow.bias = -0.0004;
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xff7a2a, 3.2);  // the setting sun behind them
+  rim.position.set(200, 120, -600);
+  scene.add(rim);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), new THREE.MeshLambertMaterial({ color: 0xd99a5e }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+  const sun = new THREE.Mesh(new THREE.CircleGeometry(120, 48), new THREE.MeshBasicMaterial({ color: 0xffe9a8, fog: false }));
+  sun.position.set(-520, 260, -1900);
+  scene.add(sun);
+  const dustTex = puff();
+  const put = async (loadout, x, z, yaw, t = 0.26, dust = 1) => {
+    const v = await vehicle(loadout, 'accelerate', t);
+    v.group.position.set(x, 0, z);
+    v.group.rotation.y = THREE.MathUtils.degToRad(180 + yaw);
+    scene.add(v.group);
+    // a dust trail kicked up behind it (vehicles face -z, so behind is +z locally)
+    const b = box(v.bodyRoot), len = b.getSize(new THREE.Vector3()).z, wid = b.getSize(new THREE.Vector3()).x;
+    for (let i = 0; i < 14 * dust; i++) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: dustTex, color: 0xe8b07a, transparent: true, depthWrite: false, opacity: 0.32 * (1 - i / (16 * dust)) }));
+      const k = Math.random();
+      s.position.set((Math.random() - 0.5) * wid * 1.2, 8 + k * 30, len * 0.45 + k * 200 + Math.random() * 30);
+      s.scale.setScalar(30 + k * 110);
+      v.group.add(s);
+    }
+    return v;
+  };
+  // the monster bus leads, the ice-cream van on its right shoulder, bikes out
+  // front, and a long convoy snaking back to the horizon behind them
+  const D = -28;
+  await put(defaults('bus-hood', { roof: 'tyre-stack', bumper: 'longhorns', paint: 'gold', trim: 'iron' }), 15, -80, D, 0.5, 1.3);
+  await put(defaults('icecream', { bumper: 'spike-ram', paint: 'pink', trim: 'bone' }), 205, -330, D, 0.32);
+  await put(defaults('buggy', { front: 'spiked', rear: 'spiked', paint: 'lime' }), -195, -360, D, 0.22);
+  await put(defaults('chopper', { paint: 'purple' }), 95, -15, D, 0.26);
+  await put(defaults('dirt', { paint: 'orange' }), -78, 5, D, 0.26);
+  const convoy = [
+    ['muscle', { front: 'slick', rear: 'monster', paint: 'red' }], ['semi', { paint: 'red', trailers: [{ type: 'tanker', wheels: 'steel', paint: 'iron' }] }],
+    ['rally', {}], ['pickup', { paint: 'teal' }], ['franken', {}], ['scooter', {}], ['rv', { paint: 'sky' }], ['wedge', {}], ['tow', {}],
+    ['bus-flat', { front: 'treads', rear: 'treads', paint: 'orange' }], ['hearse', { front: 'monster', rear: 'monster' }], ['camino', {}],
+    ['armchair', {}], ['cruiser', { front: 'balloon', rear: 'balloon' }], ['bug', {}], ['hatch', {}], ['chairbike', {}],
+    ['roadster', {}], ['semi', { paint: 'teal', trailers: [{ type: 'box' }, { type: 'cattle' }] }], ['muscle', { paint: 'purple' }],
+    ['pickup', {}], ['rally', { paint: 'gold' }], ['bus-hood', { paint: 'red' }], ['tow', { paint: 'lime' }],
+  ];
+  for (let i = 0; i < convoy.length; i++) {
+    const z = -650 - i * 170 - i * i * 4;  // bunching up toward the horizon
+    const x = 0.215 * (340 - z) + 15 * Math.sin(z / 400) + (i % 2 ? 30 : -30);  // up the gap between bus and van, to the top right
+    await put(defaults(convoy[i][0], convoy[i][1]), x, z, D + 18 * Math.cos(z / 650), 0.2 + (i % 5) * 0.06, i < 6 ? 0.7 : 0.4);
+  }
+  const cam = new THREE.PerspectiveCamera(Number(q.get('fov') || 40), W / H, 1, 8000);
+  cam.position.set(0, Number(q.get('cy') || 70), Number(q.get('cz') || 340));
+  cam.lookAt(0, Number(q.get('ly') || 15), -250);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.setViewport(0, 0, W, H); renderer.setScissor(0, 0, W, H);
+  renderer.render(scene, cam);
+  const t = document.createElement('div');
+  t.id = 'logo'; t.className = q.get('font') || 'ops'; t.style.bottom = '40px';
+  t.innerHTML = '<div class="w1"><span class="o">WASTELAND</span><span class="f">WASTELAND</span></div><div class="w2"><span class="o">WHEELS</span><span class="f">WHEELS</span></div><div class="sub">MIX &amp; MATCH VEHICLE KIT</div>';
+  document.body.append(t);
+}
+
+const SHOTS = {
+  cover,
+  lineup: () => grid(Object.keys(K.bodies).map((b) => tile(defaults(b), b)), 6, 'Ready-made vehicles'),
+  mix: () => grid([
+    ['bus-flat', 'monster', 'monster', 'monster'], ['bus-flat', 'treads', 'treads', 'treads'], ['bus-flat', 'balloon', 'balloon', 'balloon'], ['bus-flat', 'slick', 'monster', 'slick front, monster rear'],
+    ['icecream', 'monster', 'monster', 'monster'], ['icecream', 'treads', 'treads', 'treads'], ['icecream', 'spiked', 'spiked', 'spiked'], ['icecream', 'wire', 'tractor', 'wire front, tractor rear'],
+    ['chopper', 'mono-wire', 'mono-slick', 'bike: single wheels'], ['chopper', 'mono-monster', 'monster', 'trike: single + pair'], ['muscle', 'steel', 'steel', 'steel'], ['muscle', 'wire', 'slick', 'wire front, slick rear'],
+  ].map(([b, f, r, label]) => tile(defaults(b, { front: f, rear: r }), label)), 4, 'Any body on any wheels'),
+  wheels: () => grid(['monster', 'tractor', 'wire', 'steel', 'spiked', 'slick', 'balloon', 'chained', 'treads']
+    .map((w) => tile(defaults('hatch', { front: w, rear: w, roof: null, hood: null }), w)), 3, 'Wheel sets (each also comes single, for bikes and trikes)'),
+  parts: () => grid([
+    { roof: 'cone' }, { roof: 'rack-spare' }, { roof: 'harpoon' }, { roof: 'searchlights' }, { roof: 'dish' }, { roof: 'surfboard' },
+    { hood: 'blower-giant' }, { hood: 'velocity-stacks' }, { stacks: 'zoomies' }, { bumper: 'cow-catcher' }, { bumper: 'longhorns' }, { bumper: 'dozer-blade' },
+  ].map((p) => tile(defaults('pickup', { roof: null, hood: null, stacks: null, bumper: null, ...p }), Object.values(p)[0])), 4, 'Bolt-ons for roof, hood, stacks and bumper'),
+  trailers: async () => {
+    const tr = (types) => types.map((type, i) => ({ type, wheels: ['steel', 'monster', 'balloon', 'wire', 'chained'][i % 5], paint: ['red', 'teal', 'gold', 'sky', 'lime'][i % 5] }));
+    await grid([
+      tile(defaults('semi', { trailers: tr(['tanker', 'box']) }), 'semi + tanker + box'),
+      tile(defaults('bus-hood', { trailers: tr(['cattle', 'flatbed', 'camper']) }), 'bus + cattle + flatbed + camper'),
+      tile(defaults('chopper', { trailers: tr(['camper']) }), 'chopper + camper'),
+      tile(defaults('icecream', { trailers: tr(['tanker', 'tanker']) }), 'ice-cream van + two tankers'),
+    ], 2, 'Hitch any trailer to anything', { yaw: 118, pitch: 14 });
+  },
+};
+await SHOTS[shot]();
+document.title = 'ready';
+</script>
+</body>
+</html>

@@ -1,0 +1,628 @@
+{
+ "parts": {
+  "head": [
+   "bat",
+   "bear",
+   "bird",
+   "bunny",
+   "cat",
+   "deer",
+   "dog",
+   "dragon",
+   "fox",
+   "goat",
+   "horse",
+   "husky",
+   "hyena",
+   "kangaroo",
+   "lion",
+   "lizard",
+   "mouse",
+   "otter",
+   "raccoon",
+   "redpanda",
+   "shark",
+   "tiger",
+   "wolf"
+  ],
+  "ears": [
+   "bat",
+   "big_round",
+   "bunny",
+   "cat",
+   "deer",
+   "fin",
+   "fox",
+   "horse",
+   "lop",
+   "round",
+   "small",
+   "tall",
+   "wolf"
+  ],
+  "hair": [
+   "crest",
+   "long",
+   "mohawk",
+   "swoop",
+   "none"
+  ],
+  "tail": [
+   "bat",
+   "bear",
+   "bird",
+   "bunny",
+   "cat",
+   "deer",
+   "dragon",
+   "fox",
+   "horse",
+   "hyena",
+   "kangaroo",
+   "lion",
+   "lizard",
+   "mouse",
+   "otter",
+   "raccoon",
+   "redpanda",
+   "shark",
+   "tiger",
+   "wolf"
+  ],
+  "feet": [
+   "cloven",
+   "hooves",
+   "paws",
+   "reptile",
+   "talons"
+  ],
+  "eyes": [
+   "almond",
+   "dot",
+   "happy",
+   "round",
+   "sharp",
+   "sleepy",
+   "slit"
+  ],
+  "teeth": [
+   "fangs",
+   "buck",
+   "shark",
+   "tusks",
+   "snaggle",
+   "none"
+  ],
+  "cheeks": [
+   "fin",
+   "round",
+   "spiky",
+   "none"
+  ]
+ },
+ "species": {
+  "wolf": {
+   "snout": "dog",
+   "ears": "wolf",
+   "tail": "wolf",
+   "feet": "paws",
+   "hair": "crest",
+   "eyes": "almond",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "wolf",
+   "colours": {
+    "fur": "#70809e",
+    "fur_light": "#e2e8f2",
+    "fur_dark": "#4e5a78",
+    "hair": "#34a896",
+    "inner_ear": "#d6dce8",
+    "nose": "#1c1c22",
+    "iris": "#78968c",
+    "horn": "#e8dec4",
+    "pads": "#3a3c4c"
+   }
+  },
+  "husky": {
+   "snout": "dog",
+   "ears": "wolf",
+   "tail": "wolf",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "round",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "husky",
+   "colours": {
+    "fur": "#464c60",
+    "fur_light": "#f5f5fa",
+    "fur_dark": "#303442",
+    "hair": "#464c60",
+    "iris": "#6ec8ff"
+   }
+  },
+  "fox": {
+   "snout": "fox",
+   "ears": "fox",
+   "tail": "fox",
+   "feet": "paws",
+   "hair": "swoop",
+   "eyes": "sharp",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "fox",
+   "colours": {
+    "fur": "#ee7a34",
+    "fur_light": "#fff4e4",
+    "fur_dark": "#382828",
+    "hair": "#fa78be",
+    "iris": "#6ed25a",
+    "inner_ear": "#fff4e4"
+   }
+  },
+  "dog": {
+   "snout": "lab",
+   "ears": "lop",
+   "tail": "wolf",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "round",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "dog",
+   "colours": {
+    "fur": "#d6a860",
+    "fur_light": "#faecce",
+    "fur_dark": "#966838",
+    "hair": "#966838",
+    "iris": "#604028"
+   }
+  },
+  "cat": {
+   "snout": "cat",
+   "ears": "cat",
+   "tail": "cat",
+   "feet": "paws",
+   "hair": "crest",
+   "eyes": "slit",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "cat",
+   "colours": {
+    "fur": "#b096dc",
+    "fur_light": "#f4ecfc",
+    "fur_dark": "#6e50aa",
+    "hair": "#6e50aa",
+    "iris": "#ffc43c",
+    "nose": "#f096aa",
+    "inner_ear": "#f0aabe"
+   }
+  },
+  "tiger": {
+   "snout": "bigcat",
+   "ears": "round",
+   "tail": "tiger",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "sharp",
+   "teeth": "fangs",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "tiger",
+   "colours": {
+    "fur": "#f28c32",
+    "fur_light": "#fff6e6",
+    "fur_dark": "#281e1e",
+    "hair": "#281e1e",
+    "iris": "#b4d250",
+    "inner_ear": "#fff6e6"
+   }
+  },
+  "lion": {
+   "snout": "bigcat",
+   "ears": "round",
+   "tail": "lion",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "almond",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "lion",
+   "colours": {
+    "fur": "#deb068",
+    "fur_light": "#faecce",
+    "fur_dark": "#784828",
+    "hair": "#965228",
+    "iris": "#c8963c",
+    "nose": "#965c50"
+   }
+  },
+  "bunny": {
+   "snout": "bunny",
+   "ears": "bunny",
+   "tail": "bunny",
+   "feet": "paws",
+   "hair": "swoop",
+   "eyes": "round",
+   "teeth": "buck",
+   "tuft": true,
+   "cheeks": "round",
+   "head": "bunny",
+   "colours": {
+    "fur": "#faece2",
+    "fur_light": "#fffaf6",
+    "fur_dark": "#f0c8d6",
+    "hair": "#ffaac8",
+    "iris": "#dc5078",
+    "nose": "#f096aa",
+    "inner_ear": "#f0a0b4"
+   }
+  },
+  "deer": {
+   "snout": "deer",
+   "ears": "deer",
+   "tail": "deer",
+   "feet": "cloven",
+   "hair": "none",
+   "eyes": "round",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "deer",
+   "colours": {
+    "fur": "#c4824e",
+    "fur_light": "#faeedc",
+    "fur_dark": "#784c32",
+    "hair": "#784c32",
+    "iris": "#603c28",
+    "horn": "#ecdcbe",
+    "inner_ear": "#fad2d2"
+   }
+  },
+  "horse": {
+   "snout": "horse",
+   "ears": "horse",
+   "tail": "horse",
+   "feet": "hooves",
+   "hair": "none",
+   "eyes": "almond",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "horse",
+   "colours": {
+    "fur": "#825234",
+    "fur_light": "#f5eee2",
+    "fur_dark": "#3c281e",
+    "hair": "#281c18",
+    "iris": "#462e1e",
+    "horn": "#322824",
+    "nose": "#3c2e28"
+   }
+  },
+  "goat": {
+   "snout": "goat",
+   "ears": "deer",
+   "tail": "deer",
+   "feet": "cloven",
+   "hair": "none",
+   "eyes": "sharp",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "goat",
+   "colours": {
+    "fur": "#ceb898",
+    "fur_light": "#faf6ec",
+    "fur_dark": "#786e64",
+    "hair": "#c8c4ba",
+    "iris": "#dcaa32",
+    "horn": "#96826e",
+    "nose": "#786464"
+   }
+  },
+  "bear": {
+   "snout": "bear",
+   "ears": "round",
+   "tail": "bear",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "dot",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "round",
+   "head": "bear",
+   "colours": {
+    "fur": "#82583c",
+    "fur_light": "#d6b68c",
+    "fur_dark": "#503626",
+    "hair": "#503626",
+    "iris": "#3c281e"
+   }
+  },
+  "raccoon": {
+   "snout": "raccoon",
+   "ears": "round",
+   "tail": "raccoon",
+   "feet": "paws",
+   "hair": "mohawk",
+   "eyes": "round",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "raccoon",
+   "colours": {
+    "fur": "#8c8c96",
+    "fur_light": "#e8e8ec",
+    "fur_dark": "#28262e",
+    "hair": "#28262e",
+    "iris": "#fab43c"
+   }
+  },
+  "redpanda": {
+   "snout": "raccoon",
+   "ears": "round",
+   "tail": "redpanda",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "dot",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "round",
+   "head": "redpanda",
+   "colours": {
+    "fur": "#c45228",
+    "fur_light": "#fcf4e8",
+    "fur_dark": "#3c1e1a",
+    "hair": "#c45228",
+    "iris": "#3c1e14",
+    "inner_ear": "#fcf4e8"
+   }
+  },
+  "otter": {
+   "snout": "otter",
+   "ears": "small",
+   "tail": "otter",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "dot",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "round",
+   "head": "otter",
+   "colours": {
+    "fur": "#78563c",
+    "fur_light": "#d6bea0",
+    "fur_dark": "#503828",
+    "hair": "#503828",
+    "iris": "#281e18"
+   }
+  },
+  "hyena": {
+   "snout": "hyena",
+   "ears": "round",
+   "tail": "hyena",
+   "feet": "paws",
+   "hair": "mohawk",
+   "eyes": "sharp",
+   "teeth": "fangs",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "hyena",
+   "colours": {
+    "fur": "#ceb078",
+    "fur_light": "#e8d6b0",
+    "fur_dark": "#46362c",
+    "hair": "#46362c",
+    "iris": "#dcaa32"
+   }
+  },
+  "mouse": {
+   "snout": "mouse",
+   "ears": "big_round",
+   "tail": "mouse",
+   "feet": "paws",
+   "hair": "swoop",
+   "eyes": "dot",
+   "teeth": "buck",
+   "tuft": true,
+   "cheeks": "round",
+   "head": "mouse",
+   "colours": {
+    "fur": "#a09ca6",
+    "fur_light": "#ece8ee",
+    "fur_dark": "#6e6874",
+    "hair": "#6e6874",
+    "iris": "#1e1a1e",
+    "nose": "#f096aa",
+    "inner_ear": "#f0aabe",
+    "pads": "#f0aabe"
+   }
+  },
+  "kangaroo": {
+   "snout": "kangaroo",
+   "ears": "tall",
+   "tail": "kangaroo",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "almond",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "kangaroo",
+   "colours": {
+    "fur": "#b07c5c",
+    "fur_light": "#ecdcc8",
+    "fur_dark": "#6e4c3a",
+    "hair": "#6e4c3a",
+    "iris": "#3c281e",
+    "inner_ear": "#ecc8be"
+   }
+  },
+  "bat": {
+   "snout": "bat",
+   "ears": "bat",
+   "tail": "bat",
+   "feet": "paws",
+   "hair": "swoop",
+   "eyes": "round",
+   "teeth": "fangs",
+   "tuft": true,
+   "cheeks": "spiky",
+   "head": "bat",
+   "colours": {
+    "fur": "#543c68",
+    "fur_light": "#966eaa",
+    "fur_dark": "#382846",
+    "hair": "#c878ff",
+    "iris": "#ff5a8c",
+    "inner_ear": "#f096be",
+    "nose": "#d678ac"
+   }
+  },
+  "dragon": {
+   "snout": "dragon",
+   "ears": "fin",
+   "tail": "dragon",
+   "feet": "reptile",
+   "hair": "none",
+   "eyes": "slit",
+   "teeth": "fangs",
+   "tuft": false,
+   "cheeks": "fin",
+   "head": "dragon",
+   "colours": {
+    "fur": "#345cc4",
+    "fur_light": "#face5c",
+    "fur_dark": "#1e3882",
+    "hair": "#face5c",
+    "iris": "#ffaa28",
+    "horn": "#faf5e6",
+    "inner_ear": "#6ec8e6",
+    "claws": "#faf5e6"
+   }
+  },
+  "lizard": {
+   "snout": "lizard",
+   "ears": "none",
+   "tail": "lizard",
+   "feet": "reptile",
+   "hair": "none",
+   "eyes": "slit",
+   "teeth": "none",
+   "tuft": false,
+   "cheeks": "none",
+   "head": "lizard",
+   "colours": {
+    "fur": "#5aaa5a",
+    "fur_light": "#dcecaa",
+    "fur_dark": "#326e3c",
+    "hair": "#fa783c",
+    "iris": "#fad23c",
+    "horn": "#dcecaa"
+   }
+  },
+  "shark": {
+   "snout": "shark",
+   "ears": "none",
+   "tail": "shark",
+   "feet": "paws",
+   "hair": "none",
+   "eyes": "dot",
+   "teeth": "shark",
+   "tuft": false,
+   "cheeks": "fin",
+   "head": "shark",
+   "colours": {
+    "fur": "#628cac",
+    "fur_light": "#f0f4f8",
+    "fur_dark": "#466482",
+    "hair": "#ff6e5a",
+    "iris": "#1e1e28"
+   }
+  },
+  "bird": {
+   "snout": "bird",
+   "ears": "none",
+   "tail": "bird",
+   "feet": "talons",
+   "hair": "none",
+   "eyes": "round",
+   "teeth": "none",
+   "tuft": true,
+   "cheeks": "none",
+   "head": "bird",
+   "colours": {
+    "fur": "#466ec8",
+    "fur_light": "#f0f0fa",
+    "fur_dark": "#283c82",
+    "hair": "#fac83c",
+    "iris": "#fab428",
+    "horn": "#fabe3c"
+   }
+  }
+ },
+ "trails": {
+  "slash_r": [
+   {
+    "bone": "R",
+    "start": 0.18,
+    "end": 0.4
+   }
+  ],
+  "slash_l": [
+   {
+    "bone": "L",
+    "start": 0.18,
+    "end": 0.4
+   }
+  ],
+  "slash_combo": [
+   {
+    "bone": "R",
+    "start": 0.18,
+    "end": 0.4
+   },
+   {
+    "bone": "L",
+    "start": 0.47,
+    "end": 0.69
+   }
+  ],
+  "maul": [
+   {
+    "bone": "L",
+    "start": 0.26,
+    "end": 0.46
+   },
+   {
+    "bone": "R",
+    "start": 0.26,
+    "end": 0.46
+   }
+  ]
+ },
+ "loops": [
+  "bark",
+  "fours_idle",
+  "gallop",
+  "gather",
+  "idle",
+  "sit_eat",
+  "sit_idle",
+  "sit_talk",
+  "sit_type",
+  "sprint",
+  "trot",
+  "type",
+  "walk",
+  "wave",
+  "wave_princess"
+ ]
+}

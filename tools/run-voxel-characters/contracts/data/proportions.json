@@ -1,0 +1,79 @@
+{
+  "version": 2,
+  "humanoid": {
+    "voxelSize": 0.05,
+    "headwearVoxelSize": 0.025,
+    "defaults": {
+      "height": 0.97,
+      "legRatio": 0.9,
+      "build": 0,
+      "shoulderWidth": 1.46,
+      "torsoBulk": 1,
+      "waistScale": 1,
+      "headScale": 1,
+      "limbThickness": 1,
+      "armLength": 0.95
+    },
+    "silhouette": {
+      "faceToChestWidth": [
+        0.38,
+        0.5
+      ],
+      "minFacePortraitRatio": 1.5,
+      "headEnvelopeToChestWidth": [
+        0.65,
+        0.9
+      ],
+      "headwearToChestWidth": [
+        0.55,
+        0.92
+      ],
+      "maxHeadwearHeight": 0.36,
+      "minNeckToFaceWidth": 0.6,
+      "minArmToChestWidth": 0.27,
+      "minCalfToThighWidth": 0.65,
+      "minShoeLength": 0.19,
+      "maxHeelBackOffset": 0.01,
+      "minToeStep": 0.04
+    }
+  },
+  "bipedalMonster": {
+    "silhouette": {
+      "maxWaistToChestWidth": 0.82,
+      "minHeadDepthMeters": 0.24,
+      "minHeadForwardOffset": 0.025,
+      "minFootLengthMeters": 0.22
+    },
+    "requireBakedAo": true
+  },
+  "prop": {
+    "minHeightMeters": 0.2,
+    "minUniqueShades": 3
+  },
+  "quadruped": {
+    "silhouette": {
+      "faceToChestWidth": [
+        0.44,
+        0.8
+      ],
+      "maxHeadToChestWidth": 1.0,
+      "maxWaistToChestWidth": 0.8,
+      "lowerLegSectionVoxels": 2,
+      "pawToeStepVoxels": [
+        1,
+        2
+      ],
+      "maxLimbProudVoxels": 1,
+      "maxBrowOverhangVoxels": 1,
+      "maxPivotOutsideVoxels": 1,
+      "maxLimbOffCentreVoxels": 1
+    }
+  },
+  "creature": {
+    "motion": {
+      "maxBoneStretch": 0.02,
+      "maxSegmentGapVoxels": 1,
+      "minAnimatedDegrees": 5
+    }
+  }
+}

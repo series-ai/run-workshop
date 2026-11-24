@@ -1,6 +1,29 @@
+import { PFX_TELEPORT_BURST_BODY_FRAGMENT, PFX_TELEPORT_BURST_ACCENT_FRAGMENT, createPfxTeleportBurstBodyMaterial, createPfxTeleportBurstAccentMaterial } from '../effects/teleportBurstSpatial'
+import { PFX_SPAWN_BURST_BODY_FRAGMENT, PFX_SPAWN_BURST_ACCENT_FRAGMENT, createPfxSpawnBurstBodyMaterial, createPfxSpawnBurstAccentMaterial } from '../effects/spawnBurstMaterialize'
+import { PFX_DESPAWN_BURST_BODY_FRAGMENT, PFX_DESPAWN_BURST_ACCENT_FRAGMENT, createPfxDespawnBurstBodyMaterial, createPfxDespawnBurstAccentMaterial } from '../effects/despawnBurstDisperse'
+import { PFX_DASH_BURST_BODY_FRAGMENT, PFX_DASH_BURST_ACCENT_FRAGMENT, createPfxDashBurstBodyMaterial, createPfxDashBurstAccentMaterial } from '../effects/dashBurstSlipstream'
+import { PFX_REFLECT_BURST_BODY_FRAGMENT, PFX_REFLECT_BURST_ACCENT_FRAGMENT, createPfxReflectBurstBodyMaterial, createPfxReflectBurstAccentMaterial } from '../effects/reflectBurstRebound'
+import { PFX_RUNE_BURST_BODY_FRAGMENT, PFX_RUNE_BURST_ACCENT_FRAGMENT, createPfxRuneBurstBodyMaterial, createPfxRuneBurstAccentMaterial } from '../effects/runeBurstInscription'
+import { PFX_HEALING_BURST_BODY_FRAGMENT, PFX_HEALING_BURST_ACCENT_FRAGMENT, createPfxHealingBurstBodyMaterial, createPfxHealingBurstAccentMaterial } from '../effects/healingBurstRestoration'
+import { PFX_HOLY_BURST_BODY_FRAGMENT, PFX_HOLY_BURST_ACCENT_FRAGMENT, createPfxHolyBurstBodyMaterial, createPfxHolyBurstAccentMaterial } from '../effects/holyBurstConsecration'
+import { PFX_ACID_BURST_BODY_FRAGMENT, PFX_ACID_BURST_ACCENT_FRAGMENT, createPfxAcidBurstBodyMaterial, createPfxAcidBurstAccentMaterial } from '../effects/acidBurstCorrosiveSplash'
+import { PFX_SLIME_BURST_BODY_FRAGMENT, PFX_SLIME_BURST_ACCENT_FRAGMENT, createPfxSlimeBurstBodyMaterial, createPfxSlimeBurstAccentMaterial } from '../effects/slimeBurstElasticSplat'
+import { PFX_FROST_BURST_BODY_FRAGMENT, PFX_FROST_BURST_ACCENT_FRAGMENT, createPfxFrostBurstBodyMaterial, createPfxFrostBurstAccentMaterial } from '../effects/frostBurstCrystallization'
+import { PFX_ELECTRIC_BURST_BODY_FRAGMENT, PFX_ELECTRIC_BURST_ACCENT_FRAGMENT, createPfxElectricBurstBodyMaterial, createPfxElectricBurstAccentMaterial } from '../effects/electricBurstDischarge'
+import { PFX_PLASMA_BURST_BODY_FRAGMENT, PFX_PLASMA_BURST_ACCENT_FRAGMENT, createPfxPlasmaBurstBodyMaterial, createPfxPlasmaBurstAccentMaterial } from '../effects/plasmaBurstMagnetic'
+import { PFX_WATER_BURST_BODY_FRAGMENT, PFX_WATER_BURST_ACCENT_FRAGMENT, createPfxWaterBurstBodyMaterial, createPfxWaterBurstAccentMaterial } from '../effects/waterBurstSplash'
+import { PFX_BUBBLE_BURST_BODY_FRAGMENT, PFX_BUBBLE_BURST_ACCENT_FRAGMENT, createPfxBubbleBurstBodyMaterial, createPfxBubbleBurstAccentMaterial } from '../effects/bubbleBurstThinFilm'
 import * as THREE from 'three'
 import { roundMetric } from './03'
 import { PFX_ARC_INNER_RADIUS, PFX_ARC_OUTER_RADIUS, PFX_ARC_THETA_LENGTH, PFX_ARC_THETA_START, PFX_FLAME_BURST_VERTEX, createPfxComboRingMaterial, createPfxExhaustTelegraphMaterial, createPfxHologramBreakMaterial, createPfxMarkerReleaseMaterial, createPfxScanConeMaterial, createPfxTargetSpawnMaterial, createPfxThrusterTrailMaterial, createPfxUiPickupMaterial, createPfxWarningLoopMaterial } from './05'
+import { PFX_MATERIAL_COMMON_CHUNK, PFX_MATERIAL_MESH_CHUNK, pfxMaterialCoverageGlsl } from '../materials/chunks'
+import { createPfxMaterialUniforms, getPfxMaterialDefines, type PfxMaterialBinding } from '../materials/bindings'
+import { PFX_MATERIAL_PATH_USERDATA_KEY, type PfxMaterialPathTag } from '../materials/types'
+import { PFX_DISSOLVE_FRAGMENT_FRAGMENT, PFX_DISSOLVE_PROP_FRAGMENT, createPfxDissolveFragmentMaterial, createPfxDissolvePropMaterial } from '../effects/dissolveErodingProp'
+import { PFX_HOLOGRAM_BURST_EMITTER_FRAGMENT, PFX_HOLOGRAM_BURST_SUBJECT_FRAGMENT, createPfxHologramBurstEmitterMaterial, createPfxHologramBurstSubjectMaterial } from '../effects/hologramBurstProjection'
+import { PFX_GHOST_BODY_FRAGMENT, PFX_GHOST_WISP_FRAGMENT, createPfxGhostBurstBodyMaterial, createPfxGhostBurstWispMaterial } from '../effects/ghostBurstApparition'
+import { PFX_POISON_GAS_FRAGMENT, PFX_POISON_SPORE_FRAGMENT, createPfxPoisonCloudGasMaterial, createPfxPoisonCloudSporeMaterial } from '../effects/poisonCloudGasBank'
+import { PFX_WARP_SHEET_FRAGMENT, PFX_WARP_TRACE_FRAGMENT, createPfxWarpBurstSheetMaterial, createPfxWarpBurstTraceMaterial } from '../effects/warpBurstFold'
 import type { PfxHologramBreakRuntimeState, PfxMarkerReleaseRuntimeState, PfxScanConeRuntimeState, PfxSurfaceMaterialProps, PfxSurfaceTuning, PfxThrusterTrailRuntimeState, PfxWarningLoopRuntimeState } from '../types/02'
 
 const PFX_MESH_SHADER_VERTEX = /* glsl */ `
@@ -81,6 +104,12 @@ void main() {
 }
 `
 
+const PFX_SHELL_COVERAGE = pfxMaterialCoverageGlsl({
+  alpha: 'alpha',
+  coverageUv: 'pfxShellLocalUv(vLocalPos)',
+  lifeT: 'pfxMeshLifeT()',
+})
+
 const PFX_FRESNEL_SHELL_FRAGMENT = /* glsl */ `
 uniform float uTime;
 uniform float uBreak;
@@ -93,6 +122,8 @@ varying vec3 vViewDir;
 varying vec3 vLocalPos;
 
 ${PFX_GLSL_NOISE_HELPERS}
+${PFX_MATERIAL_COMMON_CHUNK}
+${PFX_MATERIAL_MESH_CHUNK}
 
 float pfxHexEdge(vec2 uv) {
   // Distance to the nearest hex-cell edge on a pointy-top grid; 0 at the
@@ -110,7 +141,7 @@ void main() {
   float facing = abs(dot(normalize(vNormal), normalize(vViewDir)));
   // Tight, overdriven rim — a wide soft gradient reads as a frosted soap
   // bubble; only the rim should saturate (round-5).
-  float rim = pow(1.0 - facing, 3.4);
+  float rim = PFX_RIM_TERM(facing, 3.4);
   // Sharp rising energy bands, visible on the face too, not just the rim.
   // Wavy bands: pure-y modulation rendered as hard Neptune latitude stripes.
   float bandWave = sin(vLocalPos.y * 9.0 - uTime * 1.8 + sin(vLocalPos.x * 6.0 + uTime * 0.7) * 0.9);
@@ -119,7 +150,7 @@ void main() {
   float interior = 0.025 + bands * 0.04 + pattern;
   float breathe = 0.85 + 0.15 * sin(uTime * 2.1);
   float energy = rim * (2.1 + bands * 1.1) * breathe + interior;
-  vec3 color = mix(uColor, uColorHot * 1.9, rim * 0.9);
+  vec3 color = mix(uColor, PFX_RIM_HOT * 1.9, rim * 0.9);
   float alpha = energy;
   if (uHex > 0.5) {
     // Force-field read: a hexagonal energy lattice over the WHOLE sphere,
@@ -135,7 +166,7 @@ void main() {
     // Pole caps of the equirect mapping smear — fade the lattice there.
     float poleFade = smoothstep(0.0, 0.35, abs(1.0 - abs(n.y)));
     alpha = rim * 1.7 * breathe + lattice * (0.34 + rim * 0.5) * poleFade + cellPulse * 0.02 + 0.02;
-    color = mix(uColor, uColorHot * 1.8, clamp(lattice * 0.85 + rim * 0.55, 0.0, 1.0));
+    color = mix(uColor, PFX_RIM_HOT * 1.8, clamp(lattice * 0.85 + rim * 0.55, 0.0, 1.0));
   }
   if (uBreak > 0.0) {
     // Shatter: curved wedge panels (spherical-coordinate cells — an
@@ -153,6 +184,9 @@ void main() {
     alpha = alpha * survive * (1.0 + (1.0 - uBreak) * 0.5) + crackLine * (0.35 + rim * 1.1) * step(0.001, uBreak);
     color = mix(color, uColorHot * 1.7, crackLine);
   }
+  // Material mask and dissolve multiply the coverage after the existing break.
+${PFX_SHELL_COVERAGE.coverage}
+${PFX_SHELL_COVERAGE.edge('color')}
   gl_FragColor = vec4(color, clamp(alpha, 0.0, 1.0) * uOpacity);
 }
 `
@@ -333,9 +367,15 @@ uniform float uOpacity;
 uniform vec3 uColor;
 uniform vec3 uColorHot;
 varying vec2 vUv;
+${PFX_MATERIAL_COMMON_CHUNK}
 
 void main() {
-  vec2 p = vUv * 2.0 - 1.0;
+  #ifdef PFX_MAT_LOCAL_UV
+    // Continuous loop: constant UV and distortion values only.
+    vec2 p = pfxWrapLocalUv(pfxMaterialLocalUv(vUv, 0.0, 1.0)) * 2.0 - 1.0;
+  #else
+    vec2 p = vUv * 2.0 - 1.0;
+  #endif
   float r = length(p);
   if (r > 1.0) discard;
   float angle = atan(p.y, p.x);
@@ -360,6 +400,41 @@ void main() {
 }
 `
 
+const PFX_PORTAL_APERTURE_FRAGMENT = /* glsl */ `
+uniform float uTime;
+uniform float uOpacity;
+uniform vec3 uColor;
+uniform vec3 uColorHot;
+varying vec2 vUv;
+${PFX_MATERIAL_COMMON_CHUNK}
+
+void main() {
+  #ifdef PFX_MAT_LOCAL_UV
+    vec2 p = pfxWrapLocalUv(pfxMaterialLocalUv(vUv, 0.0, 1.0)) * 2.0 - 1.0;
+  #else
+    vec2 p = vUv * 2.0 - 1.0;
+  #endif
+  float r = length(p);
+  if (r > 1.0) discard;
+  float angle = atan(p.y, p.x);
+  // Log radius gives equal depth steps progressively smaller image radii.
+  float depth = -log(max(r, 0.035));
+  float swirl = angle + depth * 1.35 + uTime * 0.85;
+  float arms = pow(0.5 + 0.5 * sin(swirl * 3.0), 7.0);
+  float filaments = pow(0.5 + 0.5 * sin(swirl * 11.0 - depth * 2.0), 12.0);
+  float bands = pow(0.5 + 0.5 * sin(depth * 16.0 - uTime * 4.0 + sin(angle * 3.0) * 0.35), 14.0);
+  float opening = smoothstep(0.08, 0.34, r);
+  float edge = 1.0 - smoothstep(0.86, 1.0, r);
+  float rim = exp(-pow((r - 0.8) / 0.09, 2.0));
+  float wall = opening * (arms * 0.6 + filaments * 0.22 + bands * 0.32) * smoothstep(0.0, 0.72, r);
+  float energy = edge * (wall + rim * (0.6 + arms * 0.3));
+  vec3 shadow = uColor * (0.015 + r * 0.035);
+  vec3 color = shadow + uColor * energy * 1.9 + uColorHot * filaments * energy * 0.2;
+  // Normal alpha keeps the opening dark over a bright scene.
+  gl_FragColor = vec4(color, edge * uOpacity);
+}
+`
+
 const PFX_PORTAL_THROAT_FRAGMENT = /* glsl */ `
 uniform float uTime;
 uniform float uOpacity;
@@ -368,14 +443,16 @@ uniform vec3 uColorHot;
 varying vec3 vNormal;
 varying vec3 vViewDir;
 varying vec3 vLocalPos;
+${PFX_MATERIAL_COMMON_CHUNK}
+${PFX_MATERIAL_MESH_CHUNK}
 
 void main() {
   float facing = abs(dot(normalize(vNormal), normalize(vViewDir)));
-  float rim = pow(1.0 - facing, 2.2);
+  float rim = PFX_RIM_TERM(facing, 2.2);
   float axial = 0.5 + 0.5 * sin(vLocalPos.y * 17.0 - uTime * 2.4);
   float taperGlow = smoothstep(0.62, 0.0, abs(vLocalPos.y)) * 0.24;
   float energy = rim * (0.48 + axial * 0.24) + taperGlow;
-  vec3 color = mix(uColor, uColorHot, clamp(rim * 0.65 + axial * 0.18, 0.0, 1.0));
+  vec3 color = mix(uColor, PFX_RIM_HOT, clamp(rim * 0.65 + axial * 0.18, 0.0, 1.0));
   gl_FragColor = vec4(color, clamp(energy, 0.0, 0.82) * uOpacity);
 }
 `
@@ -1017,6 +1094,7 @@ const PFX_MESH_SHADER_FRAGMENTS: Record<NonNullable<PfxSurfaceTuning['meshShader
   'force-field-shell': PFX_FORCE_FIELD_SHELL_FRAGMENT,
   'heal-wave': PFX_HEAL_WAVE_FRAGMENT,
   'vortex-swirl': PFX_VORTEX_SWIRL_FRAGMENT,
+  'portal-aperture': PFX_PORTAL_APERTURE_FRAGMENT,
   'portal-throat': PFX_PORTAL_THROAT_FRAGMENT,
   'arc-sweep': PFX_ARC_SWEEP_FRAGMENT,
   'energy-column': PFX_ENERGY_COLUMN_FRAGMENT,
@@ -1048,6 +1126,53 @@ const PFX_MESH_SHADER_FRAGMENTS: Record<NonNullable<PfxSurfaceTuning['meshShader
   'exhaust-telegraph-vent': PFX_FRESNEL_SHELL_FRAGMENT,
   'flame-burst-blossom': PFX_FRESNEL_SHELL_FRAGMENT,
   'meteor-burst-collision': PFX_FRESNEL_SHELL_FRAGMENT,
+  // PfxSurface builds these three with their own factories and never calls
+  // buildPfxMeshShaderMaterial for them. Like the other dedicated-factory
+  // keys above, the entry only completes the record.
+  'debris-burst-ballistic-breakup': PFX_FRESNEL_SHELL_FRAGMENT,
+  'dust-burst-pigment-roll': PFX_FRESNEL_SHELL_FRAGMENT,
+  'shockwave-burst-pressure-front': PFX_FRESNEL_SHELL_FRAGMENT,
+  // Dedicated factories below; each entry names the fragment it really uses.
+  'hologram-burst-projection': PFX_HOLOGRAM_BURST_SUBJECT_FRAGMENT,
+  'hologram-burst-emitter': PFX_HOLOGRAM_BURST_EMITTER_FRAGMENT,
+  'dissolve-eroding-prop': PFX_DISSOLVE_PROP_FRAGMENT,
+  'dissolve-front-fragments': PFX_DISSOLVE_FRAGMENT_FRAGMENT,
+  'ghost-burst-apparition': PFX_GHOST_BODY_FRAGMENT,
+  'ghost-burst-wisps': PFX_GHOST_WISP_FRAGMENT,
+  'poison-cloud-gas-bank': PFX_POISON_GAS_FRAGMENT,
+  'poison-cloud-spores': PFX_POISON_SPORE_FRAGMENT,
+  'warp-burst-fold-sheet': PFX_WARP_SHEET_FRAGMENT,
+  'warp-burst-shear-traces': PFX_WARP_TRACE_FRAGMENT,
+  'frost-burst-crystal-fan': PFX_FROST_BURST_BODY_FRAGMENT,
+  'frost-burst-freezing-mist': PFX_FROST_BURST_ACCENT_FRAGMENT,
+  'electric-burst-branch-network': PFX_ELECTRIC_BURST_BODY_FRAGMENT,
+  'electric-burst-corona': PFX_ELECTRIC_BURST_ACCENT_FRAGMENT,
+  'plasma-burst-magnetic-core': PFX_PLASMA_BURST_BODY_FRAGMENT,
+  'plasma-burst-ion-filaments': PFX_PLASMA_BURST_ACCENT_FRAGMENT,
+  'water-burst-splash-crown': PFX_WATER_BURST_BODY_FRAGMENT,
+  'water-burst-ballistic-droplets': PFX_WATER_BURST_ACCENT_FRAGMENT,
+  'bubble-burst-thin-film': PFX_BUBBLE_BURST_BODY_FRAGMENT,
+  'bubble-burst-pop-fragments': PFX_BUBBLE_BURST_ACCENT_FRAGMENT,
+  'rune-burst-inscription': PFX_RUNE_BURST_BODY_FRAGMENT,
+  'rune-burst-glyph-fragments': PFX_RUNE_BURST_ACCENT_FRAGMENT,
+  'healing-burst-restoration-weave': PFX_HEALING_BURST_BODY_FRAGMENT,
+  'healing-burst-renewal-motes': PFX_HEALING_BURST_ACCENT_FRAGMENT,
+  'holy-burst-consecration-rays': PFX_HOLY_BURST_BODY_FRAGMENT,
+  'holy-burst-sanctity-feathers': PFX_HOLY_BURST_ACCENT_FRAGMENT,
+  'acid-burst-corrosive-splash': PFX_ACID_BURST_BODY_FRAGMENT,
+  'acid-burst-caustic-spray': PFX_ACID_BURST_ACCENT_FRAGMENT,
+  'slime-burst-elastic-splat': PFX_SLIME_BURST_BODY_FRAGMENT,
+  'slime-burst-sticky-drops': PFX_SLIME_BURST_ACCENT_FRAGMENT,
+  'teleport-burst-spatial-slices': PFX_TELEPORT_BURST_BODY_FRAGMENT,
+  'teleport-burst-arrival-traces': PFX_TELEPORT_BURST_ACCENT_FRAGMENT,
+  'spawn-burst-materialize-weave': PFX_SPAWN_BURST_BODY_FRAGMENT,
+  'spawn-burst-rising-motes': PFX_SPAWN_BURST_ACCENT_FRAGMENT,
+  'despawn-burst-unmake-slices': PFX_DESPAWN_BURST_BODY_FRAGMENT,
+  'despawn-burst-exit-fragments': PFX_DESPAWN_BURST_ACCENT_FRAGMENT,
+  'dash-burst-shear-ribbons': PFX_DASH_BURST_BODY_FRAGMENT,
+  'dash-burst-speed-traces': PFX_DASH_BURST_ACCENT_FRAGMENT,
+  'reflect-burst-parry-fan': PFX_REFLECT_BURST_BODY_FRAGMENT,
+  'reflect-burst-return-streaks': PFX_REFLECT_BURST_ACCENT_FRAGMENT,
 }
 
 export function createPfxMeshShaderHotColor(
@@ -1072,7 +1197,7 @@ export function createPfxMeshShaderRenderPolicy(
     // sharp kink never loses its hot lane as the camera orbits.
     return { blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }
   }
-  if (meshShader === 'acid-pool') {
+  if (meshShader === 'acid-pool' || meshShader === 'portal-aperture') {
     return { blending: THREE.NormalBlending, depthWrite: false, side: THREE.DoubleSide }
   }
   if (meshShader === 'barrier-failure-shell') {
@@ -1779,9 +1904,61 @@ export const PFX_DEBRIS_BURST_FRAGMENT = /* glsl */ `
   }
 `
 
+/** Mesh-shader keys that own their geometry, clock and material. */
+export type PfxAuthoredSubjectMeshShader =
+  | 'hologram-burst-projection' | 'hologram-burst-emitter'
+  | 'dissolve-eroding-prop' | 'dissolve-front-fragments'
+  | 'ghost-burst-apparition' | 'ghost-burst-wisps'
+  | 'poison-cloud-gas-bank' | 'poison-cloud-spores'
+  | 'warp-burst-fold-sheet' | 'warp-burst-shear-traces'
+  | 'frost-burst-crystal-fan' | 'frost-burst-freezing-mist'
+  | 'electric-burst-branch-network' | 'electric-burst-corona'
+  | 'plasma-burst-magnetic-core' | 'plasma-burst-ion-filaments'
+  | 'water-burst-splash-crown' | 'water-burst-ballistic-droplets'
+  | 'bubble-burst-thin-film' | 'bubble-burst-pop-fragments'
+  | 'rune-burst-inscription' | 'rune-burst-glyph-fragments'
+  | 'healing-burst-restoration-weave' | 'healing-burst-renewal-motes'
+  | 'holy-burst-consecration-rays' | 'holy-burst-sanctity-feathers'
+  | 'acid-burst-corrosive-splash' | 'acid-burst-caustic-spray'
+  | 'slime-burst-elastic-splat' | 'slime-burst-sticky-drops'
+  | 'teleport-burst-spatial-slices' | 'teleport-burst-arrival-traces'
+  | 'spawn-burst-materialize-weave' | 'spawn-burst-rising-motes'
+  | 'despawn-burst-unmake-slices' | 'despawn-burst-exit-fragments'
+  | 'dash-burst-shear-ribbons' | 'dash-burst-speed-traces'
+  | 'reflect-burst-parry-fan' | 'reflect-burst-return-streaks'
+
+const PFX_AUTHORED_SUBJECT_MESH_SHADERS: ReadonlySet<string> = new Set<PfxAuthoredSubjectMeshShader>([
+  'hologram-burst-projection', 'hologram-burst-emitter',
+  'dissolve-eroding-prop', 'dissolve-front-fragments',
+  'ghost-burst-apparition', 'ghost-burst-wisps',
+  'poison-cloud-gas-bank', 'poison-cloud-spores',
+  'warp-burst-fold-sheet', 'warp-burst-shear-traces',
+  'frost-burst-crystal-fan', 'frost-burst-freezing-mist',
+  'electric-burst-branch-network', 'electric-burst-corona',
+  'plasma-burst-magnetic-core', 'plasma-burst-ion-filaments',
+  'water-burst-splash-crown', 'water-burst-ballistic-droplets',
+  'bubble-burst-thin-film', 'bubble-burst-pop-fragments',
+  'rune-burst-inscription', 'rune-burst-glyph-fragments',
+  'healing-burst-restoration-weave', 'healing-burst-renewal-motes',
+  'holy-burst-consecration-rays', 'holy-burst-sanctity-feathers',
+  'acid-burst-corrosive-splash', 'acid-burst-caustic-spray',
+  'slime-burst-elastic-splat', 'slime-burst-sticky-drops',
+  'teleport-burst-spatial-slices', 'teleport-burst-arrival-traces',
+  'spawn-burst-materialize-weave', 'spawn-burst-rising-motes',
+  'despawn-burst-unmake-slices', 'despawn-burst-exit-fragments',
+  'dash-burst-shear-ribbons', 'dash-burst-speed-traces',
+  'reflect-burst-parry-fan', 'reflect-burst-return-streaks',
+])
+
+export function isPfxAuthoredSubjectMeshShader(meshShader: PfxSurfaceTuning['meshShader']): meshShader is PfxAuthoredSubjectMeshShader {
+  return meshShader !== undefined && PFX_AUTHORED_SUBJECT_MESH_SHADERS.has(meshShader)
+}
+
 export function buildPfxMeshShaderMaterial(
   meshShader: NonNullable<PfxSurfaceTuning['meshShader']>,
   materialProps: PfxSurfaceMaterialProps,
+  /** Validated layer binding. Null keeps the original material. */
+  materialBinding: PfxMaterialBinding | null = null,
 ): THREE.ShaderMaterial {
   if (meshShader === 'combo-ring-meter') return createPfxComboRingMaterial(materialProps.opacity, materialProps.color, 1, 0.5, 3)
   if (meshShader === 'ui-pickup-receipt') return createPfxUiPickupMaterial(materialProps.opacity, materialProps.color)
@@ -1801,12 +1978,76 @@ export function buildPfxMeshShaderMaterial(
   if (meshShader === 'exhaust-telegraph-vent') return createPfxExhaustTelegraphMaterial('vent', materialProps.opacity, materialProps.color)
   if (meshShader === 'flame-burst-blossom') return createPfxFlameBurstMaterial(materialProps.opacity, materialProps.color)
   if (meshShader === 'meteor-burst-collision') return createPfxMeteorBurstMaterial(materialProps.opacity, materialProps.color)
+  // These authored subjects draw their own geometry and accept no shared material binding.
+  if (isPfxAuthoredSubjectMeshShader(meshShader)) {
+    if (materialBinding) throw new Error(`buildPfxMeshShaderMaterial: '${meshShader}' has no shared material path`)
+    switch (meshShader) {
+      case 'hologram-burst-projection': return createPfxHologramBurstSubjectMaterial(materialProps.opacity, materialProps.color)
+      case 'hologram-burst-emitter': return createPfxHologramBurstEmitterMaterial(materialProps.opacity, materialProps.color)
+      case 'dissolve-eroding-prop': return createPfxDissolvePropMaterial(materialProps.color)
+      case 'dissolve-front-fragments': return createPfxDissolveFragmentMaterial(materialProps.opacity, materialProps.color)
+      case 'ghost-burst-apparition': return createPfxGhostBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'ghost-burst-wisps': return createPfxGhostBurstWispMaterial(materialProps.opacity, materialProps.color)
+      case 'poison-cloud-gas-bank': return createPfxPoisonCloudGasMaterial(materialProps.opacity, materialProps.color)
+      case 'poison-cloud-spores': return createPfxPoisonCloudSporeMaterial(materialProps.opacity, materialProps.color)
+      case 'warp-burst-fold-sheet': return createPfxWarpBurstSheetMaterial(materialProps.opacity, materialProps.color)
+      case 'warp-burst-shear-traces': return createPfxWarpBurstTraceMaterial(materialProps.opacity, materialProps.color)
+      case 'frost-burst-crystal-fan': return createPfxFrostBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'frost-burst-freezing-mist': return createPfxFrostBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'electric-burst-branch-network': return createPfxElectricBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'electric-burst-corona': return createPfxElectricBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'plasma-burst-magnetic-core': return createPfxPlasmaBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'plasma-burst-ion-filaments': return createPfxPlasmaBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'water-burst-splash-crown': return createPfxWaterBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'water-burst-ballistic-droplets': return createPfxWaterBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'bubble-burst-thin-film': return createPfxBubbleBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'bubble-burst-pop-fragments': return createPfxBubbleBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'rune-burst-inscription': return createPfxRuneBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'rune-burst-glyph-fragments': return createPfxRuneBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'healing-burst-restoration-weave': return createPfxHealingBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'healing-burst-renewal-motes': return createPfxHealingBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'holy-burst-consecration-rays': return createPfxHolyBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'holy-burst-sanctity-feathers': return createPfxHolyBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'acid-burst-corrosive-splash': return createPfxAcidBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'acid-burst-caustic-spray': return createPfxAcidBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'slime-burst-elastic-splat': return createPfxSlimeBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'slime-burst-sticky-drops': return createPfxSlimeBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'teleport-burst-spatial-slices': return createPfxTeleportBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'teleport-burst-arrival-traces': return createPfxTeleportBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'spawn-burst-materialize-weave': return createPfxSpawnBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'spawn-burst-rising-motes': return createPfxSpawnBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'despawn-burst-unmake-slices': return createPfxDespawnBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'despawn-burst-exit-fragments': return createPfxDespawnBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'dash-burst-shear-ribbons': return createPfxDashBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'dash-burst-speed-traces': return createPfxDashBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      case 'reflect-burst-parry-fan': return createPfxReflectBurstBodyMaterial(materialProps.opacity, materialProps.color)
+      case 'reflect-burst-return-streaks': return createPfxReflectBurstAccentMaterial(materialProps.opacity, materialProps.color)
+      default: {
+        const unhandled: never = meshShader
+        throw new Error(`buildPfxMeshShaderMaterial: unhandled authored subject '${String(unhandled)}'`)
+      }
+    }
+  }
   const base = new THREE.Color(materialProps.color)
   // Fire shaders push toward YELLOW-white (the reference core color) —
   // a pure white lerp lands on pale peach.
   const hot = createPfxMeshShaderHotColor(meshShader, base)
   const renderPolicy = createPfxMeshShaderRenderPolicy(meshShader)
-  return new THREE.ShaderMaterial({
+  // Literal shared-material path of this factory branch. Only the explicit
+  // shell keys, the vortex swirl, and the portal throat carry one.
+  const pathTag: PfxMaterialPathTag | null =
+    meshShader === 'fresnel-shell' || meshShader === 'hex-shell'
+      ? 'fresnel-shell'
+      : (meshShader === 'vortex-swirl' || meshShader === 'portal-aperture')
+        ? 'vortex-swirl'
+        : meshShader === 'portal-throat'
+          ? 'portal-throat'
+          : null
+  if (materialBinding && materialBinding.path.kind !== pathTag) {
+    throw new Error(`buildPfxMeshShaderMaterial: binding path '${materialBinding.path.kind}' does not match the '${meshShader}' factory (${pathTag ?? 'untagged'})`)
+  }
+  const hotColor = new THREE.Vector3(hot.r, hot.g, hot.b)
+  const material = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
       uCycle: { value: 0 },
@@ -1820,8 +2061,12 @@ export function buildPfxMeshShaderMaterial(
       uElectricDecay: { value: 0 },
       uOpacity: { value: materialProps.opacity },
       uColor: { value: new THREE.Vector3(base.r, base.g, base.b) },
-      uColorHot: { value: new THREE.Vector3(hot.r, hot.g, hot.b) },
+      uColorHot: { value: hotColor },
+      ...(materialBinding
+        ? createPfxMaterialUniforms(materialBinding, { convention: 'mesh-color', baselineHotColor: hotColor })
+        : {}),
     },
+    ...(materialBinding ? { defines: getPfxMaterialDefines(materialBinding) } : {}),
     vertexShader: PFX_MESH_SHADER_VERTEX,
     fragmentShader: PFX_MESH_SHADER_FRAGMENTS[meshShader],
     transparent: true,
@@ -1832,4 +2077,10 @@ export function buildPfxMeshShaderMaterial(
     side: renderPolicy.side,
     depthWrite: renderPolicy.depthWrite,
   })
+  if (pathTag) material.userData[PFX_MATERIAL_PATH_USERDATA_KEY] = pathTag
+  if (materialBinding) {
+    material.userData.pfxMaterialColorConvention = 'mesh-color'
+    material.userData.pfxBaselineHotColor = hotColor
+  }
+  return material
 }

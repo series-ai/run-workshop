@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Furries Unleashed: pack test</title>
+<style>html, body { margin: 0; background: #ecebf0; } canvas { display: block; }</style>
+<script type="importmap">
+{ "imports": { "three": "../viewer/vendor/three-build/three.module.js", "three/addons/": "../viewer/vendor/jsm/" } }
+</script>
+</head>
+<body>
+<script type="module">
+// Loads the packed leaf (out/leaf) the way a game would: the ready-made GLBs with a plain mixer, and the kit
+// through furrykit.js (species, swapped parts, recolours, styles, clips). Reports problems in window.RESULT.
+// Serve tools/run-furry-avatars, open pack/test.html?leaf=../out/leaf
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from './node_modules/meshoptimizer/meshopt_decoder.mjs';
+const Q = new URLSearchParams(location.search);
+const LEAF = Q.get('leaf') || '../out/leaf';
+const out = { errors: [], notes: [] };
+window.RESULT = out;
+addEventListener('error', (e) => out.errors.push(String(e.message)));
+try {
+  const { loadFurryKit, toonify } = await import(`${LEAF}/kit/furrykit.js`);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(1400, 700);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  document.body.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#ecebf0');
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8890a0, 1.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.position.set(-2, 4, 3);
+  scene.add(sun);
+  const camera = new THREE.PerspectiveCamera(30, 2, 0.1, 100);
+  camera.position.set(0, 2.2, 11);
+  camera.lookAt(0, 1.0, 0);
+  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+
+  if (Q.has('cmp')) {   // the same idle frame: ready-made wolf vs the kit's wolf
+    const { loadFurryKit: L2 } = await import(`${LEAF}/kit/furrykit.js`);
+    const g = await loader.loadAsync(`${LEAF}/characters/wolf.glb`);
+    g.scene.position.set(-1, 0, 0); scene.add(g.scene);
+    const mx = new THREE.AnimationMixer(g.scene); const c = THREE.AnimationClip.findByName(g.animations, 'idle'); mx.clipAction(c).play(); mx.setTime(0.5);
+    const k2 = await L2(`${LEAF}/kit/`, { loader }); const f = await k2.makeFurry('wolf'); f.object.position.set(1, 0, 0); scene.add(f.object);
+    f.play('idle', { fade: 0 }); f.update(0.5);
+    const ua = (o) => { let q; o.traverse((b) => { if (b.isBone && b.name === 'upper_armL') q = b.quaternion.toArray().map((v) => v.toFixed(3)).join(','); }); return q; };
+    out.notes.push('ready upper_armL ' + ua(g.scene), 'kit upper_armL ' + ua(f.object), 'kit actions ' + f.mixer._actions.map((a) => a.getClip().name + ':' + a.getEffectiveWeight().toFixed(2)).join(' '));
+    camera.position.set(0, 1.5, 6); camera.lookAt(0, 1, 0);
+    renderer.render(scene, camera); out.image = renderer.domElement.toDataURL('image/png'); out.done = true; throw 'cmp-done';
+  }
+  // 1) ready-made characters, no helper
+  const ready = [];
+  for (const [i, sp] of ['wolf', 'dragon', 'horse'].entries()) {
+    const g = await loader.loadAsync(`${LEAF}/characters/${sp}.glb`);
+    g.scene.position.set(-5 + i * 1.3, 0, 0);
+    scene.add(toonify(g.scene));
+    const mixer = new THREE.AnimationMixer(g.scene);
+    const clip = THREE.AnimationClip.findByName(g.animations, ['roar', 'slash_r', 'gallop'][i]);
+    if (!clip) out.errors.push(`${sp}: clip missing`);
+    mixer.clipAction(clip).play();
+    mixer.setTime(clip.duration * 0.4);
+    ready.push(g);
+    const box = new THREE.Box3().setFromObject(g.scene);
+    out.notes.push(`${sp}.glb: ${g.animations.length} clips, height ${box.max.y.toFixed(2)}`);
+  }
+  // 2) the kit: species presets, a hybrid, recolour, styles
+  const kit = await loadFurryKit(`${LEAF}/kit/`, { loader });
+  out.notes.push(`kit: ${Object.keys(kit.catalog.species).length} species, ${Object.keys(kit.clips).length} clips, parts ${Object.entries(kit.catalog.parts).map(([k, v]) => k + ' ' + v.length).join(', ')}`);
+  const furs = [];
+  const specs = [
+    ['fox', 'slash_combo', 0.6, null],
+    [{ species: 'wolf', ears: 'bunny', tail: 'dragon', feet: 'hooves', teeth: 'fangs' }, 'roar', 0.6, null],
+    ['shark', 'idle', 0.3, null],
+    ['cat', 'fours_idle', 0.5, null],
+    ['lion', 'wave', 0.8, { style: { outline: 0.012, steps: 2 } }],
+    ['bunny', 'sit_eat', 0.6, { paint: { fur: '#7fd8f7', hair: '#ff6fd8' } }],
+  ];
+  for (const [i, [look, clip, frac, extra]] of specs.entries()) {
+    const f = await kit.makeFurry(look);
+    if (extra?.style) f.setStyle(extra.style);
+    if (extra?.paint) f.paint(extra.paint);
+    f.object.position.set(-1 + i * 1.3, 0, 0);
+    scene.add(f.object);
+    f.play(clip, { fade: 0 });
+    f.update(kit.clips[clip].duration * frac);
+    furs.push(f);
+  }
+  // swapping parts on a live character
+  await furs[2].set({ hair: 'mohawk', ears: 'fox', teeth: 'shark' });
+  out.notes.push('trails(slash_combo): ' + JSON.stringify(furs[0].trails('slash_combo')));
+  out.notes.push('clawTip R: ' + furs[0].clawTip('R').toArray().map((v) => v.toFixed(2)).join(','));
+  renderer.render(scene, camera);
+  out.image = renderer.domElement.toDataURL('image/png');
+} catch (e) {
+  out.errors.push(String(e && e.stack || e));
+}
+out.done = true;
+</script>
+</body>
+</html>

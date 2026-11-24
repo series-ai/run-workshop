@@ -1,0 +1,346 @@
+{
+  "version": 1,
+  "rigId": "run-pug-24",
+  "source": "RUN Chonky Pug Rig (CC0-1.0 / RUN Supplemental)",
+  "jointCount": 24,
+  "joints": [
+    "root",
+    "hips",
+    "spine",
+    "chest",
+    "neck",
+    "head",
+    "jaw",
+    "mouth",
+    "upperarm.L",
+    "forearm.L",
+    "hand.L",
+    "upperarm.R",
+    "forearm.R",
+    "hand.R",
+    "tail.1",
+    "tail.2",
+    "tail.3",
+    "tail.tip",
+    "thigh.L",
+    "shin.L",
+    "foot.L",
+    "thigh.R",
+    "shin.R",
+    "foot.R"
+  ],
+  "parents": {
+    "root": null,
+    "hips": "root",
+    "spine": "hips",
+    "chest": "spine",
+    "neck": "chest",
+    "head": "neck",
+    "jaw": "head",
+    "mouth": "head",
+    "upperarm.L": "chest",
+    "forearm.L": "upperarm.L",
+    "hand.L": "forearm.L",
+    "upperarm.R": "chest",
+    "forearm.R": "upperarm.R",
+    "hand.R": "forearm.R",
+    "tail.1": "hips",
+    "tail.2": "tail.1",
+    "tail.3": "tail.2",
+    "tail.tip": "tail.3",
+    "thigh.L": "hips",
+    "shin.L": "thigh.L",
+    "foot.L": "shin.L",
+    "thigh.R": "hips",
+    "shin.R": "thigh.R",
+    "foot.R": "shin.R"
+  },
+  "worldPositions": {
+    "root": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "hips": [
+      0.0,
+      0.30476,
+      -0.17968
+    ],
+    "spine": [
+      0.0,
+      0.30476,
+      -0.08506
+    ],
+    "chest": [
+      0.0,
+      0.30476,
+      0.00956
+    ],
+    "neck": [
+      0.0,
+      0.30476,
+      0.10417
+    ],
+    "head": [
+      -0.0,
+      0.39003,
+      0.16389
+    ],
+    "jaw": [
+      -0.0,
+      0.32793,
+      0.24698
+    ],
+    "mouth": [
+      -0.0,
+      0.32793,
+      0.29055
+    ],
+    "upperarm.L": [
+      0.09019,
+      0.30476,
+      0.10417
+    ],
+    "forearm.L": [
+      0.09019,
+      0.13714,
+      0.10417
+    ],
+    "hand.L": [
+      0.09019,
+      0.03657,
+      0.10417
+    ],
+    "upperarm.R": [
+      -0.09019,
+      0.30476,
+      0.10417
+    ],
+    "forearm.R": [
+      -0.09019,
+      0.13714,
+      0.10417
+    ],
+    "hand.R": [
+      -0.09019,
+      0.03657,
+      0.10417
+    ],
+    "tail.1": [
+      0.0,
+      0.34185,
+      -0.24221
+    ],
+    "tail.2": [
+      0.0,
+      0.35669,
+      -0.24009
+    ],
+    "tail.3": [
+      0.0,
+      0.37153,
+      -0.23797
+    ],
+    "tail.tip": [
+      0.0,
+      0.40931,
+      -0.23257
+    ],
+    "thigh.L": [
+      0.09362,
+      0.30476,
+      -0.17968
+    ],
+    "shin.L": [
+      0.09362,
+      0.13714,
+      -0.17968
+    ],
+    "foot.L": [
+      0.09362,
+      0.03657,
+      -0.17968
+    ],
+    "thigh.R": [
+      -0.09362,
+      0.30476,
+      -0.17968
+    ],
+    "shin.R": [
+      -0.09362,
+      0.13714,
+      -0.17968
+    ],
+    "foot.R": [
+      -0.09362,
+      0.03657,
+      -0.17968
+    ]
+  },
+  "clips": [
+    {
+      "name": "walk",
+      "duration": 0.9167
+    },
+    {
+      "name": "robot",
+      "duration": 0.375
+    },
+    {
+      "name": "trot",
+      "duration": 0.4583
+    },
+    {
+      "name": "run",
+      "duration": 0.4167
+    },
+    {
+      "name": "gallop",
+      "duration": 0.3333
+    },
+    {
+      "name": "idle",
+      "duration": 2.0
+    },
+    {
+      "name": "play_bow",
+      "duration": 2.4167
+    },
+    {
+      "name": "catch",
+      "duration": 1.2083
+    },
+    {
+      "name": "drop_ball",
+      "duration": 1.7917
+    },
+    {
+      "name": "stretch",
+      "duration": 4.5833
+    },
+    {
+      "name": "bark",
+      "duration": 0.7083
+    },
+    {
+      "name": "bark_rapid",
+      "duration": 0.875
+    },
+    {
+      "name": "sniff",
+      "duration": 3.0
+    },
+    {
+      "name": "point",
+      "duration": 3.0
+    },
+    {
+      "name": "pee_male",
+      "duration": 5.0
+    },
+    {
+      "name": "pee_female",
+      "duration": 4.7917
+    },
+    {
+      "name": "poop",
+      "duration": 6.4167
+    },
+    {
+      "name": "sit_enter",
+      "duration": 0.5
+    },
+    {
+      "name": "sit_loop",
+      "duration": 3.0
+    },
+    {
+      "name": "sit_exit",
+      "duration": 0.4583
+    },
+    {
+      "name": "down_enter",
+      "duration": 0.6667
+    },
+    {
+      "name": "down_loop",
+      "duration": 3.0
+    },
+    {
+      "name": "down_exit",
+      "duration": 0.5417
+    },
+    {
+      "name": "comfy_enter",
+      "duration": 0.9167
+    },
+    {
+      "name": "comfy_loop",
+      "duration": 3.0
+    },
+    {
+      "name": "comfy_exit",
+      "duration": 0.7917
+    },
+    {
+      "name": "sploot_enter",
+      "duration": 0.9167
+    },
+    {
+      "name": "sploot_loop",
+      "duration": 3.0
+    },
+    {
+      "name": "sploot_exit",
+      "duration": 0.75
+    },
+    {
+      "name": "beg_enter",
+      "duration": 0.5
+    },
+    {
+      "name": "beg_loop",
+      "duration": 2.0
+    },
+    {
+      "name": "beg_exit",
+      "duration": 0.4583
+    },
+    {
+      "name": "dance_enter",
+      "duration": 0.5417
+    },
+    {
+      "name": "dance_loop",
+      "duration": 2.0
+    },
+    {
+      "name": "dance_exit",
+      "duration": 0.5
+    },
+    {
+      "name": "play_dead_enter",
+      "duration": 1.4167
+    },
+    {
+      "name": "play_dead_loop",
+      "duration": 2.4167
+    },
+    {
+      "name": "play_dead_exit",
+      "duration": 1.4167
+    },
+    {
+      "name": "paw",
+      "duration": 1.5833
+    },
+    {
+      "name": "roll_over",
+      "duration": 1.5833
+    },
+    {
+      "name": "spin",
+      "duration": 2.0833
+    }
+  ]
+}

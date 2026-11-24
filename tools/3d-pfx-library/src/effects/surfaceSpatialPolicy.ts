@@ -6,7 +6,7 @@ export function getPfxSurfaceSpatialPolicy(
   const cameraFacing = surface.role === 'screen' || surface.kind === 'screen-plane'
   const isTrail = surface.kind === 'trail-ribbon'
   const isImpactShardVolume = surface.kind === 'impact-shards' || surface.kind === 'shield-fragments' || surface.kind === 'coin-reward-burst'
-  const isVortex = surface.tuning?.meshShader === 'vortex-swirl'
+  const isVortex = surface.tuning?.meshShader === 'vortex-swirl' || surface.tuning?.meshShader === 'portal-aperture'
   const isArc = surface.tuning?.meshShader === 'arc-sweep'
   return {
     cameraFacing,

@@ -1,0 +1,3358 @@
+{
+  "version": 1,
+  "pack": "ww2",
+  "label": "WW2 Frontline",
+  "license": "LicenseRef-RUN-Repository-Supplemental-1.0",
+  "clips": [],
+  "parts": [
+    {
+      "id": "torso_ww2_field_jacket",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "torso_ww2_field_jacket",
+      "slot": "torso",
+      "label": "M41 Field Jacket",
+      "triangles": 450,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0403,
+            0.1279,
+            0.0203
+          ],
+          "b": [
+            0.0403,
+            0.1279,
+            0.0203
+          ],
+          "radius": 0.11
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.0416,
+            0.0208,
+            0.0388
+          ],
+          "b": [
+            0.0416,
+            0.0208,
+            0.0388
+          ],
+          "radius": 0.126
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.006,
+            0.081,
+            0.015
+          ],
+          "b": [
+            0.006,
+            0.081,
+            0.015
+          ],
+          "radius": 0.0596
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0707,
+            0.0043
+          ],
+          "b": [
+            0,
+            -0.0707,
+            0.0043
+          ],
+          "radius": 0.0698
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0198,
+            0.0721,
+            -0.0057
+          ],
+          "b": [
+            -0.02,
+            0.2429,
+            -0.0028
+          ],
+          "radius": 0.0477
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.001,
+            0.0656,
+            0.0006
+          ],
+          "b": [
+            -0.0009,
+            0.2161,
+            -0.002
+          ],
+          "radius": 0.0417
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0198,
+            0.0721,
+            -0.0057
+          ],
+          "b": [
+            0.02,
+            0.2429,
+            -0.0028
+          ],
+          "radius": 0.0477
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.001,
+            0.0656,
+            0.0006
+          ],
+          "b": [
+            0.0009,
+            0.2161,
+            -0.002
+          ],
+          "radius": 0.0417
+        }
+      }
+    },
+    {
+      "id": "torso_ww2_trenchcoat",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "torso_ww2_trenchcoat",
+      "slot": "torso",
+      "label": "Officer Trenchcoat",
+      "triangles": 508,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": true
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0398,
+            0.0823,
+            0.0098
+          ],
+          "b": [
+            0.0398,
+            0.0823,
+            0.0098
+          ],
+          "radius": 0.1325
+        },
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.0354,
+            0.0211,
+            0.0284
+          ],
+          "b": [
+            0.0354,
+            0.0211,
+            0.0284
+          ],
+          "radius": 0.1268
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.0117,
+            0.0486,
+            0.026
+          ],
+          "b": [
+            0.0117,
+            0.0486,
+            0.026
+          ],
+          "radius": 0.073
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0737,
+            0.0045
+          ],
+          "b": [
+            0,
+            -0.0737,
+            0.0045
+          ],
+          "radius": 0.0716
+        },
+        "thigh_l": {
+          "type": "capsule",
+          "a": [
+            0.0395,
+            0.1324,
+            -0.0728
+          ],
+          "b": [
+            0.0395,
+            0.2934,
+            -0.0739
+          ],
+          "radius": 0.1769
+        },
+        "thigh_r": {
+          "type": "capsule",
+          "a": [
+            -0.0395,
+            0.1324,
+            -0.0728
+          ],
+          "b": [
+            -0.0395,
+            0.2934,
+            -0.0739
+          ],
+          "radius": 0.1769
+        },
+        "upperarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.0199,
+            0.0729,
+            -0.0057
+          ],
+          "b": [
+            -0.02,
+            0.2421,
+            -0.0028
+          ],
+          "radius": 0.0486
+        },
+        "lowerarm_l": {
+          "type": "capsule",
+          "a": [
+            -0.001,
+            0.066,
+            -0.0004
+          ],
+          "b": [
+            -0.001,
+            0.2156,
+            -0.003
+          ],
+          "radius": 0.0423
+        },
+        "upperarm_r": {
+          "type": "capsule",
+          "a": [
+            0.0199,
+            0.0729,
+            -0.0057
+          ],
+          "b": [
+            0.02,
+            0.2421,
+            -0.0028
+          ],
+          "radius": 0.0486
+        },
+        "lowerarm_r": {
+          "type": "capsule",
+          "a": [
+            0.001,
+            0.066,
+            -0.0004
+          ],
+          "b": [
+            0.001,
+            0.2156,
+            -0.003
+          ],
+          "radius": 0.0423
+        }
+      }
+    },
+    {
+      "id": "legs_ww2_field_trousers",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "legs_ww2_field_trousers",
+      "slot": "legs",
+      "label": "Field Trousers and Gaiters",
+      "triangles": 388,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0432,
+            0.0542,
+            0.0249
+          ],
+          "b": [
+            0.0432,
+            0.0542,
+            0.0249
+          ],
+          "radius": 0.1054
+        },
+        "thigh_l": {
+          "type": "capsule",
+          "a": [
+            -0.0121,
+            0.0745,
+            -0.0033
+          ],
+          "b": [
+            -0.0121,
+            0.3475,
+            -0.0052
+          ],
+          "radius": 0.058
+        },
+        "calf_l": {
+          "type": "capsule",
+          "a": [
+            -0.0002,
+            0.1739,
+            0.0107
+          ],
+          "b": [
+            -0.0001,
+            0.4067,
+            -0.008
+          ],
+          "radius": 0.0692
+        },
+        "foot_l": {
+          "type": "capsule",
+          "a": [
+            -0.004,
+            0.0505,
+            0.1039
+          ],
+          "b": [
+            0.0001,
+            0.2285,
+            -0.0018
+          ],
+          "radius": 0.041
+        },
+        "thigh_r": {
+          "type": "capsule",
+          "a": [
+            0.0121,
+            0.0745,
+            -0.0033
+          ],
+          "b": [
+            0.0121,
+            0.3475,
+            -0.0052
+          ],
+          "radius": 0.058
+        },
+        "calf_r": {
+          "type": "capsule",
+          "a": [
+            0.0002,
+            0.1739,
+            0.0107
+          ],
+          "b": [
+            0.0001,
+            0.4067,
+            -0.008
+          ],
+          "radius": 0.0692
+        },
+        "foot_r": {
+          "type": "capsule",
+          "a": [
+            0.004,
+            0.0505,
+            0.1039
+          ],
+          "b": [
+            -0.0001,
+            0.2285,
+            -0.0018
+          ],
+          "radius": 0.041
+        }
+      }
+    },
+    {
+      "id": "legs_ww2_officer_breeches",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "legs_ww2_officer_breeches",
+      "slot": "legs",
+      "label": "Officer Breeches and Jackboots",
+      "triangles": 388,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "pelvis": {
+          "type": "capsule",
+          "a": [
+            -0.0432,
+            0.0542,
+            0.0249
+          ],
+          "b": [
+            0.0432,
+            0.0542,
+            0.0249
+          ],
+          "radius": 0.1054
+        },
+        "thigh_l": {
+          "type": "capsule",
+          "a": [
+            -0.0118,
+            0.079,
+            -0.0017
+          ],
+          "b": [
+            -0.0118,
+            0.3781,
+            -0.0038
+          ],
+          "radius": 0.063
+        },
+        "calf_l": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.2534,
+            0.0093
+          ],
+          "b": [
+            0,
+            0.413,
+            -0.0035
+          ],
+          "radius": 0.0625
+        },
+        "foot_l": {
+          "type": "capsule",
+          "a": [
+            -0.004,
+            0.0505,
+            0.1039
+          ],
+          "b": [
+            0,
+            0.2285,
+            -0.0018
+          ],
+          "radius": 0.041
+        },
+        "thigh_r": {
+          "type": "capsule",
+          "a": [
+            0.0118,
+            0.079,
+            -0.0017
+          ],
+          "b": [
+            0.0118,
+            0.3781,
+            -0.0038
+          ],
+          "radius": 0.063
+        },
+        "calf_r": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.2534,
+            0.0093
+          ],
+          "b": [
+            0,
+            0.413,
+            -0.0035
+          ],
+          "radius": 0.0625
+        },
+        "foot_r": {
+          "type": "capsule",
+          "a": [
+            0.004,
+            0.0505,
+            0.1039
+          ],
+          "b": [
+            0,
+            0.2285,
+            -0.0018
+          ],
+          "radius": 0.041
+        }
+      }
+    },
+    {
+      "id": "headwear_m1_helmet",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "headwear_m1_helmet",
+      "slot": "headwear",
+      "label": "M1 Steel Helmet",
+      "triangles": 118,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": true,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.1548,
+            0.0062
+          ],
+          "b": [
+            0,
+            0.2341,
+            0.0037
+          ],
+          "radius": 0.1328
+        }
+      }
+    },
+    {
+      "id": "headwear_officer_cap",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "headwear_officer_cap",
+      "slot": "headwear",
+      "label": "Officer Peaked Cap",
+      "triangles": 130,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": true,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            0.1551,
+            0.0197
+          ],
+          "b": [
+            0,
+            0.2227,
+            0.0175
+          ],
+          "radius": 0.1325
+        }
+      }
+    },
+    {
+      "id": "back_ww2_field_pack",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "ww2-parts.glb",
+      "nodeName": "back_ww2_field_pack",
+      "slot": "back",
+      "label": "Field Pack",
+      "triangles": 134,
+      "rigId": "ual1",
+      "rules": {
+        "hidesHair": false,
+        "hidesLegsUpper": false
+      },
+      "ragdollColliders": {
+        "spine_03": {
+          "type": "capsule",
+          "a": [
+            -0.11,
+            -0.0216,
+            -0.0627
+          ],
+          "b": [
+            0.06,
+            -0.0216,
+            -0.0627
+          ],
+          "radius": 0.1871
+        },
+        "Head": {
+          "type": "capsule",
+          "a": [
+            0,
+            -0.0654,
+            0.0122
+          ],
+          "b": [
+            0,
+            -0.0654,
+            0.0122
+          ],
+          "radius": 0.0451
+        },
+        "spine_01": {
+          "type": "capsule",
+          "a": [
+            -0.0423,
+            0.0743,
+            0.0835
+          ],
+          "b": [
+            0.0423,
+            0.0743,
+            0.0835
+          ],
+          "radius": 0.0383
+        }
+      }
+    }
+  ],
+  "heldItems": [
+    {
+      "id": "held_rifle",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_rifle.glb",
+      "nodeName": "held_rifle",
+      "label": "Service Rifle",
+      "hand": "hand_r",
+      "triangles": 156
+    },
+    {
+      "id": "held_smg",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_smg.glb",
+      "nodeName": "held_smg",
+      "label": "Submachine Gun",
+      "hand": "hand_r",
+      "triangles": 130
+    },
+    {
+      "id": "held_pistol",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_pistol.glb",
+      "nodeName": "held_pistol",
+      "label": "Service Pistol",
+      "hand": "hand_r",
+      "triangles": 94
+    },
+    {
+      "id": "held_ammo_can",
+      "pack": "ww2",
+      "leaf": "characters",
+      "relativePath": "held/held_ammo_can.glb",
+      "nodeName": "held_ammo_can",
+      "label": "Ammo Can",
+      "hand": "hand_l",
+      "triangles": 152
+    }
+  ],
+  "props": [
+    {
+      "id": "prop_sandbag_wall",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_sandbag_wall.glb",
+      "nodeName": "prop_sandbag_wall",
+      "label": "Sandbag Wall",
+      "triangles": 540,
+      "bounds": {
+        "min": [
+          -1.26179,
+          0,
+          -0.19652
+        ],
+        "max": [
+          1.26179,
+          0.6,
+          0.19652
+        ],
+        "size": [
+          2.52357,
+          0.6,
+          0.39304
+        ]
+      }
+    },
+    {
+      "id": "prop_jerrycan",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_jerrycan.glb",
+      "nodeName": "prop_jerrycan",
+      "label": "Jerrycan",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -0.17,
+          0,
+          -0.09
+        ],
+        "max": [
+          0.17,
+          0.508,
+          0.09
+        ],
+        "size": [
+          0.34,
+          0.508,
+          0.18
+        ]
+      }
+    },
+    {
+      "id": "prop_ammo_crate",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_ammo_crate.glb",
+      "nodeName": "prop_ammo_crate",
+      "label": "Ammo Crate",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -0.451,
+          0,
+          -0.187
+        ],
+        "max": [
+          0.451,
+          0.322,
+          0.187
+        ],
+        "size": [
+          0.902,
+          0.322,
+          0.374
+        ]
+      }
+    },
+    {
+      "id": "prop_field_radio",
+      "pack": "ww2",
+      "leaf": "world",
+      "relativePath": "props/prop_field_radio.glb",
+      "nodeName": "prop_field_radio",
+      "label": "Field Radio",
+      "triangles": 272,
+      "bounds": {
+        "min": [
+          -0.22,
+          0,
+          -0.12
+        ],
+        "max": [
+          0.22,
+          1.66,
+          0.12
+        ],
+        "size": [
+          0.44,
+          1.66,
+          0.24
+        ]
+      }
+    }
+  ],
+  "presets": [
+    {
+      "id": "ww2_rifleman",
+      "pack": "ww2",
+      "label": "Rifleman",
+      "rigId": "ual1",
+      "clip": "Ranged_2H_Aiming",
+      "body": "body_athletic",
+      "head": "head_hero",
+      "hair": "hair_short_part",
+      "torso": "torso_ww2_field_jacket",
+      "legs": "legs_ww2_field_trousers",
+      "headwear": "headwear_m1_helmet",
+      "back": "back_ww2_field_pack",
+      "heldRight": "held_rifle",
+      "heldLeft": null,
+      "palette": {
+        "skin": "#d8a67e",
+        "hair": "#25262b",
+        "primary": "#566045",
+        "secondary": "#8a7c5a",
+        "accent": "#b8503c",
+        "metal": "#454c52",
+        "eye": "#1f2634"
+      },
+      "proportions": {
+        "height": 1,
+        "legRatio": 0.94,
+        "shoulderWidth": 1.04,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.02,
+        "armLength": 0.96
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 78.92,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.2816,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.047,
+                0.0908,
+                0.0211
+              ],
+              "b": [
+                0.047,
+                0.0908,
+                0.0211
+              ],
+              "radius": 0.13
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2603,
+              -0.0018
+            ],
+            "massKg": 11.7061,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0423,
+                0.0966,
+                0.0131
+              ],
+              "b": [
+                0.0423,
+                0.0966,
+                0.0131
+              ],
+              "radius": 0.0656
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.2265,
+              -0.0213
+            ],
+            "massKg": 14.4409,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.1124,
+                0.0083,
+                0.0217
+              ],
+              "b": [
+                0.0613,
+                0.0083,
+                0.0217
+              ],
+              "radius": 0.1915
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2503,
+              0.0082
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0705,
+                0.0104
+              ],
+              "b": [
+                0,
+                0.234,
+                0.0002
+              ],
+              "radius": 0.1328
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.1128,
+              0.0608,
+              0.0256
+            ],
+            "massKg": 2.5707,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0182,
+                0.0623,
+                -0.0059
+              ],
+              "b": [
+                -0.0183,
+                0.2424,
+                -0.0028
+              ],
+              "radius": 0.0487
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.3017,
+              -0.0003
+            ],
+            "massKg": 1.6471,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                0.0559,
+                -0.0006
+              ],
+              "b": [
+                -0.0009,
+                0.2165,
+                -0.0033
+              ],
+              "radius": 0.0424
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2588,
+              0.0002
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.1128,
+              0.0608,
+              0.0256
+            ],
+            "massKg": 2.5707,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0182,
+                0.0623,
+                -0.0059
+              ],
+              "b": [
+                0.0183,
+                0.2424,
+                -0.0028
+              ],
+              "radius": 0.0487
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.3017,
+              -0.0003
+            ],
+            "massKg": 1.6471,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                0.0559,
+                -0.0006
+              ],
+              "b": [
+                0.0009,
+                0.2165,
+                -0.0033
+              ],
+              "radius": 0.0424
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2588,
+              0.0002
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                -0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.057,
+              0.0102
+            ],
+            "massKg": 7.6607,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0121,
+                0.0624,
+                -0.0033
+              ],
+              "b": [
+                -0.0121,
+                0.3343,
+                -0.0052
+              ],
+              "radius": 0.059
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.4292,
+              0.0003
+            ],
+            "massKg": 3.4932,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0002,
+                0.0834,
+                0.0161
+              ],
+              "b": [
+                0,
+                0.397,
+                -0.0091
+              ],
+              "radius": 0.0703
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              0,
+              0.4404,
+              0.0028
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.057,
+              0.0102
+            ],
+            "massKg": 7.6607,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0121,
+                0.0624,
+                -0.0033
+              ],
+              "b": [
+                0.0121,
+                0.3343,
+                -0.0052
+              ],
+              "radius": 0.059
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.4292,
+              0.0003
+            ],
+            "massKg": 3.4932,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0002,
+                0.0834,
+                0.0161
+              ],
+              "b": [
+                0,
+                0.397,
+                -0.0091
+              ],
+              "radius": 0.0703
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0,
+              0.4404,
+              0.0028
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                -0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    },
+    {
+      "id": "ww2_officer",
+      "pack": "ww2",
+      "label": "Field Officer",
+      "rigId": "ual1",
+      "clip": "Pistol_Idle_Loop",
+      "body": "body_athletic",
+      "head": "head_stern",
+      "hair": "hair_short_part",
+      "torso": "torso_ww2_trenchcoat",
+      "legs": "legs_ww2_officer_breeches",
+      "headwear": "headwear_officer_cap",
+      "back": null,
+      "heldRight": "held_pistol",
+      "heldLeft": null,
+      "palette": {
+        "skin": "#ecc8aa",
+        "hair": "#cfa563",
+        "primary": "#5c635f",
+        "secondary": "#4a4238",
+        "accent": "#b84a39",
+        "metal": "#3a4046",
+        "eye": "#2e5d8c"
+      },
+      "proportions": {
+        "height": 1.02,
+        "legRatio": 0.94,
+        "shoulderWidth": 1.06,
+        "torsoBulk": 1,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.02,
+        "armLength": 0.96
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 80.7653,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 13.4066,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.047,
+                0.0916,
+                0.0209
+              ],
+              "b": [
+                0.047,
+                0.0916,
+                0.0209
+              ],
+              "radius": 0.1359
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.2626,
+              -0.0024
+            ],
+            "massKg": 12.2411,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0117,
+                0.1009,
+                0.0125
+              ],
+              "b": [
+                0.0117,
+                0.1009,
+                0.0125
+              ],
+              "radius": 0.0823
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.2368,
+              -0.0225
+            ],
+            "massKg": 14.7743,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0366,
+                0.0084,
+                0.0217
+              ],
+              "b": [
+                0.0366,
+                0.0084,
+                0.0217
+              ],
+              "radius": 0.1306
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2532,
+              0.0083
+            ],
+            "massKg": 5.25,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0735,
+                0.0105
+              ],
+              "b": [
+                0,
+                0.2221,
+                0.0006
+              ],
+              "radius": 0.1325
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.1156,
+              0.0619,
+              0.0256
+            ],
+            "massKg": 2.6386,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0182,
+                0.0639,
+                -0.0059
+              ],
+              "b": [
+                -0.0183,
+                0.2487,
+                -0.0027
+              ],
+              "radius": 0.0496
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.3097,
+              -0.0002
+            ],
+            "massKg": 1.6906,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                0.0574,
+                -0.0006
+              ],
+              "b": [
+                -0.0009,
+                0.2222,
+                -0.0034
+              ],
+              "radius": 0.043
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2656,
+              0.0001
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.1156,
+              0.0619,
+              0.0256
+            ],
+            "massKg": 2.6386,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0182,
+                0.0639,
+                -0.0059
+              ],
+              "b": [
+                0.0183,
+                0.2487,
+                -0.0027
+              ],
+              "radius": 0.0496
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.3097,
+              -0.0002
+            ],
+            "massKg": 1.6906,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                0.0574,
+                -0.0006
+              ],
+              "b": [
+                0.0009,
+                0.2222,
+                -0.0034
+              ],
+              "radius": 0.043
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2656,
+              0.0001
+            ],
+            "massKg": 0.6127,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0152,
+                0.0032,
+                0.0359
+              ],
+              "b": [
+                -0.0152,
+                0.1746,
+                0.0359
+              ],
+              "radius": 0.0342
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0574,
+              0.01
+            ],
+            "massKg": 7.8768,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0121,
+                0.0642,
+                -0.0033
+              ],
+              "b": [
+                -0.0121,
+                0.3654,
+                -0.0055
+              ],
+              "radius": 0.18
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.4413,
+              0.0002
+            ],
+            "massKg": 3.5917,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0002,
+                0.0857,
+                0.0159
+              ],
+              "b": [
+                0,
+                0.4082,
+                -0.01
+              ],
+              "radius": 0.0635
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              0,
+              0.4527,
+              0.0019
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0574,
+              0.01
+            ],
+            "massKg": 7.8768,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0121,
+                0.0642,
+                -0.0033
+              ],
+              "b": [
+                0.0121,
+                0.3654,
+                -0.0055
+              ],
+              "radius": 0.18
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.4413,
+              0.0002
+            ],
+            "massKg": 3.5917,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0002,
+                0.0857,
+                0.0159
+              ],
+              "b": [
+                0,
+                0.4082,
+                -0.01
+              ],
+              "radius": 0.0635
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0,
+              0.4527,
+              0.0018
+            ],
+            "massKg": 1.1363,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0385,
+                0.0837
+              ],
+              "b": [
+                -0.0008,
+                0.2174,
+                -0.0224
+              ],
+              "radius": 0.0647
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    },
+    {
+      "id": "ww2_sapper",
+      "pack": "ww2",
+      "label": "Assault Sapper",
+      "rigId": "ual1",
+      "clip": "Walk_Loop",
+      "body": "body_heavy",
+      "head": "head_cheerful",
+      "hair": "hair_short_part",
+      "torso": "torso_ww2_field_jacket",
+      "legs": "legs_ww2_field_trousers",
+      "headwear": "headwear_m1_helmet",
+      "back": null,
+      "heldRight": "held_smg",
+      "heldLeft": "held_ammo_can",
+      "palette": {
+        "skin": "#945d3b",
+        "hair": "#25262b",
+        "primary": "#545e43",
+        "secondary": "#8c7d5b",
+        "accent": "#d4a24c",
+        "metal": "#3a4046",
+        "eye": "#3c2a21"
+      },
+      "proportions": {
+        "height": 1,
+        "legRatio": 0.95,
+        "shoulderWidth": 1.04,
+        "torsoBulk": 1.06,
+        "waistScale": 1,
+        "headScale": 1,
+        "limbThickness": 1.06,
+        "armLength": 0.97
+      },
+      "ragdoll": {
+        "version": 1,
+        "rigId": "ual1",
+        "totalMassKg": 96.7237,
+        "bodies": [
+          {
+            "bone": "pelvis",
+            "parentBody": null,
+            "parentAnchor": [
+              0,
+              0,
+              0
+            ],
+            "massKg": 15.6756,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0467,
+                0.0925,
+                0.0299
+              ],
+              "b": [
+                0.0467,
+                0.0925,
+                0.0299
+              ],
+              "radius": 0.1372
+            },
+            "joint": null,
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_01",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0,
+              0.259,
+              -0.0007
+            ],
+            "massKg": 13.5942,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0061,
+                0.0943,
+                0.0157
+              ],
+              "b": [
+                0.0061,
+                0.0943,
+                0.0157
+              ],
+              "radius": 0.0649
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                25,
+                22
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "spine_03",
+            "parentBody": "spine_01",
+            "parentAnchor": [
+              0,
+              0.2202,
+              -0.0205
+            ],
+            "massKg": 18.0888,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0431,
+                0.0081,
+                0.0252
+              ],
+              "b": [
+                0.0431,
+                0.0081,
+                0.0252
+              ],
+              "radius": 0.1322
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                28,
+                24
+              ],
+              "twistLimitsDeg": [
+                -30,
+                30
+              ],
+              "stiffness": 36,
+              "damping": 5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "Head",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0,
+              0.2486,
+              0.008
+            ],
+            "massKg": 6.16,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0,
+                -0.0704,
+                0.0121
+              ],
+              "b": [
+                0,
+                0.234,
+                0.0014
+              ],
+              "radius": 0.1328
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                42,
+                35
+              ],
+              "twistLimitsDeg": [
+                -48,
+                48
+              ],
+              "stiffness": 22,
+              "damping": 3.5
+            },
+            "collisionGroup": 1
+          },
+          {
+            "bone": "upperarm_l",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              0.1154,
+              0.0601,
+              0.0275
+            ],
+            "massKg": 3.2993,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0205,
+                0.0655,
+                -0.0062
+              ],
+              "b": [
+                -0.0206,
+                0.2419,
+                -0.0031
+              ],
+              "radius": 0.0507
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_l",
+            "parentBody": "upperarm_l",
+            "parentAnchor": [
+              0,
+              0.3045,
+              -0.0005
+            ],
+            "massKg": 2.075,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.001,
+                0.057,
+                -0.0006
+              ],
+              "b": [
+                -0.0009,
+                0.2179,
+                -0.0033
+              ],
+              "radius": 0.0437
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_l",
+            "parentBody": "lowerarm_l",
+            "parentAnchor": [
+              0,
+              0.2611,
+              0.0003
+            ],
+            "massKg": 0.7493,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0154,
+                0.0033,
+                0.0362
+              ],
+              "b": [
+                0.0154,
+                0.177,
+                0.0362
+              ],
+              "radius": 0.0347
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "upperarm_r",
+            "parentBody": "spine_03",
+            "parentAnchor": [
+              -0.1154,
+              0.0601,
+              0.0275
+            ],
+            "massKg": 3.2993,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0205,
+                0.0655,
+                -0.0062
+              ],
+              "b": [
+                0.0206,
+                0.2419,
+                -0.0031
+              ],
+              "radius": 0.0507
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                95,
+                80
+              ],
+              "twistLimitsDeg": [
+                -60,
+                60
+              ],
+              "stiffness": 16,
+              "damping": 3
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "lowerarm_r",
+            "parentBody": "upperarm_r",
+            "parentAnchor": [
+              0,
+              0.3045,
+              -0.0005
+            ],
+            "massKg": 2.075,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.001,
+                0.057,
+                -0.0006
+              ],
+              "b": [
+                0.0009,
+                0.2179,
+                -0.0033
+              ],
+              "radius": 0.0437
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                0,
+                0,
+                1
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                145
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "hand_r",
+            "parentBody": "lowerarm_r",
+            "parentAnchor": [
+              0,
+              0.2611,
+              0.0003
+            ],
+            "massKg": 0.7493,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0154,
+                0.0033,
+                0.0362
+              ],
+              "b": [
+                -0.0154,
+                0.177,
+                0.0362
+              ],
+              "radius": 0.0347
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                55,
+                30
+              ],
+              "twistLimitsDeg": [
+                -25,
+                25
+              ],
+              "stiffness": 8,
+              "damping": 1.5
+            },
+            "collisionGroup": 2
+          },
+          {
+            "bone": "thigh_l",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              0.0943,
+              0.0567,
+              0.0105
+            ],
+            "massKg": 9.7117,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0123,
+                0.0639,
+                -0.0035
+              ],
+              "b": [
+                -0.0123,
+                0.337,
+                -0.0054
+              ],
+              "radius": 0.061
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_l",
+            "parentBody": "thigh_l",
+            "parentAnchor": [
+              0,
+              0.4338,
+              0.0004
+            ],
+            "massKg": 4.4073,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0002,
+                0.0851,
+                0.0167
+              ],
+              "b": [
+                0,
+                0.4005,
+                -0.0086
+              ],
+              "radius": 0.0725
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_l",
+            "parentBody": "calf_l",
+            "parentAnchor": [
+              0,
+              0.4451,
+              0.0037
+            ],
+            "massKg": 1.3599,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                -0.0032,
+                0.0384,
+                0.0838
+              ],
+              "b": [
+                0.0009,
+                0.2191,
+                -0.0234
+              ],
+              "radius": 0.065
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "thigh_r",
+            "parentBody": "pelvis",
+            "parentAnchor": [
+              -0.0943,
+              0.0567,
+              0.0105
+            ],
+            "massKg": 9.7117,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0123,
+                0.0639,
+                -0.0035
+              ],
+              "b": [
+                0.0123,
+                0.337,
+                -0.0054
+              ],
+              "radius": 0.061
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                85,
+                55
+              ],
+              "twistLimitsDeg": [
+                -35,
+                35
+              ],
+              "stiffness": 22,
+              "damping": 4
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "calf_r",
+            "parentBody": "thigh_r",
+            "parentAnchor": [
+              0,
+              0.4338,
+              0.0004
+            ],
+            "massKg": 4.4073,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0002,
+                0.0851,
+                0.0167
+              ],
+              "b": [
+                0,
+                0.4005,
+                -0.0086
+              ],
+              "radius": 0.0725
+            },
+            "joint": {
+              "type": "hinge",
+              "axisLocal": [
+                1,
+                0,
+                0
+              ],
+              "twistAxisLocal": [
+                0,
+                1,
+                0
+              ],
+              "swingLimitsDeg": [
+                0,
+                140
+              ],
+              "twistLimitsDeg": [
+                0,
+                0
+              ],
+              "stiffness": 14,
+              "damping": 3
+            },
+            "collisionGroup": 3
+          },
+          {
+            "bone": "foot_r",
+            "parentBody": "calf_r",
+            "parentAnchor": [
+              0,
+              0.4451,
+              0.0037
+            ],
+            "massKg": 1.3599,
+            "collider": {
+              "type": "capsule",
+              "a": [
+                0.0032,
+                0.0384,
+                0.0838
+              ],
+              "b": [
+                -0.0009,
+                0.2191,
+                -0.0234
+              ],
+              "radius": 0.065
+            },
+            "joint": {
+              "type": "cone_twist",
+              "axisLocal": [
+                0,
+                1,
+                0
+              ],
+              "twistAxisLocal": [
+                1,
+                0,
+                0
+              ],
+              "swingLimitsDeg": [
+                45,
+                25
+              ],
+              "twistLimitsDeg": [
+                -20,
+                20
+              ],
+              "stiffness": 10,
+              "damping": 2
+            },
+            "collisionGroup": 3
+          }
+        ],
+        "ignoreCollisionPairs": [
+          [
+            "pelvis",
+            "spine_01"
+          ],
+          [
+            "spine_01",
+            "spine_03"
+          ],
+          [
+            "spine_03",
+            "Head"
+          ],
+          [
+            "spine_03",
+            "upperarm_l"
+          ],
+          [
+            "upperarm_l",
+            "lowerarm_l"
+          ],
+          [
+            "lowerarm_l",
+            "hand_l"
+          ],
+          [
+            "spine_03",
+            "upperarm_r"
+          ],
+          [
+            "upperarm_r",
+            "lowerarm_r"
+          ],
+          [
+            "lowerarm_r",
+            "hand_r"
+          ],
+          [
+            "pelvis",
+            "thigh_l"
+          ],
+          [
+            "thigh_l",
+            "calf_l"
+          ],
+          [
+            "calf_l",
+            "foot_l"
+          ],
+          [
+            "pelvis",
+            "thigh_r"
+          ],
+          [
+            "thigh_r",
+            "calf_r"
+          ],
+          [
+            "calf_r",
+            "foot_r"
+          ]
+        ],
+        "groundContactBones": [
+          "foot_l",
+          "foot_r"
+        ]
+      }
+    }
+  ]
+}

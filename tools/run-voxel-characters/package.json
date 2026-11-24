@@ -1,0 +1,30 @@
+{
+  "name": "run-voxel-characters",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "Chunky 5 cm voxel character & pack authoring pipeline on the Quaternius UAL1 53-joint CC0 rig, targeting S23 Ultra 120Hz performance and jam-ready-assets staging.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "build": "node --import tsx scripts/build.ts",
+    "validate": "node --import tsx scripts/validate.ts",
+    "validate:creature": "node --import tsx scripts/validate-creature.ts",
+    "catalog": "node --import tsx scripts/export-catalog.ts",
+    "stage": "node --import tsx scripts/stage-jam.ts"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/three": "~0.170.0",
+    "three": "~0.170.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.7.0",
+    "vitest": "^4.1.12"
+  }
+}

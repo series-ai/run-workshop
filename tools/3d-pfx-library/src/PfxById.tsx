@@ -11,6 +11,7 @@ import { InspectPackEffect } from './inspect-packs/InspectPackEffect'
 import { getRvxRecipe, isRvxId, RVX_IDS, RVX_TEXTURE_URLS } from './inspect-packs/rvxRecipes'
 import { PFX_PRESETS } from './tooling/01'
 import { GamePfx } from './tooling/07'
+import type { PfxAuthoredRecipe } from './types/02'
 
 /** Every RUN voxel pack effect id (`rvx-<pack>-<effect>`). */
 export const RVX_EFFECT_IDS: readonly string[] = RVX_IDS
@@ -58,10 +59,22 @@ function withoutSweep(recipe: ReturnType<typeof getRvxRecipe>): ReturnType<typeo
  * `prewarm` (loops; default true): start a loop as if it had run for a while. False for a loop
  * that a clip starts, such as mist that pours out as a door opens.
  */
-export function PfxById({ effectId, playKey, preview = false, prewarm = true }: { effectId: string; playKey?: number | string; preview?: boolean; prewarm?: boolean }) {
+export interface PfxByIdProps {
+  effectId: string
+  playKey?: number | string
+  preview?: boolean
+  prewarm?: boolean
+  recipeOverride?: PfxAuthoredRecipe
+  previewTimeSeconds?: number
+}
+
+export function PfxById({ effectId, playKey, preview = false, prewarm = true, recipeOverride, previewTimeSeconds }: PfxByIdProps) {
+  if (isInspectPackId(effectId) && (recipeOverride !== undefined || previewTimeSeconds !== undefined)) {
+    throw new Error(`Catalog recipe and time overrides are unavailable for pack effect "${effectId}"`)
+  }
   if (isRvxId(effectId)) return <RvxEffect effectId={effectId} playKey={playKey} preview={preview} prewarm={prewarm} />
   if (isInspectPackId(effectId)) return <InspectPackEffect id={effectId} />
   const preset = PFX_PRESETS.find((candidate) => candidate.effectId === effectId)
   if (!preset) throw new Error(`Unknown PFX effect id "${effectId}"`)
-  return <GamePfx preset={preset} screenAnchor={false} />
+  return <GamePfx preset={preset} screenAnchor={false} recipeOverride={recipeOverride} previewTimeSeconds={previewTimeSeconds} />
 }
