@@ -14,7 +14,7 @@
 #loading .track b { display: block; width: 38%; height: 100%; border-radius: 4px; background: #ffd23f; animation: run 1.1s ease-in-out infinite; }
 @keyframes run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
 
-#trailer-button { position: fixed; z-index: 5; top: calc(12px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right));
+#trailer-button { position: fixed; z-index: 5; top: calc(12px + env(safe-area-inset-top)); right: calc(62px + env(safe-area-inset-right)); /* left of the eye */
   font: 700 13px system-ui, sans-serif; color: #fff; background: #1d2a33e6; border: 0; border-radius: 999px; padding: 10px 16px 10px 12px;
   box-shadow: 0 6px 20px #0b1a2a40; cursor: pointer; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px); }
 #trailer-button span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #ffd23f; color: #1d2a33; font-size: 10px; }

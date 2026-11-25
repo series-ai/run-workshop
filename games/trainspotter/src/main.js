@@ -43,6 +43,7 @@ try {
 function trailer(viewer) {
   const button = document.createElement('button');
   button.id = 'trailer-button';
+  button.className = 'ui-hideable'; // the viewer's eye hides it with the rest of the controls
   button.innerHTML = '<span>▶</span> Watch the trailer';
   const sheet = document.createElement('div');
   sheet.id = 'trailer';

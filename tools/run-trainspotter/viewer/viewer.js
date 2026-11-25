@@ -62,6 +62,14 @@ const UI = `
 
 export async function startViewer({ kitBase = '../out/glb/', catalogue = null, soundsBase = '../out/sounds/ogg/' } = {}) {
   document.body.insertAdjacentHTML('afterbegin', UI);
+  // a faint eye in the top-right corner hides every control, for an unobstructed view (H does too)
+  document.body.insertAdjacentHTML('beforeend', `<button id="hide-ui" aria-label="Hide the controls" title="Hide the controls (H)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="open" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle class="open" cx="12" cy="12" r="3"/><path class="shut" d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6C3.9 8.4 2 12 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>`);
+  const hideUi = (on = !document.body.classList.contains('ui-hidden')) => {
+    document.body.classList.toggle('ui-hidden', on);
+    document.getElementById('hide-ui').setAttribute('aria-label', on ? 'Show the controls' : 'Hide the controls');
+  };
+  document.getElementById('hide-ui').onclick = () => hideUi();
+  addEventListener('keydown', (e) => { if (e.key.toLowerCase() === 'h' && !/input|select|textarea/i.test(e.target.tagName)) hideUi(); });
   const $ = (id) => document.getElementById(id);
   const params = new URLSearchParams(location.search);
   const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
@@ -102,7 +110,12 @@ export async function startViewer({ kitBase = '../out/glb/', catalogue = null, s
     if (!world) return;
     world.ops = null;
     if (!Operations) return;
-    try { world.ops = new Operations(world, { trains: allTrains(), plan: world.plan, kit, main: train }); } catch (e) { console.warn('operations', e); }
+    try {
+      world.ops = new Operations(world, { trains: [] });
+      if (train) world.ops.addTrain(train, { stops: world.plan.main?.stops ?? [], speed: Number($('speed').value) });
+      for (const t of world.trains) world.ops.addTrain(t, t.plan ?? {});
+      if (!running) mainDriver()?.hold(true);
+    } catch (e) { console.warn('operations', e); }
     world.ops?.on?.((name, t) => audio.event(name, t));
     for (const [t] of audio.trains) if (!allTrains().includes(t)) audio.detach(t);
     for (const t of allTrains()) audio.attach(t);
@@ -156,10 +169,11 @@ export async function startViewer({ kitBase = '../out/glb/', catalogue = null, s
   }
   async function setConsistCars(cars) {
     // the same cars in new colours: repaint them where they are, so the train keeps its place
-    const same = train && train.spec?.length === cars.length && cars.every((c, i) => c.id === train.spec[i].id && !!c.flip === !!train.spec[i].flip && c.load === train.spec[i].load);
+    const was = train?.consistCars;
+    const same = was?.length === cars.length && cars.every((c, i) => c.id === was[i].id && !!c.flip === !!was[i].flip && c.load === was[i].load);
     if (same) {
       cars.forEach((c, i) => kit.recolour(train.cars[i].group, train.cars[i].entry, c));
-      train.spec = cars;
+      train.consistCars = cars;
       pretty.adopt(train.group);
       return;
     }
@@ -169,7 +183,7 @@ export async function startViewer({ kitBase = '../out/glb/', catalogue = null, s
     if (my !== token || w !== world) { w.group.remove(t.group); return; }
     if (train) { w.group.remove(train.group); fx.detach(train); }
     train = t;
-    train.spec = cars;
+    train.consistCars = cars;
     fx.attach(train);
     running = true;
     $('brake').textContent = 'Brake';
@@ -198,9 +212,18 @@ export async function startViewer({ kitBase = '../out/glb/', catalogue = null, s
     setConsistCars(CONSISTS[sel.value].map((c) => ({ ...c, ...((name && kit.entry(c.id).liveries?.[name]) || {}) })));
   };
   sel.onchange = () => { liveries(); for (const o of sw.children) o.classList.remove('on'); setConsist(sel.value); };
-  $('speed').oninput = (e) => { if (train && running) train.go(Number(e.target.value)); };
+  // the controls drive through your train's driver, which plans its speed and stops every frame
+  function mainDriver() { return train ? world?.ops?.driver(train) : null; }
+  $('speed').oninput = (e) => {
+    const v = Number(e.target.value);
+    const d = mainDriver();
+    if (d) d.cruise = v; // 0 stands the train
+    if (train && running) train.go(v);
+  };
   $('brake').onclick = (e) => {
     running = !running;
+    const d = mainDriver();
+    if (d) d.hold(!running);
     if (running) train?.go(Number($('speed').value));
     else train?.brake();
     e.target.textContent = running ? 'Brake' : 'Go';
