@@ -36,7 +36,8 @@ const UI = `
     <div class="two"><button id="brake" class="primary">Brake</button><button id="horn">Horn</button></div>
     <div class="two"><button id="points">Points: straight</button><button id="signal">Signal: danger</button></div>
     <label><span>Sound</span><input id="sound" type="checkbox" checked></label>
-    <label><span>Birds and breeze</span><input id="ambience" type="checkbox" checked></label>
+    <label class="range"><span>Train sounds</span><input id="vol-trains" type="range" min="0" max="1" step="0.05" value="1"></label>
+    <label class="range"><span>Ambience</span><input id="vol-ambience" type="range" min="0" max="1" step="0.05" value="0.45"></label>
     <label><span>Follow train</span><input id="follow" type="checkbox"></label>
   </div></details>
   <details open><summary>Look</summary><div class="rows">
@@ -259,7 +260,9 @@ export async function startViewer({ kitBase = '../out/glb/', catalogue = null, s
   }
 
   $('sound').onchange = (e) => (e.target.checked ? audio.start() : audio.stop());
-  $('ambience').onchange = (e) => { audio.ambience = e.target.checked; };
+  // two mixer levels: trains and stations, and the countryside (birds and breeze; 0 is off)
+  $('vol-trains').oninput = (e) => audio.setVolumes({ trains: Number(e.target.value) });
+  $('vol-ambience').oninput = (e) => audio.setVolumes({ ambience: Number(e.target.value) });
   const firstGesture = () => { if ($('sound').checked && !audio.enabled) audio.start(); };
   for (const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, firstGesture, { once: true, capture: true });
   // click (not drag) on the railway: the tilt-shift focus eases to that spot; on a train it rides
