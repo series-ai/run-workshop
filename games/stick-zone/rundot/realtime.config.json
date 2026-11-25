@@ -1,0 +1,20 @@
+{
+  "rooms": [
+    {
+      "type": "sector-7-depot",
+      "deterministic": true,
+      "config": {
+        "maxPlayers": 4,
+        "tickRateHz": 4,
+        "waitForFullRoom": false,
+        "autoPersist": false,
+        "allowReconnect": true,
+        "reconnectTimeout": 30000,
+        "metadata": {
+          "title": "Sector 7 Depot Raid",
+          "mode": "coop_extraction"
+        }
+      }
+    }
+  ]
+}
