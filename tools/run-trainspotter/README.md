@@ -10,7 +10,7 @@ packs, without weathering.
 Trains follow well-known real types, but every name is a generic description of the type:
 no operator, line or maker names, no logos or lettering.
 
-The kit has 148 models: 19 track pieces, 6 bridges and tunnel pieces, 61 locomotives,
+The kit has 150 models: 19 track pieces, 6 bridges and tunnel pieces, 63 locomotives,
 carriages, wagons, trams and metro cars, 5 loads, 21 stations, platforms and lineside
 structures, 33 props and scenery pieces (signals, trees, town buildings, road vehicles,
 people), and 3 board-game tokens.

@@ -14,6 +14,7 @@ export const CONSISTS = {
   'Steam express': [{ id: 'steam-express-green' }, { id: 'tender-express' }, { id: 'coach-classic' }, { id: 'coach-classic' }, { id: 'coach-classic' }],
   'Diesel freight': [{ id: 'diesel-streamlined-cab' }, { id: 'wagon-boxcar' }, { id: 'wagon-flatcar', load: 'load-container' }, { id: 'wagon-boxcar', paint: 'teal' }],
   'Bullet set': [{ id: 'highspeed-bullet-power-car' }, { id: 'highspeed-bullet-car' }, { id: 'highspeed-bullet-car' }, { id: 'highspeed-bullet-power-car', flip: true }],
+  'Double-deck bullet set': [{ id: 'highspeed-double-deck-power-car' }, { id: 'highspeed-double-deck-car' }, { id: 'highspeed-double-deck-car' }, { id: 'highspeed-double-deck-power-car', flip: true }],
   'Intercity': [{ id: 'diesel-streamlined-cab', paint: 'skin', trim: 'blue', accent: 'red' }, { id: 'coach-intercity' }, { id: 'coach-intercity' }, { id: 'coach-intercity' }],
   'Streamlined steam': [{ id: 'steam-streamlined-blue' }, { id: 'tender-streamlined-blue' }, { id: 'coach-sleeper' }, { id: 'coach-dining' }, { id: 'coach-sleeper' }],
   'Western 4-4-0': [{ id: 'steam-western-4-4-0' }, { id: 'tender-western' }, { id: 'coach-baggage-mail' }, { id: 'coach-observation' }],

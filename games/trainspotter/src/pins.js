@@ -10,6 +10,6 @@ export const KIT_LEAF = 'run-trainspotter/3D/vehicles-racing';
 export const AUDIO_LEAF = 'run-trainspotter/audio';
 
 export const PINS = {
-  [KIT_LEAF]: 'bb1349b93d49',
+  [KIT_LEAF]: '53e7a34e6604',
   [AUDIO_LEAF]: 'bd29ad54bb58',
 };

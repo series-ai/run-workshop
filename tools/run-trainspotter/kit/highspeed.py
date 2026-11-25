@@ -214,6 +214,90 @@ def wedge_car(name="highspeed-wedge-car", paint="skin", trim="orange", accent="a
     return _intermediate(name, paint, trim, accent, 56, "wedge", "wedge")
 
 
+# ---------------------------------------------------------------- double-deck set
+DD_ROOF = 66  # ten voxels taller than the single-deck sets, still inside the loading gauge
+DD_LIVERIES = {
+    "yellow-line": {"paint": "skin", "trim": "blue", "accent": "gold"},
+    "pink-line": {"paint": "skin", "trim": "blue", "accent": "pink"},
+}
+
+
+def _dd_paint(g, body, trim, accent, Y):
+    """White above, the lower body (and the lower nose) in the trim colour, a stripe between."""
+    P.flat(g, body & (Y < 17), "iron", 3)
+    P.flat(g, body & (Y >= 17) & (Y < 34), trim, 4)
+    P.flat(g, body & (Y >= 34) & (Y < 37), accent, 5)
+
+
+def _dd_windows(g, body, z0, z1, paint):
+    """Two decks of windows: an upper row under the roof and a lower row just above
+    the floor, framed in white so it reads on the blue. The tall section's sides curve
+    in toward the roof, so windows go on the whole side-facing skin, not one plane."""
+    X, Y, Z = coords(g)
+    sides = body & (np.abs(X + 0.5 - BX) >= 17.5)
+    span = (Z >= z0) & (Z < z1)
+    P.flat(g, sides & span & (Y >= 21) & (Y < 31), paint, 5)  # the lower deck's white frame
+    for y0, y1 in ((46, 55), (22, 30)):
+        win = sides & span & (Y >= y0) & (Y < y1)
+        glass(g, win)
+        P.flat(g, win & ((Z - z0) % 10 == 0), paint, 5)  # pillars between the windows
+    return sides
+
+
+def double_deck_power(name="highspeed-double-deck-power-car", paint="skin", trim="blue", accent="gold") -> Stock:
+    """A double-deck high-speed power car with a very long nose: it rises from a
+    low pointed tip over half the car's length to a cab set high and far back,
+    then runs at full double-deck height with two rows of windows. White above,
+    a blue lower body and a yellow stripe between."""
+    g = Grid(BW, 72, L + 1)
+    body = loft(g, [(1, 5, 17, 23), (12, 10, 15.5, 28), (26, 15, 14.5, 34), (42, 18.5, 14, 41), (56, 20.5, 14, 48),
+                    (66, 21, 14, 55), (76, 21, 14, 61), (88, 21, 14, DD_ROOF), (156, 21, 14, DD_ROOF)],
+                paint, 5, p=2.4, n=20)
+    X, Y, Z = coords(g)
+    _dd_paint(g, body, trim, accent, Y)
+    ws = body & (Z >= 62) & (Z < 80) & (Y >= 50) & (Y < 62) & (np.abs(X + 0.5 - BX) < 17)  # the high, raked cab
+    glass(g, ws)
+    P.flat(g, ws & (np.abs(X + 0.5 - BX) < 1), paint, 5)
+    _dd_windows(g, body, 96, 150, paint)
+    for x in (BX - 21, BX + 20):  # crew door behind the cab
+        P.flat(g, body & (X == x) & (Z >= 86) & (Z < 92) & (Y >= 17) & (Y < 56), paint, 3)
+    for sx in (-1, 1):  # headlights low on the nose
+        P.flat(g, body & (Z >= 14) & (Z < 24) & (np.abs(X + 0.5 - (BX + sx * 9)) < 2.5) & (Y >= 24) & (Y < 28), "sand", 7)
+    underframe(g, 24, 156, y0=10, y1=15)
+    equipment(g, 96, 140, boxes=2)
+    ends(g, L, buffers=False, front=False)
+    # a sloped pilot under the nose, over the covered coupler (reaches the coupler face)
+    g.prism("x", [(6, 0), (13, 0), (19, 12), (19, 26), (6, 26)], BX - 14, BX + 14, C("iron", 3))
+    g.box(BX - 7, 16, L - 3, BX + 7, 50, L, C("iron", 2))
+    parts, clips = panto(BX, DD_ROOF, 118)
+    return Stock(name, "power-car", L, g, {"paint": paint, "trim": trim, "accent": accent},
+                 bogies=[Bogie("f", 50), Bogie("r", 136)], powered=True, idle="electric", extra_parts=parts, extra_clips=clips,
+                 sockets=[("socket-light-f", (BX, 26, 14)), ("socket-cab", (BX, 56, 70)), ("socket-panto", (BX, DD_ROOF + 1, 118))],
+                 data={"traction": "electric", "set": "double-deck", "floorY": FLOOR_Y, "decks": 2, "liveries": DD_LIVERIES})
+
+
+def double_deck_car(name="highspeed-double-deck-car", paint="skin", trim="blue", accent="gold") -> Stock:
+    """The matching double-deck intermediate car: the tall section, two decks of
+    windows, doors at both ends."""
+    from pnshapes import last
+
+    g = Grid(BW, 72, L + 1)
+    g.prism("z", _round(21, 14, DD_ROOF), 3, 157, C(paint, 5))
+    body = last(g)
+    X, Y, Z = coords(g)
+    _dd_paint(g, body, trim, accent, Y)
+    sides = _dd_windows(g, body, 18, 142, paint)
+    for zd in (6, 148):  # doors at the car ends
+        P.flat(g, sides & (Z >= zd) & (Z < zd + 6) & (Y >= 17) & (Y < 50), paint, 3)
+    underframe(g, 4, 156, y0=10, y1=15)
+    equipment(g, 44, 116, boxes=3)
+    for z0, z1 in ((0, 3), (L - 3, L)):
+        g.box(BX - 7, 16, z0, BX + 7, 50, z1, C("iron", 2))
+    ends(g, L, buffers=False)
+    return Stock(name, "coach", L, g, {"paint": paint, "trim": trim, "accent": accent},
+                 bogies=[Bogie("f", 28), Bogie("r", 132)], data={"set": "double-deck", "floorY": FLOOR_Y, "decks": 2, "liveries": DD_LIVERIES})
+
+
 CATALOG = [
     stock("high-speed-trains", bullet_nose, tier="slice"),
     stock("high-speed-trains", bullet_car, tier="slice"),
@@ -221,4 +305,6 @@ CATALOG = [
     stock("high-speed-trains", longnose_car),
     stock("high-speed-trains", wedge_power),
     stock("high-speed-trains", wedge_car),
+    stock("high-speed-trains", double_deck_power),
+    stock("high-speed-trains", double_deck_car),
 ]
