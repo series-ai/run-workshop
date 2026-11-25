@@ -3,17 +3,18 @@
  * Headless Chromium (Metal ANGLE) visual and telemetry check for games/run-chisel-showcase.
  *
  * The script starts `vite preview --mode local-preview`, drives the real UI and writes one PNG for
- * each shot plus `report.json` to `--out <dir>`. A console error or a page error fails the run.
+ * each shot plus `report.json` to `--out <dir>`. Browser errors and clipped compact controls fail the run.
  *
  *   --out <dir>     output directory (default: out/visual-check)
  *   --port <n>      preview port (default: 4194)
  *   --only <regex>  capture only the shots whose name matches (for fast iteration)
+ *   --lighting fast  use the experimental lightweight palette lighting
  *
  * Lab shots hold the clip at a fixed phase, so each pose is the same on every run.
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { chromium } from 'playwright'
 
@@ -24,7 +25,10 @@ function parseArgs(argv) {
   const port = portIdx >= 0 && argv[portIdx + 1] ? Number(argv[portIdx + 1]) : 4194
   const onlyIdx = argv.indexOf('--only')
   const only = onlyIdx >= 0 && argv[onlyIdx + 1] ? new RegExp(argv[onlyIdx + 1]) : null
-  return { outDir, port, only }
+  const lightingIdx = argv.indexOf('--lighting')
+  const lighting = lightingIdx < 0 ? 'standard' : argv[lightingIdx + 1]
+  if (lighting !== 'standard' && lighting !== 'fast') throw new Error('--lighting requires standard or fast.')
+  return { outDir, port, only, lighting }
 }
 
 async function waitForServer(url, timeoutMs = 15000) {
@@ -42,7 +46,7 @@ async function waitForServer(url, timeoutMs = 15000) {
 }
 
 async function main() {
-  const { outDir, port, only } = parseArgs(process.argv.slice(2))
+  const { outDir, port, only, lighting } = parseArgs(process.argv.slice(2))
   mkdirSync(outDir, { recursive: true })
 
   const repoRoot = resolve(dirname(new URL(import.meta.url).pathname), '../../..')
@@ -71,22 +75,61 @@ async function main() {
       args: ['--use-gl=angle', '--use-angle=metal', '--enable-webgl', '--ignore-gpu-blocklist'],
     })
 
-    const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 })
+    const desktop = { width: 1280, height: 800 }
+    const phone = { width: 390, height: 844 }
+    const compactPhone = { width: 320, height: 700 }
+    const page = await browser.newPage({ viewport: desktop, deviceScaleFactor: 1.5 })
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text())
     })
     page.on('pageerror', (err) => pageErrors.push(String(err)))
 
-    await page.goto(url, { waitUntil: 'networkidle' })
+    await page.goto(`${url}?lighting=${lighting}`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(1000)
 
-    const snap = async (name, waitMs = 500) => {
+    const snap = async (name, waitMs = 500, options = {}) => {
       await page.waitForTimeout(waitMs)
       const path = resolve(outDir, `${name}.png`)
-      await page.screenshot({ path })
+      await page.screenshot({ path, ...options })
       console.log(`CAPTURED ${path}`)
     }
-    const tab = (name) => page.locator('.topbar').getByRole('button', { name }).click()
+    const navigation = page.getByRole('navigation', { name: 'Workshop sections' })
+    const tab = (name) => navigation.getByRole('button', { name }).click()
+    const assertControlsFit = async (group, label) => {
+      const buttons = await group.getByRole('button').evaluateAll((elements) => elements.map((button) => {
+        const box = button.getBoundingClientRect()
+        const fits = box.width > 0 && box.height > 0 && box.left >= 0 && box.top >= 0
+          && box.right <= window.innerWidth && box.bottom <= window.innerHeight
+          && button.scrollWidth <= button.clientWidth + 1
+        return { label: button.textContent.trim(), fits }
+      }))
+      if (buttons.length === 0) throw new Error(`No buttons in ${label}.`)
+      const clipped = buttons.filter((button) => !button.fits)
+      if (clipped.length) throw new Error(`${label} clips: ${clipped.map((button) => button.label).join(', ')}.`)
+    }
+    const colorDirection = JSON.parse(readFileSync(new URL('../contracts/data/color-direction.json', import.meta.url), 'utf8'))
+    const contexts = Object.keys(colorDirection.packs)
+    const stage = (context, viewport) => async () => {
+      await page.setViewportSize(viewport)
+      await tab(/Context Stage/)
+      const picker = page.getByRole('group', { name: 'Scene' })
+      await picker.getByRole('button', { name: new RegExp(`^${context}$`, 'i') }).click()
+      await page.getByRole('status').filter({ hasText: 'Loading scene' }).waitFor({ state: 'hidden' })
+      await page.waitForLoadState('networkidle')
+      if (context === `All ${contexts.length}`) {
+        await page.waitForFunction((count) => {
+          const labels = [...document.querySelectorAll('.stage-scene-label')]
+          return labels.length === count && labels.every((label) => {
+            const box = label.getBoundingClientRect()
+            return box.left >= 0 && box.top >= 0 && box.right <= innerWidth && box.bottom <= innerHeight
+          })
+        }, contexts.length, { timeout: 5000 })
+      }
+      if (viewport === compactPhone) {
+        await assertControlsFit(navigation, 'Workshop navigation')
+        await assertControlsFit(picker, 'Scene picker')
+      }
+    }
 
     /** Open a lab preset. `clip` selects a clip, `hold` holds it at a phase (0 to 1). */
     const lab = async (preset, { clip, hold } = {}) => {
@@ -114,6 +157,18 @@ async function main() {
     }
 
     let perfText = null
+    const bench = (viewport) => async () => {
+      await page.setViewportSize(viewport)
+      await tab(/Perf Bench$/)
+      await page.getByRole('button', { name: '64', exact: true }).click()
+      await page.waitForTimeout(3200)
+      if (viewport === compactPhone) {
+        await assertControlsFit(navigation, 'Workshop navigation')
+        await assertControlsFit(page.locator('.perf-controls-compact'), 'Performance Bench controls')
+      } else {
+        perfText = await page.locator('.hud-overlay').first().innerText()
+      }
+    }
     const HUMANS = [
       ['knight', 'Knight Captain'], ['squire', 'Torchbearer Squire'], ['guard', 'Town Guard'],
       ['rifleman', 'Rifleman'], ['officer', 'Field Officer'], ['sapper', 'Assault Sapper'],
@@ -184,36 +239,33 @@ async function main() {
         await page.getByRole('button', { name: 'Reset View', exact: true }).click()
         await page.waitForTimeout(900)
       }],
-      ['09-stage-all-contexts', async () => {
-        await tab(/Context Stage/)
-        await page.getByRole('button', { name: /^All \d+(?: Contexts)?$/ }).click()
-        await page.waitForTimeout(900)
-      }],
-      ...['MEDIEVAL', 'WW2', 'SIM', 'CYBERPUNK', 'MONSTERS'].map((context, i) => [`09${'bcdef'[i]}-stage-${context.toLowerCase()}`, async () => {
-        await tab(/Context Stage/)
-        await page.getByRole('button', { name: context, exact: true }).click()
-        await page.waitForTimeout(700)
+      ['09-stage-all-contexts', stage(`All ${contexts.length}`, desktop)],
+      ...contexts.map((context, i) => [`09${String.fromCharCode(98 + i)}-stage-${context}`, stage(context, desktop)]),
+      ...contexts.map((context) => [`09-phone-${context}`, stage(context, phone), { scale: 'css' }]),
+      ...contexts.map((context) => [`09-phone-320-${context}`, stage(context, compactPhone), { scale: 'css' }]),
+      ['09-phone-320-all-contexts', stage(`All ${contexts.length}`, compactPhone), { scale: 'css' }],
+      ...contexts.map((context) => [`09-value-${context}`, stage(context, desktop), {
+        style: '.context-stage-canvas { filter: grayscale(1); }',
       }]),
-      ['10-perf-bench-64', async () => {
-        await tab('S23 Ultra Perf Bench')
-        await page.getByRole('button', { name: '64', exact: true }).click()
-        await page.waitForTimeout(3200)
-        perfText = await page.locator('.hud-overlay').first().innerText()
-      }],
+      ['10-perf-bench-64', bench(desktop)],
+      ['10-phone-320-perf-bench-64', bench(compactPhone), { scale: 'css' }],
     ]
-    for (const [name, run] of shots) {
-      if (only && !only.test(name)) continue
-      await run()
-      await snap(name)
-    }
-
     // Use the real composer with empty clothing slots for the body seam checks.
     const bareShots = ['Athletic', 'Heavy', 'Slim'].flatMap((body) =>
       ['A_TPose', 'Idle_Loop'].map((clip) => ({
         name: `11-bare-${body.toLowerCase()}-${clip}`, body, clip,
       })),
     ).filter(({ name }) => !only || only.test(name))
+    const selectedShots = shots.filter(([name]) => !only || only.test(name))
+    if (selectedShots.length + bareShots.length === 0) {
+      throw new Error(`No visual checks match ${only}.`)
+    }
+    for (const [name, run, options] of selectedShots) {
+      await run()
+      await snap(name, 500, options)
+    }
     if (bareShots.length) {
+      await page.setViewportSize(desktop)
       await page.route('**/catalog/core/catalog.json', async (route) => {
         const response = await route.fetch()
         const catalog = await response.json()
@@ -232,6 +284,7 @@ async function main() {
 
     const report = {
       capturedAt: new Date().toISOString(),
+      lighting,
       consoleErrors,
       pageErrors,
       perfHud: perfText,

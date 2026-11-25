@@ -44,8 +44,18 @@ are `- [x]`. So:
   `jam-ready-assets`, then sync the updated leaf hashes back into `src/pins.ts`
   with `npm run sync-pins -- --target <jam-ready-assets-checkout>` (for Chisel
   packs) and verify a pinned `npm run build`.
-- For `run-chisel-*` authoring, follow
-  [`.agents/skills/run-chisel-assets/SKILL.md`](.agents/skills/run-chisel-assets/SKILL.md).
+
+### Add or update Chisel assets
+
+- Start with the [Chisel authoring skill](.agents/skills/run-chisel-assets/SKILL.md)
+  and the [pack color briefs](tools/run-chisel-packs/contracts/data/color-direction.json).
+  Start new assets with `npm run scaffold` in `tools/run-chisel-packs`.
+- Build, validate, and export the catalogs. Use `snapshot` to check the mesh
+  and `lineup` to check its scale against the 1.80 m adult. For assets that
+  interact, check the actual fit at the pose used in the scene.
+- Run `npm run verify:visual -- --only '^(09|10)'` from `tools/run-chisel-packs`
+  after the showcase local build. Review screenshots at desktop, 390 px, and
+  320 px before staging. See the [Chisel commands](tools/run-chisel-packs/README.md).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution requirements and
 [GETTING_STARTED.md](GETTING_STARTED.md) for onboarding.

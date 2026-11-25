@@ -119,7 +119,8 @@ describe('ragdoll physics metadata contracts', () => {
         const ragdoll = preset.ragdoll!
         expect(ragdoll.rigId).toBe(rigId)
         expect(ragdoll.bodies).toHaveLength(RAGDOLL_RIG_TEMPLATES[rigId].bodies.length)
-        expect(ragdoll.totalMassKg).toBeGreaterThan(20)
+        const bodyMassKg = ragdoll.bodies.reduce((total, body) => total + body.massKg, 0)
+        expect(ragdoll.totalMassKg).toBeCloseTo(bodyMassKg, 2)
 
         const seen = new Set<string>()
         for (const body of ragdoll.bodies) {

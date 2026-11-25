@@ -9,29 +9,12 @@
  */
 import { spawn, spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
+import { chromium } from 'playwright'
 import { packCatalogSchema } from '../contracts/catalog'
 import { POLY_PACK_KEYS } from '../contracts/packs'
 import { REPO_ROOT } from '../src/paths'
-
-const require = createRequire(import.meta.url)
-
-function findPlaywright() {
-  for (const candidate of [
-    'playwright',
-    resolve(dirname(process.execPath), '../lib/node_modules/@playwright/cli/node_modules/playwright'),
-    '/Users/pany/.local/share/mise/installs/node/24.19.0/lib/node_modules/@playwright/cli/node_modules/playwright',
-  ]) {
-    try {
-      return require(candidate)
-    } catch {
-      // try next
-    }
-  }
-  throw new Error('Playwright not found. Install playwright or @playwright/cli.')
-}
 
 function checkMagick(): string {
   for (const bin of ['/opt/homebrew/bin/magick', 'magick']) {
@@ -116,7 +99,6 @@ async function main(): Promise<void> {
 
   try {
     await waitForServer(`http://localhost:${port}/thumb.html`)
-    const { chromium } = findPlaywright()
     const chromeBin = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     const launched = await chromium.launch({
       headless: true,

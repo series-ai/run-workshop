@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react'
 import { BUDGETS } from '@chisel/contracts/budgets'
 import type { PackCatalog } from '@chisel/contracts/catalog'
 import type { PolyPartIndex } from '../avatar/composePolyAvatar'
-import { PerfBenchStage, type PerfTelemetry } from '../scenes/PerfBenchStage'
+import { BENCH_CAMERA_POSITION, BENCH_CAMERA_TARGET, PerfBenchStage, type PerfTelemetry } from '../scenes/PerfBenchStage'
 import { STUDIO_GL, StudioLights } from '../scenes/studio'
 
 const COUNTS = [1, 12, 24, 36, 48, 64] as const
@@ -30,7 +30,7 @@ export function PerfBenchTab({ catalogs, index }: { catalogs: PackCatalog[]; ind
       <Canvas
         dpr={mobileMode ? [1, BUDGETS.mobilePolicy.maxDpr] : [1, 2]}
         gl={STUDIO_GL}
-        camera={{ position: [0, 9.0, 20.0], fov: 42 }}
+        camera={{ position: BENCH_CAMERA_POSITION, fov: 42 }}
       >
         <StudioLights reach={2.4} fill={false} />
         <Suspense fallback={null}>
@@ -43,7 +43,7 @@ export function PerfBenchTab({ catalogs, index }: { catalogs: PackCatalog[]; ind
             onTelemetry={setTelemetry}
           />
         </Suspense>
-        <OrbitControls target={[0, 1.0, 0]} maxPolarAngle={Math.PI / 2.05} />
+        <OrbitControls target={BENCH_CAMERA_TARGET} maxPolarAngle={Math.PI / 2.05} />
       </Canvas>
 
       <div className="hud-overlay perf-hud-top">

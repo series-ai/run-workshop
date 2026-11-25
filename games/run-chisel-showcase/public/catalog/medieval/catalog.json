@@ -807,6 +807,1731 @@
           0.47833
         ]
       }
+    },
+    {
+      "id": "prop_stone_floor_tile",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_stone_floor_tile.glb",
+      "nodeName": "prop_stone_floor_tile",
+      "label": "Stone Floor Tile",
+      "triangles": 124,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.135,
+          1
+        ],
+        "size": [
+          2,
+          0.135,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_wall",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_wall.glb",
+      "nodeName": "prop_dungeon_wall",
+      "label": "Dungeon Stone Wall",
+      "triangles": 260,
+      "bounds": {
+        "min": [
+          -1.01,
+          0,
+          -0.22
+        ],
+        "max": [
+          1.01,
+          2.21,
+          0.22
+        ],
+        "size": [
+          2.02,
+          2.21,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_pillar",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_pillar.glb",
+      "nodeName": "prop_dungeon_pillar",
+      "label": "Dungeon Stone Pillar",
+      "triangles": 224,
+      "bounds": {
+        "min": [
+          -0.33,
+          0,
+          -0.3325
+        ],
+        "max": [
+          0.33,
+          2.28,
+          0.3325
+        ],
+        "size": [
+          0.66,
+          2.28,
+          0.665
+        ]
+      }
+    },
+    {
+      "id": "prop_wooden_bridge",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_wooden_bridge.glb",
+      "nodeName": "prop_wooden_bridge",
+      "label": "Wooden Plank Bridge",
+      "triangles": 516,
+      "bounds": {
+        "min": [
+          -1.17628,
+          0,
+          -0.635
+        ],
+        "max": [
+          1.17628,
+          1.045,
+          0.635
+        ],
+        "size": [
+          2.35257,
+          1.045,
+          1.27
+        ]
+      }
+    },
+    {
+      "id": "prop_anvil_forge",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_anvil_forge.glb",
+      "nodeName": "prop_anvil_forge",
+      "label": "Blacksmith Anvil & Forge",
+      "triangles": 178,
+      "bounds": {
+        "min": [
+          -0.56125,
+          0,
+          -0.30625
+        ],
+        "max": [
+          0.56125,
+          1.04,
+          0.30625
+        ],
+        "size": [
+          1.12249,
+          1.04,
+          0.61249
+        ]
+      }
+    },
+    {
+      "id": "prop_tavern_table",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_tavern_table.glb",
+      "nodeName": "prop_tavern_table",
+      "label": "Tavern Banquet Table",
+      "triangles": 334,
+      "bounds": {
+        "min": [
+          -0.76,
+          0,
+          -0.41
+        ],
+        "max": [
+          0.76,
+          0.89,
+          0.41
+        ],
+        "size": [
+          1.52,
+          0.89,
+          0.82
+        ]
+      }
+    },
+    {
+      "id": "prop_tree_oak",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_tree_oak.glb",
+      "nodeName": "prop_tree_oak",
+      "label": "Faceted Oak Tree",
+      "triangles": 228,
+      "bounds": {
+        "min": [
+          -0.93722,
+          0,
+          -0.74095
+        ],
+        "max": [
+          0.93722,
+          2.84,
+          0.74095
+        ],
+        "size": [
+          1.87445,
+          2.84,
+          1.48189
+        ]
+      }
+    },
+    {
+      "id": "prop_boulder_cluster",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_boulder_cluster.glb",
+      "nodeName": "prop_boulder_cluster",
+      "label": "Mossy Boulder Cluster",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -0.73334,
+          0,
+          -0.55835
+        ],
+        "max": [
+          0.73334,
+          0.72,
+          0.55835
+        ],
+        "size": [
+          1.46667,
+          0.72,
+          1.1167
+        ]
+      }
+    },
+    {
+      "id": "prop_quay_deck",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_quay_deck.glb",
+      "nodeName": "prop_quay_deck",
+      "label": "Pile-Supported Quay Deck",
+      "triangles": 196,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.705,
+          1
+        ],
+        "size": [
+          2,
+          0.705,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_quay_landing_steps",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_quay_landing_steps.glb",
+      "nodeName": "prop_quay_landing_steps",
+      "label": "Quay Landing Steps",
+      "triangles": 84,
+      "bounds": {
+        "min": [
+          -0.84999,
+          0,
+          -1
+        ],
+        "max": [
+          0.84999,
+          0.74698,
+          1
+        ],
+        "size": [
+          1.69998,
+          0.74698,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_quay_bollard",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_quay_bollard.glb",
+      "nodeName": "prop_quay_bollard",
+      "label": "Rope-Wound Mooring Bollard",
+      "triangles": 200,
+      "bounds": {
+        "min": [
+          -0.30488,
+          0,
+          -0.30488
+        ],
+        "max": [
+          0.30488,
+          0.75,
+          0.30488
+        ],
+        "size": [
+          0.60976,
+          0.75,
+          0.60976
+        ]
+      }
+    },
+    {
+      "id": "prop_quay_crane",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_quay_crane.glb",
+      "nodeName": "prop_quay_crane",
+      "label": "Quay Cargo Crane",
+      "triangles": 201,
+      "bounds": {
+        "min": [
+          -0.86,
+          0,
+          -0.55
+        ],
+        "max": [
+          0.86,
+          2.67,
+          0.55
+        ],
+        "size": [
+          1.72,
+          2.67,
+          1.1
+        ]
+      }
+    },
+    {
+      "id": "prop_quay_fish_rack",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_quay_fish_rack.glb",
+      "nodeName": "prop_quay_fish_rack",
+      "label": "Herring Drying Rack",
+      "triangles": 396,
+      "bounds": {
+        "min": [
+          -0.9,
+          0,
+          -0.295
+        ],
+        "max": [
+          0.9,
+          1.4,
+          0.295
+        ],
+        "size": [
+          1.8,
+          1.4,
+          0.59
+        ]
+      }
+    },
+    {
+      "id": "prop_quay_net_frame",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_quay_net_frame.glb",
+      "nodeName": "prop_quay_net_frame",
+      "label": "Net Mending Frame",
+      "triangles": 240,
+      "bounds": {
+        "min": [
+          -0.965,
+          0,
+          -0.32
+        ],
+        "max": [
+          0.965,
+          1.62,
+          0.32
+        ],
+        "size": [
+          1.93,
+          1.62,
+          0.64
+        ]
+      }
+    },
+    {
+      "id": "prop_cooper_casks",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_cooper_casks.glb",
+      "nodeName": "prop_cooper_casks",
+      "label": "Cooper’s Shipping Casks",
+      "triangles": 408,
+      "bounds": {
+        "min": [
+          -0.71738,
+          0,
+          -0.67
+        ],
+        "max": [
+          0.71738,
+          0.88,
+          0.67
+        ],
+        "size": [
+          1.43476,
+          0.88,
+          1.34
+        ]
+      }
+    },
+    {
+      "id": "prop_cooper_wash_vat",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_cooper_wash_vat.glb",
+      "nodeName": "prop_cooper_wash_vat",
+      "label": "Open Wash Vat",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -0.64672,
+          0,
+          -0.68
+        ],
+        "max": [
+          0.64672,
+          1.09083,
+          0.68
+        ],
+        "size": [
+          1.29344,
+          1.09083,
+          1.36
+        ]
+      }
+    },
+    {
+      "id": "prop_cooper_drawbench",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_cooper_drawbench.glb",
+      "nodeName": "prop_cooper_drawbench",
+      "label": "Cooper’s Shaving Horse",
+      "triangles": 120,
+      "bounds": {
+        "min": [
+          -0.8,
+          0,
+          -0.31728
+        ],
+        "max": [
+          0.8,
+          0.91642,
+          0.31728
+        ],
+        "size": [
+          1.6,
+          0.91642,
+          0.63457
+        ]
+      }
+    },
+    {
+      "id": "prop_cooper_stave_stack",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_cooper_stave_stack.glb",
+      "nodeName": "prop_cooper_stave_stack",
+      "label": "Seasoned Cask Staves",
+      "triangles": 168,
+      "bounds": {
+        "min": [
+          -0.63,
+          0,
+          -0.685
+        ],
+        "max": [
+          0.63,
+          0.455,
+          0.685
+        ],
+        "size": [
+          1.26,
+          0.455,
+          1.37
+        ]
+      }
+    },
+    {
+      "id": "prop_market_bread_table",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_market_bread_table.glb",
+      "nodeName": "prop_market_bread_table",
+      "label": "Baker’s Trestle Table",
+      "triangles": 286,
+      "bounds": {
+        "min": [
+          -0.83,
+          0,
+          -0.39436
+        ],
+        "max": [
+          0.83,
+          0.96103,
+          0.39436
+        ],
+        "size": [
+          1.66,
+          0.96103,
+          0.78872
+        ]
+      }
+    },
+    {
+      "id": "prop_market_cloth_booth",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_market_cloth_booth.glb",
+      "nodeName": "prop_market_cloth_booth",
+      "label": "Striped Market Booth",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -1.05005,
+          0,
+          -0.58157
+        ],
+        "max": [
+          1.05005,
+          2.56,
+          0.58157
+        ],
+        "size": [
+          2.10009,
+          2.56,
+          1.16314
+        ]
+      }
+    },
+    {
+      "id": "prop_market_apple_bin",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_market_apple_bin.glb",
+      "nodeName": "prop_market_apple_bin",
+      "label": "Slatted Apple Bin",
+      "triangles": 528,
+      "bounds": {
+        "min": [
+          -0.655,
+          0,
+          -0.44
+        ],
+        "max": [
+          0.655,
+          0.58,
+          0.44
+        ],
+        "size": [
+          1.31,
+          0.58,
+          0.88
+        ]
+      }
+    },
+    {
+      "id": "prop_market_balance",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_market_balance.glb",
+      "nodeName": "prop_market_balance",
+      "label": "Merchant’s Balance",
+      "triangles": 208,
+      "bounds": {
+        "min": [
+          -0.69249,
+          0,
+          -0.235
+        ],
+        "max": [
+          0.69249,
+          1.165,
+          0.235
+        ],
+        "size": [
+          1.38498,
+          1.165,
+          0.47
+        ]
+      }
+    },
+    {
+      "id": "prop_bake_oven",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_bake_oven.glb",
+      "nodeName": "prop_bake_oven",
+      "label": "Courtyard Bread Oven",
+      "triangles": 134,
+      "bounds": {
+        "min": [
+          -0.76682,
+          0,
+          -0.83774
+        ],
+        "max": [
+          0.76682,
+          1.96,
+          0.83774
+        ],
+        "size": [
+          1.53364,
+          1.96,
+          1.67547
+        ]
+      }
+    },
+    {
+      "id": "prop_castle_buttress",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_castle_buttress.glb",
+      "nodeName": "prop_castle_buttress",
+      "label": "Stepped Castle Buttress",
+      "triangles": 60,
+      "bounds": {
+        "min": [
+          -0.42,
+          0,
+          -0.6
+        ],
+        "max": [
+          0.42,
+          2.36,
+          0.6
+        ],
+        "size": [
+          0.84,
+          2.36,
+          1.2
+        ]
+      }
+    },
+    {
+      "id": "prop_castle_gallery",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_castle_gallery.glb",
+      "nodeName": "prop_castle_gallery",
+      "label": "Timber Wall Gallery",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.51
+        ],
+        "max": [
+          1,
+          2.805,
+          0.51
+        ],
+        "size": [
+          2,
+          2.805,
+          1.02
+        ]
+      }
+    },
+    {
+      "id": "prop_castle_herald",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_castle_herald.glb",
+      "nodeName": "prop_castle_herald",
+      "label": "Pennant Standard",
+      "triangles": 80,
+      "bounds": {
+        "min": [
+          -0.53,
+          0,
+          -0.315
+        ],
+        "max": [
+          0.53,
+          2.74,
+          0.315
+        ],
+        "size": [
+          1.06,
+          2.74,
+          0.63
+        ]
+      }
+    },
+    {
+      "id": "prop_castle_sentry_box",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_castle_sentry_box.glb",
+      "nodeName": "prop_castle_sentry_box",
+      "label": "Roofed Sentry Box",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -0.68,
+          0,
+          -0.62
+        ],
+        "max": [
+          0.68,
+          2.74,
+          0.62
+        ],
+        "size": [
+          1.36,
+          2.74,
+          1.24
+        ]
+      }
+    },
+    {
+      "id": "prop_castle_arrow_screen",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_castle_arrow_screen.glb",
+      "nodeName": "prop_castle_arrow_screen",
+      "label": "Plank Mantlet",
+      "triangles": 156,
+      "bounds": {
+        "min": [
+          -0.75,
+          0,
+          -0.42562
+        ],
+        "max": [
+          0.75,
+          1.82,
+          0.42562
+        ],
+        "size": [
+          1.5,
+          1.82,
+          0.85124
+        ]
+      }
+    },
+    {
+      "id": "prop_tavern_board",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_tavern_board.glb",
+      "nodeName": "prop_tavern_board",
+      "label": "Hanging Tankard Sign",
+      "triangles": 92,
+      "bounds": {
+        "min": [
+          -0.525,
+          0,
+          -0.0815
+        ],
+        "max": [
+          0.525,
+          2.36,
+          0.0815
+        ],
+        "size": [
+          1.05,
+          2.36,
+          0.163
+        ]
+      }
+    },
+    {
+      "id": "prop_street_water_trough",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_street_water_trough.glb",
+      "nodeName": "prop_street_water_trough",
+      "label": "Stable Water Trough",
+      "triangles": 96,
+      "bounds": {
+        "min": [
+          -0.965,
+          0,
+          -0.38
+        ],
+        "max": [
+          0.965,
+          0.63,
+          0.38
+        ],
+        "size": [
+          1.93,
+          0.63,
+          0.76
+        ]
+      }
+    },
+    {
+      "id": "prop_street_dovecote",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_street_dovecote.glb",
+      "nodeName": "prop_street_dovecote",
+      "label": "Village Dovecote",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -0.585,
+          0,
+          -0.545
+        ],
+        "max": [
+          0.585,
+          2.77,
+          0.545
+        ],
+        "size": [
+          1.17,
+          2.77,
+          1.09
+        ]
+      }
+    },
+    {
+      "id": "prop_herb_planter",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_herb_planter.glb",
+      "nodeName": "prop_herb_planter",
+      "label": "Coopered Herb Tub",
+      "triangles": 320,
+      "bounds": {
+        "min": [
+          -0.447,
+          0,
+          -0.47
+        ],
+        "max": [
+          0.447,
+          0.7358,
+          0.47
+        ],
+        "size": [
+          0.89399,
+          0.7358,
+          0.94
+        ]
+      }
+    },
+    {
+      "id": "prop_reed_bundle",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_reed_bundle.glb",
+      "nodeName": "prop_reed_bundle",
+      "label": "Bound Thatching Reeds",
+      "triangles": 180,
+      "bounds": {
+        "min": [
+          -0.30592,
+          0,
+          -0.30468
+        ],
+        "max": [
+          0.30592,
+          1.27132,
+          0.30468
+        ],
+        "size": [
+          0.61184,
+          1.27132,
+          0.60936
+        ]
+      }
+    },
+    {
+      "id": "prop_grass_tile",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_grass_tile.glb",
+      "nodeName": "prop_grass_tile",
+      "label": "Meadow Grass Tile",
+      "triangles": 42,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.137,
+          1
+        ],
+        "size": [
+          2,
+          0.137,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_dirt_path_tile",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dirt_path_tile.glb",
+      "nodeName": "prop_dirt_path_tile",
+      "label": "Village Dirt Path Tile",
+      "triangles": 66,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.141,
+          1
+        ],
+        "size": [
+          2,
+          0.141,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_cobble_road_tile",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_cobble_road_tile.glb",
+      "nodeName": "prop_cobble_road_tile",
+      "label": "Cobblestone Street Tile",
+      "triangles": 128,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.144,
+          1
+        ],
+        "size": [
+          2,
+          0.144,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_moat_water_tile",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_moat_water_tile.glb",
+      "nodeName": "prop_moat_water_tile",
+      "label": "Canal & Moat Water Tile",
+      "triangles": 88,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -1
+        ],
+        "max": [
+          1,
+          0.135,
+          1
+        ],
+        "size": [
+          2,
+          0.135,
+          2
+        ]
+      }
+    },
+    {
+      "id": "prop_stone_stairs",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_stone_stairs.glb",
+      "nodeName": "prop_stone_stairs",
+      "label": "Castle Stone Staircase",
+      "triangles": 116,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.81
+        ],
+        "max": [
+          1,
+          1,
+          0.81
+        ],
+        "size": [
+          2,
+          1,
+          1.62
+        ]
+      }
+    },
+    {
+      "id": "prop_cliff_block",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_cliff_block.glb",
+      "nodeName": "prop_cliff_block",
+      "label": "Terraced Cliff Plateau",
+      "triangles": 68,
+      "bounds": {
+        "min": [
+          -0.99722,
+          0,
+          -1.03861
+        ],
+        "max": [
+          0.99722,
+          1.58,
+          1.03861
+        ],
+        "size": [
+          1.99444,
+          1.58,
+          2.07722
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_wall_corner",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_wall_corner.glb",
+      "nodeName": "prop_dungeon_wall_corner",
+      "label": "Dungeon Wall Corner",
+      "triangles": 92,
+      "bounds": {
+        "min": [
+          -0.64,
+          0,
+          -0.64
+        ],
+        "max": [
+          0.64,
+          2.47,
+          0.64
+        ],
+        "size": [
+          1.28,
+          2.47,
+          1.28
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_doorway",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_doorway.glb",
+      "nodeName": "prop_dungeon_doorway",
+      "label": "Dungeon Arch Doorway",
+      "triangles": 204,
+      "bounds": {
+        "min": [
+          -1.01,
+          0,
+          -0.245
+        ],
+        "max": [
+          1.01,
+          2.505,
+          0.245
+        ],
+        "size": [
+          2.02,
+          2.505,
+          0.49
+        ]
+      }
+    },
+    {
+      "id": "prop_dungeon_window_wall",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_dungeon_window_wall.glb",
+      "nodeName": "prop_dungeon_window_wall",
+      "label": "Dungeon Window Wall",
+      "triangles": 176,
+      "bounds": {
+        "min": [
+          -1.01,
+          0,
+          -0.23
+        ],
+        "max": [
+          1.01,
+          2.47,
+          0.23
+        ],
+        "size": [
+          2.02,
+          2.47,
+          0.46
+        ]
+      }
+    },
+    {
+      "id": "prop_castle_keep_tower",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_castle_keep_tower.glb",
+      "nodeName": "prop_castle_keep_tower",
+      "label": "Castle Keep Corner Tower",
+      "triangles": 640,
+      "bounds": {
+        "min": [
+          -1.15075,
+          0,
+          -1.06575
+        ],
+        "max": [
+          1.15075,
+          4.65,
+          1.06575
+        ],
+        "size": [
+          2.30151,
+          4.65,
+          2.13151
+        ]
+      }
+    },
+    {
+      "id": "prop_wooden_fence",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_wooden_fence.glb",
+      "nodeName": "prop_wooden_fence",
+      "label": "Split-Rail Village Fence",
+      "triangles": 140,
+      "bounds": {
+        "min": [
+          -0.99,
+          0,
+          -0.07
+        ],
+        "max": [
+          0.99,
+          0.92,
+          0.07
+        ],
+        "size": [
+          1.98,
+          0.92,
+          0.14
+        ]
+      }
+    },
+    {
+      "id": "prop_palisade_wall",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_palisade_wall.glb",
+      "nodeName": "prop_palisade_wall",
+      "label": "Timber Fort Palisade",
+      "triangles": 252,
+      "bounds": {
+        "min": [
+          -1,
+          0,
+          -0.16
+        ],
+        "max": [
+          1,
+          2.09,
+          0.16
+        ],
+        "size": [
+          2,
+          2.09,
+          0.32
+        ]
+      }
+    },
+    {
+      "id": "prop_thatched_cottage",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_thatched_cottage.glb",
+      "nodeName": "prop_thatched_cottage",
+      "label": "Thatched Village Cottage",
+      "triangles": 580,
+      "bounds": {
+        "min": [
+          -1.42,
+          0,
+          -1.2675
+        ],
+        "max": [
+          1.42,
+          3.2,
+          1.2675
+        ],
+        "size": [
+          2.84,
+          3.2,
+          2.535
+        ]
+      }
+    },
+    {
+      "id": "prop_blacksmith_hut",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_blacksmith_hut.glb",
+      "nodeName": "prop_blacksmith_hut",
+      "label": "Blacksmith Workshop Hut",
+      "triangles": 178,
+      "bounds": {
+        "min": [
+          -1.24,
+          0,
+          -1.04162
+        ],
+        "max": [
+          1.24,
+          2.695,
+          1.04162
+        ],
+        "size": [
+          2.48,
+          2.695,
+          2.08324
+        ]
+      }
+    },
+    {
+      "id": "prop_tavern_inn",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_tavern_inn.glb",
+      "nodeName": "prop_tavern_inn",
+      "label": "Half-Timbered Tavern Inn",
+      "triangles": 152,
+      "bounds": {
+        "min": [
+          -1.55,
+          0,
+          -1.34
+        ],
+        "max": [
+          1.55,
+          3.195,
+          1.34
+        ],
+        "size": [
+          3.1,
+          3.195,
+          2.68
+        ]
+      }
+    },
+    {
+      "id": "prop_market_stall",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_market_stall.glb",
+      "nodeName": "prop_market_stall",
+      "label": "Cloth Market Stall",
+      "triangles": 172,
+      "bounds": {
+        "min": [
+          -0.97,
+          0,
+          -0.60923
+        ],
+        "max": [
+          0.97,
+          2.1591,
+          0.60923
+        ],
+        "size": [
+          1.94,
+          2.1591,
+          1.21845
+        ]
+      }
+    },
+    {
+      "id": "prop_wooden_wagon",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_wooden_wagon.glb",
+      "nodeName": "prop_wooden_wagon",
+      "label": "Covered Supply Wagon",
+      "triangles": 650,
+      "bounds": {
+        "min": [
+          -0.676,
+          0,
+          -1.6571
+        ],
+        "max": [
+          0.676,
+          2.192,
+          1.6571
+        ],
+        "size": [
+          1.352,
+          2.192,
+          3.3142
+        ]
+      }
+    },
+    {
+      "id": "prop_rowboat",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_rowboat.glb",
+      "nodeName": "prop_rowboat",
+      "label": "Oak River Rowboat",
+      "triangles": 158,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -1.14
+        ],
+        "max": [
+          0.5,
+          0.47,
+          1.14
+        ],
+        "size": [
+          1,
+          0.47,
+          2.28
+        ]
+      }
+    },
+    {
+      "id": "prop_pine_tree",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_pine_tree.glb",
+      "nodeName": "prop_pine_tree",
+      "label": "Faceted Alpine Pine",
+      "triangles": 411,
+      "bounds": {
+        "min": [
+          -0.66,
+          0,
+          -0.76
+        ],
+        "max": [
+          0.66,
+          3.2,
+          0.76
+        ],
+        "size": [
+          1.32,
+          3.2,
+          1.52
+        ]
+      }
+    },
+    {
+      "id": "prop_bush_cluster",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_bush_cluster.glb",
+      "nodeName": "prop_bush_cluster",
+      "label": "Shrub & Bush Cluster",
+      "triangles": 66,
+      "bounds": {
+        "min": [
+          -0.61579,
+          0,
+          -0.49
+        ],
+        "max": [
+          0.61579,
+          0.609,
+          0.49
+        ],
+        "size": [
+          1.23158,
+          0.609,
+          0.98
+        ]
+      }
+    },
+    {
+      "id": "prop_hay_bales",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_hay_bales.glb",
+      "nodeName": "prop_hay_bales",
+      "label": "Stacked Hay Bales",
+      "triangles": 160,
+      "bounds": {
+        "min": [
+          -0.62,
+          0,
+          -0.48
+        ],
+        "max": [
+          0.62,
+          0.85,
+          0.48
+        ],
+        "size": [
+          1.24,
+          0.85,
+          0.96
+        ]
+      }
+    },
+    {
+      "id": "prop_signpost",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_signpost.glb",
+      "nodeName": "prop_signpost",
+      "label": "Timber Road Signpost",
+      "triangles": 84,
+      "bounds": {
+        "min": [
+          -0.475,
+          0,
+          -0.1
+        ],
+        "max": [
+          0.475,
+          1.8,
+          0.1
+        ],
+        "size": [
+          0.95,
+          1.8,
+          0.2
+        ]
+      }
+    },
+    {
+      "id": "prop_wooden_bench",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_wooden_bench.glb",
+      "nodeName": "prop_wooden_bench",
+      "label": "Tavern Timber Bench",
+      "triangles": 112,
+      "bounds": {
+        "min": [
+          -0.71,
+          0,
+          -0.22
+        ],
+        "max": [
+          0.71,
+          0.86,
+          0.22
+        ],
+        "size": [
+          1.42,
+          0.86,
+          0.44
+        ]
+      }
+    },
+    {
+      "id": "prop_treasure_chest",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_treasure_chest.glb",
+      "nodeName": "prop_treasure_chest",
+      "label": "Treasure Chest",
+      "triangles": 209,
+      "bounds": {
+        "min": [
+          -0.39,
+          0,
+          -0.241
+        ],
+        "max": [
+          0.39,
+          0.572,
+          0.241
+        ],
+        "size": [
+          0.78,
+          0.572,
+          0.482
+        ]
+      },
+      "clips": [
+        "Closed",
+        "Opening",
+        "Open"
+      ]
+    },
+    {
+      "id": "prop_portcullis_gate",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_portcullis_gate.glb",
+      "nodeName": "prop_portcullis_gate",
+      "label": "Portcullis Gate",
+      "triangles": 644,
+      "bounds": {
+        "min": [
+          -1.1,
+          0,
+          -0.25
+        ],
+        "max": [
+          1.1,
+          2.7,
+          0.25
+        ],
+        "size": [
+          2.2,
+          2.7,
+          0.5
+        ]
+      },
+      "clips": [
+        "Closed",
+        "Raise",
+        "Open"
+      ]
+    },
+    {
+      "id": "prop_brazier_fire",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_brazier_fire.glb",
+      "nodeName": "prop_brazier_fire",
+      "label": "Blazing Iron Brazier",
+      "triangles": 166,
+      "bounds": {
+        "min": [
+          -0.3326,
+          0,
+          -0.3326
+        ],
+        "max": [
+          0.3326,
+          1.44299,
+          0.3326
+        ],
+        "size": [
+          0.66519,
+          1.44299,
+          0.66519
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_floor_spike_trap",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_floor_spike_trap.glb",
+      "nodeName": "prop_floor_spike_trap",
+      "label": "Floor Spike Trap",
+      "triangles": 238,
+      "bounds": {
+        "min": [
+          -0.62,
+          0,
+          -0.62
+        ],
+        "max": [
+          0.62,
+          0.48,
+          0.62
+        ],
+        "size": [
+          1.24,
+          0.48,
+          1.24
+        ]
+      },
+      "clips": [
+        "Armed",
+        "Snap",
+        "Reset"
+      ]
+    },
+    {
+      "id": "prop_target_dummy",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_target_dummy.glb",
+      "nodeName": "prop_target_dummy",
+      "label": "Training Target Dummy",
+      "triangles": 294,
+      "bounds": {
+        "min": [
+          -0.46,
+          0,
+          -0.32
+        ],
+        "max": [
+          0.46,
+          1.79,
+          0.32
+        ],
+        "size": [
+          0.92,
+          1.79,
+          0.64
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Hit"
+      ]
+    },
+    {
+      "id": "prop_catapult",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_catapult.glb",
+      "nodeName": "prop_catapult",
+      "label": "Wheeled Siege Catapult",
+      "triangles": 408,
+      "bounds": {
+        "min": [
+          -0.696,
+          0,
+          -0.87564
+        ],
+        "max": [
+          0.696,
+          1.53458,
+          0.87564
+        ],
+        "size": [
+          1.392,
+          1.53458,
+          1.75128
+        ]
+      },
+      "clips": [
+        "Idle",
+        "Fire"
+      ]
+    },
+    {
+      "id": "prop_stone_well",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_stone_well.glb",
+      "nodeName": "prop_stone_well",
+      "label": "Village Stone Well",
+      "triangles": 110,
+      "bounds": {
+        "min": [
+          -0.65,
+          0,
+          -0.56
+        ],
+        "max": [
+          0.65,
+          2.08,
+          0.56
+        ],
+        "size": [
+          1.3,
+          2.08,
+          1.12
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_campfire",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_campfire.glb",
+      "nodeName": "prop_campfire",
+      "label": "Blazing Campfire",
+      "triangles": 326,
+      "bounds": {
+        "min": [
+          -0.5,
+          0,
+          -0.49
+        ],
+        "max": [
+          0.5,
+          0.72,
+          0.49
+        ],
+        "size": [
+          1,
+          0.72,
+          0.98
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
+    },
+    {
+      "id": "prop_windmill",
+      "pack": "medieval",
+      "leaf": "world",
+      "relativePath": "props/prop_windmill.glb",
+      "nodeName": "prop_windmill",
+      "label": "Timber Grain Windmill",
+      "triangles": 188,
+      "bounds": {
+        "min": [
+          -1.28,
+          0,
+          -0.99966
+        ],
+        "max": [
+          1.28,
+          3.635,
+          0.99966
+        ],
+        "size": [
+          2.56,
+          3.635,
+          1.99931
+        ]
+      },
+      "clips": [
+        "Idle"
+      ]
     }
   ],
   "presets": [
@@ -835,7 +2560,7 @@
         "eye": "#2e5d8c"
       },
       "proportions": {
-        "height": 1.04,
+        "height": 0.966576,
         "legRatio": 0.94,
         "shoulderWidth": 1.1,
         "torsoBulk": 1.06,
@@ -847,7 +2572,7 @@
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 86.6733,
+        "totalMassKg": 80.146,
         "bodies": [
           {
             "bone": "pelvis",
@@ -857,20 +2582,20 @@
               0,
               0
             ],
-            "massKg": 13.6897,
+            "massKg": 13.2257,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.047,
-                0.0924,
-                0.0212
+                0.0897,
+                0.0219
               ],
               "b": [
                 0.047,
-                0.0924,
-                0.0212
+                0.0897,
+                0.0219
               ],
-              "radius": 0.132
+              "radius": 0.1298
             },
             "joint": null,
             "collisionGroup": 1
@@ -880,23 +2605,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.265,
-              -0.0023
+              0.2566,
+              -0.0001
             ],
-            "massKg": 13.0071,
+            "massKg": 11.0076,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0075,
-                0.1052,
-                0.0122
+                0.0895,
+                0.0142
               ],
               "b": [
                 0.0075,
-                0.1052,
-                0.0122
+                0.0895,
+                0.0142
               ],
-              "radius": 0.0998
+              "radius": 0.0912
             },
             "joint": {
               "type": "cone_twist",
@@ -928,23 +2653,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2471,
-              -0.0239
+              0.2093,
+              -0.0192
             ],
-            "massKg": 16.4171,
+            "massKg": 15.6997,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0531,
-                0.0085,
+                0.0081,
                 0.023
               ],
               "b": [
                 0.0531,
-                0.0085,
+                0.0081,
                 0.023
               ],
-              "radius": 0.1332
+              "radius": 0.1302
             },
             "joint": {
               "type": "cone_twist",
@@ -976,8 +2701,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2561,
-              0.0082
+              0.2455,
+              0.0079
             ],
             "massKg": 5.25,
             "collider": {
@@ -1024,21 +2749,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1214,
-              0.0629,
-              0.0276
+              0.059,
+              0.0275
             ],
-            "massKg": 2.9337,
+            "massKg": 2.6635,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0189,
-                0.0656,
-                -0.0061
+                0.0595,
+                -0.0062
               ],
               "b": [
                 -0.019,
-                0.2552,
-                -0.0028
+                0.2317,
+                -0.0033
               ],
               "radius": 0.0631
             },
@@ -1072,21 +2797,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.3177,
-              -0.0002
+              0.2884,
+              -0.0007
             ],
-            "massKg": 1.8451,
+            "massKg": 1.6752,
             "collider": {
               "type": "capsule",
               "a": [
-                -0.001,
-                0.0588,
-                -0.0006
+                -0.0011,
+                0.0534,
+                -0.0005
               ],
               "b": [
-                -0.0009,
-                0.228,
-                -0.0034
+                -0.001,
+                0.207,
+                -0.0031
               ],
               "radius": 0.0449
             },
@@ -1120,8 +2845,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2724,
-              0.0001
+              0.2473,
+              0.0006
             ],
             "massKg": 0.6386,
             "collider": {
@@ -1168,21 +2893,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1214,
-              0.0629,
-              0.0276
+              0.059,
+              0.0275
             ],
-            "massKg": 2.9337,
+            "massKg": 2.6635,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0189,
-                0.0656,
-                -0.0061
+                0.0595,
+                -0.0062
               ],
               "b": [
                 0.019,
-                0.2552,
-                -0.0028
+                0.2317,
+                -0.0033
               ],
               "radius": 0.0631
             },
@@ -1216,21 +2941,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.3177,
-              -0.0002
+              0.2884,
+              -0.0007
             ],
-            "massKg": 1.8451,
+            "massKg": 1.6752,
             "collider": {
               "type": "capsule",
               "a": [
-                0.001,
-                0.0588,
-                -0.0006
+                0.0011,
+                0.0534,
+                -0.0005
               ],
               "b": [
-                0.0009,
-                0.228,
-                -0.0034
+                0.001,
+                0.207,
+                -0.0031
               ],
               "radius": 0.0449
             },
@@ -1264,8 +2989,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2724,
-              0.0001
+              0.2473,
+              0.0006
             ],
             "massKg": 0.6386,
             "collider": {
@@ -1312,21 +3037,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.058,
-              0.0102
+              0.0562,
+              0.0106
             ],
-            "massKg": 8.652,
+            "massKg": 7.8038,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0124,
-                0.0659,
-                -0.0035
+                0.0595,
+                -0.0034
               ],
               "b": [
                 -0.0124,
-                0.4378,
-                -0.0061
+                0.3949,
+                -0.0058
               ],
               "radius": 0.0808
             },
@@ -1360,21 +3085,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4534,
-              0.0002
+              0.409,
+              0.0005
             ],
-            "massKg": 3.9263,
+            "massKg": 3.5414,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0881,
-                0.0164
+                0.0796,
+                0.0171
               ],
               "b": [
                 0,
-                0.4194,
-                -0.0102
+                0.3784,
+                -0.0069
               ],
               "radius": 0.0675
             },
@@ -1408,8 +3133,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4651,
-              0.0021
+              0.4198,
+              0.0057
             ],
             "massKg": 1.159,
             "collider": {
@@ -1456,21 +3181,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.058,
-              0.0102
+              0.0562,
+              0.0106
             ],
-            "massKg": 8.652,
+            "massKg": 7.8038,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0124,
-                0.0659,
-                -0.0035
+                0.0595,
+                -0.0034
               ],
               "b": [
                 0.0124,
-                0.4378,
-                -0.0061
+                0.3949,
+                -0.0058
               ],
               "radius": 0.0808
             },
@@ -1504,21 +3229,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4534,
-              0.0002
+              0.409,
+              0.0005
             ],
-            "massKg": 3.9263,
+            "massKg": 3.5414,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0881,
-                0.0164
+                0.0796,
+                0.0171
               ],
               "b": [
                 0,
-                0.4194,
-                -0.0102
+                0.3784,
+                -0.0069
               ],
               "radius": 0.0675
             },
@@ -1552,8 +3277,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4651,
-              0.0021
+              0.4198,
+              0.0057
             ],
             "massKg": 1.159,
             "collider": {
@@ -1689,19 +3414,19 @@
         "eye": "#346b4c"
       },
       "proportions": {
-        "height": 0.96,
+        "height": 0.892224,
         "legRatio": 0.95,
         "shoulderWidth": 1.06,
         "torsoBulk": 1,
         "waistScale": 1,
         "headScale": 1,
         "limbThickness": 1,
-        "armLength": 0.96
+        "armLength": 0.98
       },
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 63.4097,
+        "totalMassKg": 58.7757,
         "bodies": [
           {
             "bone": "pelvis",
@@ -1711,20 +3436,20 @@
               0,
               0
             ],
-            "massKg": 10.9945,
+            "massKg": 10.6416,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0432,
-                0.0882,
-                0.0192
+                0.0857,
+                0.0198
               ],
               "b": [
                 0.0432,
-                0.0882,
-                0.0192
+                0.0857,
+                0.0198
               ],
-              "radius": 0.1373
+              "radius": 0.1351
             },
             "joint": null,
             "collisionGroup": 1
@@ -1734,23 +3459,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2542,
-              -0.0006
+              0.2466,
+              0.0013
             ],
-            "massKg": 8.8138,
+            "massKg": 7.2933,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0083,
-                0.0853,
-                0.0121
+                0.0711,
+                0.0139
               ],
               "b": [
                 0.0083,
-                0.0853,
-                0.0121
+                0.0711,
+                0.0139
               ],
-              "radius": 0.0604
+              "radius": 0.0551
             },
             "joint": {
               "type": "cone_twist",
@@ -1782,23 +3507,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.1999,
-              -0.018
+              0.1656,
+              -0.0137
             ],
-            "massKg": 12.0644,
+            "massKg": 11.5586,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0389,
-                0.0081,
+                0.0078,
                 0.0195
               ],
               "b": [
                 0.0389,
-                0.0081,
+                0.0078,
                 0.0195
               ],
-              "radius": 0.1239
+              "radius": 0.1213
             },
             "joint": {
               "type": "cone_twist",
@@ -1830,8 +3555,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2429,
-              0.008
+              0.2333,
+              0.0077
             ],
             "massKg": 4.48,
             "collider": {
@@ -1878,21 +3603,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1156,
-              0.0581,
-              0.0255
+              0.0545,
+              0.0254
             ],
-            "massKg": 1.9907,
+            "massKg": 1.8462,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0158,
-                0.0547,
-                -0.0058
+                0.0508,
+                -0.0059
               ],
               "b": [
                 -0.016,
-                0.2334,
-                -0.0028
+                0.2164,
+                -0.0031
               ],
               "radius": 0.0495
             },
@@ -1926,21 +3651,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.2854,
-              -0.0005
+              0.2647,
+              -0.0008
             ],
-            "massKg": 1.2881,
+            "massKg": 1.1946,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0494,
+                0.0458,
                 -0.0001
               ],
               "b": [
                 -0.0009,
-                0.2083,
-                -0.0029
+                0.1932,
+                -0.0026
               ],
               "radius": 0.0405
             },
@@ -1974,8 +3699,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2448,
-              0.0004
+              0.227,
+              0.0007
             ],
             "massKg": 0.512,
             "collider": {
@@ -2022,21 +3747,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1156,
-              0.0581,
-              0.0255
+              0.0545,
+              0.0254
             ],
-            "massKg": 1.9907,
+            "massKg": 1.8462,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0158,
-                0.0547,
-                -0.0058
+                0.0508,
+                -0.0059
               ],
               "b": [
                 0.016,
-                0.2334,
-                -0.0028
+                0.2164,
+                -0.0031
               ],
               "radius": 0.0495
             },
@@ -2070,21 +3795,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.2854,
-              -0.0005
+              0.2647,
+              -0.0008
             ],
-            "massKg": 1.2881,
+            "massKg": 1.1946,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0494,
+                0.0458,
                 -0.0001
               ],
               "b": [
                 0.0009,
-                0.2083,
-                -0.0029
+                0.1932,
+                -0.0026
               ],
               "radius": 0.0405
             },
@@ -2118,8 +3843,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2448,
-              0.0004
+              0.227,
+              0.0007
             ],
             "massKg": 0.512,
             "collider": {
@@ -2166,21 +3891,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0557,
-              0.0104
+              0.0541,
+              0.0108
             ],
-            "massKg": 6.0238,
+            "massKg": 5.4136,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0119,
-                0.0553,
-                -0.0033
+                0.0497,
+                -0.0032
               ],
               "b": [
                 -0.0119,
-                0.323,
-                -0.0051
+                0.2902,
+                -0.0049
               ],
               "radius": 0.1714
             },
@@ -2214,21 +3939,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4093,
-              0.0003
+              0.3679,
+              0.0006
             ],
-            "massKg": 2.7538,
+            "massKg": 2.4748,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0005,
-                0.0754,
-                0.0161
+                0.0679,
+                0.0167
               ],
               "b": [
                 -0.0004,
-                0.3828,
-                -0.0087
+                0.3442,
+                -0.0056
               ],
               "radius": 0.0701
             },
@@ -2262,8 +3987,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.42,
-              0.0039
+              0.3778,
+              0.0073
             ],
             "massKg": 0.96,
             "collider": {
@@ -2310,21 +4035,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0557,
-              0.0104
+              0.0541,
+              0.0108
             ],
-            "massKg": 6.0238,
+            "massKg": 5.4136,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0119,
-                0.0553,
-                -0.0033
+                0.0497,
+                -0.0032
               ],
               "b": [
                 0.0119,
-                0.323,
-                -0.0051
+                0.2902,
+                -0.0049
               ],
               "radius": 0.1714
             },
@@ -2358,21 +4083,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4093,
-              0.0003
+              0.3679,
+              0.0006
             ],
-            "massKg": 2.7538,
+            "massKg": 2.4748,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0005,
-                0.0754,
-                0.0161
+                0.0679,
+                0.0167
               ],
               "b": [
                 0.0004,
-                0.3828,
-                -0.0087
+                0.3442,
+                -0.0056
               ],
               "radius": 0.0701
             },
@@ -2406,8 +4131,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.42,
-              0.0039
+              0.3778,
+              0.0073
             ],
             "massKg": 0.96,
             "collider": {
@@ -2543,19 +4268,19 @@
         "eye": "#1f2634"
       },
       "proportions": {
-        "height": 1,
+        "height": 0.9294,
         "legRatio": 0.94,
         "shoulderWidth": 1.08,
         "torsoBulk": 1.06,
         "waistScale": 1,
         "headScale": 1,
         "limbThickness": 1,
-        "armLength": 0.98
+        "armLength": 1.02
       },
       "ragdoll": {
         "version": 1,
         "rigId": "ual1",
-        "totalMassKg": 93.3359,
+        "totalMassKg": 86.7496,
         "bodies": [
           {
             "bone": "pelvis",
@@ -2565,20 +4290,20 @@
               0,
               0
             ],
-            "massKg": 15.4927,
+            "massKg": 14.9783,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0467,
-                0.0928,
-                0.0289
+                0.0901,
+                0.0296
               ],
               "b": [
                 0.0467,
-                0.0928,
-                0.0289
+                0.0901,
+                0.0296
               ],
-              "radius": 0.139
+              "radius": 0.1367
             },
             "joint": null,
             "collisionGroup": 1
@@ -2588,23 +4313,23 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0,
-              0.2602,
-              -0.0022
+              0.252,
+              -0.0001
             ],
-            "massKg": 13.9835,
+            "massKg": 11.7277,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0061,
-                0.0969,
-                0.0154
+                0.0818,
+                0.0173
               ],
               "b": [
                 0.0061,
-                0.0969,
-                0.0154
+                0.0818,
+                0.0173
               ],
-              "radius": 0.0649
+              "radius": 0.0592
             },
             "joint": {
               "type": "cone_twist",
@@ -2636,23 +4361,23 @@
             "parentBody": "spine_01",
             "parentAnchor": [
               0,
-              0.2265,
-              -0.0213
+              0.1901,
+              -0.0168
             ],
-            "massKg": 18.6108,
+            "massKg": 17.8098,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0399,
-                0.0082,
+                0.0078,
                 0.0252
               ],
               "b": [
                 0.0399,
-                0.0082,
+                0.0078,
                 0.0252
               ],
-              "radius": 0.1297
+              "radius": 0.1269
             },
             "joint": {
               "type": "cone_twist",
@@ -2684,8 +4409,8 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0,
-              0.2503,
-              0.008
+              0.2402,
+              0.0077
             ],
             "massKg": 6.16,
             "collider": {
@@ -2732,21 +4457,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               0.1186,
-              0.0608,
-              0.0275
+              0.057,
+              0.0274
             ],
-            "massKg": 2.9533,
+            "massKg": 2.8032,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0193,
-                0.0662,
-                -0.0057
+                0.0629,
+                -0.0058
               ],
               "b": [
                 -0.0194,
-                0.2447,
-                -0.0027
+                0.2323,
+                -0.0029
               ],
               "radius": 0.0495
             },
@@ -2780,21 +4505,21 @@
             "parentBody": "upperarm_l",
             "parentAnchor": [
               0,
-              0.308,
-              -0.0001
+              0.2923,
+              -0.0003
             ],
-            "massKg": 1.9109,
+            "massKg": 1.8138,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.001,
-                0.0576,
-                -0.0006
+                0.0547,
+                -0.0005
               ],
               "b": [
                 -0.0009,
-                0.2204,
-                -0.0034
+                0.2092,
+                -0.0032
               ],
               "radius": 0.0405
             },
@@ -2828,8 +4553,8 @@
             "parentBody": "lowerarm_l",
             "parentAnchor": [
               0,
-              0.2641,
-              0.0001
+              0.2507,
+              0.0003
             ],
             "massKg": 0.704,
             "collider": {
@@ -2876,21 +4601,21 @@
             "parentBody": "spine_03",
             "parentAnchor": [
               -0.1186,
-              0.0608,
-              0.0275
+              0.057,
+              0.0274
             ],
-            "massKg": 2.9533,
+            "massKg": 2.8032,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0193,
-                0.0662,
-                -0.0057
+                0.0629,
+                -0.0058
               ],
               "b": [
                 0.0194,
-                0.2447,
-                -0.0027
+                0.2323,
+                -0.0029
               ],
               "radius": 0.0495
             },
@@ -2924,21 +4649,21 @@
             "parentBody": "upperarm_r",
             "parentAnchor": [
               0,
-              0.308,
-              -0.0001
+              0.2923,
+              -0.0003
             ],
-            "massKg": 1.9109,
+            "massKg": 1.8138,
             "collider": {
               "type": "capsule",
               "a": [
                 0.001,
-                0.0576,
-                -0.0006
+                0.0547,
+                -0.0005
               ],
               "b": [
                 0.0009,
-                0.2204,
-                -0.0034
+                0.2092,
+                -0.0032
               ],
               "radius": 0.0405
             },
@@ -2972,8 +4697,8 @@
             "parentBody": "lowerarm_r",
             "parentAnchor": [
               0,
-              0.2641,
-              0.0001
+              0.2507,
+              0.0003
             ],
             "massKg": 0.704,
             "collider": {
@@ -3020,21 +4745,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               0.0943,
-              0.0569,
-              0.01
+              0.0552,
+              0.0105
             ],
-            "massKg": 8.6856,
+            "massKg": 7.8207,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0118,
-                0.0633,
-                -0.0033
+                0.057,
+                -0.0032
               ],
               "b": [
                 -0.0118,
-                0.4144,
-                -0.0057
+                0.3732,
+                -0.0054
               ],
               "radius": 0.1714
             },
@@ -3068,21 +4793,21 @@
             "parentBody": "thigh_l",
             "parentAnchor": [
               0,
-              0.4292,
-              0.0002
+              0.3865,
+              0.0005
             ],
-            "massKg": 3.9706,
+            "massKg": 3.5752,
             "collider": {
               "type": "capsule",
               "a": [
                 -0.0002,
-                0.0841,
-                0.0157
+                0.0759,
+                0.0164
               ],
               "b": [
                 0,
-                0.3962,
-                -0.0094
+                0.3569,
+                -0.0062
               ],
               "radius": 0.0644
             },
@@ -3116,8 +4841,8 @@
             "parentBody": "calf_l",
             "parentAnchor": [
               0,
-              0.4403,
-              0.0022
+              0.3968,
+              0.0057
             ],
             "massKg": 1.32,
             "collider": {
@@ -3164,21 +4889,21 @@
             "parentBody": "pelvis",
             "parentAnchor": [
               -0.0943,
-              0.0569,
-              0.01
+              0.0552,
+              0.0105
             ],
-            "massKg": 8.6856,
+            "massKg": 7.8207,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0118,
-                0.0633,
-                -0.0033
+                0.057,
+                -0.0032
               ],
               "b": [
                 0.0118,
-                0.4144,
-                -0.0057
+                0.3732,
+                -0.0054
               ],
               "radius": 0.1714
             },
@@ -3212,21 +4937,21 @@
             "parentBody": "thigh_r",
             "parentAnchor": [
               0,
-              0.4292,
-              0.0002
+              0.3865,
+              0.0005
             ],
-            "massKg": 3.9706,
+            "massKg": 3.5752,
             "collider": {
               "type": "capsule",
               "a": [
                 0.0002,
-                0.0841,
-                0.0157
+                0.0759,
+                0.0164
               ],
               "b": [
                 0,
-                0.3962,
-                -0.0094
+                0.3569,
+                -0.0062
               ],
               "radius": 0.0644
             },
@@ -3260,8 +4985,8 @@
             "parentBody": "calf_r",
             "parentAnchor": [
               0,
-              0.4403,
-              0.0022
+              0.3968,
+              0.0057
             ],
             "massKg": 1.32,
             "collider": {

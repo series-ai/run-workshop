@@ -9,26 +9,9 @@
  */
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
+import { chromium, type Browser } from 'playwright'
 import { REPO_ROOT } from '../src/paths'
-
-const require = createRequire(import.meta.url)
-
-function findPlaywright() {
-  for (const candidate of [
-    'playwright',
-    resolve(dirname(process.execPath), '../lib/node_modules/@playwright/cli/node_modules/playwright'),
-    '/Users/pany/.local/share/mise/installs/node/24.19.0/lib/node_modules/@playwright/cli/node_modules/playwright',
-  ]) {
-    try {
-      return require(candidate)
-    } catch {
-      // try next
-    }
-  }
-  throw new Error('Playwright not found. Install playwright or @playwright/cli.')
-}
 
 async function waitForServer(url: string, timeoutMs = 20000): Promise<void> {
   const deadline = Date.now() + timeoutMs
@@ -73,11 +56,10 @@ async function main(): Promise<void> {
     cwd: showcaseDir,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
-  let browser: { newPage: (opts: { viewport: { width: number; height: number } }) => Promise<{ goto: (u: string) => Promise<unknown>; waitForFunction: (fn: () => boolean, arg?: unknown, opts?: { timeout: number }) => Promise<unknown>; waitForTimeout: (ms: number) => Promise<void>; evaluate: <T>(fn: () => T) => Promise<T>; locator: (s: string) => { screenshot: (opts: { type: string }) => Promise<Buffer> } }>; close: () => Promise<void> } | undefined
+  let browser: Browser | undefined
 
   try {
     await waitForServer(`http://localhost:${port}/thumb.html`)
-    const { chromium } = findPlaywright()
     const chromeBin = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     const launched = await chromium.launch({
       headless: true,

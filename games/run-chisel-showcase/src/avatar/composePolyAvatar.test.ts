@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { AnimationMixer, Matrix4, MeshBasicMaterial, SkinnedMesh, Vector3 } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import type { PackCatalog } from '@chisel/contracts/catalog'
-import { CONTEXT_DEFAULT_PALETTES } from '@chisel/contracts/palette'
+import { COLOR_DIRECTION } from '@chisel/contracts/colorDirection'
 import { PROPORTION_DEFAULTS } from '@chisel/contracts/catalog'
 import { PolyPartIndex, resolveVisibleParts, type PolyAvatarSelection } from './composePolyAvatar'
 import { createRigInstance, findSkinnedPart, getCoreRig, mergeParts } from './polyRig'
@@ -70,7 +70,7 @@ describe('composePolyAvatar', () => {
       heldRight: null,
       heldLeft: null,
       clip: 'Idle_Loop',
-      palette: { ...CONTEXT_DEFAULT_PALETTES.medieval },
+      palette: { ...COLOR_DIRECTION.packs.medieval.avatar },
       proportions: { ...PROPORTION_DEFAULTS },
     }
     const vis = resolveVisibleParts(base, idx)

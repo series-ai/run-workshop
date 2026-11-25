@@ -17,9 +17,11 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { BUDGETS } from '../contracts/budgets'
 import { AVATAR_SLOTS, type AvatarSlot } from '../contracts/catalog'
+import { COLOR_DIRECTION } from '../contracts/colorDirection'
 import { POLY_PACK_KEYS, POLY_PACKS, type PolyPackKey } from '../contracts/packs'
 import { PALETTE_REGIONS } from '../contracts/palette'
 import { RIG_IDS, RIG_SPECS, type RigId } from '../contracts/rig'
+import { HUMAN_SCALE } from '../contracts/worldScale'
 import { TOOL_ROOT } from '../src/paths'
 
 type ScaffoldKind = 'part' | 'held' | 'prop' | 'creature'
@@ -55,7 +57,49 @@ function printTables(): void {
     const spec = RIG_SPECS[r]
     console.log(`  - ${r.padEnd(10)} ${spec.label}  clips=${spec.clips.length}  groundBones=[${spec.groundBones.join(', ')}]`)
   }
-  console.log(`\n=== 7 Semantic UV Palette Regions (V in [0.15, 0.85]) ===\n  ${PALETTE_REGIONS.join(', ')}`)
+  const { uvMin, uvMax } = COLOR_DIRECTION.shade
+  console.log(`\n=== 7 Semantic UV Palette Regions (V in [${uvMin}, ${uvMax}]) ===\n  ${PALETTE_REGIONS.join(', ')}`)
+}
+
+function registration(kind: ScaffoldKind, pack: PolyPackKey, slot: AvatarSlot, rig: RigId): string {
+  if (kind === 'prop') return `Add the builder and label to the static registry in blender/props_level_${pack}.py.`
+  if (kind === 'creature') return `Add the builder to the ${rig} body list in blender/build_monsters.py and add a preset there.`
+  if (pack === 'core') {
+    if (slot === 'body' || slot === 'head') return `Add the ${slot} shape to blender/polykit.py. See blender/build_core.py for the export and morph targets.`
+    return 'Register the part in blender/build_core.py.'
+  }
+  if (pack === 'monsters') return `Register the ${kind} in blender/build_monsters.py.`
+  return `Add the ${kind} to the ${pack} entry of PACK_TABLE in blender/build_packs.py.`
+}
+
+const partStarters: Record<AvatarSlot, string> = {
+  body: `def {id}(part, body):
+    rings = [pk.torso_ring(body, station) for station in ('hips', 'waist', 'chest')]
+    part.loft(rings, 'skin', cap_start=True, cap_end=True)`,
+  torso: `def {id}(part, body):
+    rings = [pk.torso_ring(body, station, 0.02) for station in ('hips', 'waist', 'chest')]
+    part.loft(rings, 'primary', cap_start=True, cap_end=True)`,
+  legs: `def {id}(part, body):
+    with part.mirrored():
+        rings = [pk.leg_ring(body, station, 0.02) for station in (1, 2, 3)]
+        part.loft(rings, 'primary', cap_start=True, cap_end=True)`,
+  back: `def {id}(part, body):
+    anchor = pk.torso_point(body, 1.38, 0, 0, 'back')
+    part.box(anchor - pk.V(0, 0, 0.07), (0.26, 0.34, 0.13), 'primary', bevel=0.02)`,
+  head: `def {id}(part, spec):
+    part.skin = pk.SKIN_HEAD
+    rings = [pk.head_ring(spec.shape, pk.HEAD_Y[station]) for station in ('jaw', 'cheek', 'brow')]
+    part.loft(rings, 'skin', cap_start=True, cap_end=True)`,
+  hair: `def {id}(part, shape):
+    part.skin = pk.SKIN_HEAD
+    brow = pk.HEAD_Y['brow']
+    pk.head_shell(part, 'hair', 0.014, front=brow, temple=brow - 0.02,
+                  side=brow - 0.07, back=brow - 0.13, shape=shape)`,
+  headwear: `def {id}(part, shape):
+    part.skin = pk.SKIN_HEAD
+    brow = pk.HEAD_Y['brow']
+    pk.head_shell(part, 'primary', 0.025, front=brow, temple=brow - 0.02,
+                  side=brow - 0.06, back=brow - 0.10, shape=shape)`,
 }
 
 function generatePython(opts: {
@@ -67,141 +111,57 @@ function generatePython(opts: {
   hand: 'hand_r' | 'hand_l'
   rig: RigId
 }): string {
-  if (opts.kind === 'prop') {
-    const b = BUDGETS.classes.prop
-    return `"""
-RUN Chisel Prop Scaffold: ${opts.id} (${opts.label})
-Pack: ${opts.pack} (${POLY_PACKS[opts.pack].dir})
-Budget: <= ${b.maxTriangles} tris, ${b.maxMaterials} material (Poly_Atlas_Mat), grounded at y = 0 (Z-up in Blender -> Y-up in glTF).
-Paste into tools/run-chisel-packs/blender/build_packs.py and register in CATALOG_ENTRIES.
-"""
-import mathutils
-import polykit
+  const { kind, pack, id, label, slot, hand, rig } = opts
+  const budget = BUDGETS.classes[kind === 'part' ? slot : kind === 'creature' ? 'body' : kind]
+  const header = [
+    `# ${id} (${JSON.stringify(label)}) in ${POLY_PACKS[pack].dir}`,
+    `# Use at most ${budget.maxTriangles} triangles and ${budget.maxMaterials} material.`,
+    `# ${registration(kind, pack, slot, rig)}`,
+    '# Adapt the shape and check fit before you register the asset.',
+  ].join('\n')
+
+  if (kind === 'prop') {
+    return `${header}
+# Use metres, +Y up and +Z forward in the mesh builder.
 
 
-def build_${opts.id}() -> "bpy.types.Object":
-    mb = polykit.MeshBuilder('${opts.id}')
-    # Base plinth / primary silhouette (keep faces beveled/faceted, hard split normals)
-    mb.add_tapered_prism(
-        center=(0.0, 0.0, 0.25),
-        rx0=0.35, ry0=0.25,
-        rx1=0.28, ry1=0.20,
-        height=0.50,
-        sides=8,
-        region='secondary',
-    )
-    # Accent/metal detail
-    mb.add_tapered_prism(
-        center=(0.0, 0.0, 0.56),
-        rx0=0.24, ry0=0.16,
-        rx1=0.20, ry1=0.14,
-        height=0.12,
-        sides=6,
-        region='metal',
-    )
-    obj = mb.build_object(name='${opts.id}', uv_ao=True)
-    # Ground lowest Z vertex to 0.0 in Blender (becomes Y=0 in glTF)
-    polykit.ground_object_to_z0(obj)
-    return obj
+def ${id}(part):
+    part.box((0, 0.24, 0), (0.72, 0.48, 0.52), 'primary', bevel=0.03)
+    part.box((0, 0.49, 0), (0.75, 0.04, 0.55), 'secondary')
 `
   }
 
-  if (opts.kind === 'held') {
-    const b = BUDGETS.classes.held
-    return `"""
-RUN Chisel Held Item Scaffold: ${opts.id} (${opts.label})
-Pack: ${opts.pack} (${POLY_PACKS[opts.pack].dir}) | Socket: ${opts.hand}
-Budget: <= ${b.maxTriangles} tris, ${b.maxMaterials} material (Poly_Atlas_Mat).
-Local grip origin (0, 0, 0) sits in the palm; +Z extends along tool/blade axis toward tip.
-Paste into tools/run-chisel-packs/blender/build_packs.py.
-"""
-import polykit
+  if (kind === 'held') {
+    return `${header}
+# Use socket ${hand}. Keep the palm at the origin and check animated clearance.
 
 
-def build_${opts.id}() -> "bpy.types.Object":
-    mb = polykit.MeshBuilder('${opts.id}')
-    # Grip handle centered near local origin (hand_r/hand_l palm socket)
-    mb.add_tapered_prism(
-        center=(0.0, 0.0, 0.0),
-        rx0=0.024, ry0=0.024,
-        rx1=0.026, ry1=0.026,
-        height=0.24,
-        sides=6,
-        region='secondary',
-    )
-    # Guard / collar at +Z = 0.14
-    mb.add_tapered_prism(
-        center=(0.0, 0.0, 0.14),
-        rx0=0.075, ry0=0.030,
-        rx1=0.065, ry1=0.025,
-        height=0.04,
-        sides=6,
-        region='accent',
-    )
-    # Blade / head extending +Z = 0.16 .. 0.72
-    mb.add_tapered_prism(
-        center=(0.0, 0.0, 0.44),
-        rx0=0.040, ry0=0.014,
-        rx1=0.008, ry1=0.005,
-        height=0.56,
-        sides=4,
-        region='metal',
-    )
-    return mb.build_object(name='${opts.id}', uv_ao=True)
+def ${id}(part):
+    part.box((0, 0.015, 0), (0.045, 0.09, 0.045), 'secondary', bevel=0.005)
+    part.box((0, 0.015, 0.06), (0.035, 0.07, 0.08), 'accent', bevel=0.004)
 `
   }
 
-  if (opts.kind === 'part') {
-    const b = BUDGETS.classes[opts.slot]
-    return `"""
-RUN Chisel Modular Avatar Part Scaffold: ${opts.id} (${opts.label})
-Pack: ${opts.pack} (${POLY_PACKS[opts.pack].dir}) | Slot: ${opts.slot} | Rig: ${opts.rig}
-Budget: <= ${b.maxTriangles} tris, maxWeightError <= ${b.maxWeightError ?? 0.001} (sum=1.0, max 4 bones/vertex).
-Must stay watertight/layered over base body_athletic (clearance >= 0.008m outside body shell).
-"""
-import polykit
+  if (kind === 'part') {
+    return `${header}
+import polykit as pk
 
 
-def build_${opts.id}(armature_obj, core_body_obj) -> "bpy.types.Object":
-    mb = polykit.MeshBuilder('${opts.id}')
-    # Example modular geometry aligned to UAL1 world coordinates (head ~1.52m, chest ~1.18m, waist ~0.95m)
-    mb.add_tapered_prism(
-        center=(0.0, 0.0, 1.24),
-        rx0=0.18, ry0=0.13,
-        rx1=0.21, ry1=0.15,
-        height=0.34,
-        sides=8,
-        region='primary',
-    )
-    obj = mb.build_object(name='${opts.id}', uv_ao=True)
-    # Skin cleanly from the canonical UAL1 bone solver / nearest surface weights
-    polykit.transfer_weights_from(obj, core_body_obj, armature_obj)
-    return obj
+${partStarters[slot].replace('{id}', id)}
 `
   }
 
-  const spec = RIG_SPECS[opts.rig]
-  const b = BUDGETS.classes.body
-  return `"""
-RUN Chisel Creature Body Scaffold: ${opts.id} (${opts.label})
-Pack: monsters (${POLY_PACKS.monsters.dir}) | Rig: ${opts.rig} (${spec.label})
-Joints (${spec.joints.length}): ${spec.joints.join(', ')}
-Ground bones (must rest at Y=0 in bind pose and stay >= -0.02 across all clips): ${spec.groundBones.join(', ') || '(none / hovering)'}
-Budget: <= ${b.maxTriangles} tris, all 7 palette regions used, >= 4 vertices (>= 0.35 weight) per non-root bone.
-"""
-from mathutils import Vector
-import polykit
+  const joint = RIG_SPECS[rig].joints[1]
+  return `${header}
+# Use the ${rig} rig. Add geometry and weights for each joint that the body uses.
+import polykit as pk
 
 
-def build_${opts.id}_mesh(solver) -> "bpy.types.Object":
-    mb = polykit.MeshBuilder('${opts.id}')
-    # Build chunky faceted hull chunks using mb.add_box / add_prism / add_hull
-    # and register per-bone or socket-blended segment weights with \`solver\`!
-    # Rule: Keep limbs/ears/wings >= 0.015m away from X=0 on _l/_r segments.
-    # Rule: Ground lowest paw/claw/foot vertices cleanly at Y=0.0 (Blender Z=0.0).
-    obj = mb.build_object(name='${opts.id}', uv_ao=True)
-    solver.apply(obj)
-    return obj
+def build_${id}_mesh(solver):
+    part = pk.Part('${id}')
+    with part.skinned(pk.rigid(**{'${joint}': 1.0})):
+        part.box(solver.rig.position['${joint}'], (0.28, 0.30, 0.36), 'primary', bevel=0.02)
+    return part.to_mesh(solver)
 `
 }
 
@@ -220,8 +180,8 @@ function main(): void {
     throw new Error(`--pack must be one of ${POLY_PACK_KEYS.join('|')}`)
   }
   const id = arg('--id')
-  if (!id || !/^[a-z0-9_]+$/.test(id)) {
-    throw new Error('--id is required and must match /^[a-z0-9_]+$/ (e.g. prop_anvil)')
+  if (!id || !/^[a-z_][a-z0-9_]*$/.test(id)) {
+    throw new Error('--id is required and must match /^[a-z_][a-z0-9_]*$/ (e.g. prop_anvil)')
   }
   const slot = (arg('--slot') ?? 'torso') as AvatarSlot
   if (kind === 'part' && !AVATAR_SLOTS.includes(slot)) {
@@ -236,11 +196,20 @@ function main(): void {
     throw new Error(`--rig must be one of ${RIG_IDS.join('|')}`)
   }
 
+  if (kind === 'prop' && !POLY_PACKS[pack].hasWorldLeaf) {
+    throw new Error(`${pack} has no world prop leaf. Select a context pack.`)
+  }
+  if (kind === 'creature' && pack !== 'monsters') {
+    throw new Error('Register creature bodies in the monsters pack.')
+  }
+
   const label = arg('--label') ?? titleCase(id)
   const code = generatePython({ kind, pack, id, label, slot, hand, rig })
 
-  if (process.argv.includes('--stdout')) {
-    console.log(code)
+  const stdout = process.argv.includes('--stdout')
+  const print = stdout ? console.error : console.log
+  if (stdout) {
+    process.stdout.write(code)
   } else {
     const outDir = join(TOOL_ROOT, 'out/scaffolds')
     mkdirSync(outDir, { recursive: true })
@@ -249,12 +218,22 @@ function main(): void {
     console.log(`Wrote scaffold: ${outFile}`)
   }
 
-  console.log('\n=== Checklist ===')
-  console.log(`1. Wire builder into ${kind === 'creature' ? 'blender/build_monsters.py (or creatures_*.py)' : 'blender/build_packs.py'} and export GLB to ${POLY_PACKS[pack].dir}/...`)
-  console.log('2. Run: npm run build && npm run validate && npm run catalog')
-  console.log(`3. Render thumbnails: (cd ../../games/run-chisel-showcase && npm run thumbnails -- --pack ${pack} --force)`)
-  console.log(`4. Visually inspect: npm run snapshot -- --out out/review/${id}.png --views ${id}`)
-  console.log(`5. Check scale vs 1.8m human: npm run lineup -- --out out/review/${id}_lineup.png ${id}`)
+  if (pack !== 'core') {
+    const { brief } = COLOR_DIRECTION.packs[pack]
+    print(`\n=== ${POLY_PACKS[pack].label} color direction ===`)
+    print(brief.relationship)
+    print(`Field — ${brief.field}`)
+    print(`Support — ${brief.support}`)
+    print(`Focus — ${brief.focus}`)
+    print(`Review — ${brief.review}`)
+  }
+
+  print('\n=== Checklist ===')
+  print(`1. ${registration(kind, pack, slot, rig)}`)
+  print('2. Run: npm run build && npm run validate && npm run catalog')
+  print(`3. Render thumbnails: (cd ../../games/run-chisel-showcase && npm run thumbnails -- --pack ${pack} --force)`)
+  print(`4. Visually inspect: npm run snapshot -- --out out/review/${id}.png --views ${id}`)
+  print(`5. Check fit beside the ${HUMAN_SCALE.referenceHeightM.toFixed(2)} m adult: npm run lineup -- --out out/review/${id}_lineup.png ${id}`)
 }
 
 main()

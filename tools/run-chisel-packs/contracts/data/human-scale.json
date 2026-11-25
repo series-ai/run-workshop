@@ -1,0 +1,8 @@
+{
+  "heightMultiplier": 0.9294,
+  "referenceHeightM": 1.8,
+  "referencePreset": "core_athletic",
+  "referenceParts": ["body_athletic", "head_hero"],
+  "referenceClip": "Idle_Loop",
+  "referencePhase": 0.25
+}

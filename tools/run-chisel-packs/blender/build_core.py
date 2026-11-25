@@ -19,6 +19,7 @@ from polykit import X, Y, Z, V  # noqa: E402
 
 PACK = 'core'
 RIG_FILE = 'core-rig.glb'
+HUMAN_HEIGHT_MULTIPLIER = json.loads((pk.CONTRACTS / 'data/human-scale.json').read_text())['heightMultiplier']
 
 
 # --------------------------------------------------------------------------
@@ -487,14 +488,14 @@ def main():
     size = builder.write(path)
     verify_core(path, rig, all_clip_names, modified_clips=fixed_clips.keys())
 
-    default_props = {'height': 1.0, 'legRatio': 0.94, 'armLength': 0.96, 'shoulderWidth': 1.04, 'torsoBulk': 1.0, 'waistScale': 1.0, 'headScale': 1.0, 'limbThickness': 1.02}
+    default_props = {'height': HUMAN_HEIGHT_MULTIPLIER, 'legRatio': 0.94, 'armLength': 0.96, 'shoulderWidth': 1.04, 'torsoBulk': 1.0, 'waistScale': 1.0, 'headScale': 1.0, 'limbThickness': 1.02}
     core_presets = [
         {
             'id': 'core_athletic', 'pack': PACK, 'label': 'Core Athletic', 'rigId': 'ual1', 'clip': 'Idle_Loop',
             'body': 'body_athletic', 'head': 'head_hero', 'hair': 'hair_short_part', 'torso': 'torso_core_tee', 'legs': 'legs_core_shorts',
             'headwear': None, 'back': None, 'heldRight': None, 'heldLeft': None,
             'palette': {'skin': '#d8a67e', 'hair': '#4a2e1f', 'primary': '#3f6b8f', 'secondary': '#4a5568', 'accent': '#d9a441', 'metal': '#8a94a0', 'eye': '#2e5d8c'},
-            'proportions': {**default_props},
+            'proportions': {**default_props, 'legRatio': 0.92},
         },
         {
             'id': 'core_heavy', 'pack': PACK, 'label': 'Core Heavy', 'rigId': 'ual1', 'clip': 'Walk_Loop',
@@ -508,7 +509,7 @@ def main():
             'body': 'body_slim', 'head': 'head_cheerful', 'hair': 'hair_ponytail', 'torso': 'torso_core_tee', 'legs': 'legs_core_shorts',
             'headwear': None, 'back': None, 'heldRight': None, 'heldLeft': None,
             'palette': {'skin': '#ecc8aa', 'hair': '#a84f2b', 'primary': '#3f6b45', 'secondary': '#4f5565', 'accent': '#db6e48', 'metal': '#9ca3af', 'eye': '#346b4c'},
-            'proportions': {**default_props, 'height': 0.95, 'legRatio': 0.98, 'armLength': 0.97, 'shoulderWidth': 1.0, 'headScale': 1.04, 'limbThickness': 0.94},
+            'proportions': {**default_props, 'height': 0.95 * HUMAN_HEIGHT_MULTIPLIER, 'legRatio': 0.98, 'armLength': 0.97, 'shoulderWidth': 1.0, 'headScale': 1.04, 'limbThickness': 0.94},
         },
     ]
 

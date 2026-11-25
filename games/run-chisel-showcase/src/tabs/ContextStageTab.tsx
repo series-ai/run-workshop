@@ -1,53 +1,81 @@
-import { OrbitControls } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { Suspense, useState } from 'react'
+import { Suspense, useState, type CSSProperties } from 'react'
 import { BUDGETS } from '@chisel/contracts/budgets'
 import type { PackCatalog } from '@chisel/contracts/catalog'
-import { CONTEXT_PACK_KEYS, type ContextPackKey } from '@chisel/contracts/packs'
+import { CONTEXT_PACK_KEYS } from '@chisel/contracts/packs'
 import type { PolyPartIndex } from '../avatar/composePolyAvatar'
 import { MultiContextStage } from '../scenes/MultiContextStage'
-import { STUDIO_GL, StudioLights } from '../scenes/studio'
+import { STAGE_LOOK, type StageContext } from '../scenes/stageLook'
+import { STUDIO_GL } from '../scenes/studio'
+
+const STAGE_CONTEXTS = [...CONTEXT_PACK_KEYS, 'all'] as const
 
 export function ContextStageTab({ catalogs, index }: { catalogs: PackCatalog[]; index: PolyPartIndex }) {
-  const [activeContext, setActiveContext] = useState<'all' | ContextPackKey>('all')
+  const [activeContext, setActiveContext] = useState<StageContext>('medieval')
   const [shadowMode, setShadowMode] = useState<'blob' | 'none'>('blob')
+  const [reset, setReset] = useState(0)
+  const [closeView, setCloseView] = useState(true)
+  const look = STAGE_LOOK[activeContext]
+  const packLabel = catalogs.find(({ pack }) => pack === activeContext)?.label
+  const style = {
+    '--stage-glow': look.glow,
+    '--stage-backdrop': look.backdrop,
+    '--stage-accent': look.accent,
+  } as CSSProperties
 
   return (
-    <div className="viewport-wrap stage-full">
-      <Canvas dpr={[1, BUDGETS.mobilePolicy.maxDpr]} gl={STUDIO_GL} camera={{ position: [0, 4.0, 12.6], fov: 40 }}>
-        <StudioLights reach={2} />
-        <Suspense fallback={null}>
-          <MultiContextStage
-            catalogs={catalogs}
-            index={index}
-            activeContext={activeContext}
-            shadowMode={shadowMode}
-          />
-        </Suspense>
-        <OrbitControls target={[0, 0.35, 0]} maxPolarAngle={Math.PI / 2.05} minDistance={3} maxDistance={24} />
-      </Canvas>
+    <section
+      className="context-stage"
+      aria-labelledby="context-stage-title"
+      data-close-view={closeView && activeContext !== 'all' ? true : undefined}
+      style={style}
+    >
+      <header className="context-stage-header">
+        <div>
+          {packLabel && <p className="context-stage-pack">{packLabel}</p>}
+          <h2 id="context-stage-title">{look.title}</h2>
+        </div>
+        <div className="context-stage-actions">
+          <button className="pill-btn" aria-label="Shadows" aria-pressed={shadowMode === 'blob'} onClick={() => setShadowMode((s) => s === 'blob' ? 'none' : 'blob')}>
+            Shadows {shadowMode === 'blob' ? 'on' : 'off'}
+          </button>
+          {activeContext !== 'all' && (
+            <button className="pill-btn" onClick={() => setCloseView((value) => !value)}>
+              {closeView ? 'Full view' : 'Close view'}
+            </button>
+          )}
+          <button className="pill-btn" onClick={() => setReset((n) => n + 1)}>Reset view</button>
+        </div>
+      </header>
 
-      <div className="hud-overlay hud-dock-bottom">
-        <div className="hud-card hud-strip" style={{ alignItems: 'center' }}>
-          <span className="hud-strip-label">Context:</span>
-          {(['all', ...CONTEXT_PACK_KEYS] as const).map((ctx) => (
+      <div className="context-stage-canvas">
+        <Canvas orthographic dpr={[1, BUDGETS.mobilePolicy.maxDpr]} gl={STUDIO_GL} camera={{ near: 0.1, far: 220, position: [0, 9, 14] }}>
+          <Suspense fallback={
+            <Html fullscreen style={{ pointerEvents: 'none' }}>
+              <div className="context-stage-status">
+                <span role="status">Loading scene…</span>
+              </div>
+            </Html>
+          }>
+            <MultiContextStage catalogs={catalogs} index={index} activeContext={activeContext} shadowMode={shadowMode} reset={reset} closeView={closeView} />
+          </Suspense>
+        </Canvas>
+      </div>
+
+      <div className="context-stage-picker-wrap">
+        <div className="context-stage-picker" role="group" aria-label="Scene">
+          {STAGE_CONTEXTS.map((ctx) => (
             <button
               key={ctx}
-              className={`pill-btn ${activeContext === ctx ? 'active' : ''}`}
+              aria-pressed={activeContext === ctx}
               onClick={() => setActiveContext(ctx)}
             >
-              {ctx === 'all' ? `All ${CONTEXT_PACK_KEYS.length}` : ctx.toUpperCase()}
+              {ctx === 'all' ? `All ${CONTEXT_PACK_KEYS.length}` : ctx === 'ww2' ? 'WW2' : ctx}
             </button>
           ))}
-          <span className="hud-sep" />
-          <button
-            className="pill-btn"
-            onClick={() => setShadowMode((s) => (s === 'blob' ? 'none' : 'blob'))}
-          >
-            Shadows: {shadowMode === 'blob' ? 'Blob' : 'Off'}
-          </button>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

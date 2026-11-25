@@ -33,7 +33,6 @@ CONTRACTS = TOOL_ROOT / 'contracts'
 
 MATERIAL_NAME = 'Poly_Atlas_Mat'
 REGIONS = ('skin', 'hair', 'primary', 'secondary', 'accent', 'metal', 'eye')
-V_MIN, V_MAX = 0.15, 0.85
 
 X = Vector((1.0, 0.0, 0.0))
 Y = Vector((0.0, 1.0, 0.0))
@@ -70,6 +69,9 @@ def load_json(name):
 BUDGETS = load_json('budgets.json')
 PACKS = load_json('packs.json')['packs']
 RIG_CONTRACT = load_json('ual1-rig.json')
+COLOR_DIRECTION = load_json('color-direction.json')
+SHADE = COLOR_DIRECTION['shade']
+V_MIN, V_MAX = SHADE['uvMin'], SHADE['uvMax']
 
 
 # --------------------------------------------------------------------------
@@ -224,10 +226,12 @@ class GlbBuilder:
         self.doc['bufferViews'].append(view)
         return len(self.doc['bufferViews']) - 1
 
-    def _accessor(self, array, kind, target=None, bounds=False):
+    def _accessor(self, array, kind, target=None, bounds=False, normalized=False):
         array = np.ascontiguousarray(array)
         item = {'bufferView': self._view(array.tobytes(), target), 'componentType': _COMPONENT_ID[array.dtype],
                 'count': int(array.shape[0]), 'type': kind}
+        if normalized:
+            item['normalized'] = True
         if bounds:
             if array.ndim == 1:
                 item['min'] = [float(array.min())]
@@ -350,12 +354,14 @@ class GlbBuilder:
                 clips.append({'name': clip['name'], 'samplers': samplers, 'channels': channels})
             self.doc['animations'] = clips
 
-    def add_mesh(self, mesh, node_extras=None):
+    def add_mesh(self, mesh, node_extras=None, colors=None):
         attributes = {
             'POSITION': self._accessor(mesh.positions.astype(np.float32), 'VEC3', ARRAY_BUFFER, bounds=True),
             'NORMAL': self._accessor(mesh.normals.astype(np.float32), 'VEC3', ARRAY_BUFFER),
             'TEXCOORD_0': self._accessor(mesh.uvs.astype(np.float32), 'VEC2', ARRAY_BUFFER),
         }
+        if colors is not None:
+            attributes['COLOR_0'] = self._accessor(colors, 'VEC4', ARRAY_BUFFER, normalized=True)
         skinned = mesh.joints is not None
         if skinned:
             if self.rig_root is None:
@@ -396,6 +402,26 @@ class GlbBuilder:
 def write_static_glb(path, mesh):
     builder = GlbBuilder()
     builder.add_mesh(mesh)
+    return builder.write(path)
+
+
+def _bake_prop_colors(mesh, pack):
+    prop_colors = COLOR_DIRECTION['packs'][pack]['props']
+    palette = {**prop_colors['default'], **prop_colors['overrides'].get(mesh.name, {})}
+    rgb = np.asarray([[int(palette[role][i:i + 2], 16) for i in (1, 3, 5)] for role in REGIONS]) / 255
+    linear = np.where(rgb <= 0.04045, rgb / 12.92, ((rgb + 0.055) / 1.055) ** 2.4)
+    region = np.clip((mesh.uvs[:, 0] * len(REGIONS)).astype(int), 0, len(REGIONS) - 1)
+    shade = SHADE['dark'] + (SHADE['bright'] - SHADE['dark']) * np.clip((mesh.uvs[:, 1] - V_MIN) / (V_MAX - V_MIN), 0, 1)
+    colors = np.full((len(mesh.positions), 4), 255, dtype=np.uint8)
+    colors[:, :3] = np.rint(np.clip(linear[region] * shade[:, None], 0, 1) * 255).astype(np.uint8)
+    return colors
+
+
+def write_prop_glb(path, mesh, pack, *, contract=None, animations=None):
+    builder = GlbBuilder()
+    if contract is not None:
+        builder.add_custom_rig(contract, animations=animations, rig_name=f'{mesh.name}_Rig')
+    builder.add_mesh(mesh, colors=_bake_prop_colors(mesh, pack))
     return builder.write(path)
 
 
@@ -567,6 +593,20 @@ class SegmentWeightSolver:
             pairs = sorted(scores.items(), key=lambda row: (-row[1], row[0]))[:4]
         total = sum(w for _, w in pairs)
         return [(self.rig.index[name], w / total) for name, w in pairs]
+
+
+class PropWeightSolver:
+    """Rigid single-bone weight solver for animated procedural props."""
+
+    def __init__(self, joints, default_bone='base'):
+        self.index = {name: i for i, name in enumerate(joints)}
+        self.default_bone = default_bone
+
+    def solve(self, point, skin):
+        if skin and skin.rigid:
+            pairs = sorted(skin.rigid.items(), key=lambda row: (-row[1], row[0]))[:4]
+            return [(self.index[name], float(weight)) for name, weight in pairs]
+        return [(self.index[self.default_bone], 1.0)]
 
 
 # --------------------------------------------------------------------------
@@ -956,7 +996,7 @@ class Part:
         normals = np.array([normal for _, normal, *_ in rows], dtype=np.float64)
         uvs = np.zeros((len(rows), 2), dtype=np.float64)
         for row, (index, normal, region, ao, group) in enumerate(rows):
-            if region == 'skin' and solver is not None:
+            if region == 'skin' and solver is not None and not isinstance(solver, PropWeightSolver):
                 gradient = (self.pos[index].y / skin_high) - 0.5
                 ny = max(normal.y, -0.30)
                 shade = 0.60 + 0.14 * ny + 0.10 * gradient + ao
@@ -2013,7 +2053,7 @@ def held_entry(mesh, pack, label, hand, path, size):
             'label': label, 'hand': hand, 'triangles': mesh.triangles}
 
 
-def prop_entry(mesh, pack, label, path, size):
+def prop_entry(mesh, pack, label, path, size, clips=None):
     finish_budget('prop', mesh)
     limit = BUDGETS['classes']['prop']['maxBytes']
     if size > limit:
@@ -2024,8 +2064,11 @@ def prop_entry(mesh, pack, label, path, size):
     for axis in (0, 2):
         if abs(bounds['min'][axis] + bounds['max'][axis]) / 2 > 0.02:
             raise ValueError(f'{mesh.name}: the prop is not centred on X/Z.')
-    return {'id': mesh.name, 'pack': pack, 'leaf': 'world', 'relativePath': path, 'nodeName': mesh.name,
-            'label': label, 'triangles': mesh.triangles, 'bounds': bounds}
+    entry = {'id': mesh.name, 'pack': pack, 'leaf': 'world', 'relativePath': path, 'nodeName': mesh.name,
+             'label': label, 'triangles': mesh.triangles, 'bounds': bounds}
+    if clips:
+        entry['clips'] = list(clips)
+    return entry
 
 
 def pack_catalog(pack, *, parts=(), held=(), props=(), presets=(), clips=(), rig_model_path=None, creature_rigs=None):

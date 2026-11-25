@@ -25,6 +25,7 @@ import numpy as np  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
 import polykit as pk  # noqa: E402
+from build_core import HUMAN_HEIGHT_MULTIPLIER  # noqa: E402
 from polykit import X, Y, Z, V  # noqa: E402
 
 SOURCE_RIG = pk.TOOL_ROOT / 'assets/source/ual1-base.glb'
@@ -709,6 +710,21 @@ def held_pistol(part):
         part.plate(V(0, 0.070, -0.032), Y, Z, 0.016, 0.026, 0.014, 'metal', shrink=0.6)
 
 
+def held_ww2_dispatch(part):
+    # Turn the printed face toward the camera at the left hand socket.
+    with part.placed(Matrix.Rotation(math.radians(-75), 4, 'Z')):
+        # Keep the folded tab narrow through the grip.
+        sections = [(0, -.022, .028), (0, .027, .028), (0, .042, .09),
+                    (.034, .138, .09), (.034, .218, .09)]
+        rings = [pk.rect_ring(V(x, 0, z), X, Y, .001, half_width) for x, z, half_width in sections]
+        part.loft(rings, 'skin', cap_start=True, cap_end=True, ao=.25)
+
+        # Print on the flat panel above the grip.
+        for y, length in [(.051, .042), (.040, .031)]:
+            part.plate(V(.033, y, .175), -X, Y, length, .003, .0003, 'secondary')
+        part.plate(V(.033, -.046, .178), -X, Y, .025, .021, .0003, 'accent', corner=.005)
+
+
 def held_ammo_can(part):
     # Left hand carry: handle at palm x=+0.006 (<=0.032), straps angle outward (+X) so heavy can clears thigh_l/trousers.
     part.tube([V(0.006, -0.062, 0), V(0.006, 0.062, 0)], [0.013, 0.013], 6, 'metal', up=Z)
@@ -1280,6 +1296,8 @@ def proportions(**changes):
 
 def preset(pack, preset_id, label, clip, palette, *, body, head, hair, torso, legs, headwear=None, back=None,
            right=None, left=None, **scale):
+    if pack in ('medieval', 'ww2', 'sim', 'cyberpunk'):
+        scale['height'] = scale.get('height', 1.0) * HUMAN_HEIGHT_MULTIPLIER
     return {'id': preset_id, 'pack': pack, 'label': label, 'clip': clip, 'body': body, 'head': head, 'hair': hair,
             'torso': torso, 'legs': legs, 'headwear': headwear, 'back': back, 'heldRight': right, 'heldLeft': left,
             'palette': palette, 'proportions': proportions(**scale)}
@@ -1312,14 +1330,14 @@ PACK_TABLE = {
                    {'skin': '#ecc8aa', 'hair': '#a84f2b', 'primary': '#3f6b45', 'secondary': '#5c3c24', 'accent': '#d9a441',
                     'metal': '#8c96a3', 'eye': '#346b4c'},
                    body='body_slim', head='head_cheerful', hair='hair_swept', torso='torso_medieval_tunic',
-                   legs='legs_medieval_breeches', left='held_torch', height=0.96, legRatio=0.95, armLength=0.96,
+                   legs='legs_medieval_breeches', left='held_torch', height=0.96, legRatio=0.95, armLength=0.98,
                    shoulderWidth=1.06, limbThickness=1.0),
             preset('medieval', 'medieval_guard', 'Town Guard', 'Sword_Idle',
                    {'skin': '#bc8358', 'hair': '#25262b', 'primary': '#2f4f8a', 'secondary': '#5c3c24', 'accent': '#d9a441',
                     'metal': '#8c96a3', 'eye': '#1f2634'},
                    body='body_heavy', head='head_stern', hair='hair_short_part', torso='torso_medieval_tunic',
                    legs='legs_medieval_greaves', headwear='headwear_kettle_helm', right='held_broadsword',
-                   left='held_heater_shield', legRatio=0.94, armLength=0.98, shoulderWidth=1.08, torsoBulk=1.06,
+                   left='held_heater_shield', legRatio=0.94, armLength=1.02, shoulderWidth=1.08, torsoBulk=1.06,
                    limbThickness=1.0),
         ],
     },
@@ -1334,7 +1352,8 @@ PACK_TABLE = {
             ('back', back_ww2_field_pack, 'Field Pack', {}),
         ],
         'held': [(held_rifle, 'Service Rifle', 'hand_r'), (held_smg, 'Submachine Gun', 'hand_r'),
-                 (held_pistol, 'Service Pistol', 'hand_r'), (held_ammo_can, 'Ammo Can', 'hand_l')],
+                 (held_pistol, 'Service Pistol', 'hand_r'), (held_ammo_can, 'Ammo Can', 'hand_l'),
+                 (held_ww2_dispatch, 'Inspection Dispatch', 'hand_l')],
         'props': [(prop_sandbag_wall, 'Sandbag Wall'), (prop_jerrycan, 'Jerrycan'), (prop_ammo_crate, 'Ammo Crate'),
                   (prop_field_radio, 'Field Radio')],
         'presets': [
@@ -1349,13 +1368,13 @@ PACK_TABLE = {
                     'metal': '#3a4046', 'eye': '#2e5d8c'},
                    body='body_athletic', head='head_stern', hair='hair_short_part', torso='torso_ww2_trenchcoat',
                    legs='legs_ww2_officer_breeches', headwear='headwear_officer_cap', right='held_pistol',
-                   height=1.02, shoulderWidth=1.06),
+                   height=1.02, shoulderWidth=1.12),
             preset('ww2', 'ww2_sapper', 'Assault Sapper', 'Walk_Loop',
                    {'skin': '#945d3b', 'hair': '#25262b', 'primary': '#545e43', 'secondary': '#8c7d5b', 'accent': '#d4a24c',
                     'metal': '#3a4046', 'eye': '#3c2a21'},
                    body='body_heavy', head='head_cheerful', hair='hair_short_part', torso='torso_ww2_field_jacket',
                    legs='legs_ww2_field_trousers', headwear='headwear_m1_helmet', right='held_smg', left='held_ammo_can',
-                   legRatio=0.95, armLength=0.97, torsoBulk=1.06, limbThickness=1.06),
+                   legRatio=0.95, armLength=1.02, torsoBulk=1.06, limbThickness=1.06),
         ],
     },
     'sim': {
@@ -1476,7 +1495,9 @@ def build_pack(pack, table, core, solver, stage):
         # Rule M4: ground the prop and centre it on X/Z.
         mesh.positions -= np.array([(low[0] + high[0]) / 2, low[1], (low[2] + high[2]) / 2])
         path = f'props/{mesh.name}.glb'
-        props.append(pk.prop_entry(mesh, pack, label, path, pk.write_static_glb(world / path, mesh)))
+        props.append(pk.prop_entry(mesh, pack, label, path, pk.write_prop_glb(world / path, mesh, pack)))
+    from build_props import build_extra_props_for_pack
+    props.extend(build_extra_props_for_pack(pack, world))
     return pk.pack_catalog(pack, parts=parts, held=held, props=props, presets=table['presets'])
 
 

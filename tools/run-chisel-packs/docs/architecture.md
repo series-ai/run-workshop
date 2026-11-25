@@ -40,7 +40,7 @@
 ### Inside `run-workshop`
 ```
 tools/run-chisel-packs/
-  SKILL.md                   # Workshop agent/authoring skill (also in .agents/skills/run-chisel-assets/)
+  SKILL.md                   # Link to the canonical workshop skill in .agents/skills/run-chisel-assets/
   docs/
     architecture.md          # This file
     visual-direction.md      # Codified faceted style + S23 Ultra constraints (F/S/C/P/M rules)
@@ -132,6 +132,7 @@ These conventions connect `blender/*.py` to `games/run-chisel-showcase/src/avata
 - **Clips at runtime.** The UAL1 clips animate rotation and the pelvis translation only. `polyRig.optimizeClip`
   removes the constant scale and translation tracks. The proportion rig owns bone scale, joint offsets and the
   inverse bind matrices (`proportionRig.ts`).
-- **Prop palettes.** Props use the six UV regions with these roles: `primary` main body, `secondary` trim,
-  `accent` cloth and paint, `metal` hardware, `hair` foliage, `skin` stone and sand
-  (`scenes/contextPalettes.ts`).
+- **Color contract.** [color-direction.json](../contracts/data/color-direction.json) defines the pack briefs,
+  avatar defaults, prop colors, stage lighting, and shared UV shade ramp. Blender bakes prop colors into
+  `COLOR_0`. The showcase uses the same palette and UV regions for runtime recoloring. Validation and staging
+  check the baked bytes against the contract.

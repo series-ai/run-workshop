@@ -10,7 +10,8 @@ import {
   type PackCatalog,
 } from '@chisel/contracts/catalog'
 import type { ContextPackKey, PolyPackKey } from '@chisel/contracts/packs'
-import { CONTEXT_DEFAULT_PALETTES, type PaletteColors } from '@chisel/contracts/palette'
+import type { PaletteColors } from '@chisel/contracts/palette'
+import { COLOR_DIRECTION } from '@chisel/contracts/colorDirection'
 import type { RigId } from '@chisel/contracts/rig'
 import type { AssetRef } from '../assetSource'
 
@@ -165,7 +166,7 @@ export function createDefaultSelection(
           : context === 'monsters'
             ? 'Sword_Attack'
             : 'Walk_Loop',
-    palette: { ...CONTEXT_DEFAULT_PALETTES[context] },
+    palette: { ...COLOR_DIRECTION.packs[context].avatar },
     proportions: context === 'monsters' ? { ...PROPORTION_DEFAULTS } : { ...UAL1_STANDARD_PROPORTIONS },
   }
 }

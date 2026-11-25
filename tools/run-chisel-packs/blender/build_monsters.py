@@ -977,7 +977,7 @@ def wolf_clips():
         body_keys = [
             (0.00, {'py': 0.092, 'pz': 0.025, 'prx': 0.17, 's1': -0.14, 's2': -0.13, 'ch': -0.09, 'nk': 0.40, 'hd': -0.20, 'jaw': 0.34, 't1': 0.36, 't2': 0.18, 't3': 0.10}),
             (0.09, {'py': 0.066, 'pz': 0.020, 'prx': 0.13, 's1': -0.08, 's2': -0.07, 'ch': -0.04, 'nk': 0.28, 'hd': -0.17, 'jaw': 0.30, 't1': 0.44, 't2': 0.22, 't3': 0.12}),
-            (0.22, {'py': 0.036, 'pz': 0.005, 'prx': 0.01, 's1': 0.02, 's2': 0.03, 'ch': 0.03, 'nk': 0.12, 'hd': -0.14, 'jaw': 0.24, 't1': 0.50, 't2': 0.24, 't3': 0.12}),
+            (0.22, {'py': 0.020, 'pz': 0.005, 'prx': 0.01, 's1': 0.02, 's2': 0.03, 'ch': 0.03, 'nk': 0.12, 'hd': -0.14, 'jaw': 0.24, 't1': 0.50, 't2': 0.24, 't3': 0.12}),
             (0.36, {'py': 0.032, 'pz': -0.010, 'prx': -0.16, 's1': 0.14, 's2': 0.14, 'ch': 0.11, 'nk': -0.12, 'hd': -0.08, 'jaw': 0.24, 't1': 0.42, 't2': 0.15, 't3': 0.02}),
             (0.50, {'py': 0.028, 'pz': -0.025, 'prx': -0.26, 's1': 0.20, 's2': 0.20, 'ch': 0.15, 'nk': -0.24, 'hd': -0.06, 'jaw': 0.28, 't1': 0.28, 't2': 0.05, 't3': -0.10}),
             (0.63, {'py': 0.018, 'pz': -0.015, 'prx': -0.19, 's1': 0.13, 's2': 0.13, 'ch': 0.10, 'nk': -0.13, 'hd': -0.10, 'jaw': 0.32, 't1': 0.22, 't2': 0.04, 't3': -0.08}),
@@ -1621,7 +1621,9 @@ def main():
         low, high = mesh.positions.min(axis=0), mesh.positions.max(axis=0)
         mesh.positions -= np.array([(low[0] + high[0]) / 2, low[1], (low[2] + high[2]) / 2])
         rel = f'props/{mesh.name}.glb'
-        props.append(pk.prop_entry(mesh, PACK, label, rel, pk.write_static_glb(world / rel, mesh)))
+        props.append(pk.prop_entry(mesh, PACK, label, rel, pk.write_prop_glb(world / rel, mesh, PACK)))
+    from build_props import build_extra_props_for_pack
+    props.extend(build_extra_props_for_pack(PACK, world))
 
     def creature_preset(preset_id, label, rig_id, clip, body_id, palette, proportions=None):
         return {
@@ -1640,9 +1642,10 @@ def main():
             'heldRight': None,
             'heldLeft': None,
             'palette': palette,
-            'proportions': proportions or {
+            'proportions': {
                 'height': 1.0, 'shoulderWidth': 1.0, 'torsoBulk': 1.0, 'waistScale': 1.0,
                 'headScale': 1.0, 'limbThickness': 1.0,
+                **(proportions or {}),
             },
         }
 
@@ -1673,6 +1676,7 @@ def main():
             'monster_warhorse', 'Warhorse', 'quadruped', 'Trot', 'body_warhorse',
             {'skin': '#362721', 'hair': '#1a171c', 'primary': '#6e3b28', 'secondary': '#9e2629',
              'accent': '#e6d8bd', 'metal': '#9ca6b5', 'eye': '#f2b134'},
+            {'height': 1.55},
         ),
         creature_preset(
             'monster_giant_spider', 'Giant Spider', 'arachnid', 'Attack', 'body_giant_spider',
@@ -1683,6 +1687,7 @@ def main():
             'monster_frost_eagle', 'Frost Eagle', 'avian', 'Flap', 'body_frost_eagle',
             {'skin': '#e4edf5', 'hair': '#1d2430', 'primary': '#4d6f8c', 'secondary': '#253345',
              'accent': '#ebaa2f', 'metal': '#9ec0d9', 'eye': '#59e0ff'},
+            {'height': 0.70, 'bodyLength': 0.76, 'headScale': 0.90},
         ),
         creature_preset(
             'monster_ember_drake', 'Ember Wyvern', 'dragon', 'Fly_Flap', 'body_ember_drake',
@@ -1693,6 +1698,7 @@ def main():
             'monster_tyrant_rex', 'Tyrant Rex', 'kaiju', 'Roar', 'body_tyrant_rex',
             {'skin': '#c7ab70', 'hair': '#20241b', 'primary': '#436134', 'secondary': '#283820',
              'accent': '#ede2c5', 'metal': '#968f7c', 'eye': '#f58b22'},
+            {'height': 1.20},
         ),
         creature_preset(
             'monster_basilisk', 'Horned Basilisk', 'serpent', 'Coiled', 'body_basilisk',

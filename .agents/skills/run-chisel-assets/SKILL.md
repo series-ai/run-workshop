@@ -1,6 +1,6 @@
 ---
 name: run-chisel-assets
-description: Author, validate, visually verify, thumbnail, and stage stylized faceted low-poly modular avatars, held items, props, and rigged creatures in tools/run-chisel-packs for games/run-chisel-showcase and jam-ready-assets.
+description: Author, color, validate, visually review, thumbnail, and stage RUN Chisel low-poly avatars, props, creatures, and environments for the showcase and jam-ready-assets.
 ---
 
 # RUN Chisel Assets Workshop Skill
@@ -31,6 +31,18 @@ Check exact numbers in `contracts/data/budgets.json`:
 
 ## 3. Authoring a New Asset Step-by-Step
 
+Read [Color and context cohesion](../../../tools/run-chisel-packs/docs/visual-direction.md#3-color-and-context-cohesion-c) and the pack's `brief` in [color-direction.json](../../../tools/run-chisel-packs/contracts/data/color-direction.json). Define the field, support colors, and focal color before you model the asset. Check these roles in a real scene with an avatar and neighboring props.
+
+Set the ground and distant structures first. Use low-chroma ground, shallow contrast between seams and slabs, and subdued distant repeats. Join straight, corner, and junction tiles in the same review. Match the colors where their edges meet. Keep the action against a field that separates its light and dark values. Use color accents on the action and on cues that show the route.
+
+Use the pack defaults first. Add a prop override only for the material regions that need a different color. Update the pack brief, avatar defaults, prop palette, and stage colors when you add a pack. Assign colors through the seven UV regions. Keep light and dark values distinct in a 128 px prop image and a 390 px scene.
+
+Read the outline before you add surface detail. At 128 px, check the main mass, one or two useful secondary shapes, and the gaps at openings, wheels, or joints. Remove small features that merge into one patch. At 390 px, check that posts, signs, and props leave space around faces, hands, and working parts.
+
+For a main prop, model one feature that shows how it works. Use a few large seams, folds, or worn edges to identify each material. Check the material close up and at 128 px. See rule S6 in the visual direction guide.
+
+Use metres and the 1.80 m adult reference. Check the working height of seats and counters, the clear size of doors, and seated fit inside vehicles. Check an animal with its rider or cart at native scale. See [world prop and scene review](../../../tools/run-chisel-packs/docs/visual-direction.md#6-world-prop-and-scene-review).
+
 1. **Inspect budgets, packs & generate boilerplate**:
    ```bash
    cd tools/run-chisel-packs
@@ -38,13 +50,13 @@ Check exact numbers in `contracts/data/budgets.json`:
    npm run scaffold -- --kind prop --pack medieval --id prop_anvil --label "Blacksmith Anvil"
    # Supported kinds: part (--slot ...), held (--hand hand_r|hand_l), prop, creature (--rig ...)
    ```
-   Copy the generated stub from `out/scaffolds/<id>.py` into `blender/build_packs.py` (or `blender/build_monsters.py` / `creatures_*.py`) and register its catalog entry.
+   Adapt the builder in `out/scaffolds/<id>.py`. Follow the registration path printed by the command. For a new theme, see [Add a theme](../../../tools/run-chisel-packs/README.md#add-a-theme).
 
 2. **Build GLBs, validate contracts, and export showcase catalogs**:
    ```bash
    cd tools/run-chisel-packs
    npm run build       # Headless Blender -> out/jam-stage/ + out/meta/manifest.json
-   npm run validate    # Rig parity, weight normalization, unit normals, budgets, held grips
+   npm run validate    # Rig, geometry, budgets, prop scale, and baked colors
    npm run catalog     # Updates games/run-chisel-showcase/public/catalog/
    npm run typecheck && npm test
    ```
@@ -66,8 +78,12 @@ Check exact numbers in `contracts/data/budgets.json`:
    npm run thumbnails -- --all --force    # Writes <leaf>/<relDir>/Previews/<id>.jpg
    npm run typecheck && npm test && npm run build:local
    cd ../../tools/run-chisel-packs
-   node scripts/verify-visual.mjs --out /tmp/chisel-visual-check
+   npm run verify:visual -- --out /tmp/chisel-visual-check
+   # Scenes and the 64-avatar bench at desktop and phone widths:
+   npm run verify:visual -- --only '^(09|10)' --out /tmp/chisel-scene-review
    ```
+
+   Check the intended action at desktop, 390 px, and 320 px. Keep faces, hands, and working parts visible. In grayscale, check the actor and working prop against the surface behind them. In color, keep the strongest contrast at the action. Use the full scene view to check the layout. Rebuild and render thumbnails again after a prop palette change. Staging rejects GLBs with stale baked colors.
 
 ## 4. Publishing to `jam-ready-assets` & Pinning Production Builds
 
