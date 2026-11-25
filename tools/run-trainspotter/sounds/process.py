@@ -6,6 +6,8 @@ Reads out/sounds/raw/<id>_NN.wav (sounds/generate.mjs), and for each take:
 - one-shots: trims silence at both ends (-50 dBFS), short fade in, gentle fade out;
 - loops: keeps the steady body (generated takes often fade in and out), then crossfades the
   tail into the head, so the loop has no seam, click or gap;
+- mix: sounds are short showcases layered from other sounds' processed takes (looped or placed
+  at a time, with gains, a fade in and out), levelled like a one-shot;
 - cut: sounds are single hits (a chuff, a wheel over a rail joint) cut from another sound's
   takes: the loudest, crispest attacks, peak-normalised to -3 dBFS;
 - normalises loudness (ffmpeg ebur128): one-shots -16 LUFS, loops and ambience -20 LUFS, then a
@@ -138,6 +140,31 @@ def cut_hits(paths, takes, max_s, min_s=0.06, band=None):
     return hits
 
 
+def decode(path, sr=44100):
+    """An Ogg (or any file ffmpeg reads) as float32 stereo frames."""
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "2", "-ar", str(sr), "-f", "f32le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype=np.float32).reshape(-1, 2)
+
+
+def mix(spec, sr=44100):
+    """Layer processed takes: parts [{file, at, gain (dB), loop}] over `seconds`, faded in and out."""
+    out = np.zeros((int(spec["seconds"] * sr), 2), dtype=np.float32)
+    for part in spec["parts"]:
+        x = decode(os.path.join(OGG, part["file"]), sr) * 10 ** (part.get("gain", 0) / 20)
+        a = int(part.get("at", 0) * sr)
+        if part.get("loop"):
+            x = np.tile(x, (int(np.ceil((len(out) - a) / len(x))), 1))
+        n = min(len(x), len(out) - a)
+        out[a:a + n] += x[:n]
+    fi, fo = int(spec.get("fadeIn", 0) * sr), int(spec.get("fadeOut", 0) * sr)
+    if fi:
+        out[:fi] *= (np.linspace(0, 1, fi) ** 2)[:, None]
+    if fo:
+        out[-fo:] *= (np.linspace(1, 0, fo) ** 2)[:, None]
+    return out
+
+
 def seamless(x, sr):
     """Loop: the last `xf` seconds crossfade into the first, and are then cut off (equal power)."""
     xf = min(int(0.35 * sr), len(x) // 5)
@@ -161,6 +188,8 @@ def main():
     tmp = os.path.join(OUT, "_tmp.wav")
     manifest = {"about": SPEC["about"], "sounds": {}}
     for s in SPEC["sounds"]:
+        if s.get("mix"):
+            continue  # after every take is processed: mixes are layered from them
         if s.get("cut"):
             c = s["cut"]
             src = sorted(os.path.join(RAW, f) for f in os.listdir(RAW) if re.fullmatch(re.escape(c["from"]) + r"_\d\d\.wav", f))
@@ -190,6 +219,17 @@ def main():
             entries.append({"file": name, "seconds": round(len(x) / sr, 3), "lufs": round(lufs2, 1), "peak": round(peak2, 1)})
             print(f"{name:34s} {len(x) / sr:5.2f}s  {lufs2:6.1f} LUFS  peak {peak2:5.1f}")
         manifest["sounds"][s["id"]] = {"group": s["group"], "loop": bool(s.get("loop")), "takes": entries}
+    for s in (s for s in SPEC["sounds"] if s.get("mix")):
+        x = mix(s["mix"])
+        write(tmp, x, 44100)
+        lufs, _ = loudness(tmp)
+        name = f"{s['id']}.ogg"
+        chain = f"volume={min(18.0, -16.0 - lufs):.2f}dB,alimiter=limit=0.85:attack=3:release=60:level=disabled"
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", tmp, "-af", chain, "-c:a", "libvorbis", "-q:a", "6", os.path.join(OGG, name)], check=True)
+        lufs2, peak2 = loudness(os.path.join(OGG, name))
+        manifest["sounds"][s["id"]] = {"group": s["group"], "loop": False, "takes": [
+            {"file": name, "seconds": round(len(x) / 44100, 3), "lufs": round(lufs2, 1), "peak": round(peak2, 1), "mixOf": [p["file"] for p in s["mix"]["parts"]]}]}
+        print(f"{name:34s} {len(x) / 44100:5.2f}s  {lufs2:6.1f} LUFS  peak {peak2:5.1f}  mix")
     os.remove(tmp)
     json.dump(manifest, open(os.path.join(OUT, "sounds.json"), "w", encoding="utf-8", newline=""), indent=1)
     # a page to listen to every take side by side (out/sounds/listen.html)

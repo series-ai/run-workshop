@@ -31,11 +31,12 @@ people), and 3 board-game tokens.
 | `kit/render.py` | review renders and contact sheets |
 | `lint/lint.py` | contract lint without Blender: track closure, loading gauge, couplers, wheels, colour roles |
 | `lint/glb.mjs` | finalizes built GLBs with the pipeline's finalize step, then checks budgets and sockets against `kit.json` |
-| `viewer/` | the three.js helper (`train-kit.js`, `trackpath.js`, `train-fx.js`, `driver.js`, `train-audio.js`) and a viewer (`index.html`, `pretty.js`, `demo.js`, `layouts.js`, `terrain.js`, `grass.js`) that runs trains round demo railways |
+| `viewer/` | the three.js helper (`train-kit.js`, `trackpath.js`, `train-fx.js`, `driver.js`, `train-audio.js`) and a viewer (`viewer.js` with `viewer.css`, run by `index.html` here and by `games/trainspotter` on RUN; `pretty.js`, `demo.js`, `layouts.js`, `terrain.js`, `grass.js`) that runs trains round demo railways |
 | `sounds/` | the sound effects: the recipe (`sounds.json`), generation through asset-bot (`generate.mjs`) and processing to Ogg (`process.py`); `viewer/train-audio.js` plays them for running trains |
 | `trailer/` | a 30-second portrait trailer cut to a song: lyric and beat timing (`analyse.py`), the trailer page (`trailer.html`, `trailer.js`) and frame-by-frame capture to MP4 (`capture.mjs`) |
 | `pack/pack.mjs` | packages a build into the library leaf, with the helper and the catalogue built in |
-| `pack/shots.mjs`, `shots.html` | cover and gallery screenshots, made with the packaged helper |
+| `pack/shots.mjs`, `shots.html` | cover and gallery screenshots (and the audio folder's cover), made with the packaged helper |
+| `pack/hero.mjs` | the hero render for the app icon and loading screen: the viewer's full look at golden hour |
 | `tests/` | `node --test` for the track and train-following maths, the helper, the effects and the demo layouts |
 
 ## The contract
@@ -126,14 +127,16 @@ output, concept art and references stay local (see `.gitignore`).
 
 ## Sounds
 
-35 sounds for a separate audio pack (Trainspotter Sounds): 32 generated, two takes of each, and 3 cut
-as single hits from them:
+36 sounds for the pack's audio folder (Trainspotter Audio): 32 generated, two takes of each, 3 cut as
+single hits from them, and a short showcase mixed from them:
 
 - Steam: chuffs (single, slow and fast loops), whistles, cylinder hiss, safety valve, bell.
 - Diesel and electric: idle loop, throttle-up, horns, traction whine, pantograph arcs, high-speed pass-bys.
 - Track: rail clatter loop, freight pass-by, wheel and brake squeals, couplings, points.
 - Station, signals and ambience: chime, doors, guard's whistle, crossing bell and gate, signal clunk,
   tram bell, a station platform loop and a countryside loop.
+- A showcase (`"mix"` in `sounds.json`): `approaching-steam-train`, slow chuffing that swells in with a
+  long whistle. It sorts first in the folder, so the catalogue plays it as the pack's preview.
 - Cut hits (`"cut"` in `sounds.json`): four single chuffs, four wheel-over-rail-joint clacks and six bird
   calls, so rhythm and birdsong can be played from motion and at random rather than from a loop.
 

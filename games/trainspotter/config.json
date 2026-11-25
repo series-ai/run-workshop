@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "trainspotter",
+    "name": "Trainspotter",
+    "description": "A voxel model railway to play with: pick a railway and one of thirty trains, run it round, set the points and signals, change the paint and the time of day, and watch the trailer. Built from the Trainspotter asset pack.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}

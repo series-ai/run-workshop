@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+game.config.*.json
+.rundot/
+rundot/docs/
+.rundot-docs/
+public/trailer.mp4

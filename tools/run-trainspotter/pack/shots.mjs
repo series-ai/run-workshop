@@ -14,7 +14,7 @@ import { start } from '../viewer/serve.mjs';
 const [leaf, out, ...want] = process.argv.slice(2);
 if (!leaf || !out) throw new Error('usage: node pack/shots.mjs <leaf dir> <out dir> [shot ...]');
 const shots = want.length ? want : ['cover', 'layout', 'steam', 'traction', 'passenger', 'freight', 'track'];
-const SIZES = { cover: [1080, 1080] };
+const SIZES = { cover: [1080, 1080], sounds: [1080, 1080] }; // the two covers are square
 const angle = { win32: 'd3d11', darwin: 'metal' }[process.platform] ?? 'swiftshader';
 const channel = process.env.BROWSER_CHANNEL ?? (process.platform === 'win32' ? 'msedge' : 'chrome');
 mkdirSync(out, { recursive: true });
@@ -32,7 +32,7 @@ try {
     await page.waitForFunction(() => document.title === 'ready', null, { timeout: 180000 });
     const png = path.join(out, `${s}.png`);
     await page.screenshot({ path: png });
-    if (s !== 'cover') execFileSync('magick', [png, '-quality', '88', path.join(out, `${s}.webp`)]);
+    if (!['cover', 'sounds'].includes(s)) execFileSync('magick', [png, '-quality', '88', path.join(out, `${s}.webp`)]);
     console.log('shot', s);
     await page.close();
   }

@@ -3,6 +3,11 @@
  "suffix": ", clean close recording, no music, no voices, no speech",
  "sounds": [
   { "id": "steam-chuff", "group": "steam", "cut": { "from": "steam-chuff-loop-slow", "takes": 4, "max": 0.32 }, "about": "single exhaust beats cut from the slow chuffing takes; play one per beat, four per turn of the driving wheels" },
+  { "id": "approaching-steam-train", "group": "steam", "mix": { "seconds": 7.5, "fadeIn": 4.0, "fadeOut": 1.6, "parts": [
+      { "file": "steam-chuff-loop-slow_02.ogg", "loop": true, "at": 0, "gain": 0 },
+      { "file": "steam-chuff-loop-slow_01.ogg", "loop": true, "at": 0.4, "gain": -9 },
+      { "file": "steam-whistle-long_01.ogg", "at": 2.4, "gain": -3 } ] },
+    "about": "a short showcase layered from the takes: slow chuffing that swells in as the engine nears, with a long whistle; the pack's first file, so the catalogue plays it as the preview" },
   { "id": "steam-chuff-loop-slow", "group": "steam", "dur": 4, "loop": true, "prompt": "steam locomotive pulling slowly away, steady slow rhythmic chuffs, chuff chuff chuff" },
   { "id": "steam-chuff-loop-fast", "group": "steam", "dur": 4, "loop": true, "prompt": "steam locomotive running fast, rapid rhythmic exhaust chuffs and rods clanking" },
   { "id": "steam-whistle-short", "group": "steam", "dur": 1.5, "prompt": "steam locomotive whistle, one short bright blast" },

@@ -92,14 +92,6 @@ function rig(train, car, eye, look, fov = 40, move = null) { // a camera riding 
     return { eye: g.localToWorld(e.clone()), look: g.localToWorld(look.clone()), fov };
   };
 }
-function orbit(train, car, radius, height, a0, a1, fov = 36) {
-  return (f) => {
-    const g = HERO[train].cars[car].group;
-    const c = g.getWorldPosition(new THREE.Vector3()).add(V(0, 30, 0));
-    const a = (lerp(a0, a1, f) * Math.PI) / 180;
-    return { eye: c.clone().add(V(Math.cos(a) * radius, height, Math.sin(a) * radius)), look: c, fov };
-  };
-}
 
 // ---------------------------------------------------------------- shots
 // trains: [name, step, dir, mark u, time the front reaches the mark, speed, extras]
@@ -171,9 +163,9 @@ shot(wordAt('catch', 20.4), wordAt('got', 21.5) - 0.02, { tod: 0.52, tilt: 0.6,
   trains: [['Rural railcar', M.branchTown, 'a', 140, 21.6, 70, { brake: 21.1 }]],
   cam: fixed(track(M.branchTown, 260, { side: 30, h: 26 }), track(M.branchTown, 140, { h: 24 }), 38) });
 const got = wordAt('got', 21.5);
-shot(got - 0.02, B(16), { tod: 0.55, tilt: 0.9, polaroid: true, freeze: got,
-  trains: [['Streamlined steam', M.upperViaductA, 'a', 80, got, 60]],
-  cam: orbit('Streamlined steam', 0, 260, 60, 250, 250, 32) });
+// the photo: a wide, scenic frame with the whole train in it (the same in both cuts)
+shot(got - 0.02, B(16), { tod: 0.55, tilt: 1.3, polaroid: true, freeze: got, trains: [['Streamlined steam', M.upperViaductA, 'a', 120, got, 60]],
+  cam: fixed(track(M.upperViaductA, 60, { side: -900, h: 260 }), track(M.upperViaductA, 60, { h: -20 }), 34) });
 shot(B(16), B(17), { tod: 0.6, tilt: 0.3, shake: 1, lines: 0.8, trains: [['Articulated freight', M.innerFront, 'a', 120, B(16), 110]],
   cam: rig('Articulated freight', 0, V(-24, 20, -200), V(0, 36, -40), 46, V(-24, 18, -150)) });
 // instrumental montage: a cut every half bar
@@ -326,7 +318,7 @@ const slamEls = SLAMS.map(([text, , rot, col]) => {
   d.className = 'word';
   d.textContent = text;
   d.style.color = col;
-  if (text.length > 8) d.style.fontSize = '150px';
+  if (text.length > 8) d.style.fontSize = `${Math.floor(960 / (text.length * 0.86))}px`; // long words fit the frame
   d.dataset.rot = rot;
   wordsEl.appendChild(d);
   return d;
@@ -402,7 +394,7 @@ async function seek(t) {
   const f = (t - s.t0) / Math.max(1e-6, s.t1 - s.t0);
   const pose = s.cam(Math.min(1, Math.max(0, s.freeze ? 0 : f)));
   // beat punch and shake
-  const punch = pulse(t, BEATS, 0.08);
+  const punch = s.card ? 0 : pulse(t, BEATS, 0.08); // the title card holds steady
   const sh = (s.shake ?? 0) * (6 + 10 * punch);
   const eye = pose.eye.clone().add(V(noise(t, 1) * sh, noise(t, 2) * sh, noise(t, 3) * sh));
   camera.position.copy(eye);

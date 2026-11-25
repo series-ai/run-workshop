@@ -29,7 +29,7 @@ const transport = new StdioClientTransport({ command: 'asset-bot', args: ['mcp']
 const client = new Client({ name: 'trainspotter-sounds', version: '1.0.0' });
 await client.connect(transport);
 
-const jobs = spec.sounds.filter((s) => !s.cut && (!only || only.includes(s.id))); // cut: sounds come from process.py
+const jobs = spec.sounds.filter((s) => !s.cut && !s.mix && (!only || only.includes(s.id))); // cut: and mix: sounds come from process.py
 const queue = [...jobs];
 let failed = 0;
 async function work() {

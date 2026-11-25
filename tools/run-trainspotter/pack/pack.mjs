@@ -47,5 +47,5 @@ fs.copyFileSync(path.join(here, '..', 'viewer', 'train-fx.js'), path.join(helper
 fs.copyFileSync(path.join(here, '..', 'viewer', 'driver.js'), path.join(helper, 'driver.js')); // station stops, shuttles, signals
 const audioSrc = fs.readFileSync(path.join(here, '..', 'viewer', 'train-audio.js'), 'utf8').replace("from './train-fx.js';", "from './trainfx.js';");
 if (/from '\.\/(?!trainfx\.js')/.test(audioSrc)) throw new Error('train-audio.js imports a viewer module: update pack.mjs');
-fs.writeFileSync(path.join(helper, 'trainaudio.js'), audioSrc); // sound effects (with the sounds pack)
+fs.writeFileSync(path.join(helper, 'trainaudio.js'), audioSrc); // sound effects (they play the pack's audio folder)
 console.log(JSON.stringify({ glb: files.length, folders }));

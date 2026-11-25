@@ -7,11 +7,12 @@
 //   audio.horn(train);
 //   audio.update(dt, camera.position);                   // every frame
 //
-// Sounds come from the Trainspotter Sounds pack. Takes alternate so repeats don't feel identical.
+// Sounds come from Trainspotter Audio (the pack's audio folder). Takes alternate so repeats don't feel identical.
 // Rhythm comes from the train's own motion, never from a loop: a steam engine chuffs on every
-// exhaust beat (four per turn of the driving wheels), and every axle of every car clacks as it
-// crosses a rail joint, so a train at a steady speed keeps a steady clickety-clack and a slowing
-// train slows its rhythm. Under that runs a smooth rolling rumble.
+// exhaust beat (four per turn of the driving wheels), and the axles of the car nearest the
+// listener clack as they cross each rail joint, so a train at a steady speed keeps a steady
+// clickety-clack and a slowing train slows its rhythm. Under that runs a smooth rolling rumble;
+// trains sound their horns now and then, and birds and a breeze play over the countryside.
 
 const lead = (train) => train.cars[0];
 const traction = (train) => train.cars.find((c) => c.entry.traction)?.entry.traction ?? 'none';
