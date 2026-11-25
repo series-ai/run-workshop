@@ -1,0 +1,196 @@
+<!doctype html>
+<!-- Cover and gallery sheets for the library pack, built with the PACKAGED helper
+     (helper/trainkit.js in the leaf), so this doubles as a test of what ships.
+     pack/shots.mjs serves tools/ and the leaf and screenshots every shot:
+       /run-trainspotter/pack/shots.html?shot=<cover|layout|locos|cars|track|station>&kit=/leaf/ -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<style>
+  @font-face { font-family: Bungee; src: url(../../run-monster-trucks/pack/fonts/Bungee-Regular.ttf); }
+  @font-face { font-family: Ops; src: url(../../run-monster-trucks/pack/fonts/BlackOpsOne-Regular.ttf); }
+  html, body { margin: 0; overflow: hidden; background: #a9cfee; }
+  canvas { display: block; }
+  #title { position: fixed; left: 0; right: 0; top: 36px; text-align: center; pointer-events: none; }
+  #title .t { font: 104px Bungee, sans-serif; letter-spacing: 0.02em; color: #ffd23f; -webkit-text-stroke: 10px #1d2a3a; paint-order: stroke fill;
+    filter: drop-shadow(0 8px 0 #1d2a3a); line-height: 1; }
+  #title .s { display: inline-block; margin-top: 14px; font: 34px Bungee, sans-serif; letter-spacing: 0.18em; color: #fff; background: #1d2a3a;
+    padding: 8px 20px 6px 26px; border-radius: 6px; }
+  .label { position: fixed; font: 13px Bungee, sans-serif; color: #1d2a3a; transform: translateX(-50%); white-space: nowrap; }
+  #head { position: fixed; top: 18px; left: 0; right: 0; text-align: center; font: 40px Bungee, sans-serif; color: #1d2a3a; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../node_modules/three/build/three.module.js", "three/addons/": "../node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+const q = new URLSearchParams(location.search);
+const shot = q.get('shot') ?? 'cover';
+const base = q.get('kit') ?? '/leaf/';
+const { TrainKit } = await import(`${base}helper/trainkit.js`);
+const { addTrain, buildDemo, layoutTrains, wires } = await import('../viewer/demo.js');
+const kit = await TrainKit.load(base);
+const W = innerWidth, H = innerHeight;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H);
+renderer.setScissorTest(true);
+document.body.appendChild(renderer.domElement);
+
+function lights(scene) {
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x6b7b5a, 1.7));
+  const sun = new THREE.DirectionalLight(0xffffff, 1.9);
+  sun.position.set(-400, 700, 500);
+  scene.add(sun);
+}
+function frame(camera, object, dir, fill = 1.0) {
+  const box = new THREE.Box3().setFromObject(object);
+  const c = box.getCenter(new THREE.Vector3());
+  const r = box.getSize(new THREE.Vector3()).length() / 2;
+  camera.position.copy(c).add(dir.clone().normalize().multiplyScalar(r * 2.3 / fill));
+  camera.lookAt(c);
+  if (camera.isOrthographicCamera) {
+    const s = r * 1.05 / fill;
+    const a = camera.right / camera.top;
+    Object.assign(camera, { left: -s * a, right: s * a, top: s, bottom: -s, near: 0.1, far: r * 10 });
+  } else camera.far = r * 20;
+  camera.updateProjectionMatrix();
+}
+function label(text, x, y) {
+  const d = document.createElement('div');
+  d.className = 'label';
+  d.textContent = text;
+  d.style.left = `${x}px`;
+  d.style.top = `${y}px`;
+  document.body.appendChild(d);
+}
+const nice = (id) => id.replace(/^(track|steam|diesel|electric|highspeed|coach|wagon|load|platform|station|signal|token)-/, '').replace(/-/g, ' ');
+
+/** A sheet of tiles, one model each, all at the same scale. */
+async function tiles(ids, cols, head, view = new THREE.Vector3(-0.8, 0.45, -0.9), each = false) {
+  document.body.insertAdjacentHTML('beforeend', `<div id="head">${head}</div>`);
+  const rows = Math.ceil(ids.length / cols);
+  const top = 80, tw = W / cols, th = (H - top) / rows;
+  const models = await Promise.all(ids.map((id) => kit.model(id)));
+  let biggest = 0;
+  for (const m of models) biggest = Math.max(biggest, new THREE.Box3().setFromObject(m.group).getSize(new THREE.Vector3()).length());
+  models.forEach((m, i) => {
+    const scene = new THREE.Scene();
+    lights(scene);
+    scene.add(m.group);
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1);
+    cam.right = tw / th; cam.left = -cam.right;
+    const box = new THREE.Box3().setFromObject(m.group);
+    const c = box.getCenter(new THREE.Vector3());
+    const size = each ? box.getSize(new THREE.Vector3()).length() : biggest; // each: every model fills its tile
+    cam.position.copy(c).add(view.clone().normalize().multiplyScalar(size * 2));
+    cam.lookAt(c);
+    const s = size * (each ? 0.42 : 0.36);
+    Object.assign(cam, { left: -s * tw / th, right: s * tw / th, top: s, bottom: -s, near: 0.1, far: size * 10 });
+    cam.updateProjectionMatrix();
+    const x = (i % cols) * tw, y = top + Math.floor(i / cols) * th;
+    renderer.setViewport(x, H - y - th, tw, th);
+    renderer.setScissor(x, H - y - th, tw, th);
+    renderer.setClearColor(0xa9cfee);
+    renderer.render(scene, cam);
+    label(nice(ids[i]), x + tw / 2, y + th - 22);
+  });
+}
+
+async function railway(cameraDir, consists, fill = 1, name = 'Country junction') {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xa9cfee);
+  lights(scene);
+  const { layout, plan } = await buildDemo(kit, scene, { name });
+  for (const t of await layoutTrains(kit, scene, layout, plan)) t.update(0);
+  const w = await wires(kit, layout, plan);
+  if (w) scene.add(w);
+  for (const [cars, step, u] of consists) (await addTrain(kit, scene, layout, cars, step, u)).update(0);
+  const cam = new THREE.PerspectiveCamera(30, W / H, 1, 1);
+  frame(cam, layout.group, cameraDir, fill);
+  renderer.setViewport(0, 0, W, H);
+  renderer.setScissor(0, 0, W, H);
+  renderer.render(scene, cam);
+  return { scene, cam, layout };
+}
+
+if (shot === 'cover') {
+  // three trains abreast on parallel track, nose-on at a low three-quarter angle
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xa9cfee);
+  lights(scene);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), new THREE.MeshLambertMaterial({ color: 0x7fae5a }));
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+  const line = Array(8).fill('track-straight-128');
+  const lanes = [];
+  for (const x of [-64, 0, 64]) {
+    const lay = await kit.layout(line, { p: [x, 0, 0], yaw: 0 });
+    scene.add(lay.group);
+    lanes.push(lay);
+  }
+  // each lane runs from z = 0 to z = -1024; the trains run toward +Z (at the camera),
+  // entering at the far end and brought forward so their noses are staggered
+  const trains = [
+    [[{ id: 'highspeed-bullet-power-car' }, { id: 'highspeed-bullet-car' }, { id: 'highspeed-bullet-car' }], 0, 700],
+    [[{ id: 'steam-express-green' }, { id: 'tender-express' }, { id: 'coach-classic' }, { id: 'coach-classic' }], 1, 800],
+    [[{ id: 'diesel-streamlined-cab' }, { id: 'wagon-boxcar' }, { id: 'wagon-flatcar', load: 'load-container' }], 2, 620],
+  ];
+  for (const [cars, lane, ahead] of trains) {
+    const lay = lanes[lane];
+    const t = await addTrain(kit, scene, lay, cars, 0, 0);
+    t.setTrack(lay, lay.edge(7, 'b'), 0);
+    t.runner.advance(ahead);
+    t.update(0);
+  }
+  const cam = new THREE.PerspectiveCamera(30, W / H, 1, 20000);
+  cam.position.set(-330, 210, 130);
+  cam.lookAt(0, 40, -360);
+  renderer.setViewport(0, 0, W, H);
+  renderer.setScissor(0, 0, W, H);
+  renderer.render(scene, cam);
+  document.body.insertAdjacentHTML('beforeend', '<div id="title"><div class="t">TRAINSPOTTER</div><div class="s">VOXEL RAILWAY KIT</div></div>');
+} else if (shot === 'layout') {
+  await railway(new THREE.Vector3(-0.6, 0.75, 0.75), [[[{ id: 'electric-express-blue' }, { id: 'coach-intercity' }, { id: 'coach-intercity' }, { id: 'coach-intercity' }], 5, 120]],
+    0.95, 'Big trainset');
+  document.body.insertAdjacentHTML('beforeend', '<div id="head">LAY TRACK, RUN TRAINS</div>');
+} else if (shot === 'station') {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xa9cfee);
+  lights(scene);
+  const { layout } = await buildDemo(kit, scene);
+  (await addTrain(kit, scene, layout, [{ id: 'steam-express-green' }, { id: 'tender-express' }, { id: 'coach-classic' }, { id: 'coach-classic' }], 5, 60)).update(0);
+  // look across the line at the station front, from above the far side of the track
+  const st = layout.placed[3];
+  const toWorld = (x, y, z) => new THREE.Vector3(x, y, z).applyAxisAngle(new THREE.Vector3(0, 1, 0), st.theta * Math.PI / 180).add(new THREE.Vector3(st.tx, 0, st.tz));
+  const cam = new THREE.PerspectiveCamera(30, W / H, 1, 20000);
+  cam.position.copy(toWorld(-330, 260, 140));
+  cam.lookAt(toWorld(60, 20, -80));
+  renderer.setViewport(0, 0, W, H);
+  renderer.setScissor(0, 0, W, H);
+  renderer.render(scene, cam);
+  document.body.insertAdjacentHTML('beforeend', '<div id="head">STATIONS AND SIGNALS</div>');
+} else {
+  // catalogue-driven sheets: every model in the named library folders
+  const all = Object.values(kit.m).filter((sec) => sec && typeof sec === 'object' && !Array.isArray(sec))
+    .flatMap((sec) => Object.entries(sec).filter(([, e]) => e?.file).map(([id, e]) => ({ id, folder: e.file.split('/')[0], e })));
+  const pick = (folders, keep = () => true) => all.filter((m) => folders.includes(m.folder) && keep(m)).map((m) => m.id);
+  const SHEETS = {
+    steam: [pick(['steam-locomotives']), 4, 'STEAM'],
+    traction: [pick(['diesel-locomotives', 'electric-locomotives', 'high-speed-trains'], (m) => m.e.kind !== 'coach'), 5, 'DIESEL, ELECTRIC AND HIGH SPEED'],
+    passenger: [pick(['passenger-carriages', 'trams-metro', 'high-speed-trains'], (m) => m.e.kind === 'coach' || m.folder === 'trams-metro'), 6, 'CARRIAGES, METRO AND TRAMS'],
+    freight: [pick(['freight-wagons', 'freight-loads']), 5, 'WAGONS AND LOADS'],
+    track: [pick(['railway-track', 'bridges-tunnels', 'stations-platforms', 'signals-crossings', 'lineside-props', 'board-game-tokens'],
+      (m) => !['track-straight-32', 'track-straight-256', 'track-shift-left', 'track-curve-45-left'].includes(m.id)), 8, 'TRACK, STATIONS AND LINESIDE (NOT TO SCALE)'],
+  };
+  const [ids, cols, head] = SHEETS[shot];
+  await tiles(ids, cols, head, shot === 'track' ? new THREE.Vector3(-0.7, 0.7, 0.8) : undefined, shot === 'track');
+}
+await document.fonts.ready;
+document.title = 'ready';
+</script>
+</body>
+</html>
