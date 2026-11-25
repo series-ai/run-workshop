@@ -1,0 +1,24 @@
+{
+  "name": "run-trainspotter",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "Trainspotter: a voxel railway kit (locomotives, carriages, wagons, track, stations, signals) built on the RUN voxel pack pipeline, with a three.js helper that lays track and runs trains.",
+  "scripts": {
+    "lint": "python lint/lint.py --mesh",
+    "test": "node --test tests/trackpath.test.mjs tests/trainfx.test.mjs tests/trainkit.test.mjs tests/layouts.test.mjs tests/driver.test.mjs tests/pretty.test.mjs tests/trainaudio.test.mjs",
+    "serve": "node viewer/serve.mjs",
+    "pack": "node pack/pack.mjs",
+    "shots": "node pack/shots.mjs",
+    "check-glb": "node --import tsx lint/glb.mjs",
+    "sounds:generate": "node sounds/generate.mjs",
+    "sounds:process": "python sounds/process.py"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "playwright-core": "^1.65.1",
+    "three": "~0.170.0",
+    "tsx": "^4.23.15"
+  }
+}

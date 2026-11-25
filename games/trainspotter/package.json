@@ -1,0 +1,27 @@
+{
+  "name": "trainspotter",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "Trainspotter: a voxel model railway to play with. Pick a railway and a train, run it round, set the points and signals, change the paint and the time of day, and watch the trailer. Built from the Trainspotter asset pack.",
+  "keywords": [
+    "RUN.game"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:local": "vite build --mode local-preview",
+    "preview": "vite preview --mode local-preview",
+    "sync-kit": "node scripts/sync-kit.mjs",
+    "trailer": "node scripts/trailer.mjs",
+    "deploy": "npm run build && rundot deploy"
+  },
+  "dependencies": {
+    "@series-inc/rundot-game-sdk": "^5.39.0",
+    "three": "~0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.3"
+  }
+}

@@ -1,0 +1,8 @@
+out/
+node_modules/
+__pycache__/
+concepts/
+references/
+.asset-bot/
+.env
+CLAUDE.md

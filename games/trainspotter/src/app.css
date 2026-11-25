@@ -1,0 +1,31 @@
+/* The app's own pieces: the loading screen and the trailer button and player. */
+/* the hero render as a glowing card over a soft, blurred copy of the same golden-hour scene */
+#loading { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; align-content: center; gap: 26px;
+  background: #2a1f1a url(/loading-backdrop.jpg) center / cover no-repeat; color: #fff; font: 700 15px system-ui, sans-serif;
+  letter-spacing: 0.02em; transition: opacity 0.6s; text-align: center; padding: 24px; overflow: hidden; }
+#loading::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, #ffcf8a40, transparent 55%), linear-gradient(#0000 40%, #0b1a2a99); }
+#loading > * { position: relative; }
+#loading.done { opacity: 0; pointer-events: none; }
+#loading .card { width: min(62vw, 300px); aspect-ratio: 1; border-radius: 22%; box-shadow: 0 0 0 3px #ffffff30, 0 18px 50px #0b1a2a99, 0 0 90px #ffb35a66;
+  animation: float 3s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-8px); } }
+#loading p { margin: 0; text-shadow: 0 2px 8px #0008; }
+#loading .track { width: min(56vw, 240px); height: 8px; border-radius: 4px; background: #ffffff33; overflow: hidden; box-shadow: 0 2px 10px #0004; }
+#loading .track b { display: block; width: 38%; height: 100%; border-radius: 4px; background: #ffd23f; animation: run 1.1s ease-in-out infinite; }
+@keyframes run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+#trailer-button { position: fixed; z-index: 5; top: calc(12px + env(safe-area-inset-top)); right: calc(62px + env(safe-area-inset-right)); /* left of the eye */
+  font: 700 13px system-ui, sans-serif; color: #fff; background: #1d2a33e6; border: 0; border-radius: 999px; padding: 10px 16px 10px 12px;
+  box-shadow: 0 6px 20px #0b1a2a40; cursor: pointer; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px); }
+#trailer-button span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #ffd23f; color: #1d2a33; font-size: 10px; }
+#trailer-button:active { transform: scale(0.97); }
+
+#trailer { position: fixed; inset: 0; z-index: 30; display: none; place-items: center; background: #050a10e8; padding: 16px; }
+#trailer.open { display: grid; }
+#trailer video { max-height: calc(100vh - 32px); max-width: 100%; aspect-ratio: 9 / 16; border-radius: 16px; background: #000; box-shadow: 0 20px 60px #000a; }
+#trailer button { position: fixed; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); width: 40px; height: 40px;
+  border-radius: 50%; border: 0; background: #ffffffe0; color: #1d2a33; font-size: 18px; cursor: pointer; }
+
+@media (max-width: 720px), (pointer: coarse) {
+  #trailer-button { font-size: 14px; padding: 12px 18px 12px 14px; }
+}

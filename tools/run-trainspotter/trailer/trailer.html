@@ -1,0 +1,76 @@
+<!doctype html>
+<!-- Trainspotter trailer: 30 s, portrait 1080x1920, cut to the song. Every frame is a pure function of song time.
+     Preview: npm run serve, open /run-trainspotter/trailer/trailer.html (?t=12.5 to jump; ?capture for frame capture).
+     Render: node trailer/capture.mjs  (needs out/glb built and out/trailer/song.m4a + timing.json). -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Trainspotter trailer</title>
+<link rel="icon" href="data:,">
+<style>
+  @font-face { font-family: Bungee; src: url(../../run-monster-trucks/pack/fonts/Bungee-Regular.ttf); }
+  @font-face { font-family: Ops; src: url(../../run-monster-trucks/pack/fonts/BlackOpsOne-Regular.ttf); }
+  html, body { margin: 0; background: #000; overflow: hidden; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  #stage canvas { position: absolute; inset: 0; }
+  .layer { position: absolute; inset: 0; pointer-events: none; }
+  #lines { background: repeating-conic-gradient(from 0deg at 50% 50%, #fff0 0deg 3deg, #ffffff38 3deg 3.6deg); mix-blend-mode: screen; opacity: 0; }
+  #flash { background: #fff; opacity: 0; }
+  #tint { opacity: 0; }
+  .word { position: absolute; left: 50%; top: 50%; font: 210px Bungee, sans-serif; color: #ffd23f; -webkit-text-stroke: 14px #1d2a3a; paint-order: stroke fill;
+    white-space: nowrap; transform-origin: 50% 50%; filter: drop-shadow(0 14px 0 #1d2a3a) drop-shadow(10px 0 0 #e8452c); opacity: 0; }
+  #lyric { position: absolute; left: 60px; right: 60px; bottom: 230px; text-align: center; font: 62px Bungee, sans-serif; color: #fff; -webkit-text-stroke: 8px #1d2a3a;
+    paint-order: stroke fill; line-height: 1.12; }
+  #lyric span { display: inline-block; margin: 0 10px; transition: none; }
+  #vf { opacity: 0; }
+  #vf .c { position: absolute; width: 120px; height: 120px; border: 10px solid #fff; }
+  #vf .rec { position: absolute; left: 110px; top: 160px; font: 54px Ops, sans-serif; color: #fff; }
+  #vf .rec b { display: inline-block; width: 38px; height: 38px; border-radius: 50%; background: #ff3b30; margin-right: 18px; vertical-align: -2px; }
+  #vf .focus { position: absolute; left: 50%; top: 46%; width: 260px; height: 180px; margin: -90px 0 0 -130px; border: 6px solid #ffd23f; }
+  #note { position: absolute; left: 70px; top: 300px; width: 560px; padding: 40px 48px 50px; background: #fffbea; box-shadow: 18px 18px 0 #1d2a3a;
+    background-image: repeating-linear-gradient(#fffbea 0 62px, #9cc3e6 62px 65px); transform: rotate(-6deg); opacity: 0;
+    font: 58px Ops, sans-serif; color: #1d2a3a; line-height: 65px; }
+  #note .h { font: 40px Bungee, sans-serif; color: #e8452c; margin-bottom: 8px; }
+  #note div.n { opacity: 0; }
+  #chip { position: absolute; left: 50%; top: 1380px; transform: translateX(-50%); padding: 18px 40px; background: #1d2a3a; color: #ffd23f; font: 64px Bungee, sans-serif;
+    border: 8px solid #ffd23f; border-radius: 14px; white-space: nowrap; opacity: 0; }
+  #rings { opacity: 0; background: repeating-radial-gradient(circle at 50% 42%, #fff0 0 60px, #ffffffa0 60px 70px); mix-blend-mode: screen; }
+  #polaroid { position: absolute; left: 110px; top: 360px; width: 780px; height: 820px; border: 40px solid #fff; border-bottom-width: 220px;
+    box-shadow: 26px 26px 0 #1d2a3a, 0 0 0 3000px #0b1020b0; opacity: 0; }
+  #polaroid div { position: absolute; left: -40px; right: -40px; bottom: -170px; text-align: center; font: 84px Bungee, sans-serif; color: #e8452c; }
+  #card { opacity: 0; text-align: center; }
+  #card .t { position: absolute; left: 0; right: 0; top: 560px; font: 148px Bungee, sans-serif; color: #ffd23f; -webkit-text-stroke: 14px #1d2a3a; paint-order: stroke fill;
+    filter: drop-shadow(0 16px 0 #1d2a3a); line-height: 1; }
+  #card .s { position: absolute; left: 0; right: 0; top: 900px; }
+  #card .s span { display: inline-block; font: 54px Bungee, sans-serif; color: #fff; background: #1d2a3a; padding: 12px 30px 8px; border-radius: 10px; letter-spacing: 0.08em; }
+  #card .f { position: absolute; left: 0; right: 0; top: 1500px; font: 44px Bungee, sans-serif; color: #fff; -webkit-text-stroke: 6px #1d2a3a; paint-order: stroke fill; }
+  #burst { opacity: 0; background: repeating-conic-gradient(from 0deg at 50% 36%, #ffd23f 0deg 9deg, #ff8a1f 9deg 18deg); }
+  #ui { position: absolute; left: 10px; top: 10px; color: #fff; font: 14px system-ui; background: #0008; padding: 6px 10px; border-radius: 6px; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "../node_modules/three/build/three.module.js", "three/addons/": "../node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="tint"></div>
+  <div class="layer" id="burst"></div>
+  <div class="layer" id="lines"></div>
+  <div class="layer" id="rings"></div>
+  <div class="layer" id="vf"><div class="c" style="left:70px;top:120px;border-right:0;border-bottom:0"></div><div class="c" style="right:70px;top:120px;border-left:0;border-bottom:0"></div>
+    <div class="c" style="left:70px;bottom:120px;border-right:0;border-top:0"></div><div class="c" style="right:70px;bottom:120px;border-left:0;border-top:0"></div>
+    <div class="rec"><b></b>REC</div><div class="focus"></div></div>
+  <div id="note"><div class="h">MY NOTEBOOK</div><div class="n">4-6-2 &nbsp;EXPRESS</div><div class="n">4-4-0 &nbsp;WESTERN</div><div class="n">0-6-0 &nbsp;TANK</div>
+    <div class="n">2-4-4-2 GIANT</div><div class="n">0-2-2 &nbsp;PIONEER</div></div>
+  <div id="chip"></div>
+  <div id="polaroid"><div>GOT THE SHOT!</div></div>
+  <div class="layer" id="words"></div>
+  <div id="lyric"></div>
+  <div class="layer" id="card"><div class="t">TRAIN<br>SPOTTER</div><div class="s"><span>VOXEL RAILWAY KIT</span></div>
+    <div class="f">140+ MODELS · TRACK · STATIONS · CITY</div></div>
+  <div class="layer" id="flash"></div>
+</div>
+<div id="ui"></div>
+<script type="module" src="./trailer.js"></script>
+</body>
+</html>
