@@ -1,6 +1,16 @@
 /**
- * Micro-scale pixel-art RTS faction buildings, defensive turrets, mineral patches,
- * and subtle battlefield props proportioned to true 8x8 units (~2.5x-3.5x unit scale).
+ * Micro-scale pixel-art RTS faction buildings, defensive structures, mineral patches,
+ * and battlefield props proportioned to true 8x8 infantry and the 22x20 3/4 Siege Tank.
+ *
+ * Architectural & visual discipline:
+ *  - Consistent 3/4 top-down camera matching the 22x20 Siege Tank and Wang-16 cliffs:
+ *    sunlit upper roof/platform planes in depth + short darker front faces for height.
+ *  - Headquarters footprint parity across all 3 factions (~30x24):
+ *    Vanguard Bastion (30x24), Kraxen Hatchery (31x23), Solaris Nexus (30x24).
+ *  - Secondary/defense structure parity (~16-18px):
+ *    Vanguard Bunker (18x13), Kraxen Spore Colony (17x14), Solaris Pylon (16x15).
+ *  - Single-pass 1px #130f1e exterior outline with lighter material shades immediately
+ *    inside lower/side edges (never near-black k doubling).
  */
 
 import {
@@ -35,178 +45,193 @@ export interface BuildingAsset {
   readonly shadowRy: number;
 }
 
-// Vanguard Command Bastion (32x25 core -> 34x27 outlined, flush bottom row)
+// 1. Vanguard Command Bastion (30x24 core -> 32x26 outlined)
+// 3/4 top-down HQ: 18x9 sunlit chamfered command roof with recessed steel landing deck & cobalt trim,
+// blue radar tower rear-left, twin exhaust stacks pulled inward rear-right, 7x3 recessed bay door.
 const VANGUARD_BASTION_ROWS: readonly string[] = [
-  '.....w..........................',
-  '....wsw.........................',
-  '.....d...............dk..dk.....',
-  '..wwwwwww............dk..dk.....',
-  '.wmmmmmmmd..........sdd.sdd.....',
-  '.sbbbbbbBd....bbbb..sdd.sdd.....',
-  '.sBvvccBBD...sBBBBd.sBBdsBBd....',
-  '.sBBBBBBBD..wssssssd.DDdsDDd....',
-  '.sDDDDDDDd.wsvssssvdsddddddq....',
-  '.sdddddddwsssssssssdqddkkddq....',
-  '.sddkkddwsdsddddddsdqddddddq....',
-  '.sddddddwsdsddddddsdqddddddq....',
-  'bBBsddddwsdsddddddsdqddqqbBB....',
-  'bBBsddddwsvsssssssvdqddqqbBB....',
-  'bBDsddddwssssssssssdqddqqbBD....',
-  'dDDsddddwwwssssssssdqddqqdDD....',
-  'dDDssmmssddddddddddqqqqqqdDD....',
-  'dDDssmmssdsddddddddqqqqqqdDD....',
-  'dDDssddssdskkkkkkkskqqfqqdDD....',
-  'dDDssddssdskkkkkkkskqqqqqdDD....',
-  'dDDsdddssdskkkkkkkskqqqqqdDD....',
-  '.dDsdddssdskkkkkkkskqqqqqdD.....',
-  '..dsdddssdsdsssssdsqqqqqqd......',
-  '..ddddddddddddddddqqqqqqqd......',
-  '...ddddddddddddddqqqqqqqq.......',
+  '....w.........................',
+  '...wsw........................',
+  '....d.........................',
+  '..wwwww...............ss.ss...',
+  '.wmmmmmd.............sdd.sdd..',
+  '.sbbbbbBd............sBBdsBBd.',
+  '.sBvccBBD............sDDdsDDd.',
+  '.sBBBBBdwwwwwwwwwwwwwwddddd...',
+  '.sDDDDDwmmmmmmmmmmmmmmmwdddds.',
+  'bBBsddwmmsddddddddddsmmwddddds',
+  'bBBsddwmmdBBsssssssssmmwddddds',
+  'bBDsddwmmdsssmmwwssssmmwddddds',
+  'dDDsddwmmdsssmmmmssssmmwddddds',
+  'dDDsddwmmdssssssBBBBsmmwddddds',
+  'dDDsdddsmmmmmmmmmmmmmmsdddddds',
+  'dDDsddddssssssssssssssddBBBBds',
+  'dDDssddddddddddddddddddsdDDDds',
+  'dDDssmmssddssssssssddssdsDDDds',
+  '.dDssmmssddskkkkkkkdsddsdDDds.',
+  '.dDssddssddskkkkkkkdsddsdDDds.',
+  '.dDssddssddskkkkkkkdsfddsDDds.',
+  '..dsddddsddssssssssddssdsddds.',
+  '..ddddddsddddddddddddssddddds.',
+  '...dddddddddddddddddddddddds..',
 ];
 
-// Vanguard Defense Bunker (18x13 core -> 20x15 outlined, flush bottom row)
+// 2. Vanguard Armored Bunker (18x13 core -> 20x15 outlined)
+// 3/4 top-down octagonal pillbox: 16x7 chamfered roof with upper-left bright bevel,
+// 3x2 blue hatch on rear-right corner, 4-row front wall with crisp 7x1 firing port.
 const VANGUARD_TURRET_ROWS: readonly string[] = [
-  '.........wbb......',
-  '.........bBBd.....',
-  '..wwwwwwwwBBd.....',
-  '.wmmssssssmmdd....',
-  'wssssssssssssdd...',
-  'bBBddddddddddBBd..',
-  'bBDsskkkkkkwwwwws.',
-  'dDDsskkkkkkdkkkdk.',
-  'dDDssddddddqqDDd..',
-  'dDDssmmssddqqDDd..',
-  'dDDssddssddqqDDd..',
-  '.dDssddssddqqdD...',
-  '.ddddddddddqqqd...',
+  '...........bbb....',
+  '...wwwwwwwwBBBd...',
+  '..wmmmmmmmmmmmsd..',
+  '.wmmssssssssmmmsd.',
+  '.wmmssmmmmssmmmsd.',
+  '.wmmssmmmmssmmmsd.',
+  '.smmssssssssmmmsd.',
+  '..smmmmmmmmmmmssd.',
+  '.bBBddddddddddBBds',
+  '.bBDsskkvkkkkssBds',
+  '.dDDssdddddddssDds',
+  '..dDssmmsssddssds.',
+  '...dddddddddddds..',
 ];
 
-// Kraxen Brood Hatchery (32x23 core -> 34x25 outlined, firmly grounded flat organic base!)
-// Heavy wide fleshy root-skirt + thick grounded creep tendrils sitting flush on the bottom rows
-// so the nest visibly grips and melts into the ground with ZERO floating shadow gap.
+// 3. Kraxen Brood Hatchery (31x23 core -> 33x25 outlined)
+// 3/4 top-down organic nest: 3 curved bone horns at varied heights, 2px raised bright-pink rear rim,
+// 10x5 oval spawning cavity with asymmetric organic egg clutch, 2px-thick rooted tendrils & warm skirt edge.
 const KRAXEN_SPIRE_ROWS: readonly string[] = [
-  '.............o..................',
-  '......o.....oc..................',
-  '.....oc....ocC.......o..........',
-  '....ocC...ocC.......co..........',
-  '....cC.pp.cC..Rmp..Cco..........',
-  '...cC.papm...Rmmmu..Cc....o.....',
-  '..Rmm.pmmmu.Rmmuuur..C...co.....',
-  '.RpmmpmmuuuRmmuurxxr.Rm..Cc.....',
-  '.pmmmmuurxxrrurxxxxxRmmr..C.....',
-  'ppmmmuurxxxxeeexxxxxxmmur.......',
-  'pmmmuuxxxxxeexxxxxxxxmuurR......',
-  'rmmuuxxxxxxxxxxxexxxxuuurpm.....',
-  'rrmurxxRrrxxxxxexRxxxurppamp....',
-  'nnrurxxRRrrrrrrRRxxrRrrpmmmu....',
-  '.nnruurRpmmrrRmmurRmmurmuurtn...',
-  '..tnrurppmmuurmmurpmmuuuurntn...',
-  '.ctntrrpmmuurruuurrmmuurrrtnct..',
-  'ct.rrrrrrruurrrrruuuurrrrrrr.tc.',
-  't.trrrCrruuurrrrruuurrrCrrrt..t.',
-  '.cttrrCoCrrrrrurrrrrrCoCrrttc...',
-  '..nrrrnCrrnrrrrrrrnrrCnrrrn.....',
-  '....nnrrrtnrrrrrrrntrrrnn.......',
-  '......nnnnrrrrrrrrrnnnn.........',
+  '............o..................',
+  '...........oc.........o........',
+  '......o....ocC.......co........',
+  '.....oc...ppC.......cCo........',
+  '.....ocC.ppmmpp....ppC.........',
+  '....ppC.ppmmmmpppppmmpp........',
+  '...ppmmpppmmppmpppmmmmpp.......',
+  '..ppmmmmpppmmmmmmmmpmmmpp......',
+  '..pmmmuurrrxxxxxxrrruummmp.....',
+  '.ppmmurrrxxexxxxxxxrrruummp....',
+  '.pmmmurxxaeexxxrxxxxxruummp....',
+  '.pmmuurxxxexxxrrxxexxruummp....',
+  '.rmmuurrrxxxxrRxxxxrrruummmr...',
+  '.rrmmpmmrrrxxxxxxrrrppmmummr...',
+  '.trrmppmmuurrrrrruummppmmrrt...',
+  '.ttrrmmmmuurrrrrruummmmrrtt....',
+  '..ttrrRmmuurrRRrruummRrrttt....',
+  '.tttrrRRrrrrRRRRrrrrRRrrtttt...',
+  '.tnttrrRrrtRRrrRRtrrRrrttntt...',
+  '..nttrrrttttRrrRttttrrrttnn....',
+  '...nnttrrRtRrrrrRtRrrttnn......',
+  '.....nnttRRRRRRRRRRttnn........',
+  '.......tttttttttttttt..........',
 ];
 
-// Kraxen Sunken / Spore Maw (16x14 core -> 18x16 outlined, grounded wide root-skirt!)
+// 4. Kraxen Spore Colony (17x14 core -> 19x16 outlined)
+// Distinct upward-facing 7x4 spore cannon opening with 3x2 dark wet center, brightest pink cluster
+// on rear rim for 1x readability on creep, 2 asymmetric angled bone barbs, 15px grounded fleshy lobes.
 const KRAXEN_COLONY_ROWS: readonly string[] = [
-  '.......o........',
-  '..o...oc........',
-  '.oc..ocC..o.....',
-  '.cC.RxxxRco.....',
-  '..CRxxxexC......',
-  '..pmmxxxmmu.....',
-  '.ppammuummur....',
-  '.pmmmuuummur....',
-  'rrmmuuRruumrr...',
-  'nrmuurrrruumrn..',
-  'tnrruurrrruurnt.',
-  'c.trrnrrRrrnt.c.',
-  '.cttrrrrrrrttc..',
-  '..nnrrrnrrrnn...',
+  '......ppppp......',
+  '....pppaapppp....',
+  '...ppmmRRRmmpp.o.',
+  '..opmRxxxRmmppco.',
+  '.ocpmRxxxRmmmpCc.',
+  '..CpmmmRRRmmppC..',
+  '...pppmmmmmmmpp..',
+  '..ppmmmuuuummmpp.',
+  '..pmmuuRRRRuummp.',
+  '.RmmuurRRRRruummR',
+  '.tRruurRrrRruurRt',
+  '.ttRrrrRRRRrrrRtt',
+  '..ttRRttRRttRRtt.',
+  '...tttttttttttt..',
 ];
 
-// Solaris Nexus Spire (20x23 core -> 22x25 outlined)
+// 5. Solaris Nexus Monument (30x24 core -> 32x26 outlined)
+// Full HQ footprint parity: faceted cyan crown seated toward rear of a 28x10 octagonal gold ziggurat
+// with continuous royal-blue geometric step-ring, sweeping outer arms (2px air gap), 3px amber front face.
 const SOLARIS_NEXUS_ROWS: readonly string[] = [
-  '.........CC.........',
-  '........cCCc........',
-  '.......cCCCCc.......',
-  '.......cCCCCc.......',
-  '......ccCCCCcc......',
-  '......cCCCCCCc......',
-  '......cCCCCCCc......',
-  '....y.ccCCCCcc.y....',
-  '...yg..cCCCCc..gy...',
-  '...yg..vcCCcv..gy...',
-  '..ygg.y.vccv.y.ggy..',
-  '..ggb.yg.vv.gy.bgg..',
-  '.yggb.ygTccTgy.bggy.',
-  '.gbb..gTCCCCtg..bbg.',
-  '.gbb.ygtCCCCtgy.bbg.',
-  '.bbb.ggttCCttgg.bbb.',
-  '..bb.ggbttttbgg.bb..',
-  '..bbyyggbbbbggyybb..',
-  '...ygggggggggggggy..',
-  '...ggbbbbbbbbbbbgg..',
-  '....gbbbbbbbbbbbg...',
-  '.....bbbbbbbbbbb....',
-  '.......bbbbbbb......',
+  '..............CC..............',
+  '.............cCCc.............',
+  '............cCCCCc............',
+  '............cCCCCc............',
+  '...........ccCCCCcc...........',
+  '.....yy....cCCCCCCc....yy.....',
+  '....yggy...cCCCCCCc...yggy....',
+  '...yggby...ccCCCCcc...ybggy...',
+  '...yggb.....cCCCCc.....bggy...',
+  '..ygggb.....vcCCcv.....bgggy..',
+  '..yggb...yy..vccv..yy...bggy..',
+  '.yggb..yyggyyvccvyyggyy..bggy.',
+  '.yggyyyggTTTTCCCCtTTTggyyyggy.',
+  '.yggggggTttggCCCCggttTggggggy.',
+  '.ygggggTttgggCCCCgggttTgggggy.',
+  '.yggbgggTTgggTccTgggTTgggbggy.',
+  '.ygbbgggyygggTTTTgggyygggbbgy.',
+  '..gbbggyyyyyyyyyyyyyyyyggbbg..',
+  '..ggbbggggggggggggggggggbbgg..',
+  '...ggbbggbbggggggggbbggbbgg...',
+  '...ggbbbbggggggggggggbbbbgg...',
+  '...ggggbbggggbbbbggggbbgggg...',
+  '....gggggggggggggggggggggg....',
+  '.....gggggggggggggggggggg.....',
 ];
 
-// Solaris Warp Pylon (12x15 core -> 14x17 outlined)
+// 6. Solaris Warp Pylon (16x15 core -> 18x17 outlined)
+// Distinct from Nexus: single 6x8 faceted cyan crystal locked into a grounded 14x6 golden socket
+// with pale-gold upper-left bevel, warm amber front face, and flat 8px contact edge.
 const SOLARIS_PYLON_ROWS: readonly string[] = [
-  '.....CC.....',
-  '....cCCc....',
-  '...cCCCCc...',
-  '...cCCCCc...',
-  '..ycCCCCcy..',
-  '..ggcCCcgg..',
-  '.yggvccvggy.',
-  '.ggb.vv.bgg.',
-  '.gbbTccTbbg.',
-  '..bbtCCtbb..',
-  '..yggttggy..',
-  '..ggbbbbgg..',
-  '...gbbbbg...',
-  '....bbbb....',
-  '.....bb.....',
+  '.......CC.......',
+  '......cCCc......',
+  '.....cCCCCc.....',
+  '.....cCCCCc.....',
+  '.....cCCCCc.....',
+  '.....vcCCcv.....',
+  '......vccv......',
+  '......vvvv......',
+  '...yyyyccyyyy...',
+  '..yygggCCggggy..',
+  '.yyggTTCCtTgggy.',
+  '.ygggTttttTgggb.',
+  '..gggbggggbggg..',
+  '...ggbggggbgg...',
+  '....gggggggg....',
 ];
 
-// Azure Mineral Cluster (10x8 core -> 12x10 outlined)
+// 7. Azure Mineral Patch (10x8 core -> 12x10 outlined)
+// Low-profile cluster: 3 clearly separated tips (6, 4, 3px), tallest off-center with 1px white glint,
+// 1px clean air gap between tips, and an exposed blue crystal facet breaking the rocky base.
 const MINERAL_CLUSTER_ROWS: readonly string[] = [
-  '....wc....',
-  '...wcc....',
-  '.w.ccb.w..',
-  'wcbcbdcwb.',
-  'cbdbbdbcb.',
-  '.RddbddbR.',
-  'rRRddddRRr',
-  '.rrrrrrrr.',
+  '....w.....',
+  '....cc....',
+  '.c..cbc.c.',
+  '.cb.cbdcc.',
+  '.cbdbbdbb.',
+  '.cbdbbdbb.',
+  'rRRdbddRRr',
+  '.rrrbdrrr.',
 ];
 
-// Micro Pine Tree (7x9 core -> 9x11 outlined)
+// 8. Highland Pine Tree (7x9 core -> 9x11 outlined)
+// Pointed crown with consolidated 2px light-green upper-left branch, dark lower-right shadow branch,
+// and a sunlit-edge 2x2 brown trunk that reads cleanly on grass and dirt.
 const PINE_TREE_ROWS: readonly string[] = [
   '...h...',
   '..hlh..',
-  '..lgl..',
-  '.hlggh.',
-  '.lgggl.',
-  'hlgdglh',
-  'dggdggd',
-  '...t...',
-  '..ttt..',
+  '..lgg..',
+  '.hhggd.',
+  '.llggd.',
+  '.lggddd',
+  '..gddd.',
+  '..Ht...',
+  '..tt...',
 ];
 
-// Micro Rocky Crag (9x6 core -> 11x8 outlined)
+// 9. Directional Boulder Crag (9x6 core -> 11x8 outlined)
+// 5x3 light upper-left facet stepping down 1px right, 2-row mid-gray front face, 6px contact edge.
 const ROCK_CRAG_ROWS: readonly string[] = [
-  '...HH....',
-  '..HSSH...',
-  '.HSSSSS..',
-  'SSssssSS.',
-  'ssssssss.',
-  '.ssssss..',
+  '..HHH....',
+  '.HHHSS...',
+  '.HHSSSS..',
+  '.SssssSS.',
+  '.sssssss.',
+  '..ssssss.',
 ];
 
 export function buildAllBuildings(
@@ -224,11 +249,12 @@ export function buildAllBuildings(
     palette: Readonly<Record<string, number>>,
     shadowRx: number,
     shadowRy: number,
+    anchorOffsetX = 0,
   ): BuildingAsset => {
     const raw = compilePattern(rows, palette);
     const surface = addPixelOutline(raw, INK_OUTLINE);
     // Anchor strictly on the actual lowest opaque pixel row (tucked 2px inside the base skirt
-    // so contact shadows hug the footprint flush instead of floating underneath!)
+    // so contact shadows hug the seated footprint with only 1-2px peeking below at 1x!)
     let bottomY = surface.height - 1;
     for (let y = surface.height - 1; y >= 0; y--) {
       let hasOpaque = false;
@@ -248,7 +274,7 @@ export function buildAllBuildings(
       name,
       faction,
       surface,
-      anchorX: Math.floor(surface.width / 2),
+      anchorX: Math.floor(surface.width / 2) + anchorOffsetX,
       anchorY: Math.max(0, bottomY - 2),
       shadowRx,
       shadowRy,
@@ -262,8 +288,8 @@ export function buildAllBuildings(
       'vanguard',
       VANGUARD_BASTION_ROWS,
       vanPal,
-      14.8,
-      5.6,
+      13.6,
+      4.0,
     ),
     'vanguard-turret': make(
       'vanguard-turret',
@@ -271,8 +297,8 @@ export function buildAllBuildings(
       'vanguard',
       VANGUARD_TURRET_ROWS,
       vanPal,
-      8.2,
-      3.5,
+      8.0,
+      3.0,
     ),
     'kraxen-spire': make(
       'kraxen-spire',
@@ -280,8 +306,8 @@ export function buildAllBuildings(
       'kraxen',
       KRAXEN_SPIRE_ROWS,
       krxPal,
-      14.5,
-      5.6,
+      13.8,
+      4.2,
     ),
     'kraxen-colony': make(
       'kraxen-colony',
@@ -290,7 +316,7 @@ export function buildAllBuildings(
       KRAXEN_COLONY_ROWS,
       krxPal,
       7.8,
-      3.4,
+      3.0,
     ),
     'solaris-nexus': make(
       'solaris-nexus',
@@ -298,8 +324,8 @@ export function buildAllBuildings(
       'solaris',
       SOLARIS_NEXUS_ROWS,
       solPal,
-      10.5,
-      4.5,
+      13.0,
+      3.9,
     ),
     'solaris-pylon': make(
       'solaris-pylon',
@@ -307,8 +333,8 @@ export function buildAllBuildings(
       'solaris',
       SOLARIS_PYLON_ROWS,
       solPal,
-      6.2,
-      2.8,
+      6.8,
+      2.6,
     ),
     'mineral-cluster': make(
       'mineral-cluster',
@@ -316,10 +342,10 @@ export function buildAllBuildings(
       'neutral',
       MINERAL_CLUSTER_ROWS,
       MINERAL_PALETTE,
-      5.8,
-      2.4,
+      5.2,
+      2.0,
     ),
-    'pine-tree': make('pine-tree', 'Highland Pine', 'neutral', PINE_TREE_ROWS, PROP_PALETTE, 3.8, 1.6),
-    'rock-crag': make('rock-crag', 'Boulder Crag', 'neutral', ROCK_CRAG_ROWS, PROP_PALETTE, 5.0, 2.1),
+    'pine-tree': make('pine-tree', 'Highland Pine', 'neutral', PINE_TREE_ROWS, PROP_PALETTE, 3.4, 1.4, -1),
+    'rock-crag': make('rock-crag', 'Boulder Crag', 'neutral', ROCK_CRAG_ROWS, PROP_PALETTE, 4.6, 1.8),
   };
 }

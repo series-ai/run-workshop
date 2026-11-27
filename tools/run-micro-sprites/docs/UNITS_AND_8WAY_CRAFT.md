@@ -84,10 +84,13 @@ Follow the Codex-verified `22×20` Siege Tank blueprint:
 6. **Track-hugging contact shadows**: Generate per-heading shadows directly from the lower tread footprint (`buildTankContactShadow(hullDir)`), not a generic oval.
 7. **Exact 64-combo muzzle sync**: Verify programmatically that `TANK_HULL_PIVOT[hullDir] + TANK_MUZZLE_REL_8[turretDir]` lands on a painted `F` flash-core pixel on `A1` for all `8 × 8 = 64` hull×turret combinations! Also draw the shell on frame 0 at the muzzle before advancing velocity so the first visible frame sits inside the flash.
 
-### E. Grounded Buildings (`src/buildings.ts`)
-- Size buildings `2.5×–3.5×` larger than `8×8` infantry (`16×14` defense structures, `32×23..32×25` main bases).
-- Paint a **flush, wide bottom foundation/root skirt** reaching the lowest row of the core pattern (`y = height - 1`) with an anchored ground shadow beneath it so structures visibly sit on the terrain with zero floating gap.
-- Keep Kraxen buildings purely organic (magenta/plum carapace, bone spires, earthy chitin roots, wet cavernous maw) — reserve neon acid-lime (`g`/`G`) for combat units and acid projectiles.
+### E. Grounded 3/4 Top-Down Buildings & Props (`src/buildings.ts`)
+- **Camera angle parity**: Match the `22×20` Siege Tank and Wang-16 cliffs — show a sunlit upper roof or platform surface in depth (`w`/`m` steel deck, raised pink carapace rim, or octagonal gold platform), then a short, darker front wall (`3–4` rows) to establish height. Never draw flat side-elevation walls.
+- **Footprint parity across factions**:
+  - **Headquarters (~`30×24` core)**: Vanguard Bastion (`30×24`), Kraxen Hatchery (`31×23`), Solaris Nexus (`30×24`).
+  - **Secondary / Defense (~`16–18px` core)**: Vanguard Bunker (`18×13`), Kraxen Spore Colony (`17×14`), Solaris Pylon (`16×15`) — each must have a silhouette clearly distinct from its HQ (e.g., Bunker octagonal pillbox vs Bastion; Spore upward-facing mortar opening vs Hatchery 3-horn nest; Pylon single crystal socket vs Nexus twin-arm ziggurat).
+- **Outline & contact grounding**: Paint a flush seated base reaching `y = height - 1` and use a **lighter material shade** (`d`/`s` steel, warm `t`/`R` hide, warm `g` gold/amber) immediately inside the lower/side exterior `#130f1e` outline so bases never double into thick black bands. Inset `anchorY = bottomY - 2` and tune `shadowRx`/`shadowRy` so only `1–2px` of contact shadow peek below the seated footprint at `1×`.
+- **Pareidolia & biome checks**: Avoid symmetrical twin dots or openings above a centered dark rectangle (they read as robot/owl/cat faces at `1×` — stagger roof panels, egg clutches, and geometric inlays asymmetrically!). Keep Kraxen buildings purely organic (magenta/plum carapace, bone horns, warm fleshy roots; reserve neon acid-lime `g`/`G` for combat units) and verify Solaris gold structures on their native **sandstone plateau** swatch.
 
 ---
 

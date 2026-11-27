@@ -277,7 +277,7 @@ function buildIsoTankPayload(): ExportedIsoTankPayload {
 
 // ---------- 2. Contact Proof Sheets (All 6 8-Way Infantry + All 6 8-Way Titans/Flyers) ----------
 
-function makeTerrainSwatch(w: number, h: number, kind: 'grass' | 'dirt' | 'creep' | 'dark'): PixelSurface {
+function makeTerrainSwatch(w: number, h: number, kind: 'grass' | 'dirt' | 'creep' | 'plateau' | 'dark'): PixelSurface {
   const s = createSurface(w, h);
   const cols =
     kind === 'grass'
@@ -286,7 +286,9 @@ function makeTerrainSwatch(w: number, h: number, kind: 'grass' | 'dirt' | 'creep
         ? [hexToU32('#5a4336'), hexToU32('#6d5340'), hexToU32('#7f634a')]
         : kind === 'creep'
           ? [hexToU32('#2d1335'), hexToU32('#3f1b44'), hexToU32('#532554')]
-          : [hexToU32('#171b26'), hexToU32('#1c2230'), hexToU32('#1a1f2c')];
+          : kind === 'plateau'
+            ? [hexToU32('#755f46'), hexToU32('#876f50'), hexToU32('#9b825d')]
+            : [hexToU32('#171b26'), hexToU32('#1c2230'), hexToU32('#1a1f2c')];
 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -505,12 +507,12 @@ const MAP_BUILDINGS: readonly StaticBuildingPlacement[] = [
   { id: 'mineral-cluster', x: 66, y: 140 },
   { id: 'mineral-cluster', x: 74, y: 184 },
 
-  // North Solaris Ridge Base
-  { id: 'solaris-nexus', x: 256, y: 66 },
-  { id: 'solaris-pylon', x: 222, y: 74 },
+  // North Solaris Ridge Base (wider 30x24 Nexus with generous ridge spacing)
+  { id: 'solaris-nexus', x: 256, y: 64 },
+  { id: 'solaris-pylon', x: 220, y: 74 },
   { id: 'solaris-pylon', x: 292, y: 74 },
-  { id: 'mineral-cluster', x: 234, y: 50 },
-  { id: 'mineral-cluster', x: 280, y: 50 },
+  { id: 'mineral-cluster', x: 224, y: 46 },
+  { id: 'mineral-cluster', x: 288, y: 46 },
 
   // East Kraxen Brood Base
   { id: 'kraxen-spire', x: 420, y: 156 },
@@ -2759,8 +2761,8 @@ function main(): void {
   const combinedBattle = renderCombinedArmsProof(terrain, buildings);
   const ultraBattle = renderUltra1000Proof(terrain, buildings);
 
-  // Dedicated 4x Building Close-Up Proof (6 faction buildings on native biomes)
-  const bCellW = 152;
+  // Dedicated 4x Building & Prop Close-Up Proof (6 faction buildings + 3 props on true native biomes)
+  const bCellW = 156;
   const bCellH = 136;
   const bPad = 3;
   const bList: readonly BuildingId[] = [
@@ -2770,10 +2772,14 @@ function main(): void {
     'kraxen-colony',
     'solaris-nexus',
     'solaris-pylon',
+    'mineral-cluster',
+    'pine-tree',
+    'rock-crag',
   ];
-  const bSheet = createSurface(3 * bCellW + 4 * bPad, 2 * bCellH + 3 * bPad, hexToU32('#0d1018'));
+  const bSheet = createSurface(3 * bCellW + 4 * bPad, 3 * bCellH + 4 * bPad, hexToU32('#0d1018'));
   const bGrass = makeTerrainSwatch(bCellW, bCellH, 'grass');
   const bCreep = makeTerrainSwatch(bCellW, bCellH, 'creep');
+  const bPlateau = makeTerrainSwatch(bCellW, bCellH, 'plateau');
   const bDirt = makeTerrainSwatch(bCellW, bCellH, 'dirt');
   for (let i = 0; i < bList.length; i++) {
     const b = buildings[bList[i]];
@@ -2781,15 +2787,33 @@ function main(): void {
     const row = Math.floor(i / 3);
     const cx = bPad + col * (bCellW + bPad);
     const cy = bPad + row * (bCellH + bPad);
-    const bg = b.faction === 'vanguard' ? bGrass : b.faction === 'kraxen' ? bCreep : bDirt;
+    const bg =
+      b.faction === 'vanguard'
+        ? bGrass
+        : b.faction === 'kraxen'
+          ? bCreep
+          : b.faction === 'solaris'
+            ? bPlateau
+            : b.id === 'pine-tree'
+              ? bGrass
+              : bDirt;
     blitScaled(bSheet, bg, cx, cy, 1);
-    fillRect(bSheet, cx, cy, bCellW, 3, accentBar(b.faction === 'neutral' ? 'vanguard' : b.faction));
-    const zoom = 4;
+    const bar =
+      b.faction === 'neutral' ? hexToU32('#94a3b8') : accentBar(b.faction);
+    fillRect(bSheet, cx, cy, bCellW, 3, bar);
+    const zoom = b.faction === 'neutral' ? 6 : 4;
     const bw = b.surface.width * zoom;
     const bh = b.surface.height * zoom;
     const ox = cx + Math.floor((bCellW - bw) / 2);
     const oy = cy + Math.floor((bCellH - bh) / 2) + 4;
-    drawEllipse(bSheet, cx + Math.floor(bCellW / 2), oy + b.anchorY * zoom, b.shadowRx * zoom * 0.9, b.shadowRy * zoom * 0.9, SHADOW_GROUND);
+    drawEllipse(
+      bSheet,
+      ox + b.anchorX * zoom,
+      oy + b.anchorY * zoom,
+      b.shadowRx * zoom * 0.9,
+      b.shadowRy * zoom * 0.9,
+      SHADOW_GROUND,
+    );
     blitScaled(bSheet, b.surface, ox, oy, zoom);
   }
   const bProofPath = resolve(OUT_ROOT, 'proof-buildings.png');
