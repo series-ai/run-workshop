@@ -115,7 +115,7 @@ const TR_N: readonly [string, string, string, string, string, string] = [
 const TR_NE: readonly [string, string, string, string, string, string] = [
   '..wsw...',
   '..sssd.s',
-  '.bBddBdk',
+  '.bBddBds',
   '.BDssDd.',
   '..DBBD..',
   '..dBBd..',
@@ -228,14 +228,14 @@ const HV_N: readonly [string, string, string, string, string, string] = [
   '.DBddBd.',
   '.dBBBBd.',
 ];
-// NE: Distinct bright-steel 2px launcher casing (ws / sd) rising over the near right shoulder + angled torso!
+// NE: Broad grounded shoulders intact; cleanly separated slate-steel shoulder pod (dq/qd) on upper-right!
 const HV_NE: readonly [string, string, string, string, string, string] = [
-  '..wsw.ws',
+  '..wsw.sq',
   '..sssdqd',
-  '.bBBddBb',
-  '.bBDssDd',
-  '..DBddBd',
-  '..dBBBd.',
+  'bBBddBBb',
+  'bBDssDBd',
+  '.DBddBd.',
+  '.dBBBBd.',
 ];
 // E: Launcher opening extends 1px beyond shoulder on right (x=6..7, y=2..3)
 const HV_E: readonly [string, string, string, string, string, string] = [
@@ -296,9 +296,9 @@ const VANGUARD_HEAVY: UnitSpec = {
         strideLegs(HV_N, ['.B.dd.B.', '.d....d.']),
       ],
       NE: [
-        ['..wsw.fs', '..sssdqd', '.bBBddBb', '.bBDssDd', '..DBddBd', '..dBBBd.', '.B.dd.B.', '.d....d.'],
-        ['.wsw.dfF', '.sssdqFf', '.bBBddBb', '.bBDssDd', '..DBddBd', '..dBBBd.', 'B..dd..B', 'd......d'],
-        ['..wsw.sf', '..sssdqd', '.bBBddBb', '.bBDssDd', '..DBddBd', '..dBBBd.', '.B.dd.B.', '.d....d.'],
+        ['..wsw.fq', '..sssdqd', 'bBBddBBb', 'bBDssDBd', '.DBddBd.', '.dBBBBd.', '.B.dd.B.', '.d....d.'],
+        ['.wsw.dfF', '.sssdqFf', 'bBBddBBb', 'bBDssDBd', '.DBddBd.', '.dBBBBd.', 'B..dd..B', 'd......d'],
+        ['..wsw.sf', '..sssdqd', 'bBBddBBb', 'bBDssDBd', '.DBddBd.', '.dBBBBd.', '.B.dd.B.', '.d....d.'],
         strideLegs(HV_NE, ['.B.dd.B.', '.d....d.']),
       ],
       // E attack: recoils 1px left so launcher opening (q at x=5) sits ahead of shoulder and flash (x=6..7) is BEYOND opening!
@@ -348,13 +348,13 @@ const ST_N: readonly [string, string, string, string, string, string] = [
   '.cmppmc.',
   '..rmmr..',
 ];
-// NE: Rear spike stays over body (x=2), far eye hidden, snout projects half-length UP-RIGHT (x=5..6, y=1..2)
+// NE: Hunched forward-leaning 3/4 bio-stalker (bridging N->E cleanly, no upright cat-ears box!)
 const ST_NE: readonly [string, string, string, string, string, string] = [
-  '..p..p..',
-  '..pmmpm.',
-  '.ppmmpmo',
-  '.cmppm..',
-  '.ocmmo..',
+  '..p.....',
+  '.ppmmpo.',
+  '.pmmmpmo',
+  'rmmppm..',
+  '.rrmmco.',
   '..rmmu..',
 ];
 // E: Reference full snout projection (x=4..7, y=2..3), rear spike over body (x=1..2, y=0)
@@ -366,13 +366,13 @@ const ST_E: readonly [string, string, string, string, string, string] = [
   '.rrmuuoc',
   '..rmmu..',
 ];
-// SE: Rear spike over body (x=2), snout projects half-length LOWERED 1px (x=5..6, y=3..4) + green acid pixel at leading edge!
+// SE: Hunched forward-leaning 3/4 stalker facing down-right with exposed lime eye & bone claw!
 const ST_SE: readonly [string, string, string, string, string, string] = [
   '..p.....',
-  '..pmmp..',
-  '.ppmmmp.',
-  '.cmumgg.',
-  '.ocuumc.',
+  '.ppmmp..',
+  'ppmmmmp.',
+  'rmmumgg.',
+  '.rruumco',
   '..rmmuo.',
 ];
 const ST_S: readonly [string, string, string, string, string, string] = [
@@ -474,19 +474,19 @@ const KRAXEN_SWARMLING: UnitSpec = {
         ['........', '..o..o..', '..pppp..', '.ppmmpp.', '.rmmmmr.', '..ruur..', '..r..r..', '...rr...'],
         ['........', '........', '..o..o..', '..pppp..', '.ppmmpp.', '.rmmmmr.', '..ruur..', '...rr...'],
       ],
-      // NE: Head shifted UP-RIGHT (4..6, 1..3), rump LOWER-LEFT (0..3, 4..5), far foreleg hidden behind chest!
+      // NE: Compact crouching quadruped rusher facing UP-RIGHT with two planted legs (no slug-on-a-stick!)
       NE: [
-        ['........', '.....po.', '...ppmp.', '..pmmmmc', '.rmmmm..', 'rr.mu.r.', 'r.......', '........'],
-        ['........', '........', '.....po.', '...ppmp.', '..pmmmmc', '.rmmmm..', 'rr.mu.r.', '........'],
+        ['........', '....po..', '..ppmp..', '.pmmmmc.', 'rrmmmu..', '.r..r...', 'r...r...', '........'],
+        ['........', '........', '....po..', '..ppmp..', '.pmmmmc.', 'rrmmmu..', '.r..r...', '........'],
       ],
       E: [
         ['........', '........', '..ppp...', '.pmmggo.', 'rmmmuuoc', '.r..r.c.', 'r....r..', '........'],
         ['........', '........', '........', '..ppp...', '.pmmggo.', 'rmmmuuoc', '.r..r.c.', '........'],
       ],
-      // SE: Rump UPPER-LEFT (0..3, 2..3), head DOWN-RIGHT (4..6, 4..5), near foreleg planted below head (x=5, y=6)!
+      // SE: Compact crouching quadruped rusher facing DOWN-RIGHT with two planted legs (no peg-leg!)
       SE: [
-        ['........', '........', '.pp.....', 'pmmmp...', 'rmmmggo.', '.r.muoc.', '..r..r..', '.....c..'],
-        ['........', '........', '........', '.pp.....', 'pmmmp...', 'rmmmggo.', '.r.muoc.', '.....c..'],
+        ['........', '........', '.ppp....', 'pmmmp...', 'rmmmggo.', '.r.muoc.', 'r...r...', '........'],
+        ['........', '........', '........', '.ppp....', 'pmmmp...', 'rmmmggo.', '.r.muoc.', '........'],
       ],
       S: [
         ['........', '........', '..pppp..', '.pmggmp.', '.rmggmr.', '.ocuuoc.', '.r.oo.r.', '........'],
@@ -501,10 +501,10 @@ const KRAXEN_SWARMLING: UnitSpec = {
         ['........', '..o..o..', '..pppp..', '.ppmmpp.', '.rmmmmr.', '..ruur..', '..r..r..', '........'],
       ],
       NE: [
-        ['.....po.', '...ppmp.', '..pmmmmc', '.rmmmm..', 'rr.mu.r.', 'r....r..', '........', '........'],
-        ['........', '.....po.', '...ppmp.', '..pmmmmc', '.rmmmm..', '.r.mu...', '..r.r...', '........'],
-        ['........', '......po', '....ppmp', '...pmmmm', '..rmmmm.', 'rr.mu.r.', 'r.......', '........'],
-        ['........', '.....po.', '...ppmp.', '..pmmmmc', '.rmmmm..', '.r.mu.r.', '.r......', '........'],
+        ['....po..', '..ppmp..', '.pmmmmc.', 'rrmmmu..', 'r...r...', 'r....r..', '........', '........'],
+        ['........', '....po..', '..ppmp..', '.pmmmmc.', 'rrmmmu..', '..rr....', '..r.r...', '........'],
+        ['........', '.....po.', '...ppmp.', '..pmmmmc', '.rrmmmu.', 'r...r...', 'r...r...', '........'],
+        ['........', '....po..', '..ppmp..', '.pmmmmc.', 'rrmmmu..', '.r..r...', '.r..r...', '........'],
       ],
       E: [
         ['........', '..ppp...', '.pmmggo.', 'rmmmuuoc', 'r...r.c.', 'r.....r.', '........', '........'],
@@ -513,10 +513,10 @@ const KRAXEN_SWARMLING: UnitSpec = {
         ['........', '........', '..ppp...', '.pmmggo.', 'rmmmuuoc', '.r..rc..', '..r.r...', '........'],
       ],
       SE: [
-        ['........', '.pp.....', 'pmmmp...', 'rmmmggo.', 'r..muoc.', 'r....r..', '.....c..', '........'],
-        ['........', '........', '.pp.....', 'pmmmp...', 'rmmmggo.', '.r.muo..', '...r.c..', '........'],
-        ['........', '........', '..pp....', '.pmmmp..', '.rmmmggo', 'rr.muoc.', 'r....c..', '........'],
-        ['........', '........', '.pp.....', 'pmmmp...', 'rmmmggo.', '.r.muo..', '..r..rc.', '........'],
+        ['........', '.ppp....', 'pmmmp...', 'rmmmggo.', 'r..muoc.', 'r....r..', '........', '........'],
+        ['........', '........', '.ppp....', 'pmmmp...', 'rmmmggo.', '..r.moc.', '..r.r...', '........'],
+        ['........', '........', '..ppp...', '.pmmmp..', '.rmmmggo', 'r..muoc.', 'r...r...', '........'],
+        ['........', '........', '.ppp....', 'pmmmp...', 'rmmmggo.', '.r.muoc.', '.r..r...', '........'],
       ],
       S: [
         ['........', '..pppp..', '.pmggmp.', '.rmggmr.', 'oc.uu.co', 'r..oo..r', '........', '........'],
@@ -585,10 +585,10 @@ const BL_N: readonly [string, string, string, string, string, string] = [
   '..bTb...',
   '..gtg...',
 ];
-// NE: Gold shoulder (g at 4,2) above gold hand (g at 5,3), cyan blade runs 1px outward & UP ((6,2)->(7,1))!
+// NE: Solid edge-connected cyan psi-blade angled UP-RIGHT from gold hand (no pinched corner dots!)
 const BL_NE: readonly [string, string, string, string, string, string] = [
-  '..ygy...',
-  '..ggy..C',
+  '..ygy..C',
+  '..ggy.CC',
   '.ygTgyc.',
   '.TbtbTg.',
   '..bTb...',
@@ -603,13 +603,13 @@ const BL_E: readonly [string, string, string, string, string, string] = [
   '..bTb...',
   '..gtg...',
 ];
-// SE: Gold shoulder (g at 4,2) above gold hand (g at 5,3), cyan blade runs 1px outward & DOWN ((6,4)->(7,5))!
+// SE: Solid edge-connected cyan psi-blade angled DOWN-RIGHT from gold hand (no pinched corner dots!)
 const BL_SE: readonly [string, string, string, string, string, string] = [
   '..ygy...',
   '..gCg...',
   '.ygtgy..',
-  '.Tbgbg..',
-  '..bTb.c.',
+  '.Tbgbgc.',
+  '..bTb.CC',
   '..gtg..C',
 ];
 const BL_S: readonly [string, string, string, string, string, string] = [
@@ -718,13 +718,13 @@ const AR_N_1: SpritePattern8x8 = [
   '...CC...',
 ];
 
-// NE: Solid back of hood, casting gold hand raised UP-RIGHT (5..6, 1..2), robe hem centered over hover point!
+// NE: Smooth rounded golden hood back + trailing left cloak fold + subtle cyan spark up-right (no duck beak!)
 const AR_NE_0: SpritePattern8x8 = [
   '...yy...',
-  '..yggyy.',
-  '.ygTgg..',
-  '.gbTtb..',
-  '..gTg...',
+  '..yggy..',
+  '.ygTgg.c',
+  'bgbTtb..',
+  '.bgTg...',
   '..bTb...',
   '...c....',
   '........',
@@ -732,21 +732,21 @@ const AR_NE_0: SpritePattern8x8 = [
 const AR_NE_1: SpritePattern8x8 = [
   '........',
   '...yy...',
-  '..yggyy.',
+  '..yggy.c',
   '.ygTgg..',
-  '.gbTtb..',
-  '..gTg...',
+  'bgbTtb..',
+  '.bgTg...',
   '..bTb...',
   '...C....',
 ];
 
-// E: Hood opening on leading RIGHT edge (yggC), casting gold hand LEVEL (5..6, 3), centered robe hem!
+// E: Smooth rounded golden hood with leading-edge cyan visor + swept cloak + subtle horizontal aura (no duck beak!)
 const AR_E_0: SpritePattern8x8 = [
   '...yy...',
   '..yggC..',
   '.ygTgb..',
-  '.gbTggy.',
-  '..gTg...',
+  'bgbTtg.c',
+  '.bgTg...',
   '..bTb...',
   '...c....',
   '........',
@@ -755,20 +755,20 @@ const AR_E_1: SpritePattern8x8 = [
   '........',
   '...yy...',
   '..yggC..',
-  '.ygTgb..',
-  '.gbTggy.',
-  '..gTg...',
+  '.ygTgb.c',
+  'bgbTtg..',
+  '.bgTg...',
   '..bTb...',
   '...C....',
 ];
 
-// SE: 1 lit cyan face pixel on front-right (ygCy), casting gold hand shifted DOWN-RIGHT (5..6, 4), centered hem!
+// SE: Smooth rounded golden hood with front-right cyan face pixel + flowing cloak + low cyan spark (no duck beak!)
 const AR_SE_0: SpritePattern8x8 = [
   '...yy...',
   '..ygCy..',
   '.ygTgb..',
   '.gbTtg..',
-  '..gTggy.',
+  '.bgTgb.c',
   '..bTb...',
   '...c....',
   '........',
@@ -778,8 +778,8 @@ const AR_SE_1: SpritePattern8x8 = [
   '...yy...',
   '..ygCy..',
   '.ygTgb..',
-  '.gbTtg..',
-  '..gTggy.',
+  '.gbTtg.c',
+  '.bgTgb..',
   '..bTb...',
   '...C....',
 ];
