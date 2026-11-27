@@ -38,26 +38,27 @@ import {
   type TilesetBundle,
 } from './tileset.ts';
 import {
-  buildHullContactShadow,
-  compileRawHull,
-  compileRawTurret,
+  buildTankContactShadow,
+  compileRawTankHull,
+  compileRawTankTurret,
   composeIsoTank,
-  CORE_H as TANK_CORE_H,
-  CORE_W as TANK_CORE_W,
-  HULL_PIVOT as TANK_HULL_PIVOT,
-  MUZZLE_REL_8 as TANK_MUZZLE_REL_8,
-  OUT_H as TANK_OUT_H,
-  OUT_W as TANK_OUT_W,
-} from './tankIsoPrototype.ts';
+  TANK_CORE_H,
+  TANK_CORE_W,
+  TANK_HULL_PIVOT,
+  TANK_MUZZLE_REL_8,
+  TANK_OUT_H,
+  TANK_OUT_W,
+} from './tankIso.ts';
 import {
+  COLOSSUS_EMITTER_8,
   compileTitanFrame,
+  compileTitanFrame8,
   getTitanAnimFrameCount,
   TITAN_SPEC_BY_ID,
   TITAN_SPECS,
   type TitanId,
 } from './titans.ts';
 import {
-  compileUnitFrame,
   compileUnitFrame8,
   DIRS_8,
   getAnimFrameCount,
@@ -72,7 +73,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_ROOT = resolve(__dirname, '../output');
 const SPRITE_DIR = resolve(OUT_ROOT, 'sprites');
 
-const FACINGS: readonly FacingId[] = ['SE', 'SW', 'NE', 'NW'];
 const ANIMS: readonly AnimId[] = ['idle', 'move', 'attack', 'death'];
 
 // ---------- 1. Export Sprite Sheets ----------
@@ -89,9 +89,6 @@ interface ExportedSpriteMeta {
   readonly airAltitude: number;
   readonly rawDataUrl: string;
   readonly outlinedDataUrl: string;
-  readonly has8Way?: boolean;
-  readonly raw8DataUrl?: string;
-  readonly outlined8DataUrl?: string;
   readonly frameOffsets: Record<AnimId, { start: number; count: number }>;
   readonly totalCols: number;
 }
@@ -128,15 +125,16 @@ function buildUnitSheets(): ExportedSpriteMeta[] {
       colCursor += count;
     }
 
-    const rawSheet = createSurface(colCursor * 8, FACINGS.length * 8);
-    const outSheet = createSurface(colCursor * 10, FACINGS.length * 10);
+    // Canonical 8-row (N, NE, E, SE, S, SW, W, NW) single-layer sheets for all 6 infantry units
+    const rawSheet = createSurface(colCursor * 8, DIRS_8.length * 8);
+    const outSheet = createSurface(colCursor * 10, DIRS_8.length * 10);
 
-    for (let r = 0; r < FACINGS.length; r++) {
-      const facing = FACINGS[r];
+    for (let r = 0; r < DIRS_8.length; r++) {
+      const dir = DIRS_8[r];
       for (const anim of ANIMS) {
         const { start, count } = frameOffsets[anim];
         for (let f = 0; f < count; f++) {
-          const compiled = compileUnitFrame(spec.id, anim, facing, f);
+          const compiled = compileUnitFrame8(spec.id, anim, dir, f);
           blitScaled(rawSheet, compiled.raw, (start + f) * 8, r * 8, 1);
           blitScaled(outSheet, compiled.outlined, (start + f) * 10, r * 10, 1);
         }
@@ -145,28 +143,6 @@ function buildUnitSheets(): ExportedSpriteMeta[] {
 
     writeFileSync(resolve(SPRITE_DIR, `${spec.id}-8x8.png`), encodePNG(rawSheet));
     writeFileSync(resolve(SPRITE_DIR, `${spec.id}-outlined-10x10.png`), encodePNG(outSheet));
-
-    let raw8DataUrl: string | undefined;
-    let outlined8DataUrl: string | undefined;
-    if (spec.has8Way) {
-      const raw8 = createSurface(colCursor * 8, DIRS_8.length * 8);
-      const out8 = createSurface(colCursor * 10, DIRS_8.length * 10);
-      for (let r = 0; r < DIRS_8.length; r++) {
-        const dir = DIRS_8[r];
-        for (const anim of ANIMS) {
-          const { start, count } = frameOffsets[anim];
-          for (let f = 0; f < count; f++) {
-            const compiled = compileUnitFrame8(spec.id, anim, dir, f);
-            blitScaled(raw8, compiled.raw, (start + f) * 8, r * 8, 1);
-            blitScaled(out8, compiled.outlined, (start + f) * 10, r * 10, 1);
-          }
-        }
-      }
-      writeFileSync(resolve(SPRITE_DIR, `${spec.id}-8way-8x8.png`), encodePNG(raw8));
-      writeFileSync(resolve(SPRITE_DIR, `${spec.id}-8way-outlined-10x10.png`), encodePNG(out8));
-      raw8DataUrl = surfaceToDataURL(raw8);
-      outlined8DataUrl = surfaceToDataURL(out8);
-    }
 
     results.push({
       id: spec.id,
@@ -180,7 +156,6 @@ function buildUnitSheets(): ExportedSpriteMeta[] {
       airAltitude: 0,
       rawDataUrl: surfaceToDataURL(rawSheet),
       outlinedDataUrl: surfaceToDataURL(outSheet),
-      ...(spec.has8Way ? { has8Way: true, raw8DataUrl, outlined8DataUrl } : {}),
       frameOffsets,
       totalCols: colCursor,
     });
@@ -206,15 +181,16 @@ function buildTitanSheets(): ExportedSpriteMeta[] {
     const ow = rw + 2;
     const oh = rh + 2;
 
-    const rawSheet = createSurface(colCursor * rw, FACINGS.length * rh);
-    const outSheet = createSurface(colCursor * ow, FACINGS.length * oh);
+    // Canonical 8-row (N..NW) sheets for all 6 Titans/Flyers (vanguard-tank uses split hull/turret live + death frames here)
+    const rawSheet = createSurface(colCursor * rw, DIRS_8.length * rh);
+    const outSheet = createSurface(colCursor * ow, DIRS_8.length * oh);
 
-    for (let r = 0; r < FACINGS.length; r++) {
-      const facing = FACINGS[r];
+    for (let r = 0; r < DIRS_8.length; r++) {
+      const dir = DIRS_8[r];
       for (const anim of ANIMS) {
         const { start, count } = frameOffsets[anim];
         for (let f = 0; f < count; f++) {
-          const compiled = compileTitanFrame(spec.id, anim, facing, f);
+          const compiled = compileTitanFrame8(spec.id, anim, dir, f);
           blitScaled(rawSheet, compiled.raw, (start + f) * rw, r * rh, 1);
           blitScaled(outSheet, compiled.outlined, (start + f) * ow, r * oh, 1);
         }
@@ -277,10 +253,10 @@ function buildIsoTankPayload(): ExportedIsoTankPayload {
   const shadowSheet = createSurface(DIRS_8.length * TANK_OUT_W, TANK_OUT_H);
   for (let d = 0; d < DIRS_8.length; d++) {
     const dir = DIRS_8[d];
-    blitScaled(shadowSheet, buildHullContactShadow(dir), d * TANK_OUT_W, 0, 1);
+    blitScaled(shadowSheet, buildTankContactShadow(dir), d * TANK_OUT_W, 0, 1);
     for (let p = 0; p < 4; p++) {
-      blitScaled(hullSheet, compileRawHull(dir, p), p * TANK_CORE_W, d * TANK_CORE_H, 1);
-      blitScaled(turretSheet, compileRawTurret(dir, p), p * TANK_CORE_W, d * TANK_CORE_H, 1);
+      blitScaled(hullSheet, compileRawTankHull(dir, p), p * TANK_CORE_W, d * TANK_CORE_H, 1);
+      blitScaled(turretSheet, compileRawTankTurret(dir, p), p * TANK_CORE_W, d * TANK_CORE_H, 1);
     }
   }
   writeFileSync(resolve(SPRITE_DIR, 'vanguard-tank-8way-hull.png'), encodePNG(hullSheet));
@@ -299,102 +275,7 @@ function buildIsoTankPayload(): ExportedIsoTankPayload {
   };
 }
 
-function renderVanguard8WayProof(
-  tileset: TilesetBundle,
-  buildings: Readonly<Record<BuildingId, BuildingAsset>>,
-): PixelSurface {
-  const cellW = 72;
-  const cellH = 68;
-  const cols = 8;
-  const topRows = 3; // Row 0: 8-way Marine Idle | Row 1: 8-way Marine Move | Row 2: 8-way Marine Attack A1
-  const pad = 2;
-  const W = cols * cellW + (cols + 1) * pad;
-  const topH = topRows * cellH + (topRows + 1) * pad;
-  const stripH = 104;
-  const H = topH + stripH + pad;
-  const sheet = createSurface(W, H, hexToU32('#0d1018'));
-
-  const darkBg = makeTerrainSwatch(cellW, cellH, 'dark');
-  const dirtBg = makeTerrainSwatch(cellW, cellH, 'dirt');
-
-  for (let c = 0; c < cols; c++) {
-    const dir = DIRS_8[c];
-    const rowSpecs: ReadonlyArray<{ row: number; anim: AnimId; frame: number; bar: number; bg: PixelSurface }> = [
-      { row: 0, anim: 'idle', frame: 0, bar: hexToU32('#38bdf8'), bg: darkBg },
-      { row: 1, anim: 'move', frame: 0, bar: hexToU32('#22c55e'), bg: dirtBg },
-      { row: 2, anim: 'attack', frame: 1, bar: hexToU32('#f97316'), bg: darkBg },
-    ];
-    for (const rs of rowSpecs) {
-      const cx = pad + c * (cellW + pad);
-      const cy = pad + rs.row * (cellH + pad);
-      blitScaled(sheet, rs.bg, cx, cy, 1);
-      fillRect(sheet, cx, cy, cellW, 2, rs.bar);
-      const sp = compileUnitFrame8('vanguard-trooper', rs.anim, dir, rs.frame).outlined;
-      const zoom = 4;
-      const ox = cx + Math.floor((cellW - sp.width * zoom) / 2);
-      const oy = cy + Math.floor((cellH - sp.height * zoom) / 2) + 2;
-      drawEllipse(sheet, cx + Math.floor(cellW / 2), oy + sp.height * zoom - 4, 14, 5, SHADOW_GROUND);
-      blitScaled(sheet, sp, ox, oy, zoom);
-    }
-  }
-
-  // Row 3: Real battle-dirt scale strip (1x native top + 2x closeup bottom): Bunker + 8-way Marines + 8-way Tank!
-  const dirtCols = Math.ceil((W - pad * 2) / TILE_PX);
-  const dirtRows = Math.ceil(stripH / TILE_PX);
-  const dirtSurf = composeTilemap(
-    {
-      gridW: dirtCols + 1,
-      gridH: dirtRows + 1,
-      biomes: new Array((dirtCols + 1) * (dirtRows + 1)).fill('dirt' as const),
-      ramps: [],
-    },
-    tileset,
-  );
-  for (let y = 0; y < stripH; y++) {
-    for (let x = 0; x < W - pad * 2; x++) {
-      sheet.pixels[(topH + y) * W + pad + x] = dirtSurf.pixels[y * dirtSurf.width + x];
-    }
-  }
-  fillRect(sheet, pad, topH, W - pad * 2, 2, hexToU32('#eab308'));
-
-  const bunker = buildings['vanguard-turret'].surface;
-  // 1x native scale lineup: Bunker + 8 Marines (N..NW) + 8 Tanks (N..NW)
-  const y1 = topH + 14;
-  blitScaled(sheet, bunker, pad + 12, y1 + 2, 1);
-  for (let i = 0; i < 8; i++) {
-    const dir = DIRS_8[i];
-    const mx = pad + 44 + i * 20;
-    drawEllipse(sheet, mx + 5, y1 + 17, 3.4, 1.3, SHADOW_SOFT);
-    blitScaled(sheet, compileUnitFrame8('vanguard-trooper', 'move', dir, 0).outlined, mx, y1 + 8, 1);
-  }
-  for (let i = 0; i < 8; i++) {
-    const dir = DIRS_8[i];
-    const tx = pad + 224 + i * 44;
-    blitScaled(sheet, buildHullContactShadow(dir), tx, y1, 1);
-    blitScaled(sheet, composeIsoTank(dir, dir, 0, 0), tx, y1, 1);
-  }
-
-  // 2x closeup lineup: Bunker + 8 Marines (N..NW) + NE & E Siege Tanks
-  const y2 = topH + 52;
-  blitScaled(sheet, bunker, pad + 12, y2 + 4, 2);
-  for (let i = 0; i < 8; i++) {
-    const dir = DIRS_8[i];
-    const mx = pad + 72 + i * 38;
-    drawEllipse(sheet, mx + 10, y2 + 34, 6.8, 2.6, SHADOW_GROUND);
-    blitScaled(sheet, compileUnitFrame8('vanguard-trooper', 'move', dir, 0).outlined, mx, y2 + 16, 2);
-  }
-  const demoDirs: readonly Dir8[] = ['NE', 'E', 'SE'];
-  for (let i = 0; i < demoDirs.length; i++) {
-    const dir = demoDirs[i];
-    const tx = pad + 390 + i * 62;
-    blitScaled(sheet, buildHullContactShadow(dir), tx, y2 + 2, 2);
-    blitScaled(sheet, composeIsoTank(dir, dir, 0, 0), tx, y2 + 2, 2);
-  }
-
-  return sheet;
-}
-
-// ---------- 2. Contact Proof Sheets (8x8 Infantry + 16x16 Titans/Flyers) ----------
+// ---------- 2. Contact Proof Sheets (All 6 8-Way Infantry + All 6 8-Way Titans/Flyers) ----------
 
 function makeTerrainSwatch(w: number, h: number, kind: 'grass' | 'dirt' | 'creep' | 'dark'): PixelSurface {
   const s = createSurface(w, h);
@@ -427,6 +308,7 @@ function accentBar(faction: FactionId): number {
 }
 
 function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, BuildingAsset>>): PixelSurface {
+  // All 6 8x8 Infantry units x All 8 compass directions (N, NE, E, SE, S, SW, W, NW) at 5x + bottom building/scale strip!
   const cellW = 76;
   const cellH = 74;
   const cols = 8;
@@ -448,52 +330,22 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
     const barCol = accentBar(spec.faction);
 
     for (let c = 0; c < cols; c++) {
+      const dir = DIRS_8[c];
       const cx = pad + c * (cellW + pad);
       const cy = pad + r * (cellH + pad);
-      const bg = c === 5 || c === 6 ? biomeBg : darkBg;
+      const bg = (c & 1) === 1 ? biomeBg : darkBg;
       blitScaled(sheet, bg, cx, cy, 1);
       fillRect(sheet, cx, cy, cellW, 2, barCol);
 
-      if (c === 0) {
-        const f = compileUnitFrame(spec.id, 'idle', 'SE', 0).outlined;
-        drawEllipse(sheet, cx + 38, cy + 58, 19, 6, SHADOW_GROUND);
-        blitScaled(sheet, f, cx + 8, cy + 7, 6);
-      } else if (c === 1) {
-        const f = compileUnitFrame(spec.id, 'move', 'SE', 0).outlined;
-        drawEllipse(sheet, cx + 38, cy + 58, 19, 6, SHADOW_GROUND);
-        blitScaled(sheet, f, cx + 8, cy + 7, 6);
-      } else if (c === 2) {
-        const f = compileUnitFrame(spec.id, 'attack', 'SE', 1).outlined;
-        drawEllipse(sheet, cx + 38, cy + 58, 19, 6, SHADOW_GROUND);
-        blitScaled(sheet, f, cx + 8, cy + 7, 6);
-      } else if (c === 3) {
-        const f = compileUnitFrame(spec.id, 'idle', 'NE', 0).outlined;
-        drawEllipse(sheet, cx + 38, cy + 58, 19, 6, SHADOW_GROUND);
-        blitScaled(sheet, f, cx + 8, cy + 7, 6);
-      } else if (c === 4) {
-        const f = compileUnitFrame(spec.id, 'death', 'SE', 1).outlined;
-        blitScaled(sheet, f, cx + 8, cy + 7, 6);
-      } else if (c === 5) {
-        const f = compileUnitFrame(spec.id, 'attack', 'SE', 1).raw;
-        drawEllipse(sheet, cx + 38, cy + 57, 19, 6, SHADOW_GROUND);
-        blitScaled(sheet, f, cx + 14, cy + 13, 6);
-      } else if (c === 6) {
-        const f = compileUnitFrame(spec.id, 'attack', 'SE', 1).outlined;
-        drawEllipse(sheet, cx + 38, cy + 58, 19, 6, SHADOW_GROUND);
-        blitScaled(sheet, f, cx + 8, cy + 7, 6);
-      } else {
-        const teams: readonly TeamColorId[] = ['crimson', 'emerald'];
-        for (let t = 0; t < teams.length; t++) {
-          const f = compileUnitFrame(spec.id, 'idle', 'SE', 0, teams[t]).outlined;
-          const ox = cx + 6 + t * 34;
-          drawEllipse(sheet, ox + 15, cy + 48, 10, 4, SHADOW_GROUND);
-          blitScaled(sheet, f, ox, cy + 21, 3);
-        }
-      }
+      const anim: AnimId = c === 2 || c === 6 ? 'attack' : 'move';
+      const frameIdx = anim === 'attack' ? 1 : 0;
+      const f = compileUnitFrame8(spec.id, anim, dir, frameIdx).outlined;
+      drawEllipse(sheet, cx + 38, cy + 56, 17, 5.5, SHADOW_GROUND);
+      blitScaled(sheet, f, cx + 13, cy + 12, 5);
     }
   }
 
-  // Bottom Row: Buildings + 2x Squad + 1x Micro Swarm
+  // Bottom Row: 6 Buildings + 2x 8-way Squad + 1x native scale lineup
   const bRowY = pad + UNIT_SPECS.length * (cellH + pad);
   const buildingStrip: readonly BuildingId[] = [
     'vanguard-bastion',
@@ -519,29 +371,29 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
     blitScaled(sheet, b.surface, ox, oy, zoom);
   }
 
-  // Col 6: 2x micro-squad
+  // Col 6: 2x 8-way squad skirmish
   {
     const cx = pad + 6 * (cellW + pad);
     blitScaled(sheet, dirtBg, cx, bRowY, 1);
     fillRect(sheet, cx, bRowY, cellW, 2, hexToU32('#22c55e'));
-    const placements: ReadonlyArray<{ id: UnitId; x: number; y: number; f: FacingId; a: AnimId }> = [
-      { id: 'vanguard-trooper', x: 6, y: 14, f: 'SE', a: 'attack' },
-      { id: 'vanguard-trooper', x: 4, y: 34, f: 'SE', a: 'move' },
-      { id: 'vanguard-heavy', x: 12, y: 50, f: 'SE', a: 'attack' },
-      { id: 'solaris-blade', x: 30, y: 10, f: 'SE', a: 'attack' },
-      { id: 'solaris-arcanist', x: 32, y: 46, f: 'SE', a: 'attack' },
-      { id: 'kraxen-swarmling', x: 50, y: 18, f: 'SW', a: 'attack' },
-      { id: 'kraxen-stalker', x: 52, y: 36, f: 'SW', a: 'attack' },
-      { id: 'kraxen-swarmling', x: 48, y: 52, f: 'SW', a: 'move' },
+    const placements: ReadonlyArray<{ id: UnitId; x: number; y: number; d: Dir8; a: AnimId }> = [
+      { id: 'vanguard-trooper', x: 6, y: 12, d: 'E', a: 'attack' },
+      { id: 'vanguard-trooper', x: 4, y: 32, d: 'N', a: 'move' },
+      { id: 'vanguard-heavy', x: 12, y: 50, d: 'SE', a: 'attack' },
+      { id: 'solaris-blade', x: 30, y: 10, d: 'S', a: 'attack' },
+      { id: 'solaris-arcanist', x: 32, y: 46, d: 'S', a: 'attack' },
+      { id: 'kraxen-swarmling', x: 50, y: 18, d: 'W', a: 'attack' },
+      { id: 'kraxen-stalker', x: 52, y: 36, d: 'SW', a: 'attack' },
+      { id: 'kraxen-swarmling', x: 48, y: 52, d: 'NW', a: 'move' },
     ];
     for (const p of placements) {
-      const sp = compileUnitFrame(p.id, p.a, p.f, 1).outlined;
+      const sp = compileUnitFrame8(p.id, p.a, p.d, 1).outlined;
       drawEllipse(sheet, cx + p.x + 10, bRowY + p.y + 18, 6, 2.5, SHADOW_GROUND);
       blitScaled(sheet, sp, cx + p.x, bRowY + p.y, 2);
     }
   }
 
-  // Col 7: 1x native scale dense micro-swarm
+  // Col 7: 1x native scale dense 8-way swarm
   {
     const cx = pad + 7 * (cellW + pad);
     blitScaled(sheet, grassBg, cx, bRowY, 1);
@@ -560,8 +412,8 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
       const row = Math.floor(u / 6);
       const ux = cx + 6 + col * 11;
       const uy = bRowY + 14 + row * 19;
-      const facing: FacingId = id.startsWith('kraxen') ? 'SW' : 'SE';
-      const frame = compileUnitFrame(id, 'idle', facing, 0).outlined;
+      const dir: Dir8 = DIRS_8[(u + row * 2) % 8];
+      const frame = compileUnitFrame8(id, 'move', dir, 0).outlined;
       drawEllipse(sheet, ux + 5, uy + 9, 3.5, 1.5, SHADOW_GROUND);
       blitScaled(sheet, frame, ux, uy, 1);
     }
@@ -571,9 +423,10 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
 }
 
 function renderTitansContactProof(): PixelSurface {
-  const cellW = 86;
-  const cellH = 84;
-  const cols = 7;
+  // All 6 Centerpiece Titans & Flyers x All 8 compass directions (N, NE, E, SE, S, SW, W, NW) at 3x!
+  const cellW = 84;
+  const cellH = 78;
+  const cols = 8;
   const rows = TITAN_SPECS.length;
   const pad = 2;
   const W = cols * cellW + (cols + 1) * pad;
@@ -585,32 +438,35 @@ function renderTitansContactProof(): PixelSurface {
   const dirtBg = makeTerrainSwatch(cellW, cellH, 'dirt');
   const creepBg = makeTerrainSwatch(cellW, cellH, 'creep');
 
-  const infantryByFaction: Record<FactionId, UnitId> = {
-    vanguard: 'vanguard-trooper',
-    kraxen: 'kraxen-stalker',
-    solaris: 'solaris-blade',
-  };
-
-  // Cols: [0] SE Idle 4x | [1] SE Move/Flap 4x | [2] SE Attack 4x | [3] NE Back 4x
-  //       [4] Death 4x | [5] On-Biome 4x | [6] Scale Ladder (16x16 Titan + 8x8 + 4x4 at 2x!)
   for (let r = 0; r < TITAN_SPECS.length; r++) {
     const spec = TITAN_SPECS[r];
     const biomeBg =
       spec.faction === 'vanguard' ? grassBg : spec.faction === 'kraxen' ? creepBg : dirtBg;
     const barCol = accentBar(spec.faction);
 
-    const drawCentered = (
-      cx: number,
-      cy: number,
-      surf: PixelSurface,
-      zoom: number,
-      showShadow: boolean,
-    ) => {
-      const sw = surf.width * zoom;
-      const sh = surf.height * zoom;
-      const ox = cx + Math.floor((cellW - sw) / 2);
-      const oy = cy + Math.floor((cellH - sh) / 2) + (spec.layer === 'air' ? -4 : 2);
-      if (showShadow) {
+    for (let c = 0; c < cols; c++) {
+      const dir = DIRS_8[c];
+      const cx = pad + c * (cellW + pad);
+      const cy = pad + r * (cellH + pad);
+      const bg = (c & 1) === 1 ? biomeBg : darkBg;
+      blitScaled(sheet, bg, cx, cy, 1);
+      fillRect(sheet, cx, cy, cellW, 2, barCol);
+
+      const zoom = 3;
+      if (spec.id === 'vanguard-tank') {
+        const sp = composeIsoTank(dir, dir, 0, c === 2 ? 1 : 0);
+        const sh = buildTankContactShadow(dir);
+        const ox = cx + Math.floor((cellW - sp.width * zoom) / 2);
+        const oy = cy + Math.floor((cellH - sp.height * zoom) / 2) + 2;
+        blitScaled(sheet, sh, ox, oy, zoom);
+        blitScaled(sheet, sp, ox, oy, zoom);
+      } else {
+        const anim: AnimId = c === 2 || c === 4 ? 'attack' : 'idle';
+        const sp = compileTitanFrame8(spec.id, anim, dir, anim === 'attack' ? 1 : 0).outlined;
+        const sw = sp.width * zoom;
+        const sh = sp.height * zoom;
+        const ox = cx + Math.floor((cellW - sw) / 2);
+        const oy = cy + Math.floor((cellH - sh) / 2) + (spec.layer === 'air' ? -4 : 2);
         const sy = spec.layer === 'air' ? cy + cellH - 12 : oy + sh - 5;
         drawEllipse(
           sheet,
@@ -620,51 +476,7 @@ function renderTitansContactProof(): PixelSurface {
           spec.shadowRy * zoom * 0.72,
           SHADOW_GROUND,
         );
-      }
-      blitScaled(sheet, surf, ox, oy, zoom);
-    };
-
-    for (let c = 0; c < cols; c++) {
-      const cx = pad + c * (cellW + pad);
-      const cy = pad + r * (cellH + pad);
-      const bg = c === 5 || c === 6 ? biomeBg : darkBg;
-      blitScaled(sheet, bg, cx, cy, 1);
-      fillRect(sheet, cx, cy, cellW, 2, barCol);
-
-      if (c === 0) {
-        drawCentered(cx, cy, compileTitanFrame(spec.id, 'idle', 'SE', 0).outlined, 4, true);
-      } else if (c === 1) {
-        drawCentered(cx, cy, compileTitanFrame(spec.id, 'move', 'SE', 2).outlined, 4, true);
-      } else if (c === 2) {
-        drawCentered(cx, cy, compileTitanFrame(spec.id, 'attack', 'SE', 1).outlined, 4, true);
-      } else if (c === 3) {
-        drawCentered(cx, cy, compileTitanFrame(spec.id, 'idle', 'NE', 0).outlined, 4, true);
-      } else if (c === 4) {
-        drawCentered(cx, cy, compileTitanFrame(spec.id, 'death', 'SE', 0).outlined, 4, false);
-      } else if (c === 5) {
-        drawCentered(cx, cy, compileTitanFrame(spec.id, 'attack', 'SE', 1).outlined, 4, true);
-      } else {
-        // Scale Ladder at 2x zoom: Titan (16x16) next to Infantry (8x8) next to Ultra-Micro (4x4)!
-        const titanSp = compileTitanFrame(spec.id, 'idle', 'SE', 0).outlined;
-        const infSp = compileUnitFrame(infantryByFaction[spec.faction], 'idle', 'SE', 0).outlined;
-        const m4Sp = compileMicro4Frame(spec.faction, 0, false).outlined;
-
-        const baseLine = cy + cellH - 18;
-        // Titan left
-        drawEllipse(sheet, cx + 22, baseLine, spec.shadowRx * 1.8, spec.shadowRy * 1.8, SHADOW_GROUND);
-        blitScaled(
-          sheet,
-          titanSp,
-          cx + 4,
-          baseLine - titanSp.height * 2 - (spec.layer === 'air' ? 14 : 0) + 4,
-          2,
-        );
-        // 8x8 Infantry center-right
-        drawEllipse(sheet, cx + 52, baseLine, 7, 2.5, SHADOW_GROUND);
-        blitScaled(sheet, infSp, cx + 42, baseLine - infSp.height * 2 + 2, 2);
-        // 4x4 Ultra-Micro far-right
-        drawEllipse(sheet, cx + 72, baseLine, 4.5, 1.8, SHADOW_GROUND);
-        blitScaled(sheet, m4Sp, cx + 66, baseLine - m4Sp.height * 2 + 2, 2);
+        blitScaled(sheet, sp, ox, oy, zoom);
       }
     }
   }
@@ -719,8 +531,7 @@ interface KeyframeTitan {
   readonly faction: FactionId;
   readonly x: number;
   readonly y: number;
-  readonly facing: FacingId;
-  readonly hullDir?: Dir8;
+  readonly dir: Dir8;
   readonly turretDir?: Dir8;
   readonly anim: AnimId;
   readonly frame: number;
@@ -728,25 +539,25 @@ interface KeyframeTitan {
 
 const KEYFRAME_TITANS: readonly KeyframeTitan[] = [
   // Vanguard 8-Way Split-Hull Siege Tanks & Valkyrie Gunships
-  { id: 'vanguard-tank', faction: 'vanguard', x: 158, y: 142, facing: 'SE', hullDir: 'NE', turretDir: 'E', anim: 'attack', frame: 1 },
-  { id: 'vanguard-tank', faction: 'vanguard', x: 154, y: 176, facing: 'SE', hullDir: 'E', turretDir: 'E', anim: 'attack', frame: 1 },
-  { id: 'vanguard-tank', faction: 'vanguard', x: 176, y: 204, facing: 'SE', hullDir: 'SE', turretDir: 'NE', anim: 'move', frame: 0 },
-  { id: 'vanguard-gunship', faction: 'vanguard', x: 198, y: 132, facing: 'SE', anim: 'attack', frame: 1 },
-  { id: 'vanguard-gunship', faction: 'vanguard', x: 192, y: 186, facing: 'SE', anim: 'move', frame: 0 },
+  { id: 'vanguard-tank', faction: 'vanguard', x: 158, y: 142, dir: 'NE', turretDir: 'E', anim: 'attack', frame: 1 },
+  { id: 'vanguard-tank', faction: 'vanguard', x: 154, y: 176, dir: 'E', turretDir: 'E', anim: 'attack', frame: 1 },
+  { id: 'vanguard-tank', faction: 'vanguard', x: 176, y: 204, dir: 'SE', turretDir: 'NE', anim: 'move', frame: 0 },
+  { id: 'vanguard-gunship', faction: 'vanguard', x: 198, y: 132, dir: 'E', anim: 'attack', frame: 1 },
+  { id: 'vanguard-gunship', faction: 'vanguard', x: 192, y: 186, dir: 'SE', anim: 'move', frame: 0 },
 
   // Kraxen Brood Behemoths & Bio-Wyverns
-  { id: 'kraxen-behemoth', faction: 'kraxen', x: 292, y: 156, facing: 'SW', anim: 'attack', frame: 1 },
-  { id: 'kraxen-behemoth', faction: 'kraxen', x: 306, y: 192, facing: 'SW', anim: 'attack', frame: 1 },
-  { id: 'kraxen-behemoth', faction: 'kraxen', x: 344, y: 148, facing: 'SW', anim: 'move', frame: 0 },
-  { id: 'kraxen-wyvern', faction: 'kraxen', x: 332, y: 122, facing: 'SW', anim: 'attack', frame: 1 },
-  { id: 'kraxen-wyvern', faction: 'kraxen', x: 356, y: 178, facing: 'SW', anim: 'move', frame: 0 },
-  { id: 'kraxen-wyvern', faction: 'kraxen', x: 316, y: 208, facing: 'NW', anim: 'move', frame: 2 },
+  { id: 'kraxen-behemoth', faction: 'kraxen', x: 292, y: 156, dir: 'W', anim: 'attack', frame: 1 },
+  { id: 'kraxen-behemoth', faction: 'kraxen', x: 306, y: 192, dir: 'SW', anim: 'attack', frame: 1 },
+  { id: 'kraxen-behemoth', faction: 'kraxen', x: 344, y: 148, dir: 'W', anim: 'move', frame: 0 },
+  { id: 'kraxen-wyvern', faction: 'kraxen', x: 332, y: 122, dir: 'SW', anim: 'attack', frame: 1 },
+  { id: 'kraxen-wyvern', faction: 'kraxen', x: 356, y: 178, dir: 'W', anim: 'move', frame: 0 },
+  { id: 'kraxen-wyvern', faction: 'kraxen', x: 316, y: 208, dir: 'NW', anim: 'move', frame: 2 },
 
-  // Solaris Thermal Colossi & Sky-Carriers (left Colossus faces SW to match its left-bound beam!)
-  { id: 'solaris-colossus', faction: 'solaris', x: 234, y: 122, facing: 'SW', anim: 'attack', frame: 1 },
-  { id: 'solaris-colossus', faction: 'solaris', x: 278, y: 124, facing: 'SE', anim: 'attack', frame: 1 },
-  { id: 'solaris-carrier', faction: 'solaris', x: 256, y: 100, facing: 'SE', anim: 'idle', frame: 0 },
-  { id: 'solaris-carrier', faction: 'solaris', x: 214, y: 108, facing: 'SW', anim: 'idle', frame: 1 },
+  // Solaris Thermal Colossi & Sky-Carriers (true 8-way headings!)
+  { id: 'solaris-colossus', faction: 'solaris', x: 234, y: 122, dir: 'SW', anim: 'attack', frame: 1 },
+  { id: 'solaris-colossus', faction: 'solaris', x: 278, y: 124, dir: 'SE', anim: 'attack', frame: 1 },
+  { id: 'solaris-carrier', faction: 'solaris', x: 256, y: 100, dir: 'S', anim: 'idle', frame: 0 },
+  { id: 'solaris-carrier', faction: 'solaris', x: 214, y: 108, dir: 'SW', anim: 'idle', frame: 1 },
 ];
 
 function seededRand(seed: number): () => number {
@@ -772,27 +583,23 @@ function drawCombinedArmsOverlay(
   const ACID_HOT = hexToU32('#ebffb3');
   const GOLD = hexToU32('#ffe066');
 
-  // Sweeping thermal beams from Solaris Colossi attached directly to their drawn A1 emitters!
+  // Sweeping thermal beams from Solaris Colossi attached directly to their drawn 8-way A1 emitters!
   for (const t of titans) {
     if (t.id === 'solaris-colossus' && t.anim === 'attack') {
-      const dir = t.facing === 'SW' || t.facing === 'NW' ? -1 : 1;
-      // Outlined 18x18 sprite draws at (t.x - camX - 9, t.y - camY - 16);
-      // SE emitter sits at outlined x=15 (+6), SW mirrored emitter sits at outlined x=2 (-7), y=5 (-11).
-      const sx = t.x - camX + (dir < 0 ? -7 : 6);
-      const sy = t.y - camY - 11;
-      const tx = dir < 0 ? 196 - camX : 302 - camX;
-      const ty = dir < 0 ? 162 - camY : 164 - camY;
+      const [ex, ey] = COLOSSUS_EMITTER_8[t.dir];
+      const sx = t.x - camX + ex;
+      const sy = t.y - camY + ey;
+      const isLeft = t.dir === 'SW' || t.dir === 'W' || t.dir === 'NW';
+      const tx = isLeft ? 196 - camX : 302 - camX;
+      const ty = isLeft ? 162 - camY : 164 - camY;
       drawLine(frame, sx, sy, tx, ty, PSI_CYN);
-      // Bright origin flare directly on the drawn emitter pixel
       setPixel(frame, sx, sy, PSI_HOT);
       setPixel(frame, sx, sy + 1, PSI_CYN);
-      // Crisp ground scorch impact
       fillRect(frame, tx - 1, ty - 1, 3, 2, PSI_CYN);
       setPixel(frame, tx, ty, PSI_HOT);
     } else if (t.id === 'vanguard-tank' && t.anim === 'attack') {
-      // Heavy fiery artillery shell originating from the exact 8-way A1 muzzle flash pixel!
-      const hDir: Dir8 = t.hullDir ?? 'E';
-      const tDir: Dir8 = t.turretDir ?? 'E';
+      const hDir: Dir8 = t.dir;
+      const tDir: Dir8 = t.turretDir ?? t.dir;
       const [px, py] = TANK_HULL_PIVOT[hDir];
       const [mx, my] = TANK_MUZZLE_REL_8[tDir];
       const sx = Math.round(t.x - camX - TANK_OUT_W / 2) + 1 + px + mx;
@@ -851,8 +658,7 @@ function renderCombinedArmsProof(
     faction: FactionId;
     x: number;
     y: number;
-    facing: FacingId;
-    dir8?: Dir8;
+    dir: Dir8;
     anim: AnimId;
     frame: number;
   }
@@ -865,9 +671,8 @@ function renderCombinedArmsProof(
     count: number,
     sx: number,
     sy: number,
-    facing: FacingId,
+    dir: Dir8,
     atk: number,
-    dir8?: Dir8,
   ) => {
     const cols = Math.max(2, Math.ceil(Math.sqrt(count * (sx / Math.max(1, sy)))));
     const rows = Math.ceil(count / cols);
@@ -882,25 +687,24 @@ function renderCombinedArmsProof(
         faction,
         x: cx + u * sx + (rand() - 0.5) * 7,
         y: cy + v * sy + (rand() - 0.5) * 6,
-        facing,
-        dir8,
+        dir,
         anim,
         frame: anim === 'attack' ? 1 : Math.floor(rand() * 4),
       });
     }
   };
 
-  addSquad('vanguard-trooper', 'vanguard', 188, 156, 22, 34, 38, 'SE', 0.72, 'E');
-  addSquad('vanguard-trooper', 'vanguard', 188, 126, 8, 22, 14, 'NE', 0.55, 'N');
-  addSquad('vanguard-heavy', 'vanguard', 176, 198, 12, 34, 22, 'SE', 0.6);
-  addSquad('vanguard-trooper', 'vanguard', 138, 158, 10, 22, 30, 'SE', 0.25, 'SE');
+  addSquad('vanguard-trooper', 'vanguard', 188, 156, 22, 34, 38, 'E', 0.72);
+  addSquad('vanguard-trooper', 'vanguard', 188, 126, 8, 22, 14, 'N', 0.55);
+  addSquad('vanguard-heavy', 'vanguard', 176, 198, 12, 34, 22, 'E', 0.6);
+  addSquad('vanguard-trooper', 'vanguard', 138, 158, 10, 22, 30, 'SE', 0.25);
 
-  addSquad('kraxen-swarmling', 'kraxen', 298, 162, 40, 48, 56, 'SW', 0.76);
-  addSquad('kraxen-stalker', 'kraxen', 344, 158, 24, 34, 52, 'SW', 0.78);
+  addSquad('kraxen-swarmling', 'kraxen', 298, 162, 40, 48, 56, 'W', 0.76);
+  addSquad('kraxen-stalker', 'kraxen', 344, 158, 24, 34, 52, 'W', 0.78);
   addSquad('kraxen-swarmling', 'kraxen', 322, 208, 16, 40, 20, 'NW', 0.45);
 
-  addSquad('solaris-blade', 'solaris', 252, 140, 22, 54, 26, 'SE', 0.8);
-  addSquad('solaris-arcanist', 'solaris', 256, 108, 14, 52, 16, 'SE', 0.75);
+  addSquad('solaris-blade', 'solaris', 252, 140, 22, 54, 26, 'S', 0.8);
+  addSquad('solaris-arcanist', 'solaris', 256, 108, 14, 52, 16, 'S', 0.75);
 
   const groundTitans = KEYFRAME_TITANS.filter((t) => TITAN_SPEC_BY_ID[t.id].layer === 'ground');
   const airTitans = KEYFRAME_TITANS.filter((t) => TITAN_SPEC_BY_ID[t.id].layer === 'air');
@@ -935,8 +739,7 @@ function renderCombinedArmsProof(
   }
   for (const t of groundTitans) {
     if (t.id === 'vanguard-tank') {
-      const hDir: Dir8 = t.hullDir ?? 'E';
-      const sh = buildHullContactShadow(hDir);
+      const sh = buildTankContactShadow(t.dir);
       blitScaled(frame, sh, Math.round(t.x - camX - TANK_OUT_W / 2), Math.round(t.y - camY - TANK_OUT_H + 5), 1);
     } else {
       const sp = TITAN_SPEC_BY_ID[t.id];
@@ -967,16 +770,12 @@ function renderCombinedArmsProof(
       const a = buildings[item.b.id];
       blitScaled(frame, a.surface, Math.round(item.b.x - camX - a.anchorX), Math.round(item.b.y - camY - a.anchorY), 1);
     } else if (item.kind === 'u') {
-      const sp =
-        item.u.id === 'vanguard-trooper' && item.u.dir8
-          ? compileUnitFrame8(item.u.id, item.u.anim, item.u.dir8, item.u.frame).outlined
-          : compileUnitFrame(item.u.id, item.u.anim, item.u.facing, item.u.frame).outlined;
+      const sp = compileUnitFrame8(item.u.id, item.u.anim, item.u.dir, item.u.frame).outlined;
       blitScaled(frame, sp, Math.round(item.u.x - camX - 5), Math.round(item.u.y - camY - 9), 1);
     } else if (item.t.id === 'vanguard-tank') {
-      const hDir: Dir8 = item.t.hullDir ?? 'E';
-      const tDir: Dir8 = item.t.turretDir ?? 'E';
+      const tDir: Dir8 = item.t.turretDir ?? item.t.dir;
       const atkF = item.t.anim === 'attack' ? item.t.frame : 0;
-      const sp = composeIsoTank(hDir, tDir, 0, atkF);
+      const sp = composeIsoTank(item.t.dir, tDir, 0, atkF);
       blitScaled(
         frame,
         sp,
@@ -985,7 +784,7 @@ function renderCombinedArmsProof(
         1,
       );
     } else {
-      const sp = compileTitanFrame(item.t.id, item.t.anim, item.t.facing, item.t.frame).outlined;
+      const sp = compileTitanFrame8(item.t.id, item.t.anim, item.t.dir, item.t.frame).outlined;
       blitScaled(
         frame,
         sp,
@@ -1035,7 +834,7 @@ function renderCombinedArmsProof(
   airTitans.sort((a, b) => a.y - b.y);
   for (const t of airTitans) {
     const meta = TITAN_SPEC_BY_ID[t.id];
-    const sp = compileTitanFrame(t.id, t.anim, t.facing, t.frame).outlined;
+    const sp = compileTitanFrame8(t.id, t.anim, t.dir, t.frame).outlined;
     blitScaled(
       frame,
       sp,
@@ -1122,8 +921,7 @@ function renderUltra1000Proof(
   }
   for (const t of groundTitans) {
     if (t.id === 'vanguard-tank') {
-      const hDir: Dir8 = t.hullDir ?? 'E';
-      const sh = buildHullContactShadow(hDir);
+      const sh = buildTankContactShadow(t.dir);
       blitScaled(frame, sh, Math.round(t.x - camX - TANK_OUT_W / 2), Math.round(t.y - camY - TANK_OUT_H + 5), 1);
     } else {
       const sp = TITAN_SPEC_BY_ID[t.id];
@@ -1155,10 +953,9 @@ function renderUltra1000Proof(
       const sp = cache4[`${item.m.faction}-${item.m.flip ? 1 : 0}-${item.m.f}`];
       blitScaled(frame, sp, Math.round(item.m.x - camX - 3), Math.round(item.m.y - camY - 5), 1);
     } else if (item.t.id === 'vanguard-tank') {
-      const hDir: Dir8 = item.t.hullDir ?? 'E';
-      const tDir: Dir8 = item.t.turretDir ?? 'E';
+      const tDir: Dir8 = item.t.turretDir ?? item.t.dir;
       const atkF = item.t.anim === 'attack' ? item.t.frame : 0;
-      const sp = composeIsoTank(hDir, tDir, 0, atkF);
+      const sp = composeIsoTank(item.t.dir, tDir, 0, atkF);
       blitScaled(
         frame,
         sp,
@@ -1167,7 +964,7 @@ function renderUltra1000Proof(
         1,
       );
     } else {
-      const sp = compileTitanFrame(item.t.id, item.t.anim, item.t.facing, item.t.frame).outlined;
+      const sp = compileTitanFrame8(item.t.id, item.t.anim, item.t.dir, item.t.frame).outlined;
       blitScaled(
         frame,
         sp,
@@ -1205,7 +1002,7 @@ function renderUltra1000Proof(
 
   for (const t of airTitans) {
     const meta = TITAN_SPEC_BY_ID[t.id];
-    const sp = compileTitanFrame(t.id, t.anim, t.facing, t.frame).outlined;
+    const sp = compileTitanFrame8(t.id, t.anim, t.dir, t.frame).outlined;
     blitScaled(
       frame,
       sp,
@@ -1261,6 +1058,7 @@ function buildInteractiveShowcaseHTML(
     titans: titansMeta,
     micro4: micro4Meta,
     isoTank,
+    colossusEmitters: DIRS_8.map((d) => COLOSSUS_EMITTER_8[d]),
     buildings: buildingPayload,
     mapBuildings: MAP_BUILDINGS,
   });
@@ -1492,6 +1290,7 @@ function buildInteractiveShowcaseHTML(
         <button class="pill" data-cast-tab="micro4">4×4 Mega-Swarm (3)</button>
       </div>
       <div class="group">
+        <button class="pill active" id="btn-cast-spin">8-Way Spin</button>
         <button class="pill active" data-cast-anim="attack">Attack</button>
         <button class="pill" data-cast-anim="move">Move</button>
         <button class="pill" data-cast-anim="idle">Idle</button>
@@ -1516,6 +1315,7 @@ const state = {
   paused: false,
   castTab: 'titans',
   castAnim: 'attack',
+  castSpin: true,
   camX: (DATA.worldW - DATA.viewW) / 2,
   camY: (DATA.worldH - DATA.viewH) / 2 - 4,
   lastTime: performance.now(),
@@ -1529,8 +1329,6 @@ const images = {
   tilesetAtlas: null,
   raw: {},
   out: {},
-  raw8: {},
-  out8: {},
   isoHull: null,
   isoTurret: null,
   isoShadow: null,
@@ -1956,14 +1754,14 @@ function stepSim(dt) {
           const aimDx = tgt.x - u.x;
           const aimDy = tgt.y - u.y;
           u.attackIsRight = aimDx >= 0;
-          u.facing = (aimDy >= -2) ? (u.attackIsRight ? 0 : 1) : (u.attackIsRight ? 2 : 3);
           const aimDir8 = vecToDir8(aimDx, aimDy);
           if (u.id === 'vanguard-tank') u.turret8 = aimDir8;
           else u.dir8 = aimDir8;
           const alt = meta.airAltitude;
           const distHit = Math.hypot(aimDx, aimDy) || 1;
           if (st.proj === 'thermal-beam') {
-            beams.push({ x0: u.x + (u.attackIsRight ? 4 : -4), y0: u.y - 12, x1: tgt.x, y1: tgt.y - 3, t: 0, dur: 0.28 });
+            const [ex, ey] = DATA.colossusEmitters[u.dir8];
+            beams.push({ x0: u.x + ex, y0: u.y + ey, x1: tgt.x, y1: tgt.y - 3, t: 0, dur: 0.28 });
             tgt.hp -= st.dmg;
             if (tgt.hp <= 0 && tgt.dead !== undefined) { tgt.dead = true; tgt.deathT = 0; }
             blasts.push({ x: tgt.x, y: tgt.y - 2, r: 3, col: '#2ce8f5', hot: '#ffffff', t: 0, maxT: 0.22 });
@@ -2408,12 +2206,8 @@ function renderBattle() {
           : animName === 'attack'
             ? Math.min(seg.count - 1, Math.floor(u.attackTime * ANIM_FPS.attack))
             : Math.floor(u.animT * ANIM_FPS[animName]) % seg.count;
-        const use8 = Boolean(meta.has8Way && images.out8[u.id]);
-        const img = use8
-          ? (state.outlined ? images.out8[u.id] : images.raw8[u.id])
-          : (state.outlined ? images.out[u.id] : images.raw[u.id]);
-        const rowIdx = use8 ? u.dir8 : u.facing;
-        ctx.drawImage(img, (seg.start + fIdx) * cw, rowIdx * ch, cw, ch, sx - (cw >> 1), sy - ch + 1, cw, ch);
+        const img = state.outlined ? images.out[u.id] : images.raw[u.id];
+        ctx.drawImage(img, (seg.start + fIdx) * cw, u.dir8 * ch, cw, ch, sx - (cw >> 1), sy - ch + 1, cw, ch);
       }
 
       if (!u.dead && u.hp < u.maxHp) {
@@ -2517,7 +2311,7 @@ function renderBattle() {
         ? Math.min(seg.count - 1, Math.floor(u.attackTime * ANIM_FPS.attack))
         : Math.floor(u.animT * ANIM_FPS[animName]) % seg.count;
     const img = state.outlined ? images.out[u.id] : images.raw[u.id];
-    ctx.drawImage(img, (seg.start + fIdx) * cw, u.facing * ch, cw, ch, sx - (cw >> 1), sy - (ch >> 1), cw, ch);
+    ctx.drawImage(img, (seg.start + fIdx) * cw, u.dir8 * ch, cw, ch, sx - (cw >> 1), sy - (ch >> 1), cw, ch);
   }
 
   ctx.restore();
@@ -2559,7 +2353,7 @@ function rebuildCastInspector() {
     n.textContent = meta.name.replace('Vanguard ', 'V. ').replace('Kraxen ', 'K. ').replace('Solaris ', 'S. ');
     const r = document.createElement('div');
     r.className = 'unit-role';
-    const roleLabel = meta.id === 'vanguard-tank' ? '22×20 · 8-Way Tank' : meta.has8Way ? meta.w + '×' + meta.h + ' · 8-Way Rifle' : meta.w + '×' + meta.h + ' · ' + meta.role;
+    const roleLabel = meta.id === 'vanguard-tank' ? '22×20 · 8-Way Tank' : meta.w + '×' + meta.h + ' · ' + meta.role;
     r.textContent = roleLabel;
     card.append(cv, n, r);
     grid.appendChild(card);
@@ -2585,8 +2379,8 @@ function renderCastInspector(nowSec) {
       const meta = item.meta;
       if (meta.id === 'vanguard-tank') {
         const T = DATA.isoTank;
-        const dir = Math.floor(nowSec * 0.45) % 8;
-        const tDir = state.castAnim === 'idle' ? dir : Math.floor(nowSec * 1.15) % 8;
+        const dir = state.castSpin ? (Math.floor(nowSec * 0.45) % 8) : 3;
+        const tDir = state.castSpin ? (state.castAnim === 'idle' ? dir : Math.floor(nowSec * 1.15) % 8) : 2;
         const phase = state.castAnim === 'move' ? (Math.floor(nowSec * 8) & 3) : 0;
         const atkCol = state.castAnim === 'attack' ? (Math.floor(nowSec * 5.5) & 3) : 0;
         const comp = getCompositeTank(dir, phase, tDir, atkCol, state.outlined);
@@ -2601,11 +2395,8 @@ function renderCastInspector(nowSec) {
         const fIdx = Math.floor(nowSec * fps) % seg.count;
         const cw = state.outlined ? meta.w + 2 : meta.w;
         const ch = state.outlined ? meta.h + 2 : meta.h;
-        const use8 = Boolean(meta.has8Way && images.out8[meta.id]);
-        const img = use8
-          ? (state.outlined ? images.out8[meta.id] : images.raw8[meta.id])
-          : (state.outlined ? images.out[meta.id] : images.raw[meta.id]);
-        const rowIdx = use8 ? (Math.floor(nowSec * 0.85) % 8) : 0;
+        const img = state.outlined ? images.out[meta.id] : images.raw[meta.id];
+        const rowIdx = state.castSpin ? (Math.floor(nowSec * 0.8) % 8) : 3;
         const zoom = meta.w >= 14 ? 3 : (state.outlined ? 4 : 5);
         const dw = cw * zoom;
         const dh = ch * zoom;
@@ -2742,6 +2533,12 @@ document.querySelectorAll('[data-cast-tab]').forEach((btn) => {
   });
 });
 
+document.getElementById('btn-cast-spin').addEventListener('click', (e) => {
+  state.castSpin = !state.castSpin;
+  e.target.classList.toggle('active', state.castSpin);
+  e.target.textContent = state.castSpin ? '8-Way Spin' : 'Lock SE';
+});
+
 document.querySelectorAll('[data-cast-anim]').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('[data-cast-anim]').forEach((b) => b.classList.remove('active'));
@@ -2797,10 +2594,6 @@ async function init() {
     ...[...DATA.units, ...DATA.titans].map(async (u) => {
       images.raw[u.id] = await loadImage(u.rawDataUrl);
       images.out[u.id] = await loadImage(u.outlinedDataUrl);
-      if (u.has8Way && u.raw8DataUrl && u.outlined8DataUrl) {
-        images.raw8[u.id] = await loadImage(u.raw8DataUrl);
-        images.out8[u.id] = await loadImage(u.outlined8DataUrl);
-      }
     }),
     loadImage(DATA.isoTank.hullDataUrl).then((img) => { images.isoHull = img; }),
     loadImage(DATA.isoTank.turretDataUrl).then((img) => { images.isoTurret = img; }),
@@ -2875,7 +2668,7 @@ function main(): void {
       {
         infantryTilePx: 8,
         ultraMicroTilePx: 4,
-        facings: FACINGS,
+        facings: DIRS_8,
         anims: ANIMS,
         infantry: unitsMeta.map(({ id, name, role, faction, w, h, attackKind, frameOffsets, totalCols }) => ({
           id,
@@ -3025,14 +2818,12 @@ function main(): void {
 
   const infProofPath = resolve(OUT_ROOT, 'proof-8x8-sprites.png');
   const titanProofPath = resolve(OUT_ROOT, 'proof-titans-16x16.png');
-  const vanguard8Path = resolve(OUT_ROOT, 'proof-8way-vanguard.png');
   const combinedPath = resolve(OUT_ROOT, 'proof-combined-arms-battle.png');
   const ultraPath = resolve(OUT_ROOT, 'proof-ultra-1000-swarm.png');
   const htmlPath = resolve(OUT_ROOT, 'micro-rts-showcase.html');
 
   writeFileSync(infProofPath, encodePNG(contactInf));
   writeFileSync(titanProofPath, encodePNG(contactTitans));
-  writeFileSync(vanguard8Path, encodePNG(renderVanguard8WayProof(tileset, buildings)));
   writeFileSync(combinedPath, encodePNG(combinedBattle.surface2x));
   writeFileSync(ultraPath, encodePNG(ultraBattle.surface2x));
   writeFileSync(
@@ -3042,9 +2833,9 @@ function main(): void {
   );
 
   console.log(
-    `Generated Mixed-Scale Micro-RTS Kit:\n` +
-      `  - 6 8x8 infantry (8-way Vanguard Marine) + 6 Titans (22x20 8-way Iso Tank) + 3 4x4 factions\n` +
-      `  - ${vanguard8Path}\n` +
+    `Generated Full 8-Way Micro-RTS Kit:\n` +
+      `  - 6 8-way 8x8 infantry + 6 8-way Titans/Flyers (22x20 split-hull Siege Tank) + 3 4x4 factions\n` +
+      `  - ${infProofPath}\n` +
       `  - ${titanProofPath}\n` +
       `  - ${combinedPath} (${combinedBattle.totalCount} units on screen)\n` +
       `  - ${ultraPath} (${ultraBattle.totalCount} units on screen)\n` +

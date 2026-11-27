@@ -2,9 +2,13 @@
   "infantryTilePx": 8,
   "ultraMicroTilePx": 4,
   "facings": [
-    "SE",
-    "SW",
+    "N",
     "NE",
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
     "NW"
   ],
   "anims": [

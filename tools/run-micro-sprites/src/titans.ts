@@ -15,7 +15,7 @@
 
 import { buildFactionPalette, INK_OUTLINE, type FactionId, type TeamColorId } from './palette.ts';
 import { addPixelOutline, compilePattern, mirrorHorizontal, type PixelSurface } from './pixel.ts';
-import type { AnimId, FacingId } from './units.ts';
+import { DIRS_8, type AnimId, type Dir8, type FacingId } from './units.ts';
 
 export type TitanId =
   | 'vanguard-tank'
@@ -43,6 +43,9 @@ export interface TitanSpec {
       {
         readonly SE: readonly (readonly string[])[];
         readonly NE: readonly (readonly string[])[];
+        readonly N?: readonly (readonly string[])[];
+        readonly E?: readonly (readonly string[])[];
+        readonly S?: readonly (readonly string[])[];
       }
     >
   >;
@@ -614,6 +617,187 @@ const GUNSHIP_DEATH_2: readonly string[] = [
   '..............',
 ];
 
+// 8-way N / E / S frames for Vanguard Valkyrie (14x12 air)
+const GUNSHIP_N_1: readonly string[] = [
+  '......ww......',
+  '.....wmmw.....',
+  '....sBmmBs....',
+  '...bBBmmBBb...',
+  '..bBBBmmBBBb..',
+  '.bBBBBmmBBBBb.',
+  'bBBBBBmmBBBBBb',
+  'dDDDssmmssDDDd',
+  '..ddqssssqdd..',
+  '....qddddq....',
+  '....cc..cc....',
+  '.....c..c.....',
+];
+
+const GUNSHIP_N_2: readonly string[] = [
+  '..............',
+  '......ww......',
+  '.....wmmw.....',
+  '....sBmmBs....',
+  '...bBBmmBBb...',
+  '..bBBBmmBBBb..',
+  '.bBBBBmmBBBBb.',
+  'bBBBBBmmBBBBBb',
+  'dDDDssmmssDDDd',
+  '..ddqssssqdd..',
+  '....cc..cc....',
+  '..............',
+];
+
+const GUNSHIP_N_ATK1: readonly string[] = [
+  '..fF..ww..Ff..',
+  '..f..wmmw..f..',
+  '....sBmmBs....',
+  '...bBBmmBBb...',
+  '..bBBBmmBBBb..',
+  '.bBBBBmmBBBBb.',
+  'bBBBBBmmBBBBBb',
+  'dDDDssmmssDDDd',
+  '..ddqssssqdd..',
+  '....qddddq....',
+  '....cc..cc....',
+  '.....c..c.....',
+];
+
+const GUNSHIP_N_ATK2: readonly string[] = [
+  '..e...ww...e..',
+  '.....wmmw.....',
+  '....sBmmBs....',
+  '...bBBmmBBb...',
+  '..bBBBmmBBBb..',
+  '.bBBBBmmBBBBb.',
+  'bBBBBBmmBBBBBb',
+  'dDDDssmmssDDDd',
+  '..ddqssssqdd..',
+  '....qddddq....',
+  '....cc..cc....',
+  '..............',
+];
+
+const GUNSHIP_E_1: readonly string[] = [
+  '..............',
+  '....bbb.......',
+  '...bBBBD......',
+  '..bBBBBd......',
+  'ccdwwssssww...',
+  'c.wmmmmmsvvv..',
+  '.qBBBBBBBvvvd.',
+  'ccdBBBBBBssdd.',
+  '..bDDDDddsq...',
+  '...bBBBD......',
+  '..............',
+  '..............',
+];
+
+const GUNSHIP_E_2: readonly string[] = [
+  '..............',
+  '..............',
+  '....bbb.......',
+  '...bBBBD......',
+  'c.bBBBBd......',
+  'ccdwwssssww...',
+  '.cwmmmmmsvvv..',
+  'ccqBBBBBBBvvvd',
+  '..dBBBBBBssdd.',
+  '..bDDDDddsq...',
+  '...bBBBD......',
+  '..............',
+];
+
+const GUNSHIP_E_ATK1: readonly string[] = [
+  '..............',
+  '....bbb.......',
+  '...bBBBD......',
+  '..bBBBBd..f...',
+  'ccdwwsssswfFf.',
+  'c.wmmmmmsvvf..',
+  '.qBBBBBBBvvvd.',
+  'ccdBBBBBBssdd.',
+  '..bDDDDddsq...',
+  '...bBBBD......',
+  '..............',
+  '..............',
+];
+
+const GUNSHIP_E_ATK2: readonly string[] = [
+  '..............',
+  '....bbb.......',
+  '...bBBBD......',
+  '..bBBBBd..e...',
+  'c.dwwssssww...',
+  'ccwmmmmmsvvv..',
+  '.qBBBBBBBvvdf.',
+  'c.dBBBBBBssfFf',
+  '..bDDDDddsq.f.',
+  '...bBBBD......',
+  '..............',
+  '..............',
+];
+
+const GUNSHIP_S_1: readonly string[] = [
+  '....cc..cc....',
+  '....qddddq....',
+  '..ddqssssqdd..',
+  'bBBBssmmssBBBb',
+  'bBBBBBmmBBBBBb',
+  '.bBBBBmmBBBBb.',
+  '..dBBswwsBBd..',
+  '...dDsvvsDd...',
+  '....dsvvsd....',
+  '.....qssq.....',
+  '......dd......',
+  '..............',
+];
+
+const GUNSHIP_S_2: readonly string[] = [
+  '..............',
+  '....cc..cc....',
+  '....qddddq....',
+  '..ddqssssqdd..',
+  'bBBBssmmssBBBb',
+  'bBBBBBmmBBBBBb',
+  '.bBBBBmmBBBBb.',
+  '..dBBswwsBBd..',
+  '...dDsvvsDd...',
+  '....dsvvsd....',
+  '.....qssq.....',
+  '......dd......',
+];
+
+const GUNSHIP_S_ATK1: readonly string[] = [
+  '....cc..cc....',
+  '....qddddq....',
+  '..ddqssssqdd..',
+  'bBBBssmmssBBBb',
+  'bBBBBBmmBBBBBb',
+  '.bBBBBmmBBBBb.',
+  '..dBBswwsBBd..',
+  '..fdDsvvsDdf..',
+  '..fFdvvvvdFf..',
+  '...f.qssq.f...',
+  '......dd......',
+  '..............',
+];
+
+const GUNSHIP_S_ATK2: readonly string[] = [
+  '....cc..cc....',
+  '....qddddq....',
+  '..ddqssssqdd..',
+  'bBBBssmmssBBBb',
+  'bBBBBBmmBBBBBb',
+  '.bBBBBmmBBBBb.',
+  '..dBBswwsBBd..',
+  '...dDsvvsDd...',
+  '..e.dsvvsd.e..',
+  '.....qssq.....',
+  '......dd......',
+  '..............',
+];
+
 const VANGUARD_GUNSHIP: TitanSpec = {
   id: 'vanguard-gunship',
   name: 'Vanguard Valkyrie',
@@ -628,14 +812,23 @@ const VANGUARD_GUNSHIP: TitanSpec = {
   attackKind: 'rocket-salvo',
   anims: {
     idle: {
+      N: [GUNSHIP_N_1, GUNSHIP_N_2],
+      E: [GUNSHIP_E_1, GUNSHIP_E_2],
+      S: [GUNSHIP_S_1, GUNSHIP_S_2],
       SE: [GUNSHIP_SE_1, GUNSHIP_SE_2],
       NE: [GUNSHIP_NE_1, GUNSHIP_NE_2],
     },
     move: {
+      N: [GUNSHIP_N_1, GUNSHIP_N_2, GUNSHIP_N_1, GUNSHIP_N_2],
+      E: [GUNSHIP_E_1, GUNSHIP_E_2, GUNSHIP_E_1, GUNSHIP_E_2],
+      S: [GUNSHIP_S_1, GUNSHIP_S_2, GUNSHIP_S_1, GUNSHIP_S_2],
       SE: [GUNSHIP_SE_1, GUNSHIP_SE_2, GUNSHIP_SE_1, GUNSHIP_SE_2],
       NE: [GUNSHIP_NE_1, GUNSHIP_NE_2, GUNSHIP_NE_1, GUNSHIP_NE_2],
     },
     attack: {
+      N: [GUNSHIP_N_1, GUNSHIP_N_ATK1, GUNSHIP_N_ATK2, GUNSHIP_N_2],
+      E: [GUNSHIP_E_1, GUNSHIP_E_ATK1, GUNSHIP_E_ATK2, GUNSHIP_E_2],
+      S: [GUNSHIP_S_1, GUNSHIP_S_ATK1, GUNSHIP_S_ATK2, GUNSHIP_S_2],
       SE: [GUNSHIP_SE_1, GUNSHIP_SE_ATK1, GUNSHIP_SE_ATK2, GUNSHIP_SE_2],
       NE: [GUNSHIP_NE_1, GUNSHIP_NE_ATK1, GUNSHIP_NE_ATK2, GUNSHIP_NE_2],
     },
@@ -1053,6 +1246,197 @@ const BEH_DEATH_2: readonly string[] = [
   '..................',
 ];
 
+// 8-way N / E / S frames for Kraxen Brood Behemoth (18x16 ground, feet firmly anchored on y=14!)
+const BEH_N_IDLE_0: readonly string[] = [
+  '..oo..........oo..',
+  '..co..p..p....oc..',
+  '..cc.ppmmpp...cc..',
+  '...cppmmmmpp.cc...',
+  '...ppmmppmmppp....',
+  '..ppmmppppmmppp...',
+  '..pmmmmmmmmmmmp...',
+  '..pmmuuuuuuumpp...',
+  '..rmmuuuuuuuumr...',
+  '..rrmmuuuuummrr...',
+  '...rrmuuuuuumr....',
+  '...rrmr..rmmr.....',
+  '...rrmr..rmmr.....',
+  '...rrC....Crr.....',
+  '...oC......Co.....',
+  '..................',
+];
+
+const BEH_N_MOVE_0: readonly string[] = [
+  '..oo..........oo..',
+  '..co..p..p....oc..',
+  '..cc.ppmmpp...cc..',
+  '...cppmmmmpp.cc...',
+  '...ppmmppmmppp....',
+  '..ppmmppppmmppp...',
+  '..pmmmmmmmmmmmp...',
+  '..pmmuuuuuuumpp...',
+  '..rmmuuuuuuuumr...',
+  '..rrmmuuuuummrr...',
+  '...rrmuuuuuumr....',
+  '...rrmr..rmmr.....',
+  '...rrC...rmmr.....',
+  '...oC.....Crr.....',
+  '...........Co.....',
+  '..................',
+];
+
+const BEH_N_MOVE_2: readonly string[] = [
+  '..oo..........oo..',
+  '..co..p..p....oc..',
+  '..cc.ppmmpp...cc..',
+  '...cppmmmmpp.cc...',
+  '...ppmmppmmppp....',
+  '..ppmmppppmmppp...',
+  '..pmmmmmmmmmmmp...',
+  '..pmmuuuuuuumpp...',
+  '..rmmuuuuuuuumr...',
+  '..rrmmuuuuummrr...',
+  '...rrmuuuuuumr....',
+  '...rrmr..rmmr.....',
+  '...rrmr...Crr.....',
+  '...rrC.....Co.....',
+  '...oC.............',
+  '..................',
+];
+
+const BEH_N_ATK_1: readonly string[] = [
+  '.oooo........oooo.',
+  '.oocco.p..p.occoo.',
+  '..cccppmmppcccc...',
+  '...cppmmmmppcc....',
+  '...ppmmppmmppp....',
+  '..ppmmppppmmppp...',
+  '..pmmmmmmmmmmmp...',
+  '..pmmuuuuuuumpp...',
+  '..rmmuuuuuuuumr...',
+  '..rrmmuuuuummrr...',
+  '...rrmuuuuuumr....',
+  '...rrmr..rmmr.....',
+  '...rrmr..rmmr.....',
+  '...rrC....Crr.....',
+  '...oC......Co.....',
+  '..................',
+];
+
+const BEH_E_IDLE_0: readonly string[] = [
+  '..................',
+  '.....p..p.........',
+  '...ppmmmmpp.......',
+  '..ppmmggmmpp..oo..',
+  '.ppmmgGGgmmpp.oc..',
+  '.pmmmggggmmmuccc..',
+  'ppmmmmmmmmmuucooo.',
+  'pmmmuummmmuuccoooo',
+  'rmmuuummmuuuccooo.',
+  'rrmuummmuuuuccoo..',
+  '.rrmuuuuuuuccc....',
+  '.rrmmruuurrmm.....',
+  '.rrmr.ruur.rmr....',
+  '.rrC..r..r..rC....',
+  '.oC...C..C..oC....',
+  '..................',
+];
+
+const BEH_E_ATK_1: readonly string[] = [
+  '..................',
+  '.....p..p......oo.',
+  '...ppmmmmpp..oooc.',
+  '..ppmmgGGmppcccooo',
+  '.ppmmgGGGGmmcccooo',
+  '.pmmmggggmmuucoooo',
+  'ppmmmmmmmmmuuccooo',
+  'pmmmuummmmuucccooo',
+  'rmmuuummmuuuccco..',
+  'rrmuummmuuuuccc...',
+  '.rrmuuuuuuucc.....',
+  '.rrmmruuurrmmr....',
+  '.rrmr.ruur..rmr...',
+  '.rrC..r..r...rC...',
+  '.oC...C..C...oC...',
+  '..................',
+];
+
+const BEH_S_IDLE_0: readonly string[] = [
+  '..................',
+  '.....p....p.......',
+  '....ppmmmmpp......',
+  '...ppmmmmmmpp.....',
+  '..ppmmggggmmpp....',
+  '..pmmgGmmGgmmp....',
+  '.ppmmggmmggmmpp...',
+  '.pmmuuummuuummp...',
+  '.oocmuuuuuuumcoo..',
+  'ooocruuuuuuurcooo.',
+  'oooc.rruuuurr.cooo',
+  '.oo..rrm..mrr..oo.',
+  '.....rrC..Crr.....',
+  '.....rrC..Crr.....',
+  '.....oC....Co.....',
+  '..................',
+];
+
+const BEH_S_MOVE_0: readonly string[] = [
+  '..................',
+  '.....p....p.......',
+  '....ppmmmmpp......',
+  '...ppmmmmmmpp.....',
+  '..ppmmggggmmpp....',
+  '..pmmgGmmGgmmp....',
+  '.ppmmggmmggmmpp...',
+  '.pmmuuummuuummp...',
+  '.oocmuuuuuuumcoo..',
+  'ooocruuuuuuurcooo.',
+  'oooc.rruuuurr.cooo',
+  '.oo..rrm..mrr..oo.',
+  '.....rrC..Crr.....',
+  '.....oC...Crr.....',
+  '...........Co.....',
+  '..................',
+];
+
+const BEH_S_MOVE_2: readonly string[] = [
+  '..................',
+  '.....p....p.......',
+  '....ppmmmmpp......',
+  '...ppmmmmmmpp.....',
+  '..ppmmggggmmpp....',
+  '..pmmgGmmGgmmp....',
+  '.ppmmggmmggmmpp...',
+  '.pmmuuummuuummp...',
+  '.oocmuuuuuuumcoo..',
+  'ooocruuuuuuurcooo.',
+  'oooc.rruuuurr.cooo',
+  '.oo..rrm..mrr..oo.',
+  '.....rrC..Crr.....',
+  '.....rrC...Co.....',
+  '.....oC...........',
+  '..................',
+];
+
+const BEH_S_ATK_1: readonly string[] = [
+  '..................',
+  '.....p....p.......',
+  '....ppmmmmpp......',
+  '...ppmmmmmmpp.....',
+  '..ppmmgGGgmmpp....',
+  '..pmmgGmmGgmmp....',
+  '.ppmmgGmmGgmmpp...',
+  '.pmmuuummuuummp...',
+  'ooocmuuuuuuumcooo.',
+  'ooocruuuuuuurcooo.',
+  '.ooc.rruuuurr.coo.',
+  '..ooo.rrmmrr.ooo..',
+  '...ooooCCoooo.....',
+  '....ooo..ooo......',
+  '.....oC..Co.......',
+  '..................',
+];
+
 const KRAXEN_BEHEMOTH: TitanSpec = {
   id: 'kraxen-behemoth',
   name: 'Kraxen Behemoth',
@@ -1067,14 +1451,23 @@ const KRAXEN_BEHEMOTH: TitanSpec = {
   attackKind: 'cleave',
   anims: {
     idle: {
+      N: [BEH_N_IDLE_0, BEH_N_MOVE_0],
+      E: [BEH_E_IDLE_0, BEH_SE_IDLE_1],
+      S: [BEH_S_IDLE_0, BEH_S_MOVE_0],
       SE: [BEH_SE_IDLE_0, BEH_SE_IDLE_1],
       NE: [BEH_NE_IDLE_0, BEH_NE_MOVE_1],
     },
     move: {
+      N: [BEH_N_MOVE_0, BEH_N_IDLE_0, BEH_N_MOVE_2, BEH_N_IDLE_0],
+      E: [BEH_SE_MOVE_0, BEH_E_IDLE_0, BEH_SE_MOVE_2, BEH_E_IDLE_0],
+      S: [BEH_S_MOVE_0, BEH_S_IDLE_0, BEH_S_MOVE_2, BEH_S_IDLE_0],
       SE: [BEH_SE_MOVE_0, BEH_SE_MOVE_1, BEH_SE_MOVE_2, BEH_SE_MOVE_3],
       NE: [BEH_NE_MOVE_0, BEH_NE_MOVE_1, BEH_NE_MOVE_2, BEH_NE_IDLE_0],
     },
     attack: {
+      N: [BEH_N_IDLE_0, BEH_N_ATK_1, BEH_N_ATK_1, BEH_N_IDLE_0, BEH_N_IDLE_0],
+      E: [BEH_SE_ATK_0, BEH_E_ATK_1, BEH_SE_ATK_2, BEH_SE_ATK_3, BEH_E_IDLE_0],
+      S: [BEH_S_IDLE_0, BEH_S_ATK_1, BEH_S_ATK_1, BEH_S_IDLE_0, BEH_S_IDLE_0],
       SE: [BEH_SE_ATK_0, BEH_SE_ATK_1, BEH_SE_ATK_2, BEH_SE_ATK_3, BEH_SE_IDLE_0],
       NE: [BEH_NE_ATK_0, BEH_NE_ATK_1, BEH_NE_ATK_2, BEH_NE_ATK_3, BEH_NE_IDLE_0],
     },
@@ -1254,6 +1647,142 @@ const WYVERN_DEATH_2: readonly string[] = [
   '..............',
 ];
 
+// 8-way N / E / S frames for Kraxen Bio-Wyvern (14x12 air)
+const WYVERN_N_UP: readonly string[] = [
+  '.....o..o.....',
+  '....opmmpo....',
+  '..oo.pmmp.oo..',
+  '.pppopmmpoppp.',
+  '.pmmmummmmmmp.',
+  '..uuumrmmuuu..',
+  '.....rggmr....',
+  '......rr......',
+  '......rr......',
+  '.......r......',
+  '..............',
+  '..............',
+];
+
+const WYVERN_N_DOWN: readonly string[] = [
+  '.....o..o.....',
+  '....opmmpo....',
+  '.....pmmp.....',
+  '....pmmmmp....',
+  '..ppmmummmpp..',
+  '.pmmp.rr.pmmp.',
+  '.pmo..rr..omp.',
+  '.oo...rr...oo.',
+  '.......r......',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_N_SPIT: readonly string[] = [
+  '.....gGGg.....',
+  '....opggpo....',
+  '..oo.pmmp.oo..',
+  '.pppopmmpoppp.',
+  '.pmmmummmmmmp.',
+  '..uuumrmmuuu..',
+  '.....rggmr....',
+  '......rr......',
+  '.......r......',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_E_UP: readonly string[] = [
+  '....oo........',
+  '...pppo.......',
+  '..pmmppo......',
+  '..ummmppmmp...',
+  'rrummmggmggo..',
+  '.rrrmmGgmmo...',
+  '....rggmr.....',
+  '..............',
+  '..............',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_E_DOWN: readonly string[] = [
+  '..............',
+  '..............',
+  '....ppmmp.....',
+  'rrummmggmggo..',
+  '.rrrmmGgmmo...',
+  '...pmmggmr....',
+  '..pmmpo.......',
+  '..pppo........',
+  '...oo.........',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_E_SPIT: readonly string[] = [
+  '....oo........',
+  '...pppo.......',
+  '..pmmppo......',
+  '..ummmppmmp.g.',
+  'rrummmGGmGogG.',
+  '.rrrmmGgmmo.g.',
+  '....rggmr.....',
+  '..............',
+  '..............',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_S_UP: readonly string[] = [
+  '......rr......',
+  '..oo..rr..oo..',
+  '.pppo.rr.oppp.',
+  '.pmmprggmpmmp.',
+  '..ummmggmmmu..',
+  '...pmmGGmmp...',
+  '....pmggmp....',
+  '.....o..o.....',
+  '..............',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_S_DOWN: readonly string[] = [
+  '......rr......',
+  '......rr......',
+  '....pmggmp....',
+  '...pmmGGmmp...',
+  '..ppmmggmmpp..',
+  '.pmmpo..opmmp.',
+  '.pmo......omp.',
+  '.oo........oo.',
+  '..............',
+  '..............',
+  '..............',
+  '..............',
+];
+
+const WYVERN_S_SPIT: readonly string[] = [
+  '......rr......',
+  '..oo..rr..oo..',
+  '.pppo.rr.oppp.',
+  '.pmmprggmpmmp.',
+  '..ummmGGmmmu..',
+  '...pmmGGmmp...',
+  '....pgGGgp....',
+  '.....gGGg.....',
+  '......gg......',
+  '..............',
+  '..............',
+  '..............',
+];
+
 const KRAXEN_WYVERN: TitanSpec = {
   id: 'kraxen-wyvern',
   name: 'Kraxen Bio-Wyvern',
@@ -1268,14 +1797,23 @@ const KRAXEN_WYVERN: TitanSpec = {
   attackKind: 'glaive',
   anims: {
     idle: {
+      N: [WYVERN_N_UP, WYVERN_N_DOWN],
+      E: [WYVERN_E_UP, WYVERN_E_DOWN],
+      S: [WYVERN_S_UP, WYVERN_S_DOWN],
       SE: [WYVERN_SE_UP, WYVERN_SE_MID],
       NE: [WYVERN_NE_UP, WYVERN_NE_MID],
     },
     move: {
+      N: [WYVERN_N_UP, WYVERN_N_DOWN, WYVERN_N_UP, WYVERN_N_DOWN],
+      E: [WYVERN_E_UP, WYVERN_E_DOWN, WYVERN_E_UP, WYVERN_E_DOWN],
+      S: [WYVERN_S_UP, WYVERN_S_DOWN, WYVERN_S_UP, WYVERN_S_DOWN],
       SE: [WYVERN_SE_UP, WYVERN_SE_MID, WYVERN_SE_DOWN, WYVERN_SE_MID],
       NE: [WYVERN_NE_UP, WYVERN_NE_MID, WYVERN_NE_DOWN, WYVERN_NE_MID],
     },
     attack: {
+      N: [WYVERN_N_UP, WYVERN_N_SPIT, WYVERN_N_DOWN, WYVERN_N_UP],
+      E: [WYVERN_E_UP, WYVERN_E_SPIT, WYVERN_E_DOWN, WYVERN_E_UP],
+      S: [WYVERN_S_UP, WYVERN_S_SPIT, WYVERN_S_DOWN, WYVERN_S_UP],
       SE: [WYVERN_SE_MID, WYVERN_SE_SPIT, WYVERN_SE_DOWN, WYVERN_SE_MID],
       NE: [WYVERN_NE_MID, WYVERN_NE_SPIT, WYVERN_NE_DOWN, WYVERN_NE_MID],
     },
@@ -1596,6 +2134,83 @@ const COL_DEATH_2: readonly string[] = [
   '................',
 ];
 
+// 8-way N / E / S frames for Solaris Thermal Colossus (16x16 ground, stilts planted on y=14!)
+const COL_N_ATK_1: readonly string[] = [
+  '.....cCCCCc.....',
+  '...yygCggCgyy...',
+  '..yggTTTTTTggy..',
+  '..ggTttttttTgg..',
+  '..gbttttttttbg..',
+  '...bbggggggbb...',
+  '....ybbTTbby....',
+  '...yg..bb..gy...',
+  '..yg..y..y..gy..',
+  '..gb..g..g..bg..',
+  '.yg..gb..bg..gy.',
+  '.gb..b....b..bg.',
+  '.g...g....g...g.',
+  '.b...b....b...b.',
+  'bb...b....b...bb',
+  '................',
+];
+
+const COL_E_IDLE_0: readonly string[] = [
+  '....yyyyyy......',
+  '..yyggggggyy....',
+  '..yggTTCCCTgy...',
+  '..ggTCCCCCCtg...',
+  '..gbttCCCCttg...',
+  '...bbggggggbb...',
+  '....ybbTTbby....',
+  '...yg..bb..gy...',
+  '..yg..y..y..gy..',
+  '..gb..g..g..bg..',
+  '.yg..gb..bg..gy.',
+  '.gb..b....b..bg.',
+  '.g...g....g...g.',
+  '.b...b....b...b.',
+  'bb...b....b...bb',
+  '................',
+];
+
+const COL_E_ATK_1: readonly string[] = [
+  '....yyyyyy......',
+  '..yyggggggyy....',
+  '..yggTTCCCTgy...',
+  '..ggTCCCCCCtgcC.',
+  '..gbttCCCCttgcC.',
+  '...bbggCCggbbc..',
+  '....ybbTTbby....',
+  '...yg..bb..gy...',
+  '..yg..y..y..gy..',
+  '..gb..g..g..bg..',
+  '.yg..gb..bg..gy.',
+  '.gb..b....b..bg.',
+  '.g...g....g...g.',
+  '.b...b....b...b.',
+  'bb...b....b...bb',
+  '................',
+];
+
+const COL_S_ATK_1: readonly string[] = [
+  '.....yyyyyy.....',
+  '...yyggggggyy...',
+  '..yggTTCCCTggy..',
+  '..ggTCCCCCCtgg..',
+  '..gbttCCCCttbg..',
+  '...bbggCCggbb...',
+  '....ybcCCcby....',
+  '...yg.cCCc.gy...',
+  '..yg..yccy..gy..',
+  '..gb..g..g..bg..',
+  '.yg..gb..bg..gy.',
+  '.gb..b....b..bg.',
+  '.g...g....g...g.',
+  '.b...b....b...b.',
+  'bb...b....b...bb',
+  '................',
+];
+
 const SOLARIS_COLOSSUS: TitanSpec = {
   id: 'solaris-colossus',
   name: 'Solaris Colossus',
@@ -1610,14 +2225,23 @@ const SOLARIS_COLOSSUS: TitanSpec = {
   attackKind: 'thermal-beam',
   anims: {
     idle: {
+      N: [COL_NE_IDLE_0, COL_NE_IDLE_0],
+      E: [COL_E_IDLE_0, COL_SE_IDLE_1],
+      S: [COL_SE_IDLE_0, COL_SE_IDLE_1],
       SE: [COL_SE_IDLE_0, COL_SE_IDLE_1],
       NE: [COL_NE_IDLE_0, COL_NE_IDLE_0],
     },
     move: {
+      N: [COL_NE_MOVE_0, COL_NE_IDLE_0, COL_NE_MOVE_2, COL_NE_IDLE_0],
+      E: [COL_SE_MOVE_0, COL_E_IDLE_0, COL_SE_MOVE_2, COL_E_IDLE_0],
+      S: [COL_SE_MOVE_0, COL_SE_IDLE_0, COL_SE_MOVE_2, COL_SE_IDLE_0],
       SE: [COL_SE_MOVE_0, COL_SE_IDLE_0, COL_SE_MOVE_2, COL_SE_IDLE_0],
       NE: [COL_NE_MOVE_0, COL_NE_IDLE_0, COL_NE_MOVE_2, COL_NE_IDLE_0],
     },
     attack: {
+      N: [COL_NE_ATK_0, COL_N_ATK_1, COL_N_ATK_1, COL_NE_IDLE_0],
+      E: [COL_SE_ATK_0, COL_E_ATK_1, COL_E_ATK_1, COL_E_IDLE_0],
+      S: [COL_SE_ATK_0, COL_S_ATK_1, COL_S_ATK_1, COL_SE_IDLE_0],
       SE: [COL_SE_ATK_0, COL_SE_ATK_1, COL_SE_ATK_2, COL_SE_IDLE_0],
       NE: [COL_NE_ATK_0, COL_NE_ATK_1, COL_NE_ATK_2, COL_NE_IDLE_0],
     },
@@ -1797,6 +2421,97 @@ const CARRIER_DEATH_2: readonly string[] = [
   '................',
 ];
 
+// 8-way N / E / S frames for Solaris Sky-Carrier (16x12 air)
+const CARRIER_N_1: readonly string[] = [
+  '......yyyy......',
+  '....yyggggyy....',
+  '...yggTTTTggy...',
+  '..ygTTCCCCtTgy..',
+  '..ygTttttttTgy..',
+  '..yggTTTTTTggy..',
+  '..yggTCCCCtggy..',
+  '...bbggggggbb...',
+  '...bCCggggCCb...',
+  '....ccbbbbcc....',
+  '.....c....c.....',
+  '................',
+];
+
+const CARRIER_N_2: readonly string[] = [
+  '................',
+  '......yyyy......',
+  '....yyggggyy....',
+  '...yggTTTTggy...',
+  '..ygTTCCCCtTgy..',
+  '..ygTttttttTgy..',
+  '..yggTTTTTTggy..',
+  '..yggTCCCCtggy..',
+  '...bbggggggbb...',
+  '...bCCggggCCb...',
+  '....ccbbbbcc....',
+  '................',
+];
+
+const CARRIER_N_LAUNCH: readonly string[] = [
+  '......yyyy......',
+  '....yyggggyy....',
+  '..cyggTTTTggyc..',
+  '.cCgTTCCCCtTgCc.',
+  '..cyTttttttTyc..',
+  '..yggTTTTTTggy..',
+  '..yggTCCCCtggy..',
+  '...bbggggggbb...',
+  '...bCCggggCCb...',
+  '....ccbbbbcc....',
+  '.....c....c.....',
+  '................',
+];
+
+const CARRIER_S_1: readonly string[] = [
+  '....ccbbbbcc....',
+  '...bCCggggCCb...',
+  '..yggTTTTTTggy..',
+  '..ygTTCCCCtTgy..',
+  '.ygTCCCCCCCCtgy.',
+  '.yggttCCCCttggy.',
+  '..yggTTCCCTggy..',
+  '...yyggggggyy...',
+  '....bbggggbb....',
+  '......bbbb......',
+  '................',
+  '................',
+];
+
+const CARRIER_S_2: readonly string[] = [
+  '................',
+  '....ccbbbbcc....',
+  '...bCCggggCCb...',
+  '..yggTTTTTTggy..',
+  '..ygTTCCCCtTgy..',
+  '.ygTCCCCCCCCtgy.',
+  '.yggttCCCCttggy.',
+  '..yggTTCCCTggy..',
+  '...yyggggggyy...',
+  '....bbggggbb....',
+  '......bbbb......',
+  '................',
+];
+
+const CARRIER_S_LAUNCH: readonly string[] = [
+  '....ccbbbbcc....',
+  '...bCCggggCCb...',
+  '..yggTTTTTTggy..',
+  '..ygTTCCCCtTgy..',
+  'cCgTCCCCCCCCtgCc',
+  'cCggttCCCCttggCc',
+  '.cyggTTCCCTggyc.',
+  '...yyggggggyy...',
+  '....bbggggbb....',
+  '......bbbb......',
+  '................',
+  '................',
+];
+
 const SOLARIS_CARRIER: TitanSpec = {
   id: 'solaris-carrier',
   name: 'Solaris Sky-Carrier',
@@ -1811,14 +2526,23 @@ const SOLARIS_CARRIER: TitanSpec = {
   attackKind: 'interceptors',
   anims: {
     idle: {
+      N: [CARRIER_N_1, CARRIER_N_2],
+      E: [CARRIER_SE_1, CARRIER_SE_2],
+      S: [CARRIER_S_1, CARRIER_S_2],
       SE: [CARRIER_SE_1, CARRIER_SE_2],
       NE: [CARRIER_NE_1, CARRIER_NE_2],
     },
     move: {
+      N: [CARRIER_N_1, CARRIER_N_2, CARRIER_N_1, CARRIER_N_2],
+      E: [CARRIER_SE_1, CARRIER_SE_2, CARRIER_SE_1, CARRIER_SE_2],
+      S: [CARRIER_S_1, CARRIER_S_2, CARRIER_S_1, CARRIER_S_2],
       SE: [CARRIER_SE_1, CARRIER_SE_2, CARRIER_SE_1, CARRIER_SE_2],
       NE: [CARRIER_NE_1, CARRIER_NE_2, CARRIER_NE_1, CARRIER_NE_2],
     },
     attack: {
+      N: [CARRIER_N_1, CARRIER_N_LAUNCH, CARRIER_N_LAUNCH, CARRIER_N_2],
+      E: [CARRIER_SE_1, CARRIER_SE_LAUNCH_1, CARRIER_SE_LAUNCH_2, CARRIER_SE_2],
+      S: [CARRIER_S_1, CARRIER_S_LAUNCH, CARRIER_S_LAUNCH, CARRIER_S_2],
       SE: [CARRIER_SE_1, CARRIER_SE_LAUNCH_1, CARRIER_SE_LAUNCH_2, CARRIER_SE_2],
       NE: [CARRIER_NE_1, CARRIER_NE_LAUNCH_1, CARRIER_NE_LAUNCH_2, CARRIER_NE_2],
     },
@@ -1871,6 +2595,51 @@ export function compileTitanFrame(
   const outlined = addPixelOutline(raw, INK_OUTLINE);
   return { raw, outlined };
 }
+
+export function compileTitanFrame8(
+  id: TitanId,
+  anim: AnimId,
+  dir: Dir8,
+  frameIdx: number,
+  team: TeamColorId = 'default',
+): CompiledTitanFrame {
+  const spec = TITAN_SPEC_BY_ID[id];
+  const palette = buildFactionPalette(spec.faction, team);
+  const animSet = spec.anims[anim];
+  const isFlipped = dir === 'NW' || dir === 'W' || dir === 'SW';
+  const baseDir: 'N' | 'NE' | 'E' | 'SE' | 'S' =
+    dir === 'NW' ? 'NE' : dir === 'W' ? 'E' : dir === 'SW' ? 'SE' : dir;
+  const list =
+    baseDir === 'N'
+      ? (animSet.N ?? animSet.NE)
+      : baseDir === 'E'
+        ? (animSet.E ?? animSet.SE)
+        : baseDir === 'S'
+          ? (animSet.S ?? animSet.SE)
+          : baseDir === 'NE'
+            ? animSet.NE
+            : animSet.SE;
+  const pattern = list[frameIdx % list.length];
+  const compiled = compilePattern(pattern, palette, spec.width, spec.height);
+  const raw = isFlipped ? mirrorHorizontal(compiled) : compiled;
+  const outlined = addPixelOutline(raw, INK_OUTLINE);
+  return { raw, outlined };
+}
+
+/**
+ * Exact painted emitter offset (relative to bottom-center anchor `(x, y)` of the 18x18 outlined
+ * Colossus drawn at `(x - 9, y - 16)`) for all 8 headings so thermal beams always lock to the emitter!
+ */
+export const COLOSSUS_EMITTER_8: Readonly<Record<Dir8, readonly [number, number]>> = {
+  N: [0, -15],
+  NE: [6, -13],
+  E: [6, -12],
+  SE: [6, -11],
+  S: [0, -9],
+  SW: [-7, -11],
+  W: [-7, -12],
+  NW: [-7, -13],
+};
 
 export function getTitanAnimFrameCount(id: TitanId, anim: AnimId): number {
   return TITAN_SPEC_BY_ID[id].anims[anim].SE.length;
