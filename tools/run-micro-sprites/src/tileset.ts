@@ -18,7 +18,15 @@
  *      Row 7: water-on-dirt    Wang masks 0..15 (water painted on dirt keeps dirt shore, never grass!)
  */
 
-import { blitScaled, createSurface, hexToU32, type PixelSurface, type RGBA32 } from './pixel.ts';
+import {
+  blendPixel,
+  blitScaled,
+  createSurface,
+  hexToU32,
+  packRGBA,
+  type PixelSurface,
+  type RGBA32,
+} from './pixel.ts';
 
 export const TILE_PX = 8;
 export const ATLAS_COLS = 16;
@@ -74,7 +82,10 @@ const PAL = {
   cliffMid: hexToU32('#54423b'),
   cliffDark: hexToU32('#33252d'),
   cliffInk: hexToU32('#1a1220'),
-  cliffFootShadow: hexToU32('#241c29'), // neutral dark shadow blending cleanly into grass, dirt, AND creep!
+  // Translucent alpha shadows for Layer-1 cliffs & ramps over ANY Layer-0 ground biome!
+  cliffShadowDeep: packRGBA(18, 12, 28, 136),
+  cliffShadowSoft: packRGBA(18, 12, 28, 64),
+  transparent: 0,
 
   creepInk: hexToU32('#1d0c24'),
   creepDark: hexToU32('#2e1336'),
@@ -236,29 +247,34 @@ export function buildTileset(): TilesetBundle {
       return paintBasePixel('plateau', x, y, v);
     });
   }
-  // Worn sandy stone ramps with tapered curbs (NO artificial metal grate stripes or abrupt vertical rails!)
+  // Worn sandy stone ramps with tapered alpha edges so curbs seat directly into ANY Layer-0 ground!
   writeTile(atlas, 8, 1, (x, y) => {
     const curbW = y >= 5 ? 1 : 2;
+    if (x === 0 && y === 7) return PAL.cliffShadowSoft;
     if (x === 0 && y < 7) return PAL.cliffInk;
+    if (x === 1 && y === 7) return PAL.cliffShadowDeep;
     if (x === 1 && y < 6) return PAL.cliffDark;
     if (x === curbW && y < 6) return PAL.cliffTop;
     const h = hash2i(x, y, 71);
+    if (y === 7 && h < 0.35) return PAL.cliffShadowSoft;
     if (y === 3 && x > 3) return PAL.sandDark;
     return h > 0.68 ? PAL.sandHi : h < 0.25 ? PAL.dirtMid : PAL.sandBase;
   });
   writeTile(atlas, 9, 1, (x, y) => {
     const h = hash2i(x + 3, y, 73);
-    // Natural worn flagstones with subtle horizontal wear every 3-4px instead of uniform 1px grate bars
     if ((y === 2 && x >= 1 && x <= 5) || (y === 6 && x >= 2 && x <= 6)) return PAL.sandDark;
     if (y === 1 && x === 2) return PAL.sandHi;
     return h > 0.72 ? PAL.sandHi : h < 0.26 ? PAL.dirtMid : PAL.sandBase;
   });
   writeTile(atlas, 10, 1, (x, y) => {
     const curbX = y >= 5 ? 6 : 5;
+    if (x === 7 && y === 7) return PAL.cliffShadowSoft;
     if (x === 7 && y < 7) return PAL.cliffInk;
+    if (x === 6 && y === 7) return PAL.cliffShadowDeep;
     if (x === 6 && y < 6) return PAL.cliffDark;
     if (x === curbX && y < 6) return PAL.cliffTop;
     const h = hash2i(x + 9, y, 79);
+    if (y === 7 && h < 0.35) return PAL.cliffShadowSoft;
     if (y === 4 && x < 4) return PAL.sandDark;
     return h > 0.68 ? PAL.sandHi : h < 0.25 ? PAL.dirtMid : PAL.sandBase;
   });
@@ -345,16 +361,23 @@ export function buildTileset(): TilesetBundle {
     });
   }
 
-  // Row 6: plateau-cliff Wang-16 (neutral dark cliffFootShadow blends cleanly into grass, dirt, AND creep!)
+  // Row 6: LAYER-1 ALPHA plateau-cliff Wang-16!
+  // Opaque sunlit sandstone rim + stepped rocky cliff face + warm dark rock foot + translucent cast shadow
+  // + fully transparent outside -> composites seamlessly onto ANY Layer-0 biome (grass, dirt, creep, water)!
   for (let mask = 0; mask < 16; mask++) {
     writeTile(atlas, mask, 6, (x, y) => {
-      const c = wangCoverage(x, y, mask, 0.03);
-      if (c >= 0.68) return c < 0.82 ? PAL.cliffTop : paintBasePixel('plateau', x, y, 0);
-      if (c >= 0.56) return PAL.cliffInk;
-      if (c >= 0.36) return (x & 3) === 0 ? PAL.cliffDark : PAL.cliffLit;
-      if (c >= 0.22) return PAL.cliffDark;
-      if (c >= 0.12) return PAL.cliffInk;
-      return PAL.cliffFootShadow;
+      if (mask === 0) return PAL.transparent;
+      const onBorder = x === 0 || x === TILE_PX - 1 || y === 0 || y === TILE_PX - 1;
+      const rockJitter = onBorder ? 0 : (hash2i(x + mask * 7, y + mask * 13, 601) - 0.5) * 0.06;
+      const c = wangCoverage(x, y, mask, 0.03) + rockJitter;
+      if (c >= 0.68) return c < 0.81 ? PAL.cliffTop : paintBasePixel('plateau', x, y, 0);
+      if (c >= 0.57) return PAL.cliffDark;
+      if (c >= 0.34) return ((x + (y >> 1)) & 3) === 0 ? PAL.cliffDark : PAL.cliffLit;
+      if (c >= 0.21) return PAL.cliffDark;
+      if (c >= 0.14) return PAL.cliffInk;
+      if (c >= 0.07) return PAL.cliffShadowDeep;
+      if (c >= 0.01) return PAL.cliffShadowSoft;
+      return PAL.transparent;
     });
   }
 
@@ -408,35 +431,49 @@ function blitTile(
     const dRow = (dy0 + y) * dst.width + dx0;
     const sRow = (sy0 + y) * tileset.atlas.width + sx0;
     for (let x = 0; x < TILE_PX; x++) {
-      dst.pixels[dRow + x] = tileset.atlas.pixels[sRow + x];
+      blendPixel(dst.pixels, dRow + x, tileset.atlas.pixels[sRow + x]);
     }
   }
 }
 
-export function resolveTileAtlasCoord(
+/**
+ * Resolve Layer-0 ground tile (strictly ground biomes: grass, dirt, creep, water —
+ * substituting the nearest valley biome beneath plateau vertices so ground continues smoothly under cliffs!).
+ */
+export function resolveGroundTileAtlasCoord(
   map: TileMapData,
   tx: number,
   ty: number,
   tileset: TilesetBundle,
 ): readonly [number, number] {
-  const at = (gx: number, gy: number): TileBiome => map.biomes[gy * map.gridW + gx];
-  const nw = at(tx, ty);
-  const ne = at(tx + 1, ty);
-  const sw = at(tx, ty + 1);
-  const se = at(tx + 1, ty + 1);
-
-  // Non-periodic 2D hashed variant selector weighted toward calm base fill (zero even-row stripes!)
-  const vr = hash2i(tx, ty, 313);
-  const variant = vr < 0.52 ? 0 : vr < 0.72 ? 1 : vr < 0.88 ? 2 : 3;
-
-  // Carved ramp cells cut flush through the exact cliff rows [r.gy, r.gy + 1]
-  for (const r of map.ramps) {
-    if (ty >= r.gy && ty <= r.gy + 1 && Math.abs(tx - r.gx) <= r.halfW) {
-      if (tx === r.gx - r.halfW) return [8, tileset.rowIndex.baseExtra];
-      if (tx === r.gx + r.halfW) return [10, tileset.rowIndex.baseExtra];
-      return [9, tileset.rowIndex.baseExtra];
+  const rawAt = (gx: number, gy: number): TileBiome => map.biomes[gy * map.gridW + gx];
+  const cornersRaw: readonly TileBiome[] = [
+    rawAt(tx, ty),
+    rawAt(tx + 1, ty),
+    rawAt(tx, ty + 1),
+    rawAt(tx + 1, ty + 1),
+  ];
+  // Find dominant non-plateau ground biome at this cell (falls back to nearest valley row below)
+  let fallback: TileBiome = 'grass';
+  const nonPlat = cornersRaw.filter((b) => b !== 'plateau');
+  if (nonPlat.length > 0) {
+    fallback = nonPlat[0];
+  } else {
+    for (let sy = ty + 2; sy < map.gridH; sy++) {
+      const b = rawAt(tx, sy);
+      if (b !== 'plateau') {
+        fallback = b;
+        break;
+      }
     }
   }
+  const nw = cornersRaw[0] === 'plateau' ? fallback : cornersRaw[0];
+  const ne = cornersRaw[1] === 'plateau' ? fallback : cornersRaw[1];
+  const sw = cornersRaw[2] === 'plateau' ? fallback : cornersRaw[2];
+  const se = cornersRaw[3] === 'plateau' ? fallback : cornersRaw[3];
+
+  const vr = hash2i(tx, ty, 313);
+  const variant = vr < 0.52 ? 0 : vr < 0.72 ? 1 : vr < 0.88 ? 2 : 3;
 
   const maskOf = (target: TileBiome): number =>
     (nw === target ? 1 : 0) |
@@ -444,17 +481,6 @@ export function resolveTileAtlasCoord(
     (sw === target ? 4 : 0) |
     (se === target ? 8 : 0);
 
-  // 1. Plateau cliff (highest elevation)
-  const pMask = maskOf('plateau');
-  if (pMask === 15) {
-    const patch = hash2i(tx, ty, 41);
-    return patch > 0.86
-      ? [4 + (Math.floor(patch * 29) & 3), tileset.rowIndex.baseExtra]
-      : [12 + variant, tileset.rowIndex.baseMain];
-  }
-  if (pMask > 0) return [pMask, tileset.rowIndex.plateauCliff];
-
-  // 2. Water coastline (sparse bright water gleams via hash so open water never stripes!)
   const wMask = maskOf('water');
   if (wMask === 15) {
     const wr = hash2i(tx, ty, 811);
@@ -467,7 +493,6 @@ export function resolveTileAtlasCoord(
     return [wMask, dirtCount > grassCount ? tileset.rowIndex.waterOnDirt : tileset.rowIndex.waterOnGrass];
   }
 
-  // 3. Kraxen Creep over dirt or grass
   const cMask = maskOf('creep');
   if (cMask === 15) return [8 + variant, tileset.rowIndex.baseMain];
   if (cMask > 0) {
@@ -477,7 +502,6 @@ export function resolveTileAtlasCoord(
     return [cMask, underGrass ? tileset.rowIndex.creepOnGrass : tileset.rowIndex.creepOnDirt];
   }
 
-  // 4. Highland Grass over Sun-Baked Dirt
   const gMask = maskOf('grass');
   if (gMask === 15) {
     const fl = hash2i(tx, ty, 77);
@@ -486,12 +510,62 @@ export function resolveTileAtlasCoord(
   }
   if (gMask > 0) return [gMask, tileset.rowIndex.grassOnDirt];
 
-  // 5. Pure Dirt (with occasional battle crater tile)
   const craterH = hash2i(tx, ty, 505);
   if (tx >= 22 && tx <= 42 && ty >= 15 && ty <= 24 && craterH > 0.94) {
     return [11 + (variant % 3), tileset.rowIndex.baseExtra];
   }
   return [variant, tileset.rowIndex.baseMain];
+}
+
+/**
+ * Resolve optional Layer-1 Alpha Overlay tile (plateau cliffs, plateau interior, and carved ramps)
+ * drawn with alpha blending ON TOP of Layer-0 ground! Returns null when no overlay exists.
+ */
+export function resolveOverlayTileAtlasCoord(
+  map: TileMapData,
+  tx: number,
+  ty: number,
+  tileset: TilesetBundle,
+): readonly [number, number] | null {
+  const at = (gx: number, gy: number): TileBiome => map.biomes[gy * map.gridW + gx];
+  const nw = at(tx, ty);
+  const ne = at(tx + 1, ty);
+  const sw = at(tx, ty + 1);
+  const se = at(tx + 1, ty + 1);
+
+  for (const r of map.ramps) {
+    if (ty >= r.gy && ty <= r.gy + 1 && Math.abs(tx - r.gx) <= r.halfW) {
+      if (tx === r.gx - r.halfW) return [8, tileset.rowIndex.baseExtra];
+      if (tx === r.gx + r.halfW) return [10, tileset.rowIndex.baseExtra];
+      return [9, tileset.rowIndex.baseExtra];
+    }
+  }
+
+  const pMask =
+    (nw === 'plateau' ? 1 : 0) |
+    (ne === 'plateau' ? 2 : 0) |
+    (sw === 'plateau' ? 4 : 0) |
+    (se === 'plateau' ? 8 : 0);
+
+  if (pMask === 0) return null;
+  if (pMask === 15) {
+    const vr = hash2i(tx, ty, 313);
+    const variant = vr < 0.52 ? 0 : vr < 0.72 ? 1 : vr < 0.88 ? 2 : 3;
+    const patch = hash2i(tx, ty, 41);
+    return patch > 0.86
+      ? [4 + (Math.floor(patch * 29) & 3), tileset.rowIndex.baseExtra]
+      : [12 + variant, tileset.rowIndex.baseMain];
+  }
+  return [pMask, tileset.rowIndex.plateauCliff];
+}
+
+export function resolveTileAtlasCoord(
+  map: TileMapData,
+  tx: number,
+  ty: number,
+  tileset: TilesetBundle,
+): readonly [number, number] {
+  return resolveOverlayTileAtlasCoord(map, tx, ty, tileset) ?? resolveGroundTileAtlasCoord(map, tx, ty, tileset);
 }
 
 export function composeTilemap(map: TileMapData, tileset: TilesetBundle): PixelSurface {
@@ -501,8 +575,14 @@ export function composeTilemap(map: TileMapData, tileset: TilesetBundle): PixelS
 
   for (let ty = 0; ty < tilesH; ty++) {
     for (let tx = 0; tx < tilesW; tx++) {
-      const [col, row] = resolveTileAtlasCoord(map, tx, ty, tileset);
-      blitTile(surface, tileset, col, row, tx, ty);
+      // Pass 1 (Layer 0): Continuous ground biome underneath!
+      const [gCol, gRow] = resolveGroundTileAtlasCoord(map, tx, ty, tileset);
+      blitTile(surface, tileset, gCol, gRow, tx, ty);
+      // Pass 2 (Layer 1): Alpha-blended cliff / plateau / ramp overlay on top!
+      const overlay = resolveOverlayTileAtlasCoord(map, tx, ty, tileset);
+      if (overlay) {
+        blitTile(surface, tileset, overlay[0], overlay[1], tx, ty);
+      }
     }
   }
   return surface;
@@ -634,6 +714,16 @@ export function renderTilesetProof(tileset: TilesetBundle): PixelSurface {
       }
       const dx = pad + c * (cell + pad);
       const dy = pad + r * (cell + pad);
+      if (r === 6) {
+        // Subtle transparency checker behind Row 6 so Layer-1 alpha cliffs & cast shadows are clearly visible
+        const chkA = hexToU32('#1e2636');
+        const chkB = hexToU32('#2a3448');
+        for (let py = 0; py < cell; py++) {
+          for (let px = 0; px < cell; px++) {
+            proof.pixels[(dy + py) * W + (dx + px)] = (((px >> 2) + (py >> 2)) & 1) === 0 ? chkA : chkB;
+          }
+        }
+      }
       blitScaled(proof, tileScratch, dx, dy, zoom);
       for (let bx = 0; bx < cell; bx++) {
         proof.pixels[dy * W + dx + bx] = rowColors[r];

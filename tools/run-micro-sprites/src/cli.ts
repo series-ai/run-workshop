@@ -38,6 +38,18 @@ import {
   type TilesetBundle,
 } from './tileset.ts';
 import {
+  buildHullContactShadow,
+  compileRawHull,
+  compileRawTurret,
+  composeIsoTank,
+  CORE_H as TANK_CORE_H,
+  CORE_W as TANK_CORE_W,
+  HULL_PIVOT as TANK_HULL_PIVOT,
+  MUZZLE_REL_8 as TANK_MUZZLE_REL_8,
+  OUT_H as TANK_OUT_H,
+  OUT_W as TANK_OUT_W,
+} from './tankIsoPrototype.ts';
+import {
   compileTitanFrame,
   getTitanAnimFrameCount,
   TITAN_SPEC_BY_ID,
@@ -46,9 +58,12 @@ import {
 } from './titans.ts';
 import {
   compileUnitFrame,
+  compileUnitFrame8,
+  DIRS_8,
   getAnimFrameCount,
   UNIT_SPECS,
   type AnimId,
+  type Dir8,
   type FacingId,
   type UnitId,
 } from './units.ts';
@@ -74,8 +89,23 @@ interface ExportedSpriteMeta {
   readonly airAltitude: number;
   readonly rawDataUrl: string;
   readonly outlinedDataUrl: string;
+  readonly has8Way?: boolean;
+  readonly raw8DataUrl?: string;
+  readonly outlined8DataUrl?: string;
   readonly frameOffsets: Record<AnimId, { start: number; count: number }>;
   readonly totalCols: number;
+}
+
+interface ExportedIsoTankPayload {
+  readonly coreW: number;
+  readonly coreH: number;
+  readonly outW: number;
+  readonly outH: number;
+  readonly pivots: readonly (readonly [number, number])[];
+  readonly muzzles: readonly (readonly [number, number])[];
+  readonly hullDataUrl: string;
+  readonly turretDataUrl: string;
+  readonly shadowDataUrl: string;
 }
 
 interface ExportedMicro4Meta {
@@ -116,6 +146,28 @@ function buildUnitSheets(): ExportedSpriteMeta[] {
     writeFileSync(resolve(SPRITE_DIR, `${spec.id}-8x8.png`), encodePNG(rawSheet));
     writeFileSync(resolve(SPRITE_DIR, `${spec.id}-outlined-10x10.png`), encodePNG(outSheet));
 
+    let raw8DataUrl: string | undefined;
+    let outlined8DataUrl: string | undefined;
+    if (spec.has8Way) {
+      const raw8 = createSurface(colCursor * 8, DIRS_8.length * 8);
+      const out8 = createSurface(colCursor * 10, DIRS_8.length * 10);
+      for (let r = 0; r < DIRS_8.length; r++) {
+        const dir = DIRS_8[r];
+        for (const anim of ANIMS) {
+          const { start, count } = frameOffsets[anim];
+          for (let f = 0; f < count; f++) {
+            const compiled = compileUnitFrame8(spec.id, anim, dir, f);
+            blitScaled(raw8, compiled.raw, (start + f) * 8, r * 8, 1);
+            blitScaled(out8, compiled.outlined, (start + f) * 10, r * 10, 1);
+          }
+        }
+      }
+      writeFileSync(resolve(SPRITE_DIR, `${spec.id}-8way-8x8.png`), encodePNG(raw8));
+      writeFileSync(resolve(SPRITE_DIR, `${spec.id}-8way-outlined-10x10.png`), encodePNG(out8));
+      raw8DataUrl = surfaceToDataURL(raw8);
+      outlined8DataUrl = surfaceToDataURL(out8);
+    }
+
     results.push({
       id: spec.id,
       name: spec.name,
@@ -128,6 +180,7 @@ function buildUnitSheets(): ExportedSpriteMeta[] {
       airAltitude: 0,
       rawDataUrl: surfaceToDataURL(rawSheet),
       outlinedDataUrl: surfaceToDataURL(outSheet),
+      ...(spec.has8Way ? { has8Way: true, raw8DataUrl, outlined8DataUrl } : {}),
       frameOffsets,
       totalCols: colCursor,
     });
@@ -216,6 +269,129 @@ function buildMicro4Sheets(): ExportedMicro4Meta[] {
     });
   }
   return results;
+}
+
+function buildIsoTankPayload(): ExportedIsoTankPayload {
+  const hullSheet = createSurface(4 * TANK_CORE_W, DIRS_8.length * TANK_CORE_H);
+  const turretSheet = createSurface(4 * TANK_CORE_W, DIRS_8.length * TANK_CORE_H);
+  const shadowSheet = createSurface(DIRS_8.length * TANK_OUT_W, TANK_OUT_H);
+  for (let d = 0; d < DIRS_8.length; d++) {
+    const dir = DIRS_8[d];
+    blitScaled(shadowSheet, buildHullContactShadow(dir), d * TANK_OUT_W, 0, 1);
+    for (let p = 0; p < 4; p++) {
+      blitScaled(hullSheet, compileRawHull(dir, p), p * TANK_CORE_W, d * TANK_CORE_H, 1);
+      blitScaled(turretSheet, compileRawTurret(dir, p), p * TANK_CORE_W, d * TANK_CORE_H, 1);
+    }
+  }
+  writeFileSync(resolve(SPRITE_DIR, 'vanguard-tank-8way-hull.png'), encodePNG(hullSheet));
+  writeFileSync(resolve(SPRITE_DIR, 'vanguard-tank-8way-turret.png'), encodePNG(turretSheet));
+  writeFileSync(resolve(SPRITE_DIR, 'vanguard-tank-8way-shadow.png'), encodePNG(shadowSheet));
+  return {
+    coreW: TANK_CORE_W,
+    coreH: TANK_CORE_H,
+    outW: TANK_OUT_W,
+    outH: TANK_OUT_H,
+    pivots: DIRS_8.map((d) => TANK_HULL_PIVOT[d]),
+    muzzles: DIRS_8.map((d) => TANK_MUZZLE_REL_8[d]),
+    hullDataUrl: surfaceToDataURL(hullSheet),
+    turretDataUrl: surfaceToDataURL(turretSheet),
+    shadowDataUrl: surfaceToDataURL(shadowSheet),
+  };
+}
+
+function renderVanguard8WayProof(
+  tileset: TilesetBundle,
+  buildings: Readonly<Record<BuildingId, BuildingAsset>>,
+): PixelSurface {
+  const cellW = 72;
+  const cellH = 68;
+  const cols = 8;
+  const topRows = 3; // Row 0: 8-way Marine Idle | Row 1: 8-way Marine Move | Row 2: 8-way Marine Attack A1
+  const pad = 2;
+  const W = cols * cellW + (cols + 1) * pad;
+  const topH = topRows * cellH + (topRows + 1) * pad;
+  const stripH = 104;
+  const H = topH + stripH + pad;
+  const sheet = createSurface(W, H, hexToU32('#0d1018'));
+
+  const darkBg = makeTerrainSwatch(cellW, cellH, 'dark');
+  const dirtBg = makeTerrainSwatch(cellW, cellH, 'dirt');
+
+  for (let c = 0; c < cols; c++) {
+    const dir = DIRS_8[c];
+    const rowSpecs: ReadonlyArray<{ row: number; anim: AnimId; frame: number; bar: number; bg: PixelSurface }> = [
+      { row: 0, anim: 'idle', frame: 0, bar: hexToU32('#38bdf8'), bg: darkBg },
+      { row: 1, anim: 'move', frame: 0, bar: hexToU32('#22c55e'), bg: dirtBg },
+      { row: 2, anim: 'attack', frame: 1, bar: hexToU32('#f97316'), bg: darkBg },
+    ];
+    for (const rs of rowSpecs) {
+      const cx = pad + c * (cellW + pad);
+      const cy = pad + rs.row * (cellH + pad);
+      blitScaled(sheet, rs.bg, cx, cy, 1);
+      fillRect(sheet, cx, cy, cellW, 2, rs.bar);
+      const sp = compileUnitFrame8('vanguard-trooper', rs.anim, dir, rs.frame).outlined;
+      const zoom = 4;
+      const ox = cx + Math.floor((cellW - sp.width * zoom) / 2);
+      const oy = cy + Math.floor((cellH - sp.height * zoom) / 2) + 2;
+      drawEllipse(sheet, cx + Math.floor(cellW / 2), oy + sp.height * zoom - 4, 14, 5, SHADOW_GROUND);
+      blitScaled(sheet, sp, ox, oy, zoom);
+    }
+  }
+
+  // Row 3: Real battle-dirt scale strip (1x native top + 2x closeup bottom): Bunker + 8-way Marines + 8-way Tank!
+  const dirtCols = Math.ceil((W - pad * 2) / TILE_PX);
+  const dirtRows = Math.ceil(stripH / TILE_PX);
+  const dirtSurf = composeTilemap(
+    {
+      gridW: dirtCols + 1,
+      gridH: dirtRows + 1,
+      biomes: new Array((dirtCols + 1) * (dirtRows + 1)).fill('dirt' as const),
+      ramps: [],
+    },
+    tileset,
+  );
+  for (let y = 0; y < stripH; y++) {
+    for (let x = 0; x < W - pad * 2; x++) {
+      sheet.pixels[(topH + y) * W + pad + x] = dirtSurf.pixels[y * dirtSurf.width + x];
+    }
+  }
+  fillRect(sheet, pad, topH, W - pad * 2, 2, hexToU32('#eab308'));
+
+  const bunker = buildings['vanguard-turret'].surface;
+  // 1x native scale lineup: Bunker + 8 Marines (N..NW) + 8 Tanks (N..NW)
+  const y1 = topH + 14;
+  blitScaled(sheet, bunker, pad + 12, y1 + 2, 1);
+  for (let i = 0; i < 8; i++) {
+    const dir = DIRS_8[i];
+    const mx = pad + 44 + i * 20;
+    drawEllipse(sheet, mx + 5, y1 + 17, 3.4, 1.3, SHADOW_SOFT);
+    blitScaled(sheet, compileUnitFrame8('vanguard-trooper', 'move', dir, 0).outlined, mx, y1 + 8, 1);
+  }
+  for (let i = 0; i < 8; i++) {
+    const dir = DIRS_8[i];
+    const tx = pad + 224 + i * 44;
+    blitScaled(sheet, buildHullContactShadow(dir), tx, y1, 1);
+    blitScaled(sheet, composeIsoTank(dir, dir, 0, 0), tx, y1, 1);
+  }
+
+  // 2x closeup lineup: Bunker + 8 Marines (N..NW) + NE & E Siege Tanks
+  const y2 = topH + 52;
+  blitScaled(sheet, bunker, pad + 12, y2 + 4, 2);
+  for (let i = 0; i < 8; i++) {
+    const dir = DIRS_8[i];
+    const mx = pad + 72 + i * 38;
+    drawEllipse(sheet, mx + 10, y2 + 34, 6.8, 2.6, SHADOW_GROUND);
+    blitScaled(sheet, compileUnitFrame8('vanguard-trooper', 'move', dir, 0).outlined, mx, y2 + 16, 2);
+  }
+  const demoDirs: readonly Dir8[] = ['NE', 'E', 'SE'];
+  for (let i = 0; i < demoDirs.length; i++) {
+    const dir = demoDirs[i];
+    const tx = pad + 390 + i * 62;
+    blitScaled(sheet, buildHullContactShadow(dir), tx, y2 + 2, 2);
+    blitScaled(sheet, composeIsoTank(dir, dir, 0, 0), tx, y2 + 2, 2);
+  }
+
+  return sheet;
 }
 
 // ---------- 2. Contact Proof Sheets (8x8 Infantry + 16x16 Titans/Flyers) ----------
@@ -544,15 +720,17 @@ interface KeyframeTitan {
   readonly x: number;
   readonly y: number;
   readonly facing: FacingId;
+  readonly hullDir?: Dir8;
+  readonly turretDir?: Dir8;
   readonly anim: AnimId;
   readonly frame: number;
 }
 
 const KEYFRAME_TITANS: readonly KeyframeTitan[] = [
-  // Vanguard Siege Tanks & Valkyrie Gunships
-  { id: 'vanguard-tank', faction: 'vanguard', x: 158, y: 142, facing: 'SE', anim: 'attack', frame: 1 },
-  { id: 'vanguard-tank', faction: 'vanguard', x: 154, y: 176, facing: 'SE', anim: 'attack', frame: 1 },
-  { id: 'vanguard-tank', faction: 'vanguard', x: 176, y: 204, facing: 'SE', anim: 'move', frame: 0 },
+  // Vanguard 8-Way Split-Hull Siege Tanks & Valkyrie Gunships
+  { id: 'vanguard-tank', faction: 'vanguard', x: 158, y: 142, facing: 'SE', hullDir: 'NE', turretDir: 'E', anim: 'attack', frame: 1 },
+  { id: 'vanguard-tank', faction: 'vanguard', x: 154, y: 176, facing: 'SE', hullDir: 'E', turretDir: 'E', anim: 'attack', frame: 1 },
+  { id: 'vanguard-tank', faction: 'vanguard', x: 176, y: 204, facing: 'SE', hullDir: 'SE', turretDir: 'NE', anim: 'move', frame: 0 },
   { id: 'vanguard-gunship', faction: 'vanguard', x: 198, y: 132, facing: 'SE', anim: 'attack', frame: 1 },
   { id: 'vanguard-gunship', faction: 'vanguard', x: 192, y: 186, facing: 'SE', anim: 'move', frame: 0 },
 
@@ -612,10 +790,16 @@ function drawCombinedArmsOverlay(
       fillRect(frame, tx - 1, ty - 1, 3, 2, PSI_CYN);
       setPixel(frame, tx, ty, PSI_HOT);
     } else if (t.id === 'vanguard-tank' && t.anim === 'attack') {
-      // Heavy fiery artillery shell impact blast!
+      // Heavy fiery artillery shell originating from the exact 8-way A1 muzzle flash pixel!
+      const hDir: Dir8 = t.hullDir ?? 'E';
+      const tDir: Dir8 = t.turretDir ?? 'E';
+      const [px, py] = TANK_HULL_PIVOT[hDir];
+      const [mx, my] = TANK_MUZZLE_REL_8[tDir];
+      const sx = Math.round(t.x - camX - TANK_OUT_W / 2) + 1 + px + mx;
+      const sy = Math.round(t.y - camY - TANK_OUT_H + 5) + 1 + py + my;
       const bx = t.y < 160 ? 276 - camX : 284 - camX;
       const by = t.y < 160 ? 150 - camY : 184 - camY;
-      drawLine(frame, t.x - camX + 8, t.y - camY - 9, bx, by, TRACER_ORG);
+      drawLine(frame, sx, sy, bx, by, TRACER_ORG);
       drawEllipse(frame, bx, by, 4.5, 3.2, BLAST_RED);
       drawEllipse(frame, bx, by, 2.8, 2.0, TRACER_ORG);
       fillRect(frame, bx - 1, by - 1, 2, 2, TRACER_HOT);
@@ -668,6 +852,7 @@ function renderCombinedArmsProof(
     x: number;
     y: number;
     facing: FacingId;
+    dir8?: Dir8;
     anim: AnimId;
     frame: number;
   }
@@ -682,6 +867,7 @@ function renderCombinedArmsProof(
     sy: number,
     facing: FacingId,
     atk: number,
+    dir8?: Dir8,
   ) => {
     const cols = Math.max(2, Math.ceil(Math.sqrt(count * (sx / Math.max(1, sy)))));
     const rows = Math.ceil(count / cols);
@@ -697,15 +883,17 @@ function renderCombinedArmsProof(
         x: cx + u * sx + (rand() - 0.5) * 7,
         y: cy + v * sy + (rand() - 0.5) * 6,
         facing,
+        dir8,
         anim,
         frame: anim === 'attack' ? 1 : Math.floor(rand() * 4),
       });
     }
   };
 
-  addSquad('vanguard-trooper', 'vanguard', 188, 152, 28, 36, 46, 'SE', 0.72);
+  addSquad('vanguard-trooper', 'vanguard', 188, 156, 22, 34, 38, 'SE', 0.72, 'E');
+  addSquad('vanguard-trooper', 'vanguard', 188, 126, 8, 22, 14, 'NE', 0.55, 'N');
   addSquad('vanguard-heavy', 'vanguard', 176, 198, 12, 34, 22, 'SE', 0.6);
-  addSquad('vanguard-trooper', 'vanguard', 138, 158, 10, 22, 30, 'SE', 0.25);
+  addSquad('vanguard-trooper', 'vanguard', 138, 158, 10, 22, 30, 'SE', 0.25, 'SE');
 
   addSquad('kraxen-swarmling', 'kraxen', 298, 162, 40, 48, 56, 'SW', 0.76);
   addSquad('kraxen-stalker', 'kraxen', 344, 158, 24, 34, 52, 'SW', 0.78);
@@ -746,8 +934,14 @@ function renderCombinedArmsProof(
     drawEllipse(frame, u.x - camX, u.y - camY, 3.4, 1.3, SHADOW_SOFT);
   }
   for (const t of groundTitans) {
-    const sp = TITAN_SPEC_BY_ID[t.id];
-    drawEllipse(frame, t.x - camX, t.y - camY, sp.shadowRx, sp.shadowRy, SHADOW_GROUND);
+    if (t.id === 'vanguard-tank') {
+      const hDir: Dir8 = t.hullDir ?? 'E';
+      const sh = buildHullContactShadow(hDir);
+      blitScaled(frame, sh, Math.round(t.x - camX - TANK_OUT_W / 2), Math.round(t.y - camY - TANK_OUT_H + 5), 1);
+    } else {
+      const sp = TITAN_SPEC_BY_ID[t.id];
+      drawEllipse(frame, t.x - camX, t.y - camY, sp.shadowRx, sp.shadowRy, SHADOW_GROUND);
+    }
   }
   // Air unit shadows projected on the ground below!
   for (const t of airTitans) {
@@ -773,8 +967,23 @@ function renderCombinedArmsProof(
       const a = buildings[item.b.id];
       blitScaled(frame, a.surface, Math.round(item.b.x - camX - a.anchorX), Math.round(item.b.y - camY - a.anchorY), 1);
     } else if (item.kind === 'u') {
-      const sp = compileUnitFrame(item.u.id, item.u.anim, item.u.facing, item.u.frame).outlined;
+      const sp =
+        item.u.id === 'vanguard-trooper' && item.u.dir8
+          ? compileUnitFrame8(item.u.id, item.u.anim, item.u.dir8, item.u.frame).outlined
+          : compileUnitFrame(item.u.id, item.u.anim, item.u.facing, item.u.frame).outlined;
       blitScaled(frame, sp, Math.round(item.u.x - camX - 5), Math.round(item.u.y - camY - 9), 1);
+    } else if (item.t.id === 'vanguard-tank') {
+      const hDir: Dir8 = item.t.hullDir ?? 'E';
+      const tDir: Dir8 = item.t.turretDir ?? 'E';
+      const atkF = item.t.anim === 'attack' ? item.t.frame : 0;
+      const sp = composeIsoTank(hDir, tDir, 0, atkF);
+      blitScaled(
+        frame,
+        sp,
+        Math.round(item.t.x - camX - TANK_OUT_W / 2),
+        Math.round(item.t.y - camY - TANK_OUT_H + 5),
+        1,
+      );
     } else {
       const sp = compileTitanFrame(item.t.id, item.t.anim, item.t.facing, item.t.frame).outlined;
       blitScaled(
@@ -912,8 +1121,14 @@ function renderUltra1000Proof(
     drawEllipse(frame, b.x - camX, b.y - camY, a.shadowRx, a.shadowRy, SHADOW_GROUND);
   }
   for (const t of groundTitans) {
-    const sp = TITAN_SPEC_BY_ID[t.id];
-    drawEllipse(frame, t.x - camX, t.y - camY, sp.shadowRx, sp.shadowRy, SHADOW_GROUND);
+    if (t.id === 'vanguard-tank') {
+      const hDir: Dir8 = t.hullDir ?? 'E';
+      const sh = buildHullContactShadow(hDir);
+      blitScaled(frame, sh, Math.round(t.x - camX - TANK_OUT_W / 2), Math.round(t.y - camY - TANK_OUT_H + 5), 1);
+    } else {
+      const sp = TITAN_SPEC_BY_ID[t.id];
+      drawEllipse(frame, t.x - camX, t.y - camY, sp.shadowRx, sp.shadowRy, SHADOW_GROUND);
+    }
   }
   for (const t of airTitans) {
     const sp = TITAN_SPEC_BY_ID[t.id];
@@ -939,6 +1154,18 @@ function renderUltra1000Proof(
     } else if (item.kind === 'm') {
       const sp = cache4[`${item.m.faction}-${item.m.flip ? 1 : 0}-${item.m.f}`];
       blitScaled(frame, sp, Math.round(item.m.x - camX - 3), Math.round(item.m.y - camY - 5), 1);
+    } else if (item.t.id === 'vanguard-tank') {
+      const hDir: Dir8 = item.t.hullDir ?? 'E';
+      const tDir: Dir8 = item.t.turretDir ?? 'E';
+      const atkF = item.t.anim === 'attack' ? item.t.frame : 0;
+      const sp = composeIsoTank(hDir, tDir, 0, atkF);
+      blitScaled(
+        frame,
+        sp,
+        Math.round(item.t.x - camX - TANK_OUT_W / 2),
+        Math.round(item.t.y - camY - TANK_OUT_H + 5),
+        1,
+      );
     } else {
       const sp = compileTitanFrame(item.t.id, item.t.anim, item.t.facing, item.t.frame).outlined;
       blitScaled(
@@ -1000,6 +1227,7 @@ function buildInteractiveShowcaseHTML(
   unitsMeta: readonly ExportedSpriteMeta[],
   titansMeta: readonly ExportedSpriteMeta[],
   micro4Meta: readonly ExportedMicro4Meta[],
+  isoTank: ExportedIsoTankPayload,
   buildings: Readonly<Record<BuildingId, BuildingAsset>>,
 ): string {
   const terrainDataUrl = surfaceToDataURL(terrain);
@@ -1032,6 +1260,7 @@ function buildInteractiveShowcaseHTML(
     units: unitsMeta,
     titans: titansMeta,
     micro4: micro4Meta,
+    isoTank,
     buildings: buildingPayload,
     mapBuildings: MAP_BUILDINGS,
   });
@@ -1300,10 +1529,57 @@ const images = {
   tilesetAtlas: null,
   raw: {},
   out: {},
+  raw8: {},
+  out8: {},
+  isoHull: null,
+  isoTurret: null,
+  isoShadow: null,
   micro4Raw: {},
   micro4Out: {},
   buildings: {},
 };
+
+function vecToDir8(dx, dy) {
+  const shifted = Math.atan2(dy, dx) + Math.PI / 2;
+  return ((Math.round(shifted / (Math.PI / 4)) % 8) + 8) % 8;
+}
+
+const tankCompositeCache = new Map();
+function getCompositeTank(hullDir, phase, turretDir, atkCol, outlined) {
+  const key = (outlined ? 2048 : 0) | (hullDir << 7) | (phase << 5) | (turretDir << 2) | atkCol;
+  let cached = tankCompositeCache.get(key);
+  if (cached) return cached;
+  const T = DATA.isoTank;
+  const c = document.createElement('canvas');
+  c.width = T.outW; c.height = T.outH;
+  const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  const [px, py] = T.pivots[hullDir];
+  const dx = px - 11, dy = py - 8;
+  g.drawImage(images.isoHull, phase * T.coreW, hullDir * T.coreH, T.coreW, T.coreH, 1, 1, T.coreW, T.coreH);
+  g.drawImage(images.isoTurret, atkCol * T.coreW, turretDir * T.coreH, T.coreW, T.coreH, 1 + dx, 1 + dy, T.coreW, T.coreH);
+  if (outlined) {
+    const img = g.getImageData(0, 0, T.outW, T.outH);
+    const src = new Uint8ClampedArray(img.data);
+    const dst = img.data;
+    const W = T.outW, H = T.outH;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        if (src[i + 3] > 0) continue;
+        const adj =
+          (x > 0 && src[i - 4 + 3] > 0) ||
+          (x + 1 < W && src[i + 4 + 3] > 0) ||
+          (y > 0 && src[i - W * 4 + 3] > 0) ||
+          (y + 1 < H && src[i + W * 4 + 3] > 0);
+        if (adj) { dst[i] = 0x13; dst[i + 1] = 0x0f; dst[i + 2] = 0x1e; dst[i + 3] = 255; }
+      }
+    }
+    g.putImageData(img, 0, 0);
+  }
+  tankCompositeCache.set(key, c);
+  return c;
+}
 
 // Offscreen live 512x288 tilemap buffer + dual-grid biome vertices for real-time Wang-16 painting!
 const terrainCanvas = document.createElement('canvas');
@@ -1322,29 +1598,22 @@ function hash2iJS(x, y, seed) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
-function resolveTileJS(tx, ty) {
-  const nw = liveBiomes[ty * GRID_W + tx];
-  const ne = liveBiomes[ty * GRID_W + tx + 1];
-  const sw = liveBiomes[(ty + 1) * GRID_W + tx];
-  const se = liveBiomes[(ty + 1) * GRID_W + tx + 1];
+function resolveGroundTileJS(tx, ty) {
+  const rawAt = (gx, gy) => liveBiomes[gy * GRID_W + gx];
+  const raw = [rawAt(tx, ty), rawAt(tx + 1, ty), rawAt(tx, ty + 1), rawAt(tx + 1, ty + 1)];
+  let fb = 'grass';
+  const np = raw.filter((b) => b !== 'plateau');
+  if (np.length) fb = np[0];
+  else {
+    for (let sy = ty + 2; sy < GRID_H; sy++) { const b = rawAt(tx, sy); if (b !== 'plateau') { fb = b; break; } }
+  }
+  const nw = raw[0] === 'plateau' ? fb : raw[0];
+  const ne = raw[1] === 'plateau' ? fb : raw[1];
+  const sw = raw[2] === 'plateau' ? fb : raw[2];
+  const se = raw[3] === 'plateau' ? fb : raw[3];
   const vr = hash2iJS(tx, ty, 313);
   const variant = vr < 0.52 ? 0 : vr < 0.72 ? 1 : vr < 0.88 ? 2 : 3;
-
-  for (let i = 0; i < RAMPS.length; i++) {
-    const r = RAMPS[i];
-    if (ty >= r.gy && ty <= r.gy + 1 && Math.abs(tx - r.gx) <= r.halfW) {
-      if (tx === r.gx - r.halfW) return [8, 1];
-      if (tx === r.gx + r.halfW) return [10, 1];
-      return [9, 1];
-    }
-  }
   const maskOf = (t) => (nw === t ? 1 : 0) | (ne === t ? 2 : 0) | (sw === t ? 4 : 0) | (se === t ? 8 : 0);
-  const pMask = maskOf('plateau');
-  if (pMask === 15) {
-    const patch = hash2iJS(tx, ty, 41);
-    return patch > 0.86 ? [4 + (Math.floor(patch * 29) & 3), 1] : [12 + variant, 0];
-  }
-  if (pMask > 0) return [pMask, 6];
   const wMask = maskOf('water');
   if (wMask === 15) {
     const wr = hash2iJS(tx, ty, 811);
@@ -1369,10 +1638,36 @@ function resolveTileJS(tx, ty) {
   return [variant, 0];
 }
 
+function resolveOverlayTileJS(tx, ty) {
+  const nw = liveBiomes[ty * GRID_W + tx];
+  const ne = liveBiomes[ty * GRID_W + tx + 1];
+  const sw = liveBiomes[(ty + 1) * GRID_W + tx];
+  const se = liveBiomes[(ty + 1) * GRID_W + tx + 1];
+  for (let i = 0; i < RAMPS.length; i++) {
+    const r = RAMPS[i];
+    if (ty >= r.gy && ty <= r.gy + 1 && Math.abs(tx - r.gx) <= r.halfW) {
+      if (tx === r.gx - r.halfW) return [8, 1];
+      if (tx === r.gx + r.halfW) return [10, 1];
+      return [9, 1];
+    }
+  }
+  const pMask = (nw === 'plateau' ? 1 : 0) | (ne === 'plateau' ? 2 : 0) | (sw === 'plateau' ? 4 : 0) | (se === 'plateau' ? 8 : 0);
+  if (pMask === 0) return null;
+  if (pMask === 15) {
+    const vr = hash2iJS(tx, ty, 313);
+    const variant = vr < 0.52 ? 0 : vr < 0.72 ? 1 : vr < 0.88 ? 2 : 3;
+    const patch = hash2iJS(tx, ty, 41);
+    return patch > 0.86 ? [4 + (Math.floor(patch * 29) & 3), 1] : [12 + variant, 0];
+  }
+  return [pMask, 6];
+}
+
 function redrawTileCell(tx, ty) {
   if (tx < 0 || ty < 0 || tx >= GRID_W - 1 || ty >= GRID_H - 1 || !images.tilesetAtlas) return;
-  const [col, row] = resolveTileJS(tx, ty);
-  terrainCtx.drawImage(images.tilesetAtlas, col * 8, row * 8, 8, 8, tx * 8, ty * 8, 8, 8);
+  const [gCol, gRow] = resolveGroundTileJS(tx, ty);
+  terrainCtx.drawImage(images.tilesetAtlas, gCol * 8, gRow * 8, 8, 8, tx * 8, ty * 8, 8, 8);
+  const ov = resolveOverlayTileJS(tx, ty);
+  if (ov) terrainCtx.drawImage(images.tilesetAtlas, ov[0] * 8, ov[1] * 8, 8, 8, tx * 8, ty * 8, 8, 8);
 }
 
 function paintBiomeAtWorld(wx, wy, biome) {
@@ -1432,6 +1727,7 @@ const ANIM_FPS = { idle: 2.5, move: 8, attack: 9, death: 7 };
 
 let units = [];
 let tinyUnits = []; // Used in 'mega4' 1,000-unit mode for blistering 60fps performance
+let treadTracks = [];
 let projectiles = [];
 let beams = [];
 let blasts = [];
@@ -1440,6 +1736,7 @@ let interceptors = [];
 function spawnUnit(id, x, y) {
   const st = STATS[id];
   const meta = spriteMetaById[id];
+  const initDir8 = st.faction === 'kraxen' ? 6 : st.faction === 'solaris' ? 4 : 2;
   return {
     id,
     faction: st.faction,
@@ -1450,6 +1747,11 @@ function spawnUnit(id, x, y) {
     hp: st.hp,
     maxHp: st.hp,
     facing: st.faction === 'kraxen' ? 1 : 0,
+    dir8: initDir8,
+    turret8: initDir8,
+    hullTurnCd: 0,
+    moveDist: 0,
+    trackAccum: 0,
     anim: 'move',
     animT: Math.random() * 4,
     cd: Math.random() * st.cd,
@@ -1495,6 +1797,7 @@ function seedTitans() {
 function seedBattle() {
   units = [];
   tinyUnits = [];
+  treadTracks = [];
   projectiles = [];
   beams = [];
   blasts = [];
@@ -1534,29 +1837,64 @@ function seedBattle() {
   }
 }
 
+function biomeAtWorld(wx, wy) {
+  const gx = Math.max(0, Math.min(GRID_W - 1, Math.round(wx / 8)));
+  const gy = Math.max(0, Math.min(GRID_H - 1, Math.round(wy / 8)));
+  return liveBiomes[gy * GRID_W + gx];
+}
+function onRampWorld(wx, wy) {
+  const tx = wx / 8, ty = wy / 8;
+  for (let i = 0; i < DATA.tilemap.ramps.length; i++) {
+    const r = DATA.tilemap.ramps[i];
+    if (Math.abs(tx - r.gx) <= r.halfW + 0.65 && ty >= r.gy - 0.8 && ty <= r.gy + 2.4) return true;
+  }
+  return false;
+}
+function canGroundStep(x0, y0, x1, y1) {
+  const b0 = biomeAtWorld(x0, y0);
+  const b1 = biomeAtWorld(x1, y1);
+  if (b1 === 'water' && b0 !== 'water') return false;
+  if ((b0 === 'plateau') !== (b1 === 'plateau') && !onRampWorld(x0, y0) && !onRampWorld(x1, y1)) return false;
+  return true;
+}
+
 function stepSim(dt) {
-  // Replenish Titans if fewer than 14
-  const aliveTitans = units.filter((u) => !u.dead && u.titan);
-  if (aliveTitans.length < 14) {
-    const f = ['vanguard', 'kraxen', 'solaris'][(Math.random() * 3) | 0];
-    const b = BASES[f];
-    units.push(spawnUnit(pickTitan(f), b.x + (Math.random() - 0.5) * 32, b.y + (Math.random() - 0.5) * 24));
+  // Per-faction balanced Titan & Infantry replenishment so all 3 factions stay dramatic & competitive!
+  const tCnt = { vanguard: 0, kraxen: 0, solaris: 0 };
+  const iCnt = { vanguard: 0, kraxen: 0, solaris: 0 };
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i];
+    if (u.dead) continue;
+    if (u.titan) tCnt[u.faction]++;
+    else iCnt[u.faction]++;
+  }
+
+  for (const f of ['vanguard', 'kraxen', 'solaris']) {
+    if (tCnt[f] < 5) {
+      const b = BASES[f];
+      units.push(spawnUnit(pickTitan(f), b.x + (Math.random() - 0.5) * 32, b.y + (Math.random() - 0.5) * 20));
+      tCnt[f]++;
+    }
   }
 
   if (state.mode === 'mixed') {
-    const aliveInf = units.filter((u) => !u.dead && !u.titan);
-    if (aliveInf.length < 182) {
-      for (let k = 0; k < 4; k++) {
-        const f = Math.random() < 0.42 ? 'kraxen' : Math.random() < 0.58 ? 'vanguard' : 'solaris';
+    const caps = { vanguard: 56, kraxen: 74, solaris: 54 };
+    for (const f of ['solaris', 'kraxen', 'vanguard']) {
+      let spawned = 0;
+      while (iCnt[f] < caps[f] && spawned < 2) {
         const b = BASES[f];
-        units.push(spawnUnit(pickInfantry(f), b.x + (Math.random() - 0.5) * 44, b.y + (Math.random() - 0.5) * 30));
+        const sx = f === 'solaris' ? b.x + (Math.random() - 0.5) * 86 : b.x + (Math.random() - 0.5) * 44;
+        const sy = f === 'solaris' ? 62 + Math.random() * 14 : b.y + (Math.random() - 0.5) * 36;
+        units.push(spawnUnit(pickInfantry(f), sx, sy));
+        iCnt[f]++;
+        spawned++;
       }
     }
   } else {
-    // Keep 4x4 swarm around 990 units!
+    // Keep 4x4 swarm around 990 units balanced across all 3 factions!
     if (tinyUnits.length < 980) {
       for (let k = 0; k < 14; k++) {
-        const f = Math.random() < 0.43 ? 'kraxen' : Math.random() < 0.6 ? 'vanguard' : 'solaris';
+        const f = Math.random() < 0.4 ? 'kraxen' : Math.random() < 0.52 ? 'vanguard' : 'solaris';
         const b = BASES[f];
         tinyUnits.push({
           faction: f,
@@ -1619,6 +1957,9 @@ function stepSim(dt) {
           const aimDy = tgt.y - u.y;
           u.attackIsRight = aimDx >= 0;
           u.facing = (aimDy >= -2) ? (u.attackIsRight ? 0 : 1) : (u.attackIsRight ? 2 : 3);
+          const aimDir8 = vecToDir8(aimDx, aimDy);
+          if (u.id === 'vanguard-tank') u.turret8 = aimDir8;
+          else u.dir8 = aimDir8;
           const alt = meta.airAltitude;
           const distHit = Math.hypot(aimDx, aimDy) || 1;
           if (st.proj === 'thermal-beam') {
@@ -1652,9 +1993,18 @@ function stepSim(dt) {
               dur: 0.72,
             });
           } else {
+            let px0 = u.x + (u.attackIsRight ? 6 : -6);
+            let py0 = u.y - 6 - alt;
+            if (u.id === 'vanguard-tank') {
+              const T = DATA.isoTank;
+              const [pvx, pvy] = T.pivots[u.dir8];
+              const [mx, my] = T.muzzles[u.turret8];
+              px0 = Math.round(u.x - T.outW / 2) + 1 + pvx + mx;
+              py0 = Math.round(u.y - T.outH + 5) + 1 + pvy + my;
+            }
             projectiles.push({
-              x: u.x + (u.attackIsRight ? 6 : -6),
-              y: u.y - 6 - alt,
+              x: px0,
+              y: py0,
               tx: tgt.x,
               ty: tgt.y - 4,
               target: tgt,
@@ -1662,6 +2012,7 @@ function stepSim(dt) {
               kind: st.proj,
               t: 0,
               dur: Math.max(0.14, distHit / (st.proj === 'shell' ? 115 : 155)),
+              fresh: true,
             });
           }
         }
@@ -1678,7 +2029,7 @@ function stepSim(dt) {
     let sepX = 0, sepY = 0;
     let target = null;
     let bestD2 = 1e9;
-    const sepRad = u.titan ? 15 : 8;
+    if (u.hullTurnCd > 0) u.hullTurnCd -= dt;
 
     for (let gy = cy - 2; gy <= cy + 2; gy++) {
       for (let gx = cx - 2; gx <= cx + 2; gx++) {
@@ -1690,11 +2041,16 @@ function stepSim(dt) {
           const dx = o.x - u.x;
           const dy = o.y - u.y;
           const d2 = dx * dx + dy * dy;
-          if (o.layer === u.layer && d2 < sepRad * sepRad && d2 > 0.01) {
-            const d = Math.sqrt(d2);
-            const push = (sepRad - d) / sepRad;
-            sepX -= (dx / d) * push;
-            sepY -= (dy / d) * push;
+          if (o.layer === u.layer && d2 > 0.01) {
+            // Mass-weighted separation: infantry give Tanks clean breathing room; Tanks barely budge from infantry!
+            const pairRad = (u.titan && o.titan) ? 21 : (u.titan || o.titan) ? 15 : 10;
+            if (d2 < pairRad * pairRad) {
+              const d = Math.sqrt(d2);
+              const weight = u.titan && !o.titan ? 0.14 : !u.titan && o.titan ? 1.55 : 1.0;
+              const push = ((pairRad - d) / pairRad) * weight;
+              sepX -= (dx / d) * push;
+              sepY -= (dy / d) * push;
+            }
           }
           if (o.faction !== u.faction && d2 < bestD2) {
             bestD2 = d2;
@@ -1729,9 +2085,21 @@ function stepSim(dt) {
 
     let gx = 256, gy = 158;
     if (target) { gx = target.x; gy = target.y; }
-    if (!u.attacking && u.layer === 'ground' && u.y < 92 && gy > 96) {
-      const rampX = Math.abs(u.x - 196) < Math.abs(u.x - 318) ? 196 : 318;
-      if (Math.abs(u.x - rampX) > 12) { gx = rampX; gy = 90; }
+    // Clean 2-stage bidirectional ramp routing: align 8px clear of cliff wall, then march straight through the ramp!
+    if (!u.attacking && u.layer === 'ground') {
+      const onPlat = biomeAtWorld(u.x, u.y) === 'plateau';
+      const tgtPlat = biomeAtWorld(gx, gy) === 'plateau';
+      const tgtDist = Math.hypot(gx - u.x, gy - u.y);
+      if (onPlat !== tgtPlat && tgtDist > st.range) {
+        const rampX = Math.abs(u.x - 196) < Math.abs(u.x - 318) ? 196 : 318;
+        if (Math.abs(u.x - rampX) > 8) {
+          gx = rampX;
+          gy = onPlat ? 66 : 100;
+        } else {
+          gx = rampX;
+          gy = onPlat ? 102 : 64;
+        }
+      }
     }
 
     const dx = gx - u.x;
@@ -1741,22 +2109,28 @@ function stepSim(dt) {
     const isDown = dy >= -2;
     if (!u.attacking || (u.attackTarget && !u.attackTarget.dead && u.attackTarget.hp > 0)) {
       u.facing = isDown ? (isRight ? 0 : 1) : (isRight ? 2 : 3);
+      if (u.id === 'vanguard-tank') {
+        u.turret8 = vecToDir8(dx, dy);
+      } else {
+        u.dir8 = vecToDir8(dx, dy);
+      }
     }
 
     if (target && dist <= st.range) {
-      // Flyers gently orbit while firing; ground units hold line with separation
+      // Flyers gently orbit while firing; ground units hold line with separation (Tanks stay planted!)
       if (u.layer === 'air') {
         u.vx = (-dy / dist) * st.speed * 0.55 + sepX * 18;
         u.vy = (dx / dist) * st.speed * 0.45 + sepY * 14;
       } else {
-        u.vx = sepX * 12;
-        u.vy = sepY * 10;
+        const sepMul = u.titan ? 6 : 14;
+        u.vx = sepX * sepMul;
+        u.vy = sepY * (sepMul * 0.85);
       }
       u.anim = u.attacking ? 'attack' : u.layer === 'air' ? 'move' : 'idle';
 
       if (!u.attacking && u.cd <= 0) {
         u.cd = st.cd * (0.85 + Math.random() * 0.3);
-        const atkCount = meta.frameOffsets.attack.count;
+        const atkCount = u.id === 'vanguard-tank' ? 4 : meta.frameOffsets.attack.count;
         u.attacking = true;
         u.attackTime = 0;
         u.attackDur = atkCount / ANIM_FPS.attack;
@@ -1771,8 +2145,43 @@ function stepSim(dt) {
       u.anim = 'move';
     }
 
-    u.x = Math.max(70, Math.min(DATA.worldW - 70, u.x + u.vx * dt));
-    u.y = Math.max(54, Math.min(DATA.worldH - 42, u.y + u.vy * dt));
+    const oldX = u.x, oldY = u.y;
+    let candX = Math.max(70, Math.min(DATA.worldW - 70, u.x + u.vx * dt));
+    let candY = Math.max(54, Math.min(DATA.worldH - 42, u.y + u.vy * dt));
+    if (u.layer === 'ground' && !canGroundStep(oldX, oldY, candX, candY)) {
+      if (canGroundStep(oldX, oldY, candX, oldY)) candY = oldY;
+      else if (canGroundStep(oldX, oldY, oldX, candY)) candX = oldX;
+      else { candX = oldX; candY = oldY; }
+    }
+    u.x = candX;
+    u.y = candY;
+    const stepD = Math.hypot(u.x - oldX, u.y - oldY);
+    // Tanks only rotate hull & lay tread marks while actively driving (zero separation jitter!)
+    if (u.id === 'vanguard-tank' && u.anim === 'move' && stepD > 0.14) {
+      if (u.hullTurnCd <= 0) {
+        const nextDir = vecToDir8(u.x - oldX, u.y - oldY);
+        if (nextDir !== u.dir8) {
+          u.dir8 = nextDir;
+          u.hullTurnCd = 0.22;
+        }
+      }
+      u.moveDist += stepD;
+      u.trackAccum += stepD;
+      if (u.trackAccum >= 4.5) {
+        u.trackAccum = 0;
+        const nx = (u.x - oldX) / stepD, ny = (u.y - oldY) / stepD;
+        const px = -ny * 4.0, py = nx * 2.5;
+        const horiz = Math.abs(nx) >= Math.abs(ny);
+        treadTracks.push({ x: u.x + px, y: u.y + py, w: horiz ? 2 : 1, h: horiz ? 1 : 2, life: 3.4 });
+        treadTracks.push({ x: u.x - px, y: u.y - py, w: horiz ? 2 : 1, h: horiz ? 1 : 2, life: 3.4 });
+        if (treadTracks.length > 220) treadTracks.splice(0, 2);
+      }
+    }
+  }
+
+  for (let i = treadTracks.length - 1; i >= 0; i--) {
+    treadTracks[i].life -= dt;
+    if (treadTracks[i].life <= 0) treadTracks.splice(i, 1);
   }
 
   // Step 1,000-unit 4x4 mega-swarm (lightweight O(N) hash!)
@@ -1849,6 +2258,7 @@ function stepSim(dt) {
   // Advance projectiles, beams, blasts, interceptors
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
+    if (p.fresh) { p.fresh = false; continue; }
     p.t += dt;
     if (p.t >= p.dur) {
       if (p.target && p.dmg > 0) {
@@ -1918,6 +2328,13 @@ function renderBattle() {
   groundList.sort((a, b) => a.y - b.y);
   airList.sort((a, b) => a.y - b.y);
 
+  // Fading twin tank tread tracks
+  for (let i = 0; i < treadTracks.length; i++) {
+    const tr = treadTracks[i];
+    ctx.fillStyle = 'rgba(18, 12, 24, ' + (Math.min(1, tr.life / 3.4) * 0.24).toFixed(2) + ')';
+    ctx.fillRect(Math.round(tr.x - cx), Math.round(tr.y - cy), tr.w, tr.h);
+  }
+
   // Ground shadows (buildings, units, and flyers projected below)
   ctx.fillStyle = 'rgba(14, 10, 24, 0.42)';
   for (let i = 0; i < groundList.length; i++) {
@@ -1928,11 +2345,20 @@ function renderBattle() {
       ctx.ellipse(it.b.x - cx, it.b.y - cy, bm.srx, bm.sry, 0, 0, Math.PI * 2);
       ctx.fill();
     } else if (it.kind === 1 && (!it.u.dead || it.u.deathT < 0.42)) {
-      const deathFrame = Math.min(2, Math.floor(it.u.deathT * ANIM_FPS.death));
-      const shrink = it.u.dead ? (deathFrame < 2 ? 0.8 : 0.6) : 1;
-      const w = Math.max(4, Math.round((it.u.titan ? 12 : 6) * shrink));
-      const h = Math.max(2, Math.round((it.u.titan ? 4 : 2) * shrink));
-      ctx.fillRect(Math.round(it.u.x - cx - w / 2), Math.round(it.u.y - cy - h / 2), w, h);
+      if (it.u.id === 'vanguard-tank' && !it.u.dead) {
+        const T = DATA.isoTank;
+        ctx.drawImage(
+          images.isoShadow,
+          it.u.dir8 * T.outW, 0, T.outW, T.outH,
+          Math.round(it.u.x - cx - T.outW / 2), Math.round(it.u.y - cy - T.outH + 5), T.outW, T.outH,
+        );
+      } else {
+        const deathFrame = Math.min(2, Math.floor(it.u.deathT * ANIM_FPS.death));
+        const shrink = it.u.dead ? (deathFrame < 2 ? 0.8 : 0.6) : 1;
+        const w = Math.max(4, Math.round((it.u.titan ? 12 : 6) * shrink));
+        const h = Math.max(2, Math.round((it.u.titan ? 4 : 2) * shrink));
+        ctx.fillRect(Math.round(it.u.x - cx - w / 2), Math.round(it.u.y - cy - h / 2), w, h);
+      }
     }
   }
   ctx.fillStyle = 'rgba(14, 10, 24, 0.32)';
@@ -1966,16 +2392,29 @@ function renderBattle() {
       const meta = spriteMetaById[u.id];
       const cw = state.outlined ? meta.w + 2 : meta.w;
       const ch = state.outlined ? meta.h + 2 : meta.h;
-      if (sx < -cw || sx > visW + cw || sy < -ch || sy > visH + ch) continue;
-      const animName = u.dead ? 'death' : u.attacking ? 'attack' : u.anim;
-      const seg = meta.frameOffsets[animName];
-      const fIdx = u.dead
-        ? Math.min(seg.count - 1, Math.floor(u.deathT * ANIM_FPS.death))
-        : animName === 'attack'
-          ? Math.min(seg.count - 1, Math.floor(u.attackTime * ANIM_FPS.attack))
-          : Math.floor(u.animT * ANIM_FPS[animName]) % seg.count;
-      const img = state.outlined ? images.out[u.id] : images.raw[u.id];
-      ctx.drawImage(img, (seg.start + fIdx) * cw, u.facing * ch, cw, ch, sx - (cw >> 1), sy - ch + 1, cw, ch);
+      if (u.id === 'vanguard-tank' && !u.dead) {
+        const T = DATA.isoTank;
+        if (sx < -T.outW || sx > visW + T.outW || sy < -T.outH || sy > visH + T.outH) continue;
+        const phase = Math.floor(u.moveDist * 0.45) & 3;
+        const atkCol = u.attacking ? Math.min(3, Math.floor(u.attackTime * ANIM_FPS.attack)) : 0;
+        const comp = getCompositeTank(u.dir8, phase, u.turret8, atkCol, state.outlined);
+        ctx.drawImage(comp, Math.round(sx - T.outW / 2), Math.round(sy - T.outH + 5));
+      } else {
+        if (sx < -cw || sx > visW + cw || sy < -ch || sy > visH + ch) continue;
+        const animName = u.dead ? 'death' : u.attacking ? 'attack' : u.anim;
+        const seg = meta.frameOffsets[animName];
+        const fIdx = u.dead
+          ? Math.min(seg.count - 1, Math.floor(u.deathT * ANIM_FPS.death))
+          : animName === 'attack'
+            ? Math.min(seg.count - 1, Math.floor(u.attackTime * ANIM_FPS.attack))
+            : Math.floor(u.animT * ANIM_FPS[animName]) % seg.count;
+        const use8 = Boolean(meta.has8Way && images.out8[u.id]);
+        const img = use8
+          ? (state.outlined ? images.out8[u.id] : images.raw8[u.id])
+          : (state.outlined ? images.out[u.id] : images.raw[u.id]);
+        const rowIdx = use8 ? u.dir8 : u.facing;
+        ctx.drawImage(img, (seg.start + fIdx) * cw, rowIdx * ch, cw, ch, sx - (cw >> 1), sy - ch + 1, cw, ch);
+      }
 
       if (!u.dead && u.hp < u.maxHp) {
         const bw = u.titan ? 12 : 6;
@@ -2120,7 +2559,8 @@ function rebuildCastInspector() {
     n.textContent = meta.name.replace('Vanguard ', 'V. ').replace('Kraxen ', 'K. ').replace('Solaris ', 'S. ');
     const r = document.createElement('div');
     r.className = 'unit-role';
-    r.textContent = meta.w + '×' + meta.h + ' · ' + meta.role;
+    const roleLabel = meta.id === 'vanguard-tank' ? '22×20 · 8-Way Tank' : meta.has8Way ? meta.w + '×' + meta.h + ' · 8-Way Rifle' : meta.w + '×' + meta.h + ' · ' + meta.role;
+    r.textContent = roleLabel;
     card.append(cv, n, r);
     grid.appendChild(card);
     castItems.push({ kind: 'sprite', meta, ctx: cctx });
@@ -2143,20 +2583,38 @@ function renderCastInspector(nowSec) {
       cctx.drawImage(img, fCol * cell, 0, cell, cell, pad, pad, ds, ds);
     } else {
       const meta = item.meta;
-      const seg = meta.frameOffsets[state.castAnim];
-      const fps = ANIM_FPS[state.castAnim];
-      const fIdx = Math.floor(nowSec * fps) % seg.count;
-      const cw = state.outlined ? meta.w + 2 : meta.w;
-      const ch = state.outlined ? meta.h + 2 : meta.h;
-      const img = state.outlined ? images.out[meta.id] : images.raw[meta.id];
-      const zoom = meta.w >= 14 ? 3 : (state.outlined ? 4 : 5);
-      const dw = cw * zoom;
-      const dh = ch * zoom;
-      const px = Math.floor((60 - dw) / 2);
-      const py = Math.floor((60 - dh) / 2) + (meta.layer === 'air' ? -3 : 1);
-      cctx.fillStyle = 'rgba(14,10,24,0.35)';
-      cctx.beginPath(); cctx.ellipse(30, 52, meta.w >= 14 ? 20 : 13, 4, 0, 0, Math.PI * 2); cctx.fill();
-      cctx.drawImage(img, (seg.start + fIdx) * cw, 0, cw, ch, px, py, dw, dh);
+      if (meta.id === 'vanguard-tank') {
+        const T = DATA.isoTank;
+        const dir = Math.floor(nowSec * 0.45) % 8;
+        const tDir = state.castAnim === 'idle' ? dir : Math.floor(nowSec * 1.15) % 8;
+        const phase = state.castAnim === 'move' ? (Math.floor(nowSec * 8) & 3) : 0;
+        const atkCol = state.castAnim === 'attack' ? (Math.floor(nowSec * 5.5) & 3) : 0;
+        const comp = getCompositeTank(dir, phase, tDir, atkCol, state.outlined);
+        const zoom = 2;
+        const dw = T.outW * zoom, dh = T.outH * zoom;
+        const px = Math.floor((60 - dw) / 2), py = Math.floor((60 - dh) / 2) + 2;
+        cctx.drawImage(images.isoShadow, dir * T.outW, 0, T.outW, T.outH, px, py, dw, dh);
+        cctx.drawImage(comp, px, py, dw, dh);
+      } else {
+        const seg = meta.frameOffsets[state.castAnim];
+        const fps = ANIM_FPS[state.castAnim];
+        const fIdx = Math.floor(nowSec * fps) % seg.count;
+        const cw = state.outlined ? meta.w + 2 : meta.w;
+        const ch = state.outlined ? meta.h + 2 : meta.h;
+        const use8 = Boolean(meta.has8Way && images.out8[meta.id]);
+        const img = use8
+          ? (state.outlined ? images.out8[meta.id] : images.raw8[meta.id])
+          : (state.outlined ? images.out[meta.id] : images.raw[meta.id]);
+        const rowIdx = use8 ? (Math.floor(nowSec * 0.85) % 8) : 0;
+        const zoom = meta.w >= 14 ? 3 : (state.outlined ? 4 : 5);
+        const dw = cw * zoom;
+        const dh = ch * zoom;
+        const px = Math.floor((60 - dw) / 2);
+        const py = Math.floor((60 - dh) / 2) + (meta.layer === 'air' ? -3 : 1);
+        cctx.fillStyle = 'rgba(14,10,24,0.35)';
+        cctx.beginPath(); cctx.ellipse(30, 52, meta.w >= 14 ? 20 : 13, 4, 0, 0, Math.PI * 2); cctx.fill();
+        cctx.drawImage(img, (seg.start + fIdx) * cw, rowIdx * ch, cw, ch, px, py, dw, dh);
+      }
     }
   }
 }
@@ -2339,7 +2797,14 @@ async function init() {
     ...[...DATA.units, ...DATA.titans].map(async (u) => {
       images.raw[u.id] = await loadImage(u.rawDataUrl);
       images.out[u.id] = await loadImage(u.outlinedDataUrl);
+      if (u.has8Way && u.raw8DataUrl && u.outlined8DataUrl) {
+        images.raw8[u.id] = await loadImage(u.raw8DataUrl);
+        images.out8[u.id] = await loadImage(u.outlined8DataUrl);
+      }
     }),
+    loadImage(DATA.isoTank.hullDataUrl).then((img) => { images.isoHull = img; }),
+    loadImage(DATA.isoTank.turretDataUrl).then((img) => { images.isoTurret = img; }),
+    loadImage(DATA.isoTank.shadowDataUrl).then((img) => { images.isoShadow = img; }),
     ...DATA.micro4.map(async (m) => {
       images.micro4Raw[m.faction] = await loadImage(m.rawDataUrl);
       images.micro4Out[m.faction] = await loadImage(m.outlinedDataUrl);
@@ -2374,6 +2839,7 @@ function main(): void {
   const unitsMeta = buildUnitSheets();
   const titansMeta = buildTitanSheets();
   const micro4Meta = buildMicro4Sheets();
+  const isoTank = buildIsoTankPayload();
   const buildings = buildAllBuildings();
 
   // Build true 8x8 tiling & Wang-16 transitioning terrain tileset, then compose the 512x288 map strictly from tiles!
@@ -2559,23 +3025,26 @@ function main(): void {
 
   const infProofPath = resolve(OUT_ROOT, 'proof-8x8-sprites.png');
   const titanProofPath = resolve(OUT_ROOT, 'proof-titans-16x16.png');
+  const vanguard8Path = resolve(OUT_ROOT, 'proof-8way-vanguard.png');
   const combinedPath = resolve(OUT_ROOT, 'proof-combined-arms-battle.png');
   const ultraPath = resolve(OUT_ROOT, 'proof-ultra-1000-swarm.png');
   const htmlPath = resolve(OUT_ROOT, 'micro-rts-showcase.html');
 
   writeFileSync(infProofPath, encodePNG(contactInf));
   writeFileSync(titanProofPath, encodePNG(contactTitans));
+  writeFileSync(vanguard8Path, encodePNG(renderVanguard8WayProof(tileset, buildings)));
   writeFileSync(combinedPath, encodePNG(combinedBattle.surface2x));
   writeFileSync(ultraPath, encodePNG(ultraBattle.surface2x));
   writeFileSync(
     htmlPath,
-    buildInteractiveShowcaseHTML(terrain, tileset, tilemap, unitsMeta, titansMeta, micro4Meta, buildings),
+    buildInteractiveShowcaseHTML(terrain, tileset, tilemap, unitsMeta, titansMeta, micro4Meta, isoTank, buildings),
     'utf8',
   );
 
   console.log(
     `Generated Mixed-Scale Micro-RTS Kit:\n` +
-      `  - 6 8x8 infantry + 6 14x12..16x16 Titans/Flyers + 3 4x4 ultra-micro factions\n` +
+      `  - 6 8x8 infantry (8-way Vanguard Marine) + 6 Titans (22x20 8-way Iso Tank) + 3 4x4 factions\n` +
+      `  - ${vanguard8Path}\n` +
       `  - ${titanProofPath}\n` +
       `  - ${combinedPath} (${combinedBattle.totalCount} units on screen)\n` +
       `  - ${ultraPath} (${ultraBattle.totalCount} units on screen)\n` +

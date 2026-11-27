@@ -28,6 +28,8 @@ export type UnitId =
   | 'solaris-arcanist';
 
 export type FacingId = 'SE' | 'SW' | 'NE' | 'NW';
+export type Dir8 = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+export const DIRS_8: readonly Dir8[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 export type AnimId = 'idle' | 'move' | 'attack' | 'death';
 
 export type SpritePattern8x8 = readonly [
@@ -49,12 +51,16 @@ export interface UnitSpec {
   readonly attackKind: 'tracer' | 'missile' | 'acid' | 'bite' | 'psi-slash' | 'psi-orb';
   readonly shadowRx: number;
   readonly shadowRy: number;
+  readonly has8Way?: boolean;
   readonly anims: Readonly<
     Record<
       AnimId,
       {
         readonly SE: readonly SpritePattern8x8[];
         readonly NE: readonly SpritePattern8x8[];
+        readonly N?: readonly SpritePattern8x8[];
+        readonly E?: readonly SpritePattern8x8[];
+        readonly S?: readonly SpritePattern8x8[];
       }
     >
   >;
@@ -72,8 +78,75 @@ const VANGUARD_TROOPER: UnitSpec = {
   attackKind: 'tracer',
   shadowRx: 3.4,
   shadowRy: 1.5,
+  has8Way: true,
   anims: {
     idle: {
+      N: [
+        [
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+        [
+          '........',
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
+      E: [
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+        [
+          '........',
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
+      S: [
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+        [
+          '........',
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
       SE: [
         [
           '..wsw...',
@@ -120,6 +193,132 @@ const VANGUARD_TROOPER: UnitSpec = {
       ],
     },
     move: {
+      N: [
+        [
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '.d...B..',
+          '.....d..',
+        ],
+        [
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+        [
+          '........',
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..dBBd..',
+          '..B..d..',
+          '..d.....',
+        ],
+        [
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
+      E: [
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..dBBd..',
+          '.B...B..',
+          '.d....d.',
+        ],
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..dBBd..',
+          '...BB...',
+          '...dd...',
+        ],
+        [
+          '........',
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..B..B..',
+          '.d....d.',
+        ],
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..dBBd..',
+          '..B.B...',
+          '..d.d...',
+        ],
+      ],
+      S: [
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBBd..',
+          '..B..d..',
+          '..d.....',
+        ],
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+        [
+          '........',
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..d..B..',
+          '.....d..',
+        ],
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
       SE: [
         [
           '..wsw...',
@@ -206,6 +405,132 @@ const VANGUARD_TROOPER: UnitSpec = {
       ],
     },
     attack: {
+      N: [
+        [
+          '..wsw.s.',
+          '..ssddd.',
+          '.bBddBbs',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '.B...B..',
+          '.d...d..',
+        ],
+        [
+          '.....fFf',
+          '..wsw.f.',
+          '..ssddd.',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..dBBd..',
+          '.B...B..',
+          '.d...d..',
+        ],
+        [
+          '..wsw.f.',
+          '..ssddd.',
+          '.bBddBbs',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '.B...B..',
+          '.d...d..',
+        ],
+        [
+          '..wsw...',
+          '..ssdd..',
+          '.bBddBb.',
+          '.BDssDB.',
+          '..DBBD..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
+      E: [
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..dBBd..',
+          '.B...B..',
+          '.d...d..',
+        ],
+        [
+          '.wsw....',
+          '.ssvv...',
+          'bBBsd.f.',
+          'BDDssFfF',
+          '.dBBd.f.',
+          '.dBBd...',
+          '.B..B...',
+          '.d..d...',
+        ],
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssf',
+          '..dBBdd.',
+          '..dBBd..',
+          '.B...B..',
+          '.d...d..',
+        ],
+        [
+          '..wsw...',
+          '..ssvv..',
+          '.bBBsd..',
+          '.BDDsssd',
+          '..dBBdd.',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
+      S: [
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBsd..',
+          '.B...B..',
+          '.d...d..',
+        ],
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBfF..',
+          '.B..fFf.',
+          '.d...f..',
+        ],
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBsd..',
+          '.B...f..',
+          '.d...d..',
+        ],
+        [
+          '..wsw...',
+          '..svvs..',
+          '.bBssBb.',
+          '.BDssBD.',
+          '..DBsd..',
+          '..dBBd..',
+          '..B..B..',
+          '..d..d..',
+        ],
+      ],
       SE: [
         [
           '..wsw...',
@@ -1896,6 +2221,36 @@ export function compileUnitFrame(
   const isBack = facing === 'NE' || facing === 'NW';
   const isFlipped = facing === 'SW' || facing === 'NW';
   const list = isBack ? animSet.NE : animSet.SE;
+  const pattern = list[frameIdx % list.length];
+  const compiled = compilePattern(pattern, palette, 8, 8);
+  const raw = isFlipped ? mirrorHorizontal(compiled) : compiled;
+  const outlined = addPixelOutline(raw, INK_OUTLINE);
+  return { raw, outlined };
+}
+
+export function compileUnitFrame8(
+  unitId: UnitId,
+  anim: AnimId,
+  dir: Dir8,
+  frameIdx: number,
+  team: TeamColorId = 'default',
+): CompiledUnitFrame {
+  const spec = UNIT_SPEC_BY_ID[unitId];
+  const palette = buildFactionPalette(spec.faction, team);
+  const animSet = spec.anims[anim];
+  const isFlipped = dir === 'NW' || dir === 'W' || dir === 'SW';
+  const baseDir: 'N' | 'NE' | 'E' | 'SE' | 'S' =
+    dir === 'NW' ? 'NE' : dir === 'W' ? 'E' : dir === 'SW' ? 'SE' : dir;
+  const list =
+    baseDir === 'N'
+      ? (animSet.N ?? animSet.NE)
+      : baseDir === 'E'
+        ? (animSet.E ?? animSet.SE)
+        : baseDir === 'S'
+          ? (animSet.S ?? animSet.SE)
+          : baseDir === 'NE'
+            ? animSet.NE
+            : animSet.SE;
   const pattern = list[frameIdx % list.length];
   const compiled = compilePattern(pattern, palette, 8, 8);
   const raw = isFlipped ? mirrorHorizontal(compiled) : compiled;
