@@ -46,6 +46,9 @@ are `- [x]`. So:
   packs) and verify a pinned `npm run build`.
 - For `run-chisel-*` authoring, follow
   [`.agents/skills/run-chisel-assets/SKILL.md`](.agents/skills/run-chisel-assets/SKILL.md).
+- For `tools/run-micro-sprites/` (8-way micro-RTS units, split-hull vehicles,
+  grounded buildings, and `8×8` Wang-16 terrain tilesets), follow
+  [`.agents/skills/run-micro-sprites/SKILL.md`](.agents/skills/run-micro-sprites/SKILL.md).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution requirements and
 [GETTING_STARTED.md](GETTING_STARTED.md) for onboarding.
