@@ -12,8 +12,8 @@ All sprites live on one shared native pixel grid (`1×` = authentic retro pixel 
 |---|---:|---:|---|---|
 | **Ultra-Micro Swarm** | `4×4` | `6×6` | Single-layer, 2-way (`R`/`L`), 3f | `src/micro4.ts` |
 | **Infantry** | `8×8` | `10×10` | Single-layer, 8-way (`N..NW`), 13f (`2+4+4+3`) | `src/units.ts` |
-| **Flyers** | `14×12` / `16×12` | `16×14` / `18×14` | Single-layer, 8-way (`N..NW`), 13f (`2+4+4+3`) | `src/titans.ts` |
-| **Ground Titans** | `16×16` / `18×16` | `18×18` / `20×18` | Single-layer, 8-way (`N..NW`), 13–14f | `src/titans.ts` |
+| **Flyers** | `14×12` – `18×14` | `16×14` – `20×16` | Single-layer, 8-way (`N..NW`), 13f (`2+4+4+3`) | `src/titans.ts` |
+| **Ground Titans** | `16×16` / `20×18` | `18×18` / `22×20` | Single-layer, 8-way (`N..NW`), 13–14f | `src/titans.ts` |
 | **Split-Hull Vehicles** | `22×20` | `24×22` | 2-layer (8-way hull × 8-way turret), 4 tread + 4 recoil frames | `src/tankIso.ts` |
 | **Buildings & Props** | `16×14` – `32×25` | `+2px` | Static grounded footprints (`2.5×–3.5×` infantry) | `src/buildings.ts` |
 

@@ -224,8 +224,8 @@
       "role": "VTOL Gunship",
       "faction": "vanguard",
       "layer": "air",
-      "w": 14,
-      "h": 12,
+      "w": 18,
+      "h": 14,
       "airAltitude": 16,
       "attackKind": "rocket-salvo",
       "frameOffsets": {
@@ -254,8 +254,8 @@
       "role": "Tusk Juggernaut",
       "faction": "kraxen",
       "layer": "ground",
-      "w": 18,
-      "h": 16,
+      "w": 20,
+      "h": 18,
       "airAltitude": 0,
       "attackKind": "cleave",
       "frameOffsets": {
