@@ -308,11 +308,13 @@ function accentBar(faction: FactionId): number {
 }
 
 function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, BuildingAsset>>): PixelSurface {
-  // All 6 8x8 Infantry units x All 8 compass directions (N, NE, E, SE, S, SW, W, NW) at 5x + bottom building/scale strip!
-  const cellW = 76;
-  const cellH = 74;
+  // All 6 8x8 Infantry units x 2 rows each (Idle + Strike A1) x All 8 compass directions (N..NW) on uniform bg!
+  // Plus a bottom strip with the 6 buildings + 2x skirmish + 1x native scale lineup.
+  const cellW = 68;
+  const cellH = 62;
   const cols = 8;
-  const rows = UNIT_SPECS.length + 1;
+  const unitRows = UNIT_SPECS.length * 2;
+  const rows = unitRows + 1;
   const pad = 2;
   const W = cols * cellW + (cols + 1) * pad;
   const H = rows * cellH + (rows + 1) * pad;
@@ -323,30 +325,32 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
   const dirtBg = makeTerrainSwatch(cellW, cellH, 'dirt');
   const creepBg = makeTerrainSwatch(cellW, cellH, 'creep');
 
-  for (let r = 0; r < UNIT_SPECS.length; r++) {
-    const spec = UNIT_SPECS[r];
-    const biomeBg =
-      spec.faction === 'vanguard' ? grassBg : spec.faction === 'kraxen' ? creepBg : dirtBg;
+  for (let u = 0; u < UNIT_SPECS.length; u++) {
+    const spec = UNIT_SPECS[u];
     const barCol = accentBar(spec.faction);
+    const strikeBarCol = hexToU32('#334155');
 
-    for (let c = 0; c < cols; c++) {
-      const dir = DIRS_8[c];
-      const cx = pad + c * (cellW + pad);
-      const cy = pad + r * (cellH + pad);
-      const bg = (c & 1) === 1 ? biomeBg : darkBg;
-      blitScaled(sheet, bg, cx, cy, 1);
-      fillRect(sheet, cx, cy, cellW, 2, barCol);
+    for (let sub = 0; sub < 2; sub++) {
+      const r = u * 2 + sub;
+      const anim: AnimId = sub === 0 ? 'idle' : 'attack';
+      const frameIdx = sub === 0 ? 0 : 1;
 
-      const anim: AnimId = c === 2 || c === 6 ? 'attack' : 'move';
-      const frameIdx = anim === 'attack' ? 1 : 0;
-      const f = compileUnitFrame8(spec.id, anim, dir, frameIdx).outlined;
-      drawEllipse(sheet, cx + 38, cy + 56, 17, 5.5, SHADOW_GROUND);
-      blitScaled(sheet, f, cx + 13, cy + 12, 5);
+      for (let c = 0; c < cols; c++) {
+        const dir = DIRS_8[c];
+        const cx = pad + c * (cellW + pad);
+        const cy = pad + r * (cellH + pad);
+        blitScaled(sheet, darkBg, cx, cy, 1);
+        fillRect(sheet, cx, cy, cellW, sub === 0 ? 2 : 1, sub === 0 ? barCol : strikeBarCol);
+
+        const f = compileUnitFrame8(spec.id, anim, dir, frameIdx).outlined;
+        drawEllipse(sheet, cx + 34, cy + 48, 15, 4.5, SHADOW_GROUND);
+        blitScaled(sheet, f, cx + 14, cy + 9, 4);
+      }
     }
   }
 
   // Bottom Row: 6 Buildings + 2x 8-way Squad + 1x native scale lineup
-  const bRowY = pad + UNIT_SPECS.length * (cellH + pad);
+  const bRowY = pad + unitRows * (cellH + pad);
   const buildingStrip: readonly BuildingId[] = [
     'vanguard-bastion',
     'vanguard-turret',
@@ -377,14 +381,14 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
     blitScaled(sheet, dirtBg, cx, bRowY, 1);
     fillRect(sheet, cx, bRowY, cellW, 2, hexToU32('#22c55e'));
     const placements: ReadonlyArray<{ id: UnitId; x: number; y: number; d: Dir8; a: AnimId }> = [
-      { id: 'vanguard-trooper', x: 6, y: 12, d: 'E', a: 'attack' },
-      { id: 'vanguard-trooper', x: 4, y: 32, d: 'N', a: 'move' },
-      { id: 'vanguard-heavy', x: 12, y: 50, d: 'SE', a: 'attack' },
-      { id: 'solaris-blade', x: 30, y: 10, d: 'S', a: 'attack' },
-      { id: 'solaris-arcanist', x: 32, y: 46, d: 'S', a: 'attack' },
-      { id: 'kraxen-swarmling', x: 50, y: 18, d: 'W', a: 'attack' },
-      { id: 'kraxen-stalker', x: 52, y: 36, d: 'SW', a: 'attack' },
-      { id: 'kraxen-swarmling', x: 48, y: 52, d: 'NW', a: 'move' },
+      { id: 'vanguard-trooper', x: 4, y: 8, d: 'E', a: 'attack' },
+      { id: 'vanguard-trooper', x: 3, y: 26, d: 'N', a: 'move' },
+      { id: 'vanguard-heavy', x: 8, y: 40, d: 'SE', a: 'attack' },
+      { id: 'solaris-blade', x: 25, y: 8, d: 'S', a: 'attack' },
+      { id: 'solaris-arcanist', x: 26, y: 38, d: 'S', a: 'attack' },
+      { id: 'kraxen-swarmling', x: 44, y: 12, d: 'W', a: 'attack' },
+      { id: 'kraxen-stalker', x: 45, y: 28, d: 'SW', a: 'attack' },
+      { id: 'kraxen-swarmling', x: 43, y: 42, d: 'NW', a: 'move' },
     ];
     for (const p of placements) {
       const sp = compileUnitFrame8(p.id, p.a, p.d, 1).outlined;
@@ -410,8 +414,8 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
       const id = miniRow[u % miniRow.length];
       const col = u % 6;
       const row = Math.floor(u / 6);
-      const ux = cx + 6 + col * 11;
-      const uy = bRowY + 14 + row * 19;
+      const ux = cx + 4 + col * 10;
+      const uy = bRowY + 10 + row * 16;
       const dir: Dir8 = DIRS_8[(u + row * 2) % 8];
       const frame = compileUnitFrame8(id, 'move', dir, 0).outlined;
       drawEllipse(sheet, ux + 5, uy + 9, 3.5, 1.5, SHADOW_GROUND);
@@ -423,60 +427,60 @@ function renderSpriteContactProof(buildings: Readonly<Record<BuildingId, Buildin
 }
 
 function renderTitansContactProof(): PixelSurface {
-  // All 6 Centerpiece Titans & Flyers x All 8 compass directions (N, NE, E, SE, S, SW, W, NW) at 3x!
-  const cellW = 84;
-  const cellH = 78;
+  // All 6 Centerpiece Titans & Flyers x 2 rows each (Idle + Strike A1) x All 8 compass directions (N..NW) on uniform bg!
+  const cellW = 82;
+  const cellH = 70;
   const cols = 8;
-  const rows = TITAN_SPECS.length;
+  const rows = TITAN_SPECS.length * 2;
   const pad = 2;
   const W = cols * cellW + (cols + 1) * pad;
   const H = rows * cellH + (rows + 1) * pad;
   const sheet = createSurface(W, H, hexToU32('#0d1018'));
 
   const darkBg = makeTerrainSwatch(cellW, cellH, 'dark');
-  const grassBg = makeTerrainSwatch(cellW, cellH, 'grass');
-  const dirtBg = makeTerrainSwatch(cellW, cellH, 'dirt');
-  const creepBg = makeTerrainSwatch(cellW, cellH, 'creep');
 
-  for (let r = 0; r < TITAN_SPECS.length; r++) {
-    const spec = TITAN_SPECS[r];
-    const biomeBg =
-      spec.faction === 'vanguard' ? grassBg : spec.faction === 'kraxen' ? creepBg : dirtBg;
+  for (let t = 0; t < TITAN_SPECS.length; t++) {
+    const spec = TITAN_SPECS[t];
     const barCol = accentBar(spec.faction);
+    const strikeBarCol = hexToU32('#334155');
 
-    for (let c = 0; c < cols; c++) {
-      const dir = DIRS_8[c];
-      const cx = pad + c * (cellW + pad);
-      const cy = pad + r * (cellH + pad);
-      const bg = (c & 1) === 1 ? biomeBg : darkBg;
-      blitScaled(sheet, bg, cx, cy, 1);
-      fillRect(sheet, cx, cy, cellW, 2, barCol);
+    for (let sub = 0; sub < 2; sub++) {
+      const r = t * 2 + sub;
+      const anim: AnimId = sub === 0 ? 'idle' : 'attack';
+      const frameIdx = sub === 0 ? 0 : 1;
 
-      const zoom = 3;
-      if (spec.id === 'vanguard-tank') {
-        const sp = composeIsoTank(dir, dir, 0, c === 2 ? 1 : 0);
-        const sh = buildTankContactShadow(dir);
-        const ox = cx + Math.floor((cellW - sp.width * zoom) / 2);
-        const oy = cy + Math.floor((cellH - sp.height * zoom) / 2) + 2;
-        blitScaled(sheet, sh, ox, oy, zoom);
-        blitScaled(sheet, sp, ox, oy, zoom);
-      } else {
-        const anim: AnimId = c === 2 || c === 4 ? 'attack' : 'idle';
-        const sp = compileTitanFrame8(spec.id, anim, dir, anim === 'attack' ? 1 : 0).outlined;
-        const sw = sp.width * zoom;
-        const sh = sp.height * zoom;
-        const ox = cx + Math.floor((cellW - sw) / 2);
-        const oy = cy + Math.floor((cellH - sh) / 2) + (spec.layer === 'air' ? -4 : 2);
-        const sy = spec.layer === 'air' ? cy + cellH - 12 : oy + sh - 5;
-        drawEllipse(
-          sheet,
-          cx + Math.floor(cellW / 2),
-          sy,
-          spec.shadowRx * zoom * 0.72,
-          spec.shadowRy * zoom * 0.72,
-          SHADOW_GROUND,
-        );
-        blitScaled(sheet, sp, ox, oy, zoom);
+      for (let c = 0; c < cols; c++) {
+        const dir = DIRS_8[c];
+        const cx = pad + c * (cellW + pad);
+        const cy = pad + r * (cellH + pad);
+        blitScaled(sheet, darkBg, cx, cy, 1);
+        fillRect(sheet, cx, cy, cellW, sub === 0 ? 2 : 1, sub === 0 ? barCol : strikeBarCol);
+
+        const zoom = 3;
+        if (spec.id === 'vanguard-tank') {
+          const sp = composeIsoTank(dir, dir, 0, sub === 1 ? 1 : 0);
+          const sh = buildTankContactShadow(dir);
+          const ox = cx + Math.floor((cellW - sp.width * zoom) / 2);
+          const oy = cy + Math.floor((cellH - sp.height * zoom) / 2) + 2;
+          blitScaled(sheet, sh, ox, oy, zoom);
+          blitScaled(sheet, sp, ox, oy, zoom);
+        } else {
+          const sp = compileTitanFrame8(spec.id, anim, dir, frameIdx).outlined;
+          const sw = sp.width * zoom;
+          const sh = sp.height * zoom;
+          const ox = cx + Math.floor((cellW - sw) / 2);
+          const oy = cy + Math.floor((cellH - sh) / 2) + (spec.layer === 'air' ? -3 : 2);
+          const sy = spec.layer === 'air' ? cy + cellH - 10 : oy + sh - 5;
+          drawEllipse(
+            sheet,
+            cx + Math.floor(cellW / 2),
+            sy,
+            spec.shadowRx * zoom * 0.72,
+            spec.shadowRy * zoom * 0.72,
+            SHADOW_GROUND,
+          );
+          blitScaled(sheet, sp, ox, oy, zoom);
+        }
       }
     }
   }
@@ -1342,6 +1346,16 @@ function vecToDir8(dx, dy) {
   return ((Math.round(shifted / (Math.PI / 4)) % 8) + 8) % 8;
 }
 
+// Angular hysteresis + 1-octant smooth turn stepping: eliminates rapid octant-boundary flicker!
+function stepDir8Smooth(curDir, dx, dy, deadbandDeg) {
+  if (dx * dx + dy * dy < 0.04) return curDir;
+  const targetA = Math.atan2(dy, dx) + Math.PI / 2;
+  const curA = curDir * (Math.PI / 4);
+  const diff = Math.atan2(Math.sin(targetA - curA), Math.cos(targetA - curA));
+  if (Math.abs(diff) < (deadbandDeg * Math.PI) / 180) return curDir;
+  return (curDir + (diff > 0 ? 1 : 7)) & 7;
+}
+
 const tankCompositeCache = new Map();
 function getCompositeTank(hullDir, phase, turretDir, atkCol, outlined) {
   const key = (outlined ? 2048 : 0) | (hullDir << 7) | (phase << 5) | (turretDir << 2) | atkCol;
@@ -1542,12 +1556,18 @@ function spawnUnit(id, x, y) {
     titan: st.titan,
     x, y,
     vx: 0, vy: 0,
+    svx: st.faction === 'kraxen' ? -10 : st.faction === 'solaris' ? 0 : 10,
+    svy: st.faction === 'solaris' ? 10 : 0,
     hp: st.hp,
     maxHp: st.hp,
     facing: st.faction === 'kraxen' ? 1 : 0,
     dir8: initDir8,
     turret8: initDir8,
+    dirTurnCd: Math.random() * 0.15,
+    turretTurnCd: Math.random() * 0.12,
     hullTurnCd: 0,
+    stickyTarget: null,
+    retargetCd: Math.random() * 0.4,
     moveDist: 0,
     trackAccum: 0,
     anim: 'move',
@@ -1828,6 +1848,19 @@ function stepSim(dt) {
     let target = null;
     let bestD2 = 1e9;
     if (u.hullTurnCd > 0) u.hullTurnCd -= dt;
+    if (u.dirTurnCd > 0) u.dirTurnCd -= dt;
+    if (u.turretTurnCd > 0) u.turretTurnCd -= dt;
+    if (u.retargetCd > 0) u.retargetCd -= dt;
+
+    // Keep sticky target to prevent frame-to-frame target ping-ponging!
+    if (u.stickyTarget && !u.stickyTarget.dead && u.stickyTarget.hp > 0) {
+      const sd2 = (u.stickyTarget.x - u.x) ** 2 + (u.stickyTarget.y - u.y) ** 2;
+      const keepRad = Math.max(st.range + 34, 88);
+      if (sd2 <= keepRad * keepRad && u.retargetCd > 0) {
+        target = u.stickyTarget;
+        bestD2 = sd2;
+      }
+    }
 
     for (let gy = cy - 2; gy <= cy + 2; gy++) {
       for (let gx = cx - 2; gx <= cx + 2; gx++) {
@@ -1840,7 +1873,6 @@ function stepSim(dt) {
           const dy = o.y - u.y;
           const d2 = dx * dx + dy * dy;
           if (o.layer === u.layer && d2 > 0.01) {
-            // Mass-weighted separation: infantry give Tanks clean breathing room; Tanks barely budge from infantry!
             const pairRad = (u.titan && o.titan) ? 21 : (u.titan || o.titan) ? 15 : 10;
             if (d2 < pairRad * pairRad) {
               const d = Math.sqrt(d2);
@@ -1850,7 +1882,7 @@ function stepSim(dt) {
               sepY -= (dy / d) * push;
             }
           }
-          if (o.faction !== u.faction && d2 < bestD2) {
+          if (!target && o.faction !== u.faction && d2 < bestD2) {
             bestD2 = d2;
             target = o;
           }
@@ -1858,7 +1890,6 @@ function stepSim(dt) {
       }
     }
 
-    // In 1K mode, Titans can also target the 4x4 swarm directly!
     if (!target && tinyUnits.length > 0) {
       for (let s = 0; s < 10; s++) {
         const m = tinyUnits[(Math.random() * tinyUnits.length) | 0];
@@ -1874,6 +1905,10 @@ function stepSim(dt) {
         const d2 = (o.x - u.x) ** 2 + (o.y - u.y) ** 2;
         if (d2 < bestD2) { bestD2 = d2; target = o; }
       }
+    }
+    if (target && target !== u.stickyTarget) {
+      u.stickyTarget = target;
+      u.retargetCd = 0.55 + Math.random() * 0.35;
     }
 
     // While mid-attack, stay locked onto the committed attackTarget so sprite facing & strike always agree!
@@ -1904,21 +1939,11 @@ function stepSim(dt) {
     const dy = gy - u.y;
     const dist = Math.hypot(dx, dy) || 1;
     const isRight = dx >= 0;
-    const isDown = dy >= -2;
-    if (!u.attacking || (u.attackTarget && !u.attackTarget.dead && u.attackTarget.hp > 0)) {
-      u.facing = isDown ? (isRight ? 0 : 1) : (isRight ? 2 : 3);
-      if (u.id === 'vanguard-tank') {
-        u.turret8 = vecToDir8(dx, dy);
-      } else {
-        u.dir8 = vecToDir8(dx, dy);
-      }
-    }
 
     if (target && dist <= st.range) {
-      // Flyers gently orbit while firing; ground units hold line with separation (Tanks stay planted!)
       if (u.layer === 'air') {
-        u.vx = (-dy / dist) * st.speed * 0.55 + sepX * 18;
-        u.vy = (dx / dist) * st.speed * 0.45 + sepY * 14;
+        u.vx = (-dy / dist) * st.speed * 0.55 + sepX * 14;
+        u.vy = (dx / dist) * st.speed * 0.45 + sepY * 12;
       } else {
         const sepMul = u.titan ? 6 : 14;
         u.vx = sepX * sepMul;
@@ -1936,11 +1961,39 @@ function stepSim(dt) {
         u.attackTarget = target;
         u.attackIsRight = isRight;
         u.anim = 'attack';
+        // Face target cleanly on attack start
+        if (u.id === 'vanguard-tank') u.turret8 = vecToDir8(dx, dy);
+        else u.dir8 = vecToDir8(dx, dy);
       }
     } else {
-      u.vx = (dx / dist) * st.speed + sepX * 22;
-      u.vy = (dy / dist) * st.speed + sepY * 18;
+      u.vx = (dx / dist) * st.speed + sepX * 18;
+      u.vy = (dy / dist) * st.speed + sepY * 15;
       u.anim = 'move';
+    }
+
+    // Smooth low-pass velocity for graceful non-jittery heading turns
+    const smoothK = Math.min(1, dt * 4.5);
+    u.svx += (u.vx - u.svx) * smoothK;
+    u.svy += (u.vy - u.svy) * smoothK;
+
+    // Smooth debounced 8-way heading updates with 32-degree hysteresis deadband!
+    if (!u.attacking) {
+      if (u.id === 'vanguard-tank') {
+        if (u.turretTurnCd <= 0) {
+          const nextT = stepDir8Smooth(u.turret8, dx, dy, 28);
+          if (nextT !== u.turret8) { u.turret8 = nextT; u.turretTurnCd = 0.16; }
+        }
+      } else if (u.layer === 'air') {
+        if (u.dirTurnCd <= 0 && (u.svx * u.svx + u.svy * u.svy) > 9) {
+          const nextA = stepDir8Smooth(u.dir8, u.svx, u.svy, 32);
+          if (nextA !== u.dir8) { u.dir8 = nextA; u.dirTurnCd = 0.24; }
+        }
+      } else if (u.dirTurnCd <= 0) {
+        const fx = u.anim === 'move' ? u.svx : dx;
+        const fy = u.anim === 'move' ? u.svy : dy;
+        const nextD = stepDir8Smooth(u.dir8, fx, fy, 32);
+        if (nextD !== u.dir8) { u.dir8 = nextD; u.dirTurnCd = 0.22; }
+      }
     }
 
     const oldX = u.x, oldY = u.y;
@@ -1954,13 +2007,13 @@ function stepSim(dt) {
     u.x = candX;
     u.y = candY;
     const stepD = Math.hypot(u.x - oldX, u.y - oldY);
-    // Tanks only rotate hull & lay tread marks while actively driving (zero separation jitter!)
+    // Tanks rotate hull smoothly 1 octant at a time only while actively driving!
     if (u.id === 'vanguard-tank' && u.anim === 'move' && stepD > 0.14) {
       if (u.hullTurnCd <= 0) {
-        const nextDir = vecToDir8(u.x - oldX, u.y - oldY);
+        const nextDir = stepDir8Smooth(u.dir8, u.svx, u.svy, 32);
         if (nextDir !== u.dir8) {
           u.dir8 = nextDir;
-          u.hullTurnCd = 0.22;
+          u.hullTurnCd = 0.28;
         }
       }
       u.moveDist += stepD;
