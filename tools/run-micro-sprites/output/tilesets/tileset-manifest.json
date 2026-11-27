@@ -1,0 +1,37 @@
+{
+  "tilePx": 8,
+  "atlasCols": 16,
+  "atlasRows": 8,
+  "wangCornerBits": {
+    "NW": 1,
+    "NE": 2,
+    "SW": 4,
+    "SE": 8
+  },
+  "rows": {
+    "baseMain": 0,
+    "baseExtra": 1,
+    "grassOnDirt": 2,
+    "creepOnDirt": 3,
+    "creepOnGrass": 4,
+    "waterOnGrass": 5,
+    "plateauCliff": 6,
+    "waterOnDirt": 7
+  },
+  "mapGrid": {
+    "width": 65,
+    "height": 37,
+    "ramps": [
+      {
+        "gx": 24,
+        "gy": 9,
+        "halfW": 2
+      },
+      {
+        "gx": 40,
+        "gy": 9,
+        "halfW": 2
+      }
+    ]
+  }
+}

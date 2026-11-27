@@ -1,0 +1,17 @@
+{
+  "name": "run-micro-sprites",
+  "version": "0.1.0",
+  "private": true,
+  "description": "True 8x8 micro-pixel-art RTS sprite kit, buildings, multi-biome terrain, and mass-unit landscape mobile battle showcase.",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "node src/cli.ts"
+  }
+}

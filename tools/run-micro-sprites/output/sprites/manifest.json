@@ -1,0 +1,368 @@
+{
+  "infantryTilePx": 8,
+  "ultraMicroTilePx": 4,
+  "facings": [
+    "SE",
+    "SW",
+    "NE",
+    "NW"
+  ],
+  "anims": [
+    "idle",
+    "move",
+    "attack",
+    "death"
+  ],
+  "infantry": [
+    {
+      "id": "vanguard-trooper",
+      "name": "Vanguard Trooper",
+      "role": "Rifle Infantry",
+      "faction": "vanguard",
+      "w": 8,
+      "h": 8,
+      "attackKind": "tracer",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "vanguard-heavy",
+      "name": "Vanguard Heavy",
+      "role": "Siege Rocket Frame",
+      "faction": "vanguard",
+      "w": 8,
+      "h": 8,
+      "attackKind": "missile",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "kraxen-stalker",
+      "name": "Kraxen Stalker",
+      "role": "Acid Bio-Lancer",
+      "faction": "kraxen",
+      "w": 8,
+      "h": 8,
+      "attackKind": "acid",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "kraxen-swarmling",
+      "name": "Kraxen Swarmling",
+      "role": "Fast Brood Rusher",
+      "faction": "kraxen",
+      "w": 8,
+      "h": 8,
+      "attackKind": "bite",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-blade",
+      "name": "Solaris Blade",
+      "role": "Psi-Blade Zealot",
+      "faction": "solaris",
+      "w": 8,
+      "h": 8,
+      "attackKind": "psi-slash",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-arcanist",
+      "name": "Solaris Arcanist",
+      "role": "Floating Psi-Caster",
+      "faction": "solaris",
+      "w": 8,
+      "h": 8,
+      "attackKind": "psi-orb",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    }
+  ],
+  "titans": [
+    {
+      "id": "vanguard-tank",
+      "name": "Vanguard Siege Tank",
+      "role": "Heavy Artillery",
+      "faction": "vanguard",
+      "layer": "ground",
+      "w": 18,
+      "h": 14,
+      "airAltitude": 0,
+      "attackKind": "shell",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 5
+        },
+        "death": {
+          "start": 11,
+          "count": 3
+        }
+      },
+      "totalCols": 14
+    },
+    {
+      "id": "vanguard-gunship",
+      "name": "Vanguard Valkyrie",
+      "role": "VTOL Gunship",
+      "faction": "vanguard",
+      "layer": "air",
+      "w": 14,
+      "h": 12,
+      "airAltitude": 16,
+      "attackKind": "rocket-salvo",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "kraxen-behemoth",
+      "name": "Kraxen Behemoth",
+      "role": "Tusk Juggernaut",
+      "faction": "kraxen",
+      "layer": "ground",
+      "w": 18,
+      "h": 16,
+      "airAltitude": 0,
+      "attackKind": "cleave",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 5
+        },
+        "death": {
+          "start": 11,
+          "count": 3
+        }
+      },
+      "totalCols": 14
+    },
+    {
+      "id": "kraxen-wyvern",
+      "name": "Kraxen Bio-Wyvern",
+      "role": "Acid Sky-Stalker",
+      "faction": "kraxen",
+      "layer": "air",
+      "w": 14,
+      "h": 12,
+      "airAltitude": 15,
+      "attackKind": "glaive",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-colossus",
+      "name": "Solaris Colossus",
+      "role": "Thermal Beam Walker",
+      "faction": "solaris",
+      "layer": "ground",
+      "w": 16,
+      "h": 16,
+      "airAltitude": 0,
+      "attackKind": "thermal-beam",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-carrier",
+      "name": "Solaris Sky-Carrier",
+      "role": "Drone Capital Ship",
+      "faction": "solaris",
+      "layer": "air",
+      "w": 16,
+      "h": 12,
+      "airAltitude": 19,
+      "attackKind": "interceptors",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    }
+  ]
+}
