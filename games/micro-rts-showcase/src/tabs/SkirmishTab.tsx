@@ -4,12 +4,18 @@ import type { BiomeEntry, Dir8, MicroRtsCatalog, RosterUnitEntry } from '../cata
 import { DIRS_8 } from '../catalog'
 import { LEAF_2D, LEAF_UI } from '../pins'
 import { drawDiscreteChainArc, drawDiscreteLine, drawDiscreteRampBeam, useSpriteBatch } from '../spriteCache'
-
-const WORLD_W = 480
-const WORLD_H = 256
-const TILE = 8
-const COLS = WORLD_W / TILE // 60
-const ROWS = WORLD_H / TILE // 32
+import {
+  bakeTerrainToCanvas,
+  generateWfcBattleMap,
+  isWalkableGround,
+  MAP_PRESETS,
+  TILE_PX,
+  WORLD_H,
+  WORLD_W,
+  type GeneratedBattleMap,
+  type MapPresetId,
+  type WfcSectorKind,
+} from '../terrainGen'
 
 type CmdMode = 'select' | 'move' | 'attack' | 'build'
 
@@ -85,6 +91,17 @@ interface PlacedBuilding {
   stateCol: number
 }
 
+const SECTOR_DEBUG_COLORS: Record<WfcSectorKind, string> = {
+  GRASS: 'rgba(74, 222, 128, 0.14)',
+  ROAD: 'rgba(250, 204, 21, 0.16)',
+  PLATEAU: 'rgba(249, 115, 22, 0.24)',
+  WATER: 'rgba(56, 189, 248, 0.26)',
+  CREEP: 'rgba(217, 70, 239, 0.22)',
+  BRIDGE_H: 'rgba(255, 255, 255, 0.34)',
+  RAMP_S: 'rgba(253, 224, 71, 0.36)',
+  RAMP_W: 'rgba(253, 224, 71, 0.36)',
+}
+
 function angleToDir8(dx: number, dy: number): number {
   const deg = ((Math.atan2(dy, dx) * 180) / Math.PI + 360 + 90) % 360
   return Math.round(deg / 45) % 8
@@ -112,8 +129,23 @@ function ringTierFor(u: RosterUnitEntry): 'sel-sm' | 'sel-md' | 'sel-lg' {
   return 'sel-sm'
 }
 
+function findNearestWalkable(map: GeneratedBattleMap, x: number, y: number): [number, number] {
+  if (isWalkableGround(map, x, y)) return [x, y]
+  for (let rad = 8; rad <= 64; rad += 8) {
+    for (let i = 0; i < 8; i++) {
+      const nx = Math.max(16, Math.min(WORLD_W - 16, x + Math.cos((i * Math.PI) / 4) * rad))
+      const ny = Math.max(18, Math.min(WORLD_H - 16, y + Math.sin((i * Math.PI) / 4) * rad))
+      if (isWalkableGround(map, nx, ny)) return [nx, ny]
+    }
+  }
+  return [x, y]
+}
+
 export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
   const [biomeTheme, setBiomeTheme] = useState<BiomeEntry['theme']>('temperate')
+  const [mapPreset, setMapPreset] = useState<MapPresetId>('wfc-frontier')
+  const [mapSeed, setMapSeed] = useState<number>(7)
+  const [showWfcGrid, setShowWfcGrid] = useState(false)
   const [zoom, setZoom] = useState<1 | 2 | 3>(2)
   const [paused, setPaused] = useState(false)
   const [cmdMode, setCmdMode] = useState<CmdMode>('select')
@@ -121,6 +153,8 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
   const [stats, setStats] = useState({ fps: 60, units: 0, projectiles: 0, minerals: 450, gas: 180, supply: 24 })
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const bakedTerrainRef = useRef<HTMLCanvasElement | null>(null)
+
   const simRef = useRef<{
     units: SimUnit[]
     projectiles: SimProjectile[]
@@ -147,13 +181,21 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
   pausedRef.current = paused
   const cmdModeRef = useRef(cmdMode)
   cmdModeRef.current = cmdMode
+  const showWfcGridRef = useRef(showWfcGrid)
+  showWfcGridRef.current = showWfcGrid
 
   const biome = useMemo(
     () => catalog.environment.biomes.find((b) => b.theme === biomeTheme) ?? catalog.environment.biomes[0]!,
     [catalog, biomeTheme],
   )
 
-  // Curated squad roster IDs across all 3 factions (including 2-layer split turrets + flyers)
+  const battleMap = useMemo(
+    () => generateWfcBattleMap(biomeTheme, mapPreset, mapSeed, catalog.environment.objects),
+    [biomeTheme, mapPreset, mapSeed, catalog.environment.objects],
+  )
+  const mapRef = useRef(battleMap)
+  mapRef.current = battleMap
+
   const squadIds = useMemo(
     () => ['V04', 'V06', 'V12', 'V16', 'V17', 'V19', 'K01', 'K05', 'K14', 'K15', 'K20', 'S04', 'S12', 'S15', 'S16', 'S20'],
     [],
@@ -172,8 +214,8 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
       biome.bridgeV,
       biome.ramps.S,
       biome.ramps.N,
-      'environment/objects/obj-mineral-blue.png',
-      'environment/objects/obj-mineral-gold.png',
+      biome.ramps.E,
+      biome.ramps.W,
       'buildings/building-vanguard-bastion-states.png',
       'buildings/building-vanguard-barracks-states.png',
       'buildings/building-vanguard-turret-states.png',
@@ -191,6 +233,7 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
       'vfx/fx-psi-burst.png',
       'vfx/fx-acid-splash.png',
     ])
+    for (const p of battleMap.props) paths.add(p.sheet)
     for (const id of squadIds) {
       const def = unitDefs.get(id)
       if (!def) continue
@@ -200,7 +243,7 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
       if (def.shadowSheet) paths.add(def.shadowSheet)
     }
     return [...paths].map((path) => ({ leafId: LEAF_2D, path }))
-  }, [biome, squadIds, unitDefs])
+  }, [biome, battleMap.props, squadIds, unitDefs])
 
   const assetRefsUi = useMemo(
     () =>
@@ -227,8 +270,30 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
   const biomeRef = useRef(biome)
   biomeRef.current = biome
 
+  // Bake static Layer-0 Wang-16 + Layer-1 Alpha Cliffs + Ramps/Bridges to offscreen canvas
+  useEffect(() => {
+    const atlas = imgs2d.get(biome.atlas)
+    if (!atlas) {
+      bakedTerrainRef.current = null
+      return
+    }
+    bakedTerrainRef.current = bakeTerrainToCanvas(
+      battleMap,
+      atlas,
+      {
+        N: imgs2d.get(biome.ramps.N),
+        S: imgs2d.get(biome.ramps.S),
+        E: imgs2d.get(biome.ramps.E),
+        W: imgs2d.get(biome.ramps.W),
+      },
+      imgs2d.get(biome.bridgeH) ?? null,
+      imgs2d.get(biome.bridgeV) ?? null,
+    )
+  }, [battleMap, biome, imgs2d])
+
   const spawnWave = (reset = false) => {
     const sim = simRef.current
+    const curMap = mapRef.current
     if (reset) {
       sim.units = []
       sim.projectiles = []
@@ -255,17 +320,23 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
           stateCol: 3,
         }
       }
+      const vBase = curMap.bases.find((b) => b.faction === 'vanguard') ?? { x: 56, y: 144 }
+      const sBase = curMap.bases.find((b) => b.faction === 'solaris') ?? { x: 420, y: 52 }
+      const kBase = curMap.bases.find((b) => b.faction === 'kraxen') ?? { x: 422, y: 204 }
+      const [turX, turY] = findNearestWalkable(curMap, vBase.x + 42, vBase.y - 28)
+
       sim.buildings = [
-        mkBldg('vanguard-bastion', 52, 132, 'vanguard'),
-        mkBldg('vanguard-turret', 92, 96, 'vanguard'),
-        mkBldg('kraxen-colony', 428, 172, 'kraxen'),
-        mkBldg('solaris-nexus', 422, 72, 'solaris'),
+        mkBldg('vanguard-bastion', vBase.x, vBase.y, 'vanguard'),
+        mkBldg('vanguard-turret', turX, turY, 'vanguard'),
+        mkBldg('kraxen-colony', kBase.x, kBase.y, 'kraxen'),
+        mkBldg('solaris-nexus', sBase.x, sBase.y, 'solaris'),
       ].filter((b): b is PlacedBuilding => b !== null)
     }
 
-    const add = (id: string, x: number, y: number, selected = false) => {
+    const add = (id: string, rawX: number, rawY: number, selected = false) => {
       const def = unitDefs.get(id)
       if (!def || def.faction === 'neutral') return
+      const [x, y] = def.layer === 'air' ? [rawX, rawY] : findNearestWalkable(curMap, rawX, rawY)
       const isHeavy = Math.max(def.cellW, def.cellH) >= 18
       sim.units.push({
         uid: sim.nextUid++,
@@ -292,42 +363,42 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
       })
     }
 
-    // Vanguard force (left, pre-select flagship squad on reset)
-    add('V16', 112, 118, reset)
-    add('V16', 116, 152, reset)
-    add('V17', 132, 134, reset)
+    // Vanguard squad (West flank)
+    add('V16', 112, 120, reset)
+    add('V16', 116, 158, reset)
+    add('V17', 132, 138, reset)
     add('V19', 102, 86, reset)
-    add('V04', 142, 108, reset)
-    add('V04', 148, 122, reset)
-    add('V04', 146, 146, reset)
-    add('V06', 138, 162, reset)
-    add('V12', 124, 96, reset)
+    add('V04', 142, 114, reset)
+    add('V04', 148, 130, reset)
+    add('V04', 146, 152, reset)
+    add('V06', 138, 168, reset)
+    add('V12', 124, 102, reset)
 
-    // Kraxen swarm (bottom-right)
-    add('K15', 348, 166)
-    add('K14', 362, 190)
-    add('K20', 338, 136)
-    add('K05', 324, 154)
-    add('K05', 330, 174)
-    add('K01', 316, 144)
-    add('K01', 320, 164)
-    add('K01', 326, 186)
+    // Kraxen swarm (SE flank)
+    add('K15', 348, 174)
+    add('K14', 362, 198)
+    add('K20', 338, 146)
+    add('K05', 324, 164)
+    add('K05', 330, 184)
+    add('K01', 316, 156)
+    add('K01', 320, 176)
+    add('K01', 326, 194)
 
-    // Solaris strike wing (top-right)
-    add('S15', 342, 74)
-    add('S16', 364, 94)
+    // Solaris strike wing (NE high ground + valley approach)
+    add('S15', 344, 82)
+    add('S16', 364, 96)
     add('S20', 328, 56)
-    add('S12', 320, 88)
-    add('S12', 332, 102)
-    add('S04', 312, 74)
-    add('S04', 318, 96)
+    add('S12', 322, 92)
+    add('S12', 334, 106)
+    add('S04', 312, 78)
+    add('S04', 318, 98)
 
     setSelectedCount(sim.units.filter((u) => u.selected).length)
   }
 
   useEffect(() => {
     spawnWave(true)
-  }, [unitDefs])
+  }, [unitDefs, battleMap])
 
   // Main 60 FPS simulation & crisp pixel-art render loop
   useEffect(() => {
@@ -343,9 +414,10 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
       fpsFrames++
 
       const sim = simRef.current
+      const curMap = mapRef.current
+
       if (!pausedRef.current) {
         sim.clock += dt
-        // Update units
         for (const u of sim.units) {
           u.animClock += dt
           u.turnCd = Math.max(0, u.turnCd - dt)
@@ -353,7 +425,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
           u.atkTimer = Math.max(0, u.atkTimer - dt)
           u.hitFlash = Math.max(0, u.hitFlash - dt)
 
-          // Find nearest enemy
           let nearest: SimUnit | null = null
           let bestDist = Infinity
           for (const other of sim.units) {
@@ -390,7 +461,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             const dx = moveTx - u.x
             const dy = moveTy - u.y
             const dist = Math.hypot(dx, dy) || 1
-            // Soft separation from friendly neighbors
             let sepX = 0
             let sepY = 0
             for (const o of sim.units) {
@@ -408,8 +478,22 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             const desVy = (dy / dist) * speed + sepY
             u.vx += (desVx - u.vx) * Math.min(1, dt * 6)
             u.vy += (desVy - u.vy) * Math.min(1, dt * 6)
-            u.x = Math.max(14, Math.min(WORLD_W - 14, u.x + u.vx * dt))
-            u.y = Math.max(18, Math.min(WORLD_H - 14, u.y + u.vy * dt))
+
+            const candX = Math.max(14, Math.min(WORLD_W - 14, u.x + u.vx * dt))
+            const candY = Math.max(18, Math.min(WORLD_H - 14, u.y + u.vy * dt))
+            if (u.def.layer === 'air' || isWalkableGround(curMap, candX, candY)) {
+              u.x = candX
+              u.y = candY
+            } else if (isWalkableGround(curMap, candX, u.y)) {
+              u.x = candX
+            } else if (isWalkableGround(curMap, u.x, candY)) {
+              u.y = candY
+            } else {
+              // Steer tangentially toward nearest bridge/ramp
+              const slideY = u.y + (u.y < WORLD_H / 2 ? 1 : -1) * speed * dt
+              if (isWalkableGround(curMap, u.x, slideY)) u.y = slideY
+            }
+
             if (Math.hypot(u.vx, u.vy) > 4 && u.turnCd <= 0) {
               u.hullDir = stepDir8(u.hullDir, angleToDir8(u.vx, u.vy))
               u.turnCd = 0.14
@@ -419,7 +503,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             u.vy *= 0.8
           }
 
-          // Aim & Fire
           if (nearest && bestDist <= range + 10) {
             const aimDir = angleToDir8(nearest.x - u.x, nearest.y - u.y)
             if (u.def.twoLayer) {
@@ -507,7 +590,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
           }
         }
 
-        // Update projectiles
         for (const p of sim.projectiles) {
           p.life -= dt
           if (p.kind !== 'beam' && p.kind !== 'chain') {
@@ -515,7 +597,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             p.y += p.vy * dt
           }
           if (p.life <= 0 && p.kind !== 'beam' && p.kind !== 'chain') {
-            // Apply impact damage to nearest enemy near impact
             for (const u of sim.units) {
               if (u.faction === p.faction || u.hp <= 0) continue
               if (Math.hypot(u.x - p.x, u.y - p.y) < 16) {
@@ -545,7 +626,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
         }
         sim.projectiles = sim.projectiles.filter((p) => p.life > 0)
 
-        // Remove dead units + spawn death explosion
         const alive: SimUnit[] = []
         for (const u of sim.units) {
           if (u.hp <= 0) {
@@ -565,21 +645,18 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
         }
         sim.units = alive
 
-        // Keep skirmish lively if one side is nearly wiped
         const vCount = sim.units.filter((u) => u.faction === 'vanguard').length
         const eCount = sim.units.filter((u) => u.faction !== 'vanguard').length
         if (vCount < 3 || eCount < 3) {
           spawnWave(false)
         }
 
-        // Update VFX & pings
         for (const f of sim.fx) f.age += dt
         sim.fx = sim.fx.filter((f) => f.age < f.duration)
         for (const p of sim.pings) p.age += dt
         sim.pings = sim.pings.filter((p) => p.age < 0.7)
       }
 
-      // Render crisp pixel canvas
       const canvas = canvasRef.current
       if (canvas) {
         const ctx = canvas.getContext('2d')
@@ -589,59 +666,51 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
           const mui = imgsUiRef.current
           const curBiome = biomeRef.current
 
-          // 1. Terrain base from biome 8x8 tileset:
-          // Row 0 cols 0..3 = dirt/road, cols 4..7 = grass/biome primary, cols 8..11 = creep/accent, cols 12..15 = highland
-          const atlas = m2.get(curBiome.atlas)
-          const hazard = m2.get(curBiome.hazardAnim)
-          const bridgeH = m2.get(curBiome.bridgeH)
-          if (atlas) {
-            for (let r = 0; r < ROWS; r++) {
-              for (let c = 0; c < COLS; c++) {
-                const variant = (c * 73 + r * 31 + ((c ^ r) & 3)) & 3
-                // Center river/hazard band across col 28..31 with two horizontal bridges at rows 9..12 & 20..23
-                const isRiver = c >= 28 && c <= 31 && !((r >= 9 && r <= 12) || (r >= 20 && r <= 23))
-                if (isRiver && hazard) {
-                  const hf = Math.floor(sim.clock * 4 + (c + r) * 0.25) % 3
-                  ctx.drawImage(hazard, hf * TILE, 0, TILE, TILE, c * TILE, r * TILE, TILE, TILE)
-                } else {
-                  const inKraxenCreep = Math.hypot(c - 53, r - 21) < 10
-                  const inVanguardPad = Math.hypot(c - 7, r - 16) < 8
-                  const inBattleRoad = (r >= 9 && r <= 12) || (r >= 20 && r <= 23)
-                  const inHighland = c > 45 && r < 12
-                  const baseCol = inKraxenCreep
-                    ? 8 + variant
-                    : inHighland
-                      ? 12 + variant
-                      : inVanguardPad || inBattleRoad
-                        ? variant
-                        : 4 + variant
-                  ctx.drawImage(atlas, baseCol * TILE, 0, TILE, TILE, c * TILE, r * TILE, TILE, TILE)
-                }
-              }
-            }
-            if (bridgeH) {
-              ctx.drawImage(bridgeH, 28 * TILE, 9 * TILE)
-              ctx.drawImage(bridgeH, 28 * TILE, 20 * TILE)
-            }
+          // 1. Pre-baked Dual-Grid Wang-16 + Layer-1 Alpha Cliffs + Ramps + Bridges
+          if (bakedTerrainRef.current) {
+            ctx.drawImage(bakedTerrainRef.current, 0, 0)
           } else {
             ctx.fillStyle = '#243528'
             ctx.fillRect(0, 0, WORLD_W, WORLD_H)
           }
 
-          // Mineral clusters near bases
-          const minBlue = m2.get('environment/objects/obj-mineral-blue.png')
-          const minGold = m2.get('environment/objects/obj-mineral-gold.png')
-          if (minBlue) {
-            ctx.drawImage(minBlue, 0, 0, 16, 14, 16, 86, 16, 14)
-            ctx.drawImage(minBlue, 0, 0, 16, 14, 14, 102, 16, 14)
-            ctx.drawImage(minBlue, 0, 0, 16, 14, 446, 142, 16, 14)
-          }
-          if (minGold) {
-            ctx.drawImage(minGold, 0, 0, 16, 14, 192, 24, 16, 14)
-            ctx.drawImage(minGold, 0, 0, 16, 14, 272, 224, 16, 14)
+          // 2. Animated 3-frame hazard water/lava/ice shimmer on interior hazard tiles
+          const hazardImg = m2.get(curBiome.hazardAnim)
+          if (hazardImg) {
+            const animRow = Math.floor(sim.clock * 3.5) % 3
+            for (const ht of curMap.hazardTiles) {
+              const fRow = (animRow + ((ht.tx + ht.ty) & 1)) % 3
+              ctx.drawImage(
+                hazardImg,
+                ht.variant * TILE_PX,
+                fRow * TILE_PX,
+                TILE_PX,
+                TILE_PX,
+                ht.tx * TILE_PX,
+                ht.ty * TILE_PX,
+                TILE_PX,
+                TILE_PX,
+              )
+            }
           }
 
-          // 2. Ground order pings
+          // Optional WFC Macro-Sector Debug Overlay
+          if (showWfcGridRef.current) {
+            ctx.font = 'bold 6px monospace'
+            for (let sy = 0; sy < curMap.sectorH; sy++) {
+              for (let sx = 0; sx < curMap.sectorW; sx++) {
+                const k = curMap.sectors[sy * curMap.sectorW + sx]!
+                ctx.fillStyle = SECTOR_DEBUG_COLORS[k]
+                ctx.fillRect(sx * 32, sy * 32, 32, 32)
+                ctx.strokeStyle = 'rgba(255,255,255,0.22)'
+                ctx.strokeRect(sx * 32 + 0.5, sy * 32 + 0.5, 31, 31)
+                ctx.fillStyle = 'rgba(255,255,255,0.72)'
+                ctx.fillText(k.slice(0, 5), sx * 32 + 2, sy * 32 + 8)
+              }
+            }
+          }
+
+          // 3. Ground order pings
           for (const p of sim.pings) {
             const pImg = mui.get(p.kind === 'attack' ? 'markers/order-attack-ping.png' : 'markers/order-move-ping.png')
             if (pImg) {
@@ -650,52 +719,78 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             }
           }
 
-          // 3. Build placement ghost grid
+          // 4. Live Build Grid Ghost (checks actual WFC walkability per tile!)
           if (cmdModeRef.current === 'build' && sim.hover) {
-            const gx = Math.floor(sim.hover.x / TILE) * TILE
-            const gy = Math.floor(sim.hover.y / TILE) * TILE
-            const blocked = gx >= 27 * TILE && gx <= 32 * TILE
-            const tileImg = mui.get(blocked ? 'markers/build-grid-bad.png' : 'markers/build-grid-ok.png')
-            if (tileImg) {
-              for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                  ctx.drawImage(tileImg, gx + dx * TILE, gy + dy * TILE)
-                }
+            const gx = Math.floor(sim.hover.x / TILE_PX) * TILE_PX
+            const gy = Math.floor(sim.hover.y / TILE_PX) * TILE_PX
+            for (let dy = -1; dy <= 1; dy++) {
+              for (let dx = -1; dx <= 1; dx++) {
+                const tx = gx + dx * TILE_PX
+                const ty = gy + dy * TILE_PX
+                const ok = isWalkableGround(curMap, tx + 4, ty + 4)
+                const tileImg = mui.get(ok ? 'markers/build-grid-ok.png' : 'markers/build-grid-bad.png')
+                if (tileImg) ctx.drawImage(tileImg, tx, ty)
               }
             }
           }
 
-          // 4. Buildings
-          for (const b of sim.buildings) {
-            const bImg = m2.get(b.sheet)
-            const ringBldg = mui.get('selection-rings/sel-bldg.png')
-            if (ringBldg) {
-              const rState = b.faction === 'vanguard' ? 3 : 2
-              ctx.drawImage(ringBldg, rState * 36, 0, 36, 20, Math.round(b.x - 18), Math.round(b.y - 12), 36, 20)
-            }
-            if (bImg) {
-              const col = b.stateCol === 3 ? 3 + (Math.floor(sim.clock * 3) % 2) : b.stateCol
-              ctx.drawImage(
-                bImg,
-                col * b.cellW,
-                0,
-                b.cellW,
-                b.cellH,
-                Math.round(b.x - b.anchorX),
-                Math.round(b.y - b.anchorY),
-                b.cellW,
-                b.cellH,
-              )
-            }
+          // 5. Y-Sorted Ground Layer: Terrain Props + Buildings + Ground Units
+          type DrawItem = { y: number; draw: () => void }
+          const groundQueue: DrawItem[] = []
+
+          for (const prop of curMap.props) {
+            groundQueue.push({
+              y: prop.y,
+              draw: () => {
+                const img = m2.get(prop.sheet)
+                if (!img) return
+                // Resource minerals stay full (frame 0); objectives/geysers/vents animate smoothly
+                const isAnim = prop.id.includes('geyser') || prop.id.includes('vent') || prop.id.startsWith('neutral-')
+                const col = isAnim && prop.frames > 1 ? Math.floor(sim.clock * 3 + prop.phaseOffset) % prop.frames : 0
+                ctx.drawImage(
+                  img,
+                  col * prop.cellW,
+                  0,
+                  prop.cellW,
+                  prop.cellH,
+                  Math.round(prop.x - prop.cellW / 2),
+                  Math.round(prop.y - prop.cellH + 3),
+                  prop.cellW,
+                  prop.cellH,
+                )
+              },
+            })
           }
 
-          // 5. Units (Y-sorted ground first, then air)
-          const sorted = [...sim.units].sort((a, b) => {
-            if (a.def.layer !== b.def.layer) return a.def.layer === 'ground' ? -1 : 1
-            return a.y - b.y
-          })
+          for (const b of sim.buildings) {
+            groundQueue.push({
+              y: b.y,
+              draw: () => {
+                const bImg = m2.get(b.sheet)
+                const ringBldg = mui.get('selection-rings/sel-bldg.png')
+                if (ringBldg) {
+                  const rState = b.faction === 'vanguard' ? 3 : 2
+                  ctx.drawImage(ringBldg, rState * 36, 0, 36, 20, Math.round(b.x - 18), Math.round(b.y - 12), 36, 20)
+                }
+                if (bImg) {
+                  const col = b.stateCol === 3 ? 3 + (Math.floor(sim.clock * 3) % 2) : b.stateCol
+                  ctx.drawImage(
+                    bImg,
+                    col * b.cellW,
+                    0,
+                    b.cellW,
+                    b.cellH,
+                    Math.round(b.x - b.anchorX),
+                    Math.round(b.y - b.anchorY),
+                    b.cellW,
+                    b.cellH,
+                  )
+                }
+              },
+            })
+          }
 
-          for (const u of sorted) {
+          const drawUnit = (u: SimUnit) => {
             const tier = ringTierFor(u.def)
             const ringImg = mui.get(`selection-rings/${tier}.png`)
             if (ringImg && (u.selected || u.faction !== 'vanguard')) {
@@ -739,7 +834,6 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
               }
             }
 
-            // Tiny crisp HP bar when damaged or selected
             if (u.selected || u.hp < u.maxHp) {
               const bw = Math.max(8, Math.min(18, u.def.cellW - 2))
               const bx = Math.round(u.x - bw / 2)
@@ -752,7 +846,19 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             }
           }
 
-          // 6. Projectiles & Beams
+          const airUnits: SimUnit[] = []
+          for (const u of sim.units) {
+            if (u.def.layer === 'air') airUnits.push(u)
+            else groundQueue.push({ y: u.y, draw: () => drawUnit(u) })
+          }
+
+          groundQueue.sort((a, b) => a.y - b.y)
+          for (const item of groundQueue) item.draw()
+
+          airUnits.sort((a, b) => a.y - b.y)
+          for (const u of airUnits) drawUnit(u)
+
+          // 6. Projectiles & Discrete Beams
           for (const p of sim.projectiles) {
             if (p.kind === 'beam') {
               drawDiscreteRampBeam(ctx, p.x, p.y, p.tx, p.ty, p.tier ?? 2, p.color, p.coreColor)
@@ -845,19 +951,20 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
       return
     }
     if (cmdMode === 'build') {
-      const gx = Math.floor(pt.x / TILE) * TILE + 4
-      const gy = Math.floor(pt.y / TILE) * TILE + 4
-      if (gx < 27 * TILE || gx > 32 * TILE) {
+      const gx = Math.floor(pt.x / TILE_PX) * TILE_PX + 4
+      const gy = Math.floor(pt.y / TILE_PX) * TILE_PX + 4
+      if (isWalkableGround(mapRef.current, gx, gy)) {
+        const b = catalog.buildings.buildings.find((e) => e.id === 'vanguard-turret')
         sim.buildings.push({
           id: `vanguard-turret-${sim.nextUid++}`,
           x: gx,
           y: gy,
           faction: 'vanguard',
-          sheet: 'buildings/building-vanguard-turret-states.png',
-          cellW: 22,
-          cellH: 20,
-          anchorX: 10,
-          anchorY: 17,
+          sheet: b?.stateSheet ?? 'buildings/building-vanguard-turret-states.png',
+          cellW: b?.stateCellW ?? 22,
+          cellH: b?.stateCellH ?? 20,
+          anchorX: b?.stateAnchorX ?? 10,
+          anchorY: b?.stateAnchorY ?? 17,
           stateCol: 3,
         })
         setCmdMode('select')
@@ -919,6 +1026,23 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
         </div>
 
         <div className="pill-row">
+          <span className="section-title" style={{ margin: '0 4px 0 0' }}>
+            WFC Map
+          </span>
+          {MAP_PRESETS.map((p) => (
+            <button key={p.id} className={`pill ${mapPreset === p.id ? 'active' : ''}`} onClick={() => setMapPreset(p.id)}>
+              {p.label}
+            </button>
+          ))}
+          <button className="pill" onClick={() => setMapSeed((s) => s + 1)}>
+            New Seed (#{mapSeed})
+          </button>
+          <button className={`pill ${showWfcGrid ? 'active' : ''}`} onClick={() => setShowWfcGrid((v) => !v)}>
+            WFC Grid
+          </button>
+        </div>
+
+        <div className="pill-row">
           {([1, 2, 3] as const).map((z) => (
             <button key={z} className={`pill ${zoom === z ? 'active' : ''}`} onClick={() => setZoom(z)}>
               {z}×
@@ -931,15 +1055,11 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             + Reinforce
           </button>
           <button className="pill" onClick={() => spawnWave(true)}>
-            Reset Battle
+            Reset
           </button>
-        </div>
-
-        <div className="pill-row">
           <span className="tag good">{stats.fps} FPS</span>
           <span className="tag accent">{stats.units} Units</span>
-          <span className="tag">{stats.projectiles} Shots</span>
-          <span className="tag gold">{selectedCount} Selected</span>
+          <span className="tag gold">{selectedCount} Sel</span>
         </div>
       </div>
 
@@ -981,7 +1101,7 @@ export function SkirmishTab({ catalog }: { catalog: MicroRtsCatalog }) {
             {stats.supply}/60
           </span>
           <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>
-            Drag-select Vanguard squad · Right-click to Attack-Move · Click Build to place turret
+            WFC + Dual-Grid Wang-16 Terrain · {battleMap.ramps.length} Ramps · {battleMap.bridges.length} Bridges · {battleMap.props.length} Biome Props
           </span>
         </div>
 

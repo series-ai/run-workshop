@@ -2,15 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { SpriteCellCanvas } from '../components/SpriteCanvas'
 import type { BiomeEntry, EnvObjectEntry, MicroRtsCatalog } from '../catalog'
 import { LEAF_2D } from '../pins'
-import { useSpriteImage } from '../spriteCache'
+import { useSpriteBatch, useSpriteImage } from '../spriteCache'
+import { bakeTerrainToCanvas, generateWfcBattleMap, TILE_PX, WORLD_H, WORLD_W } from '../terrainGen'
 
 export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
   const [biomeTheme, setBiomeTheme] = useState<BiomeEntry['theme']>('temperate')
   const [cat, setCat] = useState<'all' | EnvObjectEntry['category']>('all')
+  const [seed, setSeed] = useState(11)
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
-    const iv = window.setInterval(() => setTick((t) => t + 1), 420)
+    const iv = window.setInterval(() => setTick((t) => t + 1), 360)
     return () => window.clearInterval(iv)
   }, [])
 
@@ -19,6 +21,27 @@ export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
     [catalog, biomeTheme],
   )
 
+  const previewMap = useMemo(
+    () => generateWfcBattleMap(biomeTheme, 'wfc-frontier', seed, catalog.environment.objects),
+    [biomeTheme, seed, catalog.environment.objects],
+  )
+
+  const dioramaRefs = useMemo(() => {
+    const set = new Set<string>([
+      biome.atlas,
+      biome.hazardAnim,
+      biome.bridgeH,
+      biome.bridgeV,
+      biome.ramps.S,
+      biome.ramps.N,
+      biome.ramps.E,
+      biome.ramps.W,
+    ])
+    for (const p of previewMap.props) set.add(p.sheet)
+    return [...set].map((path) => ({ leafId: LEAF_2D, path }))
+  }, [biome, previewMap.props])
+
+  const batch = useSpriteBatch(dioramaRefs)
   const atlasImg = useSpriteImage({ leafId: LEAF_2D, path: biome.atlas })
   const hazardImg = useSpriteImage({ leafId: LEAF_2D, path: biome.hazardAnim })
   const bridgeHImg = useSpriteImage({ leafId: LEAF_2D, path: biome.bridgeH })
@@ -29,6 +52,8 @@ export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
   const rampWImg = useSpriteImage({ leafId: LEAF_2D, path: biome.ramps.W })
 
   const atlasCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const dioramaCanvasRef = useRef<HTMLCanvasElement | null>(null)
+
   useEffect(() => {
     const c = atlasCanvasRef.current
     if (!c || !atlasImg) return
@@ -39,6 +64,43 @@ export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
     ctx.drawImage(atlasImg, 0, 0, atlasImg.width, atlasImg.height, 0, 0, atlasImg.width * 3, atlasImg.height * 3)
   }, [atlasImg])
 
+  useEffect(() => {
+    const c = dioramaCanvasRef.current
+    const atlas = batch.get(biome.atlas)
+    if (!c || !atlas) return
+    const ctx = c.getContext('2d')
+    if (!ctx) return
+    ctx.imageSmoothingEnabled = false
+    const baked = bakeTerrainToCanvas(
+      previewMap,
+      atlas,
+      {
+        N: batch.get(biome.ramps.N),
+        S: batch.get(biome.ramps.S),
+        E: batch.get(biome.ramps.E),
+        W: batch.get(biome.ramps.W),
+      },
+      batch.get(biome.bridgeH) ?? null,
+      batch.get(biome.bridgeV) ?? null,
+    )
+    ctx.drawImage(baked, 0, 0)
+    const haz = batch.get(biome.hazardAnim)
+    if (haz) {
+      const f = tick % 3
+      for (const ht of previewMap.hazardTiles) {
+        ctx.drawImage(haz, ht.variant * TILE_PX, ((f + ((ht.tx + ht.ty) & 1)) % 3) * TILE_PX, TILE_PX, TILE_PX, ht.tx * TILE_PX, ht.ty * TILE_PX, TILE_PX, TILE_PX)
+      }
+    }
+    const sortedProps = [...previewMap.props].sort((a, b) => a.y - b.y)
+    for (const p of sortedProps) {
+      const img = batch.get(p.sheet)
+      if (!img) continue
+      const isAnim = p.id.includes('geyser') || p.id.includes('vent') || p.id.startsWith('neutral-')
+      const col = isAnim && p.frames > 1 ? (tick + p.phaseOffset) % p.frames : 0
+      ctx.drawImage(img, col * p.cellW, 0, p.cellW, p.cellH, Math.round(p.x - p.cellW / 2), Math.round(p.y - p.cellH + 3), p.cellW, p.cellH)
+    }
+  }, [batch, biome, previewMap, tick])
+
   const filteredObjects = useMemo(
     () => catalog.environment.objects.filter((o) => cat === 'all' || o.category === cat),
     [catalog, cat],
@@ -48,9 +110,9 @@ export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
     <div className="page-pad" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18 }}>4 Planet Biome 8×8 Wang-16 Tilesets</h2>
+          <h2 style={{ margin: 0, fontSize: 18 }}>4 Planet Biome 8×8 Wang-16 Tilesets + WFC Auto-Tile Preview</h2>
           <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--muted)' }}>
-            Edge-exact Wang-16 transitions, Layer-1 alpha cliffs, 3-frame animated hazards, 4-way ramps, and H/V bridges.
+            Edge-exact Wang-16 dual-grid transitions, Layer-1 alpha cliffs, 3-frame animated hazards, 4-way ramps, and H/V bridges.
           </p>
         </div>
         <div className="pill-row">
@@ -63,6 +125,24 @@ export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
               {b.label}
             </button>
           ))}
+          <button className="pill" onClick={() => setSeed((s) => s + 1)}>
+            New WFC Seed (#{seed})
+          </button>
+        </div>
+      </div>
+
+      {/* Live WFC + Wang-16 Auto-Tiled Diorama */}
+      <div className="card">
+        <h3 className="section-title">
+          {biome.label} — Live WFC + Dual-Grid Wang-16 Level ({previewMap.ramps.length} Ramps · {previewMap.bridges.length} Bridges · {previewMap.props.length} Props)
+        </h3>
+        <div className="checker-stage" style={{ padding: 12, overflowX: 'auto' }}>
+          <canvas
+            ref={dioramaCanvasRef}
+            width={WORLD_W}
+            height={WORLD_H}
+            style={{ width: WORLD_W * 2, height: WORLD_H * 2, maxWidth: '100%', imageRendering: 'pixelated', borderRadius: 6 }}
+          />
         </div>
       </div>
 
@@ -83,7 +163,7 @@ export function EnvironmentTab({ catalog }: { catalog: MicroRtsCatalog }) {
           <h3 className="section-title">Animated Hazard, Bridges &amp; 4-Way Ramps (3×)</h3>
           <div className="pill-row" style={{ gap: 14 }}>
             <div className="card-subtle" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <SpriteCellCanvas leafId={LEAF_2D} path={biome.hazardAnim} cellW={8} cellH={8} col={tick % 3} scale={4} />
+              <SpriteCellCanvas leafId={LEAF_2D} path={biome.hazardAnim} cellW={8} cellH={8} col={0} row={tick % 3} scale={4} />
               <span className="unit-id">Hazard ({hazardImg ? `${hazardImg.width}×${hazardImg.height}` : '3f'})</span>
             </div>
             {bridgeHImg && (
