@@ -230,122 +230,76 @@ function hash2i(x: number, y: number, seed = 0): number {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
+// Each stamp uses a base, a shallow plane, a cut, and a small lit edge.
+const GROUND_STAMPS = {
+  temperate: {
+    primary: ['........','..+.....','.+m.m...','..mm....','...-....','......m.','.....mm.','........'],
+    secondary: ['........','....mm..','..mm-...','..--....','........','.m...+m.','......-.','........'],
+    accent: ['........','..mm....','.m..mm..','.....+..','....m...','...m.-..','..m...-.','........'],
+  },
+  tundra: {
+    primary: ['........','.....mm.','...mmm..','..+mm...','.mm.....','.....--.','....-...','........'],
+    secondary: ['........','..mm....','...-m...','...-....','..-.mm..','.-..+...','.....m..','........'],
+    accent: ['........','..mm..m.','..-..mm.','....--..','........','.mm..m..','.m..mm..','........'],
+  },
+  volcanic: {
+    primary: ['........','...mmm..','..mm....','..-.....','...--...','.....-..','..m.....','........'],
+    secondary: ['........','.mmm....','....-mm.','...-....','..--....','.m..-...','.....-..','........'],
+    accent: ['........','..mm....','....-m..','...-....','..m.....','...m--..','........','........'],
+  },
+  desert: {
+    primary: ['........','.....mm.','...mmm..','.mmm....','.-......','......m.','....mm..','........'],
+    secondary: ['--------','mmmm..-.','......-.','--....-.','mm-----.','..m...mm','..-.....','..-.....'],
+    accent: ['........','.mmm....','.m...--.','.m..m.-.','....m.-.','...mm...','........','........'],
+  },
+} as const;
+
 function paintThemePixel(
-  theme: PlanetThemeId,
-  kind: EnvTileKind,
-  x: number,
-  y: number,
-  variant: number,
-  animFrame = 0,
+  theme: PlanetThemeId, kind: EnvTileKind, x: number, y: number, variant: number, animFrame = 0,
 ): RGBA32 {
   const p = THEME_PALETTES[theme];
-  const dither = ((x ^ y) & 1) === 1;
-  const h = hash2i(x + variant * 17, y + variant * 31, theme.length * 19 + kind.length * 7);
-
-  if (kind === 'primary') {
-    if (theme === 'desert') {
-      // Subtle wind-swept horizontal dune ripples
-      const rip = ((y + (x >> 2) + variant) % 4) === 0;
-      if (rip && h > 0.35) return p.priHi;
-      if (h < 0.18) return p.priDark;
-      return dither ? p.priBase : p.priMid;
+  const u = ((variant === 2 ? 7 - x : x) + variant * 3) & 7;
+  const v = (y + variant * 5) & 7;
+  if (kind === 'hazard') {
+    if (theme === 'volcanic') {
+      const ridge = [2, 2, 3, 5, 5, 4, 3, 2][v];
+      const fault = (u - ridge + 8) & 7;
+      if (fault === 0 && (v + variant) % 7 < 5) {
+        return (v + variant) % 7 === animFrame + 1 ? p.hazFoam : p.hazShallow;
+      }
+      if (fault < 2 || (v === 4 && fault > 4)) return p.hazMid;
+      return fault > 3 && v < 4 ? p.hazWet : p.hazDeep;
     }
     if (theme === 'tundra') {
-      if (variant === 2 && ((x === 3 && y === 4) || (x === 4 && y === 3))) return p.priLip;
-      if (h > 0.78) return p.priHi;
-      if (h < 0.22) return p.priDark;
-      return dither ? p.priBase : p.priMid;
+      const plane = (u + (v >> 1)) & 7;
+      if (plane === 3 && v === 2 + animFrame) return p.hazFoam;
+      if (plane === 3 && v >= 2 && v < 5) return p.hazShallow;
+      return (v === 5 && u < 4) || (v === 6 && u >= 2 && u < 5) ? p.hazDeep : p.hazMid;
     }
-    if (theme === 'volcanic') {
-      if (variant === 3 && x === 4 && y === 3) return p.fleck; // tiny cooling ember speck
-      if (h > 0.78) return p.priHi;
-      if (h < 0.24) return p.priDark;
-      return dither ? p.priBase : p.priMid;
-    }
-    // temperate grass
-    if (variant === 2 && ((x === 3 && y === 4) || (x === 4 && y === 3))) return p.priLip;
-    if (variant === 3 && ((x === 2 && y === 5) || (x === 5 && y === 2))) return p.priHi;
-    if (variant === 1 && h < 0.24) return p.priDark;
-    return h > 0.72 ? p.priHi : h < 0.2 ? p.priDark : dither ? p.priBase : p.priMid;
+    const wave = (u + animFrame * 2 + (v >> 1)) & 7;
+    if (v === 2 && wave < 3) return wave === 1 && variant === 2 ? p.hazFoam : p.hazShallow;
+    return (v === 3 && wave < 4) || (v === 6 && wave > 4) ? p.hazDeep : p.hazMid;
   }
-
-  if (kind === 'secondary') {
-    if (theme === 'desert') {
-      // Ancient cracked sandstone flagstone grid
-      if (x === 0 || y === 0 || (x === 4 && y >= 4) || (y === 4 && x < 4)) {
-        return h > 0.3 ? p.secDark : p.secShadow;
-      }
-      if (variant === 2 && x === 2 && y === 2) return p.secHi;
-      return dither ? p.secBase : p.secMid;
-    }
-    if (theme === 'volcanic') {
-      // Cracked basalt polygonal fissures
-      if ((x === 3 && y >= 1 && y <= 6 && variant >= 1) || (y === 4 && x >= 2 && x <= 5 && variant === 2)) {
-        return p.secShadow;
-      }
-      return h > 0.72 ? p.secMid : h < 0.24 ? p.secDark : dither ? p.secBase : p.secMid;
-    }
-    if (variant === 1 && h > 0.84) return p.secHi;
-    if (variant === 2 && h < 0.22) return p.secDark;
-    return h > 0.72 ? p.secMid : h < 0.2 ? p.secDark : dither ? p.secBase : p.secMid;
-  }
-
-  if (kind === 'accent') {
-    const hf = hash2i(x + variant * 13, y + variant * 29, 404);
-    if (theme === 'desert') {
-      // Geometric carved temple floor trim
-      if (x === 0 || y === 0) return p.accDark;
-      if ((x === 3 || x === 4) && (y === 3 || y === 4)) return p.accVein;
-      return hf < 0.25 ? p.accDark : p.accBase;
-    }
-    if (variant === 1 && Math.abs(x - y) === 0 && x >= 1 && x <= 6) return p.accVein;
-    if (variant === 2 && Math.abs(x + y - 7) === 0 && x >= 2 && x <= 5) return p.accVein;
-    return hf < 0.28 ? p.accDark : hf > 0.85 ? p.accVein : p.accBase;
-  }
-
   if (kind === 'cliff') {
-    if (variant === 1 && h > 0.78) return p.platHi;
-    if (variant === 2 && h < 0.24) return p.platDark;
-    return dither ? p.platBase : h > 0.68 ? p.platHi : p.platBase;
+    if (v === 4 && u >= 2 && u < 5) return p.platHi;
+    if (v === 5 && u >= 4 && u < 6) return p.platDark;
+    return p.platBase;
   }
-
-  // hazard (water / ice / lava / oasis) with optional 3-frame animation drift!
-  const sx = (x + animFrame * 2) & 7;
-  if (theme === 'volcanic') {
-    // Calm cooled magma crust with organic glowing orange fissures (no harsh diagonal stripes!)
-    const hLav = hash2i((x + animFrame) & 7, y, 701 + variant * 17);
-    const pocket = Math.hypot((sx - 3.5), (y - 3.5) * 1.15);
-    if (variant === 0) {
-      if (pocket < 1.6) return p.hazShallow;
-      if (hLav > 0.86) return p.hazShallow;
-      return hLav < 0.42 ? p.hazDeep : p.hazMid;
-    }
-    if (variant === 1) {
-      if (pocket < 1.3) return p.hazFoam;
-      if (pocket < 2.4) return p.hazShallow;
-      return hLav < 0.45 ? p.hazDeep : p.hazMid;
-    }
-    if (variant === 2) {
-      if ((y === 3 || y === 4) && sx >= 2 && sx <= 5) return sx === 3 ? p.hazFoam : p.hazShallow;
-      return hLav < 0.48 ? p.hazDeep : p.hazMid;
-    }
-    if (hLav > 0.88) return p.hazFoam;
-    if (hLav > 0.65) return p.hazShallow;
-    return hLav < 0.44 ? p.hazDeep : p.hazMid;
+  const stamp = GROUND_STAMPS[theme][kind][v][u];
+  if (kind === 'primary') {
+    if (stamp === '+') return p.priHi;
+    if (stamp === 'm') return p.priMid;
+    return stamp === '-' ? p.priDark : p.priBase;
   }
-  if (theme === 'tundra') {
-    // Natural calm frozen glacier ice with sparse short specular fracture glints (no blind stripes!)
-    const glint =
-      (variant === 2 && ((x === 2 && y === 2) || (x === 3 && y === 3) || (x === 4 && y === 3))) ||
-      (variant === 3 && ((x === 5 && y === 4) || (x === 4 && y === 5)));
-    if (glint) return p.hazFoam;
-    if (h > 0.78) return p.hazShallow;
-    return h < 0.28 ? p.hazDeep : p.hazMid;
+  if (kind === 'secondary') {
+    if (theme === 'volcanic' && variant === 3 && u === 2 && v === 4) return p.accVein;
+    if (stamp === '+') return p.secHi;
+    if (stamp === 'm') return p.secMid;
+    return stamp === '-' ? p.secDark : p.secBase;
   }
-  const wave = (y === 2 && sx >= 1 && sx <= 3 && variant === 1) || (y === 5 && sx >= 4 && sx <= 6 && variant === 2);
-  if (wave) return p.hazShallow;
-  if (variant === 3 && y === 3 && (sx === 3 || sx === 4)) return p.hazFoam;
-  return h > 0.74 && (y & 1) === 0 ? p.hazShallow : h < 0.3 ? p.hazDeep : p.hazMid;
+  if (stamp === '+') return p.accRim;
+  if (stamp === 'm') return p.accVein;
+  return stamp === '-' ? p.accDark : p.accBase;
 }
 
 function writeTile(atlas: PixelSurface, col: number, row: number, fn: (x: number, y: number) => RGBA32): void {
@@ -361,73 +315,28 @@ function writeTile(atlas: PixelSurface, col: number, row: number, fn: (x: number
 /** Builds 4-way carved stone ramps (S, N, E, W) with tapered alpha edges over any Layer-0 ground. */
 function buildThemeRamps(theme: PlanetThemeId): Readonly<Record<'S' | 'N' | 'E' | 'W', PixelSurface>> {
   const p = THEME_PALETTES[theme];
-  const makeSouth = (): PixelSurface => {
-    const s = createSurface(24, 16, 0);
-    for (let y = 0; y < 16; y++) {
-      for (let x = 0; x < 24; x++) {
-        const isEdge = x === 0 || x === 23;
-        const isCurb = x === 1 || x === 22;
-        const isLip = x === 2 || x === 21;
-        if (y === 15 && (isEdge || isCurb)) {
-          s.pixels[y * 24 + x] = isEdge ? SHADOW_SOFT : SHADOW_DEEP;
-          continue;
-        }
-        if (isEdge) { s.pixels[y * 24 + x] = p.cliffInk; continue; }
-        if (isCurb) { s.pixels[y * 24 + x] = p.cliffDark; continue; }
-        if (isLip) { s.pixels[y * 24 + x] = p.cliffTop; continue; }
-        const h = hash2i(x, y, 71);
-        const stepLine = y === 4 || y === 9 || y === 13;
-        if (stepLine && x >= 4 && x <= 19) s.pixels[y * 24 + x] = p.platDark;
-        else if (y === 15 && h < 0.45) s.pixels[y * 24 + x] = SHADOW_SOFT;
-        else s.pixels[y * 24 + x] = h > 0.7 ? p.platHi : h < 0.25 ? p.secMid : p.platBase;
-      }
-    }
-    return s;
-  };
-  const makeNorth = (): PixelSurface => {
-    const s = makeSouth();
-    const out = createSurface(24, 16, 0);
-    for (let y = 0; y < 16; y++) {
-      for (let x = 0; x < 24; x++) {
-        out.pixels[y * 24 + x] = s.pixels[(15 - y) * 24 + x];
+  function ramp(vertical: boolean, reverse: boolean): PixelSurface {
+    const out = createSurface(vertical ? 24 : 16, vertical ? 16 : 24, 0);
+    for (let y = 0; y < out.height; y++) {
+      for (let x = 0; x < out.width; x++) {
+        const across = vertical ? x : y;
+        const along = vertical ? y : x;
+        const depth = reverse ? 15 - along : along;
+        const curb = Math.min(across, 23 - across);
+        const tread = depth % 5;
+        let color = p.platBase;
+        if (depth === 15) color = curb < 2 ? SHADOW_DEEP : SHADOW_SOFT;
+        else if (curb === 0) color = across === 23 ? p.cliffInk : p.cliffLit;
+        else if (curb < 3) color = tread === 4 ? p.cliffLit : across < 3 ? p.cliffTop : p.platHi;
+        else if (tread === 4) color = p.platDark;
+        else if (tread === 3) color = p.platHi;
+        else if (across === 6 + (Math.floor(depth / 5) * 7) % 12 && tread < 2) color = p.cliffLit;
+        out.pixels[y * out.width + x] = color;
       }
     }
     return out;
-  };
-  const makeEast = (): PixelSurface => {
-    const s = createSurface(16, 24, 0);
-    for (let y = 0; y < 24; y++) {
-      for (let x = 0; x < 16; x++) {
-        const isEdge = y === 0 || y === 23;
-        const isCurb = y === 1 || y === 22;
-        const isLip = y === 2 || y === 21;
-        if (x === 15 && (isEdge || isCurb)) {
-          s.pixels[y * 16 + x] = isEdge ? SHADOW_SOFT : SHADOW_DEEP;
-          continue;
-        }
-        if (isEdge) { s.pixels[y * 16 + x] = p.cliffInk; continue; }
-        if (isCurb) { s.pixels[y * 16 + x] = p.cliffDark; continue; }
-        if (isLip) { s.pixels[y * 16 + x] = p.cliffTop; continue; }
-        const h = hash2i(x, y, 83);
-        const stepLine = x === 4 || x === 9 || x === 13;
-        if (stepLine && y >= 4 && y <= 19) s.pixels[y * 16 + x] = p.platDark;
-        else if (x === 15 && h < 0.45) s.pixels[y * 16 + x] = SHADOW_SOFT;
-        else s.pixels[y * 16 + x] = h > 0.7 ? p.platHi : h < 0.25 ? p.secMid : p.platBase;
-      }
-    }
-    return s;
-  };
-  const makeWest = (): PixelSurface => {
-    const s = makeEast();
-    const out = createSurface(16, 24, 0);
-    for (let y = 0; y < 24; y++) {
-      for (let x = 0; x < 16; x++) {
-        out.pixels[y * 16 + x] = s.pixels[y * 16 + (15 - x)];
-      }
-    }
-    return out;
-  };
-  return { S: makeSouth(), N: makeNorth(), E: makeEast(), W: makeWest() };
+  }
+  return { S: ramp(true, false), N: ramp(true, true), E: ramp(false, false), W: ramp(false, true) };
 }
 
 /** Builds crisp steel-truss tactical bridges (H: 24x16, V: 16x24) with alpha drop-shadows over water/lava! */
@@ -450,9 +359,9 @@ function buildTacticalBridges(theme: PlanetThemeId): { bridgeH: PixelSurface; br
         continue;
       }
       if (y === 2 || y === 11) { bridgeH.pixels[y * 24 + x] = railMid; continue; }
-      const plank = (x % 3 === 0) ? deckB : deckA;
-      const centerLine = (y === 6 || y === 7) && (x % 6 >= 1 && x % 6 <= 3);
-      bridgeH.pixels[y * 24 + x] = centerLine ? railMid : plank;
+      const plank = (x % 4 === 0 || y === 10) ? deckB : deckA;
+      const rivet = x % 4 === 1 && (y === 3 || y === 9);
+      bridgeH.pixels[y * 24 + x] = rivet ? railMid : plank;
     }
   }
 
@@ -467,9 +376,9 @@ function buildTacticalBridges(theme: PlanetThemeId): { bridgeH: PixelSurface; br
         continue;
       }
       if (x === 2 || x === 11) { bridgeV.pixels[y * 16 + x] = railMid; continue; }
-      const plank = (y % 3 === 0) ? deckB : deckA;
-      const centerLine = (x === 6 || x === 7) && (y % 6 >= 1 && y % 6 <= 3);
-      bridgeV.pixels[y * 16 + x] = centerLine ? railMid : plank;
+      const plank = (y % 4 === 0 || x === 10) ? deckB : deckA;
+      const rivet = y % 4 === 1 && (x === 3 || x === 9);
+      bridgeV.pixels[y * 16 + x] = rivet ? railMid : plank;
     }
   }
   return { bridgeH, bridgeV };
@@ -520,9 +429,9 @@ export function buildPlanetAtlas(theme: PlanetThemeId): BiomeAtlasBundle {
       const onBorder = x === 0 || x === 7 || y === 0 || y === 7;
       const jitter = onBorder ? 0 : (hash2i(x + mask * 5, y + mask * 11, 202) - 0.5) * 0.14;
       const c = wangCoverage(x, y, mask, 0.05) + jitter;
-      if (c >= 0.56) return c < 0.72 ? p.priLip : paintThemePixel(theme, 'primary', x, y, 0);
+      if (c >= 0.56) return c < 0.72 ? p.priLip : paintThemePixel(theme, 'primary', x % 7, y % 7, 0);
       if (c >= 0.42) return p.secShadow;
-      return paintThemePixel(theme, 'secondary', x, y, 0);
+      return paintThemePixel(theme, 'secondary', x % 7, y % 7, 0);
     });
   }
 
@@ -532,40 +441,34 @@ export function buildPlanetAtlas(theme: PlanetThemeId): BiomeAtlasBundle {
       const onBorder = x === 0 || x === 7 || y === 0 || y === 7;
       const jitter = onBorder ? 0 : (hash2i(x + mask * 7, y + mask * 13, 303) - 0.5) * 0.16;
       const c = wangCoverage(x, y, mask, 0.06) + jitter;
-      if (c >= 0.56) return c < 0.70 ? p.accRim : paintThemePixel(theme, 'accent', x, y, 0);
+      if (c >= 0.56) return c < 0.70 ? p.accRim : paintThemePixel(theme, 'accent', x % 7, y % 7, 0);
       if (c >= 0.42) return p.accInk;
-      return paintThemePixel(theme, 'secondary', x, y, 0);
+      return paintThemePixel(theme, 'secondary', x % 7, y % 7, 0);
     });
     writeTile(atlas, mask, 4, (x, y) => {
       const onBorder = x === 0 || x === 7 || y === 0 || y === 7;
       const jitter = onBorder ? 0 : (hash2i(x + mask * 11, y + mask * 3, 405) - 0.5) * 0.16;
       const c = wangCoverage(x, y, mask, 0.06) + jitter;
-      if (c >= 0.56) return c < 0.70 ? p.accRim : paintThemePixel(theme, 'accent', x, y, 0);
+      if (c >= 0.56) return c < 0.70 ? p.accRim : paintThemePixel(theme, 'accent', x % 7, y % 7, 0);
       if (c >= 0.42) return p.accInk;
-      return paintThemePixel(theme, 'primary', x, y, 0);
+      return paintThemePixel(theme, 'primary', x % 7, y % 7, 0);
     });
   }
 
   // Row 5 & Row 7: hazard-on-primary & hazard-on-secondary Wang-16
   for (let mask = 0; mask < 16; mask++) {
-    writeTile(atlas, mask, 5, (x, y) => {
-      const c = wangCoverage(x, y, mask, 0.04);
-      const dither = ((x ^ y) & 1) === 1;
-      const foamBreak = hash2i(x + mask * 3, y + mask * 7, 509);
-      if (c >= 0.64) return c < 0.78 ? (foamBreak > 0.56 ? p.hazFoam : p.hazShallow) : paintThemePixel(theme, 'hazard', x, y, 0);
-      if (c >= 0.50) return p.hazWet;
-      if (c >= 0.34) return dither ? p.platDark : p.platBase;
-      return paintThemePixel(theme, 'primary', x, y, 0);
-    });
-    writeTile(atlas, mask, 7, (x, y) => {
-      const c = wangCoverage(x, y, mask, 0.04);
-      const dither = ((x ^ y) & 1) === 1;
-      const foamBreak = hash2i(x + mask * 5, y + mask * 9, 709);
-      if (c >= 0.64) return c < 0.78 ? (foamBreak > 0.56 ? p.hazFoam : p.hazShallow) : paintThemePixel(theme, 'hazard', x, y, 0);
-      if (c >= 0.50) return p.hazWet;
-      if (c >= 0.34) return dither ? p.secDark : p.platBase;
-      return paintThemePixel(theme, 'secondary', x, y, 0);
-    });
+    for (const row of [5, 7]) {
+      writeTile(atlas, mask, row, (x, y) => {
+        const c = wangCoverage(x, y, mask, 0.04);
+        const u = x % 7, v = y % 7;
+        if (c >= 0.84) return paintThemePixel(theme, 'hazard', u, v, 0);
+        if (c >= 0.72) return p.hazMid;
+        if (c >= 0.55) return (u + 2 * v) % 5 === 1 ? p.hazFoam : p.hazShallow;
+        if (c >= 0.42) return p.hazWet;
+        if (c >= 0.34) return row === 5 ? p.priDark : p.secDark;
+        return paintThemePixel(theme, row === 5 ? 'primary' : 'secondary', u, v, 0);
+      });
+    }
   }
 
   // Row 6: Layer-1 ALPHA cliff Wang-16
@@ -575,13 +478,20 @@ export function buildPlanetAtlas(theme: PlanetThemeId): BiomeAtlasBundle {
       const onBorder = x === 0 || x === 7 || y === 0 || y === 7;
       const rockJitter = onBorder ? 0 : (hash2i(x + mask * 7, y + mask * 13, 601) - 0.5) * 0.06;
       const c = wangCoverage(x, y, mask, 0.03) + rockJitter;
-      if (c >= 0.68) return c < 0.81 ? p.cliffTop : paintThemePixel(theme, 'cliff', x, y, 0);
-      if (c >= 0.57) return p.cliffDark;
-      if (c >= 0.34) return ((x + (y >> 1)) & 3) === 0 ? p.cliffDark : p.cliffLit;
-      if (c >= 0.21) return p.cliffDark;
-      if (c >= 0.14) return p.cliffInk;
-      if (c >= 0.07) return SHADOW_DEEP;
-      if (c >= 0.01) return SHADOW_SOFT;
+      const u = x % 7, v = y % 7;
+      if (c >= 0.80) return paintThemePixel(theme, 'cliff', u, v, 0);
+      if (c >= 0.66) {
+        const facesSun = onBorder || wangCoverage(x + 1, y + 1, mask, 0) > c;
+        return !facesSun && c < 0.73 ? p.platHi : p.cliffTop;
+      }
+      if (c >= 0.55) return p.platDark;
+      if (c >= 0.30) {
+        if ((u + (v >> 2)) % 5 === 2) return p.cliffDark;
+        return v === 3 && u < 4 ? p.platHi : p.cliffLit;
+      }
+      if (c >= 0.20) return p.cliffDark;
+      if (c >= 0.13) return p.cliffInk;
+      if (c > 0.005) return packRGBA(16, 11, 26, Math.round(28 + c * 920));
       return 0;
     });
   }
