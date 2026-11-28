@@ -1,0 +1,10 @@
+{
+  "appData": {
+    "id": "micro-rts-showcase",
+    "name": "RUN Micro-RTS Showcase",
+    "description": "Interactive pixel-art micro-RTS showcase & sandbox: 72 8-way faction units (12 two-layer split turrets), 21 buildings x 7 states, 4 planet biomes, 31 terrain objects, 12 neutral units, 19 combat VFX, and native RTS UI chrome.",
+    "versionTag": "0.1.0",
+    "thumbnailUrl": "",
+    "userState": {}
+  }
+}
