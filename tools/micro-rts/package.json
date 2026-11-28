@@ -1,0 +1,24 @@
+{
+  "name": "micro-rts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RUN Micro-RTS (micro-rts): zero-dependency pixel-art RTS asset kit — 72 faction units, 21 buildings x 7 states, 4 biomes, 31 terrain objects, 12 neutral units, 19 combat VFX, and 29 UI/HUD chrome sprites.",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "node src/cli.ts",
+    "build:roster": "node src/roster-build.ts",
+    "build:env": "node src/env-build.ts",
+    "build:vfx": "node src/vfx-build.ts",
+    "build:ui": "node src/ui-build.ts",
+    "build:manifest": "node src/pack-manifest.ts",
+    "build:all": "npm run build && npm run build:roster && npm run build:env && npm run build:vfx && npm run build:ui && npm run build:manifest",
+    "stage": "node src/stage-jam.ts"
+  }
+}

@@ -1,0 +1,1020 @@
+{
+  "infantryTilePx": 8,
+  "ultraMicroTilePx": 4,
+  "facings": [
+    "N",
+    "NE",
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW"
+  ],
+  "anims": [
+    "idle",
+    "move",
+    "attack",
+    "death"
+  ],
+  "teamColors": [
+    "default",
+    "crimson",
+    "emerald",
+    "amber",
+    "violet"
+  ],
+  "buildingStates": [
+    "build_1",
+    "build_2",
+    "idle",
+    "active_0",
+    "active_1",
+    "damaged",
+    "rubble"
+  ],
+  "infantry": [
+    {
+      "id": "vanguard-trooper",
+      "name": "Vanguard Trooper",
+      "role": "Rifle Infantry",
+      "faction": "vanguard",
+      "w": 8,
+      "h": 8,
+      "attackKind": "tracer",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "vanguard-heavy",
+      "name": "Vanguard Heavy",
+      "role": "Siege Rocket Frame",
+      "faction": "vanguard",
+      "w": 8,
+      "h": 8,
+      "attackKind": "missile",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "kraxen-stalker",
+      "name": "Kraxen Stalker",
+      "role": "Acid Bio-Lancer",
+      "faction": "kraxen",
+      "w": 8,
+      "h": 8,
+      "attackKind": "acid",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "kraxen-swarmling",
+      "name": "Kraxen Swarmling",
+      "role": "Fast Brood Rusher",
+      "faction": "kraxen",
+      "w": 8,
+      "h": 8,
+      "attackKind": "bite",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-blade",
+      "name": "Solaris Blade",
+      "role": "Psi-Blade Zealot",
+      "faction": "solaris",
+      "w": 8,
+      "h": 8,
+      "attackKind": "psi-slash",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-arcanist",
+      "name": "Solaris Arcanist",
+      "role": "Floating Psi-Caster",
+      "faction": "solaris",
+      "w": 8,
+      "h": 8,
+      "attackKind": "psi-orb",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    }
+  ],
+  "titans": [
+    {
+      "id": "vanguard-tank",
+      "name": "Vanguard Siege Tank",
+      "role": "Heavy Artillery",
+      "faction": "vanguard",
+      "layer": "ground",
+      "w": 18,
+      "h": 14,
+      "airAltitude": 0,
+      "attackKind": "shell",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 5
+        },
+        "death": {
+          "start": 11,
+          "count": 3
+        }
+      },
+      "totalCols": 14
+    },
+    {
+      "id": "vanguard-gunship",
+      "name": "Vanguard Valkyrie",
+      "role": "VTOL Gunship",
+      "faction": "vanguard",
+      "layer": "air",
+      "w": 18,
+      "h": 14,
+      "airAltitude": 16,
+      "attackKind": "rocket-salvo",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "kraxen-behemoth",
+      "name": "Kraxen Behemoth",
+      "role": "Tusk Juggernaut",
+      "faction": "kraxen",
+      "layer": "ground",
+      "w": 20,
+      "h": 18,
+      "airAltitude": 0,
+      "attackKind": "cleave",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 5
+        },
+        "death": {
+          "start": 11,
+          "count": 3
+        }
+      },
+      "totalCols": 14
+    },
+    {
+      "id": "kraxen-wyvern",
+      "name": "Kraxen Bio-Wyvern",
+      "role": "Acid Sky-Stalker",
+      "faction": "kraxen",
+      "layer": "air",
+      "w": 14,
+      "h": 12,
+      "airAltitude": 15,
+      "attackKind": "glaive",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-colossus",
+      "name": "Solaris Colossus",
+      "role": "Thermal Beam Walker",
+      "faction": "solaris",
+      "layer": "ground",
+      "w": 16,
+      "h": 16,
+      "airAltitude": 0,
+      "attackKind": "thermal-beam",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    },
+    {
+      "id": "solaris-carrier",
+      "name": "Solaris Sky-Carrier",
+      "role": "Drone Capital Ship",
+      "faction": "solaris",
+      "layer": "air",
+      "w": 16,
+      "h": 12,
+      "airAltitude": 19,
+      "attackKind": "interceptors",
+      "frameOffsets": {
+        "idle": {
+          "start": 0,
+          "count": 2
+        },
+        "move": {
+          "start": 2,
+          "count": 4
+        },
+        "attack": {
+          "start": 6,
+          "count": 4
+        },
+        "death": {
+          "start": 10,
+          "count": 3
+        }
+      },
+      "totalCols": 13
+    }
+  ],
+  "buildings": [
+    {
+      "id": "vanguard-bastion",
+      "name": "Drop-Citadel",
+      "faction": "vanguard",
+      "role": "hq",
+      "coreWidth": 30,
+      "coreHeight": 25,
+      "width": 32,
+      "height": 27,
+      "anchorX": 16,
+      "anchorY": 24,
+      "shadowRx": 13.6,
+      "shadowRy": 4,
+      "stateSheet": "building-vanguard-bastion-states.png",
+      "stateCellW": 36,
+      "stateCellH": 30,
+      "stateAnchorX": 17,
+      "stateAnchorY": 27,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "vanguard-depot",
+      "name": "Fuel Silo Rig",
+      "faction": "vanguard",
+      "role": "supply",
+      "coreWidth": 20,
+      "coreHeight": 17,
+      "width": 22,
+      "height": 19,
+      "anchorX": 11,
+      "anchorY": 16,
+      "shadowRx": 9,
+      "shadowRy": 3.1,
+      "stateSheet": "building-vanguard-depot-states.png",
+      "stateCellW": 26,
+      "stateCellH": 22,
+      "stateAnchorX": 12,
+      "stateAnchorY": 19,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "vanguard-refinery",
+      "name": "Orbital Bore Rig",
+      "faction": "vanguard",
+      "role": "extractor",
+      "coreWidth": 24,
+      "coreHeight": 21,
+      "width": 26,
+      "height": 23,
+      "anchorX": 13,
+      "anchorY": 20,
+      "shadowRx": 10.8,
+      "shadowRy": 3.4,
+      "stateSheet": "building-vanguard-refinery-states.png",
+      "stateCellW": 30,
+      "stateCellH": 26,
+      "stateAnchorX": 14,
+      "stateAnchorY": 23,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "vanguard-barracks",
+      "name": "Drop-Pod Garrison",
+      "faction": "vanguard",
+      "role": "production",
+      "coreWidth": 25,
+      "coreHeight": 21,
+      "width": 27,
+      "height": 23,
+      "anchorX": 13,
+      "anchorY": 20,
+      "shadowRx": 11.2,
+      "shadowRy": 3.5,
+      "stateSheet": "building-vanguard-barracks-states.png",
+      "stateCellW": 31,
+      "stateCellH": 26,
+      "stateAnchorX": 14,
+      "stateAnchorY": 23,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "vanguard-factory",
+      "name": "Armor Forge",
+      "faction": "vanguard",
+      "role": "tech",
+      "coreWidth": 27,
+      "coreHeight": 22,
+      "width": 29,
+      "height": 24,
+      "anchorX": 14,
+      "anchorY": 21,
+      "shadowRx": 12.2,
+      "shadowRy": 3.6,
+      "stateSheet": "building-vanguard-factory-states.png",
+      "stateCellW": 33,
+      "stateCellH": 27,
+      "stateAnchorX": 15,
+      "stateAnchorY": 24,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "vanguard-starport",
+      "name": "VTOL Sky-Pad",
+      "faction": "vanguard",
+      "role": "air",
+      "coreWidth": 28,
+      "coreHeight": 23,
+      "width": 30,
+      "height": 25,
+      "anchorX": 15,
+      "anchorY": 22,
+      "shadowRx": 12.6,
+      "shadowRy": 3.8,
+      "stateSheet": "building-vanguard-starport-states.png",
+      "stateCellW": 34,
+      "stateCellH": 28,
+      "stateAnchorX": 16,
+      "stateAnchorY": 25,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "vanguard-turret",
+      "name": "Aegis Gun-Bunker",
+      "faction": "vanguard",
+      "role": "defense",
+      "coreWidth": 21,
+      "coreHeight": 16,
+      "width": 23,
+      "height": 18,
+      "anchorX": 10,
+      "anchorY": 15,
+      "shadowRx": 8.8,
+      "shadowRy": 3.1,
+      "stateSheet": "building-vanguard-turret-states.png",
+      "stateCellW": 27,
+      "stateCellH": 21,
+      "stateAnchorX": 11,
+      "stateAnchorY": 18,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-spire",
+      "name": "Scarab Citadel",
+      "faction": "kraxen",
+      "role": "hq",
+      "coreWidth": 31,
+      "coreHeight": 25,
+      "width": 33,
+      "height": 27,
+      "anchorX": 16,
+      "anchorY": 24,
+      "shadowRx": 13.8,
+      "shadowRy": 4.2,
+      "stateSheet": "building-kraxen-spire-states.png",
+      "stateCellW": 37,
+      "stateCellH": 30,
+      "stateAnchorX": 17,
+      "stateAnchorY": 27,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-cyst",
+      "name": "Sail-Pod",
+      "faction": "kraxen",
+      "role": "supply",
+      "coreWidth": 20,
+      "coreHeight": 19,
+      "width": 22,
+      "height": 21,
+      "anchorX": 11,
+      "anchorY": 18,
+      "shadowRx": 8.2,
+      "shadowRy": 3,
+      "stateSheet": "building-kraxen-cyst-states.png",
+      "stateCellW": 26,
+      "stateCellH": 24,
+      "stateAnchorX": 12,
+      "stateAnchorY": 21,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-extractor",
+      "name": "Fang-Pump",
+      "faction": "kraxen",
+      "role": "extractor",
+      "coreWidth": 24,
+      "coreHeight": 21,
+      "width": 26,
+      "height": 23,
+      "anchorX": 13,
+      "anchorY": 20,
+      "shadowRx": 10.6,
+      "shadowRy": 3.4,
+      "stateSheet": "building-kraxen-extractor-states.png",
+      "stateCellW": 30,
+      "stateCellH": 26,
+      "stateAnchorX": 14,
+      "stateAnchorY": 23,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-spawner",
+      "name": "Elytra Brood-Vault",
+      "faction": "kraxen",
+      "role": "production",
+      "coreWidth": 25,
+      "coreHeight": 21,
+      "width": 27,
+      "height": 23,
+      "anchorX": 13,
+      "anchorY": 20,
+      "shadowRx": 11.2,
+      "shadowRy": 3.5,
+      "stateSheet": "building-kraxen-spawner-states.png",
+      "stateCellW": 31,
+      "stateCellH": 26,
+      "stateAnchorX": 14,
+      "stateAnchorY": 23,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-lab",
+      "name": "Mutagen Rib-Lab",
+      "faction": "kraxen",
+      "role": "tech",
+      "coreWidth": 26,
+      "coreHeight": 22,
+      "width": 28,
+      "height": 24,
+      "anchorX": 14,
+      "anchorY": 21,
+      "shadowRx": 11.6,
+      "shadowRy": 3.5,
+      "stateSheet": "building-kraxen-lab-states.png",
+      "stateCellW": 32,
+      "stateCellH": 27,
+      "stateAnchorX": 15,
+      "stateAnchorY": 24,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-roost",
+      "name": "Wing-Sail Aerie",
+      "faction": "kraxen",
+      "role": "air",
+      "coreWidth": 27,
+      "coreHeight": 24,
+      "width": 29,
+      "height": 26,
+      "anchorX": 14,
+      "anchorY": 23,
+      "shadowRx": 11.4,
+      "shadowRy": 3.6,
+      "stateSheet": "building-kraxen-roost-states.png",
+      "stateCellW": 33,
+      "stateCellH": 29,
+      "stateAnchorX": 15,
+      "stateAnchorY": 26,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "kraxen-colony",
+      "name": "Mantis-Crest Turret",
+      "faction": "kraxen",
+      "role": "defense",
+      "coreWidth": 19,
+      "coreHeight": 19,
+      "width": 21,
+      "height": 21,
+      "anchorX": 10,
+      "anchorY": 18,
+      "shadowRx": 7.6,
+      "shadowRy": 2.8,
+      "stateSheet": "building-kraxen-colony-states.png",
+      "stateCellW": 25,
+      "stateCellH": 24,
+      "stateAnchorX": 11,
+      "stateAnchorY": 21,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-nexus",
+      "name": "Solar Orrery",
+      "faction": "solaris",
+      "role": "hq",
+      "coreWidth": 31,
+      "coreHeight": 25,
+      "width": 33,
+      "height": 27,
+      "anchorX": 16,
+      "anchorY": 24,
+      "shadowRx": 13.6,
+      "shadowRy": 4,
+      "stateSheet": "building-solaris-nexus-states.png",
+      "stateCellW": 37,
+      "stateCellH": 30,
+      "stateAnchorX": 17,
+      "stateAnchorY": 27,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-pylon",
+      "name": "Astrolabe Spire",
+      "faction": "solaris",
+      "role": "supply",
+      "coreWidth": 17,
+      "coreHeight": 19,
+      "width": 19,
+      "height": 21,
+      "anchorX": 9,
+      "anchorY": 18,
+      "shadowRx": 6.8,
+      "shadowRy": 2.6,
+      "stateSheet": "building-solaris-pylon-states.png",
+      "stateCellW": 23,
+      "stateCellH": 24,
+      "stateAnchorX": 10,
+      "stateAnchorY": 21,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-harvester",
+      "name": "Prism Harvester",
+      "faction": "solaris",
+      "role": "extractor",
+      "coreWidth": 24,
+      "coreHeight": 21,
+      "width": 26,
+      "height": 23,
+      "anchorX": 13,
+      "anchorY": 20,
+      "shadowRx": 10.6,
+      "shadowRy": 3.4,
+      "stateSheet": "building-solaris-harvester-states.png",
+      "stateCellW": 30,
+      "stateCellH": 26,
+      "stateAnchorX": 14,
+      "stateAnchorY": 23,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-gate",
+      "name": "Sun-Arch Conduit",
+      "faction": "solaris",
+      "role": "production",
+      "coreWidth": 26,
+      "coreHeight": 22,
+      "width": 28,
+      "height": 24,
+      "anchorX": 14,
+      "anchorY": 21,
+      "shadowRx": 11.4,
+      "shadowRy": 3.5,
+      "stateSheet": "building-solaris-gate-states.png",
+      "stateCellW": 32,
+      "stateCellH": 27,
+      "stateAnchorX": 15,
+      "stateAnchorY": 24,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-forge",
+      "name": "Heliostat Crucible",
+      "faction": "solaris",
+      "role": "tech",
+      "coreWidth": 26,
+      "coreHeight": 21,
+      "width": 28,
+      "height": 23,
+      "anchorX": 14,
+      "anchorY": 20,
+      "shadowRx": 11.4,
+      "shadowRy": 3.5,
+      "stateSheet": "building-solaris-forge-states.png",
+      "stateCellW": 32,
+      "stateCellH": 26,
+      "stateAnchorX": 15,
+      "stateAnchorY": 23,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-dock",
+      "name": "Zenith Dock",
+      "faction": "solaris",
+      "role": "air",
+      "coreWidth": 28,
+      "coreHeight": 23,
+      "width": 30,
+      "height": 25,
+      "anchorX": 15,
+      "anchorY": 22,
+      "shadowRx": 12.6,
+      "shadowRy": 3.8,
+      "stateSheet": "building-solaris-dock-states.png",
+      "stateCellW": 34,
+      "stateCellH": 28,
+      "stateAnchorX": 16,
+      "stateAnchorY": 25,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "solaris-turret",
+      "name": "Helios Obelisk",
+      "faction": "solaris",
+      "role": "defense",
+      "coreWidth": 18,
+      "coreHeight": 19,
+      "width": 20,
+      "height": 21,
+      "anchorX": 9,
+      "anchorY": 18,
+      "shadowRx": 7.8,
+      "shadowRy": 2.8,
+      "stateSheet": "building-solaris-turret-states.png",
+      "stateCellW": 24,
+      "stateCellH": 24,
+      "stateAnchorX": 10,
+      "stateAnchorY": 21,
+      "states": [
+        "build_1",
+        "build_2",
+        "idle",
+        "active_0",
+        "active_1",
+        "damaged",
+        "rubble"
+      ]
+    },
+    {
+      "id": "mineral-cluster",
+      "name": "Mineral Patch",
+      "faction": "neutral",
+      "role": "prop",
+      "coreWidth": 10,
+      "coreHeight": 8,
+      "width": 12,
+      "height": 10,
+      "anchorX": 6,
+      "anchorY": 7,
+      "shadowRx": 5.2,
+      "shadowRy": 2
+    },
+    {
+      "id": "pine-tree",
+      "name": "Highland Pine",
+      "faction": "neutral",
+      "role": "prop",
+      "coreWidth": 7,
+      "coreHeight": 9,
+      "width": 9,
+      "height": 11,
+      "anchorX": 3,
+      "anchorY": 8,
+      "shadowRx": 3.4,
+      "shadowRy": 1.4
+    },
+    {
+      "id": "rock-crag",
+      "name": "Boulder Crag",
+      "faction": "neutral",
+      "role": "prop",
+      "coreWidth": 9,
+      "coreHeight": 6,
+      "width": 11,
+      "height": 8,
+      "anchorX": 5,
+      "anchorY": 5,
+      "shadowRx": 4.6,
+      "shadowRy": 1.8
+    }
+  ]
+}
