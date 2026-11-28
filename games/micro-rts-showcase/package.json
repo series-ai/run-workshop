@@ -1,0 +1,34 @@
+{
+  "name": "micro-rts-showcase",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "SEE LICENSE IN ../../LICENSE.md",
+  "description": "RUN Micro-RTS Showcase: interactive 8x8-grid sci-fi pixel-art RTS sandbox, 72-unit 8-way & 2-layer turret inspector, 21 buildings x 7 states, 4 planet biomes, 31 terrain objects, 12 neutral units, 19 combat VFX, and RTS UI chrome.",
+  "keywords": [
+    "RUN.game"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build:local": "tsc -p tsconfig.json --noEmit && vite build --mode local-preview",
+    "preview": "vite preview --mode local-preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "deploy": "npm run build && rundot deploy"
+  },
+  "dependencies": {
+    "@series-inc/rundot-game-sdk": "^5.39.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.7.0",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.7"
+  }
+}

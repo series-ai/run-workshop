@@ -19,6 +19,7 @@
     "build:ui": "node src/ui-build.ts",
     "build:manifest": "node src/pack-manifest.ts",
     "build:all": "npm run build && npm run build:roster && npm run build:env && npm run build:vfx && npm run build:ui && npm run build:manifest",
-    "stage": "node src/stage-jam.ts"
+    "stage": "node src/stage-jam.ts",
+    "sync-pins": "node src/sync-pins.ts"
   }
 }
